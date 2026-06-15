@@ -1,0 +1,79 @@
+{
+  "id": "c787c16a-8b05-4b7c-87b5-7b79c0856085",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 252,
+  "costDucats": 198,
+  "startingDucats": 68,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 148,
+  "upgradeCostConstruction": 189,
+  "sectorId": "sector:industry",
+  "industryId": "industry:chemicals",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:chemicals",
+      "amount": 14
+    },
+    {
+      "goodId": "good:fertilizer",
+      "amount": 8
+    },
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 4
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:explosives",
+      "amount": 28.78
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:chemist",
+      "workers": 240
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 90
+    }
+  ],
+  "infrastructureUse": 4,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.c787c16a_8b05_4b7c_87b5_7b79c0856085.name"
+}

@@ -1,0 +1,21 @@
+{
+  "id": "balanced-economy",
+  "name": "Сбалансированная экономика",
+  "description": "Отдельная content library с логичными цепочками зданий, товаров и профессий. Использует текущую карту.",
+  "startTurn": 1,
+  "calendar": {
+    "startYear": 1836,
+    "turnsPerYear": 12
+  },
+  "mapRoot": "active",
+  "tags": [
+    "economy",
+    "content-library",
+    "balance"
+  ],
+  "content": {
+    "files": [
+      "content-library.json"
+    ]
+  }
+}

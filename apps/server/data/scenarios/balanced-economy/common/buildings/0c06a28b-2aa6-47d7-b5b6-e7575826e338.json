@@ -1,0 +1,79 @@
+{
+  "id": "0c06a28b-2aa6-47d7-b5b6-e7575826e338",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 280,
+  "costDucats": 220,
+  "startingDucats": 76,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 164,
+  "upgradeCostConstruction": 210,
+  "sectorId": "sector:industry",
+  "industryId": "industry:machinery",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:steel",
+      "amount": 14
+    },
+    {
+      "goodId": "good:nonferrous_metals",
+      "amount": 6
+    },
+    {
+      "goodId": "good:electronics",
+      "amount": 4
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:energy_equipment",
+      "amount": 23.32
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:machinist",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 480
+    }
+  ],
+  "infrastructureUse": 5,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.0c06a28b_2aa6_47d7_b5b6_e7575826e338.name"
+}

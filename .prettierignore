@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+apps/server/data/scenarios/**/map/tiles
+apps/server/uploads
+*.mvt
+*.webp
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.ico

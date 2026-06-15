@@ -1,0 +1,79 @@
+{
+  "id": "4c2ee888-d760-4e20-96da-f84c6a66a40e",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 294,
+  "costDucats": 231,
+  "startingDucats": 80,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 172,
+  "upgradeCostConstruction": 221,
+  "sectorId": "sector:industry",
+  "industryId": "industry:machinery",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:engines",
+      "amount": 4
+    },
+    {
+      "goodId": "good:steel",
+      "amount": 16
+    },
+    {
+      "goodId": "good:machinery",
+      "amount": 4
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:construction_machinery",
+      "amount": 23.27
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:machinist",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 480
+    }
+  ],
+  "infrastructureUse": 5,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.4c2ee888_d760_4e20_96da_f84c6a66a40e.name"
+}

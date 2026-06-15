@@ -1,0 +1,79 @@
+{
+  "id": "7b210824-cb96-418e-9207-7653f61dce23",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 238,
+  "costDucats": 187,
+  "startingDucats": 65,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 139,
+  "upgradeCostConstruction": 179,
+  "sectorId": "sector:services",
+  "industryId": "industry:services",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:pharmaceuticals",
+      "amount": 6
+    },
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 4
+    },
+    {
+      "goodId": "good:household_chemicals",
+      "amount": 2
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:healthcare",
+      "amount": 35.52
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:doctor",
+      "workers": 360
+    },
+    {
+      "professionId": "profession:service",
+      "workers": 240
+    },
+    {
+      "professionId": "profession:manager",
+      "workers": 55
+    }
+  ],
+  "infrastructureUse": 1,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.7b210824_cb96_418e_9207_7653f61dce23.name"
+}

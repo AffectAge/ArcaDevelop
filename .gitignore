@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+**/dist/
+build/
+**/build/
+.turbo/
+.vite/
+**/.vite/
+coverage/
+**/coverage/
+
+# TypeScript and test caches
+*.tsbuildinfo
+.vitest/
+**/.vitest/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs and local runtime output
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.codex-logs/
+
+# Local databases and uploads
+*.db
+*.sqlite
+*.sqlite3
+/uploads/
+/apps/server/uploads/
+
+# Archives and local backups
+*.rar
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+*.bak
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/
+*.tmp

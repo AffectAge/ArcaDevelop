@@ -1,0 +1,79 @@
+{
+  "id": "1c56901c-e4ae-436a-a0b8-7508356b427b",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 294,
+  "costDucats": 231,
+  "startingDucats": 80,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 172,
+  "upgradeCostConstruction": 221,
+  "sectorId": "sector:industry",
+  "industryId": "industry:metallurgy",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:iron_ore",
+      "amount": 32
+    },
+    {
+      "goodId": "68f51d4c-fb46-4792-9069-231f5e8c4ed2",
+      "amount": 16
+    },
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 6
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:steel",
+      "amount": 59.41
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:machinist",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 480
+    }
+  ],
+  "infrastructureUse": 7,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.1c56901c_e4ae_436a_a0b8_7508356b427b.name"
+}

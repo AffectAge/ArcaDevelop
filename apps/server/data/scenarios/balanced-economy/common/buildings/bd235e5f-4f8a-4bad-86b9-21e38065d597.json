@@ -1,0 +1,79 @@
+{
+  "id": "bd235e5f-4f8a-4bad-86b9-21e38065d597",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 336,
+  "costDucats": 264,
+  "startingDucats": 91,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 197,
+  "upgradeCostConstruction": 252,
+  "sectorId": "sector:industry",
+  "industryId": "industry:machinery",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:steel",
+      "amount": 22
+    },
+    {
+      "goodId": "good:engines",
+      "amount": 5
+    },
+    {
+      "goodId": "good:electronics",
+      "amount": 3
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:ships",
+      "amount": 23.34
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:machinist",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 480
+    }
+  ],
+  "infrastructureUse": 6,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.bd235e5f_4f8a_4bad_86b9_21e38065d597.name"
+}

@@ -1,0 +1,79 @@
+{
+  "id": "a9e80338-5ff1-4f90-941b-3108a8fabd88",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 217,
+  "costDucats": 171,
+  "startingDucats": 59,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 127,
+  "upgradeCostConstruction": 163,
+  "sectorId": "sector:consumer",
+  "industryId": "industry:chemicals",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:chemicals",
+      "amount": 12
+    },
+    {
+      "goodId": "good:plastics",
+      "amount": 4
+    },
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 4
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:household_chemicals",
+      "amount": 27.49
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:chemist",
+      "workers": 240
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 90
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.a9e80338_5ff1_4f90_941b_3108a8fabd88.name"
+}

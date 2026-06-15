@@ -1,0 +1,50 @@
+{
+  "economy": {
+    "baseCulturePerTurn": 1,
+    "baseSciencePerTurn": 1,
+    "baseReligionPerTurn": 1,
+    "baseConstructionPerTurn": 5,
+    "baseDucatsPerTurn": 5,
+    "baseGoldPerTurn": 10,
+    "demolitionCostConstructionPercent": 20,
+    "marketPriceSmoothing": 0.2,
+    "buildingDurabilityDecayPerTurn": 10,
+    "buildingDurabilityRecoveryPerTurn": 5,
+    "pollutionProductivityEffectPer1000": 0.1,
+    "explorationBaseEmptyChancePct": 5,
+    "explorationDepletionPerAttemptPct": 7.5,
+    "explorationDurationTurns": 1,
+    "explorationRollsPerExpedition": 3
+  },
+  "auditLog": {
+    "maxEntries": 1000,
+    "retentionTurns": null
+  },
+  "colonization": {
+    "maxActiveColonizations": 3,
+    "pointsPerTurn": 30,
+    "pointsCostPer1000Km2": 5,
+    "ducatsCostPer1000Km2": 5
+  },
+  "customization": {
+    "renameDucats": 20,
+    "recolorDucats": 10,
+    "flagDucats": 15,
+    "crestDucats": 15,
+    "provinceRenameDucats": 25
+  },
+  "military": {
+    "militaryFormationSpeed": 10
+  },
+  "registration": {
+    "requireAdminApproval": false
+  },
+  "eventLog": {
+    "retentionTurns": 3
+  },
+  "turnTimer": {
+    "enabled": true,
+    "secondsPerTurn": 86400,
+    "pauseWhenNoPlayersOnline": false
+  }
+}

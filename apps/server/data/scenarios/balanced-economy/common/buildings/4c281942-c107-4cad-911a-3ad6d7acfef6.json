@@ -1,0 +1,74 @@
+{
+  "id": "4c281942-c107-4cad-911a-3ad6d7acfef6",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 308,
+  "costDucats": 242,
+  "startingDucats": 84,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 180,
+  "upgradeCostConstruction": 231,
+  "sectorId": "sector:mining",
+  "industryId": "industry:mining",
+  "extractionGoodId": "c84afdb6-d7ff-4521-8347-fc8d58b5d39c",
+  "extractionAmountPerTurn": 58.45,
+  "extractionRequiresDeposit": true,
+  "inputs": [
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 5
+    },
+    {
+      "goodId": "good:mining_equipment",
+      "amount": 1.8
+    },
+    {
+      "goodId": "good:chemicals",
+      "amount": 1.2
+    }
+  ],
+  "outputs": [],
+  "workforceRequirements": [
+    {
+      "professionId": "0b93b497-db9e-4788-83f4-9e7e12cf3a8e",
+      "workers": 900
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 55
+    }
+  ],
+  "infrastructureUse": 6,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.4c281942_c107_4cad_911a_3ad6d7acfef6.name"
+}

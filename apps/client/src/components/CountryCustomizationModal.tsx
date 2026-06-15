@@ -1,0 +1,403 @@
+import { useEffect, useMemo, useState } from "react";
+import { Coins, Palette, Save, Upload } from "lucide-react";
+import { toast } from "sonner";
+import { fetchPublicCustomizationPrices, type CustomizationPrices, updateOwnCountryCustomization } from "../lib/api";
+import { AppButton } from "./ui/AppButton";
+import { AppModal, AppModalHeader } from "./ui/AppModal";
+import { AppCard, AppSection } from "./ui/AppSurface";
+
+type Props = {
+  open: boolean;
+  token: string;
+  country: {
+    name: string;
+    color: string;
+    flagUrl?: string | null;
+    crestUrl?: string | null;
+  };
+  currentDucats: number;
+  ducatsIconUrl?: string | null;
+  onClose: () => void;
+  onSaved: (payload: { name: string; color: string; flagUrl?: string | null; crestUrl?: string | null; ducats: number; chargedDucats: number }) => void;
+};
+
+const defaultPrices: CustomizationPrices = {
+  renameDucats: 20,
+  recolorDucats: 10,
+  flagDucats: 15,
+  crestDucats: 15,
+  provinceRenameDucats: 25,
+};
+
+function formatCompact(value: number): string {
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  const units = [
+    { n: 1_000_000_000_000, s: "T" },
+    { n: 1_000_000_000, s: "B" },
+    { n: 1_000_000, s: "M" },
+    { n: 1_000, s: "K" },
+  ] as const;
+
+  for (const unit of units) {
+    if (abs >= unit.n) {
+      const scaled = abs / unit.n;
+      const text =
+        scaled >= 100
+          ? Math.floor(scaled).toString()
+          : scaled >= 10
+            ? scaled.toFixed(1).replace(/\.0$/, "")
+            : scaled.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+      return `${sign}${text}${unit.s}`;
+    }
+  }
+
+  return `${sign}${Math.floor(abs)}`;
+}
+
+function DucatValue({ value, iconUrl, className = "" }: { value: number; iconUrl?: string | null; className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1 ${className}`.trim()}>
+      {iconUrl ? (
+        <img src={iconUrl} alt="" className="h-[13px] w-[13px] rounded-sm object-contain" />
+      ) : (
+        <Coins size={13} className="text-amber-300" />
+      )}
+      <span>{formatCompact(value)}</span>
+    </span>
+  );
+}
+
+async function isImageWithinRule(
+  file: File,
+  rule: { maxWidth: number; maxHeight: number; ratioWidth: number; ratioHeight: number },
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const ratio = img.width / Math.max(1, img.height);
+      const targetRatio = rule.ratioWidth / rule.ratioHeight;
+      const ok =
+        img.width <= rule.maxWidth &&
+        img.height <= rule.maxHeight &&
+        Math.abs(ratio - targetRatio) <= 0.01;
+      URL.revokeObjectURL(url);
+      resolve(ok);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(false);
+    };
+    img.src = url;
+  });
+}
+
+function FilePicker({
+  label,
+  file,
+  hint,
+  onChange,
+}: {
+  label: string;
+  file: File | null;
+  hint: string;
+  onChange: (file: File | null) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs text-slate-300">{label}</label>
+      <label className="panel-border flex cursor-pointer items-center gap-2 rounded-lg bg-black/35 px-3 py-2 text-sm text-slate-200 transition hover:border-arc-accent/40">
+        <Upload size={14} className="text-arc-accent" />
+        <span className="truncate">{file ? file.name : "Выбрать изображение"}</span>
+        <input type="file" accept="image/*" className="hidden" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+      </label>
+      <p className="mt-1 text-xs text-slate-500">{hint}</p>
+    </div>
+  );
+}
+
+export function CountryCustomizationModal({ open, token, country, currentDucats, ducatsIconUrl, onClose, onSaved }: Props) {
+  const [loadingPrices, setLoadingPrices] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [prices, setPrices] = useState<CustomizationPrices>(defaultPrices);
+  const [name, setName] = useState(country.name);
+  const [color, setColor] = useState(country.color);
+  const [flagFile, setFlagFile] = useState<File | null>(null);
+  const [crestFile, setCrestFile] = useState<File | null>(null);
+  const [flagPreviewUrl, setFlagPreviewUrl] = useState<string | null>(null);
+  const [crestPreviewUrl, setCrestPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setName(country.name);
+    setColor(country.color);
+    setFlagFile(null);
+    setCrestFile(null);
+  }, [open, country.color, country.name]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    let cancelled = false;
+    setLoadingPrices(true);
+    fetchPublicCustomizationPrices()
+      .then((next) => {
+        if (!cancelled) {
+          setPrices(next);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          toast.error("Не удалось загрузить цены кастомизации");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingPrices(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!flagFile) {
+      setFlagPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(flagFile);
+    setFlagPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [flagFile]);
+
+  useEffect(() => {
+    if (!crestFile) {
+      setCrestPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(crestFile);
+    setCrestPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [crestFile]);
+
+  const normalizedName = name.trim();
+  const normalizedColor = color.trim();
+  const nameChanged = normalizedName.length >= 2 && normalizedName !== country.name;
+  const colorChanged = /^#[0-9a-fA-F]{6}$/.test(normalizedColor) && normalizedColor.toLowerCase() !== country.color.toLowerCase();
+  const totalCost = (nameChanged ? prices.renameDucats : 0) + (colorChanged ? prices.recolorDucats : 0) + (flagFile ? prices.flagDucats : 0) + (crestFile ? prices.crestDucats : 0);
+  const canAfford = currentDucats >= totalCost;
+
+  const changes = useMemo(
+    () => [
+      { label: "Переименование", enabled: nameChanged, cost: prices.renameDucats },
+      { label: "Смена цвета", enabled: colorChanged, cost: prices.recolorDucats },
+      { label: "Смена флага", enabled: Boolean(flagFile), cost: prices.flagDucats },
+      { label: "Смена герба", enabled: Boolean(crestFile), cost: prices.crestDucats },
+    ],
+    [colorChanged, crestFile, flagFile, nameChanged, prices],
+  );
+
+  const submit = async () => {
+    if (!nameChanged && !colorChanged && !flagFile && !crestFile) {
+      toast.error("Нет изменений для сохранения");
+      return;
+    }
+
+    if (normalizedName.length > 0 && normalizedName.length < 2) {
+      toast.error("Название страны должно быть минимум 2 символа");
+      return;
+    }
+
+    if (normalizedColor && !/^#[0-9a-fA-F]{6}$/.test(normalizedColor)) {
+      toast.error("Введите корректный HEX-цвет");
+      return;
+    }
+
+    if (!canAfford) {
+      toast.error(`Недостаточно дукатов: нужно ${totalCost}, доступно ${currentDucats}`);
+      return;
+    }
+
+    if (flagFile && !(await isImageWithinRule(flagFile, { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 }))) {
+      toast.error("Флаг: максимум 192x128, соотношение 3:2");
+      return;
+    }
+    if (crestFile && !(await isImageWithinRule(crestFile, { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 }))) {
+      toast.error("Герб: максимум 128x192, соотношение 2:3");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const result = await updateOwnCountryCustomization(token, {
+        countryName: nameChanged ? normalizedName : undefined,
+        countryColor: colorChanged ? normalizedColor : undefined,
+        flagFile,
+        crestFile,
+      });
+
+      onSaved({
+        name: result.country.name,
+        color: result.country.color,
+        flagUrl: result.country.flagUrl,
+        crestUrl: result.country.crestUrl,
+        ducats: result.resources.ducats,
+        chargedDucats: result.chargedDucats,
+      });
+      toast.success(`Изменения применены (-${result.chargedDucats} дукатов)`);
+      onClose();
+    } catch (err) {
+      const code = err instanceof Error ? err.message : "COUNTRY_CUSTOMIZATION_FAILED";
+      if (code === "INSUFFICIENT_DUCATS") {
+        toast.error("Недостаточно дукатов");
+      } else if (code === "IMAGE_DIMENSIONS_TOO_LARGE") {
+        toast.error("Проверьте формат: флаг 192x128 (3:2), герб 128x192 (2:3)");
+      } else if (code === "FILE_TOO_LARGE") {
+        toast.error("Файл слишком большой (до 4MB)");
+      } else if (code === "ONLY_IMAGES") {
+        toast.error("Разрешены только изображения");
+      } else if (code === "NO_CHANGES") {
+        toast.error("Нет изменений для сохранения");
+      } else {
+        toast.error("Не удалось применить изменения страны");
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <AppModal
+      modalKey="country-customization"
+      open={open}
+      onClose={onClose}
+      zIndexClassName="z-[130]"
+      panelClassName="h-auto w-full max-w-3xl"
+      paddingClassName="p-4 flex items-center justify-center"
+    >
+          <AppModalHeader
+            title="Кастомизация страны"
+            description={`Доступно: ${formatCompact(currentDucats)} дукатов`}
+            onClose={onClose}
+          />
+
+          <div className="grid gap-4 md:grid-cols-[1.25fr_.85fr]">
+            <AppSection className="space-y-4 p-4">
+              <div>
+                <label className="mb-1 block text-xs text-slate-300">Название страны</label>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm outline-none transition focus:border-arc-accent/60"
+                  placeholder="Название страны"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 flex items-center gap-2 text-xs text-slate-300">
+                  <Palette size={13} /> Цвет страны
+                </label>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(color) ? color : "#4ade80"} onChange={(e) => setColor(e.target.value)} className="panel-border h-10 w-12 rounded-lg bg-black/35 p-1" />
+                  <input
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="flex-1 rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm outline-none transition focus:border-arc-accent/60"
+                    placeholder="#4ade80"
+                  />
+                  <span className="panel-border h-9 w-9 rounded-md" style={{ backgroundColor: /^#[0-9a-fA-F]{6}$/.test(color) ? color : "#111827" }} />
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <FilePicker
+                  label="Новый флаг"
+                  file={flagFile}
+                  hint="До 4MB, максимум 192x128, соотношение 3:2"
+                  onChange={setFlagFile}
+                />
+                <FilePicker
+                  label="Новый герб"
+                  file={crestFile}
+                  hint="До 4MB, максимум 128x192, соотношение 2:3"
+                  onChange={setCrestFile}
+                />
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <AppCard className="bg-black/25 p-2">
+                  <div className="mb-2 text-xs text-slate-400">Предпросмотр флага</div>
+                  <div className="h-24 overflow-hidden rounded-md bg-black/30">
+                    {flagPreviewUrl ? (
+                      <img src={flagPreviewUrl} alt="flag preview" className="h-full w-full object-contain p-1" />
+                    ) : country.flagUrl ? (
+                      <img src={country.flagUrl} alt="current flag" className="h-full w-full object-contain p-1 opacity-80" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-xs text-slate-500">Не выбран</div>
+                    )}
+                  </div>
+                </AppCard>
+
+                <AppCard className="bg-black/25 p-2">
+                  <div className="mb-2 text-xs text-slate-400">Предпросмотр герба</div>
+                  <div className="h-24 overflow-hidden rounded-md bg-black/30">
+                    {crestPreviewUrl ? (
+                      <img src={crestPreviewUrl} alt="crest preview" className="h-full w-full object-contain p-1" />
+                    ) : country.crestUrl ? (
+                      <img src={country.crestUrl} alt="current crest" className="h-full w-full object-contain p-1 opacity-80" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-xs text-slate-500">Не выбран</div>
+                    )}
+                  </div>
+                </AppCard>
+              </div>
+            </AppSection>
+
+            <AppSection className="space-y-3 p-4">
+              <div className="text-sm font-semibold text-slate-200">Стоимость изменений</div>
+              {loadingPrices && <div className="text-xs text-slate-400">Загрузка цен...</div>}
+
+              <div className="space-y-2 text-sm">
+                {changes.map((item) => (
+                  <div key={item.label} className={`flex items-center justify-between rounded-lg px-2 py-1 ${item.enabled ? "bg-white/5 text-slate-100" : "text-slate-500"}`}>
+                    <span>{item.label}</span>
+                    <DucatValue value={item.enabled ? item.cost : 0} iconUrl={ducatsIconUrl} className={item.enabled ? "text-slate-200" : "text-slate-500"} />
+                  </div>
+                ))}
+              </div>
+
+              <AppCard className="bg-black/30">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-300">Итого</span>
+                  <strong className="text-arc-accent">
+                    <DucatValue value={totalCost} iconUrl={ducatsIconUrl} className="text-arc-accent" />
+                  </strong>
+                </div>
+                <div className="mt-1 flex items-center justify-between text-xs">
+                  <span className="text-slate-400">После покупки</span>
+                  <DucatValue value={currentDucats - totalCost} iconUrl={ducatsIconUrl} className={canAfford ? "text-slate-300" : "text-rose-300"} />
+                </div>
+              </AppCard>
+
+              <AppButton
+                type="button"
+                onClick={submit}
+                disabled={saving || totalCost <= 0 || !canAfford}
+                variant="primary"
+                className="w-full"
+                icon={<Save size={14} />}
+              >
+                {saving ? "Сохраняем..." : "Купить и применить"}
+              </AppButton>
+            </AppSection>
+          </div>
+    </AppModal>
+  );
+}

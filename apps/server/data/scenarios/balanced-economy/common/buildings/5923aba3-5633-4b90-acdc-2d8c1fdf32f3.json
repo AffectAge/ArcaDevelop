@@ -1,0 +1,75 @@
+{
+  "id": "5923aba3-5633-4b90-acdc-2d8c1fdf32f3",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 175,
+  "costDucats": 138,
+  "startingDucats": 48,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 103,
+  "upgradeCostConstruction": 131,
+  "sectorId": "sector:agriculture",
+  "industryId": "industry:farms",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:tools",
+      "amount": 2
+    },
+    {
+      "goodId": "good:ships",
+      "amount": 0.8
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:fish",
+      "amount": 59.52
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:sailor",
+      "workers": 460
+    },
+    {
+      "professionId": "profession:driver",
+      "workers": 220
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 250
+    }
+  ],
+  "infrastructureUse": 4,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.5923aba3_5633_4b90_acdc_2d8c1fdf32f3.name"
+}

@@ -1,0 +1,63 @@
+{
+  "id": "a88b3e23-6e30-494f-9799-d3ade94bef0d",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": "/scenario-assets/balanced-economy/assets/uploads/technologies/8f9011cd-e082-4b8d-8d41-31b17a82ab47.png?v=1777483156218",
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "costScience": 100,
+  "prerequisiteTechnologyIds": [
+    "c753b914-d019-4580-ac62-b8e7ea87ae8e",
+    "ea2c842b-b00c-4347-8a42-1d19fe3f55b9"
+  ],
+  "unlockBuildingIds": [
+    "3bc957f8-630d-4858-a9af-a1f3b8d5b063",
+    "8b008e8b-cfe8-4979-9573-cb9abe174fe9"
+  ],
+  "unlockLawIds": [
+    "21aa620e-ace9-4aa4-8d30-d9fc00c1561e",
+    "cf35a860-e7d2-4cba-8139-af5070d4bb05"
+  ],
+  "modifiers": [
+    {
+      "id": "modifier-1",
+      "label": "Новый модификатор",
+      "scope": "country",
+      "conditions": [],
+      "effects": [
+        {
+          "stat": "culture_gain",
+          "mode": "add_pct",
+          "value": 0.1,
+          "target": null
+        },
+        {
+          "stat": "construction_gain",
+          "mode": "add",
+          "value": 0.1,
+          "target": {
+            "buildingId": "ea1bc737-cc43-41e7-9edf-ff47a90406fa",
+            "goodId": "7d1c7f9e-c580-4e42-8cea-1b9dcc317faf",
+            "professionId": "profession:default",
+            "resourceCategoryId": "e9dc8ca5-0d4e-489e-b3b1-2255bae8b3c2"
+          }
+        }
+      ]
+    }
+  ],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "nameKey": "technologies.a88b3e23_6e30_494f_9799_d3ade94bef0d.name"
+}

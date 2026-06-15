@@ -1,0 +1,83 @@
+{
+  "id": "68ff7c12-5990-42b6-957d-59fde885b824",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 189,
+  "costDucats": 149,
+  "startingDucats": 51,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 111,
+  "upgradeCostConstruction": 142,
+  "sectorId": "sector:consumer",
+  "industryId": "industry:food",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:processed_meat",
+      "amount": 8
+    },
+    {
+      "goodId": "good:processed_vegetables",
+      "amount": 8
+    },
+    {
+      "goodId": "good:bread",
+      "amount": 6
+    },
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 4
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:prepared_food",
+      "amount": 34.23
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 600
+    },
+    {
+      "professionId": "profession:machinist",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 70
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.68ff7c12_5990_42b6_957d_59fde885b824.name"
+}

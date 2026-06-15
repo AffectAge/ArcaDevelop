@@ -1,0 +1,75 @@
+{
+  "id": "2bf0cfd5-5319-4259-8cd4-01f02b1d94ea",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": "/scenario-assets/balanced-economy/assets/uploads/buildings/3a01677f-b523-402b-a5e3-2dd0bf59c833.png?v=1777741847481",
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 175,
+  "costDucats": 138,
+  "startingDucats": 48,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 103,
+  "upgradeCostConstruction": 131,
+  "sectorId": "sector:agriculture",
+  "industryId": "industry:farms",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:tools",
+      "amount": 4
+    },
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 3
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:timber",
+      "amount": 59.51
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "019299f7-7854-4f8c-8724-ec8d021e5d31",
+      "workers": 850
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 250
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 35
+    }
+  ],
+  "infrastructureUse": 5,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.2bf0cfd5_5319_4259_8cd4_01f02b1d94ea.name"
+}

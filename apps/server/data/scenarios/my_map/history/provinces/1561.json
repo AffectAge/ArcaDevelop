@@ -1,0 +1,30 @@
+{
+  "id": "province:1561",
+  "nameKey": "province.1561.name",
+  "color": "#8cb762",
+  "terrain": "land",
+  "landscape": "в",
+  "climate": "в",
+  "continent": "в",
+  "strategicArea": "в",
+  "passable": true,
+  "movementCost": 1,
+  "adjacentProvinceIds": [
+    "province:568",
+    "province:569",
+    "province:1562",
+    "province:2400",
+    "province:2401",
+    "province:7917",
+    "province:7918"
+  ],
+  "areaKm2": 37379.638,
+  "center": {
+    "x": 21.47613158,
+    "y": 12.01241995
+  },
+  "fertility": 50,
+  "fertileLandKm2": 18689.819,
+  "pollution": 0,
+  "radiation": 0
+}

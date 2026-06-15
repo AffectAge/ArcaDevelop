@@ -1,0 +1,7 @@
+{
+  "id": "my_map",
+  "name": "my_map",
+  "description": "Generated from my_map.geojson.",
+  "startTurn": 1,
+  "mapRoot": "map"
+}

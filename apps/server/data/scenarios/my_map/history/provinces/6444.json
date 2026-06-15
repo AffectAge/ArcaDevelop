@@ -1,0 +1,22 @@
+{
+  "id": "province:6444",
+  "nameKey": "province.6444.name",
+  "color": "#675db1",
+  "terrain": "land",
+  "landscape": "в",
+  "climate": "в",
+  "continent": "в",
+  "strategicArea": "в",
+  "passable": true,
+  "movementCost": 1,
+  "adjacentProvinceIds": [],
+  "areaKm2": 0.333,
+  "center": {
+    "x": 71.35488936,
+    "y": -6.65459564
+  },
+  "fertility": 50,
+  "fertileLandKm2": 0.166,
+  "pollution": 0,
+  "radiation": 0
+}

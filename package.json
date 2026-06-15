@@ -1,0 +1,37 @@
+{
+  "name": "arcanorum-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/fix-esbuild.cjs",
+    "dev": "concurrently \"npm run dev -w @arcanorum/server\" \"npm run dev -w @arcanorum/client\"",
+    "build": "npm run build -ws",
+    "lint": "eslint apps/server/src/index.ts apps/server/src/serverRuntime.ts apps/server/src/app apps/server/src/scenarios apps/server/src/map apps/server/src/lifecycle apps/server/src/mechanics apps/server/src/security apps/server/src/persistence apps/server/src/runtime apps/server/src/routes apps/server/src/uploads apps/server/scripts/scenario-*.ts packages/shared/src scripts/check-docs.mjs scripts/check-project-rules.ts scripts/check-code-guards.ts scripts/projectGuardConfig.ts",
+    "lint:all": "eslint .",
+    "format:check": "prettier --check .",
+    "map:from-geojson": "node scripts/prepare-map-from-geojson.mjs",
+    "typecheck": "npm run typecheck -ws",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:integration": "echo integration tests not implemented",
+    "test:e2e": "echo e2e tests not implemented",
+    "docs:check": "node scripts/check-docs.mjs && tsx scripts/check-project-rules.ts && tsx scripts/check-code-guards.ts",
+    "scenario:validate": "tsx apps/server/scripts/scenario-validate.ts",
+    "scenario:build-indexes": "tsx apps/server/scripts/scenario-build-indexes.ts"
+  },
+  "devDependencies": {
+    "@esbuild/win32-x64": "0.25.12",
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^9.2.1",
+    "eslint": "^10.4.1",
+    "markdown-link-check": "^3.14.2",
+    "prettier": "^3.8.4",
+    "sharp": "^0.34.5",
+    "typescript-eslint": "^8.61.0",
+    "vitest": "^4.1.8"
+  }
+}

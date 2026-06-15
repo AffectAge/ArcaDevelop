@@ -1,0 +1,79 @@
+{
+  "id": "1d89742d-19a6-49f5-b690-08856d3e8482",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 175,
+  "costDucats": 138,
+  "startingDucats": 48,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 103,
+  "upgradeCostConstruction": 131,
+  "sectorId": "sector:consumer",
+  "industryId": "industry:food",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:flour",
+      "amount": 14
+    },
+    {
+      "goodId": "good:sugar",
+      "amount": 12
+    },
+    {
+      "goodId": "good:vegetable_oil",
+      "amount": 4
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:confectionery",
+      "amount": 23.08
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 600
+    },
+    {
+      "professionId": "profession:machinist",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 70
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.1d89742d_19a6_49f5_b690_08856d3e8482.name"
+}

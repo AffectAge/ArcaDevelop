@@ -1,0 +1,87 @@
+{
+  "id": "9ffaa159-2a3a-4460-a13c-5aa1ae98e3c9",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 392,
+  "costDucats": 308,
+  "startingDucats": 106,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 230,
+  "upgradeCostConstruction": 294,
+  "sectorId": "sector:military",
+  "industryId": "industry:military",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:steel",
+      "amount": 18
+    },
+    {
+      "goodId": "good:engines",
+      "amount": 6
+    },
+    {
+      "goodId": "good:electronics",
+      "amount": 5
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:ships",
+      "amount": 13.46
+    },
+    {
+      "goodId": "good:weapons",
+      "amount": 13.46
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:machinist",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 130
+    },
+    {
+      "professionId": "profession:officer",
+      "workers": 40
+    }
+  ],
+  "infrastructureUse": 6,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.9ffaa159_2a3a_4460_a13c_5aa1ae98e3c9.name"
+}

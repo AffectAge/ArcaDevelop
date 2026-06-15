@@ -1,0 +1,87 @@
+{
+  "id": "f5160bde-3d09-45ff-b116-60061b0d9b8a",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 420,
+  "costDucats": 330,
+  "startingDucats": 114,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 246,
+  "upgradeCostConstruction": 315,
+  "sectorId": "sector:military",
+  "industryId": "industry:military",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:aircraft",
+      "amount": 0.4
+    },
+    {
+      "goodId": "good:electronics",
+      "amount": 8
+    },
+    {
+      "goodId": "good:weapons",
+      "amount": 5
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:aircraft",
+      "amount": 11.15
+    },
+    {
+      "goodId": "good:weapons",
+      "amount": 11.15
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:machinist",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 130
+    },
+    {
+      "professionId": "profession:officer",
+      "workers": 40
+    }
+  ],
+  "infrastructureUse": 5,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.f5160bde_3d09_45ff_b116_60061b0d9b8a.name"
+}

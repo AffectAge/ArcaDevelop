@@ -1,0 +1,265 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Rajdhani:wght@500;700&display=swap");
+@import "./styles/theme.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply m-0 bg-arc-bg font-body text-white;
+}
+
+#root {
+  @apply h-screen;
+}
+
+.map-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.maplibregl-map,
+.maplibregl-canvas-container,
+.maplibregl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.vignette {
+  background: transparent;
+}
+
+
+.glass {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--arc-color-panel) 95%, black), color-mix(in srgb, var(--arc-color-bg) 93%, black));
+  backdrop-filter: blur(10px);
+}
+
+.panel-border {
+  border: 1px solid color-mix(in srgb, var(--arc-color-gold-soft) 24%, transparent);
+}
+
+.map-btn {
+  @apply inline-flex h-8 w-8 items-center justify-center rounded-lg transition;
+  background: color-mix(in srgb, var(--arc-color-paper-soft) 8%, transparent);
+  color: var(--arc-color-text-soft);
+}
+
+.map-btn:hover {
+  color: var(--arc-color-gold);
+}
+
+.arc-hud-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--arc-color-gold-soft) 42%, transparent);
+  background: var(--arc-color-panel);
+  color: var(--arc-color-text);
+  box-shadow: var(--arc-shadow-panel);
+}
+
+.arc-hud-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  background: var(--arc-modal-ornament);
+}
+
+.arc-hud-panel.arc-hud-panel--overflow-visible {
+  overflow: visible;
+}
+
+.arc-hud-content {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-hud-button {
+  border: 1px solid color-mix(in srgb, var(--arc-color-gold) 32%, transparent);
+  background: color-mix(in srgb, var(--arc-overlay-35) 100%, transparent);
+  color: var(--arc-color-text-soft);
+  box-shadow: var(--arc-shadow-inset-button);
+}
+
+.arc-hud-button:hover {
+  border-color: var(--arc-color-gold);
+  color: var(--arc-color-text);
+  background: var(--arc-overlay-50);
+}
+
+.arc-hud-button-solid {
+  border: 1px solid var(--arc-color-brown-dark);
+  background: linear-gradient(180deg, var(--arc-color-panel-soft), var(--arc-color-panel));
+  color: var(--arc-color-text-soft);
+  box-shadow: var(--arc-shadow-inset-button);
+}
+
+.arc-hud-button-solid:hover {
+  border-color: var(--arc-color-gold);
+  color: var(--arc-color-text);
+  filter: brightness(1.08);
+}
+
+.arc-hud-chip {
+  border: 1px solid color-mix(in srgb, var(--arc-color-brown) 55%, transparent);
+  background: color-mix(in srgb, var(--arc-color-paper-muted) 92%, transparent);
+  color: var(--arc-color-text-paper);
+  box-shadow: var(--arc-shadow-inset-soft);
+}
+
+.arc-province-panel {
+  background: var(--arc-color-panel);
+  color: var(--arc-color-text);
+}
+
+.arc-province-panel [class*="border-white/10"] {
+  border-color: color-mix(in srgb, var(--arc-color-brown) 42%, transparent) !important;
+}
+
+.arc-province-panel [class*="bg-[#101720]"],
+.arc-province-panel [class*="bg-black/20"],
+.arc-province-panel [class*="bg-black/25"],
+.arc-province-panel [class*="bg-black/30"],
+.arc-province-panel [class*="bg-black/35"] {
+  background: color-mix(in srgb, var(--arc-color-paper-soft) 88%, transparent) !important;
+  color: var(--arc-color-text-paper) !important;
+}
+
+.arc-province-panel [class*="text-white/45"],
+.arc-province-panel [class*="text-white/50"],
+.arc-province-panel [class*="text-white/55"],
+.arc-province-panel [class*="text-white/60"],
+.arc-province-panel [class*="text-white/65"],
+.arc-province-panel [class*="text-white/70"],
+.arc-province-panel [class*="text-white/75"],
+.arc-province-panel [class*="text-white/80"] {
+  color: var(--arc-color-text-muted) !important;
+}
+
+.arc-province-panel [class*="text-white"] {
+  color: var(--arc-color-text-paper) !important;
+}
+
+.arc-province-panel .arc-province-header [class*="text-white"],
+.arc-province-panel .arc-province-header [class*="text-white/"] {
+  color: var(--arc-color-text) !important;
+}
+
+.arc-province-panel [class*="bg-white/10"] {
+  background: color-mix(in srgb, var(--arc-color-brown) 18%, transparent) !important;
+}
+
+.pulse-status {
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+}
+
+
+.map-hover-popup .maplibregl-popup-content {
+  background: linear-gradient(160deg, rgba(6, 8, 11, 0.97), rgba(3, 5, 7, 0.95));
+  border: 1px solid rgba(67, 78, 92, 0.24);
+  border-radius: 10px;
+  color: #f8fafc;
+  padding: 8px 10px;
+  box-shadow: none;
+}
+
+.map-hover-popup .maplibregl-popup-tip {
+  border-top-color: rgba(5, 7, 10, 0.96);
+}
+
+
+.arc-toast {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--arc-color-panel) 97%, black), color-mix(in srgb, var(--arc-color-bg) 95%, black)) !important;
+  border: 1px solid color-mix(in srgb, var(--arc-color-gold-soft) 30%, transparent) !important;
+  color: var(--arc-color-text-soft) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32) !important;
+}
+
+.arc-toast-title {
+  color: var(--arc-color-text) !important;
+  font-weight: 600 !important;
+}
+
+.arc-toast-description {
+  color: color-mix(in srgb, var(--arc-color-text-soft) 70%, transparent) !important;
+}
+
+.arc-toast-success {
+  border-color: color-mix(in srgb, var(--arc-color-success-border) 70%, transparent) !important;
+}
+
+.arc-toast-error {
+  border-color: color-mix(in srgb, var(--arc-color-danger-border) 70%, transparent) !important;
+}
+
+.arc-toast-warning {
+  border-color: color-mix(in srgb, var(--arc-color-warning-border) 70%, transparent) !important;
+}
+
+.arc-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--arc-color-gold) 45%, transparent) color-mix(in srgb, var(--arc-color-paper-soft) 4%, transparent);
+}
+
+.arc-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.arc-scrollbar::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--arc-color-paper-soft) 3%, transparent);
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--arc-color-gold-soft) 16%, transparent);
+}
+
+.arc-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--arc-color-gold) 42%, transparent), color-mix(in srgb, var(--arc-color-gold-warm) 22%, transparent));
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--arc-color-gold) 24%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.arc-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--arc-color-gold) 58%, transparent), color-mix(in srgb, var(--arc-color-gold-warm) 34%, transparent));
+}
+
+.arc-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.arc-scrollbar-construction {
+  scrollbar-color: color-mix(in srgb, var(--arc-color-warning-top) 55%, transparent) color-mix(in srgb, var(--arc-color-paper-soft) 4%, transparent);
+}
+
+.arc-scrollbar-construction::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--arc-color-paper-soft) 3%, transparent);
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--arc-color-warning-top) 22%, transparent);
+}
+
+.arc-scrollbar-construction::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--arc-color-warning-top) 58%, transparent), color-mix(in srgb, var(--arc-color-warning-bottom) 40%, transparent));
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--arc-color-warning-top) 38%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.arc-scrollbar-construction::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--arc-color-warning-top) 72%, transparent), color-mix(in srgb, var(--arc-color-warning-bottom) 52%, transparent));
+}

@@ -1,0 +1,584 @@
+:root {
+  /* Общий световой режим интерфейса: темная основа для встроенных контролов браузера. */
+  color-scheme: dark;
+
+  /* Почерк интерфейса: обычный текст и крупные титулы окон. */
+  --arc-font-body: "Manrope", sans-serif;
+  --arc-font-display: "Rajdhani", sans-serif;
+
+  /* Темная рама: внешний фон, корпус окон и глубокие боковые панели. */
+  --arc-color-bg: #030405;
+  --arc-color-panel: #151310;
+  --arc-color-panel-soft: #111417;
+  --arc-color-panel-edge: #2e1d12;
+
+  /* Шапка окна: холодный металлический градиент сверху вниз. */
+  --arc-color-header-top: #213441;
+  --arc-color-header-bottom: #0e1b24;
+  --arc-modal-panel: var(--arc-color-panel);
+  --arc-modal-border: var(--arc-color-gold-soft);
+  --arc-modal-header-top: var(--arc-color-header-top);
+  --arc-modal-header-bottom: var(--arc-color-header-bottom);
+  --arc-modal-text: var(--arc-color-text);
+  --arc-modal-text-soft: var(--arc-color-text-soft);
+  --arc-modal-tooltip-panel: color-mix(in srgb, var(--arc-color-panel) 94%, black);
+  --arc-modal-tooltip-border: color-mix(in srgb, var(--arc-color-gold-soft) 72%, transparent);
+  --arc-modal-tooltip-title: var(--arc-color-text);
+  --arc-modal-tooltip-text: var(--arc-color-text-soft);
+  --arc-modal-tooltip-muted: color-mix(in srgb, var(--arc-color-text-soft) 62%, transparent);
+  --arc-modal-tooltip-description: color-mix(in srgb, var(--arc-color-text-soft) 78%, transparent);
+  --arc-modal-tooltip-label: color-mix(in srgb, var(--arc-color-text-soft) 52%, transparent);
+  --arc-modal-tooltip-value: color-mix(in srgb, var(--arc-color-text) 82%, transparent);
+  --arc-modal-tooltip-divider: color-mix(in srgb, var(--arc-color-text-soft) 22%, transparent);
+  --arc-modal-tooltip-positive: #86efac;
+  --arc-modal-tooltip-negative: #fca5a5;
+  --arc-modal-tooltip-warning: #fcd34d;
+  --arc-modal-tooltip-info: #bae6fd;
+  --arc-modal-tooltip-positive-bg: rgb(34 197 94 / 0.1);
+  --arc-modal-tooltip-negative-bg: rgb(239 68 68 / 0.1);
+  --arc-modal-tooltip-progress: #34d399;
+  --arc-modal-tooltip-info-progress: #38bdf8;
+  --arc-modal-tooltip-good: #b8f0a3;
+  --arc-modal-tooltip-bad: #f5a3a3;
+
+  /* Пергамент: рабочие области, карточки, поля, таблицы и пустые состояния. */
+  --arc-color-paper: #d6cfbb;
+  --arc-color-paper-soft: #efe4cd;
+  --arc-color-paper-muted: #ece3d0;
+  --arc-color-paper-toolbar: #c3b89f;
+  --arc-color-paper-empty: #cfc5ae;
+
+  /* Чернила: светлый текст на металле и темный текст на пергаменте. */
+  --arc-color-text: #f4e9bd;
+  --arc-color-text-soft: #d8d0bd;
+  --arc-color-text-paper: #241d17;
+  --arc-color-text-muted: #5e5140;
+
+  /* Позолота и старая бронза: рамки, разделители, акценты и декоративные подписи. */
+  --arc-color-gold: #d6b36a;
+  --arc-color-gold-soft: #8E7D5F;
+  --arc-color-gold-warm: #d89b59;
+  --arc-color-brown: #9b8767;
+  --arc-color-brown-dark: #6b5b44;
+
+  /* Главная печать действия: создать, отправить, подтвердить, выбрать активную вкладку. */
+  --arc-color-primary-top: #1d6070;
+  --arc-color-primary-bottom: #0d3946;
+  --arc-color-primary-border: #103442;
+
+  /* Красная печать отказа: закрыть, отменить, отклонить, удалить. */
+  --arc-color-danger-top: #6b2323;
+  --arc-color-danger-bottom: #331010;
+  --arc-color-danger-border: #6e1e1e;
+  --arc-color-danger-text: #f4d1c8;
+  --arc-color-danger-ink: #8f2b2b;
+
+  /* Зеленая печать успеха: принято, выполнено, включено. */
+  --arc-color-success-top: #2f6b4b;
+  --arc-color-success-bottom: #173423;
+  --arc-color-success-border: #23533f;
+  --arc-color-success-text: #dff0d4;
+
+  /* Янтарная печать внимания: предупреждение, ожидание, важный промежуточный статус. */
+  --arc-color-warning-top: #c49a4a;
+  --arc-color-warning-bottom: #684211;
+  --arc-color-warning-border: #8a5a16;
+
+  /* Тень поверх мира: затемнение модалок и темные подложки под значками. */
+  --arc-modal-backdrop: rgb(0 0 0 / 0.7);
+  --arc-overlay-30: rgb(0 0 0 / 0.3);
+  --arc-overlay-35: rgb(0 0 0 / 0.35);
+  --arc-overlay-45: rgb(0 0 0 / 0.45);
+  --arc-overlay-50: rgb(0 0 0 / 0.5);
+  --arc-overlay-55: rgb(0 0 0 / 0.55);
+
+  /* Орнамент окна: мягкое золотое свечение и затемненные боковые края. */
+  --arc-modal-ornament: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--arc-color-gold) 33%, transparent), transparent 34%),
+    linear-gradient(90deg, var(--arc-color-panel-edge), var(--arc-color-panel) 18%, var(--arc-color-panel) 82%, var(--arc-color-panel-edge));
+
+  /* Рельеф: внутренние блики кнопок, карточек и глубокая тень больших окон. */
+  --arc-shadow-inset-soft: 0 1px 0 rgb(255 255 255 / 0.45) inset;
+  --arc-shadow-inset-button: 0 1px 0 rgb(255 255 255 / 0.18) inset;
+  --arc-shadow-panel: 0 25px 50px -12px rgb(0 0 0 / 0.7);
+
+  /* Силуэт: скругления малых элементов, карточек, панелей и крупных окон. */
+  --arc-radius-sm: 0.375rem;
+  --arc-radius-md: 0.5rem;
+  --arc-radius-lg: 0.75rem;
+  --arc-radius-xl: 1rem;
+}
+
+/*
+  Цвета модульных окон.
+  Каждый блок ниже переопределяет переменные только для окна с указанным ключом.
+*/
+.arc-modal {
+  --arc-modal-panel: var(--arc-color-panel);
+  --arc-modal-border: var(--arc-color-gold-soft);
+  --arc-modal-header-top: var(--arc-color-header-top);
+  --arc-modal-header-bottom: var(--arc-color-header-bottom);
+  --arc-modal-text: var(--arc-color-text);
+  --arc-modal-text-soft: var(--arc-color-text-soft);
+  --arc-modal-tooltip-panel: color-mix(in srgb, var(--arc-modal-panel) 94%, black);
+  --arc-modal-tooltip-border: color-mix(in srgb, var(--arc-modal-border) 72%, transparent);
+  --arc-modal-tooltip-title: var(--arc-modal-text);
+  --arc-modal-tooltip-text: var(--arc-modal-text-soft);
+  --arc-modal-tooltip-muted: color-mix(in srgb, var(--arc-modal-text-soft) 62%, transparent);
+  --arc-modal-tooltip-description: color-mix(in srgb, var(--arc-modal-text-soft) 78%, transparent);
+  --arc-modal-tooltip-label: color-mix(in srgb, var(--arc-modal-text-soft) 52%, transparent);
+  --arc-modal-tooltip-value: color-mix(in srgb, var(--arc-modal-text) 82%, transparent);
+  --arc-modal-tooltip-divider: color-mix(in srgb, var(--arc-modal-text-soft) 22%, transparent);
+  --arc-modal-tooltip-positive: #86efac;
+  --arc-modal-tooltip-negative: #fca5a5;
+  --arc-modal-tooltip-warning: #fcd34d;
+  --arc-modal-tooltip-info: #bae6fd;
+  --arc-modal-tooltip-positive-bg: rgb(34 197 94 / 0.1);
+  --arc-modal-tooltip-negative-bg: rgb(239 68 68 / 0.1);
+  --arc-modal-tooltip-progress: #34d399;
+  --arc-modal-tooltip-info-progress: #38bdf8;
+  --arc-modal-tooltip-good: #b8f0a3;
+  --arc-modal-tooltip-bad: #f5a3a3;
+  --arc-modal-close-bg: rgb(116 24 24 / 0.72);
+  --arc-modal-close-border: rgb(248 113 113 / 0.68);
+  --arc-modal-close-text: rgb(255 220 220 / 0.94);
+  --arc-modal-close-hover-bg: rgb(153 27 27 / 0.9);
+  --arc-modal-close-hover-border: rgb(252 165 165 / 0.92);
+  --arc-modal-close-hover-text: #ffffff;
+}
+
+.arc-modal--admin {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #b08a55;
+  --arc-modal-header-top: #4a2b24;
+  --arc-modal-header-bottom: #1d1110;
+}
+
+.arc-modal--army {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #7f9bad;
+  --arc-modal-header-top: #263d4a;
+  --arc-modal-header-bottom: #101d24;
+}
+
+.arc-modal--budget {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #c3a35f;
+  --arc-modal-header-top: #4a3b1f;
+  --arc-modal-header-bottom: #1d170d;
+}
+
+.arc-modal--buildings,
+.arc-modal--construction {
+  --arc-modal-panel: #D9D0BE;
+  --arc-modal-border: #C8A96B;
+  --arc-modal-header-top: #1f4654;
+  --arc-modal-header-bottom: #0d1b22;
+  --arc-modal-text: #f5e6b8;
+  --arc-modal-text-soft: rgb(245 230 184 / 0.68);
+  --arc-color-gold: #C8A96B;
+  --arc-color-gold-soft: rgb(200 169 107 / 0.72);
+  --arc-color-brown: rgb(105 85 53 / 0.7);
+  --arc-color-brown-dark: rgb(82 62 36 / 0.78);
+  --arc-color-paper-toolbar: #1C252B;
+  --arc-color-text-paper: rgb(246 237 214 / 0.92);
+  --arc-color-text-muted: rgb(232 224 205 / 0.62);
+  --arc-industry-panel-bg: #1C252B;
+  --arc-industry-panel-border: rgb(200 169 107 / 0.38);
+  --arc-industry-panel-text: rgb(246 237 214 / 0.9);
+  --arc-industry-panel-muted: rgb(232 224 205 / 0.58);
+  --arc-industry-inner-bg: #121A1F;
+  --arc-industry-inner-border: rgb(200 169 107 / 0.22);
+  --arc-building-card-title: rgb(255 247 226 / 0.95);
+  --arc-building-card-text: rgb(232 224 205 / 0.76);
+  --arc-building-card-muted: rgb(232 224 205 / 0.52);
+  --arc-building-card-icon-bg: #121A1F;
+  --arc-building-card-icon-border: rgb(200 169 107 / 0.18);
+  --arc-add-building-button-bg: rgb(28 37 43 / 0.92);
+  --arc-add-building-button-border: rgb(200 169 107 / 0.52);
+  --arc-add-building-button-hover-bg: rgb(38 48 55 / 0.96);
+  --arc-add-building-button-hover-border: rgb(232 204 139 / 0.82);
+  --arc-add-building-button-text: rgb(232 224 205 / 0.72);
+  --arc-add-building-button-title: rgb(255 247 226 / 0.95);
+  --arc-add-building-button-icon-bg: rgb(200 169 107 / 0.16);
+  --arc-add-building-button-icon-border: rgb(200 169 107 / 0.48);
+  --arc-add-building-button-icon-text: rgb(245 220 158 / 0.94);
+  --arc-add-building-button-opacity: 1;
+  --arc-construction-link-bg: rgb(200 169 107 / 0.16);
+  --arc-construction-link-border: rgb(200 169 107 / 0.6);
+  --arc-construction-link-text: rgb(245 220 158 / 0.96);
+  --arc-construction-link-hover-bg: rgb(200 169 107 / 0.26);
+  --arc-construction-link-hover-border: rgb(232 204 139 / 0.88);
+  --arc-construction-link-hover-text: #fff7d6;
+  --arc-construction-link-opacity: 1;
+  --arc-building-card-built-bg: #1C252B;
+  --arc-building-card-built-border: rgb(200 169 107 / 0.26);
+  --arc-building-card-built-hover-border: rgb(232 204 139 / 0.58);
+  --arc-building-card-built-shadow: rgb(6 12 16 / 0.42);
+  --arc-building-card-built-hover-shadow: rgb(6 18 24 / 0.55);
+  --arc-building-card-built-opacity: 1;
+  --arc-building-card-inactive-bg: rgb(42 24 22 / 0.82);
+  --arc-building-card-inactive-border: rgb(210 120 96 / 0.36);
+  --arc-building-card-inactive-hover-border: rgb(240 160 130 / 0.62);
+  --arc-building-card-inactive-shadow: rgb(80 22 18 / 0.25);
+  --arc-building-card-inactive-opacity: 0.92;
+  --arc-building-card-construction-bg: #1C252B;
+  --arc-building-card-construction-border: rgb(200 169 107 / 0.46);
+  --arc-building-card-construction-hover-border: rgb(244 212 142 / 0.66);
+  --arc-building-card-construction-shadow: rgb(120 78 22 / 0.24);
+  --arc-building-card-construction-opacity: 1;
+  --arc-building-card-buildable-bg: #1C252B;
+  --arc-building-card-buildable-border: rgb(200 169 107 / 0.34);
+  --arc-building-card-buildable-hover-border: rgb(232 204 139 / 0.62);
+  --arc-building-card-buildable-shadow: rgb(65 50 24 / 0.22);
+  --arc-building-card-buildable-opacity: 1;
+  --arc-building-card-locked-bg: rgb(39 25 26 / 0.82);
+  --arc-building-card-locked-border: rgb(198 108 108 / 0.34);
+  --arc-building-card-locked-hover-border: rgb(240 152 142 / 0.58);
+  --arc-building-card-locked-shadow: rgb(82 24 24 / 0.22);
+  --arc-building-card-locked-opacity: 0.9;
+  --arc-modal-tooltip-title: rgb(255 255 255 / 0.9);
+  --arc-modal-tooltip-text: rgb(0 0 0 / 0.72);
+  --arc-modal-tooltip-muted: rgb(255 255 255 / 0.45);
+  --arc-modal-tooltip-label: rgb(255 255 255 / 0.4);
+  --arc-modal-tooltip-value: rgb(255 255 255 / 0.8);
+  --arc-modal-tooltip-divider: rgb(255 255 255 / 0.24);
+  --arc-modal-tooltip-positive: rgb(110 231 183 / 0.92);
+  --arc-modal-tooltip-negative: rgb(252 165 165 / 0.92);
+  --arc-modal-tooltip-warning: rgb(252 211 77 / 0.92);
+  --arc-modal-tooltip-info: rgb(186 230 253 / 0.92);
+  --arc-modal-tooltip-positive-bg: rgb(16 185 129 / 0.1);
+  --arc-modal-tooltip-negative-bg: rgb(248 113 113 / 0.1);
+  --arc-modal-tooltip-progress: rgb(52 211 153 / 0.8);
+  --arc-modal-tooltip-info-progress: rgb(56 189 248 / 0.8);
+  --arc-modal-tooltip-good: #a8e88f;
+  --arc-modal-tooltip-bad: #f0a083;
+}
+
+.arc-modal--civilopedia {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #b99b6b;
+  --arc-modal-header-top: #463620;
+  --arc-modal-header-bottom: #1c150d;
+}
+
+.arc-modal--client-settings,
+.arc-modal--game-settings {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #7794a6;
+  --arc-modal-header-top: #254050;
+  --arc-modal-header-bottom: #0f1b22;
+}
+
+.arc-modal--colonization {
+  --arc-modal-panel: #101812;
+  --arc-modal-border: #7aa66e;
+  --arc-modal-header-top: #24442d;
+  --arc-modal-header-bottom: #0f1d13;
+}
+
+.arc-modal--content {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #9a86c8;
+  --arc-modal-header-top: #3c3157;
+  --arc-modal-header-bottom: #181323;
+}
+
+.arc-modal--country-customization,
+.arc-modal--politics {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #bd7f8b;
+  --arc-modal-header-top: #4b2835;
+  --arc-modal-header-bottom: #1e1015;
+}
+
+.arc-modal--decisions,
+.arc-modal--events {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #d2ad68;
+  --arc-modal-header-top: #4c3518;
+  --arc-modal-header-bottom: #201407;
+}
+
+.arc-modal--diplomacy,
+.arc-modal--diplomacy-story {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #6f9fb4;
+  --arc-modal-header-top: #1f4654;
+  --arc-modal-header-bottom: #0d1b22;
+}
+
+.arc-modal--market,
+.arc-modal--global-market,
+.arc-modal--market-alerts,
+.arc-modal--market-management,
+.arc-modal--market-membership,
+.arc-modal--market-sanctions {
+  --arc-modal-panel: #12150f;
+  --arc-modal-border: #9db36a;
+  --arc-modal-header-top: #35451f;
+  --arc-modal-header-bottom: #161d0d;
+}
+
+.arc-modal--modifiers,
+.arc-modal--technology {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #7f94c9;
+  --arc-modal-header-top: #293759;
+  --arc-modal-header-bottom: #101525;
+}
+
+.arc-modal--notifications,
+.arc-modal--registration,
+.arc-modal--turn-status {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #8ca0a8;
+  --arc-modal-header-top: #303c43;
+  --arc-modal-header-bottom: #12191d;
+}
+
+.arc-modal--population {
+  --arc-modal-panel: #d6cfbb;
+  --arc-modal-border: #78a98f;
+  --arc-modal-header-top: #244538;
+  --arc-modal-header-bottom: #0f1d18;
+}
+
+.arc-modal--province-details,
+.arc-modal--text-input {
+  --arc-modal-panel: var(--arc-color-panel);
+  --arc-modal-border: var(--arc-color-gold-soft);
+  --arc-modal-header-top: var(--arc-color-header-top);
+  --arc-modal-header-bottom: var(--arc-color-header-bottom);
+}
+
+.arc-modal--admin,
+.arc-modal--army,
+.arc-modal--budget,
+.arc-modal--buildings,
+.arc-modal--construction,
+.arc-modal--civilopedia,
+.arc-modal--client-settings,
+.arc-modal--game-settings,
+.arc-modal--colonization,
+.arc-modal--content,
+.arc-modal--country-customization,
+.arc-modal--politics,
+.arc-modal--decisions,
+.arc-modal--events,
+.arc-modal--diplomacy,
+.arc-modal--diplomacy-story,
+.arc-modal--market,
+.arc-modal--global-market,
+.arc-modal--market-alerts,
+.arc-modal--market-management,
+.arc-modal--market-membership,
+.arc-modal--market-sanctions,
+.arc-modal--modifiers,
+.arc-modal--technology,
+.arc-modal--notifications,
+.arc-modal--registration,
+.arc-modal--turn-status,
+.arc-modal--population {
+  --arc-color-panel: var(--arc-modal-panel);
+  --arc-color-panel-soft: color-mix(in srgb, var(--arc-modal-panel) 82%, white 6%);
+  --arc-color-gold-soft: var(--arc-modal-border);
+  --arc-color-header-top: var(--arc-modal-header-top);
+  --arc-color-header-bottom: var(--arc-modal-header-bottom);
+  --arc-color-text: var(--arc-modal-text);
+  --arc-color-text-soft: var(--arc-modal-text-soft);
+}
+
+.arc-modal--buildings .arc-modal-header,
+.arc-modal--construction .arc-modal-header {
+  margin-bottom: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-color: var(--arc-modal-border);
+}
+
+.arc-modal--buildings .arc-modal-header-title,
+.arc-modal--construction .arc-modal-header-title {
+  font-size: 1.5rem;
+  line-height: 1.55rem;
+}
+
+.arc-modal--buildings .arc-modal-header-description,
+.arc-modal--construction .arc-modal-header-description {
+  margin-top: 0.125rem;
+  font-size: 0.6875rem;
+}
+
+.arc-modal--buildings [class*="bg-[var(--arc-color-paper-toolbar)]"],
+.arc-modal--construction [class*="bg-[var(--arc-color-paper-toolbar)]"] {
+  border-color: var(--arc-industry-panel-border, rgb(200 169 107 / 0.38));
+  background: var(--arc-industry-panel-bg, #1C252B);
+  color: var(--arc-industry-panel-text, rgb(246 237 214 / 0.9));
+}
+
+.arc-province-building-section,
+.arc-construction-panel {
+  border-color: var(--arc-industry-panel-border, rgb(200 169 107 / 0.38));
+  background: var(--arc-industry-panel-bg, #1C252B);
+  color: var(--arc-industry-panel-text, rgb(246 237 214 / 0.9));
+}
+
+.arc-construction-group,
+.arc-industry-chip {
+  border-color: var(--arc-industry-inner-border, rgb(200 169 107 / 0.22));
+  background: var(--arc-industry-inner-bg, #121A1F);
+  color: var(--arc-industry-panel-text, rgb(246 237 214 / 0.9));
+}
+
+.arc-province-building-section [class*="text-white/85"],
+.arc-province-building-section [class*="text-white/75"],
+.arc-construction-panel [class*="text-white/75"] {
+  color: var(--arc-industry-panel-text, rgb(246 237 214 / 0.9)) !important;
+}
+
+.arc-province-building-section [class*="text-white/65"],
+.arc-province-building-section [class*="text-white/55"],
+.arc-province-building-section [class*="text-white/50"],
+.arc-province-building-section [class*="text-white/45"],
+.arc-construction-panel [class*="text-white/65"],
+.arc-construction-panel [class*="text-white/60"],
+.arc-construction-panel [class*="text-white/45"] {
+  color: var(--arc-industry-panel-muted, rgb(232 224 205 / 0.58)) !important;
+}
+
+.arc-building-card {
+  border-color: var(--arc-building-card-built-border, rgb(255 255 255 / 0.12));
+  background: var(--arc-building-card-built-bg, rgb(11 19 32 / 0.76));
+  box-shadow: 0 0 0 1px var(--arc-building-card-built-shadow, rgb(0 0 0 / 0.28));
+  color: var(--arc-building-card-text, rgb(232 224 205 / 0.76));
+  opacity: var(--arc-building-card-built-opacity, 1);
+}
+
+.arc-building-card:hover {
+  border-color: var(--arc-building-card-built-hover-border, rgb(255 255 255 / 0.28));
+  box-shadow: 0 8px 24px var(--arc-building-card-built-hover-shadow, rgb(0 0 0 / 0.4));
+}
+
+.arc-building-card--inactive {
+  border-color: var(--arc-building-card-inactive-border, rgb(248 113 113 / 0.42));
+  background: var(--arc-building-card-inactive-bg, rgb(32 12 12 / 0.78));
+  box-shadow: 0 0 0 1px var(--arc-building-card-inactive-shadow, rgb(127 29 29 / 0.16));
+  opacity: var(--arc-building-card-inactive-opacity, 0.92);
+}
+
+.arc-building-card--inactive:hover {
+  border-color: var(--arc-building-card-inactive-hover-border, rgb(252 165 165 / 0.72));
+}
+
+.arc-building-card--construction {
+  border-color: var(--arc-building-card-construction-border, rgb(251 191 36 / 0.55));
+  background: var(--arc-building-card-construction-bg, rgb(20 16 10 / 0.86));
+  box-shadow: 0 0 0 1px var(--arc-building-card-construction-shadow, rgb(245 158 11 / 0.16));
+  opacity: var(--arc-building-card-construction-opacity, 1);
+}
+
+.arc-building-card--construction:hover {
+  border-color: var(--arc-building-card-construction-hover-border, rgb(252 211 77 / 0.82));
+  box-shadow: 0 8px 24px var(--arc-building-card-construction-shadow, rgb(245 158 11 / 0.16));
+}
+
+.arc-building-card--buildable {
+  border-color: var(--arc-building-card-buildable-border, rgb(52 211 153 / 0.55));
+  background: var(--arc-building-card-buildable-bg, rgb(15 26 19 / 0.84));
+  box-shadow: 0 0 0 1px var(--arc-building-card-buildable-shadow, rgb(16 185 129 / 0.16));
+  opacity: var(--arc-building-card-buildable-opacity, 1);
+}
+
+.arc-building-card--buildable:hover {
+  border-color: var(--arc-building-card-buildable-hover-border, rgb(110 231 183 / 0.82));
+  box-shadow: 0 8px 24px var(--arc-building-card-buildable-shadow, rgb(16 185 129 / 0.16));
+}
+
+.arc-building-card--locked {
+  border-color: var(--arc-building-card-locked-border, rgb(248 113 113 / 0.55));
+  background: var(--arc-building-card-locked-bg, rgb(26 16 16 / 0.84));
+  box-shadow: 0 0 0 1px var(--arc-building-card-locked-shadow, rgb(248 113 113 / 0.14));
+  opacity: var(--arc-building-card-locked-opacity, 0.9);
+}
+
+.arc-building-card--locked:hover {
+  border-color: var(--arc-building-card-locked-hover-border, rgb(252 165 165 / 0.8));
+  box-shadow: 0 8px 24px var(--arc-building-card-locked-shadow, rgb(248 113 113 / 0.14));
+}
+
+.arc-building-card [class*="text-white/90"],
+.arc-building-card [class*="text-white/80"] {
+  color: var(--arc-building-card-title, rgb(255 247 226 / 0.95)) !important;
+}
+
+.arc-building-card [class*="text-white/70"],
+.arc-building-card [class*="text-white/60"] {
+  color: var(--arc-building-card-text, rgb(232 224 205 / 0.76)) !important;
+}
+
+.arc-building-card [class*="text-white/55"],
+.arc-building-card [class*="text-white/45"],
+.arc-building-card [class*="text-white/40"],
+.arc-building-card [class*="text-white/35"] {
+  color: var(--arc-building-card-muted, rgb(232 224 205 / 0.52)) !important;
+}
+
+.arc-building-card [class*="bg-black"] {
+  background-color: var(--arc-building-card-icon-bg, rgb(5 12 16 / 0.56)) !important;
+}
+
+.arc-building-card [class*="border-white/10"],
+.arc-building-card [class*="border-amber-400/40"],
+.arc-building-card [class*="border-emerald-400/40"],
+.arc-building-card [class*="border-red-400/40"] {
+  border-color: var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)) !important;
+}
+
+.arc-modal-close-button {
+  border-color: var(--arc-modal-close-border, rgb(248 113 113 / 0.68)) !important;
+  background: var(--arc-modal-close-bg, rgb(116 24 24 / 0.72)) !important;
+  color: var(--arc-modal-close-text, rgb(255 220 220 / 0.94)) !important;
+}
+
+.arc-modal-close-button:hover {
+  border-color: var(--arc-modal-close-hover-border, rgb(252 165 165 / 0.92)) !important;
+  background: var(--arc-modal-close-hover-bg, rgb(153 27 27 / 0.9)) !important;
+  color: var(--arc-modal-close-hover-text, #ffffff) !important;
+}
+
+.arc-add-building-button {
+  border-color: var(--arc-add-building-button-border, rgb(200 169 107 / 0.52));
+  background: var(--arc-add-building-button-bg, rgb(28 37 43 / 0.92));
+  color: var(--arc-add-building-button-text, rgb(232 224 205 / 0.72));
+  opacity: var(--arc-add-building-button-opacity, 1);
+}
+
+.arc-add-building-button:hover {
+  border-color: var(--arc-add-building-button-hover-border, rgb(232 204 139 / 0.82));
+  background: var(--arc-add-building-button-hover-bg, rgb(38 48 55 / 0.96));
+}
+
+.arc-add-building-button__icon {
+  border-color: var(--arc-add-building-button-icon-border, rgb(200 169 107 / 0.48));
+  background: var(--arc-add-building-button-icon-bg, rgb(200 169 107 / 0.16));
+  color: var(--arc-add-building-button-icon-text, rgb(245 220 158 / 0.94));
+}
+
+.arc-add-building-button__title {
+  color: var(--arc-add-building-button-title, rgb(236 255 242 / 0.96));
+}
+
+.arc-add-building-button__text {
+  color: var(--arc-add-building-button-text, rgb(214 244 226 / 0.82));
+}
+
+.arc-construction-link-button {
+  border-color: var(--arc-construction-link-border, rgb(214 179 106 / 0.62)) !important;
+  background: var(--arc-construction-link-bg, rgb(42 34 18 / 0.88)) !important;
+  color: var(--arc-construction-link-text, rgb(255 236 176 / 0.96)) !important;
+  opacity: var(--arc-construction-link-opacity, 1);
+}
+
+.arc-construction-link-button:hover {
+  border-color: var(--arc-construction-link-hover-border, rgb(244 212 142 / 0.86)) !important;
+  background: var(--arc-construction-link-hover-bg, rgb(62 49 22 / 0.96)) !important;
+  color: var(--arc-construction-link-hover-text, #fff7d6) !important;
+}

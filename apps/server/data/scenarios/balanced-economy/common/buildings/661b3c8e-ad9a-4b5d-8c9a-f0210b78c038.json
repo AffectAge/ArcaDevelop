@@ -1,0 +1,79 @@
+{
+  "id": "661b3c8e-ad9a-4b5d-8c9a-f0210b78c038",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 182,
+  "costDucats": 143,
+  "startingDucats": 49,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 107,
+  "upgradeCostConstruction": 137,
+  "sectorId": "sector:consumer",
+  "industryId": "industry:food",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:grain",
+      "amount": 18
+    },
+    {
+      "goodId": "good:sugar",
+      "amount": 6
+    },
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 3
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:spirits",
+      "amount": 20.42
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 600
+    },
+    {
+      "professionId": "profession:machinist",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 70
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.661b3c8e_ad9a_4b5d_8c9a_f0210b78c038.name"
+}

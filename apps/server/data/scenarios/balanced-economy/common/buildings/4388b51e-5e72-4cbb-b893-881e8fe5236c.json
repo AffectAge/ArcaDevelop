@@ -1,0 +1,75 @@
+{
+  "id": "4388b51e-5e72-4cbb-b893-881e8fe5236c",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 203,
+  "costDucats": 160,
+  "startingDucats": 55,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 119,
+  "upgradeCostConstruction": 152,
+  "sectorId": "sector:energy",
+  "industryId": "industry:energy",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "39a4b3da-d82a-4f4a-828c-1355dc0936a8",
+      "amount": 28
+    },
+    {
+      "goodId": "good:energy_equipment",
+      "amount": 0.8
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 85.75
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "95124bb7-549e-4292-9719-cb1030cbd66e",
+      "workers": 540
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 120
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 180
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.4388b51e_5e72_4cbb_b893_881e8fe5236c.name"
+}

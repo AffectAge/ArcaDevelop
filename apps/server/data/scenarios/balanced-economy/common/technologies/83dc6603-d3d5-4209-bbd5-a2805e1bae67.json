@@ -1,0 +1,30 @@
+{
+  "id": "83dc6603-d3d5-4209-bbd5-a2805e1bae67",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "costScience": 100,
+  "prerequisiteTechnologyIds": [
+    "b9c0caa3-13d8-43d0-a4d6-ecc1d49f5dac"
+  ],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "nameKey": "technologies.83dc6603_d3d5_4209_bbd5_a2805e1bae67.name"
+}

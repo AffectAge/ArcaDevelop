@@ -1,0 +1,75 @@
+{
+  "id": "701378a6-c4b6-47f0-a12e-6a1e48a79cd9",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 147,
+  "costDucats": 116,
+  "startingDucats": 40,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 86,
+  "upgradeCostConstruction": 110,
+  "sectorId": "sector:agriculture",
+  "industryId": "industry:farms",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:tools",
+      "amount": 2
+    },
+    {
+      "goodId": "good:fertilizer",
+      "amount": 3
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:cotton",
+      "amount": 56.42
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "019299f7-7854-4f8c-8724-ec8d021e5d31",
+      "workers": 850
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 250
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 35
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.701378a6_c4b6_47f0_a12e_6a1e48a79cd9.name"
+}

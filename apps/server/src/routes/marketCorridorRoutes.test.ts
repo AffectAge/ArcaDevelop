@@ -1,0 +1,202 @@
+import express from "express";
+import { describe, expect, it, vi } from "vitest";
+import type { RouteAuth } from "../security/routeAuth";
+import {
+  marketTransportCorridorCreateSchema,
+  registerMarketCorridorRoutes,
+  type MarketCorridorEntry,
+  type MarketCorridorMarket,
+  type MarketCorridorRoutesDependencies,
+} from "./marketCorridorRoutes";
+
+describe("marketCorridorRoutes", () => {
+  it("validates corridor create payloads", () => {
+    expect(marketTransportCorridorCreateSchema.safeParse({
+      provinceIds: ["province:a", "province:b"],
+      transportMode: "land",
+    }).success).toBe(true);
+    expect(marketTransportCorridorCreateSchema.safeParse({
+      provinceIds: ["province:a"],
+      transportMode: "land",
+    }).success).toBe(false);
+  });
+
+  it("lists corridors for market members", async () => {
+    const corridor = makeCorridor({ id: "corridor:a" });
+    const deps = makeDeps({ corridors: { "corridor:a": corridor } });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/markets/market:a/corridors");
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      marketId: "market:a",
+      capitalProvinceId: "province:capital",
+      corridors: [{ id: "corridor:a" }],
+    });
+  });
+
+  it("creates building corridors with construction cost and route validation", async () => {
+    const corridors: Record<string, MarketCorridorEntry> = {};
+    const deps = makeDeps({ corridors });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/markets/market:a/corridors", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        provinceIds: ["province:a", "province:b", "province:c"],
+        transportMode: "land",
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(corridors["corridor-1"]).toMatchObject({
+      id: "corridor-1",
+      marketId: "market:a",
+      ownerCountryId: "country:a",
+      provinceIds: ["province:a", "province:b", "province:c"],
+      transportMode: "land",
+      status: "building",
+      costConstruction: 20,
+    });
+    expect(deps.refreshExpiredDiplomacyProposals).toHaveBeenCalledOnce();
+    expect(deps.savePersistentState).toHaveBeenCalledOnce();
+  });
+
+  it("rejects non-contiguous corridor routes before saving", async () => {
+    const deps = makeDeps({ contiguous: false });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/markets/market:a/corridors", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        provinceIds: ["province:a", "province:b"],
+        transportMode: "land",
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "CORRIDOR_ROUTE_MUST_BE_CONTIGUOUS" });
+    expect(deps.savePersistentState).not.toHaveBeenCalled();
+  });
+
+  it("closes owner corridors", async () => {
+    const corridor = makeCorridor({ id: "corridor:a", status: "active" });
+    const deps = makeDeps({ corridors: { "corridor:a": corridor } });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/markets/market:a/corridors/corridor:a", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "close" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(corridor.status).toBe("closed");
+    expect(deps.savePersistentState).toHaveBeenCalledOnce();
+  });
+
+  it("prevents deleting corridors owned by another country", async () => {
+    const deps = makeDeps({
+      corridors: { "corridor:a": makeCorridor({ id: "corridor:a", ownerCountryId: "country:b" }) },
+    });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/markets/market:a/corridors/corridor:a", { method: "DELETE" });
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: "CORRIDOR_OWNER_ONLY" });
+    expect(deps.savePersistentState).not.toHaveBeenCalled();
+  });
+});
+
+function makeApp(deps: MarketCorridorRoutesDependencies): express.Express {
+  const app = express();
+  app.use(express.json());
+  registerMarketCorridorRoutes(app, deps);
+  return app;
+}
+
+function makeDeps(options?: {
+  market?: MarketCorridorMarket;
+  corridors?: Record<string, MarketCorridorEntry>;
+  contiguous?: boolean;
+}): MarketCorridorRoutesDependencies {
+  const corridors = options?.corridors ?? {};
+  const market = options?.market ?? makeMarket();
+  return {
+    routeAuth: createRouteAuth(),
+    createId: () => "corridor-1",
+    refreshExpiredDiplomacyProposals: vi.fn(),
+    getMarketById: (marketId) => marketId === market.id ? market : null,
+    getCorridorsById: () => corridors,
+    getMarketTransportCorridors: (marketId) =>
+      Object.values(corridors).filter((corridor) => corridor.marketId === marketId),
+    normalizeTransportCorridorRoutePoints: (input) => Array.isArray(input) ? input : [],
+    normalizeProvinceIdList: (input) => Array.isArray(input) ? [...new Set(input.map(String))] : [],
+    isProvinceAllowedForCorridorOwner: () => true,
+    isContiguousTransportCorridorRoute: () => options?.contiguous ?? true,
+    getProvinceOwner: () => "country:a",
+    getInfrastructureConstructionRightForProvince: () => null,
+    getTransportCorridorBuildCost: (_mode, segments) => segments * 10,
+    savePersistentState: vi.fn(),
+  };
+}
+
+function makeMarket(overrides?: Partial<MarketCorridorMarket>): MarketCorridorMarket {
+  return {
+    id: "market:a",
+    ownerCountryId: "country:a",
+    memberCountryIds: ["country:a", "country:b"],
+    capitalProvinceId: "province:capital",
+    ...overrides,
+  };
+}
+
+function makeCorridor(overrides?: Partial<MarketCorridorEntry>): MarketCorridorEntry {
+  return {
+    id: "corridor",
+    marketId: "market:a",
+    ownerCountryId: "country:a",
+    provinceIds: ["province:a", "province:b"],
+    transportMode: "land",
+    level: 1,
+    status: "building",
+    progressConstruction: 0,
+    costConstruction: 10,
+    lastLoadByMode: {},
+    lastCapacityByMode: {},
+    lastLoadHistoryByMode: {},
+    foreignConstructionRights: [],
+    nationalizedAt: null,
+    nationalizedFromCountryId: null,
+    createdAt: "2026-01-01",
+    completedAt: null,
+    ...overrides,
+  };
+}
+
+function createRouteAuth(): RouteAuth {
+  return {
+    requireAuth: vi.fn().mockReturnValue({ countryId: "country:a", isAdmin: false }),
+    requireAuthOrCleanup: vi.fn(),
+    requireAdmin: vi.fn(),
+    requireAdminOrCleanup: vi.fn(),
+    requireSelfOrAdmin: vi.fn(),
+  } as unknown as RouteAuth;
+}
+
+async function request(app: express.Express, path: string, init?: RequestInit): Promise<Response> {
+  const server = app.listen(0);
+  try {
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("server did not bind to a port");
+    return await fetch(`http://127.0.0.1:${address.port}${path}`, init);
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+}

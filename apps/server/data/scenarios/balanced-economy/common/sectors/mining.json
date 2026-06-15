@@ -1,0 +1,7 @@
+{
+  "id": "sector:mining",
+  "description": "",
+  "color": "#f59e0b",
+  "logoUrl": null,
+  "nameKey": "sectors.mining.name"
+}

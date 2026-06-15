@@ -1,0 +1,387 @@
+{
+  "schemaVersion": 1,
+  "project": "Arcanorum",
+  "requiredEntryPoints": [
+    "AGENTS.md",
+    "docs/README.md",
+    "docs/agent-start-checklist.md",
+    "docs/task-routing.md"
+  ],
+  "folderAgentFiles": [
+    "apps/server/AGENTS.md",
+    "apps/server/src/app/AGENTS.md",
+    "apps/server/src/mechanics/AGENTS.md",
+    "apps/server/src/runtime/AGENTS.md",
+    "apps/server/src/routes/AGENTS.md",
+    "apps/server/src/uploads/AGENTS.md",
+    "apps/client/AGENTS.md",
+    "packages/shared/AGENTS.md",
+    "apps/server/data/AGENTS.md",
+    "project_assets/AGENTS.md"
+  ],
+  "coreDocs": [
+    "docs/programming-standards.md",
+    "docs/engineering-standards.md",
+    "docs/folder-structure.md",
+    "docs/refactoring-plan.md",
+    "docs/naming-and-abstractions.md",
+    "docs/definition-of-done.md",
+    "docs/review-checklist.md",
+    "docs/commands.md"
+  ],
+  "taskRouting": {
+    "ui": [
+      "apps/client/AGENTS.md",
+      "docs/programming-standards.md",
+      "docs/accessibility.md",
+      "docs/localization.md",
+      "docs/theme-system.md"
+    ],
+    "mapOrMovement": [
+      "apps/client/AGENTS.md",
+      "apps/server/AGENTS.md",
+      "docs/regions-and-provinces.md",
+      "docs/performance-budgets.md",
+      "docs/folder-structure.md"
+    ],
+    "gameMechanic": [
+      "apps/server/AGENTS.md",
+      "apps/server/src/mechanics/AGENTS.md",
+      "packages/shared/AGENTS.md",
+      "docs/world-model.md",
+      "docs/testing-strategy.md",
+      "docs/definition-of-done.md"
+    ],
+    "regionOrScenarioData": [
+      "apps/server/data/AGENTS.md",
+      "docs/scenario-region-history.md",
+      "docs/modding-authoring.md",
+      "docs/data-deletion-lifecycle.md",
+      "docs/entity-ownership.md"
+    ],
+    "apiWsSharedContract": [
+      "packages/shared/AGENTS.md",
+      "apps/server/AGENTS.md",
+      "apps/client/AGENTS.md",
+      "docs/api-ws-versioning.md",
+      "docs/error-codes.md",
+      "docs/concurrency.md"
+    ],
+    "serverAppMiddleware": [
+      "apps/server/AGENTS.md",
+      "apps/server/src/app/AGENTS.md",
+      "apps/server/src/routes/AGENTS.md",
+      "docs/security-baseline.md",
+      "docs/api-ws-versioning.md"
+    ],
+    "authAdminSecurity": [
+      "apps/server/AGENTS.md",
+      "docs/security-baseline.md",
+      "docs/secrets-policy.md",
+      "docs/permissions.md",
+      "docs/audit-log.md",
+      "docs/rate-limits.md"
+    ],
+    "uploadsAssetsCleanup": [
+      "apps/server/AGENTS.md",
+      "apps/server/src/uploads/AGENTS.md",
+      "docs/security-baseline.md",
+      "docs/data-deletion-lifecycle.md",
+      "docs/entity-ownership.md"
+    ],
+    "persistenceDb": [
+      "apps/server/AGENTS.md",
+      "docs/database-rules.md",
+      "docs/concurrency.md",
+      "docs/data-deletion-lifecycle.md"
+    ],
+    "serverRuntimePrimitive": [
+      "apps/server/AGENTS.md",
+      "apps/server/src/runtime/AGENTS.md",
+      "docs/concurrency.md",
+      "docs/observability.md",
+      "docs/performance-budgets.md"
+    ],
+    "aiBehavior": [
+      "apps/server/AGENTS.md",
+      "docs/game-ai-development.md",
+      "docs/ai-testing.md",
+      "docs/country-control-ai.md",
+      "docs/performance-budgets.md"
+    ],
+    "dependencyTooling": [
+      "docs/libraries.md",
+      "docs/programming-standards.md",
+      "docs/engineering-standards.md",
+      "docs/ai-operating-boundaries.md",
+      "docs/adr/README.md"
+    ],
+    "folderModuleRefactor": [
+      "docs/refactoring-plan.md",
+      "docs/folder-structure.md",
+      "docs/programming-standards.md",
+      "docs/adr/README.md"
+    ],
+    "review": [
+      "docs/review-checklist.md"
+    ]
+  },
+  "templates": {
+    "mechanicChange": "docs/templates/mechanic-change.md",
+    "apiChange": "docs/templates/api-change.md",
+    "uiChange": "docs/templates/ui-change.md",
+    "newFolderProposal": "docs/templates/new-folder-proposal.md",
+    "adr": "docs/templates/adr.md",
+    "finalReport": "docs/templates/final-report.md",
+    "bugFix": "docs/templates/bug-fix.md",
+    "refactor": "docs/templates/refactor.md",
+    "scenarioChange": "docs/templates/scenario-change.md",
+    "dataMigrationRemoval": "docs/templates/data-migration-removal.md",
+    "securityChange": "docs/templates/security-change.md",
+    "performanceChange": "docs/templates/performance-change.md",
+    "testPlan": "docs/templates/test-plan.md",
+    "arcawikiUpdate": "docs/templates/arcawiki-update.md",
+    "dependencyRequest": "docs/templates/dependency-request.md",
+    "cleanupLifecycle": "docs/templates/cleanup-lifecycle.md",
+    "databaseChange": "docs/templates/database-change.md",
+    "wsDeltaChange": "docs/templates/ws-delta-change.md",
+    "localizationChange": "docs/templates/localization-change.md",
+    "themeChange": "docs/templates/theme-change.md",
+    "aiBehaviorChange": "docs/templates/ai-behavior-change.md",
+    "releaseChecklist": "docs/templates/release-checklist.md"
+  },
+  "nonNegotiableRules": [
+    "Do not add province-level heavy mechanics without explicit approval.",
+    "Heavy mechanics belong to state regions.",
+    "The server is authoritative for game decisions.",
+    "AI countries use normal validated orders.",
+    "No hidden gameplay fallback.",
+    "All visible UI text uses localization keys with English and Russian values.",
+    "Balance and pacing values belong in scenario defines.",
+    "Scenario-owned data/assets stay under scenario ownership.",
+    "Scenario-authored data uses strict JSON, one entity per file, authoritative JSON id fields, and stable-ID references.",
+    "Scenario generated indexes live under scenarios/<scenarioId>/.generated/ and are not authored source.",
+    "Privileged behavior must be enforced server-side.",
+    "Major architecture/protocol/persistence/AI/dependency/world-model/scenario decisions require an ADR."
+  ],
+  "forbiddenPatterns": [
+    "hardcoded player-facing UI text",
+    "hardcoded UI colors or theme values",
+    "hardcoded balance numbers in code",
+    "new province-level population/buildings/construction/resources/colonization/diplomacy transfer",
+    "authored aggregate map/provinces.json or monolithic scenario content libraries in the target scenario format",
+    "manual edits to scenarios/<scenarioId>/.generated/",
+    "admin/security checks only on the client",
+    "upload flow without owner, scenario scope, validation, and cleanup lifecycle",
+    "AI direct world-state mutation",
+    "raw server errors exposed to players",
+    "unjustified full-world scans in hot paths",
+    "destructive operations without confirmation/audit/dry-run where practical",
+    "new dependency without approval and rationale",
+    "dead code/data/assets/docs/tests after mechanic removal",
+    "any/@ts-ignore/broad casts outside boundary adapters",
+    "secrets/tokens/passwords/private data in logs/docs/code",
+    "vague folder names such as misc/helpers/stuff/random/newMechanicStuff"
+  ],
+  "verificationDefaults": [
+    "npm run typecheck -ws",
+    "relevant tests when available",
+    "scenario validator when scenario/content/regions/AI/localization/assets change",
+    "manual scenario notes for gameplay mechanics"
+  ],
+  "guardedPaths": {
+    "codeScannedRoots": [
+      "apps/server/src/app",
+      "apps/server/src/scenarios",
+      "apps/server/src/map",
+      "apps/server/src/lifecycle",
+      "apps/server/src/mechanics",
+      "apps/server/src/security",
+      "apps/server/src/persistence",
+      "apps/server/src/runtime",
+      "apps/server/src/routes",
+      "apps/server/src/uploads",
+      "apps/server/scripts",
+      "packages/shared/src",
+      "scripts"
+    ],
+    "scenarioDataRoot": "apps/server/data/scenarios",
+    "clientThemeTokenPaths": [
+      "apps/client/src/components/ui"
+    ],
+    "clientLocalizedTextPaths": [
+      "apps/client/src/components/ui",
+      "apps/client/src/components/map-hud",
+      "apps/client/src/components/ClientSettingsModal.tsx",
+      "apps/client/src/components/ColonizationModal.tsx"
+    ]
+  },
+  "scenarioDataRules": {
+    "authoredFormat": "strict-json-per-entity",
+    "authoritativeId": "json.id",
+    "fileNameRole": "human-readable-only",
+    "referenceStyle": "stable-id",
+    "generatedDirectory": "scenarios/<scenarioId>/.generated/",
+    "generatedIsAuthoredSource": false,
+    "authoredPaths": {
+      "defines": "scenarios/<scenarioId>/common/defines.json",
+      "provinces": "scenarios/<scenarioId>/history/provinces/*.json",
+      "regions": "scenarios/<scenarioId>/history/regions/*.json",
+      "countries": "scenarios/<scenarioId>/history/countries/*.json",
+      "diplomacyRelations": "scenarios/<scenarioId>/history/diplomacy/relations/*.json",
+      "diplomacyTreaties": "scenarios/<scenarioId>/history/diplomacy/treaties/*.json",
+      "goods": "scenarios/<scenarioId>/common/goods/*.json",
+      "buildings": "scenarios/<scenarioId>/common/buildings/*.json",
+      "technologies": "scenarios/<scenarioId>/common/technologies/*.json",
+      "laws": "scenarios/<scenarioId>/common/laws/*.json",
+      "lawGroups": "scenarios/<scenarioId>/common/lawGroups/*.json",
+      "cultures": "scenarios/<scenarioId>/common/cultures/*.json",
+      "resourceCategories": "scenarios/<scenarioId>/common/resourceCategories/*.json",
+      "provinceTypes": "scenarios/<scenarioId>/common/provinceTypes/*.json",
+      "provinceClimates": "scenarios/<scenarioId>/common/provinceClimates/*.json",
+      "provinceLandscapes": "scenarios/<scenarioId>/common/provinceLandscapes/*.json",
+      "provinceContinents": "scenarios/<scenarioId>/common/provinceContinents/*.json",
+      "provinceStrategicRegions": "scenarios/<scenarioId>/common/provinceStrategicRegions/*.json",
+      "religions": "scenarios/<scenarioId>/common/religions/*.json",
+      "ideologies": "scenarios/<scenarioId>/common/ideologies/*.json",
+      "professions": "scenarios/<scenarioId>/common/professions/*.json",
+      "races": "scenarios/<scenarioId>/common/races/*.json",
+      "markets": "scenarios/<scenarioId>/common/markets/*.json",
+      "modifiers": "scenarios/<scenarioId>/common/modifiers/*.json",
+      "interestGroups": "scenarios/<scenarioId>/common/interestGroups/*.json",
+      "parties": "scenarios/<scenarioId>/common/parties/*.json",
+      "companies": "scenarios/<scenarioId>/common/companies/*.json",
+      "industries": "scenarios/<scenarioId>/common/industries/*.json",
+      "sectors": "scenarios/<scenarioId>/common/sectors/*.json",
+      "decisions": "scenarios/<scenarioId>/common/decisions/*.json",
+      "events": "scenarios/<scenarioId>/common/events/*.json",
+      "battalions": "scenarios/<scenarioId>/common/battalions/*.json",
+      "shipTypes": "scenarios/<scenarioId>/common/shipTypes/*.json",
+      "aircraftTypes": "scenarios/<scenarioId>/common/aircraftTypes/*.json",
+      "aiArchetypes": "scenarios/<scenarioId>/common/ai/archetypes/*.json",
+      "aiPersonalities": "scenarios/<scenarioId>/common/ai/personalities/*.json",
+      "aiStrategies": "scenarios/<scenarioId>/common/ai/strategies/*.json",
+      "arcawikiEntries": "scenarios/<scenarioId>/arcawiki/entries/*.json"
+    },
+    "defines": {
+      "path": "scenarios/<scenarioId>/common/defines.json",
+      "strictUnknownKeys": true,
+      "invalidValuesFailValidation": true,
+      "applyBehavior": "scenario-defines-become-running-game-baseline-on-scenario-apply",
+      "runtimeAdminSettingsBehavior": "admin-runtime-settings-may-change-current-running-game-after-scenario-apply",
+      "supportedSections": {
+        "economy": {
+          "baseCulturePerTurn": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "baseSciencePerTurn": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "baseReligionPerTurn": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "baseConstructionPerTurn": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "baseDucatsPerTurn": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "baseGoldPerTurn": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "demolitionCostConstructionPercent": { "type": "integer", "min": 0, "max": 100 },
+          "marketPriceSmoothing": { "type": "number", "min": 0, "max": 1 },
+          "buildingDurabilityDecayPerTurn": { "type": "number", "min": 0, "max": 1000000000000 },
+          "buildingDurabilityRecoveryPerTurn": { "type": "number", "min": 0, "max": 1000000000000 },
+          "pollutionProductivityEffectPer1000": { "type": "number", "min": 0, "max": 1000000000000 },
+          "explorationBaseEmptyChancePct": { "type": "number", "min": 0, "max": 100 },
+          "explorationDepletionPerAttemptPct": { "type": "number", "min": 0, "max": 100 },
+          "explorationDurationTurns": { "type": "integer", "min": 1, "max": 3650 },
+          "explorationRollsPerExpedition": { "type": "integer", "min": 1, "max": 100 }
+        },
+        "auditLog": {
+          "maxEntries": { "type": "integer", "min": 1, "max": 10000 },
+          "retentionTurns": { "type": "integerOrNull", "min": 1 }
+        },
+        "colonization": {
+          "maxActiveColonizations": { "type": "integer", "min": 1, "max": 1000 },
+          "pointsPerTurn": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "pointsCostPer1000Km2": { "type": "integer", "min": 1, "max": 1000000000000 },
+          "ducatsCostPer1000Km2": { "type": "integer", "min": 0, "max": 1000000000000 }
+        },
+        "customization": {
+          "renameDucats": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "recolorDucats": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "flagDucats": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "crestDucats": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "provinceRenameDucats": { "type": "integer", "min": 0, "max": 1000000000000 }
+        },
+        "military": {
+          "militaryFormationSpeed": { "type": "number", "min": 1, "max": 1000000000000 }
+        },
+        "registration": {
+          "requireAdminApproval": { "type": "boolean" }
+        },
+        "eventLog": {
+          "retentionTurns": { "type": "integer", "min": 1, "max": 100 }
+        },
+        "turnTimer": {
+          "enabled": { "type": "boolean" },
+          "secondsPerTurn": { "type": "integer", "min": 10, "max": 2592000 },
+          "pauseWhenNoPlayersOnline": { "type": "boolean" }
+        }
+      }
+    },
+    "provinceAllowedData": [
+      "id",
+      "nameKey",
+      "color",
+      "terrain",
+      "landscape",
+      "climate",
+      "passable",
+      "passability",
+      "movementCost",
+      "adjacentProvinceIds",
+      "adjacency",
+      "center",
+      "areaKm2",
+      "pollution",
+      "radiation",
+      "continent",
+      "strategicArea",
+      "fertileLandKm2",
+      "fertility",
+      "specialSites"
+    ],
+    "provinceForbiddenHeavyData": [
+      "pops",
+      "population",
+      "buildings",
+      "construction",
+      "constructionQueue",
+      "production",
+      "taxes",
+      "markets",
+      "market",
+      "colonizationProgress",
+      "diplomacyTransferState",
+      "provincePopulationByProvince",
+      "provinceBuildingsByProvince",
+      "provincePopulationTreasuryByProvince",
+      "provinceConstructionQueueByProvince",
+      "provinceBuildingDucatsByProvince",
+      "provinceColonizationByProvince",
+      "colonyProgressByProvince",
+      "resources",
+      "resourceDeposits",
+      "localResources",
+      "localDeposits",
+      "productionMethods",
+      "regionModifiers"
+    ],
+    "validationMustFailOn": [
+      "duplicateIds",
+      "invalidJson",
+      "schemaFailures",
+      "brokenStableIdReferences",
+      "missingLocalizationKeys",
+      "missingRegionProvinceMembership",
+      "provinceHeavyForbiddenFields",
+      "staleOrInvalidGeneratedIndexes"
+    ]
+  },
+  "notes": [
+    "This file is machine-readable guidance for future scripts and agents.",
+    "Markdown docs remain the human-readable source of truth.",
+    "Update this file when routing, required docs, templates, or forbidden patterns change."
+  ]
+}

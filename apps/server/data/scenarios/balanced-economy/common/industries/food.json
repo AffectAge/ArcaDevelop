@@ -1,0 +1,8 @@
+{
+  "id": "industry:food",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "sectorId": "sector:consumer",
+  "nameKey": "industries.food.name"
+}

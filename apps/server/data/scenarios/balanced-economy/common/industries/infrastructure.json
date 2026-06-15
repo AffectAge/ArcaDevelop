@@ -1,0 +1,8 @@
+{
+  "id": "industry:infrastructure",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "sectorId": "sector:infrastructure",
+  "nameKey": "industries.infrastructure.name"
+}

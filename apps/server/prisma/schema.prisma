@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Country {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  color        String
+  flagUrl      String?
+  crestUrl     String?
+  passwordHash String
+  isLocked         Boolean   @default(false)
+  isAdmin          Boolean   @default(false)
+  blockedUntilTurn Int?
+  blockedUntilAt   DateTime?
+  lockReason       String?
+  ignoreUntilTurn  Int?
+  eventLogRetentionTurns Int @default(3)
+  isRegistrationApproved Boolean @default(true)
+  createdAt        DateTime  @default(now())
+}
+
+model GameState {
+  id                 String   @id
+  turnId             Int
+  gameSettingsJson   Json
+  worldBaseJson      Json
+  ordersByTurnJson   Json
+  resolveReadyByTurnJson Json
+  adminAuditLogJson  Json     @default("[]")
+  updatedAt          DateTime @updatedAt
+}
+
+model WorldDeltaLog {
+  id                Int      @id @default(autoincrement())
+  worldStateVersion Int      @unique
+  turnId            Int
+  payloadJson       String
+  createdAt         DateTime @default(now())
+
+  @@index([worldStateVersion])
+}

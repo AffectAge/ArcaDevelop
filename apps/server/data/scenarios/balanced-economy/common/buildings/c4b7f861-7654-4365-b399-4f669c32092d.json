@@ -1,0 +1,79 @@
+{
+  "id": "c4b7f861-7654-4365-b399-4f669c32092d",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 280,
+  "costDucats": 220,
+  "startingDucats": 76,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 164,
+  "upgradeCostConstruction": 210,
+  "sectorId": "sector:consumer",
+  "industryId": "industry:machinery",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:electronics",
+      "amount": 8
+    },
+    {
+      "goodId": "good:steel",
+      "amount": 8
+    },
+    {
+      "goodId": "good:plastics",
+      "amount": 6
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:appliances",
+      "amount": 30.67
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:machinist",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 480
+    }
+  ],
+  "infrastructureUse": 4,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.c4b7f861_7654_4365_b399_4f669c32092d.name"
+}

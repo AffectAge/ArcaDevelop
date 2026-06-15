@@ -1,0 +1,26 @@
+{
+  "id": "province:1910",
+  "nameKey": "province.1910.name",
+  "color": "#b87f9f",
+  "terrain": "land",
+  "landscape": "в",
+  "climate": "в",
+  "continent": "в",
+  "strategicArea": "в",
+  "passable": true,
+  "movementCost": 1,
+  "adjacentProvinceIds": [
+    "province:1882",
+    "province:1902",
+    "province:1921"
+  ],
+  "areaKm2": 83609.749,
+  "center": {
+    "x": -69.17215762,
+    "y": 45.27023529
+  },
+  "fertility": 50,
+  "fertileLandKm2": 41804.875,
+  "pollution": 0,
+  "radiation": 0
+}

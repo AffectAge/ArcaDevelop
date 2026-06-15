@@ -1,0 +1,79 @@
+{
+  "id": "ea71e9c6-e62e-4c4b-9c68-775cb096ca7f",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 224,
+  "costDucats": 176,
+  "startingDucats": 61,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 131,
+  "upgradeCostConstruction": 168,
+  "sectorId": "sector:consumer",
+  "industryId": "industry:chemicals",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:chemicals",
+      "amount": 10
+    },
+    {
+      "goodId": "good:organic_chemicals",
+      "amount": 6
+    },
+    {
+      "goodId": "good:vegetable_oil",
+      "amount": 4
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:cosmetics",
+      "amount": 21.02
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:chemist",
+      "workers": 240
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 90
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.ea71e9c6_e62e_4c4b_9c68_775cb096ca7f.name"
+}

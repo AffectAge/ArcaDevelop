@@ -1,0 +1,158 @@
+import { useEffect, useMemo, useState } from "react";
+import { LoaderCircle } from "lucide-react";
+import { fetchTurnStatus, type TurnStatusItem } from "../lib/api";
+import { AppModal, AppModalHeader } from "./ui/AppModal";
+import { AppCard } from "./ui/AppSurface";
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+};
+
+type TurnStatusPayload = {
+  turnId: number;
+  readyCount: number;
+  requiredCount: number;
+  countries: TurnStatusItem[];
+};
+
+function statusText(item: TurnStatusItem): string {
+  if (item.status === "ready") {
+    return "Готова";
+  }
+
+  if (item.status === "waiting") {
+    return "Ожидает";
+  }
+
+  if (item.blockedReason === "PERMANENT") {
+    return "Заблокирована бессрочно";
+  }
+
+  if (item.blockedReason === "TURN" && item.blockedUntilTurn != null) {
+    return `Заблокирована до хода #${item.blockedUntilTurn}`;
+  }
+
+  if (item.blockedReason === "TIME" && item.blockedUntilAt) {
+    return `Заблокирована до ${new Date(item.blockedUntilAt).toLocaleString()}`;
+  }
+
+  return "Заблокирована";
+}
+
+function statusClass(item: TurnStatusItem): string {
+  if (item.status === "ready") {
+    return "bg-emerald-500/15 text-emerald-500 border-emerald-400/30";
+  }
+
+  if (item.status === "waiting") {
+    return "bg-slate-500/15 text-slate-300 border-slate-400/30";
+  }
+
+  return "bg-rose-500/15 text-rose-300 border-rose-400/30";
+}
+
+function onlineBadgeClass(isOnline: boolean): string {
+  return isOnline
+    ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-300"
+    : "border-slate-400/20 bg-slate-500/10 text-slate-300";
+}
+
+export function TurnStatusModal({ open, onClose }: Props) {
+  const [loading, setLoading] = useState(false);
+  const [payload, setPayload] = useState<TurnStatusPayload | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchTurnStatus();
+        if (!cancelled) {
+          setPayload(data);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+    const timer = setInterval(load, 1500);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [open]);
+
+  const sorted = useMemo(() => {
+    if (!payload) {
+      return [];
+    }
+
+    const rank = (status: TurnStatusItem["status"]): number => (status === "waiting" ? 0 : status === "ready" ? 1 : status === "ignored" ? 2 : 3);
+    return [...payload.countries].sort((a, b) => rank(a.status) - rank(b.status) || a.name.localeCompare(b.name));
+  }, [payload]);
+
+  return (
+    <AppModal
+      modalKey="turn-status"
+      open={open}
+      onClose={onClose}
+      zIndexClassName="z-[130]"
+      panelClassName="h-auto w-full max-w-2xl"
+      paddingClassName="p-4 pt-24 flex items-start justify-center"
+    >
+          <AppModalHeader
+            title="Готовность стран к ходу"
+            description={`Ход #${payload?.turnId ?? "-"} • Готово ${payload?.readyCount ?? 0}/${payload?.requiredCount ?? 0}`}
+            onClose={onClose}
+          />
+
+          {loading && !payload ? (
+            <div className="flex items-center justify-center gap-2 py-12 text-sm text-slate-300">
+              <LoaderCircle size={16} className="animate-spin" />
+              Загрузка статусов...
+            </div>
+          ) : (
+            <div className="arc-scrollbar max-h-[55vh] space-y-2 overflow-auto pr-1">
+              {sorted.map((item) => (
+                <AppCard key={item.id} className="flex items-center justify-between bg-black/25 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    {item.flagUrl ? (
+                      <img src={item.flagUrl} alt="" className="h-4 w-6 rounded-sm object-cover" />
+                    ) : (
+                      <span
+                        className="h-3.5 w-3.5 rounded-full border border-white/10"
+                        style={{ backgroundColor: item.color ?? "#94a3b8" }}
+                      />
+                    )}
+                    <div>
+                      <div className="text-sm text-slate-100">{item.name}</div>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                        <span>
+                          Последний вход: {item.lastLoginAt ? new Date(item.lastLoginAt).toLocaleString() : "нет данных"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-24 rounded-md border px-2 py-1 text-center text-xs ${onlineBadgeClass(item.online)}`}>
+                      {item.online ? "Онлайн" : "Оффлайн"}
+                    </div>
+                    <div className={`w-24 rounded-md border px-2 py-1 text-center text-xs ${statusClass(item)}`}>{statusText(item)}</div>
+                  </div>
+                </AppCard>
+              ))}
+            </div>
+          )}
+    </AppModal>
+  );
+}

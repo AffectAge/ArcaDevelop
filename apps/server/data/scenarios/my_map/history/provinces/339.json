@@ -1,0 +1,22 @@
+{
+  "id": "province:339",
+  "nameKey": "province.339.name",
+  "color": "#67abad",
+  "terrain": "land",
+  "landscape": "в",
+  "climate": "в",
+  "continent": "в",
+  "strategicArea": "в",
+  "passable": true,
+  "movementCost": 1,
+  "adjacentProvinceIds": [],
+  "areaKm2": 44.479,
+  "center": {
+    "x": 21.74089198,
+    "y": 70.3294335
+  },
+  "fertility": 50,
+  "fertileLandKm2": 22.24,
+  "pollution": 0,
+  "radiation": 0
+}

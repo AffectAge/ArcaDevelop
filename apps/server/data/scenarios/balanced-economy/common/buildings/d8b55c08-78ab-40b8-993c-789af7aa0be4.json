@@ -1,0 +1,83 @@
+{
+  "id": "d8b55c08-78ab-40b8-993c-789af7aa0be4",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 210,
+  "costDucats": 165,
+  "startingDucats": 57,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 123,
+  "upgradeCostConstruction": 158,
+  "sectorId": "sector:services",
+  "industryId": "industry:services",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:paper",
+      "amount": 4
+    },
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 3
+    },
+    {
+      "goodId": "good:communications",
+      "amount": 2
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:education",
+      "amount": 8.91
+    },
+    {
+      "goodId": "good:research",
+      "amount": 8.91
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:teacher",
+      "workers": 460
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:manager",
+      "workers": 50
+    }
+  ],
+  "infrastructureUse": 1,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.d8b55c08_78ab_40b8_993c_789af7aa0be4.name"
+}

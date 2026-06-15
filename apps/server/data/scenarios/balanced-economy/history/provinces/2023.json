@@ -1,0 +1,22 @@
+{
+  "id": "province:2023",
+  "nameKey": "province.2023.name",
+  "color": "#87b55e",
+  "terrain": "land",
+  "landscape": "в",
+  "climate": "в",
+  "continent": "в",
+  "strategicArea": "в",
+  "passable": true,
+  "movementCost": 1,
+  "adjacentProvinceIds": [],
+  "areaKm2": 61.081,
+  "center": {
+    "x": -60.80768029,
+    "y": 9.17957184
+  },
+  "fertility": 50,
+  "fertileLandKm2": 30.541,
+  "pollution": 0,
+  "radiation": 0
+}

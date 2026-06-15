@@ -1,0 +1,46 @@
+{
+  "id": "731e2fc3-2592-4070-ab83-bb4e8d06f562",
+  "description": "",
+  "color": "#f10909",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [
+    {
+      "id": "rule-1",
+      "type": "sol_below",
+      "weight": 20,
+      "threshold": 8,
+      "targetId": null,
+      "label": "варваапр",
+      "invert": false
+    },
+    {
+      "id": "rule-2",
+      "type": "profession_is",
+      "weight": 20,
+      "threshold": 0,
+      "targetId": "019299f7-7854-4f8c-8724-ec8d021e5d31",
+      "label": "ываыва",
+      "invert": false
+    }
+  ],
+  "nameKey": "ideologies.731e2fc3_2592_4070_ab83_bb4e8d06f562.name"
+}

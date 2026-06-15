@@ -1,0 +1,75 @@
+{
+  "id": "5d814963-dbed-4040-9145-b5e9b7437748",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 175,
+  "costDucats": 138,
+  "startingDucats": 48,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 103,
+  "upgradeCostConstruction": 131,
+  "sectorId": "sector:consumer",
+  "industryId": "industry:food",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:fish",
+      "amount": 26
+    },
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 4
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:canned_fish",
+      "amount": 31.31
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 600
+    },
+    {
+      "professionId": "profession:machinist",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 70
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.5d814963_dbed_4040_9145_b5e9b7437748.name"
+}

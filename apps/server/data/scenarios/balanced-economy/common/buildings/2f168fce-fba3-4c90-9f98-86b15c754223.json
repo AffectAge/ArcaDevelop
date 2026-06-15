@@ -1,0 +1,79 @@
+{
+  "id": "2f168fce-fba3-4c90-9f98-86b15c754223",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 210,
+  "costDucats": 165,
+  "startingDucats": 57,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 123,
+  "upgradeCostConstruction": 158,
+  "sectorId": "sector:industry",
+  "industryId": "industry:metallurgy",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:stone",
+      "amount": 18
+    },
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 5
+    },
+    {
+      "goodId": "good:chemicals",
+      "amount": 2
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:silicates",
+      "amount": 51.36
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 700
+    },
+    {
+      "professionId": "profession:machinist",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 95
+    }
+  ],
+  "infrastructureUse": 5,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.2f168fce_fba3_4c90_9f98_86b15c754223.name"
+}

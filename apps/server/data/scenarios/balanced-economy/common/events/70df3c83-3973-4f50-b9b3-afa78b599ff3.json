@@ -1,0 +1,53 @@
+{
+  "id": "70df3c83-3973-4f50-b9b3-afa78b599ff3",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": {
+    "category": "politics",
+    "priority": "medium",
+    "visibility": "private",
+    "triggerConditions": [
+      {
+        "type": "always",
+        "targetId": null,
+        "invert": false
+      }
+    ],
+    "options": [
+      {
+        "id": "ok",
+        "label": "Понятно",
+        "description": null,
+        "effects": [],
+        "autoChancePct": 100,
+        "buttonColor": "#15505b"
+      }
+    ],
+    "cooldownTurns": 0,
+    "repeatable": true,
+    "checkIntervalTurns": 1,
+    "chancePct": 100,
+    "blocking": false
+  },
+  "ideologyAttractionRules": [],
+  "nameKey": "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.name"
+}

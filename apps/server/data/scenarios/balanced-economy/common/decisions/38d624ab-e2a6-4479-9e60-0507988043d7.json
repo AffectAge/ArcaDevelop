@@ -1,0 +1,55 @@
+{
+  "id": "38d624ab-e2a6-4479-9e60-0507988043d7",
+  "description": "Мы живем в эпоху эпидемии, охватившей весь земной шар, но коронавирус невинный ребенок по сравнению с бубонной чумой, ежедневно убивавшей десятки тысяч людей. Пик эпидемии чёрной смерти или бубонной чумы пришёлся на 1346—1353 годы, а повторные вспышки продолжались в разных уголках Европы и Азии вплоть до XIX века. Приблизительное количество жертв черной смерти 75 миллионов человек – колоссальный демографический удар по населению планеты. Кроме демографии сильно пострадали экономика, культура, социальная и религиозная сфера.",
+  "color": "#a78bfa",
+  "logoUrl": "/scenario-assets/balanced-economy/assets/uploads/decisions/f164017e-91c5-472a-84d1-f3157ad9eecc.jpg?v=1778422430729",
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": {
+    "category": "colonization",
+    "visibilityConditions": [
+      {
+        "type": "country_is",
+        "targetId": "cmmfg4k050000vm9wuaabzedy",
+        "invert": false
+      }
+    ],
+    "availabilityConditions": [
+      {
+        "type": "always",
+        "targetId": null,
+        "invert": false
+      }
+    ],
+    "costs": {
+      "religion": 100
+    },
+    "effects": [
+      {
+        "type": "resource_delta",
+        "resource": "culture",
+        "amount": 10
+      }
+    ],
+    "cooldownTurns": 0,
+    "repeatable": true
+  },
+  "event": null,
+  "ideologyAttractionRules": [],
+  "nameKey": "decisions.38d624ab_e2a6_4479_9e60_0507988043d7.name"
+}

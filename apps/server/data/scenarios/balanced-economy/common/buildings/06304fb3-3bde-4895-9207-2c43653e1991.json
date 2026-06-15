@@ -1,0 +1,75 @@
+{
+  "id": "06304fb3-3bde-4895-9207-2c43653e1991",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 238,
+  "costDucats": 187,
+  "startingDucats": 65,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 139,
+  "upgradeCostConstruction": 179,
+  "sectorId": "sector:industry",
+  "industryId": "industry:chemicals",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:inorganic_chemicals",
+      "amount": 18
+    },
+    {
+      "goodId": "5fbe96dd-9a15-4b5d-a64c-5ea02e05ee60",
+      "amount": 6
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:chemicals",
+      "amount": 44.85
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:chemist",
+      "workers": 240
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 90
+    }
+  ],
+  "infrastructureUse": 4,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.06304fb3_3bde_4895_9207_2c43653e1991.name"
+}

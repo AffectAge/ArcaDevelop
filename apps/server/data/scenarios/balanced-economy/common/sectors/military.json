@@ -1,0 +1,7 @@
+{
+  "id": "sector:military",
+  "description": "",
+  "color": "#64748b",
+  "logoUrl": null,
+  "nameKey": "sectors.military.name"
+}
