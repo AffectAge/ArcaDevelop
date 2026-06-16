@@ -48,15 +48,26 @@ export type BuildingMechanicsContentEntry = {
   globalBuildLimit?: number | null;
 };
 
-export type BuildingProductionInput = {
+export type BuildingLevelRange = {
+  minLevel?: number | null;
+  maxLevel?: number | null;
+};
+
+export type BuildingProductionInput = BuildingLevelRange & {
   goodId: string;
   amount: number;
 };
 
-export type BuildingProductionOutput = {
+export type BuildingProductionOutput = BuildingLevelRange & {
   goodId: string;
   amount: number;
   affectedByFertility?: boolean | null;
+};
+
+export type BuildingProductionExtraction = BuildingLevelRange & {
+  goodId: string;
+  amount: number;
+  requiresDeposit?: boolean | null;
 };
 
 export type BuildingProductionContentEntry = {
@@ -64,6 +75,7 @@ export type BuildingProductionContentEntry = {
   extractionGoodId?: string | null;
   extractionAmountPerTurn?: number | null;
   extractionRequiresDeposit?: boolean | null;
+  extractions?: BuildingProductionExtraction[];
   pollutionProductivityMode?: PollutionProductivityMode;
   inputs?: BuildingProductionInput[];
   outputs?: BuildingProductionOutput[];
@@ -422,6 +434,30 @@ export function prepareBuildingInstanceForTurn<TInstance extends BuildingTurnPre
   return { manualWorkEnabled, instanceLevel };
 }
 
+export function isBuildingFlowActiveAtLevel(flow: BuildingLevelRange, instanceLevel: number): boolean {
+  const level = Math.max(1, Math.floor(Number(instanceLevel)));
+  const minLevel = flow.minLevel == null ? null : Math.max(1, Math.floor(Number(flow.minLevel)));
+  const maxLevel = flow.maxLevel == null ? null : Math.max(1, Math.floor(Number(flow.maxLevel)));
+  if (minLevel !== null && level < minLevel) return false;
+  if (maxLevel !== null && level > maxLevel) return false;
+  return true;
+}
+
+function getActiveBuildingExtractions(building: BuildingProductionContentEntry, instanceLevel: number): BuildingProductionExtraction[] {
+  const authoredExtractions = building.extractions ?? [];
+  const compatibleExtraction: BuildingProductionExtraction[] =
+    typeof building.extractionGoodId === "string" && building.extractionGoodId.trim().length > 0
+      ? [{
+          goodId: building.extractionGoodId.trim(),
+          amount: Number(building.extractionAmountPerTurn ?? 0),
+          requiresDeposit: building.extractionRequiresDeposit !== false,
+        }]
+      : [];
+  return [...authoredExtractions, ...compatibleExtraction].filter((extraction) =>
+    extraction.amount > 0 && isBuildingFlowActiveAtLevel(extraction, instanceLevel),
+  );
+}
+
 export function prepareBuildingOperationEconomics(params: {
   instance: BuildingOperationEconomicsInstance;
   building: {
@@ -463,7 +499,8 @@ export function prepareBuildingOperationEconomics(params: {
   const infraCoverage = 1;
 
   let requiredInputValueEstimate = 0;
-  const inputNeeds = (params.building.inputs ?? []).map((input) => {
+  const activeInputs = (params.building.inputs ?? []).filter((input) => isBuildingFlowActiveAtLevel(input, params.instanceLevel));
+  const inputNeeds = activeInputs.map((input) => {
     const required = Math.max(0, params.resolveInputAmount(input)) *
       params.instanceLevel *
       laborCoverage *
@@ -536,7 +573,7 @@ export function resolveBuildingProductionTurn(params: {
 }): BuildingProductionResult {
   let inputCoverage = 1;
   const missingInputGoodIds: string[] = [];
-  for (const input of params.building.inputs ?? []) {
+  for (const input of (params.building.inputs ?? []).filter((flow) => isBuildingFlowActiveAtLevel(flow, params.instanceLevel))) {
     const required = Math.max(0, params.resolveInputAmount(input)) *
       params.instanceLevel *
       params.laborCoverage *
@@ -551,21 +588,16 @@ export function resolveBuildingProductionTurn(params: {
   if (!Number.isFinite(inputCoverage)) inputCoverage = 1;
   inputCoverage = roundBuildingNumber(Math.max(0, Math.min(1, inputCoverage)));
 
-  const extractionGoodId =
-    typeof params.building.extractionGoodId === "string" && params.building.extractionGoodId.trim().length > 0
-      ? params.building.extractionGoodId.trim()
-      : "";
-  const extractionAmountPerTurn = extractionGoodId
-    ? Math.max(0, params.resolveOutputAmount(extractionGoodId, Number(params.building.extractionAmountPerTurn ?? 0)))
-    : 0;
-  const extractionRequiresDeposit = params.building.extractionRequiresDeposit !== false;
+  const activeExtractions = getActiveBuildingExtractions(params.building, params.instanceLevel);
   let extractionCoverage = 1;
-  if (extractionGoodId && extractionAmountPerTurn > 0 && extractionRequiresDeposit) {
-    const deposit = params.regionResourceDeposits.find((row) => row.goodId === extractionGoodId);
+  for (const extraction of activeExtractions) {
+    const extractionAmountPerTurn = Math.max(0, params.resolveOutputAmount(extraction.goodId, extraction.amount));
+    if (extractionAmountPerTurn <= 0 || extraction.requiresDeposit === false) continue;
+    const deposit = params.regionResourceDeposits.find((row) => row.goodId === extraction.goodId);
     const availableDeposit = Math.max(0, Number(deposit?.amount ?? 0));
     const extractionRequired = roundBuildingNumber(extractionAmountPerTurn * params.instanceLevel * params.laborCoverage * params.buildingThroughput);
     if (extractionRequired > 0) {
-      extractionCoverage = Math.min(1, availableDeposit / extractionRequired);
+      extractionCoverage = Math.min(extractionCoverage, availableDeposit / extractionRequired);
     }
   }
   if (!Number.isFinite(extractionCoverage)) extractionCoverage = 1;
@@ -582,7 +614,7 @@ export function resolveBuildingProductionTurn(params: {
   const productivity = roundBuildingNumber(Math.max(0, baseProductivity * params.pollutionProductivityFactor));
 
   const consumedByGood: Record<string, number> = {};
-  for (const input of params.building.inputs ?? []) {
+  for (const input of (params.building.inputs ?? []).filter((flow) => isBuildingFlowActiveAtLevel(flow, params.instanceLevel))) {
     const required = Math.max(0, params.resolveInputAmount(input)) *
       params.instanceLevel *
       params.laborCoverage *
@@ -595,7 +627,7 @@ export function resolveBuildingProductionTurn(params: {
   }
 
   const producedByGood: Record<string, number> = {};
-  for (const output of params.building.outputs ?? []) {
+  for (const output of (params.building.outputs ?? []).filter((flow) => isBuildingFlowActiveAtLevel(flow, params.instanceLevel))) {
     const outputAmount = Math.max(0, params.resolveOutputAmount(output.goodId, output.amount));
     const outputMultiplier = output.affectedByFertility === true ? params.fertilityMultiplier : 1;
     const producedMax = roundBuildingNumber(outputAmount * params.instanceLevel * params.laborCoverage * params.buildingThroughput * outputMultiplier);
@@ -608,19 +640,22 @@ export function resolveBuildingProductionTurn(params: {
   }
 
   const extractedByGood: Record<string, number> = {};
-  if (extractionGoodId && extractionAmountPerTurn > 0) {
-    const deposit = params.regionResourceDeposits.find((row) => row.goodId === extractionGoodId);
+  for (const extraction of activeExtractions) {
+    const extractionAmountPerTurn = Math.max(0, params.resolveOutputAmount(extraction.goodId, extraction.amount));
+    const extractionRequiresDeposit = extraction.requiresDeposit !== false;
+    if (extractionAmountPerTurn <= 0) continue;
+    const deposit = params.regionResourceDeposits.find((row) => row.goodId === extraction.goodId);
     const availableDeposit = Math.max(0, Number(deposit?.amount ?? 0));
     const extractionMax = roundBuildingNumber(extractionAmountPerTurn * params.instanceLevel * params.laborCoverage * params.buildingThroughput);
-    if (extractionMax > 0) params.addProductionMax(extractionGoodId, extractionRequiresDeposit ? Math.min(extractionMax, availableDeposit) : extractionMax);
+    if (extractionMax > 0) params.addProductionMax(extraction.goodId, extractionRequiresDeposit ? Math.min(extractionMax, availableDeposit) : extractionMax);
     if (!extractionRequiresDeposit || availableDeposit > 0) {
       const extractionRaw = roundBuildingNumber(extractionAmountPerTurn * params.instanceLevel * productivity * params.buildingThroughput);
       const extracted = extractionRequiresDeposit ? Math.min(extractionRaw, availableDeposit) : extractionRaw;
       if (extracted > 0) {
-        params.warehouse[extractionGoodId] = roundBuildingNumber(Math.max(0, Number(params.warehouse[extractionGoodId] ?? 0)) + extracted);
-        extractedByGood[extractionGoodId] = extracted;
-        producedByGood[extractionGoodId] = roundBuildingNumber((producedByGood[extractionGoodId] ?? 0) + extracted);
-        params.addProduction(extractionGoodId, extracted);
+        params.warehouse[extraction.goodId] = roundBuildingNumber(Math.max(0, Number(params.warehouse[extraction.goodId] ?? 0)) + extracted);
+        extractedByGood[extraction.goodId] = roundBuildingNumber((extractedByGood[extraction.goodId] ?? 0) + extracted);
+        producedByGood[extraction.goodId] = roundBuildingNumber((producedByGood[extraction.goodId] ?? 0) + extracted);
+        params.addProduction(extraction.goodId, extracted);
         if (extractionRequiresDeposit && deposit) {
           deposit.amount = roundBuildingNumber(Math.max(0, availableDeposit - extracted));
         }

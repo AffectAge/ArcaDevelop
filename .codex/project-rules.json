@@ -320,6 +320,24 @@
         }
       }
     },
+    "buildingContentFields": {
+      "path": "scenarios/<scenarioId>/common/buildings/*.json",
+      "flowFields": {
+        "inputs": {
+          "itemFields": ["goodId", "amount", "affectedByFertility", "minLevel", "maxLevel"],
+          "levelBounds": { "type": "integerOrNull", "min": 1, "rule": "maxLevel >= minLevel when both are set" }
+        },
+        "outputs": {
+          "itemFields": ["goodId", "amount", "affectedByFertility", "minLevel", "maxLevel"],
+          "levelBounds": { "type": "integerOrNull", "min": 1, "rule": "maxLevel >= minLevel when both are set" }
+        },
+        "extractions": {
+          "itemFields": ["goodId", "amount", "requiresDeposit", "minLevel", "maxLevel"],
+          "levelBounds": { "type": "integerOrNull", "min": 1, "rule": "maxLevel >= minLevel when both are set" }
+        }
+      },
+      "legacyExtractionFields": ["extractionGoodId", "extractionAmountPerTurn", "extractionRequiresDeposit"]
+    },
     "provinceAllowedData": [
       "id",
       "nameKey",

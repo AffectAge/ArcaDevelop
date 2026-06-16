@@ -24,6 +24,47 @@ describe("buildingTurnRuntime", () => {
     expect(worldBase.regionBuildingsByRegion["province:a"]).toBeUndefined();
   });
 
+  it("respects level-gated extraction with deposits", () => {
+    const worldBase = makeWorldBase({
+      regionOwner: { "region:a": "country:a" },
+      regionController: { "region:a": "country:a" },
+      regionBuildingsByRegion: {
+        "region:a": [makeBuildingInstance({ level: 1 })],
+      },
+      regionResourceDepositsByRegion: {
+        "region:a": [makeDeposit({ amount: 12 })],
+      },
+      resourcesByCountry: { "country:a": makeResources({ ducats: 100 }) },
+    });
+    const deps = makeDeps(worldBase);
+    deps.gameSettings.content.buildings = [
+      {
+        id: "building:mine",
+        name: "Mine",
+        description: "",
+        color: "#ffffff",
+        logoUrl: null,
+        malePortraitUrl: null,
+        femalePortraitUrl: null,
+        inputs: [],
+        outputs: [],
+        workforceRequirements: [],
+        extractions: [{ goodId: "good:ore", amount: 10, requiresDeposit: true, minLevel: 2 }],
+      },
+    ];
+
+    resolveBuildingsTurnForRuntime(deps);
+
+    expect(worldBase.regionBuildingsByRegion["region:a"]?.[0]?.lastExtractionByGoodId).toEqual({});
+    expect(worldBase.regionResourceDepositsByRegion["region:a"]).toEqual([makeDeposit({ amount: 12 })]);
+
+    worldBase.regionBuildingsByRegion["region:a"]![0]!.level = 2;
+    resolveBuildingsTurnForRuntime(deps);
+
+    expect(worldBase.regionBuildingsByRegion["region:a"]?.[0]?.lastExtractionByGoodId).toEqual({ "good:ore": 12 });
+    expect(worldBase.regionResourceDepositsByRegion["region:a"]).toEqual([]);
+  });
+
   it("extracts from region-owned deposits and writes remaining deposits by region", () => {
     const worldBase = makeWorldBase({
       regionOwner: { "region:a": "country:a" },

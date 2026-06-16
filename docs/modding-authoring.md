@@ -150,6 +150,28 @@ Province files must not contain heavy simulation state:
 
 Local resources/deposits may be province-authored, but extraction and economy remain region-level.
 
+## Building Goods Flows
+
+Scenario-authored buildings live in `scenarios/<scenarioId>/common/buildings/*.json`. Building `inputs`, `outputs`, and `extractions` are authored per good, so each good flow can have its own level window:
+
+```json
+{
+  "inputs": [
+    { "goodId": "good:grain", "amount": 5, "minLevel": 2, "maxLevel": 4 }
+  ],
+  "outputs": [
+    { "goodId": "good:flour", "amount": 8, "minLevel": 2 }
+  ],
+  "extractions": [
+    { "goodId": "good:ore", "amount": 10, "requiresDeposit": true, "minLevel": 3 }
+  ]
+}
+```
+
+`minLevel` and `maxLevel` are optional integer building levels starting at `1`. If omitted or `null`, that side of the window is unbounded. Validation rejects non-integer levels below `1` and rejects `maxLevel` lower than `minLevel`. Inactive flows do not create demand, consume inputs, report production capacity, produce goods, or extract deposits.
+
+Legacy extraction fields (`extractionGoodId`, `extractionAmountPerTurn`, and `extractionRequiresDeposit`) remain supported for older scenario content, but new authored buildings should prefer `extractions` so every extracted good can declare its own deposit and level rules.
+
 ## Authoring Checks
 
 Scenario authors should validate:
