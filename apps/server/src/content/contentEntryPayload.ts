@@ -30,6 +30,56 @@ import type {
 
 const SETTINGS_MAX_NUMBER = 1_000_000_000_000;
 
+const levelBoundSchema = z.number().int().min(1).nullable().optional();
+
+const goodFlowPayloadSchema = z
+  .object({
+    goodId: z.string().trim().min(1).max(120),
+    amount: z.number().finite().min(0),
+    affectedByFertility: z.boolean().optional(),
+    minLevel: levelBoundSchema,
+    maxLevel: levelBoundSchema,
+  })
+  .refine((flow) => flow.minLevel == null || flow.maxLevel == null || flow.maxLevel >= flow.minLevel, {
+    message: "maxLevel must be greater than or equal to minLevel",
+    path: ["maxLevel"],
+  });
+
+const extractionFlowPayloadSchema = z
+  .object({
+    goodId: z.string().trim().min(1).max(120),
+    amount: z.number().finite().min(0),
+    requiresDeposit: z.boolean().optional(),
+    minLevel: levelBoundSchema,
+    maxLevel: levelBoundSchema,
+  })
+  .refine((flow) => flow.minLevel == null || flow.maxLevel == null || flow.maxLevel >= flow.minLevel, {
+    message: "maxLevel must be greater than or equal to minLevel",
+    path: ["maxLevel"],
+  });
+
+function normalizeExtractionFlows(input: unknown): Array<{ goodId: string; amount: number; requiresDeposit?: boolean; minLevel?: number; maxLevel?: number }> {
+  if (!Array.isArray(input)) return [];
+  const items: Array<{ goodId: string; amount: number; requiresDeposit?: boolean; minLevel?: number; maxLevel?: number }> = [];
+  for (const raw of input) {
+    if (!raw || typeof raw !== "object") continue;
+    const row = raw as Partial<{ goodId: unknown; amount: unknown; requiresDeposit: unknown; minLevel: unknown; maxLevel: unknown }>;
+    const goodId = typeof row.goodId === "string" ? row.goodId.trim() : "";
+    const amount = typeof row.amount === "number" && Number.isFinite(row.amount) ? Math.max(0, row.amount) : 0;
+    if (!goodId || amount <= 0) continue;
+    const minLevel = typeof row.minLevel === "number" && Number.isInteger(row.minLevel) && row.minLevel >= 1 ? row.minLevel : null;
+    const maxLevel = typeof row.maxLevel === "number" && Number.isInteger(row.maxLevel) && row.maxLevel >= 1 ? row.maxLevel : null;
+    items.push({
+      goodId,
+      amount: Number(amount.toFixed(3)),
+      ...(row.requiresDeposit === false ? { requiresDeposit: false } : row.requiresDeposit === true ? { requiresDeposit: true } : {}),
+      ...(minLevel !== null ? { minLevel } : {}),
+      ...(maxLevel !== null ? { maxLevel } : {}),
+    });
+  }
+  return items.slice(0, 64);
+}
+
 const modifierEffectPayloadSchema = z.object({
   stat: z.enum([
     "culture_gain",
@@ -254,8 +304,9 @@ export const culturePayloadSchema = z.object({
   extractionGoodId: z.string().trim().min(1).max(120).nullable().optional(),
   extractionAmountPerTurn: z.number().finite().min(0).optional(),
   extractionRequiresDeposit: z.boolean().optional(),
-  inputs: z.array(z.object({ goodId: z.string().trim().min(1).max(120), amount: z.number().finite().min(0), affectedByFertility: z.boolean().optional() })).optional(),
-  outputs: z.array(z.object({ goodId: z.string().trim().min(1).max(120), amount: z.number().finite().min(0), affectedByFertility: z.boolean().optional() })).optional(),
+  extractions: z.array(extractionFlowPayloadSchema).optional(),
+  inputs: z.array(goodFlowPayloadSchema).optional(),
+  outputs: z.array(goodFlowPayloadSchema).optional(),
   workforceRequirements: z.array(z.object({ professionId: z.string().trim().min(1).max(120), workers: z.number().int().min(0) })).optional(),
   allowedCountryIds: z.array(z.string().trim().min(1).max(120)).optional(),
   deniedCountryIds: z.array(z.string().trim().min(1).max(120)).optional(),
@@ -569,6 +620,7 @@ export function sanitizeContentEntryByKind(
             : null,
       extractionAmountPerTurn: Number(Math.max(0, payload.extractionAmountPerTurn ?? 0).toFixed(3)),
       extractionRequiresDeposit: payload.extractionRequiresDeposit ?? true,
+      extractions: normalizeExtractionFlows(payload.extractions),
       inputs: normalizeGoodFlows(payload.inputs),
       outputs: normalizeGoodFlows(payload.outputs),
       workforceRequirements: normalizeWorkforceRequirements(payload.workforceRequirements),

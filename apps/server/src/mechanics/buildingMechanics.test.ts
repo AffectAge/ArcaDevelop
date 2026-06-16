@@ -524,6 +524,80 @@ describe("buildingMechanics", () => {
     expect(production).toEqual({ "good:food": 5 });
   });
 
+  it("activates and retires level-gated inputs and outputs", () => {
+    const warehouse = { "good:grain": 100 };
+    const productionMax: Record<string, number> = {};
+    const production: Record<string, number> = {};
+
+    const result = resolveBuildingProductionTurn({
+      building: {
+        id: "building:mill",
+        inputs: [
+          { goodId: "good:grain", amount: 10, minLevel: 2, maxLevel: 3 },
+          { goodId: "good:coal", amount: 10, minLevel: 4 },
+        ],
+        outputs: [
+          { goodId: "good:flour", amount: 4, minLevel: 2, maxLevel: 3 },
+          { goodId: "good:steel", amount: 4, minLevel: 4 },
+        ],
+      },
+      instanceLevel: 3,
+      warehouse,
+      regionResourceDeposits: [],
+      laborCoverage: 1,
+      infraCoverage: 1,
+      financeCoverage: 1,
+      currentDurability: 100,
+      maxDurability: 100,
+      buildingThroughput: 1,
+      fertilityMultiplier: 1,
+      pollutionProductivityFactor: 1,
+      resolveInputAmount: (input) => input.amount,
+      resolveOutputAmount: (_goodId, baseAmount) => baseAmount,
+      addProductionMax: (goodId, amount) => {
+        productionMax[goodId] = amount;
+      },
+      addProduction: (goodId, amount) => {
+        production[goodId] = amount;
+      },
+    });
+
+    expect(result.consumedByGood).toEqual({ "good:grain": 30 });
+    expect(result.producedByGood).toEqual({ "good:flour": 12 });
+    expect(warehouse).toEqual({ "good:grain": 70, "good:flour": 12 });
+    expect(productionMax).toEqual({ "good:flour": 12 });
+    expect(production).toEqual({ "good:flour": 12 });
+  });
+
+  it("keeps legacy buildings without flow levels active", () => {
+    const demanded: Record<string, number> = {};
+    const instance = makeInstance({ warehouseByGoodId: {} });
+
+    const result = prepareBuildingOperationEconomics({
+      instance,
+      building: { id: "building:legacy", inputs: [{ goodId: "good:grain", amount: 2 }] },
+      ownerCountryId: "country:a",
+      instanceLevel: 5,
+      laborCoverageProvince: 1,
+      buildingThroughput: 1,
+      professionsById: new Map(),
+      wageMultiplierByProfession: {},
+      getBaseWageFallback: () => 1,
+      resolveWage: (_professionId, baseWage) => baseWage,
+      resolveInputAmount: (input) => input.amount,
+      getInputPrice: () => 1,
+      addInputDemand: (goodId, amount) => {
+        demanded[goodId] = amount;
+      },
+      ensureCountry: () => undefined,
+      getCountryDucats: () => 0,
+      setCountryDucats: () => undefined,
+    });
+
+    expect(result.inputNeeds).toEqual([{ goodId: "good:grain", required: 10, available: 0 }]);
+    expect(demanded).toEqual({ "good:grain": 10 });
+  });
+
   it("resolves deposit extraction and depletes available deposits", () => {
     const warehouse: Record<string, number> = {};
     const deposits = [{ goodId: "good:ore", amount: 3 }];

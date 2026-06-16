@@ -2,6 +2,16 @@ export type GoodFlow = {
   goodId: string;
   amount: number;
   affectedByFertility?: boolean;
+  minLevel?: number | null;
+  maxLevel?: number | null;
+};
+
+export type BuildingExtractionFlow = {
+  goodId: string;
+  amount: number;
+  requiresDeposit?: boolean | null;
+  minLevel?: number | null;
+  maxLevel?: number | null;
 };
 
 export type WorkforceRequirement = {
@@ -14,14 +24,18 @@ export function normalizeGoodFlows(input: unknown): GoodFlow[] {
   const items: GoodFlow[] = [];
   for (const raw of input) {
     if (!raw || typeof raw !== "object") continue;
-    const row = raw as Partial<{ goodId: unknown; amount: unknown; affectedByFertility: unknown }>;
+    const row = raw as Partial<{ goodId: unknown; amount: unknown; affectedByFertility: unknown; minLevel: unknown; maxLevel: unknown }>;
     const goodId = typeof row.goodId === "string" ? row.goodId.trim() : "";
     const amount = typeof row.amount === "number" && Number.isFinite(row.amount) ? Math.max(0, row.amount) : 0;
     if (!goodId || amount <= 0) continue;
+    const minLevel = typeof row.minLevel === "number" && Number.isInteger(row.minLevel) && row.minLevel >= 1 ? row.minLevel : null;
+    const maxLevel = typeof row.maxLevel === "number" && Number.isInteger(row.maxLevel) && row.maxLevel >= 1 ? row.maxLevel : null;
     items.push({
       goodId,
       amount: Number(amount.toFixed(3)),
       ...(row.affectedByFertility === true ? { affectedByFertility: true } : {}),
+      ...(minLevel !== null ? { minLevel } : {}),
+      ...(maxLevel !== null ? { maxLevel } : {}),
     });
   }
   return items.slice(0, 64);

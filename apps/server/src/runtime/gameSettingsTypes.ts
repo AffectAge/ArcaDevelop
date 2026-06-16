@@ -10,7 +10,7 @@ import type {
 import type { BuildingCountryLimit, PollutionProductivityMode } from "../mechanics/buildingMechanics";
 import type { GoodDistributionType, GoodTransportMode } from "../mechanics/marketTurnMechanics";
 import type { CultureNeedsProfile } from "../mechanics/populationMechanics";
-import type { GoodFlow, WorkforceRequirement } from "../mechanics/contentFieldNormalizers";
+import type { BuildingExtractionFlow, GoodFlow, WorkforceRequirement } from "../mechanics/contentFieldNormalizers";
 
 export type GameContentEntry = {
   id: string;
@@ -85,6 +85,7 @@ export type BuildingContentEntry = GameContentEntry & {
   extractionGoodId?: string | null;
   extractionAmountPerTurn?: number | null;
   extractionRequiresDeposit?: boolean | null;
+  extractions?: BuildingExtractionFlow[];
   inputs?: GoodFlow[];
   outputs?: GoodFlow[];
   workforceRequirements?: WorkforceRequirement[];
