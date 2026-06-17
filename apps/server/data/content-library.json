@@ -1666,6 +1666,46 @@
     ],
     "buildings": [
       {
+        "id": "f72dc762-7f3b-4fef-b9da-8b6b7004e760",
+        "name": "Новое здание",
+        "description": "",
+        "color": "#a78bfa",
+        "logoUrl": null,
+        "malePortraitUrl": null,
+        "femalePortraitUrl": null,
+        "costConstruction": 100,
+        "costDucats": 10,
+        "startingDucats": 0,
+        "maxLevel": 1,
+        "maxDurability": 100,
+        "upgradeCostDucats": 10,
+        "upgradeCostConstruction": 100,
+        "extractionGoodId": null,
+        "extractionAmountPerTurn": 0,
+        "extractionRequiresDeposit": true,
+        "extractions": [],
+        "inputs": [],
+        "outputs": [],
+        "workforceRequirements": [],
+        "allowedCountryIds": [],
+        "deniedCountryIds": [],
+        "allowedProvinceTypes": [],
+        "deniedProvinceTypes": [],
+        "allowedClimates": [],
+        "deniedClimates": [],
+        "allowedLandscapes": [],
+        "deniedLandscapes": [],
+        "allowedContinents": [],
+        "deniedContinents": [],
+        "allowedStrategicRegions": [],
+        "deniedStrategicRegions": [],
+        "minRadiation": null,
+        "maxRadiation": null,
+        "pollutionProductivityMode": "penalty",
+        "countryBuildLimits": [],
+        "globalBuildLimit": null
+      },
+      {
         "id": "02b92dab-5bb9-4e7e-bc43-406a5e0a16fe",
         "name": "Офисный центр",
         "description": "",
@@ -18184,5 +18224,5 @@
     "ducats": "/uploads/resource-icons/b06dc196-dbe0-418f-9919-284c157bdb6e.png",
     "gold": "/uploads/resource-icons/885fa861-132b-4144-bafa-515f31c45216.png"
   },
-  "updatedAt": "2026-06-16T15:20:09.008Z"
+  "updatedAt": "2026-06-16T15:48:17.417Z"
 }

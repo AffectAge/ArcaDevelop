@@ -84,8 +84,9 @@ export type ContentCulture = {
   industryId?: string | null;
   extractionAmountPerTurn?: number | null;
   extractionRequiresDeposit?: boolean | null;
-  inputs?: Array<{ goodId: string; amount: number; affectedByFertility?: boolean }> | null;
-  outputs?: Array<{ goodId: string; amount: number; affectedByFertility?: boolean }> | null;
+  extractions?: Array<{ goodId: string; amount: number; requiresDeposit?: boolean; minLevel?: number; maxLevel?: number }> | null;
+  inputs?: Array<{ goodId: string; amount: number; affectedByFertility?: boolean; minLevel?: number; maxLevel?: number }> | null;
+  outputs?: Array<{ goodId: string; amount: number; affectedByFertility?: boolean; minLevel?: number; maxLevel?: number }> | null;
   workforceRequirements?: Array<{ professionId: string; workers: number }> | null;
   allowedCountryIds?: string[] | null;
   deniedCountryIds?: string[] | null;
@@ -209,8 +210,9 @@ type ContentEntryUpsertPayload = {
   industryId?: string | null;
   extractionAmountPerTurn?: number | null;
   extractionRequiresDeposit?: boolean | null;
-  inputs?: Array<{ goodId: string; amount: number; affectedByFertility?: boolean }>;
-  outputs?: Array<{ goodId: string; amount: number; affectedByFertility?: boolean }>;
+  extractions?: Array<{ goodId: string; amount: number; requiresDeposit?: boolean; minLevel?: number; maxLevel?: number }>;
+  inputs?: Array<{ goodId: string; amount: number; affectedByFertility?: boolean; minLevel?: number; maxLevel?: number }>;
+  outputs?: Array<{ goodId: string; amount: number; affectedByFertility?: boolean; minLevel?: number; maxLevel?: number }>;
   workforceRequirements?: Array<{ professionId: string; workers: number }>;
   allowedCountryIds?: string[];
   deniedCountryIds?: string[];

@@ -110,6 +110,19 @@ export type UiTextKey =
   | "buildings.selectRegion"
   | "buildings.confirmRegion"
   | "buildings.renamePrompt"
+  | "contentPanel.flow.addExtraction"
+  | "contentPanel.flow.amount"
+  | "contentPanel.flow.extractions"
+  | "contentPanel.flow.extractionsTooltip"
+  | "contentPanel.flow.fromLevel"
+  | "contentPanel.flow.good"
+  | "contentPanel.flow.inputsTooltip"
+  | "contentPanel.flow.invalidLevelWindow"
+  | "contentPanel.flow.noExtractions"
+  | "contentPanel.flow.noLimit"
+  | "contentPanel.flow.outputsTooltip"
+  | "contentPanel.flow.requiresDeposit"
+  | "contentPanel.flow.toLevel"
   | "provinceContext.openColonization"
   | "provinceContext.openProvinceKnowledge"
   | "provinceContext.createProvinceKnowledge"
@@ -226,6 +239,19 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.selectRegion": "Select region",
     "buildings.confirmRegion": "Region:",
     "buildings.renamePrompt": "Building: {building}\nRegion: {region}",
+    "contentPanel.flow.addExtraction": "Add extraction",
+    "contentPanel.flow.amount": "Amount",
+    "contentPanel.flow.extractions": "Resource extraction",
+    "contentPanel.flow.extractionsTooltip": "Resources extracted by the building each turn. Empty level bounds mean no level limit.",
+    "contentPanel.flow.fromLevel": "From level",
+    "contentPanel.flow.good": "Good",
+    "contentPanel.flow.inputsTooltip": "Goods consumed by the building each turn. Empty level bounds mean no level limit.",
+    "contentPanel.flow.invalidLevelWindow": "Flow level window is invalid: max level must be greater than or equal to min level.",
+    "contentPanel.flow.noExtractions": "No resource extraction rows",
+    "contentPanel.flow.noLimit": "No limit",
+    "contentPanel.flow.outputsTooltip": "Goods produced by the building each turn. Empty level bounds mean no level limit.",
+    "contentPanel.flow.requiresDeposit": "Requires deposit",
+    "contentPanel.flow.toLevel": "To level",
     "provinceContext.openColonization": "Open colonization",
     "provinceContext.openProvinceKnowledge": "Province article",
     "provinceContext.createProvinceKnowledge": "Create province article",
@@ -341,6 +367,19 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.selectRegion": "Выберите регион",
     "buildings.confirmRegion": "Регион:",
     "buildings.renamePrompt": "Постройка: {building}\nРегион: {region}",
+    "contentPanel.flow.addExtraction": "Добавить добычу",
+    "contentPanel.flow.amount": "Количество",
+    "contentPanel.flow.extractions": "Добыча ресурсов",
+    "contentPanel.flow.extractionsTooltip": "Ресурсы, которые здание добывает каждый ход. Пустые границы уровня означают отсутствие ограничения.",
+    "contentPanel.flow.fromLevel": "С уровня",
+    "contentPanel.flow.good": "Товар",
+    "contentPanel.flow.inputsTooltip": "Товары, которые здание потребляет каждый ход. Пустые границы уровня означают отсутствие ограничения.",
+    "contentPanel.flow.invalidLevelWindow": "Некорректное окно уровней flow: максимальный уровень должен быть больше или равен минимальному.",
+    "contentPanel.flow.noExtractions": "Строк добычи ресурсов нет",
+    "contentPanel.flow.noLimit": "Без лимита",
+    "contentPanel.flow.outputsTooltip": "Товары, которые здание производит каждый ход. Пустые границы уровня означают отсутствие ограничения.",
+    "contentPanel.flow.requiresDeposit": "Требует залежь",
+    "contentPanel.flow.toLevel": "До уровня",
     "provinceContext.openColonization": "Открыть колонизацию",
     "provinceContext.openProvinceKnowledge": "Статья о провинции",
     "provinceContext.createProvinceKnowledge": "Создать статью о провинции",

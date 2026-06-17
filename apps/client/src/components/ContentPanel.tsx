@@ -9,6 +9,7 @@ import { AppButton } from "./ui/AppButton";
 import { AppInput, AppTextarea } from "./ui/AppForm";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard, AppEmptyState, AppSectionHeader } from "./ui/AppSurface";
+import { useUiText } from "../i18n/useUiText";
 import {
   adminCreateContentEntry,
   adminDeleteContentEntry,
@@ -348,7 +349,8 @@ const CONTENT_UI_SCHEMA = {
 } as const;
 type PanelCategory = ContentEntryKind;
 type PanelSection = "general" | "economy" | "exploration" | "criteria" | "needs" | "politics" | "technology" | "modifiers" | "decisions" | "events" | "branding";
-type GoodFlowDraft = { goodId: string; amount: string; affectedByFertility?: boolean };
+type GoodFlowDraft = { goodId: string; amount: string; affectedByFertility?: boolean; minLevel: string; maxLevel: string };
+type ExtractionFlowDraft = { goodId: string; amount: string; requiresDeposit: boolean; minLevel: string; maxLevel: string };
 type PollutionProductivityModeDraft = "penalty" | "bonus" | "ignore";
 type WorkforceRequirementDraft = { professionId: string; workers: string };
 type CountryBuildLimitDraft = { countryId: string; limit: string };
@@ -913,18 +915,57 @@ async function validateRacePortrait(file: File): Promise<void> {
   });
 }
 
-function normalizeGoodFlowsDraft(rows: GoodFlowDraft[]): Array<{ goodId: string; amount: number; affectedByFertility?: boolean }> {
+function normalizeLevelBoundDraft(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) return null;
+  return Math.max(1, Math.floor(parsed));
+}
+
+function hasInvalidFlowLevelWindow(rows: Array<{ minLevel: string; maxLevel: string }>): boolean {
+  return rows.some((row) => {
+    const minLevel = normalizeLevelBoundDraft(row.minLevel);
+    const maxLevel = normalizeLevelBoundDraft(row.maxLevel);
+    return minLevel !== null && maxLevel !== null && maxLevel < minLevel;
+  });
+}
+
+function normalizeGoodFlowsDraft(rows: GoodFlowDraft[]): Array<{ goodId: string; amount: number; affectedByFertility?: boolean; minLevel?: number; maxLevel?: number }> {
   return rows
     .map((row) => ({
       goodId: row.goodId.trim(),
       amount: Number(row.amount),
       affectedByFertility: row.affectedByFertility === true,
+      minLevel: normalizeLevelBoundDraft(row.minLevel),
+      maxLevel: normalizeLevelBoundDraft(row.maxLevel),
     }))
     .filter((row) => row.goodId.length > 0 && Number.isFinite(row.amount) && row.amount > 0)
     .map((row) => ({
       goodId: row.goodId,
       amount: Number(row.amount.toFixed(3)),
       ...(row.affectedByFertility ? { affectedByFertility: true } : {}),
+      ...(row.minLevel !== null ? { minLevel: row.minLevel } : {}),
+      ...(row.maxLevel !== null ? { maxLevel: row.maxLevel } : {}),
+    }));
+}
+
+function normalizeExtractionFlowsDraft(rows: ExtractionFlowDraft[]): Array<{ goodId: string; amount: number; requiresDeposit?: boolean; minLevel?: number; maxLevel?: number }> {
+  return rows
+    .map((row) => ({
+      goodId: row.goodId.trim(),
+      amount: Number(row.amount),
+      requiresDeposit: row.requiresDeposit !== false,
+      minLevel: normalizeLevelBoundDraft(row.minLevel),
+      maxLevel: normalizeLevelBoundDraft(row.maxLevel),
+    }))
+    .filter((row) => row.goodId.length > 0 && Number.isFinite(row.amount) && row.amount > 0)
+    .map((row) => ({
+      goodId: row.goodId,
+      amount: Number(row.amount.toFixed(3)),
+      ...(row.requiresDeposit ? { requiresDeposit: true } : { requiresDeposit: false }),
+      ...(row.minLevel !== null ? { minLevel: row.minLevel } : {}),
+      ...(row.maxLevel !== null ? { maxLevel: row.maxLevel } : {}),
     }));
 }
 
@@ -1219,6 +1260,7 @@ function normalizeParliamentPowerDraft(
 }
 
 export function ContentPanel({ open, token, onClose }: Props) {
+  const { t } = useUiText();
   const [activeCategory, setActiveCategory] = useState<PanelCategory>("cultures");
   const [contentSection, setContentSection] = useState<PanelSection>("general");
   const [entries, setEntries] = useState<ContentEntry[]>([]);
@@ -1277,6 +1319,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
   const [draftExtractionGoodId, setDraftExtractionGoodId] = useState("");
   const [draftExtractionAmountPerTurn, setDraftExtractionAmountPerTurn] = useState("0");
   const [draftExtractionRequiresDeposit, setDraftExtractionRequiresDeposit] = useState(true);
+  const [draftExtractions, setDraftExtractions] = useState<ExtractionFlowDraft[]>([]);
   const [draftInputs, setDraftInputs] = useState<GoodFlowDraft[]>([]);
   const [draftOutputs, setDraftOutputs] = useState<GoodFlowDraft[]>([]);
   const [draftWorkforceRequirements, setDraftWorkforceRequirements] = useState<WorkforceRequirementDraft[]>([]);
@@ -1457,11 +1500,25 @@ export function ContentPanel({ open, token, onClose }: Props) {
       extractionAmountPerTurn: entry.extractionAmountPerTurn ?? null,
       extractionRequiresDeposit:
         typeof entry.extractionRequiresDeposit === "boolean" ? entry.extractionRequiresDeposit : true,
-      inputs: (entry.inputs ?? []).map((row) => ({ goodId: row.goodId, amount: Number(row.amount.toFixed(3)) })),
+      extractions: (entry.extractions ?? []).map((row) => ({
+        goodId: row.goodId,
+        amount: Number(row.amount.toFixed(3)),
+        ...(row.requiresDeposit === false ? { requiresDeposit: false } : row.requiresDeposit === true ? { requiresDeposit: true } : {}),
+        ...(typeof row.minLevel === "number" ? { minLevel: row.minLevel } : {}),
+        ...(typeof row.maxLevel === "number" ? { maxLevel: row.maxLevel } : {}),
+      })),
+      inputs: (entry.inputs ?? []).map((row) => ({
+        goodId: row.goodId,
+        amount: Number(row.amount.toFixed(3)),
+        ...(typeof row.minLevel === "number" ? { minLevel: row.minLevel } : {}),
+        ...(typeof row.maxLevel === "number" ? { maxLevel: row.maxLevel } : {}),
+      })),
       outputs: (entry.outputs ?? []).map((row) => ({
         goodId: row.goodId,
         amount: Number(row.amount.toFixed(3)),
         ...(row.affectedByFertility === true ? { affectedByFertility: true } : {}),
+        ...(typeof row.minLevel === "number" ? { minLevel: row.minLevel } : {}),
+        ...(typeof row.maxLevel === "number" ? { maxLevel: row.maxLevel } : {}),
       })),
       workforceRequirements: (entry.workforceRequirements ?? []).map((row) => ({
         professionId: row.professionId,
@@ -1752,14 +1809,10 @@ export function ContentPanel({ open, token, onClose }: Props) {
           : null,
       industryId: activeCategory === "buildings" ? draftIndustryId.trim() || null : null,
       sectorId: activeCategory === "buildings" ? draftSectorId.trim() || null : null,
-      extractionGoodId: activeCategory === "buildings" ? draftExtractionGoodId.trim() || null : null,
-      extractionAmountPerTurn:
-        activeCategory === "buildings"
-          ? Number.isFinite(Number(draftExtractionAmountPerTurn))
-            ? Number(Math.max(0, Number(draftExtractionAmountPerTurn)).toFixed(3))
-            : null
-          : null,
-      extractionRequiresDeposit: activeCategory === "buildings" ? Boolean(draftExtractionRequiresDeposit) : null,
+      extractionGoodId: activeCategory === "buildings" ? null : null,
+      extractionAmountPerTurn: activeCategory === "buildings" ? 0 : null,
+      extractionRequiresDeposit: activeCategory === "buildings" ? true : null,
+      extractions: activeCategory === "buildings" ? normalizeExtractionFlowsDraft(draftExtractions) : [],
       inputs: activeCategory === "buildings" ? normalizeGoodFlowsDraft(draftInputs) : [],
       outputs: activeCategory === "buildings" ? normalizeGoodFlowsDraft(draftOutputs) : [],
       workforceRequirements: activeCategory === "buildings" ? normalizeWorkforceDraft(draftWorkforceRequirements) : [],
@@ -2126,6 +2179,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
       setDraftUpgradeCostConstruction("100");
       setDraftIndustryId("");
       setDraftSectorId("");
+      setDraftExtractions([]);
       setDraftInputs([]);
       setDraftOutputs([]);
       setDraftWorkforceRequirements([]);
@@ -2329,7 +2383,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
           : "1000",
     );
     setDraftBattalionEquipmentNeeds(
-      (selectedEntry.equipmentNeeds ?? []).map((row) => ({ goodId: row.goodId, amount: String(row.amount) })),
+      (selectedEntry.equipmentNeeds ?? []).map((row) => ({ goodId: row.goodId, amount: String(row.amount), minLevel: "", maxLevel: "" })),
     );
     setDraftCostConstruction(
       typeof selectedEntry.costConstruction === "number" && Number.isFinite(selectedEntry.costConstruction)
@@ -2393,11 +2447,41 @@ export function ContentPanel({ open, token, onClose }: Props) {
     setDraftExtractionRequiresDeposit(
       typeof selectedEntry.extractionRequiresDeposit === "boolean" ? selectedEntry.extractionRequiresDeposit : true,
     );
-    setDraftInputs((selectedEntry.inputs ?? []).map((row) => ({ goodId: row.goodId, amount: String(row.amount) })));
+    const authoredExtractions = selectedEntry.extractions ?? [];
+    setDraftExtractions(
+      authoredExtractions.length > 0
+        ? authoredExtractions.map((row) => ({
+            goodId: row.goodId,
+            amount: String(row.amount),
+            requiresDeposit: row.requiresDeposit !== false,
+            minLevel: typeof row.minLevel === "number" ? String(row.minLevel) : "",
+            maxLevel: typeof row.maxLevel === "number" ? String(row.maxLevel) : "",
+          }))
+        : typeof selectedEntry.extractionGoodId === "string" && selectedEntry.extractionGoodId.trim().length > 0
+          ? [{
+              goodId: selectedEntry.extractionGoodId.trim(),
+              amount:
+                typeof selectedEntry.extractionAmountPerTurn === "number" && Number.isFinite(selectedEntry.extractionAmountPerTurn)
+                  ? String(Math.max(0, selectedEntry.extractionAmountPerTurn))
+                  : "0",
+              requiresDeposit: typeof selectedEntry.extractionRequiresDeposit === "boolean" ? selectedEntry.extractionRequiresDeposit : true,
+              minLevel: "",
+              maxLevel: "",
+            }]
+          : [],
+    );
+    setDraftInputs((selectedEntry.inputs ?? []).map((row) => ({
+      goodId: row.goodId,
+      amount: String(row.amount),
+      minLevel: typeof row.minLevel === "number" ? String(row.minLevel) : "",
+      maxLevel: typeof row.maxLevel === "number" ? String(row.maxLevel) : "",
+    })));
     setDraftOutputs((selectedEntry.outputs ?? []).map((row) => ({
       goodId: row.goodId,
       amount: String(row.amount),
       affectedByFertility: row.affectedByFertility === true,
+      minLevel: typeof row.minLevel === "number" ? String(row.minLevel) : "",
+      maxLevel: typeof row.maxLevel === "number" ? String(row.maxLevel) : "",
     })));
     setDraftWorkforceRequirements(
       (selectedEntry.workforceRequirements ?? []).map((row) => ({
@@ -2613,6 +2697,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
     draftExtractionGoodId,
     draftExtractionAmountPerTurn,
     draftExtractionRequiresDeposit,
+    draftExtractions,
     draftNeedsProfile,
     draftColor,
     draftDescription,
@@ -2751,6 +2836,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
         extractionGoodId: activeCategory === "buildings" ? null : undefined,
         extractionAmountPerTurn: activeCategory === "buildings" ? 0 : undefined,
         extractionRequiresDeposit: activeCategory === "buildings" ? true : undefined,
+        extractions: activeCategory === "buildings" ? [] : undefined,
         inputs: activeCategory === "buildings" ? [] : undefined,
         outputs: activeCategory === "buildings" ? [] : undefined,
         workforceRequirements: activeCategory === "buildings" ? [] : undefined,
@@ -2885,6 +2971,15 @@ export function ContentPanel({ open, token, onClose }: Props) {
       toast.error("Название должно быть уникальным");
       return;
     }
+    if (
+      activeCategory === "buildings" &&
+      (hasInvalidFlowLevelWindow(draftExtractions) ||
+        hasInvalidFlowLevelWindow(draftInputs) ||
+        hasInvalidFlowLevelWindow(draftOutputs))
+    ) {
+      toast.error(t("contentPanel.flow.invalidLevelWindow"));
+      return;
+    }
     const color = /^#[0-9A-Fa-f]{6}$/.test(draftColor) ? draftColor : "#4ade80";
     const parsedModifiers =
       activeCategory === "modifiers"
@@ -3002,10 +3097,10 @@ export function ContentPanel({ open, token, onClose }: Props) {
         activeCategory === "buildings" ? Math.max(1, Math.floor(Number(draftUpgradeCostConstruction || "100"))) : undefined,
       industryId: activeCategory === "buildings" ? (draftIndustryId.trim() || null) : undefined,
       sectorId: activeCategory === "buildings" ? (draftSectorId.trim() || null) : undefined,
-      extractionGoodId: activeCategory === "buildings" ? (draftExtractionGoodId.trim() || null) : undefined,
-      extractionAmountPerTurn:
-        activeCategory === "buildings" ? Math.max(0, Number(draftExtractionAmountPerTurn || "0")) : undefined,
-      extractionRequiresDeposit: activeCategory === "buildings" ? Boolean(draftExtractionRequiresDeposit) : undefined,
+      extractionGoodId: activeCategory === "buildings" ? null : undefined,
+      extractionAmountPerTurn: activeCategory === "buildings" ? 0 : undefined,
+      extractionRequiresDeposit: activeCategory === "buildings" ? true : undefined,
+      extractions: activeCategory === "buildings" ? normalizeExtractionFlowsDraft(draftExtractions) : undefined,
       inputs: activeCategory === "buildings" ? normalizeGoodFlowsDraft(draftInputs) : undefined,
       outputs: activeCategory === "buildings" ? normalizeGoodFlowsDraft(draftOutputs) : undefined,
       workforceRequirements: activeCategory === "buildings" ? normalizeWorkforceDraft(draftWorkforceRequirements) : undefined,
@@ -5044,7 +5139,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Требования по товарам</div>
                             <button
                               type="button"
-                              onClick={() => setDraftBattalionEquipmentNeeds((prev) => [...prev, { goodId: goodsOptions[0]?.id ?? "", amount: "1" }])}
+                              onClick={() => setDraftBattalionEquipmentNeeds((prev) => [...prev, { goodId: goodsOptions[0]?.id ?? "", amount: "1", minLevel: "", maxLevel: "" }])}
                               className="rounded-md border border-emerald-400/35 bg-emerald-500/20 px-2 py-1 text-[11px] font-semibold text-emerald-200 transition hover:bg-emerald-500/30"
                             >
                               Добавить
@@ -5266,8 +5361,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 onClick={() => setBuildingExtractionOpen((v) => !v)}
                                 className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
                               >
-                                <Tooltip content="Параметры добычи ресурсов провинции. Если задан ресурс, здание будет пытаться добывать его каждый ход.">
-                                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Добыча из залежей</div>
+                                <Tooltip content={t("contentPanel.flow.extractionsTooltip")}>
+                                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t("contentPanel.flow.extractions")}</div>
                                 </Tooltip>
                                 {buildingExtractionOpen ? (
                                   <ChevronDown size={14} className="text-white/60" />
@@ -5275,6 +5370,20 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   <ChevronRight size={14} className="text-white/60" />
                                 )}
                               </button>
+                              {buildingExtractionOpen && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setDraftExtractions((prev) => [
+                                      ...prev,
+                                      { goodId: goodsOptions[0]?.id ?? "", amount: "1", requiresDeposit: true, minLevel: "", maxLevel: "" },
+                                    ])
+                                  }
+                                  className="rounded-md border border-emerald-400/35 bg-emerald-500/20 px-2 py-1 text-[11px] font-semibold text-emerald-200 transition hover:bg-emerald-500/30"
+                                >
+                                  {t("contentPanel.flow.addExtraction")}
+                                </button>
+                              )}
                             </div>
                             <AnimatePresence initial={false}>
                             {buildingExtractionOpen ? (
@@ -5285,48 +5394,67 @@ export function ContentPanel({ open, token, onClose }: Props) {
                               transition={{ duration: 0.2, ease: "easeOut" }}
                               className="overflow-visible"
                             >
-                            <div className="grid grid-cols-1 gap-2 pt-1 md:grid-cols-3">
-                              <label className="block">
-                                <Tooltip content="Какой товар добывает здание напрямую из провинциальных залежей.">
-                                  <span className="mb-1 block text-xs text-white/60">Добываемый товар</span>
-                                </Tooltip>
-                                <CustomSelect
-                                  value={draftExtractionGoodId}
-                                  onChange={setDraftExtractionGoodId}
-                                  options={[
-                                    { value: "", label: "Не добывает" },
-                                    ...goodsOptions.map((option) => ({ value: option.id, label: option.name })),
-                                  ]}
-                                  buttonClassName="h-[42px]"
-                                />
-                              </label>
-                              <label className="block">
-                                <Tooltip content="Сколько единиц добывается за ход при 100% продуктивности.">
-                                  <span className="mb-1 block text-xs text-white/60">Объем/ход</span>
-                                </Tooltip>
-                                <AppInput
-                                  value={draftExtractionAmountPerTurn}
-                                  onChange={(e) => setDraftExtractionAmountPerTurn(e.target.value)}
-                                  inputMode="decimal"
-                                  placeholder="0"
-                                />
-                              </label>
-                              <label className="block">
-                                <Tooltip content="Если включено, добыча ограничена только существующими залежами в провинции.">
-                                  <span className="mb-1 block text-xs text-white/60">Требует залежь</span>
-                                </Tooltip>
-                                <button
-                                  type="button"
-                                  onClick={() => setDraftExtractionRequiresDeposit((v) => !v)}
-                                  className={`h-[42px] w-full rounded-lg border px-3 text-sm font-semibold transition ${
-                                    draftExtractionRequiresDeposit
-                                      ? "border-emerald-400/35 bg-emerald-500/15 text-emerald-200"
-                                      : "border-white/15 bg-black/35 text-white/70"
-                                  }`}
-                                >
-                                  {draftExtractionRequiresDeposit ? "Да" : "Нет"}
-                                </button>
-                              </label>
+                            <div className="space-y-2 pt-1">
+                              {draftExtractions.map((row, index) => (
+                                <div key={`extraction-${index}`} className="grid grid-cols-[minmax(0,1fr)_90px_90px_90px_132px_32px] gap-2">
+                                  <CustomSelect
+                                    value={row.goodId}
+                                    onChange={(value) =>
+                                      setDraftExtractions((prev) => prev.map((r, i) => (i === index ? { ...r, goodId: value } : r)))
+                                    }
+                                    options={[
+                                      { value: "", label: t("contentPanel.flow.good") },
+                                      ...goodsOptions.map((option) => ({ value: option.id, label: option.name })),
+                                    ]}
+                                    buttonClassName="h-[42px]"
+                                  />
+                                  <AppInput
+                                    value={row.amount}
+                                    onChange={(e) =>
+                                      setDraftExtractions((prev) => prev.map((r, i) => (i === index ? { ...r, amount: e.target.value } : r)))
+                                    }
+                                    inputMode="decimal"
+                                    placeholder={t("contentPanel.flow.amount")}
+                                  />
+                                  <AppInput
+                                    value={row.minLevel}
+                                    onChange={(e) =>
+                                      setDraftExtractions((prev) => prev.map((r, i) => (i === index ? { ...r, minLevel: e.target.value } : r)))
+                                    }
+                                    inputMode="numeric"
+                                    placeholder={t("contentPanel.flow.fromLevel")}
+                                  />
+                                  <AppInput
+                                    value={row.maxLevel}
+                                    onChange={(e) =>
+                                      setDraftExtractions((prev) => prev.map((r, i) => (i === index ? { ...r, maxLevel: e.target.value } : r)))
+                                    }
+                                    inputMode="numeric"
+                                    placeholder={t("contentPanel.flow.toLevel")}
+                                  />
+                                  <AppButton
+                                    type="button"
+                                    size="sm"
+                                    variant={row.requiresDeposit ? "primary" : "secondary"}
+                                    onClick={() =>
+                                      setDraftExtractions((prev) =>
+                                        prev.map((r, i) => (i === index ? { ...r, requiresDeposit: !r.requiresDeposit } : r)),
+                                      )
+                                    }
+                                    className="h-[42px] justify-center text-[11px]"
+                                  >
+                                    {t("contentPanel.flow.requiresDeposit")}
+                                  </AppButton>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDraftExtractions((prev) => prev.filter((_, i) => i !== index))}
+                                    className="rounded-lg border border-rose-400/30 bg-rose-500/10 text-xs text-rose-200"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
+                              {draftExtractions.length === 0 && <div className="text-xs text-white/45">{t("contentPanel.flow.noExtractions")}</div>}
                             </div>
                             </motion.div>
                             ) : null}
@@ -5340,7 +5468,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 onClick={() => setBuildingInputsOpen((v) => !v)}
                                 className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
                               >
-                                <Tooltip content="Товары, которые здание потребляет каждый ход при производстве.">
+                                <Tooltip content={t("contentPanel.flow.inputsTooltip")}>
                                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Входные товары</div>
                                 </Tooltip>
                                 {buildingInputsOpen ? (
@@ -5353,7 +5481,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 <Tooltip content="Добавить новую строку входного товара.">
                                   <button
                                     type="button"
-                                    onClick={() => setDraftInputs((prev) => [...prev, { goodId: goodsOptions[0]?.id ?? "", amount: "1" }])}
+                                    onClick={() => setDraftInputs((prev) => [...prev, { goodId: goodsOptions[0]?.id ?? "", amount: "1", minLevel: "", maxLevel: "" }])}
                                     className="rounded-md border border-emerald-400/35 bg-emerald-500/20 px-2 py-1 text-[11px] font-semibold text-emerald-200 transition hover:bg-emerald-500/30"
                                   >
                                     Добавить
@@ -5372,7 +5500,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             >
                             <div className="space-y-2 pt-1">
                               {draftInputs.map((row, index) => (
-                                <div key={`input-${index}`} className="grid grid-cols-[minmax(0,1fr)_110px_32px] gap-2">
+                                <div key={`input-${index}`} className="grid grid-cols-[minmax(0,1fr)_110px_90px_90px_32px] gap-2">
                                   <CustomSelect
                                     value={row.goodId}
                                     onChange={(value) =>
@@ -5391,6 +5519,22 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                     }
                                     inputMode="decimal"
                                     placeholder="0"
+                                  />
+                                  <AppInput
+                                    value={row.minLevel}
+                                    onChange={(e) =>
+                                      setDraftInputs((prev) => prev.map((r, i) => (i === index ? { ...r, minLevel: e.target.value } : r)))
+                                    }
+                                    inputMode="numeric"
+                                    placeholder={t("contentPanel.flow.fromLevel")}
+                                  />
+                                  <AppInput
+                                    value={row.maxLevel}
+                                    onChange={(e) =>
+                                      setDraftInputs((prev) => prev.map((r, i) => (i === index ? { ...r, maxLevel: e.target.value } : r)))
+                                    }
+                                    inputMode="numeric"
+                                    placeholder={t("contentPanel.flow.toLevel")}
                                   />
                                   <button
                                     type="button"
@@ -5415,7 +5559,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 onClick={() => setBuildingOutputsOpen((v) => !v)}
                                 className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
                               >
-                                <Tooltip content="Товары, которые здание производит каждый ход.">
+                                <Tooltip content={t("contentPanel.flow.outputsTooltip")}>
                                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Выходные товары</div>
                                 </Tooltip>
                                 {buildingOutputsOpen ? (
@@ -5428,7 +5572,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 <Tooltip content="Добавить новую строку выходного товара.">
                                   <button
                                     type="button"
-                                    onClick={() => setDraftOutputs((prev) => [...prev, { goodId: goodsOptions[0]?.id ?? "", amount: "1", affectedByFertility: false }])}
+                                    onClick={() => setDraftOutputs((prev) => [...prev, { goodId: goodsOptions[0]?.id ?? "", amount: "1", affectedByFertility: false, minLevel: "", maxLevel: "" }])}
                                     className="rounded-md border border-emerald-400/35 bg-emerald-500/20 px-2 py-1 text-[11px] font-semibold text-emerald-200 transition hover:bg-emerald-500/30"
                                   >
                                     Добавить
@@ -5447,7 +5591,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             >
                             <div className="space-y-2 pt-1">
                               {draftOutputs.map((row, index) => (
-                                <div key={`output-${index}`} className="grid grid-cols-[minmax(0,1fr)_110px_132px_32px] gap-2">
+                                <div key={`output-${index}`} className="grid grid-cols-[minmax(0,1fr)_110px_90px_90px_132px_32px] gap-2">
                                   <CustomSelect
                                     value={row.goodId}
                                     onChange={(value) =>
@@ -5466,6 +5610,22 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                     }
                                     inputMode="decimal"
                                     placeholder="0"
+                                  />
+                                  <AppInput
+                                    value={row.minLevel}
+                                    onChange={(e) =>
+                                      setDraftOutputs((prev) => prev.map((r, i) => (i === index ? { ...r, minLevel: e.target.value } : r)))
+                                    }
+                                    inputMode="numeric"
+                                    placeholder={t("contentPanel.flow.fromLevel")}
+                                  />
+                                  <AppInput
+                                    value={row.maxLevel}
+                                    onChange={(e) =>
+                                      setDraftOutputs((prev) => prev.map((r, i) => (i === index ? { ...r, maxLevel: e.target.value } : r)))
+                                    }
+                                    inputMode="numeric"
+                                    placeholder={t("contentPanel.flow.toLevel")}
                                   />
                                   <AppButton
                                     type="button"
