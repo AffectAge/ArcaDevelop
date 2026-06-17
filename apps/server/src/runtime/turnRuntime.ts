@@ -44,6 +44,13 @@ export const TURN_RESOLVE_WORLD_DELTA_MASK =
   WORLD_DELTA_MASK.divisionsById |
   WORLD_DELTA_MASK.militaryFormationQueueByCountry;
 
+export type AiTurnBeforeResolveHookParams = {
+  turnId: number;
+  aiSettings: GameSettings["ai"];
+};
+
+export type AiTurnBeforeResolveHook = (params: AiTurnBeforeResolveHookParams) => void;
+
 type TurnRuntimeParams = {
   getWorldBase: () => WorldBase;
   setWorldBase: (worldBase: WorldBase) => void;
@@ -69,6 +76,7 @@ type TurnRuntimeParams = {
   dropTurnOrderIndexes: (turnId: number) => void;
   flushPersistentStateNow: () => void | Promise<void>;
   resetTurnTimerAnchor: () => void;
+  runAiTurnBeforeResolve?: AiTurnBeforeResolveHook;
   parseRequestedBuildingIdFromPayload: (payload: Record<string, unknown>) => string;
   resolveBuildingOwnerFromPayload: (payload: Record<string, unknown>, requestedByCountryId: string) => BuildingOwner | null;
   isCountryAllowedForBuildingSync: (building: GameContentEntry, countryId: string) => boolean;
@@ -144,8 +152,15 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
     pushMilitaryRuntimeEvents(news, events);
   };
 
-  const resolveTurn = (): TurnRuntimeResult =>
-    resolveTurnWithPipeline<WorldBaseSectionSnapshot, CountryEventUiNotification>({
+  const resolveTurn = (): TurnRuntimeResult => {
+    const gameSettings = params.getGameSettings();
+    runAiTurnBeforeResolveIfEnabled({
+      turnId: params.getTurnId(),
+      aiSettings: gameSettings.ai,
+      runAiTurnBeforeResolve: params.runAiTurnBeforeResolve,
+    });
+
+    return resolveTurnWithPipeline<WorldBaseSectionSnapshot, CountryEventUiNotification>({
       fullSnapshotMask: params.fullSnapshotMask,
       getTurnId: params.getTurnId,
       setTurnId: params.setTurnId,
@@ -293,6 +308,7 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
       },
       flushPersistentStateNow: params.flushPersistentStateNow,
     });
+  };
 
   const resolveAndBroadcastCurrentTurn = (): boolean => {
     if (isResolvingTurnNow) return false;
@@ -316,4 +332,14 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
     resolveTurn,
     resolveAndBroadcastCurrentTurn,
   };
+}
+
+export function runAiTurnBeforeResolveIfEnabled(params: {
+  turnId: number;
+  aiSettings: GameSettings["ai"];
+  runAiTurnBeforeResolve?: AiTurnBeforeResolveHook;
+}): boolean {
+  if (!params.aiSettings.enabled || !params.runAiTurnBeforeResolve) return false;
+  params.runAiTurnBeforeResolve({ turnId: params.turnId, aiSettings: params.aiSettings });
+  return true;
 }

@@ -65,6 +65,12 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
       shipTypes: ensureDefaultMilitaryContent([], DEFAULT_SHIP_TYPES),
       aircraftTypes: ensureDefaultMilitaryContent([], DEFAULT_AIRCRAFT_TYPES),
     },
+    ai: {
+      enabled: true,
+      maxCountriesPerTick: 50,
+      maxDecisionCandidatesPerCountry: 20,
+      contextCacheTtlTurns: 1,
+    },
     civilopedia: {
       categories: defaultCivilopediaCategories(),
       entries: defaultCivilopediaEntries(),
@@ -189,6 +195,12 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
       battalions: normalizeContentBattalions((library.content as { battalions?: unknown } | undefined)?.battalions),
       shipTypes: normalizeContentShipTypes((library.content as { shipTypes?: unknown } | undefined)?.shipTypes),
       aircraftTypes: normalizeContentAircraftTypes((library.content as { aircraftTypes?: unknown } | undefined)?.aircraftTypes),
+    },
+    ai: {
+      enabled: true,
+      maxCountriesPerTick: 50,
+      maxDecisionCandidatesPerCountry: 20,
+      contextCacheTtlTurns: 1,
     },
     civilopedia: {
       categories: normalizeCivilopediaCategories(library.civilopedia?.categories, civilopediaEntries),

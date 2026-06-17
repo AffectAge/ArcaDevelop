@@ -252,6 +252,12 @@ export type GameSettings = {
     shipTypes: MilitaryContentEntry[];
     aircraftTypes: MilitaryContentEntry[];
   };
+  ai: {
+    enabled: boolean;
+    maxCountriesPerTick: number;
+    maxDecisionCandidatesPerCountry: number;
+    contextCacheTtlTurns: number;
+  };
   civilopedia: {
     categories: string[];
     entries: Array<{

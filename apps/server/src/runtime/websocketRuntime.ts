@@ -149,7 +149,7 @@ export function registerWebSocketRuntime(params: WebSocketRuntimeParams): void {
       }
 
       if (msg.type === "ORDER_DELTA") {
-        await handleOrderDelta({ params, msg, send, playerId, playerCountryId });
+        await submitOrderDeltaToRuntime({ params, msg, send, playerId, playerCountryId });
         return;
       }
 
@@ -288,7 +288,21 @@ function handleReplayRequest(input: {
   for (const delta of replay.deltas) input.send(delta);
 }
 
-async function handleOrderDelta(input: {
+export async function submitAiOrderDeltaToRuntime(input: {
+  params: WebSocketRuntimeParams;
+  msg: OrderDelta;
+  send: (message: WsOutMessage) => void;
+}): Promise<void> {
+  await submitOrderDeltaToRuntime({
+    params: input.params,
+    msg: input.msg,
+    send: input.send,
+    playerId: input.msg.order.playerId,
+    playerCountryId: input.msg.order.countryId,
+  });
+}
+
+export async function submitOrderDeltaToRuntime(input: {
   params: WebSocketRuntimeParams;
   msg: OrderDelta;
   send: (message: WsOutMessage) => void;

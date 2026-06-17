@@ -270,6 +270,12 @@
       "applyBehavior": "scenario-defines-become-running-game-baseline-on-scenario-apply",
       "runtimeAdminSettingsBehavior": "admin-runtime-settings-may-change-current-running-game-after-scenario-apply",
       "supportedSections": {
+        "ai": {
+          "enabled": { "type": "boolean" },
+          "maxCountriesPerTick": { "type": "integer", "min": 1, "max": 1000 },
+          "maxDecisionCandidatesPerCountry": { "type": "integer", "min": 1, "max": 1000 },
+          "contextCacheTtlTurns": { "type": "integer", "min": 1, "max": 100 }
+        },
         "economy": {
           "baseCulturePerTurn": { "type": "integer", "min": 0, "max": 1000000000000 },
           "baseSciencePerTurn": { "type": "integer", "min": 0, "max": 1000000000000 },

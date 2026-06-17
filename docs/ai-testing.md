@@ -46,3 +46,15 @@ Track:
 - AI idle turns.
 
 Failures should explain whether the issue is logic, balance, data, performance, or nondeterminism.
+
+
+## Phase Gates
+
+Every AI implementation phase must report the exact verification commands that ran:
+
+- typecheck: `npm run typecheck -ws`;
+- relevant unit tests for changed AI, economy, market, diplomacy, military, scenario, or shared-contract code;
+- AI fixture tests once the fixture harness exists, including `npm run test:unit -- apps/server/src/ai/aiContext.test.ts apps/server/src/ai/aiEconomyCandidates.test.ts apps/server/src/ai/aiMarketCandidates.test.ts apps/server/src/ai/aiStrategyScoring.test.ts apps/server/src/ai/aiCrisisMode.test.ts apps/server/src/ai/aiDiplomacyMilitaryCandidates.test.ts apps/server/src/ai/aiRuntimePlanner.test.ts apps/server/src/ai/aiOrderSubmissionAdapter.test.ts apps/server/src/runtime/aiRuntimeCoordinator.test.ts` for the Phase 2/3/4/5/6/7, runtime-planner, validated-draft adapter, and guarded runtime coordinator AI harnesses;
+- docs check: `npm run docs:check`.
+
+If an expected AI fixture command does not exist yet, the phase report must say so explicitly and either add the command in that phase or explain why it is deferred. Do not mark a phase complete by silently skipping fixture coverage.

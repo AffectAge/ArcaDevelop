@@ -69,6 +69,12 @@ Currently supported runtime defines:
 
 ```json
 {
+  "ai": {
+    "enabled": true,
+    "maxCountriesPerTick": 50,
+    "maxDecisionCandidatesPerCountry": 20,
+    "contextCacheTtlTurns": 1
+  },
   "economy": {
     "baseCulturePerTurn": 1,
     "baseSciencePerTurn": 1,

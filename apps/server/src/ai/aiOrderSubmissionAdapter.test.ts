@@ -1,0 +1,194 @@
+import { describe, expect, it } from "vitest";
+import type { AiDiplomacyMilitaryCandidate } from "./aiDiplomacyMilitaryCandidates";
+import type { AiEconomyOrderCandidate } from "./aiEconomyCandidates";
+import {
+  createAiBuildOrderDraftsFromPlan,
+  createAiOrderDeltaSubmitter,
+  createOrderDeltaFromAiDraft,
+  submitAiOrderDrafts,
+} from "./aiOrderSubmissionAdapter";
+import type { AiRuntimePlan } from "./aiRuntimePlanner";
+
+function createBuildCandidate(countryId: string): AiEconomyOrderCandidate {
+  return {
+    kind: "build",
+    countryId,
+    regionId: "region:alpha-core",
+    buildingId: "building:farm",
+    orderDraft: {
+      type: "BUILD",
+      countryId,
+      regionId: "region:alpha-core",
+      payload: { buildingId: "building:farm", owner: { type: "state", countryId } },
+    },
+  };
+}
+
+function createDiplomacyCandidate(countryId: string): AiDiplomacyMilitaryCandidate {
+  return {
+    kind: "diplomacy-contact",
+    countryId,
+    targetCountryId: "country:beta",
+    requiresValidatedPipeline: true,
+    request: {
+      route: "/diplomacy/proposals",
+      body: {
+        toCountryId: "country:beta",
+        expiresInTurns: 12,
+        clauses: [{ kind: "text_note", text: "ai.diplomacy.contact" }],
+      },
+    },
+  };
+}
+
+function createPlan(candidate: AiEconomyOrderCandidate | AiDiplomacyMilitaryCandidate | null): AiRuntimePlan {
+  return {
+    enabled: true,
+    turnId: 7,
+    processedCountryIds: ["country:alpha"],
+    skippedCountryIds: [],
+    budget: {
+      maxCountriesPerTick: 1,
+      maxDecisionCandidatesPerCountry: 1,
+      contextCacheTtlTurns: 1,
+    },
+    actions: [
+      {
+        countryId: "country:alpha",
+        candidateCount: candidate ? 1 : 0,
+        selected: candidate
+          ? {
+              candidate,
+              score: 3,
+              reason: { baseWeight: 3, buildingWeight: 0, goodWeight: 0, regionWeight: 0 },
+            }
+          : null,
+      },
+    ],
+  };
+}
+
+describe("createAiBuildOrderDraftsFromPlan", () => {
+  it("converts selected build candidates into validated order drafts", () => {
+    const drafts = createAiBuildOrderDraftsFromPlan({ plan: createPlan(createBuildCandidate("country:alpha")) });
+
+    expect(drafts).toEqual([
+      {
+        kind: "validated-order-draft",
+        candidateKind: "build",
+        countryId: "country:alpha",
+        requiresValidatedPipeline: true,
+        order: {
+          type: "BUILD",
+          turnId: 7,
+          playerId: "ai:country:alpha",
+          countryId: "country:alpha",
+          regionId: "region:alpha-core",
+          payload: {
+            buildingId: "building:farm",
+            owner: { type: "state", countryId: "country:alpha" },
+          },
+        },
+      },
+    ]);
+  });
+
+  it("uses a custom AI player id prefix without changing order payload", () => {
+    const drafts = createAiBuildOrderDraftsFromPlan({
+      plan: createPlan(createBuildCandidate("country:alpha")),
+      aiPlayerIdPrefix: "bot",
+    });
+
+    expect(drafts[0]?.order.playerId).toBe("bot:country:alpha");
+    expect(drafts[0]?.order.payload).toEqual({
+      buildingId: "building:farm",
+      owner: { type: "state", countryId: "country:alpha" },
+    });
+  });
+
+  it("skips unsupported selected candidates and empty selections", () => {
+    expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(createDiplomacyCandidate("country:alpha")) })).toEqual([]);
+    expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(null) })).toEqual([]);
+  });
+
+  it("submits drafts sequentially through an injected validated pipeline adapter", async () => {
+    const drafts = createAiBuildOrderDraftsFromPlan({ plan: createPlan(createBuildCandidate("country:alpha")) });
+    const seenPlayerIds: string[] = [];
+
+    const results = await submitAiOrderDrafts({
+      drafts,
+      submitDraft: async (draft) => {
+        seenPlayerIds.push(draft.order.playerId);
+        return { ok: true, submittedOrderId: "order:ai:1" };
+      },
+    });
+
+    expect(seenPlayerIds).toEqual(["ai:country:alpha"]);
+    expect(results).toEqual([{ ok: true, draft: drafts[0], submittedOrderId: "order:ai:1" }]);
+  });
+
+  it("reports rejected draft submissions without hiding the validation reason", async () => {
+    const drafts = createAiBuildOrderDraftsFromPlan({ plan: createPlan(createBuildCandidate("country:alpha")) });
+
+    const results = await submitAiOrderDrafts({
+      drafts,
+      submitDraft: async () => ({ ok: false, reason: "BUILD_CONFLICT" }),
+    });
+
+    expect(results).toEqual([{ ok: false, draft: drafts[0], reason: "BUILD_CONFLICT" }]);
+  });
+
+
+  it("preserves admin-only diagnostics for rejected draft submissions", async () => {
+    const drafts = createAiBuildOrderDraftsFromPlan({ plan: createPlan(createBuildCandidate("country:alpha")) });
+
+    const results = await submitAiOrderDrafts({
+      drafts,
+      submitDraft: async () => ({
+        ok: false,
+        reason: "NO_RESOURCES",
+        diagnostics: {
+          runtimeErrors: [
+            { code: "NO_RESOURCES", message: "R1" },
+            { code: "BUILD_CONFLICT", message: "R2" },
+          ],
+        },
+      }),
+    });
+
+    expect(results).toEqual([
+      {
+        ok: false,
+        draft: drafts[0],
+        reason: "NO_RESOURCES",
+        diagnostics: {
+          runtimeErrors: [
+            { code: "NO_RESOURCES", message: "R1" },
+            { code: "BUILD_CONFLICT", message: "R2" },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it("converts AI drafts to standard order deltas for the existing submission pipeline", () => {
+    const drafts = createAiBuildOrderDraftsFromPlan({ plan: createPlan(createBuildCandidate("country:alpha")) });
+    const delta = createOrderDeltaFromAiDraft(drafts[0]!);
+
+    expect(delta).toEqual({ type: "ORDER_DELTA", order: drafts[0]?.order });
+  });
+
+  it("adapts draft submission to an injected order-delta pipeline", async () => {
+    const drafts = createAiBuildOrderDraftsFromPlan({ plan: createPlan(createBuildCandidate("country:alpha")) });
+    const submittedDeltas: unknown[] = [];
+
+    const submitDraft = createAiOrderDeltaSubmitter(async (delta) => {
+      submittedDeltas.push(delta);
+      return { ok: true, submittedOrderId: "order:ai:delta" };
+    });
+    const results = await submitAiOrderDrafts({ drafts, submitDraft });
+
+    expect(submittedDeltas).toEqual([{ type: "ORDER_DELTA", order: drafts[0]?.order }]);
+    expect(results).toEqual([{ ok: true, draft: drafts[0], submittedOrderId: "order:ai:delta" }]);
+  });
+});
