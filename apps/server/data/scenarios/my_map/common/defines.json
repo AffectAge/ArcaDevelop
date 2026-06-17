@@ -1,4 +1,10 @@
 {
+  "ai": {
+    "enabled": true,
+    "maxCountriesPerTick": 50,
+    "maxDecisionCandidatesPerCountry": 20,
+    "contextCacheTtlTurns": 1
+  },
   "economy": {
     "baseCulturePerTurn": 1,
     "baseSciencePerTurn": 1,
@@ -24,7 +30,9 @@
     "maxActiveColonizations": 3,
     "pointsPerTurn": 30,
     "pointsCostPer1000Km2": 5,
-    "ducatsCostPer1000Km2": 5
+    "ducatsCostPer1000Km2": 5,
+    "settlementEnabled": true,
+    "settlementPopulationOnCapture": 1000
   },
   "customization": {
     "renameDucats": 20,

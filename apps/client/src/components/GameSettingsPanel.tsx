@@ -66,6 +66,8 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
   const [colonizationPointsPerTurn, setColonizationPointsPerTurn] = useState(30);
   const [colonizationPointsCostPer1000Km2, setColonizationPointsCostPer1000Km2] = useState(5);
   const [colonizationDucatsCostPer1000Km2, setColonizationDucatsCostPer1000Km2] = useState(5);
+  const [colonizationSettlementEnabled, setColonizationSettlementEnabled] = useState(true);
+  const [colonizationSettlementPopulationOnCapture, setColonizationSettlementPopulationOnCapture] = useState(1_000);
   const [renameDucats, setRenameDucats] = useState(20);
   const [recolorDucats, setRecolorDucats] = useState(10);
   const [flagDucats, setFlagDucats] = useState(15);
@@ -125,6 +127,8 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
         setColonizationPointsPerTurn(settings.colonization.pointsPerTurn);
         setColonizationPointsCostPer1000Km2(settings.colonization.pointsCostPer1000Km2);
         setColonizationDucatsCostPer1000Km2(settings.colonization.ducatsCostPer1000Km2);
+        setColonizationSettlementEnabled(settings.colonization.settlementEnabled ?? true);
+        setColonizationSettlementPopulationOnCapture(settings.colonization.settlementPopulationOnCapture ?? 1_000);
         setRenameDucats(settings.customization.renameDucats);
         setRecolorDucats(settings.customization.recolorDucats);
         setFlagDucats(settings.customization.flagDucats);
@@ -222,6 +226,11 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
           pointsPerTurn: Math.max(0, Math.floor(colonizationPointsPerTurn)),
           pointsCostPer1000Km2: Math.max(1, Math.floor(colonizationPointsCostPer1000Km2)),
           ducatsCostPer1000Km2: Math.max(0, Math.floor(colonizationDucatsCostPer1000Km2)),
+          settlementEnabled: colonizationSettlementEnabled,
+          settlementPopulationOnCapture: Math.max(
+            0,
+            Math.min(1_000_000_000, Math.floor(colonizationSettlementPopulationOnCapture)),
+          ),
         },
         map: {
           showAntarctica,
@@ -231,6 +240,8 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
       setColonizationPointsPerTurn(updated.colonization.pointsPerTurn);
       setColonizationPointsCostPer1000Km2(updated.colonization.pointsCostPer1000Km2);
       setColonizationDucatsCostPer1000Km2(updated.colonization.ducatsCostPer1000Km2);
+      setColonizationSettlementEnabled(updated.colonization.settlementEnabled ?? true);
+      setColonizationSettlementPopulationOnCapture(updated.colonization.settlementPopulationOnCapture ?? 1_000);
       setShowAntarctica(updated.map?.showAntarctica ?? true);
       onSettingsUpdated?.(updated);
       toast.success("Настройки колонизации сохранены");
@@ -782,6 +793,33 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                           <label className="mb-1 block text-xs text-slate-300">Цена (дукаты) за 1000 км²</label>
                           <input type="number" min={0} value={colonizationDucatsCostPer1000Km2} onChange={(e) => setColonizationDucatsCostPer1000Km2(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
                         </div>
+                        <div>
+                          <label className="mb-1 block text-xs text-slate-300">Поселенцы при захвате пустого региона</label>
+                          <input type="number" min={0} max={1_000_000_000} value={colonizationSettlementPopulationOnCapture} onChange={(e) => setColonizationSettlementPopulationOnCapture(Math.max(0, Math.min(1_000_000_000, Number(e.target.value) || 0)))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                        </div>
+                        <label className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                          <div>
+                            <div className="text-sm text-slate-100">Стартовые поселенцы</div>
+                            <div className="text-xs text-slate-500">Добавляет население только при первом захвате пустого региона</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setColonizationSettlementEnabled((v) => !v)}
+                            className={`relative inline-flex h-7 w-12 items-center rounded-full border transition ${
+                              colonizationSettlementEnabled ? "border-emerald-400/50 bg-emerald-500/20" : "border-white/10 bg-white/5"
+                            }`}
+                            aria-pressed={colonizationSettlementEnabled}
+                            aria-label={colonizationSettlementEnabled ? "Отключить стартовых поселенцев" : "Включить стартовых поселенцев"}
+                          >
+                            <span
+                              className={`h-5 w-5 rounded-full transition ${
+                                colonizationSettlementEnabled
+                                  ? "translate-x-6 bg-emerald-500 shadow-[0_0_12px_rgba(110,231,183,0.45)]"
+                                  : "translate-x-1 bg-white/60"
+                              }`}
+                            />
+                          </button>
+                        </label>
                         <label className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
                           <div>
                             <div className="text-sm text-slate-100">Показывать Антарктиду</div>

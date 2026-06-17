@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { AiColonizationCandidate } from "./aiColonizationCandidates";
 import type { AiDiplomacyMilitaryCandidate } from "./aiDiplomacyMilitaryCandidates";
 import type { AiEconomyOrderCandidate } from "./aiEconomyCandidates";
 import { createAiFixtureWorld } from "./aiFixtureHarness";
@@ -43,6 +44,24 @@ function createDiplomacyCandidate(countryId: string, targetCountryId: string): A
         expiresInTurns: 12,
         clauses: [{ kind: "text_note", text: "ai.diplomacy.contact" }],
       },
+    },
+  };
+}
+
+function createColonizationCandidate(countryId: string, regionId = "region:frontier"): AiColonizationCandidate {
+  return {
+    kind: "colonize-region",
+    countryId,
+    regionId,
+    pointCost: 5,
+    ducatCost: 2,
+    isAdjacentToControlledRegion: true,
+    requiresValidatedPipeline: true,
+    orderDraft: {
+      type: "COLONIZE",
+      countryId,
+      regionId,
+      payload: {},
     },
   };
 }
@@ -131,5 +150,32 @@ describe("planAiRuntimeTick", () => {
     });
     expect(plan.actions[0]?.selected?.score).toBe(10);
     expect(JSON.stringify(world)).toBe(before);
+  });
+
+  it("lets profile weights select colonization over build candidates within candidate budgets", () => {
+    const world = createAiFixtureWorld();
+    const provider: AiRuntimeCandidateProvider = {
+      id: "mixed",
+      selectCandidates: ({ countryId }) => [
+        createBuildCandidate(countryId),
+        createColonizationCandidate(countryId),
+      ],
+    };
+
+    const plan = planAiRuntimeTick({
+      world,
+      aiSettings: { ...enabledAiSettings, maxDecisionCandidatesPerCountry: 2 },
+      countryIds: ["country:alpha"],
+      candidateProviders: [provider],
+      strategyProfilesByCountryId: {
+        "country:alpha": [{ id: "strategy:colonizer", weights: { colonization: 10, economyBuild: 1 } }],
+      },
+    });
+
+    expect(plan.actions[0]?.candidateCount).toBe(2);
+    expect(plan.actions[0]?.selected?.candidate).toMatchObject({
+      kind: "colonize-region",
+      regionId: "region:frontier",
+    });
   });
 });

@@ -1,4 +1,4 @@
-import type { Order } from "@arcanorum/shared";
+import type { Order, RegionPopulation } from "@arcanorum/shared";
 import { describe, expect, it } from "vitest";
 import {
   cleanupRegionColonizationProgress,
@@ -258,13 +258,69 @@ describe("colonizationMechanics", () => {
         disabled: provinceId === "region:disabled",
         manualCost: false,
       }),
+      settlementEnabled: true,
+      settlementPopulationOnCapture: 1_000,
+      buildSettlementPopulation: makeSettlementPopulation,
     });
 
-    expect(captures).toEqual([{ regionId: "region:a", winnerCountryId: "country:a", previousOwnerId: null }]);
+    expect(captures).toEqual([
+      { regionId: "region:a", winnerCountryId: "country:a", previousOwnerId: null, settlementCreated: true },
+    ]);
     expect(worldBase.regionOwner["region:a"]).toBe("country:a");
     expect(worldBase.regionController["region:a"]).toBe("country:a");
+    expect(worldBase.regionPopulationByRegion["region:a"]?.pops[0]?.size).toBe(1_000);
     expect(worldBase.colonyProgressByRegion).toEqual({});
     expect(activeIndex.size).toBe(0);
+  });
+
+  it("does not add settlement population when captured region already has people", () => {
+    const existingPopulation = makeSettlementPopulation("region:a", "country:old", 25);
+    const worldBase = makeTurnWorld({
+      colonyProgressByRegion: { "region:a": { "country:a": 20 } },
+      regionPopulationByRegion: { "region:a": existingPopulation },
+    });
+
+    const captures = resolveColonizationCapturesTurn({
+      touchedRegionIds: new Set(["region:a"]),
+      worldBase,
+      activeColonizeRegionsByCountry: new Map([["country:a", new Set(["region:a"])]]),
+      getRegionColonizationConfig: () => ({ cost: 20, disabled: false, manualCost: false }),
+      settlementEnabled: true,
+      settlementPopulationOnCapture: 1_000,
+      buildSettlementPopulation: makeSettlementPopulation,
+    });
+
+    expect(captures).toEqual([
+      { regionId: "region:a", winnerCountryId: "country:a", previousOwnerId: null, settlementCreated: false },
+    ]);
+    expect(worldBase.regionPopulationByRegion["region:a"]).toBe(existingPopulation);
+  });
+
+  it("does not add settlement population when settlement define is disabled or zero", () => {
+    const disabledWorld = makeTurnWorld({ colonyProgressByRegion: { "region:a": { "country:a": 20 } } });
+    resolveColonizationCapturesTurn({
+      touchedRegionIds: new Set(["region:a"]),
+      worldBase: disabledWorld,
+      activeColonizeRegionsByCountry: new Map(),
+      getRegionColonizationConfig: () => ({ cost: 20, disabled: false, manualCost: false }),
+      settlementEnabled: false,
+      settlementPopulationOnCapture: 1_000,
+      buildSettlementPopulation: makeSettlementPopulation,
+    });
+
+    const zeroWorld = makeTurnWorld({ colonyProgressByRegion: { "region:b": { "country:a": 20 } } });
+    resolveColonizationCapturesTurn({
+      touchedRegionIds: new Set(["region:b"]),
+      worldBase: zeroWorld,
+      activeColonizeRegionsByCountry: new Map(),
+      getRegionColonizationConfig: () => ({ cost: 20, disabled: false, manualCost: false }),
+      settlementEnabled: true,
+      settlementPopulationOnCapture: 0,
+      buildSettlementPopulation: makeSettlementPopulation,
+    });
+
+    expect(disabledWorld.regionPopulationByRegion["region:a"]).toBeUndefined();
+    expect(zeroWorld.regionPopulationByRegion["region:b"]).toBeUndefined();
   });
 });
 
@@ -284,6 +340,7 @@ function makeTurnWorld(overrides?: Partial<ColonizationTurnWorldState>): Coloniz
     regionOwner: {},
     regionController: {},
     resourcesByCountry: {},
+    regionPopulationByRegion: {},
     ...overrides,
   } as ColonizationTurnWorldState;
 }
@@ -319,5 +376,34 @@ function makeOrder(overrides?: Omit<Partial<Extract<Order, { type: "COLONIZE" }>
     payload: {},
     createdAt: "now",
     ...overrides,
+  };
+}
+
+function makeSettlementPopulation(regionId: string, countryId: string, total: number): RegionPopulation {
+  return {
+    pops: [
+      {
+        id: `pop:${regionId}:settlers:${countryId}`,
+        size: total,
+        cultureId: "culture:default",
+        religionId: "religion:default",
+        raceId: "race:default",
+        ideologies: { "ideology:default": total },
+        professions: {
+          "profession:default": {
+            size: total,
+            ducats: 0,
+            standardOfLiving: 10,
+            radicals: 0,
+            loyalists: 0,
+            lastIncomeDucats: 0,
+            lastNeedsSpendDucats: 0,
+            lastNeedsSatisfaction: 1,
+            lastBirths: 0,
+            lastDeaths: 0,
+          },
+        },
+      },
+    ],
   };
 }

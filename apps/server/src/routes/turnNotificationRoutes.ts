@@ -1,5 +1,5 @@
 import type express from "express";
-import type { WsOutMessage } from "@arcanorum/shared";
+import type { ResourceTotals, WsOutMessage } from "@arcanorum/shared";
 import type { RouteAuth } from "../security/routeAuth";
 
 export type TurnStatusCountryRecord = {
@@ -25,6 +25,7 @@ export type TurnStatusCountryItem = {
   ignoreUntilTurn: number | null;
   online: boolean;
   lastLoginAt: string | null;
+  resources: ResourceTotals;
 };
 
 export type QueuedUiNotificationRouteItem = {
@@ -41,6 +42,8 @@ export type TurnNotificationRoutesDependencies = {
   getTurnStatusCountries: () => Promise<TurnStatusCountryRecord[]>;
   getReadySetForTurn: (turnId: number) => Set<string>;
   getOnlineCountryIds: () => Set<string>;
+  getAiControlledCountryIds: () => Set<string>;
+  getCountryResources: (countryId: string) => ResourceTotals | null;
   getCountryBlockInfo: (
     country: Pick<TurnStatusCountryRecord, "isLocked" | "blockedUntilTurn" | "blockedUntilAt">,
     turnId: number,
@@ -77,6 +80,8 @@ export function registerTurnNotificationRoutes(
       now,
       readySet: deps.getReadySetForTurn(turnId),
       onlineCountryIds: deps.getOnlineCountryIds(),
+      aiControlledCountryIds: deps.getAiControlledCountryIds(),
+      getCountryResources: deps.getCountryResources,
       getCountryBlockInfo: deps.getCountryBlockInfo,
       getCountrySkipInfo: deps.getCountrySkipInfo,
       getLastLoginAt: deps.getLastLoginAt,
@@ -118,6 +123,8 @@ export function buildTurnStatusItems(params: {
   now: Date;
   readySet: Set<string>;
   onlineCountryIds: Set<string>;
+  aiControlledCountryIds: Set<string>;
+  getCountryResources: (countryId: string) => ResourceTotals | null;
   getCountryBlockInfo: TurnNotificationRoutesDependencies["getCountryBlockInfo"];
   getCountrySkipInfo: TurnNotificationRoutesDependencies["getCountrySkipInfo"];
   getLastLoginAt: (countryId: string) => string | null;
@@ -125,7 +132,8 @@ export function buildTurnStatusItems(params: {
   return params.countries.map((country) => {
     const block = params.getCountryBlockInfo(country, params.turnId, params.now);
     const skip = params.getCountrySkipInfo(country, params.turnId);
-    const ready = !block.blocked && !skip.ignored && params.readySet.has(country.id);
+    const isAiControlled = params.aiControlledCountryIds.has(country.id);
+    const ready = !block.blocked && !skip.ignored && (params.readySet.has(country.id) || isAiControlled);
     const status = block.blocked ? "blocked" : skip.ignored ? "ignored" : ready ? "ready" : "waiting";
 
     return {
@@ -138,8 +146,21 @@ export function buildTurnStatusItems(params: {
       blockedUntilTurn: block.blockedUntilTurn,
       blockedUntilAt: block.blockedUntilAt ? block.blockedUntilAt.toISOString() : null,
       ignoreUntilTurn: skip.ignoreUntilTurn,
-      online: params.onlineCountryIds.has(country.id),
+      online: params.onlineCountryIds.has(country.id) || isAiControlled,
       lastLoginAt: params.getLastLoginAt(country.id),
+      resources: params.getCountryResources(country.id) ?? emptyResourceTotals(),
     };
   });
+}
+
+function emptyResourceTotals(): ResourceTotals {
+  return {
+    culture: 0,
+    science: 0,
+    religion: 0,
+    colonization: 0,
+    construction: 0,
+    ducats: 0,
+    gold: 0,
+  };
 }

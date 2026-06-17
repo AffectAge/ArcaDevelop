@@ -336,6 +336,8 @@ export type GameSettings = {
     pointsPerTurn: number;
     pointsCostPer1000Km2: number;
     ducatsCostPer1000Km2: number;
+    settlementEnabled: boolean;
+    settlementPopulationOnCapture: number;
   };
   customization: {
     renameDucats: number;

@@ -1,5 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { WORLD_DELTA_MASK, type BuildingOwner, type CountryParliament, type EventLogEntry, type Order, type WorldBase, type WorldDelta, type WsOutMessage } from "@arcanorum/shared";
+import {
+  WORLD_DELTA_MASK,
+  type BuildingOwner,
+  type CountryParliament,
+  type EventLogEntry,
+  type Order,
+  type RegionPopulation,
+  type WorldBase,
+  type WorldDelta,
+  type WsOutMessage,
+} from "@arcanorum/shared";
 import { applyCountryResourceIncomeTurn, type EconomyTickResourceStat } from "../mechanics/economyTickMechanics";
 import {
   advanceMilitaryFormationQueue as advanceMilitaryFormationQueueInState,
@@ -49,7 +59,7 @@ export type AiTurnBeforeResolveHookParams = {
   aiSettings: GameSettings["ai"];
 };
 
-export type AiTurnBeforeResolveHook = (params: AiTurnBeforeResolveHookParams) => void;
+export type AiTurnBeforeResolveHook = (params: AiTurnBeforeResolveHookParams) => void | Promise<void>;
 
 type TurnRuntimeParams = {
   getWorldBase: () => WorldBase;
@@ -94,6 +104,7 @@ type TurnRuntimeParams = {
   ) => number;
   getRegionColonizationConfig: (provinceId: string) => RegionColonizationConfig;
   getRegionDerivedColonizationCosts: (provinceId: string) => { pointsCost: number; ducatsCost: number };
+  buildColonizationSettlementPopulation: (regionId: string, countryId: string, total: number) => RegionPopulation;
   areProvinceIdsAdjacentOrSame: (fromProvinceId: string, toProvinceId: string) => boolean;
   enqueueBuildingAutoUpgradesTurn: () => void;
   resolveBuildingConstructionQueuesTurn: () => void;
@@ -152,9 +163,9 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
     pushMilitaryRuntimeEvents(news, events);
   };
 
-  const resolveTurn = (): TurnRuntimeResult => {
+  const resolveTurn = async (): Promise<TurnRuntimeResult> => {
     const gameSettings = params.getGameSettings();
-    runAiTurnBeforeResolveIfEnabled({
+    await runAiTurnBeforeResolveIfEnabled({
       turnId: params.getTurnId(),
       aiSettings: gameSettings.ai,
       runAiTurnBeforeResolve: params.runAiTurnBeforeResolve,
@@ -255,6 +266,9 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           worldBase: params.getWorldBase(),
           activeColonizeRegionsByCountry: params.getActiveColonizeRegionsByCountry(),
           getRegionColonizationConfig: params.getRegionColonizationConfig,
+          settlementEnabled: params.getGameSettings().colonization.settlementEnabled,
+          settlementPopulationOnCapture: params.getGameSettings().colonization.settlementPopulationOnCapture,
+          buildSettlementPopulation: params.buildColonizationSettlementPopulation,
         }),
       makeColonizationCaptureNews: ({ regionId, winnerCountryId, previousOwnerId }) =>
         params.makeOfficialNews({
@@ -310,11 +324,11 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
     });
   };
 
-  const resolveAndBroadcastCurrentTurn = (): boolean => {
+  const resolveAndBroadcastCurrentTurn = async (): Promise<boolean> => {
     if (isResolvingTurnNow) return false;
     isResolvingTurnNow = true;
     try {
-      const { previousWorldBase, rejectedOrders, news, uiNotifications } = resolveTurn();
+      const { previousWorldBase, rejectedOrders, news, uiNotifications } = await resolveTurn();
       params.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase, rejectedOrders);
       for (const event of news) {
         params.broadcast({ type: "NEWS_EVENT", event });
@@ -338,8 +352,9 @@ export function runAiTurnBeforeResolveIfEnabled(params: {
   turnId: number;
   aiSettings: GameSettings["ai"];
   runAiTurnBeforeResolve?: AiTurnBeforeResolveHook;
-}): boolean {
-  if (!params.aiSettings.enabled || !params.runAiTurnBeforeResolve) return false;
-  params.runAiTurnBeforeResolve({ turnId: params.turnId, aiSettings: params.aiSettings });
-  return true;
+}): Promise<boolean> {
+  if (!params.aiSettings.enabled || !params.runAiTurnBeforeResolve) return Promise.resolve(false);
+  return Promise.resolve(params.runAiTurnBeforeResolve({ turnId: params.turnId, aiSettings: params.aiSettings })).then(
+    () => true,
+  );
 }

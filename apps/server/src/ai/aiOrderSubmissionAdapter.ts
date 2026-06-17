@@ -1,4 +1,5 @@
 import type { OrderDelta, OrderInput } from "@arcanorum/shared";
+import type { AiColonizationCandidate } from "./aiColonizationCandidates";
 import type { AiEconomyBuildCandidate } from "./aiEconomyCandidates";
 import type { AiRuntimePlan, PlannedAiCountryAction } from "./aiRuntimePlanner";
 
@@ -10,7 +11,15 @@ export type AiBuildOrderSubmissionDraft = {
   order: Extract<OrderInput, { type: "BUILD" }>;
 };
 
-export type AiOrderSubmissionDraft = AiBuildOrderSubmissionDraft;
+export type AiColonizeOrderSubmissionDraft = {
+  kind: "validated-order-draft";
+  candidateKind: "colonize-region";
+  countryId: string;
+  requiresValidatedPipeline: true;
+  order: Extract<OrderInput, { type: "COLONIZE" }>;
+};
+
+export type AiOrderSubmissionDraft = AiBuildOrderSubmissionDraft | AiColonizeOrderSubmissionDraft;
 
 export type CreateAiBuildOrderDraftsParams = {
   plan: AiRuntimePlan;
@@ -20,26 +29,42 @@ export type CreateAiBuildOrderDraftsParams = {
 const defaultAiPlayerIdPrefix = "ai";
 
 export function createAiBuildOrderDraftsFromPlan(params: CreateAiBuildOrderDraftsParams): AiBuildOrderSubmissionDraft[] {
-  const playerIdPrefix = normalizePlayerIdPrefix(params.aiPlayerIdPrefix);
-  return params.plan.actions.flatMap((action) => createAiBuildOrderDraft(action, params.plan.turnId, playerIdPrefix));
+  return createAiOrderDraftsFromPlan(params).filter(
+    (draft): draft is AiBuildOrderSubmissionDraft => draft.candidateKind === "build",
+  );
 }
 
-function createAiBuildOrderDraft(
+export function createAiOrderDraftsFromPlan(params: CreateAiBuildOrderDraftsParams): AiOrderSubmissionDraft[] {
+  const playerIdPrefix = normalizePlayerIdPrefix(params.aiPlayerIdPrefix);
+  return params.plan.actions.flatMap((action) => createAiOrderDraft(action, params.plan.turnId, playerIdPrefix));
+}
+
+function createAiOrderDraft(
   action: PlannedAiCountryAction,
   turnId: number,
   playerIdPrefix: string,
-): AiBuildOrderSubmissionDraft[] {
+): AiOrderSubmissionDraft[] {
   const candidate = action.selected?.candidate;
-  if (!candidate || candidate.kind !== "build") return [];
-  return [
-    {
+  if (!candidate) return [];
+  if (candidate.kind === "build") {
+    return [{
       kind: "validated-order-draft",
       candidateKind: "build",
       countryId: action.countryId,
       requiresValidatedPipeline: true,
       order: createBuildOrderInput(candidate, turnId, playerIdPrefix),
-    },
-  ];
+    }];
+  }
+  if (candidate.kind === "colonize-region") {
+    return [{
+      kind: "validated-order-draft",
+      candidateKind: "colonize-region",
+      countryId: action.countryId,
+      requiresValidatedPipeline: true,
+      order: createColonizeOrderInput(candidate, turnId, playerIdPrefix),
+    }];
+  }
+  return [];
 }
 
 function createBuildOrderInput(
@@ -49,6 +74,21 @@ function createBuildOrderInput(
 ): Extract<OrderInput, { type: "BUILD" }> {
   return {
     type: "BUILD",
+    turnId,
+    playerId: `${playerIdPrefix}:${candidate.countryId}`,
+    countryId: candidate.countryId,
+    regionId: candidate.regionId,
+    payload: candidate.orderDraft.payload,
+  };
+}
+
+function createColonizeOrderInput(
+  candidate: AiColonizationCandidate,
+  turnId: number,
+  playerIdPrefix: string,
+): Extract<OrderInput, { type: "COLONIZE" }> {
+  return {
+    type: "COLONIZE",
     turnId,
     playerId: `${playerIdPrefix}:${candidate.countryId}`,
     countryId: candidate.countryId,

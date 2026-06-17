@@ -15,7 +15,7 @@ type ServerLoopRuntimeParams = {
   resetTurnTimerAnchor: () => void;
   schedulePersistedWorldDeltaLogPrune: () => void;
   broadcastTurnResolveStarted: (wsServer: WebSocketServer, reason: "manual" | "admin" | "auto") => void;
-  resolveAndBroadcastCurrentTurn: () => boolean;
+  resolveAndBroadcastCurrentTurn: () => Promise<boolean>;
   makeOfficialNews: (params: {
     turn: number;
     category: "system";
@@ -32,6 +32,7 @@ type ServerLoopRuntimeParams = {
 export function startServerLoops(params: ServerLoopRuntimeParams): void {
   params.resetTurnTimerAnchor();
   setInterval(() => {
+    void (async () => {
     try {
       const gameSettings = params.getGameSettings();
       if (!gameSettings.turnTimer.enabled) return;
@@ -44,7 +45,7 @@ export function startServerLoops(params: ServerLoopRuntimeParams): void {
       const elapsedMs = Date.now() - params.getCurrentTurnStartedAtMs();
       if (elapsedMs < seconds * 1000) return;
       params.broadcastTurnResolveStarted(params.wsServer, "auto");
-      const resolved = params.resolveAndBroadcastCurrentTurn();
+      const resolved = await params.resolveAndBroadcastCurrentTurn();
       if (resolved) {
         params.broadcast(params.wsServer, {
           type: "NEWS_EVENT",
@@ -61,6 +62,7 @@ export function startServerLoops(params: ServerLoopRuntimeParams): void {
     } catch (error) {
       params.logError("[turn-timer] Auto resolve failed:", error);
     }
+    })();
   }, 1000);
 
   setInterval(() => {

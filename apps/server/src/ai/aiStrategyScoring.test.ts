@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { AiColonizationCandidate } from "./aiColonizationCandidates";
 import type { AiDiplomacyMilitaryCandidate } from "./aiDiplomacyMilitaryCandidates";
 import type { AiEconomyOrderCandidate } from "./aiEconomyCandidates";
 import type { AiMarketImportCandidate } from "./aiMarketCandidates";
@@ -75,17 +76,33 @@ const militaryCandidate: AiDiplomacyMilitaryCandidate = {
   },
 };
 
+const colonizationCandidate: AiColonizationCandidate = {
+  kind: "colonize-region",
+  countryId: "country:alpha",
+  regionId: "region:frontier",
+  pointCost: 5,
+  ducatCost: 2,
+  isAdjacentToControlledRegion: true,
+  requiresValidatedPipeline: true,
+  orderDraft: {
+    type: "COLONIZE",
+    countryId: "country:alpha",
+    regionId: "region:frontier",
+    payload: {},
+  },
+};
+
 describe("AI strategy scoring", () => {
   it("merges archetype, personality, strategy, and country overrides deterministically", () => {
     const profile = resolveAiStrategyProfile([
       { id: "archetype:base", weights: { economyBuild: 1, economyUpgrade: 2 }, buildingWeights: { "building:farm": 3 } },
       { id: "personality:trader", weights: { marketImport: 6, diplomacyContact: 4 }, goodWeights: { "good:grain": 4 } },
       { id: "strategy:growth", regionWeights: { "region:alpha": 5 } },
-      { id: "country:alpha", weights: { economyUpgrade: 7, militaryMove: 9 }, buildingWeights: { "building:farm": 8 } },
+      { id: "country:alpha", weights: { economyUpgrade: 7, militaryMove: 9, colonization: 10 }, buildingWeights: { "building:farm": 8 } },
     ]);
 
     expect(profile).toEqual({
-      weights: { economyBuild: 1, economyUpgrade: 7, marketImport: 6, diplomacyContact: 4, militaryMove: 9 },
+      weights: { economyBuild: 1, economyUpgrade: 7, marketImport: 6, diplomacyContact: 4, militaryMove: 9, colonization: 10 },
       buildingWeights: { "building:farm": 8 },
       goodWeights: { "good:grain": 4 },
       regionWeights: { "region:alpha": 5 },
@@ -96,21 +113,22 @@ describe("AI strategy scoring", () => {
     const profile = resolveAiStrategyProfile([
       {
         id: "personality:builder",
-        weights: { economyBuild: 2, economyUpgrade: 4, marketImport: 1, diplomacyContact: 5, militaryMove: 6 },
+        weights: { economyBuild: 2, economyUpgrade: 4, marketImport: 1, diplomacyContact: 5, militaryMove: 6, colonization: 3 },
         buildingWeights: { "building:farm": 3 },
-        regionWeights: { "region:alpha": 2 },
+        regionWeights: { "region:alpha": 2, "region:frontier": 7 },
       },
     ]);
-    const candidates = [buildCandidate, upgradeCandidate, importCandidate, diplomacyCandidate, militaryCandidate];
+    const candidates = [buildCandidate, upgradeCandidate, importCandidate, diplomacyCandidate, militaryCandidate, colonizationCandidate];
 
     const scored = scoreAiCandidates(candidates, profile);
 
-    expect(scored.map((row) => row.score)).toEqual([9, 7, 6, 5, 1]);
-    expect(scored[0]?.candidate).toBe(upgradeCandidate);
-    expect(scored[1]?.candidate).toBe(buildCandidate);
-    expect(scored[2]?.candidate).toBe(militaryCandidate);
-    expect(scored[3]?.candidate).toBe(diplomacyCandidate);
-    expect(scored[4]?.candidate).toBe(importCandidate);
+    expect(scored.map((row) => row.score)).toEqual([10, 9, 7, 6, 5, 1]);
+    expect(scored[0]?.candidate).toBe(colonizationCandidate);
+    expect(scored[1]?.candidate).toBe(upgradeCandidate);
+    expect(scored[2]?.candidate).toBe(buildCandidate);
+    expect(scored[3]?.candidate).toBe(militaryCandidate);
+    expect(scored[4]?.candidate).toBe(diplomacyCandidate);
+    expect(scored[5]?.candidate).toBe(importCandidate);
   });
 
   it("uses good weights for market import candidates and stable tie breaks", () => {

@@ -35,6 +35,8 @@ export type ScenarioDefines = {
     pointsPerTurn?: unknown;
     pointsCostPer1000Km2?: unknown;
     ducatsCostPer1000Km2?: unknown;
+    settlementEnabled?: unknown;
+    settlementPopulationOnCapture?: unknown;
   };
   customization?: {
     renameDucats?: unknown;
@@ -105,6 +107,8 @@ export const SCENARIO_DEFINES_SUPPORTED_SECTIONS = {
     pointsPerTurn: { type: "integer", min: 0, max: 1_000_000_000_000 },
     pointsCostPer1000Km2: { type: "integer", min: 1, max: 1_000_000_000_000 },
     ducatsCostPer1000Km2: { type: "integer", min: 0, max: 1_000_000_000_000 },
+    settlementEnabled: { type: "boolean" },
+    settlementPopulationOnCapture: { type: "integer", min: 0, max: 1_000_000_000 },
   },
   customization: {
     renameDucats: { type: "integer", min: 0, max: 1_000_000_000_000 },
@@ -176,6 +180,8 @@ export type ColonizationSettings = {
   pointsPerTurn: number;
   pointsCostPer1000Km2: number;
   ducatsCostPer1000Km2: number;
+  settlementEnabled: boolean;
+  settlementPopulationOnCapture: number;
 };
 
 export type CustomizationSettings = {
@@ -248,6 +254,8 @@ const scenarioDefinesShapeSchema = z
         pointsPerTurn: z.unknown().optional(),
         pointsCostPer1000Km2: z.unknown().optional(),
         ducatsCostPer1000Km2: z.unknown().optional(),
+        settlementEnabled: z.unknown().optional(),
+        settlementPopulationOnCapture: z.unknown().optional(),
       })
       .strict()
       .optional(),
@@ -571,6 +579,18 @@ export function normalizeScenarioColonizationDefines(
       0,
       options.maxSettingNumber,
       "INVALID_SCENARIO_COLONIZATION_DUCATS_COST",
+    ),
+    settlementEnabled: normalizeBoolean(
+      colonizationDefines.settlementEnabled,
+      defaults.settlementEnabled,
+      "INVALID_SCENARIO_COLONIZATION_SETTLEMENT_ENABLED",
+    ),
+    settlementPopulationOnCapture: normalizeIntegerInRange(
+      colonizationDefines.settlementPopulationOnCapture,
+      defaults.settlementPopulationOnCapture,
+      0,
+      1_000_000_000,
+      "INVALID_SCENARIO_COLONIZATION_SETTLEMENT_POPULATION",
     ),
   };
 }

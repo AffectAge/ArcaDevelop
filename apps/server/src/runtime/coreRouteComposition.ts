@@ -24,7 +24,7 @@ import type { GameSettings } from "./gameSettingsTypes";
 import type { ContentEntryKind } from "../content/contentEntryPayload";
 import type { ContentEntryPayload, ContentEntryRouteItem } from "../routes/contentEntryRoutes";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
-import type { EventLogEntry, ServerStatus, WORLD_DELTA_MASK, WsOutMessage } from "@arcanorum/shared";
+import type { EventLogEntry, ResourceTotals, ServerStatus, WORLD_DELTA_MASK, WsOutMessage } from "@arcanorum/shared";
 
 type CoreRouteCompositionParams = {
   app: Express;
@@ -55,6 +55,8 @@ type CoreRouteCompositionParams = {
   getTurnStatusCountries: () => Promise<TurnStatusCountryRecord[]>;
   getReadySetForTurn: (turn: number) => Set<string>;
   getOnlineCountryIds: () => Set<string>;
+  getAiControlledCountryIds: () => Set<string>;
+  getCountryResources: (countryId: string) => ResourceTotals | null;
   getLastLoginAt: (countryId: string) => string | null;
   getCurrentTurnStartedAtMs: () => number;
   getGameSettings: () => GameSettings;
@@ -113,6 +115,8 @@ export function registerCoreRouteComposition(params: CoreRouteCompositionParams)
     getTurnStatusCountries: params.getTurnStatusCountries,
     getReadySetForTurn: params.getReadySetForTurn,
     getOnlineCountryIds: params.getOnlineCountryIds,
+    getAiControlledCountryIds: params.getAiControlledCountryIds,
+    getCountryResources: params.getCountryResources,
     getCountryBlockInfo: params.countryRuntimeHelpers.getCountryBlockInfo,
     getCountrySkipInfo: params.countryRuntimeHelpers.getCountrySkipInfo,
     getLastLoginAt: params.getLastLoginAt,

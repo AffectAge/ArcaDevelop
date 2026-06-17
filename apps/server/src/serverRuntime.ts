@@ -8,6 +8,7 @@ import { createRouteAuth } from "./security/routeAuth";
 import { createServerApp } from "./app/createServerApp";
 import { uploadErrorMiddleware } from "./app/uploadErrorMiddleware";
 import { normalizeRegionColonizationMap } from "./mechanics/colonizationMechanics";
+import { getGlobalBuildLimit } from "./mechanics/buildingMechanics";
 import { createModifierRuntime } from "./runtime/modifierRuntime";
 import { createUiNotificationRuntime } from "./runtime/uiNotificationRuntime";
 import { createTurnRuntime, TURN_RESOLVE_WORLD_DELTA_MASK } from "./runtime/turnRuntime";
@@ -44,6 +45,14 @@ import { createServerSessionStateRuntime } from "./runtime/serverSessionStateRun
 import { createServerTurnStateRuntime } from "./runtime/serverTurnStateRuntime";
 import { round3 } from "./runtime/numberRuntime";
 import { makeOfficialNews } from "./runtime/officialNewsRuntime";
+import { buildAiControlledCountryIdsFromHistory, loadScenarioHistory } from "./scenarios/scenarioHistoryLoader";
+import {
+  buildRegionAdjacencyByIdFromProvinces,
+  selectAiColonizationCandidates,
+} from "./ai/aiColonizationCandidates";
+import { selectAiEconomyOrderCandidates } from "./ai/aiEconomyCandidates";
+import { runAiOrderRuntimeCycleWithRuntimeSubmitter } from "./runtime/aiRuntimeCoordinator";
+import type { AiRuntimeCandidateProvider } from "./ai/aiRuntimePlanner";
 import { createScenarioServerRuntime } from "./runtime/scenarioServerRuntime";
 import { registerServerCoreRouteRuntime } from "./runtime/serverCoreRouteRegistrationRuntime";
 import { registerServerInteractiveRouteRuntime } from "./runtime/serverInteractiveRouteRegistrationRuntime";
@@ -235,6 +244,8 @@ const contentLibraryRuntime = createContentLibraryRuntime({
   logError: (message, error) => console.error(message, error),
 });
 
+let aiControlledCountryIds = new Set<string>();
+
 const militaryRuntimeFacade = createMilitaryRuntimeFacade({
   getGameSettings: () => gameSettings,
   getWorldBase: () => worldBase,
@@ -263,6 +274,8 @@ registerServerCoreRouteRuntime({
   turnSessionRuntime,
   contentCatalogRuntime,
   getGameSettings: () => gameSettings,
+  getAiControlledCountryIds: () => new Set(aiControlledCountryIds),
+  getCountryResources: (countryId) => worldBase.resourcesByCountry[countryId] ?? null,
   savePersistentState: persistenceFacade.savePersistentState,
   validateImageDimensions,
   removeUploadedFile,
@@ -295,6 +308,9 @@ const scenarioServerRuntime = createScenarioServerRuntime({
   getPersistedContentLibrary: contentLibraryRuntime.getPersistedContentLibraryFromDisk,
   defaultWorldBase,
   addEconomyTickCountry: (countryId) => economyTickCountryIds.add(countryId),
+  setAiControlledCountryIds: (countryIds) => {
+    aiControlledCountryIds = new Set(countryIds);
+  },
   invalidateCountryQueryCache: countryRuntimeHelpers.invalidateCountryQueryCache,
   normalizeResourcesByCountryMap: worldStateNormalizerRuntime.normalizeResourcesByCountryMap,
   normalizeRegionColonizationMap,
@@ -485,6 +501,75 @@ const turnRuntime = createTurnRuntime({
   dropTurnOrderIndexes: turnOrderRuntime.dropTurnOrderIndexes,
   flushPersistentStateNow: persistenceFacade.flushPersistentStateNow,
   resetTurnTimerAnchor: turnSessionRuntime.resetTurnTimerAnchor,
+  runAiTurnBeforeResolve: async ({ aiSettings }) => {
+    const countryIds = [...aiControlledCountryIds].filter((countryId) => worldBase.resourcesByCountry[countryId]);
+    if (countryIds.length === 0) return;
+    await runAiOrderRuntimeCycleWithRuntimeSubmitter({
+      world: worldBase,
+      aiSettings,
+      countryIds,
+      candidateProviders: createAiRuntimeCandidateProviders(),
+      runtimeParams: {
+        wsServer: wss,
+        onlinePlayers: sessionStateRuntime.onlinePlayers,
+        getWorldBase: () => worldBase,
+        getGameSettings: () => gameSettings,
+        getTurnId: () => turnId,
+        getWorldStateVersion: () => worldStateVersion,
+        getOrdersByTurn: () => turnStateRuntime.ordersByTurn,
+        getQueuedColonizeRegionsByCountryByTurn: () => turnStateRuntime.queuedColonizeRegionsByCountryByTurn,
+        getActiveColonizeRegionsByCountry: () => turnStateRuntime.activeColonizeRegionsByCountry,
+        parseAuthToken,
+        findCountryForAuth: (countryId) =>
+          prisma.country.findUnique({
+            where: { id: countryId },
+            select: { id: true, isAdmin: true, eventLogRetentionTurns: true },
+          }),
+        listResolveStatusCountries: () =>
+          countryRuntimeHelpers.getCachedCountryQuery({
+            key: "country:resolve-status",
+            loader: () =>
+              prisma.country.findMany({
+                select: {
+                  id: true,
+                  isLocked: true,
+                  blockedUntilTurn: true,
+                  blockedUntilAt: true,
+                  ignoreUntilTurn: true,
+                },
+              }),
+          }),
+        getAiControlledCountryIds: () => new Set(aiControlledCountryIds),
+        ensureCountryInWorldBase: countryWorldRuntime.ensureCountryInWorldBase,
+        getLastLoginAt: (countryId) => sessionStateRuntime.lastLoginAtByCountryId.get(countryId) ?? null,
+        setLastLoginAt: (countryId, timestamp) => sessionStateRuntime.lastLoginAtByCountryId.set(countryId, timestamp),
+        getReplayDeltasFromVersion: worldDeltaBroadcastRuntime.getReplayDeltasFromVersion,
+        sendPendingRegistrationNotificationsToAdminSocket:
+          countryRuntimeHelpers.sendPendingRegistrationNotificationsToAdminSocket,
+        broadcast: (message) => broadcast(wss, message),
+        broadcastTurnResolveStarted: (reason) => broadcastTurnResolveStartedMessage(wss, turnId, reason),
+        resolveAndBroadcastCurrentTurn: async () => false,
+        cleanupExpiredPunishments: countryRuntimeHelpers.cleanupExpiredPunishments,
+        getCountryBlockInfo: countryRuntimeHelpers.getCountryBlockInfo,
+        getCountrySkipInfo: countryRuntimeHelpers.getCountrySkipInfo,
+        getReadySetForTurn: turnSessionRuntime.getReadySetForTurn,
+        savePersistentState: persistenceFacade.savePersistentState,
+        addOrderToTurnIndexes: turnOrderRuntime.addOrderToTurnIndexes,
+        getRegionColonizationConfig: colonizationRuntime.getRegionColonizationConfig,
+        parseRequestedBuildingIdFromPayload: buildingRuntime.parseRequestedBuildingIdFromPayload,
+        resolveBuildingOwnerFromPayload: buildingRuntime.resolveBuildingOwnerFromPayload,
+        isCountryAllowedForBuildingWithEngine: buildingRuntime.isCountryAllowedForBuildingWithEngine,
+        getProvinceBuildRestriction: buildingRuntime.getProvinceBuildRestriction,
+        isBuildingUnlockedForCountry: progressionRuntime.isBuildingUnlockedForCountry,
+        countBuildingOccurrences: buildingRuntime.countBuildingOccurrences,
+        getCountryBuildLimit: buildingRuntime.getCountryBuildLimit,
+        getGlobalBuildLimit,
+        normalizeArmyMoveRoute: turnMechanicsAdapterRuntime.normalizeArmyMoveRoute,
+        isContiguousArmyRoute: turnMechanicsAdapterRuntime.isContiguousArmyRoute,
+      },
+      onSubmissionError: (message) => console.warn("[ai] order rejected", message.code),
+    });
+  },
   parseRequestedBuildingIdFromPayload: buildingRuntime.parseRequestedBuildingIdFromPayload,
   resolveBuildingOwnerFromPayload: buildingRuntime.resolveBuildingOwnerFromPayload,
   isCountryAllowedForBuildingSync: buildingRuntime.isCountryAllowedForBuildingSync,
@@ -494,6 +579,7 @@ const turnRuntime = createTurnRuntime({
   resolveModifiedValue: modifierFacade.resolveModifiedValue,
   getRegionColonizationConfig: colonizationRuntime.getRegionColonizationConfig,
   getRegionDerivedColonizationCosts: colonizationRuntime.getRegionDerivedColonizationCosts,
+  buildColonizationSettlementPopulation: worldPopulationRuntime.buildColonizationSettlementPopulation,
   areProvinceIdsAdjacentOrSame: marketAccessRuntime.areProvinceIdsAdjacentOrSame,
   enqueueBuildingAutoUpgradesTurn: buildingRuntime.enqueueBuildingAutoUpgradesTurn,
   resolveBuildingConstructionQueuesTurn: buildingRuntime.resolveBuildingConstructionQueuesTurn,
@@ -508,6 +594,45 @@ const turnRuntime = createTurnRuntime({
   makeElectionResultsUiNotification: progressionRuntime.makeElectionResultsUiNotification,
   makeOfficialNews,
 });
+
+function createAiRuntimeCandidateProviders(): AiRuntimeCandidateProvider[] {
+  const provinceIndex = mapRuntime.getProvinceIndex();
+  const regionIds = Array.from(
+    new Set(provinceIndex.map((province) => province.regionId).filter((regionId): regionId is string => Boolean(regionId))),
+  ).sort();
+  const regionAdjacencyById = buildRegionAdjacencyByIdFromProvinces(provinceIndex);
+
+  return [
+    {
+      id: "colonization",
+      selectCandidates: ({ context, world }) =>
+        selectAiColonizationCandidates({
+          context,
+          world,
+          regionIds,
+          regionAdjacencyById,
+          maxActiveColonizations: gameSettings.colonization.maxActiveColonizations,
+          activeColonizeRegionIds: turnStateRuntime.activeColonizeRegionsByCountry.get(context.countryId) ?? [],
+          queuedColonizeRegionIds:
+            turnStateRuntime.queuedColonizeRegionsByCountryByTurn.get(turnId)?.get(context.countryId) ?? [],
+          getRegionColonizationConfig: colonizationRuntime.getRegionColonizationConfig,
+          getRegionDerivedColonizationCosts: colonizationRuntime.getRegionDerivedColonizationCosts,
+        }),
+    },
+    {
+      id: "economy",
+      selectCandidates: ({ context, world, indexes }) =>
+        selectAiEconomyOrderCandidates({
+          context,
+          world,
+          indexes,
+          buildings: gameSettings.content.buildings,
+          isBuildingUnlockedForCountry: progressionRuntime.isBuildingUnlockedForCountry,
+          getRegionBuildRestriction: buildingRuntime.getProvinceBuildRestriction,
+        }),
+    },
+  ];
+}
 
 registerServerMainRouteRuntime({
   app,
@@ -610,6 +735,7 @@ registerServerInteractiveRouteRuntime({
   getWorldStateVersion: () => worldStateVersion,
   getWorldBase: () => worldBase,
   getGameSettings: () => gameSettings,
+  getAiControlledCountryIds: () => new Set(aiControlledCountryIds),
   pushAdminAuditLog: (entry) => adminAuditLogStore.push(entry),
   validateImageRule,
   removeUploadedFile,
@@ -636,6 +762,11 @@ startServerRuntime({
   getCurrentTurnStartedAtMs: turnSessionRuntime.getCurrentTurnStartedAtMs,
   getTurnId: () => turnId,
   loadPersistentState: persistenceFacade.loadPersistentState,
+  refreshAiControlledCountryIds: () => {
+    const scenario = scenarioServerRuntime.findScenario(activeScenarioId);
+    const history = scenario?.scenarioDir ? loadScenarioHistory(scenario.scenarioDir) : null;
+    aiControlledCountryIds = new Set(buildAiControlledCountryIdsFromHistory(history));
+  },
   persistContentLibraryFromSettings: contentLibraryRuntime.persistContentLibraryFromSettings,
   cleanupOrphanUploadsOnServerStart: uploadStartupCleanupRuntime.cleanupOrphanUploadsOnServerStart,
   migratePersistedMarketNamesToReadable: marketRuntimeFacade.migratePersistedMarketNamesToReadable,

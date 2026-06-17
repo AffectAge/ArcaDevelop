@@ -1,8 +1,13 @@
+import type { AiColonizationCandidate } from "./aiColonizationCandidates";
 import type { AiDiplomacyMilitaryCandidate } from "./aiDiplomacyMilitaryCandidates";
 import type { AiEconomyOrderCandidate } from "./aiEconomyCandidates";
 import type { AiMarketImportCandidate } from "./aiMarketCandidates";
 
-export type AiCandidate = AiEconomyOrderCandidate | AiMarketImportCandidate | AiDiplomacyMilitaryCandidate;
+export type AiCandidate =
+  | AiEconomyOrderCandidate
+  | AiMarketImportCandidate
+  | AiDiplomacyMilitaryCandidate
+  | AiColonizationCandidate;
 
 export type AiStrategyWeights = {
   economyBuild: number;
@@ -10,6 +15,7 @@ export type AiStrategyWeights = {
   marketImport: number;
   diplomacyContact: number;
   militaryMove: number;
+  colonization: number;
 };
 
 export type AiStrategyProfile = {
@@ -44,6 +50,7 @@ const defaultWeights: AiStrategyWeights = {
   marketImport: 1,
   diplomacyContact: 1,
   militaryMove: 1,
+  colonization: 1,
 };
 
 export function resolveAiStrategyProfile(profiles: AiStrategyProfile[]): ResolvedAiStrategyProfile {
@@ -55,6 +62,7 @@ export function resolveAiStrategyProfile(profiles: AiStrategyProfile[]): Resolve
         marketImport: normalizeWeight(profile.weights?.marketImport, resolved.weights.marketImport),
         diplomacyContact: normalizeWeight(profile.weights?.diplomacyContact, resolved.weights.diplomacyContact),
         militaryMove: normalizeWeight(profile.weights?.militaryMove, resolved.weights.militaryMove),
+        colonization: normalizeWeight(profile.weights?.colonization, resolved.weights.colonization),
       },
       buildingWeights: mergeWeightMap(resolved.buildingWeights, profile.buildingWeights),
       goodWeights: mergeWeightMap(resolved.goodWeights, profile.goodWeights),
@@ -106,6 +114,7 @@ function getBaseWeight(candidate: AiCandidate, weights: AiStrategyWeights): numb
   if (candidate.kind === "upgrade") return weights.economyUpgrade;
   if (candidate.kind === "market-import") return weights.marketImport;
   if (candidate.kind === "diplomacy-contact") return weights.diplomacyContact;
+  if (candidate.kind === "colonize-region") return weights.colonization;
   return weights.militaryMove;
 }
 
@@ -119,7 +128,9 @@ function getGoodWeight(candidate: AiCandidate, weights: Record<string, number>):
 }
 
 function getRegionWeight(candidate: AiCandidate, weights: Record<string, number>): number {
-  return candidate.kind === "build" || candidate.kind === "upgrade" ? (weights[candidate.regionId] ?? 0) : 0;
+  return candidate.kind === "build" || candidate.kind === "upgrade" || candidate.kind === "colonize-region"
+    ? (weights[candidate.regionId] ?? 0)
+    : 0;
 }
 
 function mergeWeightMap(base: Record<string, number>, override: Record<string, number> | undefined): Record<string, number> {
@@ -153,6 +164,9 @@ function getCandidateSortKey(candidate: AiCandidate): string {
   }
   if (candidate.kind === "army-move") {
     return `${candidate.kind}:${candidate.countryId}:${candidate.divisionId}:${candidate.targetProvinceId}`;
+  }
+  if (candidate.kind === "colonize-region") {
+    return `${candidate.kind}:${candidate.countryId}:${candidate.regionId}`;
   }
   return `${candidate.kind}:${candidate.regionId}:${candidate.buildingId}:${candidate.kind === "upgrade" ? candidate.instanceId : ""}`;
 }

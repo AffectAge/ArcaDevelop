@@ -301,7 +301,9 @@
           "maxActiveColonizations": { "type": "integer", "min": 1, "max": 1000 },
           "pointsPerTurn": { "type": "integer", "min": 0, "max": 1000000000000 },
           "pointsCostPer1000Km2": { "type": "integer", "min": 1, "max": 1000000000000 },
-          "ducatsCostPer1000Km2": { "type": "integer", "min": 0, "max": 1000000000000 }
+          "ducatsCostPer1000Km2": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "settlementEnabled": { "type": "boolean" },
+          "settlementPopulationOnCapture": { "type": "integer", "min": 0, "max": 1000000000 }
         },
         "customization": {
           "renameDucats": { "type": "integer", "min": 0, "max": 1000000000000 },

@@ -19,7 +19,7 @@ describe("turnResolver", () => {
   });
 
 
-  it("runs the AI before-resolve hook only when AI settings are enabled", () => {
+  it("runs the AI before-resolve hook only when AI settings are enabled", async () => {
     const calls: unknown[] = [];
     const aiSettings = {
       enabled: true,
@@ -29,19 +29,23 @@ describe("turnResolver", () => {
     };
 
     expect(
-      runAiTurnBeforeResolveIfEnabled({
+      await runAiTurnBeforeResolveIfEnabled({
         turnId: 9,
         aiSettings,
-        runAiTurnBeforeResolve: (params) => calls.push(params),
+        runAiTurnBeforeResolve: (params) => {
+          calls.push(params);
+        },
       }),
     ).toBe(true);
     expect(calls).toEqual([{ turnId: 9, aiSettings }]);
 
     expect(
-      runAiTurnBeforeResolveIfEnabled({
+      await runAiTurnBeforeResolveIfEnabled({
         turnId: 10,
         aiSettings: { ...aiSettings, enabled: false },
-        runAiTurnBeforeResolve: (params) => calls.push(params),
+        runAiTurnBeforeResolve: (params) => {
+          calls.push(params);
+        },
       }),
     ).toBe(false);
     expect(calls).toHaveLength(1);

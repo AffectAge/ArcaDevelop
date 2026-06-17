@@ -595,6 +595,7 @@ export function buildSinglePopRegionPopulation(params: {
   provinceId: string;
   total: number;
   fallbackByDimension: Record<PopulationDimensionKey, string>;
+  popId?: string;
 }): RegionPopulation {
   const size = Math.max(0, Math.floor(params.total));
   return {
@@ -602,7 +603,7 @@ export function buildSinglePopRegionPopulation(params: {
       size > 0
         ? [
             {
-              id: `pop:${params.provinceId}:default`,
+              id: params.popId ?? `pop:${params.provinceId}:default`,
               size,
               cultureId: params.fallbackByDimension.culturePct,
               religionId: params.fallbackByDimension.religionPct,

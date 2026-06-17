@@ -172,3 +172,13 @@ The first executor-facing integration slice converts selected economy `build` ca
 ## Build Order Runtime Coordinator
 
 The first guarded runtime coordinator runs the safe build-order slice only: planner, build-order draft adapter, `ORDER_DELTA` bridge, and injected order-delta submitter. The turn runtime exposes an optional before-resolve AI hook and calls it only when `gameSettings.ai.enabled` is true; deployments must still provide the hook explicitly, so AI execution remains feature-guarded instead of automatic by default. The hook receives the current turn id and resolved AI settings so the runtime can select a bounded country batch before normal turn resolution. Runtime wiring must keep `gameSettings.ai.enabled` as the guard and must preserve rejected submission diagnostics. The runtime coordinator helper adapts `submitAiOrderDeltaToRuntime` errors into AI submission results, keeps the first error code as the compatibility rejection reason, and preserves the full runtime error list for future admin-only diagnostics.
+
+## Colonization Candidate And Runtime Slice
+
+The colonization slice adds profile-driven `COLONIZE` order drafts to the guarded AI runtime coordinator. It does not add a new protocol or mutate world state directly; selected candidates become normal `ORDER_DELTA` submissions and the existing server validation enforces neutral regions, disabled-region rules, duplicate queues, active-colonization limits, current turn, and country resources.
+
+Colonization candidates are region-first. Landless AI countries may consider any neutral colonizable region, then strategy `colonization` weight and `regionWeights` decide whether that first target beats economy or other candidates. AI countries that already own or control regions only consider neutral regions adjacent to those regions, using a region-adjacency index derived from province neighbors once per AI cycle.
+
+When a colonization capture succeeds, empty captured regions may receive scenario-defined starter settlers through the normal region population state. This is controlled by `colonization.settlementEnabled` and `colonization.settlementPopulationOnCapture`; it does not create province-level population and does not change the AI order pipeline.
+
+The selector filters owned, disabled, already-progressing, active, queued, over-limit, and resource-poor targets before scoring. Candidate ordering is deterministic by point cost, ducat cost, and region id; scoring can still override between candidate kinds through the scenario-authored profile stack.

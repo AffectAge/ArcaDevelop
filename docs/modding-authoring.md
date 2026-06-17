@@ -100,7 +100,9 @@ Currently supported runtime defines:
     "maxActiveColonizations": 3,
     "pointsPerTurn": 30,
     "pointsCostPer1000Km2": 5,
-    "ducatsCostPer1000Km2": 5
+    "ducatsCostPer1000Km2": 5,
+    "settlementEnabled": true,
+    "settlementPopulationOnCapture": 1000
   },
   "customization": {
     "renameDucats": 20,
@@ -130,7 +132,13 @@ Invalid define values and unknown define keys must fail validation or scenario a
 
 Scenario defines are applied when a scenario is applied and become the baseline for that running game. Admin runtime settings may change the current running game after scenario application; those runtime changes are persisted as operational state and should not be edited back into scenario files unless the scenario author intentionally updates `common/defines.json`.
 
+Colonization settlement defines control what happens when a colonization capture succeeds in an empty region. If `settlementEnabled` is true and `settlementPopulationOnCapture` is greater than zero, the server creates one starter region-level pop for the winner only when the captured region has no existing population. It does not add province-level population and does not add duplicate settlers to already populated regions.
+
 The machine-readable supported-field mirror lives in `.codex/project-rules.json` under `scenarioDataRules.defines`. When adding, renaming, or removing a supported define, update the TypeScript loader/validator, this documentation, tests, and `.codex/project-rules.json` together.
+
+## AI Colonization Profiles
+
+AI colonization uses the same validated `COLONIZE` orders as players. Scenario AI profiles can make colonization more or less likely with the `colonization` strategy weight, and can steer first-region or frontier preference with `regionWeights`. Landless AI countries evaluate neutral colonizable regions; landed AI countries expand only to neutral regions adjacent to their owned or controlled regions.
 
 ## Province Authoring
 

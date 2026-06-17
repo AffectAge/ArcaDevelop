@@ -1,7 +1,7 @@
 import type { OrderDelta, WorldBase, WsOutMessage } from "@arcanorum/shared";
 import {
-  createAiBuildOrderDraftsFromPlan,
   createAiOrderDeltaSubmitter,
+  createAiOrderDraftsFromPlan,
   submitAiOrderDrafts,
   type AiOrderDeltaSubmitter,
   type AiOrderDraftSubmitResult,
@@ -22,15 +22,19 @@ export type RunAiBuildOrderRuntimeCycleParams = {
   strategyProfilesByCountryId?: Record<string, AiStrategyProfile[]>;
 };
 
-export type AiBuildOrderRuntimeCycleResult = {
+export type RunAiOrderRuntimeCycleParams = RunAiBuildOrderRuntimeCycleParams;
+
+export type AiOrderRuntimeCycleResult = {
   plan: AiRuntimePlan;
   drafts: AiOrderSubmissionDraft[];
   submissions: AiOrderDraftSubmitResult[];
 };
 
-export async function runAiBuildOrderRuntimeCycle(
-  params: RunAiBuildOrderRuntimeCycleParams,
-): Promise<AiBuildOrderRuntimeCycleResult> {
+export type AiBuildOrderRuntimeCycleResult = AiOrderRuntimeCycleResult;
+
+export async function runAiOrderRuntimeCycle(
+  params: RunAiOrderRuntimeCycleParams,
+): Promise<AiOrderRuntimeCycleResult> {
   const plan = planAiRuntimeTick({
     world: params.world,
     aiSettings: params.aiSettings,
@@ -42,7 +46,7 @@ export async function runAiBuildOrderRuntimeCycle(
     return { plan, drafts: [], submissions: [] };
   }
 
-  const drafts = createAiBuildOrderDraftsFromPlan({
+  const drafts = createAiOrderDraftsFromPlan({
     plan,
     aiPlayerIdPrefix: params.aiPlayerIdPrefix,
   });
@@ -52,6 +56,12 @@ export async function runAiBuildOrderRuntimeCycle(
   });
 
   return { plan, drafts, submissions };
+}
+
+export async function runAiBuildOrderRuntimeCycle(
+  params: RunAiBuildOrderRuntimeCycleParams,
+): Promise<AiBuildOrderRuntimeCycleResult> {
+  return runAiOrderRuntimeCycle(params);
 }
 
 export type AiOrderDeltaRuntimeParams = Parameters<typeof submitAiOrderDeltaToRuntime>[0]["params"];
@@ -87,17 +97,26 @@ function toRuntimeErrorDiagnostic(message: Extract<WsOutMessage, { type: "ERROR"
   return { code: message.code, message: message.message };
 }
 
-export async function runAiBuildOrderRuntimeCycleWithRuntimeSubmitter(
-  params: Omit<RunAiBuildOrderRuntimeCycleParams, "submitOrderDelta"> & {
+export async function runAiOrderRuntimeCycleWithRuntimeSubmitter(
+  params: Omit<RunAiOrderRuntimeCycleParams, "submitOrderDelta"> & {
     runtimeParams: AiOrderDeltaRuntimeParams;
     onSubmissionError?: (message: Extract<WsOutMessage, { type: "ERROR" }>) => void;
   },
-): Promise<AiBuildOrderRuntimeCycleResult> {
-  return runAiBuildOrderRuntimeCycle({
+): Promise<AiOrderRuntimeCycleResult> {
+  return runAiOrderRuntimeCycle({
     ...params,
     submitOrderDelta: createRuntimeAiOrderDeltaSubmitter({
       runtimeParams: params.runtimeParams,
       onError: params.onSubmissionError,
     }),
   });
+}
+
+export async function runAiBuildOrderRuntimeCycleWithRuntimeSubmitter(
+  params: Omit<RunAiBuildOrderRuntimeCycleParams, "submitOrderDelta"> & {
+    runtimeParams: AiOrderDeltaRuntimeParams;
+    onSubmissionError?: (message: Extract<WsOutMessage, { type: "ERROR" }>) => void;
+  },
+): Promise<AiBuildOrderRuntimeCycleResult> {
+  return runAiOrderRuntimeCycleWithRuntimeSubmitter(params);
 }

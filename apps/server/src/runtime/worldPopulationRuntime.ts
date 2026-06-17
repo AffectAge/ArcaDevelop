@@ -14,6 +14,7 @@ import { DEFAULT_BUILDING_DURABILITY_MAX } from "../mechanics/buildingMechanics"
 import { normalizeIdeologyAttractionRules } from "../mechanics/contentDefinitionNormalizers";
 import {
   buildRandomRegionPopulation as buildRandomRegionPopulationInState,
+  buildSinglePopRegionPopulation,
   getActiveCultureNeeds as getActiveCultureNeedsFromState,
   isEqualRegionPopulation as isEqualRegionPopulationInState,
   normalizePopulationPops as normalizePopulationPopsInState,
@@ -153,6 +154,15 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       domains,
       fallbackByDimension: resolvePopulationFallbackKeys(domains),
       getProvinceAreaKm2: params.getProvinceAreaKm2,
+    });
+  }
+
+  function buildColonizationSettlementPopulation(regionId: string, countryId: string, total: number): RegionPopulation {
+    return buildSinglePopRegionPopulation({
+      provinceId: regionId,
+      total,
+      fallbackByDimension: resolvePopulationFallbackKeys(getPopulationDomainKeys()),
+      popId: `pop:${toPopulationIdSegment(regionId)}:settlers:${toPopulationIdSegment(countryId)}`,
     });
   }
 
@@ -391,6 +401,7 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
   }
 
   return {
+    buildColonizationSettlementPopulation,
     buildDefaultRegionPopulation,
     buildRandomRegionPopulation,
     defaultWorldBase,
@@ -412,4 +423,8 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
     resolvePopulationTurn,
     sortCultureNeedsByPriority,
   };
+}
+
+function toPopulationIdSegment(value: string): string {
+  return value.trim().replace(/[^A-Za-z0-9:_-]+/g, "_").replace(/:/g, "_") || "unknown";
 }

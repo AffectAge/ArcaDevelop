@@ -17,6 +17,7 @@ type ServerStartupRuntimeParams = {
   getCurrentTurnStartedAtMs: () => number;
   getTurnId: () => number;
   loadPersistentState: () => Promise<void>;
+  refreshAiControlledCountryIds: () => void;
   persistContentLibraryFromSettings: () => void;
   cleanupOrphanUploadsOnServerStart: () => Promise<void>;
   migratePersistedMarketNamesToReadable: () => Promise<boolean>;
@@ -29,7 +30,7 @@ type ServerStartupRuntimeParams = {
   loadPersistedWorldDeltaHistory: () => Promise<void>;
   resetTurnTimerAnchor: () => void;
   broadcastTurnResolveStarted: (wsServer: WebSocketServer, reason: "manual" | "admin" | "auto") => void;
-  resolveAndBroadcastCurrentTurn: () => boolean;
+  resolveAndBroadcastCurrentTurn: () => Promise<boolean>;
   makeOfficialNews: (params: {
     turn: number;
     category: "system";
@@ -47,6 +48,7 @@ export async function startServerRuntime(params: ServerStartupRuntimeParams): Pr
   await ensureCorePrismaTables(params.prisma);
   await ensureWorldDeltaLogTable(params.prisma);
   await params.loadPersistentState();
+  params.refreshAiControlledCountryIds();
   params.persistContentLibraryFromSettings();
   await params.cleanupOrphanUploadsOnServerStart();
   if (await params.migratePersistedMarketNamesToReadable()) {

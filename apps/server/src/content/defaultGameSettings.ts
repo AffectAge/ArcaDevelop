@@ -106,6 +106,8 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
       pointsPerTurn: params.colonizationPointsPerTurn,
       pointsCostPer1000Km2: 5,
       ducatsCostPer1000Km2: 5,
+      settlementEnabled: true,
+      settlementPopulationOnCapture: 1_000,
     },
     customization: {
       renameDucats: 20,

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import type { AiColonizationCandidate } from "./aiColonizationCandidates";
 import type { AiDiplomacyMilitaryCandidate } from "./aiDiplomacyMilitaryCandidates";
 import type { AiEconomyOrderCandidate } from "./aiEconomyCandidates";
 import {
   createAiBuildOrderDraftsFromPlan,
   createAiOrderDeltaSubmitter,
+  createAiOrderDraftsFromPlan,
   createOrderDeltaFromAiDraft,
   submitAiOrderDrafts,
 } from "./aiOrderSubmissionAdapter";
@@ -41,7 +43,27 @@ function createDiplomacyCandidate(countryId: string): AiDiplomacyMilitaryCandida
   };
 }
 
-function createPlan(candidate: AiEconomyOrderCandidate | AiDiplomacyMilitaryCandidate | null): AiRuntimePlan {
+function createColonizationCandidate(countryId: string): AiColonizationCandidate {
+  return {
+    kind: "colonize-region",
+    countryId,
+    regionId: "region:frontier",
+    pointCost: 5,
+    ducatCost: 2,
+    isAdjacentToControlledRegion: true,
+    requiresValidatedPipeline: true,
+    orderDraft: {
+      type: "COLONIZE",
+      countryId,
+      regionId: "region:frontier",
+      payload: {},
+    },
+  };
+}
+
+function createPlan(
+  candidate: AiEconomyOrderCandidate | AiDiplomacyMilitaryCandidate | AiColonizationCandidate | null,
+): AiRuntimePlan {
   return {
     enabled: true,
     turnId: 7,
@@ -93,6 +115,27 @@ describe("createAiBuildOrderDraftsFromPlan", () => {
     ]);
   });
 
+  it("converts selected colonization candidates into validated order drafts", () => {
+    const drafts = createAiOrderDraftsFromPlan({ plan: createPlan(createColonizationCandidate("country:alpha")) });
+
+    expect(drafts).toEqual([
+      {
+        kind: "validated-order-draft",
+        candidateKind: "colonize-region",
+        countryId: "country:alpha",
+        requiresValidatedPipeline: true,
+        order: {
+          type: "COLONIZE",
+          turnId: 7,
+          playerId: "ai:country:alpha",
+          countryId: "country:alpha",
+          regionId: "region:frontier",
+          payload: {},
+        },
+      },
+    ]);
+  });
+
   it("uses a custom AI player id prefix without changing order payload", () => {
     const drafts = createAiBuildOrderDraftsFromPlan({
       plan: createPlan(createBuildCandidate("country:alpha")),
@@ -108,6 +151,7 @@ describe("createAiBuildOrderDraftsFromPlan", () => {
 
   it("skips unsupported selected candidates and empty selections", () => {
     expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(createDiplomacyCandidate("country:alpha")) })).toEqual([]);
+    expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(createColonizationCandidate("country:alpha")) })).toEqual([]);
     expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(null) })).toEqual([]);
   });
 

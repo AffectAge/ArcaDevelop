@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import type { AiColonizationCandidate } from "../ai/aiColonizationCandidates";
 import type { AiEconomyOrderCandidate } from "../ai/aiEconomyCandidates";
 import { createAiFixtureWorld } from "../ai/aiFixtureHarness";
 import type { AiRuntimeCandidateProvider } from "../ai/aiRuntimePlanner";
 import {
   createRuntimeAiOrderDeltaSubmitter,
+  runAiOrderRuntimeCycle,
   runAiBuildOrderRuntimeCycle,
   type AiOrderDeltaRuntimeParams,
 } from "./aiRuntimeCoordinator";
@@ -27,6 +29,24 @@ function createBuildCandidate(countryId: string): AiEconomyOrderCandidate {
       countryId,
       regionId: "region:alpha-core",
       payload: { buildingId: "building:farm", owner: { type: "state", countryId } },
+    },
+  };
+}
+
+function createColonizationCandidate(countryId: string): AiColonizationCandidate {
+  return {
+    kind: "colonize-region",
+    countryId,
+    regionId: "region:frontier",
+    pointCost: 5,
+    ducatCost: 2,
+    isAdjacentToControlledRegion: true,
+    requiresValidatedPipeline: true,
+    orderDraft: {
+      type: "COLONIZE",
+      countryId,
+      regionId: "region:frontier",
+      payload: {},
     },
   };
 }
@@ -84,6 +104,34 @@ describe("runAiBuildOrderRuntimeCycle", () => {
     expect(result.submissions).toEqual([{ ok: false, draft: result.drafts[0], reason: "BUILD_CONFLICT" }]);
   });
 
+  it("plans colonization drafts and submits them through the injected order-delta path", async () => {
+    const submittedOrders: unknown[] = [];
+
+    const result = await runAiOrderRuntimeCycle({
+      world: createAiFixtureWorld(),
+      aiSettings,
+      countryIds: ["country:alpha"],
+      candidateProviders: [{
+        id: "colonization",
+        selectCandidates: ({ countryId }) => [createColonizationCandidate(countryId)],
+      }],
+      submitOrderDelta: async (delta) => {
+        submittedOrders.push(delta);
+        return { ok: true, submittedOrderId: "order:ai:colonize" };
+      },
+    });
+
+    expect(result.drafts).toHaveLength(1);
+    expect(result.drafts[0]?.order).toMatchObject({
+      type: "COLONIZE",
+      playerId: "ai:country:alpha",
+      countryId: "country:alpha",
+      regionId: "region:frontier",
+    });
+    expect(submittedOrders).toEqual([{ type: "ORDER_DELTA", order: result.drafts[0]?.order }]);
+    expect(result.submissions).toEqual([{ ok: true, draft: result.drafts[0], submittedOrderId: "order:ai:colonize" }]);
+  });
+
   it("adapts websocket runtime errors into AI submission diagnostics", async () => {
     const errors: unknown[] = [];
     const submitter = createRuntimeAiOrderDeltaSubmitter({
@@ -110,6 +158,37 @@ describe("runAiBuildOrderRuntimeCycle", () => {
     });
     expect(errors).toEqual([{ type: "ERROR", code: "NO_RESOURCES", message: "Ресурсы страны не инициализированы" }]);
   });
+
+  it("reports colonization validation errors from the runtime submitter", async () => {
+    const disabledSubmitter = createRuntimeAiOrderDeltaSubmitter({
+      runtimeParams: createRuntimeParamsForColonization({
+        getRegionColonizationConfig: () => ({ cost: 1, disabled: true, manualCost: false }),
+      }),
+    });
+    const duplicateSubmitter = createRuntimeAiOrderDeltaSubmitter({
+      runtimeParams: createRuntimeParamsForColonization({
+        activeColonizeRegionsByCountry: new Map([["country:alpha", new Set(["region:frontier"])]])
+      }),
+    });
+    const cappedSubmitter = createRuntimeAiOrderDeltaSubmitter({
+      runtimeParams: createRuntimeParamsForColonization({
+        activeColonizeRegionsByCountry: new Map([["country:alpha", new Set(["region:other"])]])
+      }),
+    });
+
+    await expect(disabledSubmitter(createColonizeDelta())).resolves.toMatchObject({
+      ok: false,
+      reason: "COLONIZATION_DISABLED",
+    });
+    await expect(duplicateSubmitter(createColonizeDelta())).resolves.toMatchObject({
+      ok: false,
+      reason: "DUPLICATE_COLONIZE",
+    });
+    await expect(cappedSubmitter(createColonizeDelta())).resolves.toMatchObject({
+      ok: false,
+      reason: "COLONIZE_LIMIT",
+    });
+  });
 });
 
 function createRuntimeParamsWithoutResources(): AiOrderDeltaRuntimeParams {
@@ -127,6 +206,7 @@ function createRuntimeParamsWithoutResources(): AiOrderDeltaRuntimeParams {
     parseAuthToken: () => null,
     findCountryForAuth: async () => null,
     listResolveStatusCountries: async () => [],
+    getAiControlledCountryIds: () => new Set(),
     ensureCountryInWorldBase: () => undefined,
     getLastLoginAt: () => null,
     setLastLoginAt: () => undefined,
@@ -134,7 +214,7 @@ function createRuntimeParamsWithoutResources(): AiOrderDeltaRuntimeParams {
     sendPendingRegistrationNotificationsToAdminSocket: async () => undefined,
     broadcast: () => undefined,
     broadcastTurnResolveStarted: () => undefined,
-    resolveAndBroadcastCurrentTurn: () => false,
+    resolveAndBroadcastCurrentTurn: async () => false,
     cleanupExpiredPunishments: async () => undefined,
     getCountryBlockInfo: () => ({ blocked: false }),
     getCountrySkipInfo: () => ({ ignored: false }),
@@ -152,6 +232,45 @@ function createRuntimeParamsWithoutResources(): AiOrderDeltaRuntimeParams {
     getGlobalBuildLimit: () => null,
     normalizeArmyMoveRoute: () => [],
     isContiguousArmyRoute: () => false,
+  };
+}
+
+function createRuntimeParamsForColonization(options: {
+  getRegionColonizationConfig?: AiOrderDeltaRuntimeParams["getRegionColonizationConfig"];
+  activeColonizeRegionsByCountry?: Map<string, Set<string>>;
+} = {}): AiOrderDeltaRuntimeParams {
+  const world = createAiFixtureWorld({
+    resourcesByCountry: {
+      "country:alpha": { culture: 0, science: 0, religion: 0, colonization: 10, construction: 0, ducats: 10, gold: 0 },
+    },
+    regionOwner: {},
+    regionController: {},
+    colonyProgressByRegion: {},
+  });
+  return {
+    ...createRuntimeParamsWithoutResources(),
+    getWorldBase: () => world,
+    getGameSettings: () => ({
+      content: { buildings: [] },
+      colonization: { maxActiveColonizations: 1 },
+    }) as unknown as GameSettings,
+    getActiveColonizeRegionsByCountry: () => options.activeColonizeRegionsByCountry ?? new Map(),
+    getRegionColonizationConfig:
+      options.getRegionColonizationConfig ?? (() => ({ cost: 1, disabled: false, manualCost: false })),
+  };
+}
+
+function createColonizeDelta() {
+  return {
+    type: "ORDER_DELTA" as const,
+    order: {
+      type: "COLONIZE" as const,
+      turnId: 1,
+      playerId: "ai:country:alpha",
+      countryId: "country:alpha",
+      regionId: "region:frontier",
+      payload: {},
+    },
   };
 }
 

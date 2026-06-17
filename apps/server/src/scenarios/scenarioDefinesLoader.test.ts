@@ -58,6 +58,8 @@ const baseColonization: ColonizationSettings = {
   pointsPerTurn: 30,
   pointsCostPer1000Km2: 5,
   ducatsCostPer1000Km2: 5,
+  settlementEnabled: true,
+  settlementPopulationOnCapture: 1_000,
 };
 const baseCustomization: CustomizationSettings = {
   renameDucats: 20,
@@ -221,11 +223,25 @@ describe("scenarioDefinesLoader", () => {
   it("normalizes colonization and customization defines", () => {
     expect(
       normalizeScenarioColonizationDefines(
-        { maxActiveColonizations: 4, pointsPerTurn: 45, pointsCostPer1000Km2: 6, ducatsCostPer1000Km2: 7 },
+        {
+          maxActiveColonizations: 4,
+          pointsPerTurn: 45,
+          pointsCostPer1000Km2: 6,
+          ducatsCostPer1000Km2: 7,
+          settlementEnabled: false,
+          settlementPopulationOnCapture: 2_500,
+        },
         baseColonization,
         options,
       ),
-    ).toEqual({ maxActiveColonizations: 4, pointsPerTurn: 45, pointsCostPer1000Km2: 6, ducatsCostPer1000Km2: 7 });
+    ).toEqual({
+      maxActiveColonizations: 4,
+      pointsPerTurn: 45,
+      pointsCostPer1000Km2: 6,
+      ducatsCostPer1000Km2: 7,
+      settlementEnabled: false,
+      settlementPopulationOnCapture: 2_500,
+    });
 
     expect(
       normalizeScenarioCustomizationDefines(
@@ -244,6 +260,22 @@ describe("scenarioDefinesLoader", () => {
         options,
       ),
     ).toThrow("INVALID_SCENARIO_COLONIZATION_MAX_ACTIVE");
+
+    expect(() =>
+      normalizeScenarioColonizationDefines(
+        { settlementEnabled: "yes" },
+        baseColonization,
+        options,
+      ),
+    ).toThrow("INVALID_SCENARIO_COLONIZATION_SETTLEMENT_ENABLED");
+
+    expect(() =>
+      normalizeScenarioColonizationDefines(
+        { settlementPopulationOnCapture: -1 },
+        baseColonization,
+        options,
+      ),
+    ).toThrow("INVALID_SCENARIO_COLONIZATION_SETTLEMENT_POPULATION");
 
     expect(() =>
       normalizeScenarioCustomizationDefines(

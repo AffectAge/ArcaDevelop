@@ -36,7 +36,14 @@ describe("gameSettingsPatch", () => {
 
     const result = applyGameSettingsPatch({
       settings,
-      patch: { colonization: { pointsCostPer1000Km2: 9, ducatsCostPer1000Km2: 4 } },
+      patch: {
+        colonization: {
+          pointsCostPer1000Km2: 9,
+          ducatsCostPer1000Km2: 4,
+          settlementEnabled: false,
+          settlementPopulationOnCapture: 2_500,
+        },
+      },
       normalizeMarketId: () => null,
       normalizeMarketSanctionsMap: () => ({}),
       normalizeInfrastructureTransitAgreementsMap: () => ({}),
@@ -45,6 +52,8 @@ describe("gameSettingsPatch", () => {
 
     expect(settings.colonization.pointsCostPer1000Km2).toBe(9);
     expect(settings.colonization.ducatsCostPer1000Km2).toBe(4);
+    expect(settings.colonization.settlementEnabled).toBe(false);
+    expect(settings.colonization.settlementPopulationOnCapture).toBe(2_500);
     expect(result.colonizationPriceFormulaChanged).toBe(true);
     expect(result.previousColonizationCostPer1000Km2).toEqual({
       pointsCostPer1000Km2: 5,
@@ -108,6 +117,8 @@ function makeSettings(): PatchableGameSettings {
       pointsPerTurn: 1,
       pointsCostPer1000Km2: 5,
       ducatsCostPer1000Km2: 2,
+      settlementEnabled: true,
+      settlementPopulationOnCapture: 1_000,
     },
     customization: {
       renameDucats: 1,

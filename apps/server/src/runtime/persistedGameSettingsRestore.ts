@@ -112,6 +112,14 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
         typeof next.colonization?.ducatsCostPer1000Km2 === "number"
           ? Math.max(0, Math.floor(next.colonization.ducatsCostPer1000Km2))
           : defaults.colonization.ducatsCostPer1000Km2,
+      settlementEnabled:
+        typeof next.colonization?.settlementEnabled === "boolean"
+          ? next.colonization.settlementEnabled
+          : defaults.colonization.settlementEnabled,
+      settlementPopulationOnCapture:
+        typeof next.colonization?.settlementPopulationOnCapture === "number"
+          ? Math.max(0, Math.min(1_000_000_000, Math.floor(next.colonization.settlementPopulationOnCapture)))
+          : defaults.colonization.settlementPopulationOnCapture,
     },
     customization: {
       renameDucats: numberOrDefault(next.customization?.renameDucats, defaults.customization.renameDucats),

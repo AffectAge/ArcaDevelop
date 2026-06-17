@@ -43,6 +43,7 @@ import {
 } from "./serverRuntimeConfig";
 import type { WebSocketServer } from "ws";
 import type { GameSettings } from "./gameSettingsTypes";
+import type { ResourceTotals } from "@arcanorum/shared";
 
 type ServerCoreRouteRegistrationRuntimeParams = {
   app: Express;
@@ -65,6 +66,8 @@ type ServerCoreRouteRegistrationRuntimeParams = {
   getWsDeltaSizeMetrics: () => WsDeltaSizeMetrics;
   getWorldDeltaHistory: () => Parameters<typeof getWorldDeltaMemoryStatus>[0];
   getGameSettings: () => GameSettings;
+  getAiControlledCountryIds: () => Set<string>;
+  getCountryResources: (countryId: string) => ResourceTotals | null;
   savePersistentState: () => void;
   validateImageDimensions: typeof validateImageDimensions;
   removeUploadedFile: typeof removeUploadedFile;
@@ -119,6 +122,8 @@ export function registerServerCoreRouteRuntime(params: ServerCoreRouteRegistrati
       }),
     getReadySetForTurn: params.turnSessionRuntime.getReadySetForTurn,
     getOnlineCountryIds: () => getOnlineCountryIdsFromSockets(params.wsServerProvider()),
+    getAiControlledCountryIds: params.getAiControlledCountryIds,
+    getCountryResources: params.getCountryResources,
     getLastLoginAt: (countryId) => params.sessionStateRuntime.lastLoginAtByCountryId.get(countryId) ?? null,
     getCurrentTurnStartedAtMs: params.turnSessionRuntime.getCurrentTurnStartedAtMs,
     getGameSettings: params.getGameSettings,
