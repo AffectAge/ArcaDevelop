@@ -106,6 +106,21 @@
   --arc-radius-md: 0.5rem;
   --arc-radius-lg: 0.75rem;
   --arc-radius-xl: 1rem;
+
+  /* Redesign shell: fixed light parchment / atlas command interface. */
+  --arc-color-atlas-paper: #f0e7d2;
+  --arc-color-atlas-paper-soft: #f8f1df;
+  --arc-color-atlas-paper-deep: #d8c9aa;
+  --arc-color-atlas-ink: #211a14;
+  --arc-color-atlas-muted: #6b5d47;
+  --arc-color-atlas-line: rgb(116 92 56 / 0.28);
+  --arc-color-atlas-line-strong: rgb(94 70 40 / 0.46);
+  --arc-color-atlas-primary: #315f66;
+  --arc-color-atlas-primary-ink: #f7f0df;
+  --arc-color-atlas-danger: #8c342e;
+  --arc-color-atlas-good: #246b48;
+  --arc-color-atlas-bad: #9a342d;
+  --arc-shadow-atlas-panel: 0 18px 50px rgb(34 24 14 / 0.22), 0 1px 0 rgb(255 255 255 / 0.65) inset;
 }
 
 /*
@@ -530,6 +545,268 @@
 .arc-building-card [class*="border-emerald-400/40"],
 .arc-building-card [class*="border-red-400/40"] {
   border-color: var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)) !important;
+}
+
+.arc-building-card-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  background: var(--arc-building-card-icon-bg, rgb(5 12 16 / 0.56));
+  color: var(--arc-building-card-muted, rgb(232 224 205 / 0.52));
+}
+
+.arc-building-icon-action {
+  display: inline-flex;
+  height: 36px;
+  width: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  border-radius: 8px;
+  background: var(--arc-building-card-icon-bg, rgb(5 12 16 / 0.56));
+  color: var(--arc-building-card-text, rgb(232 224 205 / 0.76));
+  transition: border-color 160ms ease, color 160ms ease, filter 160ms ease, transform 160ms ease;
+}
+
+.arc-building-icon-action:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.arc-building-icon-action:disabled {
+  opacity: 0.4;
+}
+
+.arc-building-icon-action--good {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-good, #2f8f5b) 52%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  color: var(--arc-color-atlas-good, #2f8f5b);
+}
+
+.arc-building-icon-action--danger {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-danger, #b04a3f) 52%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  color: var(--arc-color-atlas-danger, #b04a3f);
+}
+
+.arc-building-icon-action--primary {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-primary, #9a6b2f) 58%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  color: var(--arc-color-atlas-primary, #9a6b2f);
+}
+
+.arc-building-meta-row {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--arc-building-card-icon-bg, rgb(5 12 16 / 0.56)) 76%, transparent);
+  padding: 4px 8px;
+  color: var(--arc-building-card-muted, rgb(232 224 205 / 0.52));
+}
+
+.arc-building-mini-logo {
+  height: 14px;
+  width: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  object-fit: cover;
+}
+
+.arc-building-meter-row {
+  display: inline-flex;
+  min-height: 22px;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--arc-building-card-icon-bg, rgb(5 12 16 / 0.56)) 84%, transparent);
+  padding: 4px 8px;
+  color: var(--arc-building-card-title, rgb(255 247 226 / 0.95));
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.arc-building-mini-meter {
+  display: inline-block;
+  height: 6px;
+  width: 64px;
+  overflow: hidden;
+  border: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  border-radius: 999px;
+  background: var(--arc-building-card-icon-bg, rgb(5 12 16 / 0.56));
+}
+
+.arc-building-mini-meter__fill {
+  display: block;
+  height: 100%;
+}
+
+.arc-building-mini-meter__fill--good {
+  background: var(--arc-color-atlas-good, #2f8f5b);
+}
+
+.arc-building-mini-meter__fill--primary {
+  background: var(--arc-color-atlas-primary, #9a6b2f);
+}
+
+.arc-building-confirm-card {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-primary, #9a6b2f) 48%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  background: var(--arc-building-card-built-bg, rgb(11 19 32 / 0.76));
+}
+
+.arc-building-confirm-card--danger {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-danger, #b04a3f) 58%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+}
+
+.arc-building-accordion {
+  border: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--arc-building-card-icon-bg, rgb(5 12 16 / 0.56)) 76%, transparent);
+}
+
+.arc-building-accordion-button {
+  display: flex;
+  min-height: 38px;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  color: var(--arc-building-card-title, rgb(255 247 226 / 0.95));
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.arc-building-accordion-body {
+  border-top: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  padding: 8px 12px;
+  color: var(--arc-building-card-text, rgb(232 224 205 / 0.76));
+  font-size: 12px;
+}
+
+.arc-building-economy-section {
+  border: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--arc-building-card-icon-bg, rgb(5 12 16 / 0.56)) 72%, transparent);
+  padding: 8px;
+}
+
+.arc-building-economy-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--arc-building-card-muted, rgb(232 224 205 / 0.52));
+  font-weight: 700;
+}
+
+.arc-building-economy-empty {
+  color: var(--arc-building-card-muted, rgb(232 224 205 / 0.52));
+}
+
+.arc-building-economy-row {
+  border: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--arc-building-card-icon-bg, rgb(5 12 16 / 0.56)) 48%, transparent);
+  padding: 4px 8px;
+  color: var(--arc-building-card-text, rgb(232 224 205 / 0.76));
+}
+
+.arc-building-economy-row--good {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-good, #2f8f5b) 44%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  background: color-mix(in srgb, var(--arc-color-atlas-good, #2f8f5b) 14%, transparent);
+}
+
+.arc-building-economy-row--bad,
+.arc-building-economy-row--danger {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-danger, #b04a3f) 44%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  background: color-mix(in srgb, var(--arc-color-atlas-danger, #b04a3f) 14%, transparent);
+}
+
+.arc-building-economy-row--warn {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-primary, #9a6b2f) 52%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  background: color-mix(in srgb, var(--arc-color-atlas-primary, #9a6b2f) 14%, transparent);
+}
+
+.arc-building-economy-title {
+  color: var(--arc-building-card-title, rgb(255 247 226 / 0.95));
+  font-weight: 700;
+}
+
+.arc-building-economy-title--good {
+  color: var(--arc-color-atlas-good, #2f8f5b);
+}
+
+.arc-building-economy-title--bad,
+.arc-building-economy-title--danger {
+  color: var(--arc-color-atlas-danger, #b04a3f);
+}
+
+.arc-building-economy-title--warn {
+  color: var(--arc-color-atlas-primary, #9a6b2f);
+}
+
+.arc-building-economy-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--arc-building-card-icon-bg, rgb(5 12 16 / 0.56)) 55%, transparent);
+  color: var(--arc-building-card-title, rgb(255 247 226 / 0.95));
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.arc-building-economy-chip--good {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-good, #2f8f5b) 50%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  background: color-mix(in srgb, var(--arc-color-atlas-good, #2f8f5b) 18%, transparent);
+  color: var(--arc-color-atlas-good, #2f8f5b);
+}
+
+.arc-building-economy-chip--bad,
+.arc-building-economy-chip--danger {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-danger, #b04a3f) 50%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  background: color-mix(in srgb, var(--arc-color-atlas-danger, #b04a3f) 18%, transparent);
+  color: var(--arc-color-atlas-danger, #b04a3f);
+}
+
+.arc-building-economy-chip--warn {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-primary, #9a6b2f) 54%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  background: color-mix(in srgb, var(--arc-color-atlas-primary, #9a6b2f) 18%, transparent);
+  color: var(--arc-color-atlas-primary, #9a6b2f);
+}
+
+.arc-building-economy-good-icon {
+  color: var(--arc-color-atlas-good, #2f8f5b);
+}
+
+.arc-building-economy-bad-icon {
+  color: var(--arc-color-atlas-danger, #b04a3f);
+}
+
+.arc-building-status-note {
+  border: 1px solid var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--arc-building-card-icon-bg, rgb(5 12 16 / 0.56)) 62%, transparent);
+  padding: 4px 8px;
+}
+
+.arc-building-status-note--danger {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-danger, #b04a3f) 48%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  color: var(--arc-color-atlas-danger, #b04a3f);
+}
+
+.arc-building-status-note--warn {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-primary, #9a6b2f) 54%, var(--arc-building-card-icon-border, rgb(255 247 226 / 0.14)));
+  color: var(--arc-color-atlas-primary, #9a6b2f);
+}
+
+.arc-building-status-detail {
+  margin-top: 2px;
+  color: var(--arc-building-card-text, rgb(232 224 205 / 0.76));
 }
 
 .arc-modal-close-button {

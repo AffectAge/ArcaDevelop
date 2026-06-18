@@ -47,6 +47,7 @@ import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard, AppEmptyState, AppToolbar } from "./ui/AppSurface";
 import { tUi } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 
 type Props = {
   open: boolean;
@@ -197,41 +198,41 @@ function BuildingCardTooltip({
           </div>
         </div>
         <div className={`rounded-md border px-2 py-1 text-[11px] font-semibold ${availability.available ? "border-[var(--arc-modal-tooltip-positive)] bg-[var(--arc-modal-tooltip-positive-bg)] text-[var(--arc-modal-tooltip-positive)]" : "border-[var(--arc-modal-tooltip-negative)] bg-[var(--arc-modal-tooltip-negative-bg)] text-[var(--arc-modal-tooltip-negative)]"}`}>
-          {availability.available ? "Доступно" : "Недоступно"}
+          {availability.available ? tUi("buildings.available") : tUi("buildings.unavailable")}
         </div>
       </div>
 
       <div className="space-y-3 p-3 text-sm">
         <div className="space-y-1.5">
-          {resourceLine(resourceIcons.construction, <Hammer size={14} className="text-[var(--arc-modal-tooltip-positive)]" />, "Очки строительства", formatCompact(costConstruction), "text-[var(--arc-modal-tooltip-positive)]")}
-          {resourceLine(resourceIcons.ducats, <Coins size={14} className="text-[var(--arc-modal-tooltip-warning)]" />, "Дукаты", formatCompact(costDucats), costDucats > 0 ? "text-[var(--arc-modal-tooltip-warning)]" : "text-[var(--arc-modal-tooltip-muted)]")}
-          {startingDucats > 0 ? resourceLine(resourceIcons.ducats, <Coins size={14} className="text-[var(--arc-modal-tooltip-warning)]" />, "Стартовый капитал", formatCompact(startingDucats), "text-[var(--arc-modal-tooltip-warning)]") : null}
+          {resourceLine(resourceIcons.construction, <Hammer size={14} className="text-[var(--arc-modal-tooltip-positive)]" />, tUi("shell.resource.construction"), formatCompact(costConstruction), "text-[var(--arc-modal-tooltip-positive)]")}
+          {resourceLine(resourceIcons.ducats, <Coins size={14} className="text-[var(--arc-modal-tooltip-warning)]" />, tUi("shell.resource.ducats"), formatCompact(costDucats), costDucats > 0 ? "text-[var(--arc-modal-tooltip-warning)]" : "text-[var(--arc-modal-tooltip-muted)]")}
+          {startingDucats > 0 ? resourceLine(resourceIcons.ducats, <Coins size={14} className="text-[var(--arc-modal-tooltip-warning)]" />, tUi("buildings.startingCapital"), formatCompact(startingDucats), "text-[var(--arc-modal-tooltip-warning)]") : null}
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="rounded-md border border-[var(--arc-modal-tooltip-border)] bg-[var(--arc-overlay-30)] px-2 py-1.5">
-            <div className="text-[var(--arc-modal-tooltip-muted)]">Макс. уровень</div>
+            <div className="text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.maxLevel")}</div>
             <div className="mt-0.5 font-semibold text-[var(--arc-modal-tooltip-title)]">{maxLevel}</div>
           </div>
           <div className="rounded-md border border-[var(--arc-modal-tooltip-border)] bg-[var(--arc-overlay-30)] px-2 py-1.5">
-            <div className="text-[var(--arc-modal-tooltip-muted)]">Прочность</div>
+            <div className="text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.maxDurability")}</div>
             <div className="mt-0.5 font-semibold text-[var(--arc-modal-tooltip-title)]">{maxDurability > 0 ? formatCompact(maxDurability) : "—"}</div>
           </div>
         </div>
 
         {outputs.length > 0 || extractionGood ? (
           <div className="space-y-1">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">Производит</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.produces")}</div>
             {outputs.map((entry) => (
               <div key={`out-${entry.goodId}`} className="flex items-center justify-between gap-3 text-[var(--arc-modal-tooltip-good)]">
                 <span className="truncate">+{entry.amount} {goodLabel(entry.goodId)}</span>
-                {entry.affectedByFertility ? <span className="text-[11px] text-[var(--arc-modal-tooltip-muted)]">плодородие</span> : null}
+                {entry.affectedByFertility ? <span className="text-[11px] text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.fertility")}</span> : null}
               </div>
             ))}
             {extractionGood ? (
               <div className="flex items-center justify-between gap-3 text-[var(--arc-modal-tooltip-good)]">
                 <span className="truncate">+{formatCompact(Number(building.extractionAmountPerTurn ?? 0))} {extractionGood.name}</span>
-                <span className="text-[11px] text-[var(--arc-modal-tooltip-muted)]">{building.extractionRequiresDeposit ? "требует залежь" : "добыча"}</span>
+                <span className="text-[11px] text-[var(--arc-modal-tooltip-muted)]">{building.extractionRequiresDeposit ? tUi("buildings.requiresDeposit") : tUi("buildings.extraction")}</span>
               </div>
             ) : null}
           </div>
@@ -239,11 +240,11 @@ function BuildingCardTooltip({
 
         {inputs.length > 0 ? (
           <div className="space-y-1">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">Потребляет</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.consumes")}</div>
             {inputs.map((entry) => (
               <div key={`in-${entry.goodId}`} className="flex items-center justify-between gap-3 text-[var(--arc-modal-tooltip-bad)]">
                 <span className="truncate">-{entry.amount} {goodLabel(entry.goodId)}</span>
-                {entry.affectedByFertility ? <span className="text-[11px] text-[var(--arc-modal-tooltip-muted)]">плодородие</span> : null}
+                {entry.affectedByFertility ? <span className="text-[11px] text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.fertility")}</span> : null}
               </div>
             ))}
           </div>
@@ -251,7 +252,7 @@ function BuildingCardTooltip({
 
         {workforce.length > 0 ? (
           <div className="space-y-1">
-            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">Рабочая сила</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.workforce")}</div>
             {workforce.map((entry) => (
               <div key={entry.professionId} className="flex items-center justify-between gap-3">
                 <span className="truncate text-[var(--arc-modal-tooltip-muted)]">{professionLabel(entry.professionId)}</span>
@@ -262,13 +263,13 @@ function BuildingCardTooltip({
         ) : null}
 
         <div className="space-y-1 border-t border-[var(--arc-modal-tooltip-border)] pt-3">
-          <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">Условия</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.requirements")}</div>
           {availability.available ? (
-            <div className="text-[var(--arc-modal-tooltip-positive)]">Да Можно добавить в очередь строительства</div>
+            <div className="text-[var(--arc-modal-tooltip-positive)]">{tUi("buildings.requirementsCanAdd")}</div>
           ) : (
             availability.reasons.map((reason) => (
               <div key={reason} className="text-[var(--arc-modal-tooltip-negative)]">
-                Нет {reason}
+                {tUi("buildings.requirementsCannotAdd", { reason })}
               </div>
             ))
           )}
@@ -357,7 +358,7 @@ function IndustryBuildingTooltip({
           </div>
         </div>
         <div className={`rounded-md border px-2 py-1 text-[11px] font-semibold ${displayIsActive ? "border-[var(--arc-modal-tooltip-positive)] bg-[var(--arc-modal-tooltip-positive-bg)] text-[var(--arc-modal-tooltip-positive)]" : "border-[var(--arc-modal-tooltip-negative)] bg-[var(--arc-modal-tooltip-negative-bg)] text-[var(--arc-modal-tooltip-negative)]"}`}>
-          {displayIsActive ? "Работает" : "Остановлено"}
+          {displayIsActive ? tUi("buildings.statusWorking") : tUi("buildings.statusStopped")}
         </div>
       </div>
 
@@ -365,32 +366,32 @@ function IndustryBuildingTooltip({
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-md border border-[var(--arc-modal-tooltip-border)] bg-[var(--arc-overlay-30)] px-2 py-1.5">
-              <div className="text-[var(--arc-modal-tooltip-label)]">Уровень</div>
+              <div className="text-[var(--arc-modal-tooltip-label)]">{tUi("buildings.levelLabel")}</div>
               <div className="mt-0.5 font-semibold text-[var(--arc-modal-tooltip-value)]">{card.level} / {maxLevel}</div>
             </div>
             <div className="rounded-md border border-[var(--arc-modal-tooltip-border)] bg-[var(--arc-overlay-30)] px-2 py-1.5">
-              <div className="text-[var(--arc-modal-tooltip-label)]">Рабочие</div>
+              <div className="text-[var(--arc-modal-tooltip-label)]">{tUi("buildings.workersLabel")}</div>
               <div className="mt-0.5 font-semibold text-[var(--arc-modal-tooltip-value)]">{formatCompact(card.workersEmployed)} / {formatCompact(card.workersDemand)}</div>
             </div>
           </div>
           <div className="rounded-md border border-[var(--arc-modal-tooltip-border)] bg-[var(--arc-overlay-30)] px-2 py-1.5">
-            <span className="text-[var(--arc-modal-tooltip-label)]">Владелец: </span>
+            <span className="text-[var(--arc-modal-tooltip-label)]">{tUi("buildings.owner")}: </span>
             <span className="font-semibold text-[var(--arc-modal-tooltip-value)]">{card.ownerLabel}</span>
           </div>
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[var(--arc-modal-tooltip-muted)]">Производительность</span>
+              <span className="text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.productivityMetric")}</span>
               <span className="font-semibold text-[var(--arc-modal-tooltip-positive)]">{productivityPct}%</span>
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full border border-[var(--arc-modal-tooltip-border)] bg-black/45">
+            <div className="h-1.5 overflow-hidden rounded-full border border-[var(--arc-modal-tooltip-border)] bg-[var(--arc-overlay-30)]">
               <div className="h-full bg-[var(--arc-modal-tooltip-progress)]" style={{ width: `${Math.min(100, productivityPct)}%` }} />
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[var(--arc-modal-tooltip-muted)]">Прочность</span>
+              <span className="text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.maxDurability")}</span>
               <span className="font-semibold text-[var(--arc-modal-tooltip-info)]">{durabilityPct}%</span>
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full border border-[var(--arc-modal-tooltip-border)] bg-black/45">
+            <div className="h-1.5 overflow-hidden rounded-full border border-[var(--arc-modal-tooltip-border)] bg-[var(--arc-overlay-30)]">
               <div className="h-full bg-[var(--arc-modal-tooltip-info-progress)]" style={{ width: `${durabilityPct}%` }} />
             </div>
           </div>
@@ -399,12 +400,12 @@ function IndustryBuildingTooltip({
         <div className="space-y-2">
           {economy ? (
           <div className="space-y-1.5">
-            {moneyChip("Касса здания", storageAmount, "text-[var(--arc-modal-tooltip-value)]")}
-            {moneyChip("Доход от продаж", economy.outputRevenue, "text-[var(--arc-modal-tooltip-positive)]")}
-            {moneyChip("Входные товары", -economy.inputCost, "text-[var(--arc-modal-tooltip-negative)]")}
-            {moneyChip("Зарплаты", -economy.wagesCost, "text-[var(--arc-modal-tooltip-negative)]")}
-            {subsidy > 0 ? moneyChip("Госсубсидии", subsidy, "text-[var(--arc-modal-tooltip-warning)]") : null}
-            {moneyChip("Итог за ход", netPerTurn, netPerTurn >= 0 ? "text-[var(--arc-modal-tooltip-positive)]" : "text-[var(--arc-modal-tooltip-negative)]")}
+            {moneyChip(tUi("buildings.buildingCash"), storageAmount, "text-[var(--arc-modal-tooltip-value)]")}
+            {moneyChip(tUi("buildings.salesRevenue"), economy.outputRevenue, "text-[var(--arc-modal-tooltip-positive)]")}
+            {moneyChip(tUi("buildings.inputGoodsCost"), -economy.inputCost, "text-[var(--arc-modal-tooltip-negative)]")}
+            {moneyChip(tUi("buildings.wages"), -economy.wagesCost, "text-[var(--arc-modal-tooltip-negative)]")}
+            {subsidy > 0 ? moneyChip(tUi("buildings.stateSubsidies"), subsidy, "text-[var(--arc-modal-tooltip-warning)]") : null}
+            {moneyChip(tUi("buildings.netPerTurn"), netPerTurn, netPerTurn >= 0 ? "text-[var(--arc-modal-tooltip-positive)]" : "text-[var(--arc-modal-tooltip-negative)]")}
           </div>
           ) : null}
         </div>
@@ -412,7 +413,7 @@ function IndustryBuildingTooltip({
         <div className="space-y-1">
           {outputRows.length > 0 ? (
           <>
-            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">Выпуск</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.produces")}</div>
             {outputRows.slice(0, 3).map((entry) => (
               <div key={`out-${entry.goodName}`} className="flex items-center justify-between gap-3 text-[var(--arc-modal-tooltip-text)]">
                 <span className="truncate">{entry.goodName}</span>
@@ -426,7 +427,7 @@ function IndustryBuildingTooltip({
         <div className="space-y-1">
           {(economy?.inputs ?? []).length > 0 ? (
           <>
-            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">Потребление</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-modal-tooltip-muted)]">{tUi("buildings.consumes")}</div>
             {(economy?.inputs ?? []).slice(0, 3).map((entry) => (
               <div key={`in-${entry.goodName}`} className="flex items-center justify-between gap-3 text-[var(--arc-modal-tooltip-text)]">
                 <span className="truncate">{entry.goodName}</span>
@@ -440,7 +441,7 @@ function IndustryBuildingTooltip({
         {(limitingFactor || !displayIsActive) ? (
           <div className="md:col-span-2 flex flex-wrap gap-x-4 gap-y-1 border-t border-[var(--arc-modal-tooltip-border)] pt-2">
             {limitingFactor ? <span className="text-[var(--arc-modal-tooltip-warning)]">{limitingFactor.text}</span> : null}
-            {!displayIsActive ? <span className="text-[var(--arc-modal-tooltip-negative)]">{inactiveReasons[0] ?? "Здание не работает"}</span> : null}
+            {!displayIsActive ? <span className="text-[var(--arc-modal-tooltip-negative)]">{inactiveReasons[0] ?? tUi("buildings.buildingInactive")}</span> : null}
           </div>
         ) : null}
       </div>
@@ -449,6 +450,7 @@ function IndustryBuildingTooltip({
 }
 
 export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, countryName, initialRegionId, constructionRequestId = 0, onQueueBuildOrder }: Props) {
+  const { t } = useUiText();
   const [buildings, setBuildings] = useState<ContentEntry[]>([]);
   const [technologies, setTechnologies] = useState<ContentEntry[]>([]);
   const [industries, setIndustries] = useState<ContentEntry[]>([]);
@@ -867,7 +869,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
             regionName: region.name,
             buildingName: building.name,
             ownerLabel,
-            projectLabel: (project.projectType ?? "build") === "upgrade" ? "Повышение уровня" : "Новое здание",
+            projectLabel: (project.projectType ?? "build") === "upgrade" ? tUi("buildings.projectUpgrade") : tUi("buildings.projectBuild"),
             progressPercent: Math.min(100, Math.round((project.progressConstruction / Math.max(1, project.costConstruction)) * 100)),
             iconUrl: building.logoUrl ?? null,
             queueId: project.queueId,
@@ -900,14 +902,14 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                   ? payload.building
                   : "";
             const pendingBuildingName =
-              buildingById.get(payloadBuildingId)?.name ?? (payloadBuildingId || "Здание");
+              buildingById.get(payloadBuildingId)?.name ?? (payloadBuildingId || tUi("buildings.buildingFallbackName"));
             const pendingRegionName =
               myRegions.find((p) => p.id === order.regionId)?.name ??
               order.regionId;
             const owner = payload.owner as { type?: "state" | "company"; countryId?: string; companyId?: string } | undefined;
             const ownerLabel =
               owner?.type === "company"
-                ? companyById.get(owner.companyId ?? "")?.name ?? owner.companyId ?? "Компания"
+                ? companyById.get(owner.companyId ?? "")?.name ?? owner.companyId ?? tUi("buildings.ownerCompany")
                 : countryById.get(owner?.countryId ?? countryId)?.name ?? owner?.countryId ?? countryId;
             pending.push({
               key: `pending-${order.id}`,
@@ -916,7 +918,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
               regionName: pendingRegionName,
               buildingName: pendingBuildingName,
               ownerLabel,
-              projectLabel: "Новое здание",
+              projectLabel: tUi("buildings.projectBuild"),
               progressPercent: 0,
               iconUrl: buildingById.get(payloadBuildingId)?.logoUrl ?? null,
               orderId: order.id,
@@ -1283,7 +1285,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       reasons.push(tUi("buildings.regionRequired"));
     }
     if (ownerType === "company" && !ownerCompanyId) {
-      reasons.push("Не выбрана компания-владелец");
+      reasons.push(tUi("buildings.ownerCompanyMissing"));
     }
 
     const raw = building as unknown as Record<string, unknown>;
@@ -1296,13 +1298,13 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       ? raw.deniedCountryIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
       : [];
     if (deniedCountries.includes(countryId)) {
-      reasons.push("Страна находится в списке запрета");
+      reasons.push(tUi("buildings.countryDenied"));
     } else if (allowedCountries.length > 0 && !allowedCountries.includes(countryId)) {
-      reasons.push("Страна не входит в список разрешенных");
+      reasons.push(tUi("buildings.countryNotAllowed"));
     }
     const requiredTechnology = unlockingTechnologyByBuildingId.get(building.id);
     if (requiredTechnology && !researchedTechnologyIds.has(requiredTechnology.id)) {
-      reasons.push(`Нужна технология: ${requiredTechnology.name}`);
+      reasons.push(tUi("buildings.requiredTechnology", { technology: requiredTechnology.name }));
     }
 
     const countBuiltAndQueued = Object.entries(worldBase?.regionBuildingsByRegion ?? {}).reduce(
@@ -1360,7 +1362,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
         ? Math.max(1, Math.floor(raw.globalBuildLimit))
         : null;
     if (globalLimit != null && countBuiltAndQueued + pendingGlobal >= globalLimit) {
-      reasons.push(`Достигнут глобальный лимит (${countBuiltAndQueued + pendingGlobal}/${globalLimit})`);
+      reasons.push(tUi("buildings.globalLimitReached", { current: countBuiltAndQueued + pendingGlobal, limit: globalLimit }));
     }
     const countryLimits = Array.isArray(raw.countryBuildLimits)
       ? raw.countryBuildLimits.filter(
@@ -1375,7 +1377,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       : [];
     const countryLimit = countryLimits.find((row) => row.countryId === countryId)?.limit ?? null;
     if (countryLimit != null && countBuiltAndQueuedByCountry + pendingByCountry >= countryLimit) {
-      reasons.push(`Достигнут лимит для страны (${countBuiltAndQueuedByCountry + pendingByCountry}/${countryLimit})`);
+      reasons.push(tUi("buildings.countryLimitReached", { current: countBuiltAndQueuedByCountry + pendingByCountry, limit: countryLimit }));
     }
 
     const dependencySource = Array.isArray(raw.requiredProvinceBuildingIds)
@@ -1422,7 +1424,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
     for (const card of buildableBuildingCards) {
       const rawIndustryId = getBuildingIndustryId(card.building);
       const key = industryNameById.has(rawIndustryId) ? rawIndustryId : OTHER_INDUSTRY_GROUP_ID;
-      const label = key === OTHER_INDUSTRY_GROUP_ID ? "Другое" : (industryNameById.get(key) ?? "Другое");
+      const label = key === OTHER_INDUSTRY_GROUP_ID ? tUi("buildings.otherIndustry") : (industryNameById.get(key) ?? tUi("buildings.otherIndustry"));
       const group = groups.get(key) ?? { id: key, label, cards: [] };
       group.cards.push(card);
       groups.set(key, group);
@@ -1458,13 +1460,13 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       } else {
         await cancelCountryBuild(auth.token, { regionId: item.regionId, queueId: item.queueId });
       }
-      toast.success("Строительство отменено");
+      toast.success(tUi("buildings.toastBuildCanceled"));
     } catch (error) {
       const message = error instanceof Error ? error.message : "BUILD_CANCEL_FAILED";
       if (message === "BUILD_CANCEL_NOT_FOUND") {
-        toast.error("Проект уже не найден");
+        toast.error(tUi("buildings.toastBuildNotFound"));
       } else {
-        toast.error("Не удалось отменить строительство");
+        toast.error(tUi("buildings.toastBuildCancelFailed"));
       }
     } finally {
       setCancelingQueueKey(null);
@@ -1485,19 +1487,17 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
         buildingId: target.buildingId,
         instanceId: target.instanceId,
       });
-      toast.success(
-        `Постройка снесена (${formatCompact(result.demolitionCostConstruction)} очков строительства)`,
-      );
+      toast.success(tUi("buildings.toastDemolished", { cost: formatCompact(result.demolitionCostConstruction) }));
     } catch (error) {
       const message = error instanceof Error ? error.message : "BUILD_DEMOLISH_FAILED";
       if (message === "INSUFFICIENT_CONSTRUCTION_POINTS") {
-        toast.error("Недостаточно очков строительства для сноса");
+        toast.error(tUi("buildings.toastDemolishInsufficientConstruction"));
       } else if (message === "BUILDING_NOT_FOUND") {
-        toast.error("Постройка уже отсутствует");
+        toast.error(tUi("buildings.toastDemolishNotFound"));
       } else if (message === "NOT_PROVINCE_OWNER") {
         toast.error(tUi("buildings.ownRegionOnlyDemolish"));
       } else {
-        toast.error("Не удалось снести постройку");
+        toast.error(tUi("buildings.toastDemolishFailed"));
       }
     } finally {
       setDemolishingCardKey(null);
@@ -1518,21 +1518,19 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
         buildingId: target.buildingId,
         instanceId: target.instanceId,
       });
-      toast.success(
-        `Апгрейд поставлен в очередь: Ур. ${result.currentLevel} -> ${result.targetLevel}`,
-      );
+      toast.success(tUi("buildings.toastUpgradeQueued", { current: result.currentLevel, target: result.targetLevel }));
     } catch (error) {
       const message = error instanceof Error ? error.message : "BUILD_UPGRADE_STATE_FAILED";
       if (message === "INSUFFICIENT_DUCATS") {
-        toast.error("Недостаточно дукатов государства для апгрейда");
+        toast.error(tUi("buildings.toastUpgradeInsufficientDucats"));
       } else if (message === "BUILDING_UPGRADE_ALREADY_QUEUED") {
-        toast.error("Апгрейд этого здания уже в очереди");
+        toast.error(tUi("buildings.toastUpgradeAlreadyQueued"));
       } else if (message === "BUILDING_MAX_LEVEL_REACHED") {
-        toast.error("Достигнут максимальный уровень здания");
+        toast.error(tUi("buildings.toastUpgradeMaxReached"));
       } else if (message === "NOT_PROVINCE_OWNER") {
         toast.error(tUi("buildings.ownRegionOnlyUpgrade"));
       } else {
-        toast.error("Не удалось поставить апгрейд в очередь");
+        toast.error(tUi("buildings.toastUpgradeFailed"));
       }
     } finally {
       setUpgradingCardKey(null);
@@ -1557,15 +1555,15 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       });
       toast.success(
         result.autoUpgradeEnabled
-          ? "Автоповышение за счёт здания включено"
-          : "Автоповышение за счёт здания выключено",
+          ? tUi("buildings.toastAutoUpgradeEnabled")
+          : tUi("buildings.toastAutoUpgradeDisabled"),
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "BUILD_AUTO_UPGRADE_STATE_FAILED";
       if (message === "NOT_PROVINCE_OWNER") {
         toast.error(tUi("buildings.ownRegionOnlyToggle"));
       } else {
-        toast.error("Не удалось изменить режим автоповышения");
+        toast.error(tUi("buildings.toastAutoUpgradeFailed"));
       }
     } finally {
       setTogglingAutoUpgradeCardKey(null);
@@ -1590,15 +1588,15 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       });
       toast.success(
         result.stateSubsidiesEnabled
-          ? "Государственные субсидии включены"
-          : "Государственные субсидии выключены",
+          ? tUi("buildings.toastSubsidiesEnabled")
+          : tUi("buildings.toastSubsidiesDisabled"),
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "BUILD_SUBSIDY_STATE_FAILED";
       if (message === "NOT_PROVINCE_OWNER") {
         toast.error(tUi("buildings.ownRegionOnlyToggle"));
       } else {
-        toast.error("Не удалось изменить режим субсидий");
+        toast.error(tUi("buildings.toastSubsidiesFailed"));
       }
     } finally {
       setTogglingSubsidyCardKey(null);
@@ -1623,15 +1621,15 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       });
       toast.success(
         result.manualWorkEnabled
-          ? "Постройка включена вручную"
-          : "Постройка отключена вручную",
+          ? tUi("buildings.toastManualWorkEnabled")
+          : tUi("buildings.toastManualWorkDisabled"),
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "BUILD_MANUAL_WORK_STATE_FAILED";
       if (message === "NOT_PROVINCE_OWNER") {
         toast.error(tUi("buildings.ownRegionOnlyToggle"));
       } else {
-        toast.error("Не удалось изменить ручной режим постройки");
+        toast.error(tUi("buildings.toastManualWorkFailed"));
       }
     } finally {
       setTogglingManualWorkCardKey(null);
@@ -1671,7 +1669,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
         instanceId: target.instanceId,
         customName: normalized.length > 0 ? normalized : null,
       });
-      toast.success(result.customName ? "Название постройки обновлено" : "Название постройки сброшено");
+      toast.success(result.customName ? tUi("buildings.toastRenameUpdated") : tUi("buildings.toastRenameReset"));
       setRenameModalTarget(null);
       setRenameModalValue("");
     } catch (error) {
@@ -1681,7 +1679,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       } else if (message === "BUILDING_CUSTOM_NAME_ALREADY_USED") {
         toast.error(tUi("buildings.duplicateNameInRegion"));
       } else {
-        toast.error("Не удалось обновить название постройки");
+        toast.error(tUi("buildings.toastRenameFailed"));
       }
     } finally {
       setRenamingCardKey(null);
@@ -1690,15 +1688,16 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
 
   return (
     <>
-      <AppModal open={open} onClose={onClose} modalKey="buildings" zIndexClassName="z-[206]">
+      <AppModal open={open} onClose={onClose} modalKey="buildings" zIndexClassName="z-[206]" panelClassName="arc-buildings-panel">
           <AppModalHeader
-            title="Индустрия"
+            title={t("buildings.industryTitle")}
             description={tUi("buildings.modalDescription")}
             onClose={onClose}
             actions={
               <AppButton
                 type="button"
-                title="Открыть строительство"
+                title={t("buildings.openConstruction")}
+                aria-label={t("buildings.openConstruction")}
                 onClick={() => setConstructionOpen(true)}
                 variant="primary"
                 size="icon"
@@ -1709,7 +1708,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
             }
           />
 
-          <AppToolbar>
+          <AppToolbar className="arc-buildings-toolbar">
             {(() => {
               const activeFilterCount = [
                 filterBuildingId,
@@ -1737,11 +1736,11 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                 <details className="group">
                   <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <span className="inline-flex h-8 items-center gap-1.5 rounded-md border border-white/15 bg-black/30 px-2 text-xs font-semibold text-white/75 transition group-open:border-arc-accent/35 group-open:text-white">
+                      <span className="arc-buildings-filter-chip">
                         <SlidersHorizontal size={13} />
-                        Фильтры
+                        {t("buildings.filters")}
                         {activeFilterCount > 0 && (
-                          <span className="rounded bg-arc-accent/20 px-1.5 py-0.5 text-[10px] text-arc-accent">{activeFilterCount}</span>
+                          <span className="arc-buildings-filter-count">{activeFilterCount}</span>
                         )}
                       </span>
                     </div>
@@ -1754,9 +1753,9 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                           event.stopPropagation();
                           resetFilters();
                         }}
-                        className="h-8 rounded-md border border-white/15 bg-black/30 px-2 text-[11px] text-white/65 transition hover:border-arc-accent/40 hover:text-arc-accent disabled:cursor-not-allowed disabled:opacity-45"
+                        className="arc-buildings-reset-button"
                       >
-                        Сбросить фильтры
+                        {t("buildings.resetFilters")}
                       </button>
                       <div className="w-[180px]">
                         <CustomSelect
@@ -1764,31 +1763,31 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                           onChange={(value) => setSortBy(value as "building" | "region" | "company" | "industry" | "sector")}
                           buttonClassName={compactSelectButtonClass}
                           options={[
-                            { value: "building", label: "Сорт: здание" },
+                            { value: "building", label: t("buildings.sortBuilding") },
                             { value: "region", label: tUi("buildings.sortRegion") },
-                            { value: "company", label: "Сорт: компания" },
-                            { value: "industry", label: "Сорт: отрасль" },
-                            { value: "sector", label: "Сорт: сектор" },
+                            { value: "company", label: t("buildings.sortCompany") },
+                            { value: "industry", label: t("buildings.sortIndustry") },
+                            { value: "sector", label: t("buildings.sortSector") },
                           ]}
                         />
                       </div>
                     </div>
                   </summary>
                   <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
-                    <CustomSelect value={filterBuildingId} onChange={setFilterBuildingId} buttonClassName={compactSelectButtonClass} options={[{ value: "", label: "Здание: все" }, ...sortedBuildings.map((b) => ({ value: b.id, label: b.name }))]} />
+                    <CustomSelect value={filterBuildingId} onChange={setFilterBuildingId} buttonClassName={compactSelectButtonClass} options={[{ value: "", label: t("buildings.filterBuildingAll") }, ...sortedBuildings.map((b) => ({ value: b.id, label: b.name }))]} />
                     <CustomSelect value={filterRegionId} onChange={setFilterRegionId} buttonClassName={compactSelectButtonClass} options={[{ value: "", label: tUi("buildings.filterRegionAll") }, ...myRegions.map((p) => ({ value: p.id, label: p.name }))]} />
-                    <CustomSelect value={filterCompanyId} onChange={setFilterCompanyId} buttonClassName={compactSelectButtonClass} options={[{ value: "", label: "Компания: все" }, ...companies.map((c) => ({ value: c.id, label: c.name }))]} />
-                    <CustomSelect value={filterCompanyCountryId} onChange={setFilterCompanyCountryId} buttonClassName={compactSelectButtonClass} options={[{ value: "", label: "Страна компании: все" }, ...countries.map((c) => ({ value: c.id, label: c.name }))]} />
-                    <CustomSelect value={filterIndustryId} onChange={setFilterIndustryId} buttonClassName={compactSelectButtonClass} options={[{ value: "", label: "Отрасль: все" }, ...industries.map((i) => ({ value: i.id, label: i.name }))]} />
-                    <CustomSelect value={filterSectorId} onChange={setFilterSectorId} buttonClassName={compactSelectButtonClass} options={[{ value: "", label: "Сектор: все" }, ...sectors.map((i) => ({ value: i.id, label: i.name }))]} />
+                    <CustomSelect value={filterCompanyId} onChange={setFilterCompanyId} buttonClassName={compactSelectButtonClass} options={[{ value: "", label: t("buildings.filterCompanyAll") }, ...companies.map((c) => ({ value: c.id, label: c.name }))]} />
+                    <CustomSelect value={filterCompanyCountryId} onChange={setFilterCompanyCountryId} buttonClassName={compactSelectButtonClass} options={[{ value: "", label: t("buildings.filterCompanyCountryAll") }, ...countries.map((c) => ({ value: c.id, label: c.name }))]} />
+                    <CustomSelect value={filterIndustryId} onChange={setFilterIndustryId} buttonClassName={compactSelectButtonClass} options={[{ value: "", label: t("buildings.filterIndustryAll") }, ...industries.map((i) => ({ value: i.id, label: i.name }))]} />
+                    <CustomSelect value={filterSectorId} onChange={setFilterSectorId} buttonClassName={compactSelectButtonClass} options={[{ value: "", label: t("buildings.filterSectorAll") }, ...sectors.map((i) => ({ value: i.id, label: i.name }))]} />
                     <CustomSelect
                       value={filterStatus}
                       onChange={(value) => setFilterStatus(value as "all" | "construction" | "built")}
                       buttonClassName={compactSelectButtonClass}
                       options={[
-                        { value: "all", label: "Статус: все" },
-                        { value: "construction", label: "Строящиеся" },
-                        { value: "built", label: "Построенные" },
+                        { value: "all", label: t("buildings.filterStatusAll") },
+                        { value: "construction", label: t("buildings.filterStatusConstruction") },
+                        { value: "built", label: t("buildings.filterStatusBuilt") },
                       ]}
                     />
                     <CustomSelect
@@ -1796,9 +1795,9 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       onChange={(value) => setFilterActive(value as "all" | "active" | "inactive")}
                       buttonClassName={compactSelectButtonClass}
                       options={[
-                        { value: "all", label: "Активность: все" },
-                        { value: "active", label: "Активные" },
-                        { value: "inactive", label: "Неактивные" },
+                        { value: "all", label: t("buildings.filterActivityAll") },
+                        { value: "active", label: t("buildings.filterActivityActive") },
+                        { value: "inactive", label: t("buildings.filterActivityInactive") },
                       ]}
                     />
                     <CustomSelect
@@ -1806,9 +1805,9 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       onChange={(value) => setFilterEconomy(value as "all" | "profit" | "loss")}
                       buttonClassName={compactSelectButtonClass}
                       options={[
-                        { value: "all", label: "Экономика: все" },
-                        { value: "profit", label: "Прибыльные" },
-                        { value: "loss", label: "Убыточные" },
+                        { value: "all", label: t("buildings.filterEconomyAll") },
+                        { value: "profit", label: t("buildings.filterEconomyProfit") },
+                        { value: "loss", label: t("buildings.filterEconomyLoss") },
                       ]}
                     />
                   </div>
@@ -1821,13 +1820,16 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
             {regionSections.map((section) => {
               const regionCards = section.cards;
               return (
-                <section key={section.regionId} className="arc-province-building-section rounded-2xl border p-3">
+                <section key={section.regionId} className="arc-province-building-section arc-buildings-region-section rounded-2xl border p-3">
                   <div className="mb-3 flex items-start justify-between gap-2">
                     <div>
-                      <div className="text-sm font-semibold text-white/85">{section.regionName}</div>
+                      <div className="text-sm font-semibold text-[var(--arc-color-atlas-ink)]">{section.regionName}</div>
                     </div>
-                    <div className="pt-0.5 text-[11px] text-white/50">
-                      Построек: {regionCards.filter((card) => card.kind === "built").length}, в очереди: {regionCards.filter((card) => card.kind === "construction").length}
+                    <div className="pt-0.5 text-[11px] text-[var(--arc-color-atlas-muted)]">
+                      {t("buildings.regionCounts", {
+                        built: regionCards.filter((card) => card.kind === "built").length,
+                        queued: regionCards.filter((card) => card.kind === "construction").length,
+                      })}
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -1851,25 +1853,25 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                     const limiting = factors[0];
                     const factorLabel =
                       limiting.label === "labor"
-                        ? "труд"
+                        ? tUi("buildings.limitingFactor.labor")
                         : limiting.label === "input"
-                          ? "входные товары"
+                          ? tUi("buildings.limitingFactor.inputs")
                           : limiting.label === "infra"
-                            ? "инфраструктура"
+                            ? tUi("buildings.limitingFactor.infrastructure")
                             : limiting.label === "finance"
-                              ? "финансы"
+                              ? tUi("buildings.limitingFactor.finance")
                               : limiting.label === "extraction"
-                                ? "добыча"
-                                : "прочность";
+                                ? tUi("buildings.limitingFactor.extraction")
+                                : tUi("buildings.limitingFactor.durability");
                     const factorPct = Math.round(limiting.value * 100);
                     limitingFactorBadge = {
-                      text: `Лимит: ${factorLabel} ${factorPct}%`,
-                      tooltip: `Лимит-фактор: ${factorLabel} (${factorPct}%)`,
+                      text: tUi("buildings.limitingFactor", { factor: factorLabel, value: factorPct }),
+                      tooltip: tUi("buildings.limitingFactorLabel", { factor: factorLabel, value: factorPct }),
                     };
                   }
                 }
                 if (c.kind === "built" && econ && econ.netPerTurn < 0 && econ.storageAmount <= 0) {
-                  displayInactiveReasons.push("Недостаточно дукатов: убыток не покрывается кассой здания");
+                  displayInactiveReasons.push(tUi("buildings.inactiveLossNotCovered"));
                 }
                 const displayIsActive = c.isActive;
                 const econData = c.kind === "built" ? (econ ?? getCardEconomy(c)) : null;
@@ -1953,8 +1955,8 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                 const isManuallyDisabled =
                   c.kind === "built" &&
                   (!instanceManualWorkEnabled ||
-                    c.inactiveReason === "Отключено вручную" ||
-                    c.inactiveReasons.includes("Отключено вручную"));
+                    c.inactiveReason === tUi("buildings.manualDisabledReason") ||
+                    c.inactiveReasons.includes(tUi("buildings.manualDisabledReason")));
                 const canStateUpgrade =
                   c.kind === "built" &&
                   Boolean(c.instanceId) &&
@@ -1965,13 +1967,13 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                   c.kind !== "built"
                     ? ""
                     : !c.instanceId
-                      ? "Инстанс здания не найден"
+                      ? tUi("buildings.instanceMissing")
                       : c.level >= maxLevel
-                        ? `Достигнут максимум: Ур. ${maxLevel}`
+                        ? tUi("buildings.upgradeMaxReached", { level: maxLevel })
                         : hasQueuedUpgrade
-                          ? "Апгрейд уже в очереди"
+                          ? tUi("buildings.upgradeAlreadyQueuedReason")
                           : availableDucats < upgradeCostDucats
-                            ? `Нужно дукатов: ${formatCompact(upgradeCostDucats)}`
+                            ? tUi("buildings.upgradeDucatsNeeded", { value: formatCompact(upgradeCostDucats) })
                             : "";
                 const cardThemeClass =
                   c.kind === "construction"
@@ -1992,7 +1994,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                 <div className="flex items-start justify-between gap-3">
                     <div className={`flex gap-3 ${c.kind === "built" ? "items-stretch" : "items-start"}`}>
                       <div
-                        className={`flex items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/30 ${
+                        className={`arc-building-card-thumb ${
                           c.kind === "built"
                             ? "aspect-square min-h-[74px] self-stretch"
                             : "h-[60px] w-[60px]"
@@ -2005,7 +2007,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                         )}
                       </div>
                       <div>
-                      <div className="flex items-center gap-2 text-white/80 text-sm font-semibold">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--arc-color-atlas-ink)]">
                         {c.kind === "built" ? (
                           <Tooltip
                             placement="right-start"
@@ -2032,7 +2034,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                           <Tooltip
                             content={(() => {
                               const description = (buildingById.get(c.buildingId)?.description ?? "").trim();
-                              return description.length > 0 ? description : "Описание здания отсутствует";
+                              return description.length > 0 ? description : t("buildings.buildingDescriptionMissing");
                             })()}
                             placement="top"
                           >
@@ -2040,13 +2042,23 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                           </Tooltip>
                         )}
                       </div>
-                      {c.kind === "built" && <div className="text-[11px] text-white/55">Название: {c.customName?.trim() ? c.customName : "не задано"}</div>}
-                      <div className="text-[11px] text-white/45">Стоимость: {fmt(displayCostConstruction)}</div>
-                      {c.kind === "built" && <div className="text-[11px] text-white/45">Уровень: {c.level}</div>}
+                      {c.kind === "built" && (
+                        <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">
+                          {t("buildings.customNameLabel")} <span className="text-[var(--arc-color-atlas-ink)]">{c.customName?.trim() ? c.customName : t("buildings.customNameMissing")}</span>
+                        </div>
+                      )}
+                      <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">
+                        {t("buildings.costLabel")} <span className="text-[var(--arc-color-atlas-ink)]">{fmt(displayCostConstruction)}</span>
+                      </div>
+                      {c.kind === "built" && (
+                        <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">
+                          {t("buildings.levelLabel")} <span className="text-[var(--arc-color-atlas-ink)]">{c.level}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   {c.kind === "construction" ? (
-                    <Tooltip content="Отменить строительство">
+                    <Tooltip content={t("buildings.cancelConstructionTooltip")}>
                       <button
                         type="button"
                         onClick={() =>
@@ -2059,14 +2071,14 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             queueId: c.queueId,
                           })
                         }
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-black/40 text-white/60 transition hover:border-red-400/40 hover:text-red-300"
+                        className="arc-building-icon-action arc-building-icon-action--danger"
                       >
                         <X size={14} />
                       </button>
                     </Tooltip>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Tooltip content="Изменить уникальное название постройки">
+                      <Tooltip content={t("buildings.renameTooltip")}>
                         <button
                           type="button"
                           onClick={() =>
@@ -2081,7 +2093,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             })
                           }
                           disabled={!c.instanceId || renamingCardKey === c.key}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-black/40 text-white/70 transition hover:border-white/30 hover:text-white disabled:opacity-40"
+                          className="arc-building-icon-action"
                         >
                           {renamingCardKey === c.key ? "..." : <Pencil size={14} />}
                         </button>
@@ -2089,8 +2101,8 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       <Tooltip
                         content={
                           isManuallyDisabled
-                            ? "Включить постройку вручную"
-                            : "Отключить постройку вручную"
+                            ? t("buildings.enableManualWorkTooltip")
+                            : t("buildings.disableManualWorkTooltip")
                         }
                       >
                         <button
@@ -2105,10 +2117,10 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             })
                           }
                           disabled={!c.instanceId || togglingManualWorkCardKey === c.key}
-                          className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-black/40 transition disabled:opacity-40 ${
+                          className={`arc-building-icon-action ${
                             isManuallyDisabled
-                              ? "border-red-400/50 text-red-300 hover:border-red-300/80"
-                              : "border-emerald-400/55 text-emerald-300 hover:border-emerald-300/80"
+                              ? "arc-building-icon-action--danger"
+                              : "arc-building-icon-action--good"
                           }`}
                         >
                           {togglingManualWorkCardKey === c.key ? "..." : <Power size={14} />}
@@ -2117,8 +2129,8 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       <Tooltip
                         content={
                           instanceStateSubsidiesEnabled
-                            ? "Выключить государственные субсидии"
-                            : "Включить государственные субсидии"
+                            ? t("buildings.disableSubsidiesTooltip")
+                            : t("buildings.enableSubsidiesTooltip")
                         }
                       >
                         <button
@@ -2133,10 +2145,10 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             })
                           }
                           disabled={!c.instanceId || togglingSubsidyCardKey === c.key}
-                          className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-black/40 transition disabled:opacity-40 ${
+                          className={`arc-building-icon-action ${
                             instanceStateSubsidiesEnabled
-                              ? "border-amber-400/55 text-amber-300 hover:border-amber-300/80"
-                              : "border-white/10 text-white/60 hover:border-white/25"
+                              ? "arc-building-icon-action--primary"
+                              : ""
                           }`}
                         >
                           {togglingSubsidyCardKey === c.key ? "..." : <Coins size={14} />}
@@ -2145,8 +2157,8 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       <Tooltip
                         content={
                           instanceAutoUpgradeEnabled
-                            ? "Выключить автоповышение за счёт здания"
-                            : "Включить автоповышение за счёт здания"
+                            ? t("buildings.disableAutoUpgradeTooltip")
+                            : t("buildings.enableAutoUpgradeTooltip")
                         }
                       >
                         <button
@@ -2161,10 +2173,10 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             })
                           }
                           disabled={!c.instanceId || togglingAutoUpgradeCardKey === c.key}
-                          className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-black/40 transition disabled:opacity-40 ${
+                          className={`arc-building-icon-action ${
                             instanceAutoUpgradeEnabled
-                              ? "border-sky-400/45 text-sky-300 hover:border-sky-300/70"
-                              : "border-white/10 text-white/60 hover:border-white/25"
+                              ? "arc-building-icon-action--primary"
+                              : ""
                           }`}
                         >
                           {togglingAutoUpgradeCardKey === c.key ? "..." : <Lock size={14} />}
@@ -2173,8 +2185,11 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       <Tooltip
                         content={
                           canStateUpgrade
-                            ? `Повысить уровень за счёт государства (${formatCompact(upgradeCostConstruction)} строительства, ${formatCompact(upgradeCostDucats)} дукатов)`
-                            : `Нельзя повысить: ${upgradeDisabledReason}`
+                            ? t("buildings.upgradeByStateTooltip", {
+                                construction: formatCompact(upgradeCostConstruction),
+                                ducats: formatCompact(upgradeCostDucats),
+                              })
+                            : t("buildings.upgradeBlockedTooltip", { reason: upgradeDisabledReason })
                         }
                       >
                         <button
@@ -2188,12 +2203,12 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             })
                           }
                           disabled={!canStateUpgrade || upgradingCardKey === c.key}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-black/40 text-white/60 transition hover:border-emerald-400/45 hover:text-emerald-300 disabled:opacity-40"
+                          className="arc-building-icon-action arc-building-icon-action--good"
                         >
                           {upgradingCardKey === c.key ? "..." : <ChevronUp size={14} />}
                         </button>
                       </Tooltip>
-                      <Tooltip content="Снести постройку целиком (стоимость в очках строительства)">
+                      <Tooltip content={t("buildings.demolishTooltip")}>
                         <button
                           type="button"
                           onClick={() =>
@@ -2214,7 +2229,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             })
                           }
                           disabled={demolishingCardKey === c.key}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-black/40 text-white/60 transition hover:border-red-400/40 hover:text-red-300 disabled:opacity-40"
+                          className="arc-building-icon-action arc-building-icon-action--danger"
                         >
                           {demolishingCardKey === c.key ? "..." : <Trash2 size={14} />}
                         </button>
@@ -2224,17 +2239,15 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                 </div>
                 {c.kind === "construction" && (
                   <div>
-                    <div className="h-2 overflow-hidden rounded-full border border-amber-400/30 bg-black/50">
+                    <div className="h-2 overflow-hidden border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper-deep)]">
                       <div
-                        className="h-full"
+                        className="arc-construction-progress-fill"
                         style={{
                           width: `${c.progressPercent}%`,
-                          backgroundImage:
-                            "repeating-linear-gradient(-45deg, rgba(245,158,11,0.95) 0 8px, rgba(15,23,42,0.95) 8px 16px)",
                         }}
                       />
                     </div>
-                    <div className="mt-1 text-[11px] text-amber-300/90">Прогресс: {c.progressPercent}%</div>
+                    <div className="mt-1 text-[11px] text-[var(--arc-color-atlas-primary)]">{t("buildings.constructionProgress", { value: c.progressPercent })}</div>
                   </div>
                 )}
                 <div
@@ -2244,80 +2257,80 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       : "flex items-start justify-between gap-3"
                   }
                 >
-                  <div className="min-w-0 flex flex-col gap-1.5 text-xs text-white/65">
-                    <div className="inline-flex w-full items-center gap-2 rounded-md border border-white/10 bg-black/25 px-2 py-1">
+                  <div className="min-w-0 flex flex-col gap-1.5 text-xs text-[var(--arc-color-atlas-muted)]">
+                    <div className="arc-building-meta-row">
                       <Factory size={13} />
-                      <span className="text-white/40">Отрасль:</span>
+                      <span>{t("buildings.industryLabel")}</span>
                       <Tooltip
-                        content={industryDescription.length > 0 ? industryDescription : "Описание отрасли отсутствует"}
+                        content={industryDescription.length > 0 ? industryDescription : t("buildings.industryDescriptionMissing")}
                         placement="top"
                       >
-                        <span className="inline-flex items-center gap-1.5 text-white/80">
-                          {c.industryLogo ? <img src={c.industryLogo} alt="" className="h-3.5 w-3.5 rounded object-cover border border-white/10" /> : null}
+                        <span className="inline-flex items-center gap-1.5 text-[var(--arc-color-atlas-ink)]">
+                          {c.industryLogo ? <img src={c.industryLogo} alt="" className="arc-building-mini-logo" /> : null}
                           <span>{c.industryName ?? "—"}</span>
                         </span>
                       </Tooltip>
                     </div>
-                    <div className="inline-flex w-full items-center gap-2 rounded-md border border-white/10 bg-black/25 px-2 py-1">
+                    <div className="arc-building-meta-row">
                       <Factory size={13} />
-                      <span className="text-white/40">Сектор:</span>
+                      <span>{t("buildings.sectorLabel")}</span>
                       <Tooltip
-                        content={sectorDescription.length > 0 ? sectorDescription : "Описание сектора отсутствует"}
+                        content={sectorDescription.length > 0 ? sectorDescription : t("buildings.sectorDescriptionMissing")}
                         placement="top"
                       >
-                        <span className="inline-flex items-center gap-1.5 text-white/80">
-                          {c.sectorLogo ? <img src={c.sectorLogo} alt="" className="h-3.5 w-3.5 rounded object-cover border border-white/10" /> : null}
+                        <span className="inline-flex items-center gap-1.5 text-[var(--arc-color-atlas-ink)]">
+                          {c.sectorLogo ? <img src={c.sectorLogo} alt="" className="arc-building-mini-logo" /> : null}
                           <span>{c.sectorName ?? "—"}</span>
                         </span>
                       </Tooltip>
                     </div>
-                    {c.kind === "built" && <div className="inline-flex w-full items-center gap-2 rounded-md border border-white/10 bg-black/25 px-2 py-1"><Hammer size={13} /><span className="text-white/40">Уровень:</span><span>{c.level}</span></div>}
-                    <div className="inline-flex w-full items-center gap-2 rounded-md border border-white/10 bg-black/25 px-2 py-1"><MapPin size={13} /><span className="text-white/40">{tUi("buildings.regionLabel")}</span><span>{c.regionName}</span></div>
-                    <div className="inline-flex w-full items-center gap-2 rounded-md border border-white/10 bg-black/25 px-2 py-1">
+                    {c.kind === "built" && (
+                      <div className="arc-building-meta-row"><Hammer size={13} /><span>{t("buildings.levelLabel")}</span><span className="text-[var(--arc-color-atlas-ink)]">{c.level}</span></div>
+                    )}
+                    <div className="arc-building-meta-row"><MapPin size={13} /><span>{tUi("buildings.regionLabel")}</span><span className="text-[var(--arc-color-atlas-ink)]">{c.regionName}</span></div>
+                    <div className="arc-building-meta-row">
                       <Building2 size={13} />
-                      <span className="text-white/40">Страна:</span>
-                      <span className="inline-flex items-center gap-1.5 text-white/80">
+                      <span>{t("buildings.countryLabel")}</span>
+                      <span className="inline-flex items-center gap-1.5 text-[var(--arc-color-atlas-ink)]">
                         {countryById.get(c.regionOwnerCountryId)?.flagUrl ? (
-                          <img src={countryById.get(c.regionOwnerCountryId)?.flagUrl ?? ""} alt="" className="h-3.5 w-3.5 rounded object-cover border border-white/10" />
+                          <img src={countryById.get(c.regionOwnerCountryId)?.flagUrl ?? ""} alt="" className="arc-building-mini-logo" />
                         ) : null}
                         <span>{countryById.get(c.regionOwnerCountryId)?.name ?? (c.regionOwnerCountryId || "—")}</span>
                       </span>
                     </div>
-                    <div className="inline-flex w-full items-center gap-2 rounded-md border border-white/10 bg-black/25 px-2 py-1"><Factory size={13} /><span className="text-white/40">Владелец:</span>{c.ownerType === "company" ? (
+                    <div className="arc-building-meta-row"><Factory size={13} /><span>{t("buildings.owner")}:</span>{c.ownerType === "company" ? (
                       <Tooltip
-                        content={ownerCompanyDescription.length > 0 ? ownerCompanyDescription : "Описание компании отсутствует"}
+                        content={ownerCompanyDescription.length > 0 ? ownerCompanyDescription : t("buildings.ownerCompanyDescriptionMissing")}
                         placement="top"
                       >
-                        <span className="inline-flex items-center gap-1.5 text-white/80">{c.ownerLogo ? <img src={c.ownerLogo} alt="" className="h-3.5 w-3.5 rounded object-cover border border-white/10" /> : null}<span>{c.ownerLabel}</span></span>
+                        <span className="inline-flex items-center gap-1.5 text-[var(--arc-color-atlas-ink)]">{c.ownerLogo ? <img src={c.ownerLogo} alt="" className="arc-building-mini-logo" /> : null}<span>{c.ownerLabel}</span></span>
                       </Tooltip>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 text-white/80">{c.ownerLogo ? <img src={c.ownerLogo} alt="" className="h-3.5 w-3.5 rounded object-cover border border-white/10" /> : null}<span>{c.ownerLabel}</span></span>
+                      <span className="inline-flex items-center gap-1.5 text-[var(--arc-color-atlas-ink)]">{c.ownerLogo ? <img src={c.ownerLogo} alt="" className="arc-building-mini-logo" /> : null}<span>{c.ownerLabel}</span></span>
                     )}</div>
-                    {c.kind === "built" && <div className="inline-flex w-full items-center gap-2 rounded-md border border-white/10 bg-black/25 px-2 py-1"><Users size={13} /><span className="text-white/40">Рабочие:</span><span>{fmt(c.workersEmployed)} / {fmt(c.workersDemand)}</span></div>}
+                    {c.kind === "built" && <div className="arc-building-meta-row"><Users size={13} /><span>{t("buildings.workersLabel")}</span><span className="text-[var(--arc-color-atlas-ink)]">{fmt(c.workersEmployed)} / {fmt(c.workersDemand)}</span></div>}
                   </div>
                   {c.kind === "built" && econData && (
                     <div className="flex w-full min-w-0 flex-col gap-2">
-                      <Tooltip content={`Производительность: ${productivityPct}%. Показывает, какую долю от максимальной мощности здание отрабатывает за ход.`}>
-                        <span className="inline-flex min-h-[22px] w-full items-center justify-between gap-2 rounded-md border border-white/15 bg-black/40 px-2 py-1">
-                          <span className="text-[10px] font-semibold text-white/75">Производительность: {productivityPct}%</span>
-                          <span className="h-1.5 w-16 overflow-hidden rounded-full border border-white/15 bg-black/60">
+                      <Tooltip content={t("buildings.productivityTooltip", { value: productivityPct })}>
+                        <span className="arc-building-meter-row">
+                          <span>{t("buildings.productivityLabel", { value: productivityPct })}</span>
+                          <span className="arc-building-mini-meter">
                             <span
-                              className="block h-full bg-emerald-400/75"
+                              className="arc-building-mini-meter__fill arc-building-mini-meter__fill--good"
                               style={{ width: `${productivityBarPct}%` }}
                             />
                           </span>
                         </span>
                       </Tooltip>
                       <Tooltip
-                        content={`Прочность: ${durabilityPct}%. Ограничивает максимальную производительность здания.`}
+                        content={t("buildings.durabilityTooltip", { value: durabilityPct })}
                       >
-                        <span className="inline-flex min-h-[22px] w-full items-center justify-between gap-2 rounded-md border border-white/15 bg-black/40 px-2 py-1">
-                          <span className="text-[10px] font-semibold text-white/75">
-                            Прочность: {durabilityPct}%
-                          </span>
-                          <span className="h-1.5 w-16 overflow-hidden rounded-full border border-white/15 bg-black/60">
+                        <span className="arc-building-meter-row">
+                          <span>{t("buildings.durabilityLabel", { value: durabilityPct })}</span>
+                          <span className="arc-building-mini-meter">
                             <span
-                              className="block h-full bg-sky-400/80"
+                              className="arc-building-mini-meter__fill arc-building-mini-meter__fill--primary"
                               style={{ width: `${durabilityPct}%` }}
                             />
                           </span>
@@ -2327,7 +2340,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                   )}
                 </div>
                 {c.kind === "built" && (
-                  <div className="rounded-xl border border-white/10 bg-black/30">
+                  <div className="arc-building-accordion">
                     <button
                       type="button"
                       onClick={() =>
@@ -2336,12 +2349,12 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                           [c.key]: !prev[c.key],
                         }))
                       }
-                      className="flex min-h-[38px] w-full items-center justify-between px-3 py-2 text-xs text-white/80"
+                      className="arc-building-accordion-button"
                     >
-                      <span>Экономика</span>
+                      <span>{t("buildings.finance")}</span>
                       <div className="flex items-center gap-2">
-                        <Tooltip content="Накоплено денег у здания">
-                          <span className="inline-flex min-h-[22px] items-center justify-center gap-1 rounded-md border border-white/15 bg-black/40 px-2 py-1 text-[11px] font-bold leading-none text-white/75">
+                        <Tooltip content={t("buildings.buildingCashTooltip")}>
+                          <span className="arc-building-economy-chip min-h-[22px] gap-1 leading-none">
                             {resourceIcons.ducats ? (
                               <img src={resourceIcons.ducats} alt="" className="h-3.5 w-3.5 shrink-0 self-center object-contain" />
                             ) : (
@@ -2350,12 +2363,12 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             {formatCompact(econData?.storageAmount ?? 0)}
                           </span>
                         </Tooltip>
-                        <Tooltip content="Финансовый результат здания за ход (прибыль или убыток)">
+                        <Tooltip content={t("buildings.netPerTurnTooltip")}>
                           <span
-                            className={`inline-flex min-h-[22px] items-center justify-center rounded-md border px-2 py-1 text-[11px] font-bold leading-none ${
+                            className={`arc-building-economy-chip min-h-[22px] leading-none ${
                               (econData?.netPerTurn ?? 0) >= 0
-                                ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-300"
-                                : "border-red-400/40 bg-red-500/15 text-red-300"
+                                ? "arc-building-economy-chip--good"
+                                : "arc-building-economy-chip--bad"
                             }`}
                           >
                             <span className="inline-flex items-center justify-center gap-1">
@@ -2371,12 +2384,12 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             </span>
                           </span>
                         </Tooltip>
-                        <Tooltip content="Сумма государственных субсидий, полученных зданием за ход">
+                        <Tooltip content={t("buildings.stateSubsidiesTooltip")}>
                           <span
-                            className={`inline-flex min-h-[22px] items-center justify-center rounded-md border px-2 py-1 text-[11px] font-bold leading-none ${
+                            className={`arc-building-economy-chip min-h-[22px] leading-none ${
                               (econData?.stateSubsidyDucats ?? 0) > 0
-                                ? "border-amber-400/40 bg-amber-500/15 text-amber-200"
-                                : "border-white/15 bg-black/40 text-white/55"
+                                ? "arc-building-economy-chip--warn"
+                                : ""
                             }`}
                           >
                             <span className="inline-flex items-center justify-center gap-1">
@@ -2404,39 +2417,39 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             transition={{ duration: 0.2, ease: "easeOut" }}
                             className="overflow-hidden"
                           >
-                          <div className="space-y-2 border-t border-white/10 px-3 py-2 text-xs text-white/70">
-                          <div className="space-y-1 rounded-md border border-white/15 bg-black/25 p-2">
-                            <div className="inline-flex items-center gap-1.5 font-semibold text-white/50">
+                          <div className="arc-building-accordion-body space-y-2">
+                          <div className="arc-building-economy-section space-y-1">
+                            <div className="arc-building-economy-heading">
                               <Package size={12} className="shrink-0" />
-                              <span>Склад</span>
+                              <span>{t("buildings.stock")}</span>
                             </div>
                             {econData.stockRows.length === 0 ? (
-                              <div className="text-white/50">пусто</div>
+                              <div className="arc-building-economy-empty">{t("buildings.stockEmpty")}</div>
                             ) : (
                               <div className="space-y-1">
                                 {econData.stockRows.map((row, idx) => (
-                                  <div key={`${c.key}-stock-${idx}`} className="rounded-md border border-white/20 bg-white/[0.03] px-2 py-1 text-white/70">
+                                  <div key={`${c.key}-stock-${idx}`} className="arc-building-economy-row">
                                     <div className="flex items-center justify-between gap-2">
-                                      <div className="inline-flex items-center gap-1.5 text-white/75">
+                                      <div className="inline-flex items-center gap-1.5 text-[var(--arc-building-card-title)]">
                                         {row.goodLogoUrl ? (
                                           <img src={row.goodLogoUrl} alt="" className="h-3.5 w-3.5 shrink-0 object-contain" />
                                         ) : (
-                                          <Package size={11} className="shrink-0 text-white/60" />
+                                          <Package size={11} className="shrink-0" />
                                         )}
                                         <span className="font-semibold">{row.goodName}</span>
                                       </div>
                                       <div className="ml-auto flex flex-wrap items-center justify-end gap-1 text-[10px]">
-                                        <span className="inline-flex items-center rounded-md border border-white/20 bg-white/10 px-1.5 py-0.5 font-bold text-white/70">
-                                          В наличии: {formatCompact(row.available)}
+                                        <span className="arc-building-economy-chip">
+                                          {t("buildings.stockAvailable", { value: formatCompact(row.available) })}
                                         </span>
-                                        <span className="inline-flex items-center rounded-md border border-white/20 bg-white/10 px-1.5 py-0.5 font-bold text-white/75">
-                                          Пришло: {formatCompact(row.incoming)}
+                                        <span className="arc-building-economy-chip">
+                                          {t("buildings.stockIncoming", { value: formatCompact(row.incoming) })}
                                         </span>
-                                        <span className="inline-flex items-center rounded-md border border-white/20 bg-white/10 px-1.5 py-0.5 font-bold text-white/75">
-                                          Ушло: {formatCompact(row.outgoing)}
+                                        <span className="arc-building-economy-chip">
+                                          {t("buildings.stockOutgoing", { value: formatCompact(row.outgoing) })}
                                         </span>
-                                        <span className="inline-flex items-center rounded-md border border-white/20 bg-white/10 px-1.5 py-0.5 font-bold text-white/80">
-                                          Остаток: {formatCompact(row.remainder)}
+                                        <span className="arc-building-economy-chip">
+                                          {t("buildings.stockRemainder", { value: formatCompact(row.remainder) })}
                                         </span>
                                       </div>
                                     </div>
@@ -2445,25 +2458,25 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                               </div>
                             )}
                           </div>
-                          <div className="space-y-1 rounded-md border border-white/15 bg-black/25 p-2">
-                            <div className="inline-flex items-center gap-1.5 font-semibold text-white/50">
+                          <div className="arc-building-economy-section space-y-1">
+                            <div className="arc-building-economy-heading">
                               <ArrowUpRight size={12} className="shrink-0" />
-                              <span>Торговля за ход</span>
+                              <span>{t("buildings.tradeTurn")}</span>
                             </div>
-                            {econData.trade.length === 0 && <div className="text-white/50">пусто</div>}
+                            {econData.trade.length === 0 && <div className="arc-building-economy-empty">{t("buildings.tradeEmpty")}</div>}
                             {econData.trade.map((item, idx) => {
                               const isBuy = item.kind === "buy";
                               const rowClass = isBuy
-                                ? "rounded-md border border-red-400/40 bg-red-500/10 px-2 py-1 text-white/70"
-                                : "rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-white/70";
-                              const titleClass = isBuy ? "text-red-300" : "text-emerald-300";
+                                ? "arc-building-economy-row arc-building-economy-row--bad"
+                                : "arc-building-economy-row arc-building-economy-row--good";
+                              const titleClass = isBuy ? "arc-building-economy-title arc-building-economy-title--bad" : "arc-building-economy-title arc-building-economy-title--good";
                               const pillClass = isBuy
-                                ? "inline-flex items-center rounded-md border border-red-400/45 bg-red-500/20 px-1.5 py-0.5 text-[10px] font-bold text-red-200"
-                                : "inline-flex items-center rounded-md border border-emerald-400/45 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-200";
+                                ? "arc-building-economy-chip arc-building-economy-chip--bad"
+                                : "arc-building-economy-chip arc-building-economy-chip--good";
                               return (
                                 <div key={`${c.key}-trade-${idx}`} className={rowClass}>
                                   <div className="flex items-center justify-between gap-2">
-                                    <Tooltip content={isBuy ? "Покупка входных товаров за ход" : "Продажа выходных товаров за ход"}>
+                                    <Tooltip content={isBuy ? t("buildings.tradeBuyTooltip") : t("buildings.tradeSellTooltip")}>
                                       <div className={`inline-flex items-center gap-1.5 font-semibold ${titleClass}`}>
                                         {item.goodLogoUrl ? (
                                           <img src={item.goodLogoUrl} alt="" className="h-3.5 w-3.5 shrink-0 object-contain" />
@@ -2476,13 +2489,12 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                                       </div>
                                     </Tooltip>
                                     <div className="ml-auto flex items-center justify-end gap-1.5">
-                                      <Tooltip content="Объем торговой операции за ход">
-                                        <span className={pillClass}>Объем: {formatCompact(item.amount)}</span>
+                                      <Tooltip content={t("buildings.tradeAmount", { value: formatCompact(item.amount) })}>
+                                        <span className={pillClass}>{t("buildings.tradeAmount", { value: formatCompact(item.amount) })}</span>
                                       </Tooltip>
-                                      <Tooltip content={isBuy ? "Расход на закупку за ход" : "Доход от продажи за ход"}>
+                                      <Tooltip content={isBuy ? t("buildings.tradeExpenseTooltip") : t("buildings.tradeIncomeTooltip")}>
                                         <span className={pillClass}>
-                                          {isBuy ? "Расход: " : "Доход: "}
-                                          {formatCompact(item.total)} дукат
+                                          {isBuy ? t("buildings.tradeExpense", { value: formatCompact(item.total) }) : t("buildings.tradeIncome", { value: formatCompact(item.total) })}
                                         </span>
                                       </Tooltip>
                                     </div>
@@ -2491,42 +2503,42 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                               );
                             })}
                           </div>
-                          <div className="space-y-1 rounded-md border border-white/15 bg-black/25 p-2">
-                            <div className="inline-flex items-center gap-1.5 font-semibold text-white/50">
+                          <div className="arc-building-economy-section space-y-1">
+                            <div className="arc-building-economy-heading">
                               <Factory size={12} className="shrink-0" />
-                              <span>Производство</span>
+                              <span>{t("buildings.production")}</span>
                             </div>
-                            {econData.outputs.length === 0 && <div className="text-white/50">нет выходных товаров</div>}
+                            {econData.outputs.length === 0 && <div className="arc-building-economy-empty">{t("buildings.noOutputs")}</div>}
                             {econData.outputs.map((output, idx) => (
                               <div
                                 key={`${c.key}-output-${idx}`}
-                                className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-white/70"
+                                className="arc-building-economy-row arc-building-economy-row--good"
                               >
                                 <div className="flex items-center justify-between gap-2">
-                                  <Tooltip content="Выходной товар, который производит здание">
-                                    <div className="inline-flex items-center gap-1.5 font-semibold text-emerald-300">
+                                  <Tooltip content={t("buildings.outputGoodTooltip")}>
+                                    <div className="inline-flex items-center gap-1.5 arc-building-economy-title arc-building-economy-title--good">
                                       {output.goodLogoUrl ? (
                                         <img src={output.goodLogoUrl} alt="" className="h-3.5 w-3.5 shrink-0 object-contain" />
                                       ) : (
-                                        <Package size={12} className="shrink-0 text-emerald-300" />
+                                        <Package size={12} className="shrink-0 arc-building-economy-good-icon" />
                                       )}
                                       <span>{output.goodName}</span>
                                     </div>
                                   </Tooltip>
                                   <div className="ml-auto flex items-center justify-end gap-1.5">
-                                    <Tooltip content="Фактический объем производства за ход">
-                                      <span className="inline-flex items-center rounded-md border border-emerald-400/45 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-200">
-                                        Фактически: {formatCompact(output.factual)}
+                                    <Tooltip content={t("buildings.factualAmount", { value: formatCompact(output.factual) })}>
+                                      <span className="arc-building-economy-chip arc-building-economy-chip--good">
+                                        {t("buildings.factualAmount", { value: formatCompact(output.factual) })}
                                       </span>
                                     </Tooltip>
-                                    <Tooltip content="Максимально возможный объем производства за ход">
-                                      <span className="inline-flex items-center rounded-md border border-emerald-400/45 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-200">
-                                        Максимально: {formatCompact(output.max)}
+                                    <Tooltip content={t("buildings.maxAmount", { value: formatCompact(output.max) })}>
+                                      <span className="arc-building-economy-chip arc-building-economy-chip--good">
+                                        {t("buildings.maxAmount", { value: formatCompact(output.max) })}
                                       </span>
                                     </Tooltip>
-                                    <Tooltip content="Доход от продажи выходного товара за ход">
-                                      <span className="inline-flex items-center rounded-md border border-emerald-400/45 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-200">
-                                        Доход: {formatCompact(output.income)} дукат
+                                    <Tooltip content={t("buildings.outputIncomeTooltip")}>
+                                      <span className="arc-building-economy-chip arc-building-economy-chip--good">
+                                        {t("buildings.tradeIncome", { value: formatCompact(output.income) })}
                                       </span>
                                     </Tooltip>
                                   </div>
@@ -2534,37 +2546,37 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                               </div>
                             ))}
                           </div>
-                          <div className="space-y-1 rounded-md border border-white/15 bg-black/25 p-2">
-                            <div className="inline-flex items-center gap-1.5 font-semibold text-white/50">
+                          <div className="arc-building-economy-section space-y-1">
+                            <div className="arc-building-economy-heading">
                               <Package size={12} className="shrink-0" />
-                              <span>Добыча</span>
+                              <span>{t("buildings.extraction")}</span>
                             </div>
-                            {econData.extractions.length === 0 && <div className="text-white/50">нет добычи</div>}
+                            {econData.extractions.length === 0 && <div className="arc-building-economy-empty">{t("buildings.noExtraction")}</div>}
                             {econData.extractions.map((row, idx) => (
                               <div
                                 key={`${c.key}-extraction-${idx}`}
-                                className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-white/70"
+                                className="arc-building-economy-row arc-building-economy-row--good"
                               >
                                 <div className="flex items-center justify-between gap-2">
                                   <Tooltip content={tUi("buildings.extractedResourceTooltip")}>
-                                    <div className="inline-flex items-center gap-1.5 font-semibold text-emerald-300">
+                                    <div className="inline-flex items-center gap-1.5 arc-building-economy-title arc-building-economy-title--good">
                                       {row.goodLogoUrl ? (
                                         <img src={row.goodLogoUrl} alt="" className="h-3.5 w-3.5 shrink-0 object-contain" />
                                       ) : (
-                                        <Package size={12} className="shrink-0 text-emerald-300" />
+                                        <Package size={12} className="shrink-0 arc-building-economy-good-icon" />
                                       )}
                                       <span>{row.goodName}</span>
                                     </div>
                                   </Tooltip>
                                   <div className="ml-auto flex items-center justify-end gap-1.5">
-                                    <Tooltip content="Фактический объем добычи за ход">
-                                      <span className="inline-flex items-center rounded-md border border-emerald-400/45 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-200">
-                                        Фактически: {formatCompact(row.factual)}
+                                    <Tooltip content={t("buildings.factualAmount", { value: formatCompact(row.factual) })}>
+                                      <span className="arc-building-economy-chip arc-building-economy-chip--good">
+                                        {t("buildings.factualAmount", { value: formatCompact(row.factual) })}
                                       </span>
                                     </Tooltip>
-                                    <Tooltip content="Максимально возможный объем добычи за ход">
-                                      <span className="inline-flex items-center rounded-md border border-emerald-400/45 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-200">
-                                        Максимально: {formatCompact(row.max)}
+                                    <Tooltip content={t("buildings.maxAmount", { value: formatCompact(row.max) })}>
+                                      <span className="arc-building-economy-chip arc-building-economy-chip--good">
+                                        {t("buildings.maxAmount", { value: formatCompact(row.max) })}
                                       </span>
                                     </Tooltip>
                                   </div>
@@ -2572,42 +2584,42 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                               </div>
                             ))}
                           </div>
-                          <div className="space-y-1 rounded-md border border-white/15 bg-black/25 p-2">
-                            <div className="inline-flex items-center gap-1.5 font-semibold text-white/50">
+                          <div className="arc-building-economy-section space-y-1">
+                            <div className="arc-building-economy-heading">
                               <ArrowDownLeft size={12} className="shrink-0" />
-                              <span>Потребление</span>
+                              <span>{t("buildings.consumes")}</span>
                             </div>
-                            {econData.inputs.length === 0 && <div className="text-white/50">нет входных товаров</div>}
+                            {econData.inputs.length === 0 && <div className="arc-building-economy-empty">{t("buildings.noInputs")}</div>}
                             {econData.inputs.map((input, idx) => (
                               <div
                                 key={`${c.key}-input-${idx}`}
-                                className="rounded-md border border-red-400/40 bg-red-500/10 px-2 py-1 text-white/70"
+                                className="arc-building-economy-row arc-building-economy-row--bad"
                               >
                                 <div className="flex items-center justify-between gap-2">
-                                  <Tooltip content="Входной товар, который здание закупает для производства">
-                                    <div className="inline-flex items-center gap-1.5 font-semibold text-red-300">
+                                  <Tooltip content={t("buildings.inputGoodTooltip")}>
+                                    <div className="inline-flex items-center gap-1.5 arc-building-economy-title arc-building-economy-title--bad">
                                       {input.goodLogoUrl ? (
                                         <img src={input.goodLogoUrl} alt="" className="h-3.5 w-3.5 shrink-0 object-contain" />
                                       ) : (
-                                        <Package size={12} className="shrink-0 text-red-300" />
+                                        <Package size={12} className="shrink-0 arc-building-economy-bad-icon" />
                                       )}
                                       <span>{input.goodName}</span>
                                     </div>
                                   </Tooltip>
                                   <div className="ml-auto flex items-center justify-end gap-1.5">
-                                    <Tooltip content="Фактический объем закупки за ход">
-                                      <span className="inline-flex items-center rounded-md border border-red-400/45 bg-red-500/20 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
-                                        Фактически: {formatCompact(input.factual)}
+                                    <Tooltip content={t("buildings.factualAmount", { value: formatCompact(input.factual) })}>
+                                      <span className="arc-building-economy-chip arc-building-economy-chip--bad">
+                                        {t("buildings.factualAmount", { value: formatCompact(input.factual) })}
                                       </span>
                                     </Tooltip>
-                                    <Tooltip content="Максимально возможный объем закупки за ход">
-                                      <span className="inline-flex items-center rounded-md border border-red-400/45 bg-red-500/20 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
-                                        Максимально: {formatCompact(input.max)}
+                                    <Tooltip content={t("buildings.maxAmount", { value: formatCompact(input.max) })}>
+                                      <span className="arc-building-economy-chip arc-building-economy-chip--bad">
+                                        {t("buildings.maxAmount", { value: formatCompact(input.max) })}
                                       </span>
                                     </Tooltip>
-                                    <Tooltip content="Стоимость закупки входного товара за ход">
-                                      <span className="inline-flex items-center rounded-md border border-red-400/45 bg-red-500/20 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
-                                        Затраты: {formatCompact(input.cost)} дукат
+                                    <Tooltip content={t("buildings.inputCostTooltip")}>
+                                      <span className="arc-building-economy-chip arc-building-economy-chip--bad">
+                                        {t("buildings.tradeExpense", { value: formatCompact(input.cost) })}
                                       </span>
                                     </Tooltip>
                                   </div>
@@ -2615,71 +2627,72 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                               </div>
                             ))}
                           </div>
-                          <div className="space-y-1 rounded-md border border-white/15 bg-black/25 p-2">
-                            <div className="inline-flex items-center gap-1.5 font-semibold text-white/50">
+                          <div className="arc-building-economy-section space-y-1">
+                            <div className="arc-building-economy-heading">
                               <Coins size={12} className="shrink-0" />
-                              <span>Финансы</span>
+                              <span>{t("buildings.finance")}</span>
                             </div>
-                            <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-white/70">
+                            <div className="arc-building-economy-row arc-building-economy-row--good">
                               <div className="flex items-center justify-between gap-2">
-                                <span className="font-semibold text-emerald-300">Доход от продаж</span>
-                                <span className="inline-flex items-center rounded-md border border-emerald-400/45 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-200">
-                                  +{formatCompact(econData.outputRevenue)} дукат
+                                <span className="arc-building-economy-title arc-building-economy-title--good">{t("buildings.salesRevenue")}</span>
+                                <span className="arc-building-economy-chip arc-building-economy-chip--good">
+                                  {t("buildings.tradeIncome", { value: formatCompact(econData.outputRevenue) })}
                                 </span>
                               </div>
                             </div>
-                            <div className="rounded-md border border-red-400/40 bg-red-500/10 px-2 py-1 text-white/70">
+                            <div className="arc-building-economy-row arc-building-economy-row--bad">
                               <div className="flex items-center justify-between gap-2">
-                                <span className="font-semibold text-red-300">Закупка товаров</span>
-                                <span className="inline-flex items-center rounded-md border border-red-400/45 bg-red-500/20 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
-                                  -{formatCompact(econData.inputCost)} дукат
+                                <span className="arc-building-economy-title arc-building-economy-title--bad">{t("buildings.financeGoodsPurchase")}</span>
+                                <span className="arc-building-economy-chip arc-building-economy-chip--bad">
+                                  {t("buildings.tradeExpense", { value: formatCompact(econData.inputCost) })}
                                 </span>
                               </div>
                             </div>
-                            <div className="rounded-md border border-red-400/40 bg-red-500/10 px-2 py-1 text-white/70">
+                            <div className="arc-building-economy-row arc-building-economy-row--bad">
                               <div className="flex items-center justify-between gap-2">
-                                <span className="font-semibold text-red-300">Зарплаты</span>
-                                <span className="inline-flex items-center rounded-md border border-red-400/45 bg-red-500/20 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
-                                  -{formatCompact(econData.wagesCost)} дукат
+                                <span className="arc-building-economy-title arc-building-economy-title--bad">{t("buildings.wages")}</span>
+                                <span className="arc-building-economy-chip arc-building-economy-chip--bad">
+                                  {t("buildings.tradeExpense", { value: formatCompact(econData.wagesCost) })}
                                 </span>
                               </div>
                             </div>
-                            <div className="rounded-md border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-white/70">
+                            <div className="arc-building-economy-row arc-building-economy-row--warn">
                               <div className="flex items-center justify-between gap-2">
-                                <span className="font-semibold text-amber-300">Гос. субсидии</span>
-                                <span className="inline-flex items-center rounded-md border border-amber-400/45 bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-200">
-                                  +{formatCompact(econData.stateSubsidyDucats)} дукат
+                                <span className="arc-building-economy-title arc-building-economy-title--warn">{t("buildings.stateSubsidies")}</span>
+                                <span className="arc-building-economy-chip arc-building-economy-chip--warn">
+                                  {t("buildings.tradeIncome", { value: formatCompact(econData.stateSubsidyDucats) })}
                                 </span>
                               </div>
                             </div>
-                            <div className="rounded-md border border-rose-400/40 bg-rose-500/10 px-2 py-1 text-white/70">
+                            <div className="arc-building-economy-row arc-building-economy-row--danger">
                               <div className="flex items-center justify-between gap-2">
-                                <span className="font-semibold text-rose-300">Повышение уровня</span>
-                                <span className="inline-flex items-center rounded-md border border-rose-400/45 bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-bold text-rose-200">
-                                  -{formatCompact(econData.upgradeCostDucats)} дукат
+                                <span className="arc-building-economy-title arc-building-economy-title--danger">{t("buildings.financeUpgrade")}</span>
+                                <span className="arc-building-economy-chip arc-building-economy-chip--danger">
+                                  {t("buildings.tradeExpense", { value: formatCompact(econData.upgradeCostDucats) })}
                                 </span>
                               </div>
                             </div>
                             <div
-                              className={`rounded-md border px-2 py-1 text-white/70 ${
+                              className={`arc-building-economy-row ${
                                 econData.netPerTurn >= 0
-                                  ? "border-emerald-400/40 bg-emerald-500/10"
-                                  : "border-red-400/40 bg-red-500/10"
+                                  ? "arc-building-economy-row--good"
+                                  : "arc-building-economy-row--bad"
                               }`}
                             >
                               <div className="flex items-center justify-between gap-2">
-                                <span className={econData.netPerTurn >= 0 ? "font-semibold text-emerald-300" : "font-semibold text-red-300"}>
-                                  Итог за ход
+                                <span className={econData.netPerTurn >= 0 ? "arc-building-economy-title arc-building-economy-title--good" : "arc-building-economy-title arc-building-economy-title--bad"}>
+                                  {t("buildings.netPerTurn")}
                                 </span>
                                 <span
-                                  className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${
+                                  className={`arc-building-economy-chip ${
                                     econData.netPerTurn >= 0
-                                      ? "border-emerald-400/45 bg-emerald-500/20 text-emerald-200"
-                                      : "border-red-400/45 bg-red-500/20 text-red-200"
+                                      ? "arc-building-economy-chip--good"
+                                      : "arc-building-economy-chip--bad"
                                   }`}
                                 >
-                                  {econData.netPerTurn >= 0 ? "+" : ""}
-                                  {formatCompact(econData.netPerTurn)} дукат
+                                  {econData.netPerTurn >= 0
+                                    ? t("buildings.tradeIncome", { value: formatCompact(econData.netPerTurn) })
+                                    : t("buildings.tradeExpense", { value: formatCompact(Math.abs(econData.netPerTurn)) })}
                                 </span>
                               </div>
                             </div>
@@ -2691,7 +2704,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                   </div>
                 )}
                 {c.kind === "built" && (!displayIsActive || Boolean(limitingFactorBadge)) && (
-                  <div className="rounded-xl border border-white/10 bg-black/30">
+                  <div className="arc-building-accordion">
                     <button
                       type="button"
                       onClick={() =>
@@ -2700,9 +2713,9 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                           [c.key]: !prev[c.key],
                         }))
                       }
-                      className="flex min-h-[38px] w-full items-center justify-between px-3 py-2 text-xs text-white/80"
+                      className="arc-building-accordion-button"
                     >
-                      <span>Статусы</span>
+                      <span>{t("buildings.statuses")}</span>
                       <div className="flex items-center gap-2">
                         {openStatusByCardKey[c.key] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                       </div>
@@ -2717,19 +2730,19 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="overflow-hidden"
                         >
-                          <div className="space-y-2 border-t border-white/10 px-3 py-2 text-xs">
+                          <div className="arc-building-accordion-body space-y-2">
                             {!displayIsActive && (
-                              <div className="rounded-md border border-red-400/40 bg-red-500/10 px-2 py-1 text-red-200">
-                                <div className="font-semibold">Неактивное</div>
+                              <div className="arc-building-status-note arc-building-status-note--danger">
+                                <div className="font-semibold">{t("buildings.inactiveLabel")}</div>
                                 {displayInactiveReasons.length > 0 && (
-                                  <div className="mt-0.5 text-red-100/90">{displayInactiveReasons.join(", ")}</div>
+                                  <div className="arc-building-status-detail">{displayInactiveReasons.join(", ")}</div>
                                 )}
                               </div>
                             )}
                             {limitingFactorBadge && (
-                              <div className="rounded-md border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-amber-200">
+                              <div className="arc-building-status-note arc-building-status-note--warn">
                                 <div className="font-semibold">{limitingFactorBadge.text}</div>
-                                <div className="mt-0.5 text-amber-100/90">{limitingFactorBadge.tooltip}</div>
+                                <div className="arc-building-status-detail">{limitingFactorBadge.tooltip}</div>
                               </div>
                             )}
                           </div>
@@ -2755,38 +2768,38 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       <span className="arc-add-building-button__icon inline-flex h-12 w-12 items-center justify-center rounded-full border">
                         <Plus size={20} />
                       </span>
-                      <span className="arc-add-building-button__title mt-3 text-sm font-semibold">Добавить постройку</span>
-                      <span className="arc-add-building-button__text mt-1 text-[11px]">Быстрый переход к строительству</span>
+                      <span className="arc-add-building-button__title mt-3 text-sm font-semibold">{t("buildings.addBuildingCta")}</span>
+                      <span className="arc-add-building-button__text mt-1 text-[11px]">{t("buildings.addBuildingHint")}</span>
                     </button>
                   </div>
                 </section>
               );
             })}
             {regionSections.length === 0 && (
-              <AppEmptyState>По выбранным фильтрам ничего не найдено.</AppEmptyState>
+              <AppEmptyState>{t("buildings.regionFiltersEmpty")}</AppEmptyState>
             )}
           </div>
       </AppModal>
 
-      <AppModal open={constructionOpen} onClose={() => setConstructionOpen(false)} modalKey="construction" zIndexClassName="z-[207]">
-            <AppModalHeader title="Окно строительства" onClose={() => setConstructionOpen(false)} />
+      <AppModal open={constructionOpen} onClose={() => setConstructionOpen(false)} modalKey="construction" zIndexClassName="z-[207]" panelClassName="arc-construction-workspace-panel">
+            <AppModalHeader title={t("buildings.constructionTitle")} onClose={() => setConstructionOpen(false)} />
 
             <div className="min-h-0 flex flex-1 flex-col gap-4">
               <section className="arc-construction-panel rounded-xl border p-3">
-                <div className="mb-2 text-xs uppercase tracking-wide text-white/45">Общие параметры строительства</div>
+                <div className="arc-construction-section-title mb-2">{t("buildings.constructionParameters")}</div>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                  <label className="flex flex-col gap-1 text-xs text-white/65">
+                  <label className="arc-construction-field">
                     <Tooltip content={tUi("buildings.buildCountryTooltip")}>
-                      <span>Страна строительства</span>
+                      <span>{t("buildings.buildCountry")}</span>
                     </Tooltip>
                     <CustomSelect
                       value={buildCountryId}
                       onChange={setBuildCountryId}
                       options={buildCountryOptions.map((country) => ({ value: country.id, label: country.name }))}
-                      placeholder="Выберите страну"
+                      placeholder={t("buildings.selectCountry")}
                     />
                   </label>
-                  <label className="flex flex-col gap-1 text-xs text-white/65">
+                  <label className="arc-construction-field">
                     <Tooltip content={tUi("buildings.selectedRegionTooltip")}>
                       <span>{tUi("buildings.selectedRegionLabel")}</span>
                     </Tooltip>
@@ -2797,23 +2810,23 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       placeholder={tUi("buildings.selectRegion")}
                     />
                   </label>
-                  <label className="flex flex-col gap-1 text-xs text-white/65">
-                    <Tooltip content="Кому будет принадлежать каждое добавленное здание: государству или компании.">
-                      <span>Владелец</span>
+                  <label className="arc-construction-field">
+                    <Tooltip content={t("buildings.ownerTypeTooltip")}>
+                      <span>{t("buildings.ownerType")}</span>
                     </Tooltip>
                     <CustomSelect
                       value={ownerType}
                       onChange={(value) => setOwnerType(value as "state" | "company")}
                       options={[
-                        { value: "state", label: "Государство" },
-                        { value: "company", label: "Компания" },
+                        { value: "state", label: t("buildings.ownerState") },
+                        { value: "company", label: t("buildings.ownerCompany") },
                       ]}
                     />
                   </label>
                   {ownerType === "state" ? (
-                    <label className="flex flex-col gap-1 text-xs text-white/65">
-                      <Tooltip content="Страна, которая станет владельцем проекта при выбранном типе «Государство».">
-                        <span>Страна владельца</span>
+                    <label className="arc-construction-field">
+                      <Tooltip content={t("buildings.ownerCountryTooltip")}>
+                        <span>{t("buildings.ownerCountry")}</span>
                       </Tooltip>
                       <CustomSelect
                         value={ownerCountryId}
@@ -2822,19 +2835,19 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                           value: country.id,
                           label: country.name,
                         }))}
-                        placeholder="Выберите страну"
+                        placeholder={t("buildings.selectCountry")}
                       />
                     </label>
                   ) : (
-                    <label className="flex flex-col gap-1 text-xs text-white/65">
-                      <Tooltip content="Компания, которая станет владельцем проекта при выбранном типе «Компания».">
-                        <span>Компания владельца</span>
+                    <label className="arc-construction-field">
+                      <Tooltip content={t("buildings.ownerCompanyTooltip")}>
+                        <span>{t("buildings.ownerCompanyLabel")}</span>
                       </Tooltip>
                       <CustomSelect
                         value={ownerCompanyId}
                         onChange={setOwnerCompanyId}
                         options={companies.map((c) => ({ value: c.id, label: c.name }))}
-                        placeholder="Выберите компанию"
+                        placeholder={t("buildings.selectCompany")}
                       />
                     </label>
                   )}
@@ -2844,26 +2857,26 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
               <div className="min-h-0 flex-1 grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <section className="arc-construction-panel min-h-0 rounded-xl border p-3 flex flex-col">
                   <div className="mb-2 flex items-center justify-between gap-2 px-1">
-                    <div className="text-xs uppercase tracking-wide text-white/45">Доступные здания</div>
+                    <div className="arc-construction-section-title">{t("buildings.availableBuildings")}</div>
                     <div className="flex items-center gap-1.5">
-                      <Tooltip content="Очки строительства страны (без текстовой плашки).">
-                        <div className="arc-industry-chip inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px]">
+                      <Tooltip content={t("buildings.availableConstructionTooltip")}>
+                        <div className="arc-construction-resource-chip">
                           {resourceIcons.construction ? (
                             <img src={resourceIcons.construction} alt="" className="h-3.5 w-3.5 object-contain" />
                           ) : (
-                            <Hammer size={12} className="text-emerald-300" />
+                            <Hammer size={12} />
                           )}
-                          <span className="font-bold text-white/60">{formatCompact(availableConstruction)}</span>
+                          <span>{formatCompact(availableConstruction)}</span>
                         </div>
                       </Tooltip>
-                      <Tooltip content="Дукаты страны (без текстовой плашки).">
-                        <div className="arc-industry-chip inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px]">
+                      <Tooltip content={t("buildings.availableDucatsTooltip")}>
+                        <div className="arc-construction-resource-chip">
                           {resourceIcons.ducats ? (
                             <img src={resourceIcons.ducats} alt="" className="h-3.5 w-3.5 object-contain" />
                           ) : (
-                            <Coins size={12} className="text-amber-300" />
+                            <Coins size={12} />
                           )}
-                          <span className="font-bold text-white/60">{formatCompact(availableDucats)}</span>
+                          <span>{formatCompact(availableDucats)}</span>
                         </div>
                       </Tooltip>
                     </div>
@@ -2881,11 +2894,11 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                                 [group.id]: !(current[group.id] ?? false),
                               }))
                             }
-                            className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide text-white/60 transition hover:bg-white/[0.04] hover:text-white/80"
+                            className="arc-construction-group-toggle"
                           >
                             <ChevronDown size={14} className={`shrink-0 transition-transform ${isOpen ? "" : "-rotate-90"}`} />
                             <span className="min-w-0 flex-1 truncate">{group.label}</span>
-                            <span className="rounded-md border border-white/10 bg-black/30 px-1.5 py-0.5 text-[10px] text-white/45">
+                            <span className="arc-construction-group-count">
                               {group.cards.length}
                             </span>
                           </button>
@@ -2898,7 +2911,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                                 transition={{ duration: 0.16, ease: "easeOut" }}
                                 className="overflow-hidden"
                               >
-                                <div className="space-y-2 border-t border-white/10 p-2">
+                                <div className="space-y-2 border-t border-[var(--arc-color-atlas-line)] p-2">
                                   {group.cards.map(({ building, availability }) => {
                                     const costConstruction = Math.max(1, Math.floor(Number(building.costConstruction ?? 100)));
                                     const costDucats = Math.max(0, Math.floor(Number(building.costDucats ?? 0)));
@@ -2928,52 +2941,52 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                                       >
                                         <div className={cardClass}>
                                           <div className="h-full overflow-hidden rounded-md flex items-stretch">
-                                            <div className={`flex w-[84px] shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black ${canAdd ? "border border-emerald-400/40" : "border border-red-400/40"}`}>
+                                            <div className={`arc-construction-building-thumb ${canAdd ? "arc-construction-building-thumb--can" : "arc-construction-building-thumb--locked"}`}>
                                               {building.logoUrl ? (
                                                 <img src={building.logoUrl} alt="" className="h-[72px] w-[72px] object-contain" />
                                               ) : (
-                                                <Factory size={30} className="text-white/60" />
+                                                <Factory size={30} />
                                               )}
                                             </div>
                                             <div className="min-w-0 flex-1 p-3">
                                             <div className="flex h-full items-center justify-between gap-2">
                                               <div className="min-w-0">
-                                                <div className="truncate text-sm font-semibold text-white/90">{building.name}</div>
-                                                <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-white/40">
-                                                  <Hammer size={10} className="text-white/40" />
-                                                  <span>Стоимость строительства</span>
+                                                <div className="truncate text-sm font-semibold text-[var(--arc-color-atlas-ink)]">{building.name}</div>
+                                                <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-[var(--arc-color-atlas-muted)]">
+                                                  <Hammer size={10} />
+                                                  <span>{t("buildings.constructionCost")}</span>
                                                 </div>
-                                                <div className="text-[11px] text-white/55">
+                                                <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">
                                                   <div className="flex items-center gap-1">
                                                     {resourceIcons.construction ? (
                                                       <img src={resourceIcons.construction} alt="" className="h-3.5 w-3.5 object-contain" />
                                                     ) : (
-                                                      <Hammer size={12} className="text-emerald-300" />
+                                                      <Hammer size={12} />
                                                     )}
-                                                    <span className="text-white/40">{formatCompact(costConstruction)}</span>
+                                                    <span>{formatCompact(costConstruction)}</span>
                                                   </div>
                                                   <div className="flex items-center gap-1">
                                                     {resourceIcons.ducats ? (
                                                       <img src={resourceIcons.ducats} alt="" className="h-3.5 w-3.5 object-contain" />
                                                     ) : (
-                                                      <Coins size={12} className="text-amber-300" />
+                                                      <Coins size={12} />
                                                     )}
-                                                    <span className="text-white/40">{formatCompact(costDucats)}</span>
+                                                    <span>{formatCompact(costDucats)}</span>
                                                   </div>
                                                 </div>
-                                                <div className={`mt-1 text-[11px] ${canAdd ? "text-emerald-300/90" : "text-red-300/90"}`}>
-                                                  {canAdd ? "Доступно" : "Недоступно"}
+                                                <div className={`mt-1 text-[11px] ${canAdd ? "arc-budget-value--good" : "arc-budget-value--bad"}`}>
+                                                  {t(canAdd ? "buildings.available" : "buildings.unavailable")}
                                                 </div>
                                               </div>
                                                 <button
                                                     type="button"
-                                                    title={canAdd ? `Добавить «${building.name}» в очередь строительства` : availability.reasons.join(", ")}
+                                                    title={canAdd ? t("buildings.addToQueueTitle", { building: building.name }) : availability.reasons.join(", ")}
                                                     onClick={() => submitBuild(building.id)}
                                                     disabled={!canAdd}
                                                     className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full disabled:opacity-40 ${
                                                       canAdd
-                                                        ? "border border-emerald-400/55 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30"
-                                                        : "border border-red-400/55 bg-red-500/20 text-red-200"
+                                                        ? "arc-construction-add-button arc-construction-add-button--can"
+                                                        : "arc-construction-add-button arc-construction-add-button--locked"
                                                     }`}
                                                 >
                                                   {canAdd ? <Plus size={20} /> : <Lock size={18} />}
@@ -2997,17 +3010,17 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
 
                 <section className="arc-construction-panel min-h-0 rounded-xl border p-3 flex flex-col">
                   <div className="mb-2 flex items-center justify-between gap-2 px-1">
-                    <div className="text-xs uppercase tracking-wide text-white/45">Очередь строительства</div>
-                    <Tooltip content="Количество проектов в очереди строительства (включая pending текущего хода).">
-                      <div className="inline-flex items-center gap-1 rounded-md border border-amber-400/55 bg-[#14100a] px-2 py-0.5 text-[11px] font-bold text-amber-300">
-                        <Hammer size={11} className="text-amber-300" />
+                    <div className="arc-construction-section-title">{t("buildings.constructionQueue")}</div>
+                    <Tooltip content={t("buildings.constructionQueueTooltip")}>
+                      <div className="arc-construction-resource-chip">
+                        <Hammer size={11} />
                         <span>{formatCompact(constructionQueue.length)}</span>
                       </div>
                     </Tooltip>
                   </div>
                   {constructionQueue.length === 0 && (
-                    <div className="rounded-lg border border-dashed border-white/15 bg-black/20 p-3 text-xs text-white/45">
-                      Очередь пуста
+                    <div className="arc-construction-empty-queue">
+                      {t("buildings.constructionQueueEmpty")}
                     </div>
                   )}
                   {constructionQueue.length > 0 && (
@@ -3015,46 +3028,44 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       {constructionQueue.map((card) => (
                         <div key={card.key} className={constructionCardClass}>
                           <div className="h-full overflow-hidden rounded-md flex items-stretch">
-                            <div className="flex w-[84px] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-amber-400/40 bg-black">
+                            <div className="arc-construction-building-thumb arc-construction-building-thumb--queued">
                               {card.iconUrl ? (
                                 <img src={card.iconUrl} alt="" className="h-[72px] w-[72px] object-contain" />
                               ) : (
-                                <Factory size={30} className="text-white/60" />
+                                <Factory size={30} />
                               )}
                             </div>
                             <div className="min-w-0 flex h-full flex-1 flex-col p-3">
                               <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
-                                  <div className="truncate text-sm font-semibold text-white/90">{card.buildingName}</div>
-                                  <div className="text-[11px] text-white/55">{card.regionName}</div>
+                                  <div className="truncate text-sm font-semibold text-[var(--arc-color-atlas-ink)]">{card.buildingName}</div>
+                                  <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">{card.regionName}</div>
                                 </div>
                               </div>
                               <div className="mt-auto flex items-center gap-0.5">
-                                <div className="w-9 shrink-0 text-[11px] leading-none text-amber-300/90">{card.progressPercent}%</div>
-                                <div className="h-1.5 flex-1 overflow-hidden rounded-full border border-amber-400/30 bg-black/50">
+                                <div className="w-9 shrink-0 text-[11px] leading-none text-[var(--arc-color-atlas-primary)]">{card.progressPercent}%</div>
+                                <div className="h-1.5 flex-1 overflow-hidden border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper-deep)]">
                                   <div
-                                    className="h-full"
+                                    className="arc-construction-progress-fill"
                                     style={{
                                       width: `${card.progressPercent}%`,
-                                      backgroundImage:
-                                        "repeating-linear-gradient(-45deg, rgba(245,158,11,0.95) 0 8px, rgba(15,23,42,0.95) 8px 16px)",
                                     }}
                                   />
                                 </div>
                               </div>
-                              <div className="mt-1 text-[11px] text-white/55">
-                                Владелец: <span className="text-white/80">{card.ownerLabel}</span>
+                              <div className="mt-1 text-[11px] text-[var(--arc-color-atlas-muted)]">
+                                {t("buildings.owner")}: <span className="text-[var(--arc-color-atlas-ink)]">{card.ownerLabel}</span>
                               </div>
-                              <div className="text-[11px] text-white/55">
-                                Проект: <span className="text-white/80">{card.projectLabel}</span>
+                              <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">
+                                {t("buildings.project")}: <span className="text-[var(--arc-color-atlas-ink)]">{card.projectLabel}</span>
                               </div>
                             </div>
                             <div className="flex w-16 shrink-0 items-center justify-center">
                               <Tooltip
                                 content={
                                   card.source === "pending"
-                                    ? "Отменить проект до резолва текущего хода"
-                                    : "Удалить проект из очереди строительства"
+                                    ? t("buildings.cancelPendingProjectTooltip")
+                                    : t("buildings.cancelQueuedProjectTooltip")
                                 }
                                 placement="left"
                               >
@@ -3081,7 +3092,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                                     )
                                   }
                                   disabled={cancelingQueueKey === card.key}
-                                  className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-amber-400/55 bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 disabled:opacity-40"
+                                  className="arc-construction-cancel-button inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full disabled:opacity-40"
                                 >
                                   {cancelingQueueKey === card.key ? "..." : <X size={20} />}
                                 </button>
@@ -3105,14 +3116,14 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
         panelClassName="h-auto w-full max-w-md"
         paddingClassName="p-4 flex items-center justify-center"
       >
-            <AppModalHeader title="Отменить строительство?" onClose={() => setCancelConfirmTarget(null)} />
-            <AppCard className="border-amber-400/55 bg-[#14100a]">
-              <div className="mt-2 text-xs text-white/70">
+            <AppModalHeader title={t("buildings.cancelConstructionTitle")} onClose={() => setCancelConfirmTarget(null)} />
+            <AppCard className="arc-building-confirm-card">
+              <div className="mt-2 text-xs text-[var(--arc-color-atlas-muted)]">
                 <div>
-                  Здание: <span className="text-white/90">{cancelConfirmTarget?.buildingName ?? "—"}</span>
+                  {t("buildings.buildingLabel")} <span className="text-[var(--arc-color-atlas-ink)]">{cancelConfirmTarget?.buildingName ?? "—"}</span>
                 </div>
                 <div>
-                  {tUi("buildings.confirmRegion")} <span className="text-white/90">{cancelConfirmTarget?.regionName ?? "—"}</span>
+                  {tUi("buildings.confirmRegion")} <span className="text-[var(--arc-color-atlas-ink)]">{cancelConfirmTarget?.regionName ?? "—"}</span>
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-end gap-2">
@@ -3122,7 +3133,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                   variant="ghost"
                   size="sm"
                 >
-                  Нет
+                  {t("common.cancel")}
                 </AppButton>
                 <AppButton
                   type="button"
@@ -3151,7 +3162,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                   variant="secondary"
                   size="sm"
                 >
-                  Да
+                  {t("common.confirm")}
                 </AppButton>
               </div>
             </AppCard>
@@ -3165,23 +3176,23 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
         panelClassName="h-auto w-full max-w-md"
         paddingClassName="p-4 flex items-center justify-center"
       >
-            <AppModalHeader title="Снести постройку?" onClose={() => setDemolishConfirmTarget(null)} />
-            <AppCard className="border-red-400/55 bg-[#160d0d]">
-              <div className="mt-2 text-xs text-white/70">
+            <AppModalHeader title={t("buildings.demolishBuildingTitle")} onClose={() => setDemolishConfirmTarget(null)} />
+            <AppCard className="arc-building-confirm-card arc-building-confirm-card--danger">
+              <div className="mt-2 text-xs text-[var(--arc-color-atlas-muted)]">
                 <div>
-                  Здание: <span className="text-white/90">{demolishConfirmTarget?.buildingName ?? "—"}</span>
+                  {t("buildings.buildingLabel")} <span className="text-[var(--arc-color-atlas-ink)]">{demolishConfirmTarget?.buildingName ?? "—"}</span>
                 </div>
                 <div>
-                  {tUi("buildings.confirmRegion")} <span className="text-white/90">{demolishConfirmTarget?.regionName ?? "—"}</span>
+                  {tUi("buildings.confirmRegion")} <span className="text-[var(--arc-color-atlas-ink)]">{demolishConfirmTarget?.regionName ?? "—"}</span>
                 </div>
                 <div className="mt-1">
-                  Стоимость сноса:{" "}
-                  <span className="text-white/90">
-                    {formatCompact(demolishConfirmTarget?.demolitionCostConstruction ?? 0)} очков строительства
+                  {t("buildings.demolishConstructionCost")}{" "}
+                  <span className="text-[var(--arc-color-atlas-ink)]">
+                    {formatCompact(demolishConfirmTarget?.demolitionCostConstruction ?? 0)} {t("buildings.constructionPointsUnit")}
                   </span>
                 </div>
                 <div>
-                  Доступно: <span className="text-white/90">{formatCompact(availableConstruction)}</span>
+                  {t("buildings.availableConstruction")}: <span className="text-[var(--arc-color-atlas-ink)]">{formatCompact(availableConstruction)}</span>
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-end gap-2">
@@ -3191,7 +3202,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                   variant="ghost"
                   size="sm"
                 >
-                  Нет
+                  {t("common.cancel")}
                 </AppButton>
                 <AppButton
                   type="button"
@@ -3209,7 +3220,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                   variant="danger"
                   size="sm"
                 >
-                  Да
+                  {t("common.confirm")}
                 </AppButton>
               </div>
             </AppCard>
@@ -3222,26 +3233,26 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
           setRenameModalTarget(null);
           setRenameModalValue("");
         }}
-        title="Изменение названия постройки"
+        title={t("buildings.renameBuildingTitle")}
         description={
           renameModalTarget
             ? tUi("buildings.renamePrompt", { building: renameModalTarget.buildingName, region: renameModalTarget.regionName })
             : undefined
         }
-        label="Уникальное название (до 80 символов)"
+        label={t("buildings.renameBuildingLabel")}
         value={renameModalValue}
         onChange={setRenameModalValue}
         onSubmit={() => {
           if (!renameModalTarget) return;
           void submitRenameBuiltCard(renameModalTarget);
         }}
-        placeholder="Введите уникальное название"
-        hint="Пустое значение сбросит пользовательское название"
+        placeholder={t("buildings.renameBuildingPlaceholder")}
+        hint={t("buildings.renameBuildingHint")}
         maxLength={80}
         pending={Boolean(renamingCardKey)}
         disabledSubmit={Boolean(renamingCardKey)}
-        submitLabel="Сохранить"
-        cancelLabel="Отмена"
+        submitLabel={t("buildings.renameSave")}
+        cancelLabel={t("common.cancel")}
         zIndexClassName="z-[209]"
       />
     </>

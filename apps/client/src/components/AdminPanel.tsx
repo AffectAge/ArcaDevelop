@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { BellRing, Check, ChevronDown, Flag, Map as MapIcon, Palette, RotateCcw, Shield, Trash2, Upload, Users } from "lucide-react";
 import { toast } from "sonner";
 import type { Country, PopulationPop, RegionPopulation } from "@arcanorum/shared";
+import type { UiTextKey } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 import {
   adminClearPopulation,
   adminBroadcastUiNotification,
@@ -35,10 +37,10 @@ type Props = {
 };
 
 const categories = [
-  { id: "countries", label: "Управление странами", icon: Flag },
-  { id: "provinces", label: "Провинции / Колонизация", icon: MapIcon },
-  { id: "population", label: "Управление населением", icon: Users },
-  { id: "notifications", label: "Рассылка уведомлений", icon: BellRing },
+  { id: "countries", labelKey: "adminPanel.category.countries", icon: Flag },
+  { id: "provinces", labelKey: "adminPanel.category.provinces", icon: MapIcon },
+  { id: "population", labelKey: "adminPanel.category.population", icon: Users },
+  { id: "notifications", labelKey: "adminPanel.category.notifications", icon: BellRing },
 ] as const;
 
 const DEFAULT_POPULATION_POPS: PopulationPop[] = [
@@ -75,6 +77,7 @@ function getPopulationTotal(population: RegionPopulation | null | undefined): nu
 }
 
 export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCountryUpdated, initialProvinceId }: Props) {
+  const { t, locale } = useUiText();
   const [activeCategory, setActiveCategory] = useState<(typeof categories)[number]["id"]>("countries");
   const [countrySection, setCountrySection] = useState<"general" | "punishments">("general");
   const [countries, setCountries] = useState<Country[]>([]);
@@ -128,24 +131,24 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     }
 
     if (selectedCountry.isLocked) {
-      return "Перманентная блокировка входа";
+      return t("adminPanel.punishmentStatus.permanent");
     }
 
     if (selectedCountry.blockedUntilTurn) {
-      return `Блокировка до хода #${selectedCountry.blockedUntilTurn}`;
+      return t("adminPanel.punishmentStatus.untilTurn", { turn: selectedCountry.blockedUntilTurn });
     }
 
     if (selectedCountry.blockedUntilAt) {
-      return `Блокировка до ${new Date(selectedCountry.blockedUntilAt).toLocaleString()}`;
+      return t("adminPanel.punishmentStatus.untilTime", { time: new Date(selectedCountry.blockedUntilAt).toLocaleString(locale === "ru" ? "ru-RU" : "en-US") });
     }
 
 
     if (selectedCountry.ignoreUntilTurn) {
-      return `Не учитывать при пропуске хода до #${selectedCountry.ignoreUntilTurn}`;
+      return t("adminPanel.punishmentStatus.ignoredUntilTurn", { turn: selectedCountry.ignoreUntilTurn });
     }
 
-    return "Ограничений нет";
-  }, [selectedCountry]);
+    return t("adminPanel.punishmentStatus.none");
+  }, [locale, selectedCountry, t]);
 
   useEffect(() => {
     if (!open) {
@@ -267,13 +270,13 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
       if (updated.id === currentCountryId) {
         onSessionCountryUpdated(updated);
       }
-      toast.success("Страна обновлена");
+      toast.success(t("adminPanel.countryUpdated"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "COUNTRY_UPDATE_FAILED";
       if (msg === "IMAGE_DIMENSIONS_TOO_LARGE") {
-        toast.error("Проверьте формат: флаг 192x128 (3:2), герб 128x192 (2:3)");
+        toast.error(t("auth.imageFormatInvalid"));
       } else {
-        toast.error("Не удалось обновить страну");
+        toast.error(t("adminPanel.countryUpdateFailed"));
       }
     } finally {
       setSaving(false);
@@ -295,9 +298,9 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
       if (updated.id === currentCountryId) {
         onSessionCountryUpdated(updated);
       }
-      toast.success("Наказание обновлено");
+      toast.success(t("adminPanel.punishmentUpdated"));
     } catch {
-      toast.error("Не удалось применить наказание");
+      toast.error(t("adminPanel.punishmentUpdateFailed"));
     } finally {
       setSaving(false);
     }
@@ -317,9 +320,9 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
         onSessionCountryUpdated(updated);
       }
       setIgnoreUntilTurn(updated.ignoreUntilTurn ?? 0);
-      toast.success("Исключение из пропуска хода обновлено");
+      toast.success(t("adminPanel.ignoreUpdated"));
     } catch {
-      toast.error("Не удалось обновить исключение");
+      toast.error(t("adminPanel.ignoreUpdateFailed"));
     } finally {
       setSaving(false);
     }
@@ -330,7 +333,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
       return;
     }
 
-    const confirmed = window.confirm(`Удалить страну ${selectedCountry.name}?`);
+    const confirmed = window.confirm(t("adminPanel.deleteCountryConfirm", { country: selectedCountry.name }));
     if (!confirmed) {
       return;
     }
@@ -341,13 +344,13 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
       setCountries((prev) => prev.filter((c) => c.id !== selectedCountry.id));
       const next = countries.find((c) => c.id !== selectedCountry.id);
       setSelectedCountryId(next?.id ?? "");
-      toast.success("Страна удалена");
+      toast.success(t("adminPanel.countryDeleted"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "COUNTRY_DELETE_FAILED";
       if (msg === "CANNOT_DELETE_SELF") {
-        toast.error("Нельзя удалить страну, под которой вы вошли");
+        toast.error(t("adminPanel.countryDeleteSelfFailed"));
       } else {
-        toast.error("Не удалось удалить страну");
+        toast.error(t("adminPanel.countryDeleteFailed"));
       }
     } finally {
       setSaving(false);
@@ -366,9 +369,9 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
         ownerCountryId: provinceOwnerCountryId.trim() === "" ? null : provinceOwnerCountryId,
       });
       setRegions((prev) => prev.map((region) => (region.id === updated.id ? { ...region, ...updated } : region)));
-      toast.success("Провинция обновлена");
+      toast.success(t("adminPanel.regionUpdated"));
     } catch {
-      toast.error("Не удалось обновить провинцию");
+      toast.error(t("adminPanel.regionUpdateFailed"));
     } finally {
       setSaving(false);
     }
@@ -380,9 +383,9 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     try {
       const updated = await adminResetRegionColonizationCostToAuto(token, selectedRegion.id);
       setRegions((prev) => prev.map((region) => (region.id === updated.id ? { ...region, ...updated } : region)));
-      toast.success("Цена провинции сброшена к авто");
+      toast.success(t("adminPanel.regionCostReset"));
     } catch {
-      toast.error("Не удалось сбросить цену к авто");
+      toast.error(t("adminPanel.regionCostResetFailed"));
     } finally {
       setSaving(false);
     }
@@ -392,7 +395,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     const title = broadcastTitle.trim();
     const message = broadcastMessage.trim();
     if (!title || !message) {
-      toast.error("Заполните заголовок и текст уведомления");
+      toast.error(t("adminPanel.broadcastMissingFields"));
       return;
     }
     setSaving(true);
@@ -404,9 +407,9 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
       });
       setBroadcastTitle("");
       setBroadcastMessage("");
-      toast.success("Уведомление отправлено всем игрокам");
+      toast.success(t("adminPanel.broadcastSent"));
     } catch {
-      toast.error("Не удалось отправить уведомление");
+      toast.error(t("adminPanel.broadcastFailed"));
     } finally {
       setSaving(false);
     }
@@ -503,11 +506,11 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
 
   const generatePopulation = async () => {
     if (populationScope === "region" && !selectedRegionId) {
-      toast.error("Выберите регион");
+      toast.error(t("adminPanel.selectRegion"));
       return;
     }
     if (populationScope === "country" && !populationTargetCountryId) {
-      toast.error("Выберите страну");
+      toast.error(t("adminPanel.selectCountry"));
       return;
     }
 
@@ -528,15 +531,15 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
       }
       const result = await adminGeneratePopulation(token, payload);
       await reloadAdminRegions();
-      toast.success(`Население сгенерировано: ${result.updatedCount} регионов`);
+      toast.success(t("adminPanel.populationGenerated", { count: result.updatedCount }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "ADMIN_POPULATION_GENERATE_FAILED";
       if (msg.startsWith("INVALID_POPULATION_POP")) {
-        toast.error("Проверьте JSON pop-групп");
+        toast.error(t("adminPanel.populationJsonInvalid"));
       } else if (msg === "COUNTRY_HAS_NO_REGIONS") {
-        toast.error("У выбранной страны нет регионов");
+        toast.error(t("adminPanel.countryHasNoRegions"));
       } else {
-        toast.error("Не удалось сгенерировать население");
+        toast.error(t("adminPanel.populationGenerateFailed"));
       }
     } finally {
       setSaving(false);
@@ -545,11 +548,11 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
 
   const clearPopulation = async () => {
     if (populationScope === "region" && !selectedRegionId) {
-      toast.error("Выберите регион");
+      toast.error(t("adminPanel.selectRegion"));
       return;
     }
     if (populationScope === "country" && !populationTargetCountryId) {
-      toast.error("Выберите страну");
+      toast.error(t("adminPanel.selectCountry"));
       return;
     }
     setSaving(true);
@@ -560,13 +563,13 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
         countryId: populationScope === "country" ? populationTargetCountryId : undefined,
       });
       await reloadAdminRegions();
-      toast.success(`Население очищено: ${result.updatedCount} регионов`);
+      toast.success(t("adminPanel.populationCleared", { count: result.updatedCount }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "ADMIN_POPULATION_CLEAR_FAILED";
       if (msg === "COUNTRY_HAS_NO_REGIONS") {
-        toast.error("У выбранной страны нет регионов");
+        toast.error(t("adminPanel.countryHasNoRegions"));
       } else {
-        toast.error("Не удалось очистить население");
+        toast.error(t("adminPanel.populationClearFailed"));
       }
     } finally {
       setSaving(false);
@@ -575,7 +578,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
 
   const saveRegionPopulation = async () => {
     if (!selectedRegion) {
-      toast.error("Выберите регион");
+      toast.error(t("adminPanel.selectRegion"));
       return;
     }
     setSaving(true);
@@ -584,13 +587,13 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
         pops: parsePopulationPopsJson(RegionPopulationPopsJson),
       });
       await reloadAdminRegions();
-      toast.success("Население региона обновлено");
+      toast.success(t("adminPanel.regionPopulationUpdated"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "ADMIN_POPULATION_UPDATE_FAILED";
       if (msg.startsWith("INVALID_POPULATION_POP")) {
-        toast.error("Проверьте JSON pop-групп");
+        toast.error(t("adminPanel.populationJsonInvalid"));
       } else {
-        toast.error("Не удалось обновить население региона");
+        toast.error(t("adminPanel.regionPopulationUpdateFailed"));
       }
     } finally {
       setSaving(false);
@@ -599,7 +602,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
 
   return (
     <AppModal open={open} onClose={onClose} modalKey="admin" zIndexClassName="z-[120]" paddingClassName="p-4" panelClassName="rounded-none">
-          <AppModalHeader title="Панель администратора" onClose={onClose} />
+          <AppModalHeader title={t("shell.adminPanel")} onClose={onClose} />
 
           <div className="grid h-[calc(100vh-92px)] gap-4 md:grid-cols-[260px_1fr]">
             <AppSection className="arc-scrollbar overflow-auto p-2">
@@ -612,7 +615,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
                   className="mb-2 w-full justify-start"
                   icon={<cat.icon size={14} />}
                 >
-                  {cat.label}
+                  {t(cat.labelKey)}
                 </AppButton>
               ))}
             </AppSection>

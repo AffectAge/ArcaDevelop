@@ -46,16 +46,16 @@ export function ClientSettingsModal({ open, showMapControls, sortNotifications, 
               >
                 {t("clientSettings.interface")}
               </AppButton>
-              <div className="px-3 py-2 text-xs text-slate-500">
+              <div className="px-3 py-2 text-xs text-[var(--arc-color-text-muted)]">
                 {t("clientSettings.localNote")}
               </div>
             </AppSection>
 
             <AppSection className="arc-scrollbar overflow-auto p-4">
               <div className="space-y-4">
-                <AppCard className="bg-black/20 p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm text-slate-200">
-                    <Monitor size={15} className="text-arc-accent" />
+                <AppCard className="bg-[var(--arc-overlay-30)] p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm text-[var(--arc-color-text)]">
+                    <Monitor size={15} className="text-[var(--arc-color-gold)]" />
                     {t("clientSettings.interface")}
                   </div>
                   <label className="mb-3 block">
@@ -90,12 +90,12 @@ export function ClientSettingsModal({ open, showMapControls, sortNotifications, 
                   />
                 </AppCard>
 
-                <AppCard className="bg-black/20 p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm text-slate-200">
-                    <Sliders size={15} className="text-arc-accent" />
+                <AppCard className="bg-[var(--arc-overlay-30)] p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm text-[var(--arc-color-text)]">
+                    <Sliders size={15} className="text-[var(--arc-color-gold)]" />
                     {t("clientSettings.descriptionTitle")}
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[var(--arc-color-text-muted)]">
                     {t("clientSettings.description")}
                   </p>
                 </AppCard>

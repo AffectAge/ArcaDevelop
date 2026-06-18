@@ -20,6 +20,8 @@ import { useGameStore } from "../store/gameStore";
 import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppEmptyState, AppSection } from "./ui/AppSurface";
+import { useUiText } from "../i18n/useUiText";
+import type { UiTextKey } from "../i18n/uiText";
 
 type Props = {
   open: boolean;
@@ -42,6 +44,7 @@ type TechNodeData = Record<string, unknown> & {
   related: boolean;
   dimmed: boolean;
   statusLabel: string;
+  costText: string;
 };
 
 type TechNode = Node<TechNodeData, "technology">;
@@ -49,10 +52,10 @@ type TechNode = Node<TechNodeData, "technology">;
 const elk = new ELK();
 
 const STATUS_COLOR: Record<TechNodeData["status"], string> = {
-  researched: "#34d399",
-  researching: "#fbbf24",
-  available: "#38bdf8",
-  locked: "#f87171",
+  researched: "var(--arc-color-success-text)",
+  researching: "var(--arc-color-gold)",
+  available: "var(--arc-color-primary-top)",
+  locked: "var(--arc-color-danger-text)",
 };
 
 const NODE_SIZE = {
@@ -62,18 +65,18 @@ const NODE_SIZE = {
 function TechnologyNode({ data }: NodeProps<TechNode>) {
   const statusClass =
     data.status === "researched"
-      ? "border-emerald-400/80"
+      ? "border-[var(--arc-color-success-border)]"
       : data.status === "researching"
-        ? "border-amber-300/80"
+        ? "border-[var(--arc-color-gold)]"
         : data.status === "available"
-          ? "border-sky-400/80"
-          : "border-rose-400/80";
-  const selectedClass = data.selected ? "shadow-[0_0_0_1px_rgba(255,255,255,0.24),0_0_24px_rgba(125,249,255,0.14)]" : "";
+          ? "border-[var(--arc-color-primary-top)]"
+          : "border-[var(--arc-color-danger-border)]";
+  const selectedClass = data.selected ? "ring-1 ring-[var(--arc-color-gold)] shadow-[var(--arc-shadow-panel)]" : "";
   const dimmedClass = data.dimmed ? "opacity-35" : "opacity-100";
 
   return (
     <div
-      className={`group relative h-[118px] w-[312px] cursor-pointer overflow-hidden rounded-md border bg-black p-3 pb-4 shadow-xl shadow-black/30 transition-[opacity,box-shadow,border-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-white/25 ${statusClass} ${selectedClass} ${dimmedClass}`}
+      className={`group relative h-[118px] w-[312px] cursor-pointer overflow-hidden rounded-md border bg-[var(--arc-color-panel)] p-3 pb-4 shadow-xl shadow-black/30 transition-[opacity,box-shadow,border-color,transform] duration-150 ease-out hover:-translate-y-0.5 hover:border-[var(--arc-color-gold-soft)] ${statusClass} ${selectedClass} ${dimmedClass}`}
     >
       <Handle
         type="target"
@@ -82,26 +85,26 @@ function TechnologyNode({ data }: NodeProps<TechNode>) {
       />
       <div className="flex h-full items-start gap-3 pr-1">
         <div className="flex w-14 shrink-0 flex-col items-center gap-1.5">
-          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-md border border-white/15 bg-white/[0.04] shadow-inner">
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-md border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] shadow-inner">
             {data.logoUrl ? (
               <img src={data.logoUrl} alt="" className="h-full w-full object-cover" draggable={false} />
             ) : (
-              <Network size={18} className="text-white/45" />
+              <Network size={18} className="text-[var(--arc-color-text-muted)]" />
             )}
           </div>
-          <div className="inline-flex max-w-full items-center gap-1 rounded border border-white/10 bg-white/[0.04] px-1 py-0.5 text-[10px] text-slate-300">
-            <FlaskConical size={10} className="shrink-0 text-sky-300" />
-            <span className="truncate">{typeof data.costScience === "number" ? data.costScience.toLocaleString("ru-RU") : "0"}</span>
+          <div className="inline-flex max-w-full items-center gap-1 rounded border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-1 py-0.5 text-[10px] text-[var(--arc-color-text-soft)]">
+            <FlaskConical size={10} className="shrink-0 text-[var(--arc-color-gold)]" />
+            <span className="truncate">{data.costText}</span>
           </div>
         </div>
         <div className="min-w-0 flex-1 pt-0.5">
-          <div className="line-clamp-2 text-sm font-semibold leading-snug text-white">{data.label}</div>
-          <div className="mt-2 inline-flex rounded border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] text-slate-300">
+          <div className="line-clamp-2 text-sm font-semibold leading-snug text-[var(--arc-color-text)]">{data.label}</div>
+          <div className="mt-2 inline-flex rounded border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-2 py-0.5 text-[11px] text-[var(--arc-color-text-soft)]">
             {data.statusLabel}
           </div>
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 h-1 w-full overflow-hidden rounded-b bg-white/5">
+      <div className="absolute bottom-0 left-0 h-1 w-full overflow-hidden rounded-b bg-[var(--arc-overlay-30)]">
         <div
           className="h-full"
           style={{
@@ -137,7 +140,8 @@ function buildGraph(technologies: ContentEntry[]) {
       selected: false,
       related: false,
       dimmed: false,
-      statusLabel: "Не выбрана",
+      statusLabel: "",
+      costText: "",
     },
   }));
   const edges: Edge[] = technologies.flatMap((technology) =>
@@ -181,6 +185,7 @@ async function layoutGraph(nodes: TechNode[], edges: Edge[]): Promise<TechNode[]
 }
 
 export function TechnologyModal({ open, token, countryId, worldBase, onClose }: Props) {
+  const { locale, t } = useUiText();
   const [technologies, setTechnologies] = useState<ContentEntry[]>([]);
   const [buildings, setBuildings] = useState<ContentEntry[]>([]);
   const [laws, setLaws] = useState<ContentEntry[]>([]);
@@ -217,16 +222,25 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
     if (technology && isTechnologyAvailable(technology)) return "available";
     return "locked";
   };
+  const statusLabel = (status: TechNodeData["status"]): string => {
+    const key: Record<TechNodeData["status"], UiTextKey> = {
+      available: "technology.status.available",
+      locked: "technology.status.locked",
+      researched: "technology.status.researched",
+      researching: "technology.status.researching",
+    };
+    return t(key[status]);
+  };
   const handleResearchClick = async (technologyId: string, active: boolean) => {
     setSavingTechnologyId(technologyId);
     try {
       const result = await setActiveTechnology(token, countryId, technologyId, active);
       updateCountryTechnology(countryId, result.technology);
-      toast.success(active ? "Исследование добавлено" : "Исследование отменено");
+      toast.success(active ? t("technology.researchAdded") : t("technology.researchCanceled"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "SET_ACTIVE_TECHNOLOGY_FAILED";
-      if (msg === "TECHNOLOGY_NOT_AVAILABLE") toast.error("Технология пока недоступна");
-      else toast.error("Не удалось изменить исследование");
+      if (msg === "TECHNOLOGY_NOT_AVAILABLE") toast.error(t("technology.notAvailable"));
+      else toast.error(t("technology.updateFailed"));
     } finally {
       setSavingTechnologyId(null);
     }
@@ -269,8 +283,6 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
         const cost = Math.max(1, Number(technology?.costScience ?? 100));
         const progress = Math.max(0, Number(progressByTechnologyId[node.id] ?? 0));
         const status = getTechnologyStatus(node.id);
-        const statusLabel =
-          status === "researched" ? "Изучено" : status === "researching" ? "Изучается" : status === "available" ? "Доступно" : "Заблокировано";
         return {
           ...node,
           data: {
@@ -280,18 +292,19 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
             selected: node.id === selectedTechnologyId,
             related: selectedChain.nodeIds.has(node.id),
             dimmed: Boolean(selectedTechnologyId && !related),
-            statusLabel,
+            statusLabel: statusLabel(status),
+            costText: typeof technology?.costScience === "number" ? technology.costScience.toLocaleString(locale) : "0",
           },
         };
       }),
-    [activeTechnologyIds, nodes, progressByTechnologyId, researchedIds, selectedChain.nodeIds, selectedTechnologyId, technologyById],
+    [activeTechnologyIds, locale, nodes, progressByTechnologyId, researchedIds, selectedChain.nodeIds, selectedTechnologyId, technologyById, t],
   );
   const renderedEdges = useMemo(
     () =>
       edges.map((edge) => {
         const highlighted = !selectedTechnologyId || selectedChain.edgeIds.has(edge.id);
         const status = getTechnologyStatus(edge.target);
-        const color = highlighted ? STATUS_COLOR[status] : "#334155";
+        const color = highlighted ? STATUS_COLOR[status] : "var(--arc-color-text-muted)";
         return {
           ...edge,
           markerEnd: { type: MarkerType.ArrowClosed, color, width: 18, height: 18 },
@@ -322,7 +335,7 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
     const groups = [
       {
         key: "buildings",
-        title: "Здания",
+        title: t("technology.unlockBuildings"),
         fallback: Building2,
         items: (selectedTechnology.unlockBuildingIds ?? []).map((id) => ({
           id,
@@ -332,7 +345,7 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
       },
       {
         key: "laws",
-        title: "Законы",
+        title: t("technology.unlockLaws"),
         fallback: ScrollText,
         items: (selectedTechnology.unlockLawIds ?? []).map((id) => ({
           id,
@@ -342,7 +355,7 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
       },
     ];
     return groups.filter((group) => group.items.length > 0);
-  }, [buildingById, lawById, selectedTechnology]);
+  }, [buildingById, lawById, selectedTechnology, t]);
 
   useEffect(() => {
     if (!open) return;
@@ -361,7 +374,7 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
         setSelectedTechnologyId((current) => (current && technologyItems.some((item) => item.id === current) ? current : null));
       })
       .catch(() => {
-        if (!cancelled) toast.error("Не удалось загрузить технологии");
+        if (!cancelled) toast.error(t("technology.loadFailed"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -369,7 +382,7 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, t]);
 
   useEffect(() => {
     if (!open) return;
@@ -391,22 +404,22 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
   return open ? (
         <AppModal open={open} onClose={onClose} modalKey="technology" zIndexClassName="z-[175]" panelClassName="w-full overflow-hidden md:p-5">
               <AppModalHeader
-                title="Технологии"
-                description={`${technologies.length.toLocaleString("ru-RU")} узлов`}
+                title={t("technology.title")}
+                description={t("technology.nodeCount", { count: technologies.length.toLocaleString(locale) })}
                 onClose={onClose}
                 actions={
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-arc-accent">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] text-[var(--arc-color-gold)]">
                     <Network size={19} />
                   </div>
                 }
               />
 
               <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-                <AppSection className="overflow-hidden bg-[#08101a] p-0">
+                <AppSection className="overflow-hidden bg-[var(--arc-color-panel-soft)] p-0">
                   {loading ? (
-                    <div className="flex h-full items-center justify-center text-sm text-slate-400">Загрузка технологий...</div>
+                    <div className="flex h-full items-center justify-center text-sm text-[var(--arc-color-text-soft)]">{t("technology.loading")}</div>
                   ) : technologies.length === 0 ? (
-                    <AppEmptyState className="m-4">Технологии пока не созданы</AppEmptyState>
+                    <AppEmptyState className="m-4">{t("technology.empty")}</AppEmptyState>
                   ) : (
                     <ReactFlow
                       nodes={renderedNodes}
@@ -429,33 +442,27 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
                   {selectedTechnology ? (
                     <div className="flex h-full min-h-0 flex-col">
                       <div className="flex items-start gap-3">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/15 bg-white/[0.04]">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]">
                           {selectedTechnology.logoUrl ? (
                             <img src={selectedTechnology.logoUrl} alt="" className="h-full w-full object-cover" draggable={false} />
                           ) : (
-                            <Network size={20} className="text-white/45" />
+                            <Network size={20} className="text-[var(--arc-color-text-muted)]" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-lg font-semibold leading-tight text-white">{selectedTechnology.name}</div>
-                          <div className="mt-1 text-xs text-slate-400">
-                            {selectedTechnologyStatus === "researched"
-                              ? "Изучено"
-                              : selectedTechnologyStatus === "researching"
-                                ? "Изучается"
-                                : selectedTechnologyStatus === "available"
-                                  ? "Доступно"
-                                  : "Заблокировано"}
+                          <div className="text-lg font-semibold leading-tight text-[var(--arc-color-text)]">{selectedTechnology.name}</div>
+                          <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">
+                            {selectedTechnologyStatus ? statusLabel(selectedTechnologyStatus) : t("technology.status.notSelected")}
                           </div>
                         </div>
                       </div>
 
-                      <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-3">
-                        <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
-                          <span>Прогресс</span>
-                          <span>{Math.min(100, Math.max(0, selectedTechnologyProgressPct)).toLocaleString("ru-RU")}%</span>
+                      <div className="mt-4 rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] p-3">
+                        <div className="mb-2 flex items-center justify-between text-xs text-[var(--arc-color-text-soft)]">
+                          <span>{t("technology.progress")}</span>
+                          <span>{Math.min(100, Math.max(0, selectedTechnologyProgressPct)).toLocaleString(locale)}%</span>
                         </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                        <div className="h-2 overflow-hidden rounded-full bg-[var(--arc-overlay-30)]">
                           <div
                             className="h-full rounded-full"
                             style={{
@@ -464,27 +471,27 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
                             }}
                           />
                         </div>
-                        <div className="mt-2 inline-flex items-center gap-1 text-xs text-slate-300">
-                          <FlaskConical size={12} className="text-sky-300" />
-                          {selectedTechnologyCost.toLocaleString("ru-RU")} науки
+                        <div className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--arc-color-text-soft)]">
+                          <FlaskConical size={12} className="text-[var(--arc-color-gold)]" />
+                          {t("technology.scienceCost", { cost: selectedTechnologyCost.toLocaleString(locale) })}
                         </div>
                       </div>
 
                       <div className="arc-scrollbar mt-4 min-h-0 flex-1 space-y-4 overflow-auto pr-1">
                         <section>
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Описание</div>
-                          <div className="text-sm leading-relaxed text-slate-300">
-                            {selectedTechnology.description || "Описание технологии не задано."}
+                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">{t("technology.description")}</div>
+                          <div className="text-sm leading-relaxed text-[var(--arc-color-text-soft)]">
+                            {selectedTechnology.description || t("technology.descriptionMissing")}
                           </div>
                         </section>
                         <section>
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Требует</div>
+                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">{t("technology.prerequisites")}</div>
                           {selectedPrerequisites.length === 0 ? (
-                            <div className="rounded-lg border border-dashed border-white/10 px-3 py-2 text-xs text-white/45">Корневая технология.</div>
+                            <div className="rounded-lg border border-dashed border-[var(--arc-color-gold-soft)] px-3 py-2 text-xs text-[var(--arc-color-text-muted)]">{t("technology.rootTechnology")}</div>
                           ) : (
                             <div className="flex flex-wrap gap-2">
                               {selectedPrerequisites.map((name) => (
-                                <span key={name} className="rounded border border-white/10 bg-white/[0.04] px-2 py-1 text-xs text-slate-300">
+                                <span key={name} className="rounded border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-2 py-1 text-xs text-[var(--arc-color-text-soft)]">
                                   {name}
                                 </span>
                               ))}
@@ -492,27 +499,27 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
                           )}
                         </section>
                         <section>
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Открывает</div>
-                          <div className="space-y-2 text-xs text-slate-300">
+                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">{t("technology.unlocks")}</div>
+                          <div className="space-y-2 text-xs text-[var(--arc-color-text-soft)]">
                             {selectedUnlockGroups.length === 0 ? (
-                              <div className="rounded-lg border border-dashed border-white/10 px-3 py-2 text-white/45">Нет явных открытий.</div>
+                              <div className="rounded-lg border border-dashed border-[var(--arc-color-gold-soft)] px-3 py-2 text-[var(--arc-color-text-muted)]">{t("technology.unlocksEmpty")}</div>
                             ) : (
                               selectedUnlockGroups.map((group) => (
-                                <div key={group.key} className="rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
-                                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{group.title}</div>
+                                <div key={group.key} className="rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] p-2.5">
+                                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">{group.title}</div>
                                   <div className="space-y-1.5">
                                     {group.items.map((item) => {
                                       const FallbackIcon = group.fallback;
                                       return (
                                         <div
                                           key={`${group.key}-${item.id}`}
-                                          className="flex min-h-9 items-center gap-2 rounded border border-white/10 bg-white/[0.04] px-2 py-1 text-slate-300"
+                                          className="flex min-h-9 items-center gap-2 rounded border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-2 py-1 text-[var(--arc-color-text-soft)]"
                                         >
-                                          <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded border border-white/10 bg-black/25">
+                                          <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]">
                                             {item.logoUrl ? (
                                               <img src={item.logoUrl} alt="" className="h-full w-full object-cover" draggable={false} />
                                             ) : (
-                                              <FallbackIcon size={14} className="text-white/45" />
+                                              <FallbackIcon size={14} className="text-[var(--arc-color-text-muted)]" />
                                             )}
                                           </div>
                                           <span className="min-w-0 flex-1 truncate">{item.name}</span>
@@ -535,13 +542,13 @@ export function TechnologyModal({ open, token, countryId, worldBase, onClose }: 
                           variant={selectedTechnologyStatus === "researching" ? "danger" : "primary"}
                           className="mt-4 w-full"
                         >
-                          {selectedTechnologyStatus === "researching" ? "Отменить" : "Изучать"}
+                          {selectedTechnologyStatus === "researching" ? t("technology.cancelResearch") : t("technology.startResearch")}
                         </AppButton>
                       ) : null}
                     </div>
                   ) : (
                     <AppEmptyState className="flex h-full items-center justify-center px-4">
-                      Выберите технологию в дереве, чтобы посмотреть описание, требования и открытия.
+                      {t("technology.selectPrompt")}
                     </AppEmptyState>
                   )}
                 </AppSection>

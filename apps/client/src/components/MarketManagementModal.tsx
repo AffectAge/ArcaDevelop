@@ -12,6 +12,7 @@ import {
   type MarketDetails,
   type MarketInvite,
 } from "../lib/api";
+import { useUiText } from "../i18n/useUiText";
 import { CustomSelect } from "./CustomSelect";
 import { Tooltip } from "./Tooltip";
 import { AppButton } from "./ui/AppButton";
@@ -29,6 +30,7 @@ type Props = {
 };
 
 export function MarketManagementModal({ open, onClose, token, countryId, marketId, onUpdated }: Props) {
+  const { locale, t } = useUiText();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [marketDetails, setMarketDetails] = useState<MarketDetails | null>(null);
@@ -64,7 +66,7 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
       setMarketLogoFile(null);
       setTransferOwnerCountryId(details.market.members.find((member) => !member.isOwner)?.countryId ?? "");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось загрузить управление рынком");
+      toast.error(error instanceof Error ? error.message : t("market.managementLoadFailed"));
       setMarketDetails(null);
       setOutgoingInvites([]);
     } finally {
@@ -92,9 +94,9 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
         if (!q) return true;
         return country.name.toLowerCase().includes(q) || country.id.toLowerCase().includes(q);
       })
-      .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+      .sort((a, b) => a.name.localeCompare(b.name, locale))
       .map((country) => ({ value: country.id, label: country.name }));
-  }, [countries, inviteSearch, marketDetails?.memberCountryIds, outgoingInvites]);
+  }, [countries, inviteSearch, locale, marketDetails?.memberCountryIds, outgoingInvites]);
 
   useEffect(() => {
     if (!inviteOptions.some((option) => option.value === inviteTargetCountryId)) {
@@ -127,10 +129,10 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
       });
       setMarketDetails(updated.market);
       setMarketLogoFile(null);
-      toast.success("Параметры рынка обновлены");
+      toast.success(t("market.updateSuccess"));
       onUpdated?.();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось обновить рынок");
+      toast.error(error instanceof Error ? error.message : t("market.updateFailed"));
     } finally {
       setSaving(false);
     }
@@ -141,11 +143,11 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
     setPendingInvite(true);
     try {
       await createMarketInvite(token, marketId, { toCountryId: inviteTargetCountryId });
-      toast.success("Приглашение отправлено");
+      toast.success(t("market.inviteSent"));
       await load();
       onUpdated?.();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось отправить приглашение");
+      toast.error(error instanceof Error ? error.message : t("market.inviteSendFailed"));
     } finally {
       setPendingInvite(false);
     }
@@ -155,10 +157,10 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
     setPendingCancelInviteId(inviteId);
     try {
       await respondMarketInvite(token, inviteId, "cancel");
-      toast.success("Приглашение отменено");
+      toast.success(t("market.inviteCanceled"));
       await load();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось отменить приглашение");
+      toast.error(error instanceof Error ? error.message : t("market.inviteCancelFailed"));
     } finally {
       setPendingCancelInviteId(null);
     }
@@ -170,10 +172,10 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
     try {
       const updated = await transferMarketOwner(token, marketId, transferOwnerCountryId);
       setMarketDetails(updated.market);
-      toast.success("Владелец рынка изменен");
+      toast.success(t("market.ownerChanged"));
       onUpdated?.();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось передать владение");
+      toast.error(error instanceof Error ? error.message : t("market.transferFailed"));
     } finally {
       setPendingTransferOwner(false);
     }
@@ -187,27 +189,27 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
       open={open}
       onClose={onClose}
       zIndexClassName="z-[180]"
-      panelClassName="arc-scrollbar max-h-[min(92vh,920px)] w-[min(92vw,920px)] overflow-auto"
+      panelClassName="arc-market-subpanel arc-scrollbar max-h-[min(92vh,920px)] w-[min(92vw,920px)] overflow-auto"
       paddingClassName="p-4 md:p-6 flex items-center justify-center"
     >
           <AppModalHeader
-            title="Управление рынком"
-            description="Параметры рынка, исходящие приглашения и передача владения"
+            title={t("market.managementTitle")}
+            description={t("market.managementDescription")}
             onClose={onClose}
           />
 
           {loading ? (
-            <div className="text-sm text-white/60">Загрузка...</div>
+            <div className="arc-market-muted text-sm">{t("market.loading")}</div>
           ) : !marketDetails ? (
-            <AppEmptyState>Рынок не найден или нет доступа.</AppEmptyState>
+            <AppEmptyState>{t("market.marketNotFound")}</AppEmptyState>
           ) : !isOwner ? (
-            <AppCard className="border-amber-400/35 bg-amber-500/10 text-sm text-amber-200">Управление доступно только владельцу рынка.</AppCard>
+            <AppCard className="arc-market-warning-card text-sm">{t("market.managementOwnerOnly")}</AppCard>
           ) : (
             <div className="space-y-4">
               <AppSection>
-                <AppSectionHeader title="Параметры рынка" icon={<Crown size={14} />} />
+                <AppSectionHeader title={t("market.settingsSection")} icon={<Crown size={14} />} />
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <AppField label="Название">
+                  <AppField label={t("market.nameLabel")}>
                     <AppInput
                       value={marketNameEdit}
                       onChange={(event) => setMarketNameEdit(event.target.value)}
@@ -215,22 +217,22 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
                     />
                   </AppField>
                   <div>
-                    <label className="mb-1 block text-xs text-white/60">Видимость</label>
+                    <label className="arc-market-muted mb-1 block text-xs">{t("market.visibilityLabel")}</label>
                     <CustomSelect
                       value={marketVisibilityEdit}
                       onChange={(value) => setMarketVisibilityEdit(value as "public" | "private")}
                       options={[
-                        { value: "public", label: "Публичный" },
-                        { value: "private", label: "Приватный" },
+                        { value: "public", label: t("market.visibilityPublic") },
+                        { value: "private", label: t("market.visibilityPrivate") },
                       ]}
                       buttonClassName="h-9 text-xs"
                     />
                   </div>
                 </div>
                 <div className="mt-3 flex items-center gap-2">
-                  <label className="panel-border inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-black/35 px-3 text-xs text-white/75 hover:border-arc-accent/40">
+                  <label className="arc-market-file-button">
                     <ImagePlus size={13} />
-                    Логотип
+                    {t("market.logo")}
                     <input
                       type="file"
                       accept="image/*"
@@ -246,28 +248,28 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
                     size="sm"
                     icon={<Save size={13} />}
                   >
-                    Сохранить
+                    {t("market.save")}
                   </AppButton>
                 </div>
               </AppSection>
 
               <AppSection>
-                <AppSectionHeader title="Отправить приглашение" icon={<UserPlus size={14} />} />
+                <AppSectionHeader title={t("market.sendInvite")} icon={<UserPlus size={14} />} />
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_220px_auto]">
                   <AppInput
                     value={inviteSearch}
                     onChange={(event) => setInviteSearch(event.target.value)}
-                    placeholder="Поиск страны"
+                    placeholder={t("market.countrySearch")}
                     className="h-9"
                   />
                   <CustomSelect
                     value={inviteTargetCountryId}
                     onChange={setInviteTargetCountryId}
                     options={inviteOptions}
-                    placeholder="Выберите страну"
+                    placeholder={t("market.selectCountry")}
                     buttonClassName="h-9 text-xs"
                   />
-                  <Tooltip content="Отправить приглашение в рынок">
+                  <Tooltip content={t("market.sendInviteTooltip")}>
                     <AppButton
                       type="button"
                       disabled={pendingInvite || !inviteTargetCountryId}
@@ -283,17 +285,20 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
               </AppSection>
 
               <AppSection>
-                <AppSectionHeader title="История исходящих приглашений" icon={<Send size={14} />} />
+                <AppSectionHeader title={t("market.outgoingInvites")} icon={<Send size={14} />} />
                 <div className="space-y-1">
                   {outgoingInvites.map((invite) => (
                     <AppCard
                       key={invite.id}
-                      className="flex items-center justify-between bg-black/25 px-3 py-2 text-xs"
+                      className="arc-market-soft-card flex items-center justify-between px-3 py-2 text-xs"
                     >
                       <div className="min-w-0">
-                        <div className="truncate text-white/80">{invite.toCountryName ?? invite.toCountryId}</div>
-                        <div className="text-white/50">
-                          Статус: {invite.status} · Истекает: {new Date(invite.expiresAt).toLocaleDateString("ru-RU")}
+                        <div className="truncate text-[var(--arc-color-atlas-ink)]">{invite.toCountryName ?? invite.toCountryId}</div>
+                        <div>
+                          {t("market.inviteStatusExpires", {
+                            status: invite.status,
+                            date: new Date(invite.expiresAt).toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US"),
+                          })}
                         </div>
                       </div>
                       {invite.status === "pending" ? (
@@ -304,28 +309,28 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
                           variant="danger"
                           size="sm"
                         >
-                          Отменить
+                          {t("market.cancelInvite")}
                         </AppButton>
                       ) : (
-                        <span className="rounded-md border border-white/10 bg-black/35 px-2 py-1 text-[11px] text-white/50">—</span>
+                        <span className="arc-market-status-chip">—</span>
                       )}
                     </AppCard>
                   ))}
-                  {outgoingInvites.length === 0 && <AppEmptyState>Исходящих приглашений пока нет.</AppEmptyState>}
+                  {outgoingInvites.length === 0 && <AppEmptyState>{t("market.noOutgoingInvites")}</AppEmptyState>}
                 </div>
               </AppSection>
 
               <AppSection>
-                <AppSectionHeader title="Передача владения рынком" icon={<Crown size={14} />} />
+                <AppSectionHeader title={t("market.transferOwnership")} icon={<Crown size={14} />} />
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto]">
                   <CustomSelect
                     value={transferOwnerCountryId}
                     onChange={setTransferOwnerCountryId}
                     options={transferOwnerOptions}
-                    placeholder="Выберите нового владельца"
+                    placeholder={t("market.selectNewOwner")}
                     buttonClassName="h-9 text-xs"
                   />
-                  <Tooltip content="Передать право управления рынком выбранной стране">
+                  <Tooltip content={t("market.transferOwnerTooltip")}>
                     <AppButton
                       type="button"
                       disabled={pendingTransferOwner || !transferOwnerCountryId}
@@ -334,7 +339,7 @@ export function MarketManagementModal({ open, onClose, token, countryId, marketI
                       size="sm"
                       icon={<ShieldCheck size={13} />}
                     >
-                      Передать
+                      {t("market.transfer")}
                     </AppButton>
                   </Tooltip>
                 </div>

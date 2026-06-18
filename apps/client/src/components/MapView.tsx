@@ -54,7 +54,7 @@ type InfrastructureLensViewId = "coverage" | "load" | "problems" | "corridors";
 type InfrastructureLensId = `${TransportMode}:${InfrastructureLensViewId}`;
 type ColonizationLensId = "available" | "cost" | "ownRaces" | "foreignRaces" | "blocked";
 type MilitaryLensId = "armies";
-type MapModeId = "political" | "regions" | "provinceColors" | "diplomacy" | "markets" | "population" | "resources" | "infrastructure" | "colonization" | "military";
+export type MapModeId = "political" | "regions" | "provinceColors" | "diplomacy" | "markets" | "population" | "resources" | "infrastructure" | "colonization" | "military";
 type ProvinceMapMeta = {
   name: string;
   regionId: string | null;
@@ -127,6 +127,7 @@ type Props = {
   provinceRenameDucatsCost?: number;
   showMapControls?: boolean;
   showAntarctica?: boolean;
+  strategyMapModeId?: MapModeId;
 };
 
 const DEFAULT_CENTER: [number, number] = [0, 0];
@@ -751,6 +752,7 @@ export function MapView({
   provinceRenameDucatsCost = 25,
   showMapControls = false,
   showAntarctica = false,
+  strategyMapModeId,
 }: Props) {
   const { t } = useUiText();
   const mapModeOptions = useMemo(() => MAP_MODE_IDS.map((id) => ({ id, ...getMapModeConfig(id, t) })), [t]);
@@ -763,6 +765,11 @@ export function MapView({
     }
   });
   const activeModeConfig = useMemo(() => getMapModeConfig(activeModeId, t), [activeModeId, t]);
+
+  useEffect(() => {
+    if (!strategyMapModeId) return;
+    setActiveModeId(strategyMapModeId);
+  }, [strategyMapModeId]);
   const mapRef = useRef<MapLibreMap | null>(null);
   const deckOverlayRef = useRef<MapboxOverlay | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);

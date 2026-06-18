@@ -2,6 +2,8 @@ import { Bell, Handshake, Landmark, ScrollText, ShieldAlert, Trash2 } from "luci
 import type { InAppUiNotification } from "./InAppNotificationTray";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppEmptyState } from "./ui/AppSurface";
+import { useUiText } from "../i18n/useUiText";
+import type { UiTextKey } from "../i18n/uiText";
 
 type Props = {
   open: boolean;
@@ -27,82 +29,68 @@ function iconForCategory(category: InAppUiNotification["category"]) {
   }
 }
 
-function categoryLabel(category: InAppUiNotification["category"]) {
+function categoryLabelKey(category: InAppUiNotification["category"]): UiTextKey {
   switch (category) {
     case "registration":
-      return "Регистрация";
+      return "notifications.category.registration";
     case "politics":
-      return "Политика";
+      return "notifications.category.politics";
     case "economy":
-      return "Экономика";
+      return "notifications.category.economy";
     case "diplomacy":
-      return "Дипломатия";
+      return "notifications.category.diplomacy";
     default:
-      return "Система";
+      return "notifications.category.system";
   }
 }
 
-function itemText(item: InAppUiNotification): string {
+function itemText(item: InAppUiNotification, t: (key: UiTextKey, params?: Record<string, string | number>) => string): string {
   if (item.action.type === "registration-approval") {
-    return `Заявка на регистрацию: ${item.action.country.name}`;
+    return item.title || item.message ? [item.title, item.message].filter(Boolean).join(": ") : t("notifications.registrationRequest", { country: item.action.country.name });
   }
   if (item.action.type === "country-event") {
-    return item.title && item.message ? `${item.title}: ${item.message}` : item.title ?? "Новое событие";
+    return item.title && item.message ? `${item.title}: ${item.message}` : item.title ?? item.message ?? t("notifications.fallback.countryEvent");
   }
   if (item.action.type === "election-results") {
-    return item.title && item.message ? `${item.title}: ${item.message}` : `Результаты выборов: сформирован парламент на ${item.action.seatsTotal} мест`;
+    return item.title && item.message ? `${item.title}: ${item.message}` : item.title ?? item.message ?? t("notifications.electionResults", { seats: item.action.seatsTotal });
   }
   if (item.action.type === "diplomacy-proposal") {
-    return item.title && item.message ? `${item.title}: ${item.message}` : item.title ?? "Дипломатический договор";
+    return item.title && item.message ? `${item.title}: ${item.message}` : item.title ?? item.message ?? t("notifications.fallback.diplomacy");
   }
   if (item.title && item.message) return `${item.title}: ${item.message}`;
-  return item.title ?? item.message ?? "Уведомление";
+  return item.title ?? item.message ?? t("notifications.fallback.generic");
 }
 
 function categoryColor(category: InAppUiNotification["category"]): string {
   switch (category) {
     case "registration":
-      return "text-rose-300 border-rose-400/20 bg-rose-500/10";
+      return "arc-notification-history-icon--registration";
     case "politics":
-      return "text-sky-300 border-sky-400/20 bg-sky-500/10";
+      return "arc-notification-history-icon--politics";
     case "economy":
-      return "text-emerald-300 border-emerald-400/20 bg-emerald-500/10";
+      return "arc-notification-history-icon--economy";
     case "diplomacy":
-      return "text-amber-200 border-amber-400/20 bg-amber-500/10";
+      return "arc-notification-history-icon--diplomacy";
     default:
-      return "text-slate-200 border-slate-400/20 bg-slate-500/10";
-  }
-}
-
-function categoryTextColor(category: InAppUiNotification["category"]): string {
-  switch (category) {
-    case "registration":
-      return "text-rose-300";
-    case "politics":
-      return "text-sky-300";
-    case "economy":
-      return "text-emerald-300";
-    case "diplomacy":
-      return "text-amber-200";
-    default:
-      return "text-slate-200";
+      return "arc-notification-history-icon--system";
   }
 }
 
 export function NotificationHistoryModal({ open, items, viewedIds, onClose, onOpenItem, onDeleteItem }: Props) {
+  const { t } = useUiText();
   return (
     <AppModal
       modalKey="notifications"
       open={open}
       onClose={onClose}
       zIndexClassName="z-[132]"
-      panelClassName="h-auto w-full max-w-3xl"
-      paddingClassName="p-4 pt-24 flex items-start justify-center"
+      panelClassName="arc-notification-history-panel h-auto w-full max-w-4xl"
+      paddingClassName="p-3 pt-24 md:p-4 md:pt-24 flex items-start justify-center"
     >
-            <AppModalHeader title="История уведомлений" description={`Всего: ${items.length}`} onClose={onClose} />
+      <AppModalHeader title={t("notifications.history")} description={t("notifications.total", { count: items.length })} onClose={onClose} />
 
-            <div className="arc-scrollbar max-h-[60vh] space-y-2 overflow-auto pr-1">
-              {items.length === 0 && <AppEmptyState>История уведомлений пока пуста</AppEmptyState>}
+            <div className="arc-scrollbar arc-notification-history-list">
+              {items.length === 0 && <AppEmptyState>{t("notifications.emptyHistory")}</AppEmptyState>}
               {items.map((item) => {
                 const Icon = iconForCategory(item.category);
                 const isViewed = viewedIds?.has(item.id) ?? false;
@@ -111,30 +99,30 @@ export function NotificationHistoryModal({ open, items, viewedIds, onClose, onOp
                     key={item.id}
                     type="button"
                     onClick={() => onOpenItem?.(item)}
-                    className="panel-border block w-full rounded-lg bg-black/25 p-3 text-left transition hover:border-white/15 hover:bg-black/35"
+                    className="arc-notification-history-row"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0 flex flex-1 items-center gap-3">
-                        <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${categoryColor(item.category)}`}>
+                        <span className={`arc-notification-history-icon ${categoryColor(item.category)}`}>
                         <Icon size={16} />
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className={`text-xs font-medium ${categoryTextColor(item.category)}`}>{categoryLabel(item.category)}</span>
-                                <span className={`rounded border px-1.5 py-0.5 text-[10px] ${isViewed ? "border-slate-400/20 bg-slate-500/10 text-slate-300" : "border-amber-400/20 bg-amber-500/10 text-amber-300"}`}>
-                                  {isViewed ? "Просмотрено" : "Новое"}
+                                <span className="arc-notification-history-category">{t(categoryLabelKey(item.category))}</span>
+                                <span className={`arc-notification-history-state ${isViewed ? "arc-notification-history-state--viewed" : "arc-notification-history-state--new"}`}>
+                                  {t(isViewed ? "notifications.viewed" : "notifications.new")}
                                 </span>
                               </div>
-                              <div className="mt-1 break-words text-sm text-slate-200">{itemText(item)}</div>
-                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                              <div className="mt-1 break-words text-sm text-[var(--arc-color-atlas-ink)]">{itemText(item, t)}</div>
+                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--arc-color-atlas-muted)]">
                                 <span>{new Date(item.createdAt).toLocaleString()}</span>
-                                <span>Ход получения: #{item.receivedTurnId ?? "?"}</span>
+                                <span>{t("notifications.receivedTurn", { turn: item.receivedTurnId ?? "?" })}</span>
                               </div>
                             </div>
                             {(item.action.type === "registration-approval" || item.action.type === "country-event" || item.action.type === "diplomacy-proposal") && (
-                              <span className="shrink-0 rounded border border-rose-400/20 bg-rose-500/10 px-2 py-1 text-[10px] text-rose-300">Требует решения</span>
+                              <span className="arc-notification-history-decision">{t("notifications.requiresDecision")}</span>
                             )}
                             {onDeleteItem ? (
                               <button
@@ -143,8 +131,8 @@ export function NotificationHistoryModal({ open, items, viewedIds, onClose, onOp
                                   event.stopPropagation();
                                   onDeleteItem(item);
                                 }}
-                                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/10 bg-black/20 text-white/55 transition hover:border-rose-400/35 hover:bg-rose-500/10 hover:text-rose-300"
-                                aria-label="Удалить уведомление из истории"
+                                className="arc-notification-history-delete"
+                                aria-label={t("notifications.delete")}
                               >
                                 <Trash2 size={14} />
                               </button>

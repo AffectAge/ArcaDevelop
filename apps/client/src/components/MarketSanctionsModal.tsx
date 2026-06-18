@@ -22,6 +22,8 @@ import {
   updateMarketSanction,
   type MarketSanction,
 } from "../lib/api";
+import type { UiTextKey } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 import { CustomSelect } from "./CustomSelect";
 import { Tooltip } from "./Tooltip";
 import { AppButton } from "./ui/AppButton";
@@ -47,30 +49,36 @@ type DraftGoodRule = {
 };
 
 type StatusFilter = "all" | "active" | "expired" | "paused";
+type SanctionStatus = Exclude<StatusFilter, "all">;
 
-const directionLabel = (direction: DraftGoodRule["direction"] | MarketSanction["direction"]): string => {
-  if (direction === "import") return "Импорт";
-  if (direction === "export") return "Экспорт";
-  return "Импорт+Экспорт";
+const directionLabel = (
+  direction: DraftGoodRule["direction"] | MarketSanction["direction"],
+  t: (key: UiTextKey, params?: Record<string, string | number>) => string,
+): string => {
+  if (direction === "import") return t("market.directionImport");
+  if (direction === "export") return t("market.directionExport");
+  return t("market.directionBoth");
 };
 
-const statusChip = (sanction: MarketSanction, turnId: number): { label: string; className: string } => {
+const getSanctionStatus = (sanction: MarketSanction, turnId: number): SanctionStatus => {
   if (sanction.enabled === false) {
-    return {
-      label: "PAUSED",
-      className: "border-amber-400/40 bg-amber-500/20 text-amber-200",
-    };
+    return "paused";
   }
   if (turnId >= Number(sanction.expiresAtTurn ?? sanction.startTurn + sanction.durationTurns)) {
-    return {
-      label: "EXPIRED",
-      className: "border-red-400/40 bg-red-500/20 text-red-200",
-    };
+    return "expired";
   }
-  return {
-    label: "ACTIVE",
-    className: "border-emerald-400/40 bg-emerald-500/20 text-emerald-200",
-  };
+  return "active";
+};
+
+const statusChip = (
+  sanction: MarketSanction,
+  turnId: number,
+  t: (key: UiTextKey, params?: Record<string, string | number>) => string,
+): { label: string; className: string } => {
+  const status = getSanctionStatus(sanction, turnId);
+  if (status === "paused") return { label: t("market.statusPaused"), className: "arc-market-status-chip--paused" };
+  if (status === "expired") return { label: t("market.statusExpired"), className: "arc-market-status-chip--expired" };
+  return { label: t("market.statusActive"), className: "arc-market-status-chip--active" };
 };
 
 const getDirectionIcon = (direction: DraftGoodRule["direction"] | MarketSanction["direction"], className = "h-3.5 w-3.5") => {
@@ -80,6 +88,7 @@ const getDirectionIcon = (direction: DraftGoodRule["direction"] | MarketSanction
 };
 
 export function MarketSanctionsModal({ open, onClose, token, countryId, marketId, onUpdated }: Props) {
+  const { locale, t } = useUiText();
   const [loading, setLoading] = useState(false);
   const [ownerCountryId, setOwnerCountryId] = useState<string | null>(null);
   const [turnId, setTurnId] = useState(1);
@@ -119,7 +128,7 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
       setGoods((goodsEntries ?? []).map((row) => ({ id: row.id, name: row.name })));
       setMarketsCatalog((marketsRes.markets ?? []).map((row) => ({ id: row.id, name: row.name, logoUrl: row.logoUrl ?? null })));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось загрузить санкции");
+      toast.error(error instanceof Error ? error.message : t("market.sanctionsLoadFailed"));
       setSanctions([]);
       setOwnerCountryId(null);
     } finally {
@@ -142,14 +151,14 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
     if (targetType === "country") {
       return countries
         .filter((row) => row.id !== ownerCountryId)
-        .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+        .sort((a, b) => a.name.localeCompare(b.name, locale))
         .map((row) => ({ value: row.id, label: row.name }));
     }
     return marketsCatalog
       .filter((row) => row.id !== marketId)
-      .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+      .sort((a, b) => a.name.localeCompare(b.name, locale))
       .map((row) => ({ value: row.id, label: row.name }));
-  }, [countries, targetType, ownerCountryId, marketsCatalog, marketId]);
+  }, [countries, locale, targetType, ownerCountryId, marketsCatalog, marketId]);
 
   useEffect(() => {
     if (!targetOptions.some((option) => option.value === targetId)) {
@@ -161,8 +170,8 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
     () =>
       goods
         .map((good) => ({ value: good.id, label: good.name }))
-        .sort((a, b) => a.label.localeCompare(b.label, "ru")),
-    [goods],
+        .sort((a, b) => a.label.localeCompare(b.label, locale)),
+    [goods, locale],
   );
 
   useEffect(() => {
@@ -194,11 +203,11 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
   }, [countries, marketsCatalog, targetId, targetType]);
 
   const getRuleError = (row: DraftGoodRule): string | null => {
-    if (!row.goodId) return "Выберите товар";
+    if (!row.goodId) return t("market.ruleGoodRequired");
     if (row.mode === "cap") {
       const cap = Number(row.capAmount);
       if (!Number.isFinite(cap) || cap <= 0) {
-        return "Лимит > 0";
+        return t("market.ruleCapRequired");
       }
     }
     return null;
@@ -210,7 +219,7 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
         ...row,
         error: getRuleError(row),
       })),
-    [rules],
+    [rules, t],
   );
 
   const validRules = useMemo(
@@ -238,11 +247,9 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
 
   const filteredSanctions = useMemo(() => {
     return sanctions.filter((sanction) => {
-      const status = statusChip(sanction, turnId).label;
+      const status = getSanctionStatus(sanction, turnId);
       if (statusFilter === "all") return true;
-      if (statusFilter === "active") return status === "ACTIVE";
-      if (statusFilter === "expired") return status === "EXPIRED";
-      return status === "PAUSED";
+      return status === statusFilter;
     });
   }, [sanctions, statusFilter, turnId]);
 
@@ -285,7 +292,7 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
   const applyRules = async () => {
     if (!marketId || !isOwner || !targetId) return;
     if (validRules.length === 0) {
-      toast.error("Нет валидных правил для применения");
+      toast.error(t("market.noValidSanctionRules"));
       return;
     }
     setPendingApply(true);
@@ -302,12 +309,12 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
           durationTurns,
         });
       }
-      toast.success(`Добавлено санкций: ${validRules.length}`);
+      toast.success(t("market.sanctionsAdded", { count: validRules.length }));
       setConfirmOpen(false);
       await load();
       onUpdated?.();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось применить санкции");
+      toast.error(error instanceof Error ? error.message : t("market.sanctionApplyFailed"));
     } finally {
       setPendingApply(false);
     }
@@ -320,7 +327,7 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
       await load();
       onUpdated?.();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось обновить санкцию");
+      toast.error(error instanceof Error ? error.message : t("market.sanctionUpdateFailed"));
     }
   };
 
@@ -329,11 +336,11 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
     setPendingDeleteId(sanctionId);
     try {
       await deleteMarketSanction(token, marketId, sanctionId);
-      toast.success("Санкция удалена");
+      toast.success(t("market.sanctionDeleted"));
       await load();
       onUpdated?.();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось удалить санкцию");
+      toast.error(error instanceof Error ? error.message : t("market.sanctionDeleteFailed"));
     } finally {
       setPendingDeleteId(null);
     }
@@ -348,112 +355,100 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
         open={open}
         onClose={onClose}
         zIndexClassName="z-[181]"
-        panelClassName="arc-scrollbar max-h-[min(92vh,960px)] w-[min(96vw,1460px)] overflow-auto"
+        panelClassName="arc-market-subpanel arc-scrollbar max-h-[min(92vh,960px)] w-[min(96vw,1460px)] overflow-auto"
         paddingClassName="p-4 md:p-6 flex items-center justify-center"
       >
             <AppModalHeader
-              title="Санкции рынка"
-              description="Конструктор правил импорта/экспорта с пакетным применением"
+              title={t("market.sanctionsTitle")}
+              description={t("market.sanctionsDescription")}
               onClose={onClose}
             />
 
             {loading ? (
-              <div className="text-sm text-white/60">Загрузка...</div>
+              <div className="arc-market-muted text-sm">{t("market.loading")}</div>
             ) : !isOwner ? (
-              <AppCard className="border-amber-400/35 bg-amber-500/10 text-sm text-amber-200">
-                Санкции может изменять только владелец рынка.
-              </AppCard>
+              <AppCard className="arc-market-warning-card text-sm">{t("market.sanctionsOwnerOnly")}</AppCard>
             ) : (
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_1fr]">
-                <AppSection className="flex min-h-[720px] flex-col bg-black/25 p-0">
-                  <div className="sticky top-0 z-20 border-b border-white/10 bg-[#0b111b]/95 p-3 backdrop-blur">
+                <AppSection className="flex min-h-[720px] flex-col p-0">
+                  <div className="arc-market-sticky sticky top-0 z-20 p-3">
                     <AppSectionHeader
-                      title="Конструктор санкций"
-                      description="Выберите цель, товары и режим ограничения"
+                      title={t("market.sanctionBuilder")}
+                      description={t("market.sanctionBuilderDescription")}
                       icon={<ShieldBan size={14} />}
                     />
                     <div className="mb-3 grid grid-cols-3 gap-2 text-[11px]">
-                      <div className="flex h-7 items-center justify-center rounded-lg border border-cyan-400/35 bg-cyan-500/15 px-2 font-semibold text-cyan-200">
-                        1. Цель
-                      </div>
-                      <div className="flex h-7 items-center justify-center rounded-lg border border-amber-400/35 bg-amber-500/15 px-2 font-semibold text-amber-200">
-                        2. Товары
-                      </div>
-                      <div className="flex h-7 items-center justify-center rounded-lg border border-emerald-400/35 bg-emerald-500/15 px-2 font-semibold text-emerald-200">
-                        3. Подтверждение
-                      </div>
+                      <div className="arc-market-step">{t("market.stepTarget")}</div>
+                      <div className="arc-market-step">{t("market.stepGoods")}</div>
+                      <div className="arc-market-step">{t("market.stepConfirm")}</div>
                     </div>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                      <Tooltip content="Кого санкционируем: страну или целый рынок.">
+                      <Tooltip content={t("market.targetTypeTooltip")}>
                         <div>
                           <CustomSelect
                             value={targetType}
                             onChange={(value) => setTargetType(value as "country" | "market")}
                             options={[
-                              { value: "country", label: "Цель: страна" },
-                              { value: "market", label: "Цель: рынок" },
+                              { value: "country", label: t("market.targetTypeCountry") },
+                              { value: "market", label: t("market.targetTypeMarket") },
                             ]}
                             buttonClassName="h-9 text-xs"
                           />
                         </div>
                       </Tooltip>
-                      <Tooltip content="Конкретная цель санкций.">
+                      <Tooltip content={t("market.targetSelectTooltip")}>
                         <div>
                           <CustomSelect
                             value={targetId}
                             onChange={setTargetId}
                             options={targetOptions}
-                            placeholder="Выберите цель"
+                            placeholder={t("market.selectTarget")}
                             buttonClassName="h-9 text-xs"
                           />
                         </div>
                       </Tooltip>
-                      <Tooltip content="Сколько ходов правило будет действовать.">
+                      <Tooltip content={t("market.durationTooltip")}>
                         <AppInput
                           value={duration}
                           onChange={(event) => setDuration(event.target.value.replace(/[^\d]/g, ""))}
-                          placeholder="Срок (ходов)"
+                          placeholder={t("market.durationPlaceholder")}
                           className="h-9"
                         />
                       </Tooltip>
                     </div>
-                    <div className="mt-2 flex items-center gap-2 rounded-lg border border-white/10 bg-black/25 px-2 py-2 text-xs text-white/75">
+                    <div className="arc-market-soft-card mt-2 flex items-center gap-2 px-2 py-2 text-xs">
                       {targetMeta.imageUrl ? (
-                        <img src={targetMeta.imageUrl} alt="" className="h-5 w-5 rounded object-cover border border-white/15" />
+                        <img src={targetMeta.imageUrl} alt="" className="h-5 w-5 object-cover border border-[var(--arc-color-atlas-line)]" />
                       ) : (
-                        <span className="h-5 w-5 rounded border border-white/15 bg-black/40" />
+                        <span className="h-5 w-5 border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper-deep)]" />
                       )}
-                      <span className="max-w-[420px] truncate">Цель: {targetMeta.name || "—"}</span>
+                      <span className="max-w-[420px] truncate">{t("market.targetLabel", { target: targetMeta.name || "—" })}</span>
                     </div>
                   </div>
 
                   <div className="flex-1 overflow-hidden p-3">
-                    <div className="mb-2 grid grid-cols-[1fr_120px_110px_110px_54px] items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-2 py-2 text-[11px] font-semibold uppercase tracking-wide text-white/55">
-                      <span>Товар</span>
-                      <span>Направление</span>
-                      <span>Режим</span>
-                      <span>Лимит</span>
-                      <span>Действие</span>
+                    <div className="arc-market-rule-header mb-2">
+                      <span>{t("market.goodColumn")}</span>
+                      <span>{t("market.directionColumn")}</span>
+                      <span>{t("market.modeColumn")}</span>
+                      <span>{t("market.capColumn")}</span>
+                      <span>{t("market.actionColumn")}</span>
                     </div>
                     <div className="arc-scrollbar h-[430px] overflow-auto pr-1">
                       <div className="space-y-2 pb-16">
                         {rulesWithValidation.map((row) => {
-                          const rowTone =
-                            row.mode === "ban"
-                              ? "border-red-400/35 bg-red-500/10 hover:border-red-400/55"
-                              : "border-amber-400/35 bg-amber-500/10 hover:border-amber-400/55";
                           return (
                             <div
                               key={row.rowId}
-                              className={`grid grid-cols-[1fr_120px_110px_110px_54px] gap-2 rounded-lg border px-2 py-2 transition-all duration-150 hover:-translate-y-[1px] ${rowTone} ${
-                                row.error ? "ring-1 ring-red-400/50" : ""
-                              }`}
+                              className={`arc-market-rule-grid arc-market-rule-row ${
+                                row.mode === "ban" ? "arc-market-rule-row--ban" : "arc-market-rule-row--cap"
+                              } ${row.error ? "ring-1 ring-[var(--arc-color-atlas-danger)]" : ""}`}
                             >
                               <CustomSelect
                                 value={row.goodId}
                                 onChange={(value) => updateRule(row.rowId, { goodId: value })}
                                 options={goodsOptions}
-                                placeholder="Товар"
+                                placeholder={t("market.goodColumn")}
                                 buttonClassName="h-9 text-xs"
                               />
                               <CustomSelect
@@ -462,9 +457,9 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                                   updateRule(row.rowId, { direction: value as "import" | "export" | "both" })
                                 }
                                 options={[
-                                  { value: "both", label: "Имп+Эксп" },
-                                  { value: "import", label: "Импорт" },
-                                  { value: "export", label: "Экспорт" },
+                                  { value: "both", label: t("market.directionShortBoth") },
+                                  { value: "import", label: t("market.directionImport") },
+                                  { value: "export", label: t("market.directionExport") },
                                 ]}
                                 buttonClassName="h-9 text-xs"
                               />
@@ -472,8 +467,8 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                                 value={row.mode}
                                 onChange={(value) => updateRule(row.rowId, { mode: value as "ban" | "cap" })}
                                 options={[
-                                  { value: "ban", label: "Запрет" },
-                                  { value: "cap", label: "Лимит" },
+                                  { value: "ban", label: t("market.modeBan") },
+                                  { value: "cap", label: t("market.modeCap") },
                                 ]}
                                 buttonClassName="h-9 text-xs"
                               />
@@ -483,7 +478,7 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                                 onChange={(event) =>
                                   updateRule(row.rowId, { capAmount: event.target.value.replace(/[^\d.]/g, "") })
                                 }
-                                placeholder="Лимит"
+                                placeholder={t("market.capColumn")}
                                 invalid={Boolean(row.error)}
                                 className="h-9"
                               />
@@ -497,29 +492,29 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                                 <Trash2 size={12} />
                               </AppButton>
                               {row.error && (
-                                <div className="col-span-5 -mt-1 text-[11px] font-semibold text-red-300">{row.error}</div>
+                                <div className="col-span-5 -mt-1 text-[11px] font-semibold text-[var(--arc-color-atlas-danger)]">{row.error}</div>
                               )}
                             </div>
                           );
                         })}
                         {rulesWithValidation.length === 0 && (
-                          <AppEmptyState className="text-xs">Добавьте минимум одну строку товара.</AppEmptyState>
+                          <AppEmptyState className="text-xs">{t("market.addRuleEmpty")}</AppEmptyState>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="sticky bottom-0 z-20 border-t border-white/10 bg-[#0b111b]/95 p-3 backdrop-blur">
+                  <div className="arc-market-sticky sticky bottom-0 z-20 border-t p-3">
                     <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto]">
-                      <Tooltip content="Применить направление сразу ко всем строкам.">
-                        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/25 px-2 py-2">
+                      <Tooltip content={t("market.bulkDirectionTooltip")}>
+                        <div className="arc-market-soft-card flex items-center gap-2 px-2 py-2">
                           <CustomSelect
                             value={bulkDirection}
                             onChange={(value) => setBulkDirection(value as "import" | "export" | "both")}
                             options={[
-                              { value: "both", label: "Импорт+Экспорт" },
-                              { value: "import", label: "Импорт" },
-                              { value: "export", label: "Экспорт" },
+                              { value: "both", label: t("market.directionBoth") },
+                              { value: "import", label: t("market.directionImport") },
+                              { value: "export", label: t("market.directionExport") },
                             ]}
                             buttonClassName="h-8 text-xs"
                           />
@@ -530,18 +525,18 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                             size="sm"
                             className="h-8"
                           >
-                            Применить всем
+                            {t("market.applyAll")}
                           </AppButton>
                         </div>
                       </Tooltip>
-                      <Tooltip content="Применить режим (ban/cap) сразу ко всем строкам.">
-                        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/25 px-2 py-2">
+                      <Tooltip content={t("market.bulkModeTooltip")}>
+                        <div className="arc-market-soft-card flex items-center gap-2 px-2 py-2">
                           <CustomSelect
                             value={bulkMode}
                             onChange={(value) => setBulkMode(value as "ban" | "cap")}
                             options={[
-                              { value: "ban", label: "Запрет" },
-                              { value: "cap", label: "Лимит" },
+                              { value: "ban", label: t("market.modeBan") },
+                              { value: "cap", label: t("market.modeCap") },
                             ]}
                             buttonClassName="h-8 text-xs"
                           />
@@ -552,7 +547,7 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                             size="sm"
                             className="h-8"
                           >
-                            Применить всем
+                            {t("market.applyAll")}
                           </AppButton>
                         </div>
                       </Tooltip>
@@ -563,7 +558,7 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                         size="md"
                         icon={<Plus size={13} />}
                       >
-                        Добавить товар
+                        {t("market.addGood")}
                       </AppButton>
                     </div>
                     <div className="flex items-center justify-end">
@@ -575,31 +570,31 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                         size="md"
                         icon={<Save size={13} />}
                       >
-                        Применить пакет
+                        {t("market.applyPackage")}
                       </AppButton>
                     </div>
                   </div>
                 </AppSection>
 
-                <AppSection className="flex min-h-[720px] flex-col bg-black/25 p-0">
-                  <div className="sticky top-0 z-20 border-b border-white/10 bg-[#0b111b]/95 p-3 backdrop-blur">
-                    <AppSectionHeader title="Санкции" description="Действующие и завершённые ограничения рынка" icon={<Filter size={14} />} className="mb-0" />
+                <AppSection className="flex min-h-[720px] flex-col p-0">
+                  <div className="arc-market-sticky sticky top-0 z-20 p-3">
+                    <AppSectionHeader title={t("market.sanctionsListTitle")} description={t("market.sanctionsListDescription")} icon={<Filter size={14} />} className="mb-0" />
                   </div>
 
-                  <div className="sticky top-[57px] z-10 border-b border-white/10 bg-[#0b111b]/95 p-3 backdrop-blur">
+                  <div className="arc-market-sticky sticky top-[57px] z-10 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
-                        <Filter size={14} className="text-cyan-300" />
-                        Список санкций
+                      <div className="arc-market-section-title">
+                        <Filter size={14} className="text-[var(--arc-color-atlas-primary)]" />
+                        {t("market.sanctionList")}
                       </div>
                       <CustomSelect
                         value={statusFilter}
                         onChange={(value) => setStatusFilter(value as StatusFilter)}
                         options={[
-                          { value: "all", label: "Все" },
-                          { value: "active", label: "Активные" },
-                          { value: "expired", label: "Истекшие" },
-                          { value: "paused", label: "Выключенные" },
+                          { value: "all", label: t("market.statusAll") },
+                          { value: "active", label: t("market.statusActive") },
+                          { value: "expired", label: t("market.statusExpired") },
+                          { value: "paused", label: t("market.statusPaused") },
                         ]}
                         buttonClassName="h-8 text-xs"
                       />
@@ -609,45 +604,46 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                   <div className="arc-scrollbar flex-1 overflow-auto p-3">
                     <div className="space-y-2">
                       {filteredSanctions.map((sanction) => {
-                        const badge = statusChip(sanction, turnId);
+                        const badge = statusChip(sanction, turnId, t);
                         const expiresAtTurn = Number(sanction.expiresAtTurn ?? sanction.startTurn + sanction.durationTurns);
                         const turnsLeft = Math.max(0, expiresAtTurn - turnId);
                         return (
                           <AppCard
                             key={sanction.id}
-                            className="bg-black/30 p-2 text-xs transition-all duration-150 hover:-translate-y-[1px] hover:border-arc-accent/35"
+                            className="arc-market-soft-card p-2 text-xs transition-all duration-150 hover:-translate-y-[1px]"
                           >
                             <div className="mb-1 flex items-start justify-between gap-2">
                               <div className="min-w-0">
-                                <div className="flex items-center gap-2 font-semibold text-white/85">
+                                <div className="flex items-center gap-2 font-semibold text-[var(--arc-color-atlas-ink)]">
                                   {getDirectionIcon(sanction.direction)}
-                                  <span>{directionLabel(sanction.direction)}</span>
-                                  <span className="text-white/45">·</span>
-                                  <span>{sanction.mode === "ban" ? "Запрет" : `Лимит ${sanction.capAmountPerTurn ?? 0}`}</span>
+                                  <span>{directionLabel(sanction.direction, t)}</span>
+                                  <span className="arc-market-muted">·</span>
+                                  <span>{sanction.mode === "ban" ? t("market.modeBan") : t("market.limitWithAmount", { amount: sanction.capAmountPerTurn ?? 0 })}</span>
                                 </div>
-                                <div className="truncate text-white/55">
-                                  {sanction.targetType === "country" ? "Страна" : "Рынок"}: {sanction.targetName ?? sanction.targetId}
+                                <div className="arc-market-muted truncate">
+                                  {t("market.targetValue", {
+                                    type: sanction.targetType === "country" ? t("market.targetCountry") : t("market.targetMarket"),
+                                    target: sanction.targetName ?? sanction.targetId,
+                                  })}
                                 </div>
                               </div>
-                              <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold ${badge.className}`}>{badge.label}</span>
+                              <span className={`arc-market-status-chip ${badge.className}`}>{badge.label}</span>
                             </div>
-                            <div className="mb-2 flex items-center gap-3 text-[11px] text-white/60">
+                            <div className="arc-market-muted mb-2 flex items-center gap-3 text-[11px]">
                               <span className="inline-flex items-center gap-1">
                                 <Clock3 size={12} />
-                                осталось {turnsLeft} ход.
+                                {t("market.turnsLeft", { turns: turnsLeft })}
                               </span>
-                              <span>Период: {sanction.startTurn}-{expiresAtTurn}</span>
+                              <span>{t("market.period", { from: sanction.startTurn, to: expiresAtTurn })}</span>
                             </div>
                             <div className="mb-2 flex flex-wrap gap-1">
                               {(sanction.goodsNamed ?? []).map((good) => (
-                                <span key={good.id} className="rounded-md border border-white/15 bg-black/35 px-2 py-0.5 text-white/75">
+                                <span key={good.id} className="arc-market-status-chip">
                                   {good.name}
                                 </span>
                               ))}
                               {(sanction.goodsNamed?.length ?? 0) === 0 && (
-                                <span className="rounded-md border border-white/15 bg-black/35 px-2 py-0.5 text-white/60">
-                                  Все товары
-                                </span>
+                                <span className="arc-market-status-chip">{t("market.allGoods")}</span>
                               )}
                             </div>
                             <div className="flex items-center justify-end gap-2">
@@ -658,7 +654,7 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                                 size="sm"
                                 className="h-8"
                               >
-                                {sanction.enabled === false ? "Включить" : "Выключить"}
+                                {sanction.enabled === false ? t("market.enable") : t("market.disable")}
                               </AppButton>
                               <AppButton
                                 type="button"
@@ -668,14 +664,14 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                                 size="sm"
                                 className="h-8"
                               >
-                                Удалить
+                                {t("market.delete")}
                               </AppButton>
                             </div>
                           </AppCard>
                         );
                       })}
                       {filteredSanctions.length === 0 && (
-                        <AppEmptyState className="text-xs">По фильтру ничего не найдено.</AppEmptyState>
+                        <AppEmptyState className="text-xs">{t("market.filterNoResults")}</AppEmptyState>
                       )}
                     </div>
                   </div>
@@ -689,12 +685,12 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
         open={confirmOpen}
         onClose={() => (pendingApply ? undefined : setConfirmOpen(false))}
         zIndexClassName="z-[182]"
-        panelClassName="w-[min(92vw,520px)]"
+        panelClassName="arc-market-subpanel w-[min(92vw,520px)]"
         paddingClassName="p-4 md:p-6 flex items-center justify-center"
       >
-            <AppModalHeader title="Подтверждение" onClose={() => setConfirmOpen(false)} closeDisabled={pendingApply} />
-            <AppCard className="bg-black/25 text-sm text-white/75">
-              Будет создано санкций: <span className="font-semibold text-white">{validRules.length}</span>
+            <AppModalHeader title={t("market.confirmationTitle")} onClose={() => setConfirmOpen(false)} closeDisabled={pendingApply} />
+            <AppCard className="arc-market-soft-card text-sm">
+              {t("market.sanctionsAdded", { count: validRules.length })}
             </AppCard>
             <div className="mt-3 flex items-center justify-end gap-2">
               <AppButton
@@ -704,7 +700,7 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                 variant="ghost"
                 size="sm"
               >
-                Отмена
+                {t("common.cancel")}
               </AppButton>
               <AppButton
                 type="button"
@@ -714,7 +710,7 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
                 size="sm"
                 icon={<Save size={13} />}
               >
-                Применить
+                {t("market.apply")}
               </AppButton>
             </div>
       </AppModal>

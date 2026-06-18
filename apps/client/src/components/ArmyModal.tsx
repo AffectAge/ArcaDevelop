@@ -14,6 +14,8 @@ import {
 import { AppButton } from "./ui/AppButton";
 import { AppCard, AppEmptyState, AppSection, AppSectionHeader } from "./ui/AppSurface";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
+import { useUiText } from "../i18n/useUiText";
+import type { UiTextKey } from "../i18n/uiText";
 
 type Props = {
   open: boolean;
@@ -22,10 +24,10 @@ type Props = {
   onQueueArmyMove: (divisionId: string, provinceId: string) => void;
 };
 
-const BRANCH_LABEL: Record<MilitaryBranch, string> = {
-  land: "Дивизии",
-  naval: "Флоты",
-  air: "Авиакрылья",
+const BRANCH_LABEL_KEY: Record<MilitaryBranch, UiTextKey> = {
+  land: "army.land",
+  naval: "army.naval",
+  air: "army.air",
 };
 
 const BRANCH_ICON: Record<MilitaryBranch, typeof Shield> = {
@@ -113,19 +115,20 @@ function calculateDraftStats(catalog: ContentEntry[], components: MilitaryTempla
   };
 }
 
-function branchDefaultName(kind: MilitaryBranch) {
-  if (kind === "naval") return "Новый флот";
-  if (kind === "air") return "Новое авиакрыло";
-  return "Новая дивизия";
+function branchDefaultNameKey(kind: MilitaryBranch): UiTextKey {
+  if (kind === "naval") return "army.defaultNaval";
+  if (kind === "air") return "army.defaultAir";
+  return "army.defaultLand";
 }
 
 export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
+  const { t } = useUiText();
   const [overview, setOverview] = useState<MilitaryOverview | null>(null);
   const [activeTab, setActiveTab] = useState<MilitaryBranch | "queue">("land");
   const [loading, setLoading] = useState(false);
   const [pending, setPending] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-  const [templateName, setTemplateName] = useState("Новая дивизия");
+  const [templateName, setTemplateName] = useState("");
   const [components, setComponents] = useState<MilitaryTemplateComponent[]>([]);
   const [formationName, setFormationName] = useState("");
   const [formationProvinceId, setFormationProvinceId] = useState("");
@@ -158,7 +161,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
     const nextCatalog = getCatalog(overview, kind);
     setActiveTab(kind);
     setSelectedTemplateId(null);
-    setTemplateName(branchDefaultName(kind));
+    setTemplateName(t(branchDefaultNameKey(kind)));
     setComponents(makeDefaultComponents(nextCatalog, kind));
   };
 
@@ -174,6 +177,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
         if (firstTemplate) {
           selectTemplate(firstTemplate);
         } else {
+          setTemplateName(t("army.defaultLand"));
           setComponents(makeDefaultComponents(data.battalionCatalog, "land"));
         }
       })
@@ -183,7 +187,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [open, token]);
+  }, [open, token, t]);
 
   useEffect(() => {
     if (activeTab === "queue") return;
@@ -246,7 +250,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
     if (!token || !selectedTemplateId || !file) return;
     setIconError(null);
     if (!(await validateIcon64(file))) {
-      setIconError("Логотип должен быть строго 64x64.");
+      setIconError(t("army.iconInvalid64"));
       return;
     }
     setPending(true);
@@ -254,7 +258,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
       const data = await uploadMilitaryTemplateIcon(token, selectedTemplateId, file);
       applyOverview(data);
     } catch {
-      setIconError("Не удалось загрузить логотип.");
+      setIconError(t("army.iconUploadFailed"));
     } finally {
       setPending(false);
     }
@@ -291,12 +295,12 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
   const unitsForTab = overview?.units.filter((unit) => (unit.kind ?? "land") === activeKind) ?? [];
 
   return (
-    <AppModal open={open} onClose={onClose} modalKey="army" panelClassName="mx-auto max-h-[92vh] w-[min(96vw,1240px)] overflow-auto">
-      <AppModalHeader title="Вооружённые силы" description="Шаблоны, формирование и базирование дивизий, флотов и авиакрыльев" onClose={onClose} />
+    <AppModal open={open} onClose={onClose} modalKey="army" panelClassName="arc-pop-panel mx-auto max-h-[92vh] w-[min(96vw,1240px)] overflow-auto">
+      <AppModalHeader title={t("army.title")} description={t("army.description")} onClose={onClose} />
       {loading ? (
-        <AppEmptyState title="Загрузка вооружённых сил">Получаем шаблоны, части и очередь.</AppEmptyState>
+        <AppEmptyState title={t("army.loading")}>{t("army.loadingDescription")}</AppEmptyState>
       ) : !overview ? (
-        <AppEmptyState title="Нет данных">Откройте окно после подключения к серверу.</AppEmptyState>
+        <AppEmptyState title={t("army.noData")}>{t("army.noDataDescription")}</AppEmptyState>
       ) : (
         <div className="grid gap-3">
           <div className="flex flex-wrap gap-2">
@@ -308,11 +312,11 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                   type="button"
                   onClick={() => setActiveTab(kind)}
                   className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs transition ${
-                    activeTab === kind ? "border-arc-accent/55 bg-arc-accent/15 text-arc-accent" : "border-white/10 bg-black/25 text-white/65"
+                    activeTab === kind ? "border-[var(--arc-color-atlas-primary)] bg-[color-mix(in_srgb,var(--arc-color-atlas-primary)_10%,var(--arc-color-atlas-paper))] text-[var(--arc-color-atlas-primary)]" : "border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] text-[var(--arc-color-atlas-muted)]"
                   }`}
                 >
                   <Icon size={15} />
-                  {BRANCH_LABEL[kind]}
+                  {t(BRANCH_LABEL_KEY[kind])}
                 </button>
               );
             })}
@@ -320,39 +324,39 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
               type="button"
               onClick={() => setActiveTab("queue")}
               className={`h-9 rounded-lg border px-3 text-xs transition ${
-                activeTab === "queue" ? "border-arc-accent/55 bg-arc-accent/15 text-arc-accent" : "border-white/10 bg-black/25 text-white/65"
+                activeTab === "queue" ? "border-[var(--arc-color-atlas-primary)] bg-[color-mix(in_srgb,var(--arc-color-atlas-primary)_10%,var(--arc-color-atlas-paper))] text-[var(--arc-color-atlas-primary)]" : "border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] text-[var(--arc-color-atlas-muted)]"
               }`}
             >
-              Очередь ({overview.queue.length})
+              {t("army.queue", { count: overview.queue.length })}
             </button>
           </div>
 
           {activeTab === "queue" ? (
             <AppSection>
-              <AppSectionHeader title="Очередь формирования" icon={<Plus size={15} />} />
+              <AppSectionHeader title={t("army.formationQueue")} icon={<Plus size={15} />} />
               <div className="grid gap-2">
-                {overview.queue.length === 0 && <AppEmptyState title="Очередь пуста">Новые части появляются здесь после команды сформировать.</AppEmptyState>}
+                {overview.queue.length === 0 && <AppEmptyState title={t("army.emptyQueue")}>{t("army.emptyQueueDescription")}</AppEmptyState>}
                 {overview.queue.map((item) => {
                   const template = overview.templates.find((entry) => entry.id === item.templateId);
                   const provinceName = provinceById.get(item.provinceId)?.name ?? item.provinceId;
                   return (
-                    <AppCard key={item.id} className="bg-black/20">
+                    <AppCard key={item.id} className="arc-pop-card">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                          <div className="text-sm font-semibold text-white">{item.name}</div>
-                          <div className="text-xs text-white/55">{BRANCH_LABEL[item.kind]} · {template?.name ?? "Шаблон удалён"} · {provinceName}</div>
+                          <div className="text-sm font-semibold text-[var(--arc-color-atlas-ink)]">{item.name}</div>
+                          <div className="arc-pop-muted text-xs">{t(BRANCH_LABEL_KEY[item.kind])} · {template?.name ?? t("army.templateDeleted")} · {provinceName}</div>
                         </div>
                         <div className="min-w-[180px]">
-                          <div className="mb-1 flex justify-between text-[11px] text-white/55">
+                          <div className="arc-pop-muted mb-1 flex justify-between text-[11px]">
                             <span>{Math.round(item.progress * 100)}%</span>
-                            <span>{item.turnsRemaining}/{item.turnsTotal} ход.</span>
+                            <span>{item.turnsRemaining}/{item.turnsTotal}</span>
                           </div>
                           <div className="h-2 overflow-hidden rounded bg-white/10">
                             <div className="h-full bg-arc-accent" style={{ width: `${Math.max(4, item.progress * 100)}%` }} />
                           </div>
                         </div>
                         <AppButton type="button" size="sm" variant="ghost" icon={<Trash2 size={14} />} disabled={pending} onClick={() => void handleCancelQueue(item.id)}>
-                          Отменить
+                          {t("army.cancel")}
                         </AppButton>
                       </div>
                     </AppCard>
@@ -364,12 +368,12 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
             <div className="grid min-h-0 gap-3 lg:grid-cols-[1.05fr_0.95fr]">
               <AppSection>
                 <AppSectionHeader
-                  title={`Шаблоны: ${BRANCH_LABEL[activeKind]}`}
+                  title={t("army.branchTemplates", { branch: t(BRANCH_LABEL_KEY[activeKind]) })}
                   icon={(() => {
                     const Icon = BRANCH_ICON[activeKind];
                     return <Icon size={15} />;
                   })()}
-                  actions={<AppButton type="button" size="sm" variant="secondary" icon={<Plus size={14} />} onClick={() => startNewTemplate(activeKind)}>Новый</AppButton>}
+                  actions={<AppButton type="button" size="sm" variant="secondary" icon={<Plus size={14} />} onClick={() => startNewTemplate(activeKind)}>{t("army.newTemplate")}</AppButton>}
                 />
                 <div className="mb-3 flex flex-wrap gap-2">
                   {templatesForTab.map((template) => (
@@ -378,7 +382,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                       type="button"
                       onClick={() => selectTemplate(template)}
                       className={`h-8 rounded-lg border px-2 text-xs transition ${
-                        selectedTemplateId === template.id ? "border-arc-accent/50 bg-arc-accent/15 text-arc-accent" : "border-white/10 bg-black/25 text-white/65"
+                        selectedTemplateId === template.id ? "border-[var(--arc-color-atlas-primary)] bg-[color-mix(in_srgb,var(--arc-color-atlas-primary)_10%,var(--arc-color-atlas-paper))] text-[var(--arc-color-atlas-primary)]" : "border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] text-[var(--arc-color-atlas-muted)]"
                       }`}
                     >
                       {template.name}
@@ -386,54 +390,54 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                   ))}
                 </div>
 
-                <AppCard className="bg-black/20">
+                <AppCard className="arc-pop-card">
                   <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-                    <label className="text-xs text-white/55">
-                      Название шаблона
+                    <label className="arc-pop-muted text-xs">
+                      {t("army.templateName")}
                       <input
                         value={templateName}
                         onChange={(event) => setTemplateName(event.target.value)}
-                        className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-white outline-none focus:border-arc-accent/50"
+                        className="mt-1 h-9 w-full rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
                       />
                     </label>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-white/65">
-                      <div>Атака: <span className="text-white">{formatNumber(draftStats.attack, 1)}</span></div>
-                      <div>Защита: <span className="text-white">{formatNumber(draftStats.defense, 1)}</span></div>
-                      <div>Орг.: <span className="text-white">{formatNumber(draftStats.organization, 1)}</span></div>
-                      <div>Снабж.: <span className="text-white">{formatNumber(draftStats.supplyUse, 1)}</span></div>
+                    <div className="arc-pop-muted grid grid-cols-2 gap-2 text-xs">
+                      <div>{t("army.attack")}: <span className="text-[var(--arc-color-atlas-ink)]">{formatNumber(draftStats.attack, 1)}</span></div>
+                      <div>{t("army.defense")}: <span className="text-[var(--arc-color-atlas-ink)]">{formatNumber(draftStats.defense, 1)}</span></div>
+                      <div>{t("army.organizationShort")}: <span className="text-[var(--arc-color-atlas-ink)]">{formatNumber(draftStats.organization, 1)}</span></div>
+                      <div>{t("army.supplyShort")}: <span className="text-[var(--arc-color-atlas-ink)]">{formatNumber(draftStats.supplyUse, 1)}</span></div>
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-white/10 bg-black/20 p-2">
-                    <div className="grid h-16 w-16 place-items-center rounded border border-white/15 bg-black/35">
-                      {selectedTemplate?.iconUrl ? <img src={selectedTemplate.iconUrl} alt="" className="h-16 w-16 object-cover" /> : <Shield size={24} className="text-white/45" />}
+                  <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper-soft)] p-2">
+                    <div className="grid h-16 w-16 place-items-center rounded border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper-deep)]">
+                      {selectedTemplate?.iconUrl ? <img src={selectedTemplate.iconUrl} alt="" className="h-16 w-16 object-cover" /> : <Shield size={24} className="arc-pop-muted" />}
                     </div>
-                    <label className="text-xs text-white/55">
-                      Логотип 64x64
+                    <label className="arc-pop-muted text-xs">
+                      {t("army.icon64")}
                       <input
                         type="file"
                         accept="image/png,image/jpeg,image/webp,image/svg+xml"
                         disabled={pending || !selectedTemplateId}
                         onChange={(event) => void handleUploadIcon(event.target.files?.[0] ?? null)}
-                        className="mt-1 block text-xs text-white/65 file:mr-3 file:h-8 file:rounded-md file:border-0 file:bg-arc-accent file:px-3 file:text-xs file:font-semibold file:text-black"
+                        className="mt-1 block text-xs text-[var(--arc-color-atlas-muted)] file:mr-3 file:h-8 file:border-0 file:bg-[var(--arc-color-atlas-primary)] file:px-3 file:text-xs file:font-semibold file:text-[var(--arc-color-atlas-primary-ink)]"
                       />
-                      {iconError && <span className="mt-1 block text-[11px] text-red-300">{iconError}</span>}
+                      {iconError && <span className="mt-1 block text-[11px] text-[var(--arc-color-atlas-danger)]">{iconError}</span>}
                     </label>
                   </div>
 
                   <div className={activeKind === "land" ? "mt-3 grid gap-3 lg:grid-cols-[1fr_220px]" : "mt-3"}>
                     <div>
-                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/45">
-                        {activeKind === "land" ? "Боевые слоты" : "Состав"}
+                      <div className="arc-pop-label mb-2">
+                        {activeKind === "land" ? t("army.battleSlots") : t("army.composition")}
                       </div>
                       <div className={activeKind === "land" ? "grid gap-2 sm:grid-cols-3" : "grid gap-2 sm:grid-cols-2"}>
                         {catalog.map((entry) => {
                           const value = components.find((component) => component.typeId === entry.id && (component.role ?? "line") === "line")?.count ?? 0;
                           return (
-                            <div key={entry.id} className="rounded-lg border border-white/10 bg-black/20 p-2">
+                            <div key={entry.id} className="arc-pop-card p-2">
                               <div className="flex items-center justify-between gap-2">
-                                <span className="text-xs font-semibold text-white">{entry.name}</span>
-                                <span className="text-[11px] text-white/45">{formatNumber(Number(entry.manpower ?? 0))} люд.</span>
+                                <span className="text-xs font-semibold text-[var(--arc-color-atlas-ink)]">{entry.name}</span>
+                                <span className="arc-pop-muted text-[11px]">{t("army.manpowerShort", { count: formatNumber(Number(entry.manpower ?? 0)) })}</span>
                               </div>
                               <input
                                 type="number"
@@ -441,7 +445,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                                 max={activeKind === "air" ? 999 : 24}
                                 value={value}
                                 onChange={(event) => updateComponentCount(entry.id, Number(event.target.value), "line")}
-                                className="mt-2 h-8 w-full rounded-md border border-white/10 bg-black/30 px-2 text-sm text-white outline-none focus:border-arc-accent/50"
+                                className="mt-2 h-8 w-full rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
                               />
                             </div>
                           );
@@ -450,20 +454,20 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                     </div>
                     {activeKind === "land" && (
                       <div>
-                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/45">Поддержка</div>
+                        <div className="arc-pop-label mb-2">{t("army.support")}</div>
                         <div className="grid gap-2">
                           {catalog.slice(0, 5).map((entry) => {
                             const value = components.find((component) => component.typeId === entry.id && component.role === "support")?.count ?? 0;
                             return (
-                              <div key={`${entry.id}:support`} className="rounded-lg border border-white/10 bg-black/20 p-2">
-                                <div className="text-xs font-semibold text-white">{entry.name}</div>
+                              <div key={`${entry.id}:support`} className="arc-pop-card p-2">
+                                <div className="text-xs font-semibold text-[var(--arc-color-atlas-ink)]">{entry.name}</div>
                                 <input
                                   type="number"
                                   min={0}
                                   max={5}
                                   value={value}
                                   onChange={(event) => updateComponentCount(entry.id, Number(event.target.value), "support")}
-                                  className="mt-2 h-8 w-full rounded-md border border-white/10 bg-black/30 px-2 text-sm text-white outline-none focus:border-arc-accent/50"
+                                  className="mt-2 h-8 w-full rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
                                 />
                               </div>
                             );
@@ -474,56 +478,56 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <AppButton type="button" disabled={pending || components.length === 0} onClick={() => void handleSaveTemplate()}>Сохранить шаблон</AppButton>
-                    <AppButton type="button" variant="ghost" icon={<Trash2 size={14} />} disabled={pending || !selectedTemplateId} onClick={() => void handleDeleteTemplate()}>Удалить</AppButton>
+                    <AppButton type="button" disabled={pending || components.length === 0} onClick={() => void handleSaveTemplate()}>{t("army.saveTemplate")}</AppButton>
+                    <AppButton type="button" variant="ghost" icon={<Trash2 size={14} />} disabled={pending || !selectedTemplateId} onClick={() => void handleDeleteTemplate()}>{t("army.delete")}</AppButton>
                   </div>
                 </AppCard>
               </AppSection>
 
               <div className="grid gap-3">
                 <AppSection>
-                  <AppSectionHeader title="Формирование" icon={<Upload size={15} />} />
+                  <AppSectionHeader title={t("army.formation")} icon={<Upload size={15} />} />
                   <div className="grid gap-2">
-                    <label className="text-xs text-white/55">
-                      Название части
+                    <label className="arc-pop-muted text-xs">
+                      {t("army.unitName")}
                       <input
                         value={formationName}
                         onChange={(event) => setFormationName(event.target.value)}
-                        placeholder={selectedTemplate?.name ?? branchDefaultName(activeKind)}
-                        className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-white outline-none focus:border-arc-accent/50"
+                        placeholder={selectedTemplate?.name ?? t(branchDefaultNameKey(activeKind))}
+                        className="mt-1 h-9 w-full rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
                       />
                     </label>
-                    <label className="text-xs text-white/55">
-                      Провинция базирования
+                    <label className="arc-pop-muted text-xs">
+                      {t("army.baseProvince")}
                       <select
                         value={formationProvinceId}
                         onChange={(event) => setFormationProvinceId(event.target.value)}
-                        className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-black/30 px-2 text-sm text-white outline-none focus:border-arc-accent/50"
+                        className="mt-1 h-9 w-full rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
                       >
                         {overview.provinceOptions.map((province) => <option key={province.id} value={province.id}>{province.name}</option>)}
                       </select>
                     </label>
-                    <div className="rounded-lg border border-white/10 bg-black/20 p-2 text-xs text-white/60">
-                      Скорость формирования: <span className="text-white">{formatNumber(overview.formationSpeed, 1)}</span>
+                    <div className="arc-pop-card p-2 text-xs">
+                      {t("army.formationSpeed", { speed: formatNumber(overview.formationSpeed, 1) })}
                     </div>
                     <AppButton type="button" disabled={pending || !selectedTemplateId || !formationProvinceId} onClick={() => void handleCreateFormation()}>
-                      Сформировать
+                      {t("army.createFormation")}
                     </AppButton>
                   </div>
                 </AppSection>
 
                 <AppSection>
-                  <AppSectionHeader title={`Готовые части: ${BRANCH_LABEL[activeKind]}`} icon={<Shield size={15} />} />
+                  <AppSectionHeader title={t("army.readyUnits", { branch: t(BRANCH_LABEL_KEY[activeKind]) })} icon={<Shield size={15} />} />
                   <div className="grid gap-2">
-                    {unitsForTab.length === 0 && <AppEmptyState title="Нет готовых частей">Поставьте формирование в очередь.</AppEmptyState>}
+                    {unitsForTab.length === 0 && <AppEmptyState title={t("army.noReadyUnits")}>{t("army.noReadyUnitsDescription")}</AppEmptyState>}
                     {unitsForTab.map((unit) => (
-                      <AppCard key={unit.id} className="bg-black/20">
+                      <AppCard key={unit.id} className="arc-pop-card">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
-                            <div className="text-sm font-semibold text-white">{unit.name}</div>
-                            <div className="text-xs text-white/55">{provinceById.get(unit.provinceId)?.name ?? unit.provinceId}</div>
-                            <div className="mt-1 text-[11px] text-white/45">
-                              Сила {formatNumber(unit.strength * 100)}% · Орг. {formatNumber(unit.organization, 1)}
+                            <div className="text-sm font-semibold text-[var(--arc-color-atlas-ink)]">{unit.name}</div>
+                            <div className="arc-pop-muted text-xs">{provinceById.get(unit.provinceId)?.name ?? unit.provinceId}</div>
+                            <div className="arc-pop-muted mt-1 text-[11px]">
+                              {t("army.strengthShort")} {formatNumber(unit.strength * 100)}% · {t("army.organizationShort")} {formatNumber(unit.organization, 1)}
                             </div>
                           </div>
                           {activeKind === "land" && (
@@ -531,14 +535,14 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                               <select
                                 value={moveTargetsByUnitId[unit.id] ?? unit.provinceId}
                                 onChange={(event) => setMoveTargetsByUnitId((current) => ({ ...current, [unit.id]: event.target.value }))}
-                                className="h-8 max-w-[170px] rounded-md border border-white/10 bg-black/30 px-2 text-xs text-white"
+                                className="h-8 max-w-[170px] rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-xs text-[var(--arc-color-atlas-ink)]"
                               >
                                 {(provinceById.get(unit.provinceId)?.neighbors ?? []).map((provinceId) => (
                                   <option key={provinceId} value={provinceId}>{provinceById.get(provinceId)?.name ?? provinceId}</option>
                                 ))}
                               </select>
                               <AppButton type="button" size="sm" variant="secondary" onClick={() => onQueueArmyMove(unit.id, moveTargetsByUnitId[unit.id] ?? unit.provinceId)}>
-                                Марш
+                                {t("army.march")}
                               </AppButton>
                             </div>
                           )}

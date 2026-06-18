@@ -2,6 +2,7 @@ import { AppButton } from "./ui/AppButton";
 import { AppField, AppInput } from "./ui/AppForm";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard } from "./ui/AppSurface";
+import { useUiText } from "../i18n/useUiText";
 
 type Props = {
   open: boolean;
@@ -34,13 +35,16 @@ export function TextInputModal({
   description,
   hint,
   maxLength = 80,
-  submitLabel = "Сохранить",
-  cancelLabel = "Отмена",
+  submitLabel,
+  cancelLabel,
   pending = false,
   disabledSubmit = false,
   zIndexClassName = "z-[210]",
 }: Props) {
+  const { t } = useUiText();
   const canSubmit = !pending && !disabledSubmit;
+  const submitText = submitLabel ?? t("common.save");
+  const cancelText = cancelLabel ?? t("common.cancel");
 
   return (
     <AppModal
@@ -54,12 +58,12 @@ export function TextInputModal({
             <AppModalHeader title={title} onClose={onClose} closeDisabled={pending} />
 
             {description ? (
-              <AppCard className="mb-3 bg-black/20 text-xs text-white/70">{description}</AppCard>
+              <AppCard className="mb-3 bg-[var(--arc-overlay-30)] text-xs text-[var(--arc-color-text-soft)]">{description}</AppCard>
             ) : null}
 
             <AppField
               label={label}
-              hint={hint ?? "Пустое значение сбрасывает поле"}
+              hint={hint ?? t("textInput.emptyResets")}
             >
               <AppInput
                 autoFocus
@@ -75,7 +79,7 @@ export function TextInputModal({
                 placeholder={placeholder}
               />
               <div className="-mt-5 flex justify-end text-[11px]">
-                <span className={value.trim().length >= maxLength ? "text-amber-300" : "text-white/45"}>
+                <span className={value.trim().length >= maxLength ? "text-[var(--arc-color-gold)]" : "text-[var(--arc-color-text-muted)]"}>
                   {value.length}/{maxLength}
                 </span>
               </div>
@@ -89,7 +93,7 @@ export function TextInputModal({
                 variant="ghost"
                 size="sm"
               >
-                {cancelLabel}
+                {cancelText}
               </AppButton>
               <AppButton
                 type="button"
@@ -98,7 +102,7 @@ export function TextInputModal({
                 variant="primary"
                 size="sm"
               >
-                {pending ? "Сохранение..." : submitLabel}
+                {pending ? t("common.saving") : submitText}
               </AppButton>
             </div>
     </AppModal>

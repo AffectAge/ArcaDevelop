@@ -27,6 +27,8 @@ import { AppButton } from "./ui/AppButton";
 import { AppInput } from "./ui/AppForm";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard, AppEmptyState, AppSection, AppSectionHeader } from "./ui/AppSurface";
+import type { UiTextKey } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 
 type Props = {
   open: boolean;
@@ -42,31 +44,33 @@ type Props = {
 
 type KnownCategoryId = "basics" | "colonization" | "map" | "turns" | "journal" | "economy";
 
-const CATEGORY_META: Record<KnownCategoryId, { label: string; icon: LucideIcon }> = {
-  basics: { label: "Основы", icon: BookOpen },
-  colonization: { label: "Колонизация", icon: Flag },
-  map: { label: "Карта", icon: Globe },
-  turns: { label: "Ходы и таймер", icon: Timer },
-  journal: { label: "Журнал событий", icon: ListChecks },
-  economy: { label: "Ресурсы и экономика", icon: Landmark },
+const CATEGORY_META: Record<KnownCategoryId, { labelKey: UiTextKey; icon: LucideIcon }> = {
+  basics: { labelKey: "civilopedia.category.basics", icon: BookOpen },
+  colonization: { labelKey: "civilopedia.category.colonization", icon: Flag },
+  map: { labelKey: "civilopedia.category.map", icon: Globe },
+  turns: { labelKey: "civilopedia.category.turns", icon: Timer },
+  journal: { labelKey: "civilopedia.category.journal", icon: ListChecks },
+  economy: { labelKey: "civilopedia.category.economy", icon: Landmark },
 };
 
 const categoryOrder: KnownCategoryId[] = ["basics", "colonization", "map", "turns", "journal", "economy"];
 
-function getCategoryMeta(category: string): { label: string; icon: LucideIcon } {
-  return CATEGORY_META[category as KnownCategoryId] ?? { label: category || "Другое", icon: BookOpen };
+function getCategoryMeta(category: string): { labelKey?: UiTextKey; label?: string; icon: LucideIcon } {
+  return CATEGORY_META[category as KnownCategoryId] ?? { label: category, labelKey: category ? undefined : "civilopedia.category.other", icon: BookOpen };
 }
 
-function makeEmptyEntry(): CivilopediaEntry {
+type Translator = (key: UiTextKey, params?: Record<string, string | number>) => string;
+
+function makeEmptyEntry(t: Translator): CivilopediaEntry {
   return {
     id: `entry-${Math.random().toString(36).slice(2, 10)}`,
     category: "basics",
-    title: "Новая статья",
+    title: t("civilopedia.admin.defaultArticleTitle"),
     summary: "",
     keywords: [],
     imageUrl: null,
     relatedEntryIds: [],
-    sections: [{ title: "Содержание", paragraphs: [""] }],
+    sections: [{ title: t("civilopedia.admin.defaultSectionTitle"), paragraphs: [""] }],
   };
 }
 
@@ -94,8 +98,8 @@ function toDraft(entry: CivilopediaEntry): DraftState {
   };
 }
 
-function fromDraft(draft: DraftState, fallback?: CivilopediaEntry): CivilopediaEntry {
-  let sections = fallback?.sections ?? [{ title: "Содержание", paragraphs: [""] }];
+function fromDraft(draft: DraftState, fallback: CivilopediaEntry | undefined, t: Translator): CivilopediaEntry {
+  let sections = fallback?.sections ?? [{ title: t("civilopedia.admin.defaultSectionTitle"), paragraphs: [""] }];
   try {
     const parsed = JSON.parse(draft.sectionsJson) as unknown;
     if (Array.isArray(parsed)) {
@@ -103,7 +107,7 @@ function fromDraft(draft: DraftState, fallback?: CivilopediaEntry): CivilopediaE
         .map((raw) => {
           if (!raw || typeof raw !== "object") return null;
           const r = raw as Record<string, unknown>;
-          const title = typeof r.title === "string" && r.title.trim() ? r.title.trim() : "Раздел";
+          const title = typeof r.title === "string" && r.title.trim() ? r.title.trim() : t("civilopedia.admin.defaultSectionTitle");
           const paragraphs = Array.isArray(r.paragraphs)
             ? r.paragraphs.filter((p): p is string => typeof p === "string").map((p) => p.trim()).filter(Boolean)
             : [];
@@ -117,9 +121,9 @@ function fromDraft(draft: DraftState, fallback?: CivilopediaEntry): CivilopediaE
     // keep previous sections
   }
   return {
-    id: draft.id.trim() || fallback?.id || makeEmptyEntry().id,
+    id: draft.id.trim() || fallback?.id || makeEmptyEntry(t).id,
     category: draft.category.trim() || "basics",
-    title: draft.title.trim() || "Без названия",
+    title: draft.title.trim() || t("civilopedia.admin.untitled"),
     summary: draft.summary.trim(),
     keywords: draft.keywordsCsv
       .split(",")
@@ -142,6 +146,7 @@ export function CivilopediaModal({
   initialIntent = null,
   onIntentHandled,
 }: Props) {
+  const { t } = useUiText();
   const [entries, setEntries] = useState<CivilopediaEntry[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -175,7 +180,7 @@ export function CivilopediaModal({
         }
       })
       .catch(() => {
-        if (!cancelled) toast.error("Не удалось загрузить Хранилище знаний");
+        if (!cancelled) toast.error(t("civilopedia.loadFailed"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -183,7 +188,7 @@ export function CivilopediaModal({
     return () => {
       cancelled = true;
     };
-  }, [open, isAdmin, adminToken, loadedSessionKey, sessionKey, entries.length]);
+  }, [open, isAdmin, adminToken, loadedSessionKey, sessionKey, entries.length, t]);
 
   const filteredEntries = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -225,9 +230,9 @@ export function CivilopediaModal({
       const result = await updateAdminCivilopedia(adminToken, { categories: nextCategories, entries: nextEntries });
       setEntries(result.entries);
       setCategories(result.categories);
-      toast.success("Хранилище знаний сохранено");
+      toast.success(t("civilopedia.admin.saved"));
     } catch (error) {
-      toast.error("Не удалось сохранить Хранилище знаний", {
+      toast.error(t("civilopedia.admin.saveFailed"), {
         description: error instanceof Error ? error.message : undefined,
       });
     } finally {
@@ -237,14 +242,14 @@ export function CivilopediaModal({
 
   const saveSelectedDraft = async () => {
     if (!draft || !selectedEntry) return;
-    const nextEntry = fromDraft(draft, selectedEntry);
+    const nextEntry = fromDraft(draft, selectedEntry, t);
     const nextEntries = entries.map((entry) => (entry.id === selectedEntry.id ? nextEntry : entry));
     await persistEntries(nextEntries);
     setSelectedEntryId(nextEntry.id);
   };
 
   const createEntry = async () => {
-    const next = makeEmptyEntry();
+    const next = makeEmptyEntry(t);
     const nextEntries = [next, ...entries];
     setEntries(nextEntries);
     setSelectedEntryId(next.id);
@@ -270,9 +275,9 @@ export function CivilopediaModal({
     try {
       const result = await uploadCivilopediaImage(adminToken, file);
       setDraft({ ...draft, imageUrl: result.imageUrl });
-      toast.success("Изображение загружено");
+      toast.success(t("civilopedia.admin.uploadedImage"));
     } catch (error) {
-      toast.error("Не удалось загрузить изображение", {
+      toast.error(t("civilopedia.admin.uploadImageFailed"), {
         description: error instanceof Error ? error.message : undefined,
       });
     }
@@ -284,11 +289,11 @@ export function CivilopediaModal({
       const result = await uploadCivilopediaInlineImage(adminToken, file);
       const token = `[img:${result.imageUrl}|64]`;
       setInlineTokenHint(token);
-      toast.success("Inline-изображение загружено", {
-        description: "Токен вставлен в подсказку ниже. Вставьте его в текст абзаца.",
+      toast.success(t("civilopedia.admin.uploadedInlineImage"), {
+        description: t("civilopedia.admin.inlineImageDescription"),
       });
     } catch (error) {
-      toast.error("Не удалось загрузить inline-изображение", {
+      toast.error(t("civilopedia.admin.uploadInlineImageFailed"), {
         description: error instanceof Error ? error.message : undefined,
       });
     }
@@ -319,27 +324,27 @@ export function CivilopediaModal({
       }
 
       if (!initialIntent.createIfMissing || !isAdmin || !adminToken) {
-        toast.error("Статья о провинции не найдена");
+        toast.error(t("civilopedia.admin.provinceArticleMissing"));
         onIntentHandled?.();
         return;
       }
 
-      const category = "Провинции";
+      const category = t("civilopedia.admin.provinceCategory");
       const nextEntry: CivilopediaEntry = {
         id: provinceArticleId,
         category,
-        title: `Провинция: ${initialIntent.provinceName}`,
-        summary: `Справочная статья по провинции ${initialIntent.provinceName}.`,
-        keywords: ["провинция", initialIntent.provinceName, initialIntent.provinceId],
+        title: t("civilopedia.admin.provinceDefaultTitle", { province: initialIntent.provinceName }),
+        summary: t("civilopedia.admin.provinceDefaultSummary", { province: initialIntent.provinceName }),
+        keywords: [t("modifiers.scope.province").toLowerCase(), initialIntent.provinceName, initialIntent.provinceId],
         imageUrl: null,
         relatedEntryIds: ["map-modes", "colonization-race"],
         sections: [
           {
-            title: "Общая информация",
+            title: t("civilopedia.admin.defaultSectionTitle"),
             paragraphs: [
-              `Провинция: [color:#67e8f9]${initialIntent.provinceName}[/color]`,
-              `ID провинции: ${initialIntent.provinceId}`,
-              "Заполните описание, стратегическую ценность, особенности колонизации и исторические заметки.",
+              `${t("modifiers.scope.province")}: [color:#67e8f9]${initialIntent.provinceName}[/color]`,
+              t("civilopedia.admin.provinceIdLine", { provinceId: initialIntent.provinceId }),
+              t("civilopedia.admin.provinceDefaultBody"),
             ],
           },
         ],
@@ -356,7 +361,7 @@ export function CivilopediaModal({
     };
 
     void handle();
-  }, [open, loading, initialIntent, entries, isAdmin, adminToken, categories, onIntentHandled]);
+  }, [open, loading, initialIntent, entries, isAdmin, adminToken, categories, onIntentHandled, t]);
 
   const addCategory = async () => {
     const value = newCategoryInput.trim();
@@ -377,7 +382,7 @@ export function CivilopediaModal({
 
   const removeCategory = async (category: string) => {
     if (entries.some((e) => e.category === category)) {
-      toast.error("Нельзя удалить категорию", { description: "Сначала перенесите или удалите статьи из этой категории" });
+      toast.error(t("civilopedia.admin.removeCategoryBlocked"), { description: t("civilopedia.admin.removeCategoryBlockedDescription") });
       return;
     }
     const nextCategories = categories.filter((c) => c !== category);
@@ -431,8 +436,8 @@ export function CivilopediaModal({
   return (
     <AppModal open={open} onClose={onClose} modalKey="civilopedia" zIndexClassName="z-[128]" paddingClassName="p-4" panelClassName="rounded-none">
             <AppModalHeader
-              title="Хранилище знаний"
-              description="Справочник по механикам и интерфейсу игры"
+              title={t("civilopedia.title")}
+              description={t("civilopedia.description")}
               onClose={onClose}
               actions={
                 <>
@@ -443,7 +448,7 @@ export function CivilopediaModal({
                     variant={adminEditMode ? "danger" : "secondary"}
                     size="sm"
                   >
-                    {adminEditMode ? "Режим редактирования" : "Редактировать"}
+                    {adminEditMode ? t("civilopedia.editMode") : t("civilopedia.edit")}
                   </AppButton>
                 )}
                 </>
@@ -456,6 +461,7 @@ export function CivilopediaModal({
                   const meta = getCategoryMeta(category);
                   const Icon = meta.icon;
                   const active = activeCategory === category;
+                  const label = meta.labelKey ? t(meta.labelKey) : meta.label;
                   return (
                     <AppButton
                       key={category}
@@ -466,7 +472,7 @@ export function CivilopediaModal({
                       className="mb-2 w-full justify-start"
                       icon={<Icon size={15} />}
                     >
-                      {meta.label}
+                      {label}
                     </AppButton>
                   );
                 })}
@@ -474,24 +480,24 @@ export function CivilopediaModal({
 
               <AppSection className="arc-scrollbar overflow-auto p-3">
                 <div className="mb-3 relative">
-                  <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+                  <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--arc-color-text-muted)]" />
                   <AppInput
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Поиск по статьям..."
+                    placeholder={t("civilopedia.searchPlaceholder")}
                     className="pl-9"
                   />
                 </div>
                 {adminEditMode && isAdmin && (
                   <AppButton onClick={createEntry} disabled={saving} variant="primary" size="sm" className="mb-3" icon={<Plus size={14} />}>
-                    Новая статья
+                    {t("civilopedia.newArticle")}
                   </AppButton>
                 )}
                 <div className="space-y-2">
                   {loading ? (
-                    <AppEmptyState>Загрузка...</AppEmptyState>
+                    <AppEmptyState>{t("civilopedia.loading")}</AppEmptyState>
                   ) : filteredEntries.length === 0 ? (
-                    <AppEmptyState>Ничего не найдено</AppEmptyState>
+                    <AppEmptyState>{t("civilopedia.noResults")}</AppEmptyState>
                   ) : (
                     filteredEntries.map((entry) => {
                       const active = selectedEntry?.id === entry.id;
@@ -501,12 +507,12 @@ export function CivilopediaModal({
                           type="button"
                           onClick={() => setSelectedEntryId(entry.id)}
                           className={`w-full rounded-xl border px-3 py-3 text-left transition ${
-                            active ? "border-arc-accent/40 bg-arc-accent/10" : "border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/5"
+                            active ? "border-[var(--arc-color-gold)] bg-[var(--arc-overlay-30)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] hover:border-[var(--arc-color-gold)] hover:bg-[var(--arc-overlay-45)]"
                           }`}
                         >
-                          <div className={`text-sm font-semibold ${active ? "text-arc-accent" : "text-white/90"}`}>{entry.title}</div>
-                          <div className="mt-1 text-xs text-white/55">{entry.summary}</div>
-                          <div className="mt-2 text-[10px] text-white/35">{entry.id}</div>
+                          <div className={`text-sm font-semibold ${active ? "text-[var(--arc-color-gold)]" : "text-[var(--arc-color-text)]"}`}>{entry.title}</div>
+                          <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">{entry.summary}</div>
+                          <div className="mt-2 text-[10px] text-[var(--arc-color-text-muted)]">{entry.id}</div>
                         </button>
                       );
                     })
@@ -518,17 +524,20 @@ export function CivilopediaModal({
                 {selectedEntry ? (
                   <div>
                     <AppSectionHeader
-                      title={getCategoryMeta(selectedEntry.category).label}
+                      title={(() => {
+                        const meta = getCategoryMeta(selectedEntry.category);
+                        return meta.labelKey ? t(meta.labelKey) : meta.label;
+                      })()}
                       icon={(() => {
                         const Icon = getCategoryMeta(selectedEntry.category).icon;
                         return <Icon size={14} />;
                       })()}
                     />
-                    <h2 className="font-display text-2xl tracking-wide text-white">{selectedEntry.title}</h2>
-                    <p className="mt-2 text-sm text-white/65">{selectedEntry.summary}</p>
+                    <h2 className="font-display text-2xl tracking-wide text-[var(--arc-color-text)]">{selectedEntry.title}</h2>
+                    <p className="mt-2 text-sm text-[var(--arc-color-text-soft)]">{selectedEntry.summary}</p>
 
                     {selectedEntry.imageUrl && (
-                      <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                      <div className="mt-4 overflow-hidden rounded-xl border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]">
                         <img src={selectedEntry.imageUrl} alt="" className="max-h-[260px] w-full object-cover" />
                       </div>
                     )}
@@ -540,7 +549,7 @@ export function CivilopediaModal({
                             key={keyword}
                             type="button"
                             onClick={() => setQuery(keyword)}
-                            className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-white/70 hover:border-arc-accent/40 hover:text-arc-accent"
+                            className="rounded-full border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-2 py-1 text-xs text-[var(--arc-color-text-soft)] hover:border-[var(--arc-color-gold)] hover:text-[var(--arc-color-gold)]"
                           >
                             #{keyword}
                           </button>
@@ -549,8 +558,8 @@ export function CivilopediaModal({
                     )}
 
                     {relatedEntries.length > 0 && (
-                      <AppCard className="mt-4 bg-black/20">
-                        <div className="mb-2 text-xs uppercase tracking-wide text-white/45">Связанные статьи</div>
+                      <AppCard className="mt-4 bg-[var(--arc-overlay-30)]">
+                        <div className="mb-2 text-xs uppercase tracking-wide text-[var(--arc-color-text-muted)]">{t("civilopedia.related")}</div>
                         <div className="flex flex-wrap gap-2">
                           {relatedEntries.map((related) => (
                             <button
@@ -560,7 +569,7 @@ export function CivilopediaModal({
                                 setActiveCategory(related.category);
                                 setSelectedEntryId(related.id);
                               }}
-                              className="rounded-lg border border-arc-accent/20 bg-arc-accent/5 px-2 py-1 text-xs text-arc-accent hover:bg-arc-accent/10"
+                              className="rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-2 py-1 text-xs text-[var(--arc-color-gold)] hover:bg-[var(--arc-overlay-45)]"
                             >
                               {related.title}
                             </button>
@@ -572,8 +581,8 @@ export function CivilopediaModal({
                     <div className="mt-5 space-y-4">
                       {selectedEntry.sections.map((section) => (
                         <AppSection key={`${selectedEntry.id}-${section.title}`} className="p-4">
-                          <h3 className="mb-2 text-sm font-semibold text-arc-accent">{section.title}</h3>
-                          <div className="space-y-2 text-sm leading-relaxed text-white/80">
+                          <h3 className="mb-2 text-sm font-semibold text-[var(--arc-color-gold)]">{section.title}</h3>
+                          <div className="space-y-2 text-sm leading-relaxed text-[var(--arc-color-text-soft)]">
                             {section.paragraphs.map((paragraph, idx) => (
                               <p key={idx}>{renderInlineParagraph(paragraph)}</p>
                             ))}
@@ -583,7 +592,7 @@ export function CivilopediaModal({
                     </div>
                   </div>
                 ) : (
-                  <AppEmptyState className="flex h-full items-center justify-center">Выберите статью слева</AppEmptyState>
+                  <AppEmptyState className="flex h-full items-center justify-center">{t("civilopedia.emptySelection")}</AppEmptyState>
                 )}
               </AppSection>
 
@@ -591,19 +600,19 @@ export function CivilopediaModal({
                 <AppSection className="arc-scrollbar overflow-auto p-4">
                   {draft ? (
                     <div className="space-y-3">
-                      <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                        <div className="mb-2 text-xs text-white/60">Категории статей</div>
+                      <div className="rounded-xl border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] p-3">
+                        <div className="mb-2 text-xs text-[var(--arc-color-text-soft)]">{t("civilopedia.admin.categoryTitle")}</div>
                         <div className="mb-2 flex flex-wrap gap-2">
                           {categories.map((category) => (
-                            <div key={category} className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white/80">
-                              <button type="button" onClick={() => setActiveCategory(category)} className="hover:text-arc-accent">
+                            <div key={category} className="inline-flex items-center gap-1 rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-2 py-1 text-xs text-[var(--arc-color-text-soft)]">
+                              <button type="button" onClick={() => setActiveCategory(category)} className="hover:text-[var(--arc-color-gold)]">
                                 {category}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => void removeCategory(category)}
-                                className="text-rose-300 hover:text-rose-200"
-                                title="Удалить категорию"
+                                className="text-[var(--arc-color-danger-text)] hover:brightness-110"
+                                title={t("civilopedia.admin.deleteCategory")}
                               >
                                 <X size={12} />
                               </button>
@@ -614,34 +623,34 @@ export function CivilopediaModal({
                           <input
                             value={newCategoryInput}
                             onChange={(e) => setNewCategoryInput(e.target.value)}
-                            placeholder="Новая категория"
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                            placeholder={t("civilopedia.admin.categoryInputPlaceholder")}
+                            className="w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] outline-none placeholder:text-[var(--arc-color-text-muted)] focus:border-[var(--arc-color-gold)]"
                           />
-                          <button onClick={() => void addCategory()} className="inline-flex h-9 items-center gap-1 rounded-lg bg-emerald-500/20 px-3 text-xs text-emerald-200">
+                          <button onClick={() => void addCategory()} className="inline-flex h-9 items-center gap-1 rounded-lg border border-[var(--arc-color-success-border)] bg-gradient-to-b from-[var(--arc-color-success-top)] to-[var(--arc-color-success-bottom)] px-3 text-xs text-[var(--arc-color-success-text)]">
                             <Plus size={13} />
-                            Добавить
+                            {t("civilopedia.admin.addCategory")}
                           </button>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold text-white/90">Редактор статьи (Хранилище знаний)</div>
+                    <div className="text-sm font-semibold text-[var(--arc-color-text)]">{t("civilopedia.admin.articleEditor")}</div>
                         {selectedEntry && (
-                          <button onClick={deleteSelectedEntry} disabled={saving} className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/20 text-rose-300 disabled:opacity-60">
+                          <button onClick={deleteSelectedEntry} disabled={saving} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--arc-color-danger-border)] bg-gradient-to-b from-[var(--arc-color-danger-top)] to-[var(--arc-color-danger-bottom)] text-[var(--arc-color-danger-text)] disabled:opacity-60">
                             <Trash2 size={14} />
                           </button>
                         )}
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs text-white/60">ID</label>
-                        <input value={draft.id} onChange={(e) => setDraft({ ...draft, id: e.target.value })} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                        <label className="mb-1 block text-xs text-[var(--arc-color-text-soft)]">ID</label>
+                        <input value={draft.id} onChange={(e) => setDraft({ ...draft, id: e.target.value })} className="w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] outline-none focus:border-[var(--arc-color-gold)]" />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs text-white/60">Категория</label>
+                        <label className="mb-1 block text-xs text-[var(--arc-color-text-soft)]">{t("civilopedia.admin.category")}</label>
                         <div className="flex gap-2">
                           <select
                             value={draft.category}
                             onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] outline-none focus:border-[var(--arc-color-gold)]"
                           >
                             {groupedCategories.map((category) => (
                               <option key={category} value={category}>
@@ -652,47 +661,47 @@ export function CivilopediaModal({
                           <input
                             value={draft.category}
                             onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
-                            placeholder="Или введите вручную"
+                            className="w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] outline-none placeholder:text-[var(--arc-color-text-muted)] focus:border-[var(--arc-color-gold)]"
+                            placeholder={t("civilopedia.admin.categoryManualPlaceholder")}
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs text-white/60">Заголовок</label>
-                        <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                        <label className="mb-1 block text-xs text-[var(--arc-color-text-soft)]">{t("civilopedia.admin.title")}</label>
+                        <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] outline-none focus:border-[var(--arc-color-gold)]" />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs text-white/60">Краткое описание</label>
-                        <textarea value={draft.summary} onChange={(e) => setDraft({ ...draft, summary: e.target.value })} rows={3} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                        <label className="mb-1 block text-xs text-[var(--arc-color-text-soft)]">{t("civilopedia.admin.description")}</label>
+                        <textarea value={draft.summary} onChange={(e) => setDraft({ ...draft, summary: e.target.value })} rows={3} className="w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] outline-none focus:border-[var(--arc-color-gold)]" />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs text-white/60">Теги (через запятую)</label>
-                        <input value={draft.keywordsCsv} onChange={(e) => setDraft({ ...draft, keywordsCsv: e.target.value })} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                        <label className="mb-1 block text-xs text-[var(--arc-color-text-soft)]">{t("civilopedia.admin.keywords")}</label>
+                        <input value={draft.keywordsCsv} onChange={(e) => setDraft({ ...draft, keywordsCsv: e.target.value })} className="w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] outline-none focus:border-[var(--arc-color-gold)]" />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs text-white/60">Связанные статьи (ID через запятую)</label>
-                        <input value={draft.relatedCsv} onChange={(e) => setDraft({ ...draft, relatedCsv: e.target.value })} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                        <label className="mb-1 block text-xs text-[var(--arc-color-text-soft)]">{t("civilopedia.admin.relatedCsv")}</label>
+                        <input value={draft.relatedCsv} onChange={(e) => setDraft({ ...draft, relatedCsv: e.target.value })} className="w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] outline-none focus:border-[var(--arc-color-gold)]" />
                       </div>
-                      <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                        <div className="mb-2 text-xs text-white/60">Изображение статьи</div>
-                        <div className="mb-2 text-[11px] text-white/45">Обложка статьи: максимум 1024x1024</div>
+                      <div className="rounded-xl border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] p-3">
+                        <div className="mb-2 text-xs text-[var(--arc-color-text-soft)]">{t("civilopedia.admin.articleImage")}</div>
+                        <div className="mb-2 text-[11px] text-[var(--arc-color-text-muted)]">{t("civilopedia.admin.articleImageHint")}</div>
                         {draft.imageUrl ? (
                           <img src={draft.imageUrl} alt="" className="mb-2 max-h-32 w-full rounded-lg object-cover" />
                         ) : (
-                          <div className="mb-2 flex h-20 items-center justify-center rounded-lg border border-dashed border-white/10 text-xs text-white/40">
-                            Нет изображения
+                          <div className="mb-2 flex h-20 items-center justify-center rounded-lg border border-dashed border-[var(--arc-color-gold-soft)] text-xs text-[var(--arc-color-text-muted)]">
+                            {t("civilopedia.admin.noImage")}
                           </div>
                         )}
                         <input
                           type="text"
                           value={draft.imageUrl}
                           onChange={(e) => setDraft({ ...draft, imageUrl: e.target.value })}
-                          placeholder="URL изображения"
-                          className="mb-2 w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                          placeholder={t("civilopedia.admin.urlPlaceholder")}
+                          className="mb-2 w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] outline-none placeholder:text-[var(--arc-color-text-muted)] focus:border-[var(--arc-color-gold)]"
                         />
-                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs text-white/80 hover:bg-white/10">
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-3 py-2 text-xs text-[var(--arc-color-text-soft)] hover:bg-[var(--arc-overlay-45)]">
                           <Upload size={13} />
-                          Загрузить
+                          {t("civilopedia.admin.upload")}
                           <input
                             type="file"
                             accept="image/*"
@@ -705,12 +714,12 @@ export function CivilopediaModal({
                           />
                         </label>
                       </div>
-                      <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                        <div className="mb-2 text-xs text-white/60">Inline-изображения 64x64 в тексте</div>
-                        <div className="mb-2 text-[11px] text-white/45">Лимит загрузки: максимум 64x64</div>
-                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs text-white/80 hover:bg-white/10">
+                      <div className="rounded-xl border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] p-3">
+                        <div className="mb-2 text-xs text-[var(--arc-color-text-soft)]">{t("civilopedia.admin.inlineImage")}</div>
+                        <div className="mb-2 text-[11px] text-[var(--arc-color-text-muted)]">{t("civilopedia.admin.inlineImageLimit")}</div>
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-3 py-2 text-xs text-[var(--arc-color-text-soft)] hover:bg-[var(--arc-overlay-45)]">
                           <Upload size={13} />
-                          Загрузить 64x64
+                          {t("civilopedia.admin.inlineUpload")}
                           <input
                             type="file"
                             accept="image/*"
@@ -722,44 +731,44 @@ export function CivilopediaModal({
                             }}
                           />
                         </label>
-                        <div className="mt-2 text-[11px] text-white/45">
-                          Используйте в тексте: <code>[img:URL|64]</code>
+                        <div className="mt-2 text-[11px] text-[var(--arc-color-text-muted)]">
+                          {t("civilopedia.admin.inlineHint")}
                         </div>
-                        <div className="mt-1 text-[11px] text-white/45">
-                          Цветные слова: <code>[color:#22c55e]текст[/color]</code>
+                        <div className="mt-1 text-[11px] text-[var(--arc-color-text-muted)]">
+                          {t("civilopedia.admin.uploadInlineImageHint")}
                         </div>
                         {inlineTokenHint && (
                           <button
                             type="button"
                             onClick={() => {
                               navigator.clipboard?.writeText(inlineTokenHint).catch(() => undefined);
-                              toast.success("Токен скопирован");
+                              toast.success(t("civilopedia.admin.copiedToken"));
                             }}
-                            className="mt-2 block w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-left font-mono text-[11px] text-emerald-200 hover:border-emerald-400/30"
+                            className="mt-2 block w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-left font-mono text-[11px] text-[var(--arc-color-success-text)] hover:border-[var(--arc-color-gold)]"
                           >
                             {inlineTokenHint}
                           </button>
                         )}
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs text-white/60">Секции (JSON)</label>
+                        <label className="mb-1 block text-xs text-[var(--arc-color-text-soft)]">{t("civilopedia.admin.sectionsJson")}</label>
                         <textarea
                           value={draft.sectionsJson}
                           onChange={(e) => setDraft({ ...draft, sectionsJson: e.target.value })}
                           rows={14}
-                          className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 font-mono text-xs"
+                          className="w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 font-mono text-xs text-[var(--arc-color-text)] outline-none focus:border-[var(--arc-color-gold)]"
                         />
                       </div>
-                      <div className="text-[11px] text-white/45">
-                        Формат секций: массив объектов вида {"{ title, paragraphs: [..] }"}.
+                      <div className="text-[11px] text-[var(--arc-color-text-muted)]">
+                        {t("civilopedia.admin.sectionFormatHint")}
                       </div>
-                      <button onClick={saveSelectedDraft} disabled={saving || !selectedEntry} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-arc-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-60">
+                      <button onClick={saveSelectedDraft} disabled={saving || !selectedEntry} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--arc-color-primary-border)] bg-gradient-to-b from-[var(--arc-color-primary-top)] to-[var(--arc-color-primary-bottom)] px-4 py-2 text-sm font-semibold text-[var(--arc-color-text)] disabled:opacity-60">
                         <Save size={14} />
-                        Сохранить статью
+                        {t("civilopedia.admin.saveArticle")}
                       </button>
                     </div>
                   ) : (
-                    <AppEmptyState>Выберите статью для редактирования</AppEmptyState>
+                    <AppEmptyState>{t("civilopedia.admin.emptyEditor")}</AppEmptyState>
                   )}
                 </AppSection>
               )}

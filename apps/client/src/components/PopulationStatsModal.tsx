@@ -4,6 +4,7 @@ import type { EChartsType } from "echarts";
 import { BarChart3, Briefcase, FileText, Flame, Globe2, MapPinned, Package, Palette, ScrollText, Sticker, UserRound, Users } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchContentEntries, type ContentEntryKind } from "../lib/api";
+import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
@@ -123,30 +124,30 @@ type NeedBudgetShortageRow = {
   amount: number;
 };
 
-const DIMENSION_LABELS: Array<{ key: PopulationDimensionKey; label: string }> = [
-  { key: "culturePct", label: "Культуры" },
-  { key: "ideologyPct", label: "Идеологии" },
-  { key: "religionPct", label: "Религии" },
-  { key: "racePct", label: "Расы" },
-  { key: "professionPct", label: "Профессии" },
+const DIMENSION_LABELS: Array<{ key: PopulationDimensionKey; labelKey: UiTextKey }> = [
+  { key: "culturePct", labelKey: "population.dimensionCultures" },
+  { key: "ideologyPct", labelKey: "population.dimensionIdeologies" },
+  { key: "religionPct", labelKey: "population.dimensionReligions" },
+  { key: "racePct", labelKey: "population.dimensionRaces" },
+  { key: "professionPct", labelKey: "population.dimensionProfessions" },
 ];
 
 const STAT_TABS: Array<{
   id: PanelSection;
-  label: string;
+  labelKey: UiTextKey;
   icon: typeof FileText;
   dimension?: PopulationDimensionKey;
 }> = [
-  { id: "general", label: "Основная информация", icon: FileText },
-  { id: "groups", label: "Группы", icon: Users },
-  { id: "needs", label: "Потребности", icon: Package },
-  { id: "finance", label: "Финансы населения", icon: BarChart3 },
-  { id: "religions", label: "Религии", icon: ScrollText, dimension: "religionPct" },
-  { id: "cultures", label: "Культуры", icon: Palette, dimension: "culturePct" },
-  { id: "professions", label: "Профессии", icon: Briefcase, dimension: "professionPct" },
-  { id: "ideologies", label: "Идеологии", icon: Flame, dimension: "ideologyPct" },
-  { id: "races", label: "Расы", icon: UserRound, dimension: "racePct" },
-  { id: "branding", label: "Логотип и стиль", icon: Sticker },
+  { id: "general", labelKey: "population.sectionGeneral", icon: FileText },
+  { id: "groups", labelKey: "population.sectionGroups", icon: Users },
+  { id: "needs", labelKey: "population.sectionNeeds", icon: Package },
+  { id: "finance", labelKey: "population.sectionFinance", icon: BarChart3 },
+  { id: "religions", labelKey: "population.sectionReligions", icon: ScrollText, dimension: "religionPct" },
+  { id: "cultures", labelKey: "population.sectionCultures", icon: Palette, dimension: "culturePct" },
+  { id: "professions", labelKey: "population.sectionProfessions", icon: Briefcase, dimension: "professionPct" },
+  { id: "ideologies", labelKey: "population.sectionIdeologies", icon: Flame, dimension: "ideologyPct" },
+  { id: "races", labelKey: "population.sectionRaces", icon: UserRound, dimension: "racePct" },
+  { id: "branding", labelKey: "population.sectionBranding", icon: Sticker },
 ];
 
 const KIND_BY_DIMENSION: Record<PopulationDimensionKey, PopulationContentKind> = {
@@ -163,11 +164,11 @@ const POP_FIELD_BY_DIMENSION: Record<"culturePct" | "religionPct" | "racePct", P
   racePct: "raceId",
 };
 
-const NEED_CATEGORY_LABELS: Record<NeedCategoryKey, string> = {
-  survival: "Выживание",
-  basic: "Базовые",
-  comfort: "Комфорт",
-  luxury: "Роскошь",
+const NEED_CATEGORY_LABEL_KEYS: Record<NeedCategoryKey, UiTextKey> = {
+  survival: "population.categorySurvival",
+  basic: "population.categoryBasic",
+  comfort: "population.categoryComfort",
+  luxury: "population.categoryLuxury",
 };
 
 function formatInt(value: number): string {
@@ -361,6 +362,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
   const title = mode === "country" ? t("population.countryTitle", { country: countryName }) : t("population.worldTitle");
   const subtitle = mode === "country" ? t("population.countryRegionSubtitle") : t("population.worldRegionSubtitle");
   const activeTab = STAT_TABS.find((tab) => tab.id === section) ?? STAT_TABS[0];
+  const activeTabLabel = t(activeTab.labelKey);
   const activeDimension = activeTab.dimension ?? null;
   const scopedRegionIds = useMemo(() => resolveScopeRegionIds(worldBase, mode, countryId), [countryId, mode, worldBase]);
 
@@ -447,14 +449,14 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
         totalTreasury: 0,
         totalPopulation: 0,
         incomeRows: [
-          { id: "wages", label: "Зарплаты от зданий", value: 0, color: "#34d399" },
-          { id: "transfers", label: "Соцвыплаты/трансферты", value: 0, color: "#60a5fa" },
-          { id: "other-income", label: "Прочие источники", value: 0, color: "#f59e0b" },
+          { id: "wages", label: t("population.flowWages"), value: 0, color: "#34d399" },
+          { id: "transfers", label: t("population.flowTransfers"), value: 0, color: "#60a5fa" },
+          { id: "other-income", label: t("population.flowOtherIncome"), value: 0, color: "#f59e0b" },
         ] satisfies FinanceFlowRow[],
         expenseRows: [
-          { id: "goods", label: "Покупка товаров населением", value: 0, color: "#f87171" },
-          { id: "taxes", label: "Налоги/сборы", value: 0, color: "#fb7185" },
-          { id: "other-expense", label: "Прочие траты", value: 0, color: "#a78bfa" },
+          { id: "goods", label: t("population.flowGoodsExpense"), value: 0, color: "#f87171" },
+          { id: "taxes", label: t("population.flowTaxes"), value: 0, color: "#fb7185" },
+          { id: "other-expense", label: t("population.flowOtherExpense"), value: 0, color: "#a78bfa" },
         ] satisfies FinanceFlowRow[],
         totalIncome: 0,
         totalExpenses: 0,
@@ -507,14 +509,14 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
     }
 
     const incomeRows: FinanceFlowRow[] = [
-      { id: "wages", label: "Зарплаты от зданий", value: wagesIncome, color: "#34d399" },
-      { id: "transfers", label: "Соцвыплаты/трансферты", value: transferIncome, color: "#60a5fa" },
-      { id: "other-income", label: "Прочие источники", value: otherIncome, color: "#f59e0b" },
+      { id: "wages", label: t("population.flowWages"), value: wagesIncome, color: "#34d399" },
+      { id: "transfers", label: t("population.flowTransfers"), value: transferIncome, color: "#60a5fa" },
+      { id: "other-income", label: t("population.flowOtherIncome"), value: otherIncome, color: "#f59e0b" },
     ];
     const expenseRows: FinanceFlowRow[] = [
-      { id: "goods", label: "Покупка товаров населением", value: goodsExpense, color: "#f87171" },
-      { id: "taxes", label: "Налоги/сборы", value: taxesExpense, color: "#fb7185" },
-      { id: "other-expense", label: "Прочие траты", value: otherExpense, color: "#a78bfa" },
+      { id: "goods", label: t("population.flowGoodsExpense"), value: goodsExpense, color: "#f87171" },
+      { id: "taxes", label: t("population.flowTaxes"), value: taxesExpense, color: "#fb7185" },
+      { id: "other-expense", label: t("population.flowOtherExpense"), value: otherExpense, color: "#a78bfa" },
     ];
     const totalIncome = round3(incomeRows.reduce((sum, row) => sum + row.value, 0));
     const totalExpenses = round3(expenseRows.reduce((sum, row) => sum + row.value, 0));
@@ -530,12 +532,12 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
       netBalance,
       byRegion: byRegion.sort((a, b) => b.treasury - a.treasury),
     };
-  }, [scopedRegionIds, worldBase]);
+  }, [scopedRegionIds, t, worldBase]);
 
   const needsDiagnostics = useMemo(() => {
-    const emptyRows: NeedCategoryRow[] = (Object.keys(NEED_CATEGORY_LABELS) as NeedCategoryKey[]).map((category) => ({
+    const emptyRows: NeedCategoryRow[] = (Object.keys(NEED_CATEGORY_LABEL_KEYS) as NeedCategoryKey[]).map((category) => ({
       category,
-      label: NEED_CATEGORY_LABELS[category],
+      label: t(NEED_CATEGORY_LABEL_KEYS[category]),
       required: 0,
       fulfilled: 0,
       spend: 0,
@@ -546,7 +548,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
     }
 
     const byCategory = Object.fromEntries(
-      (Object.keys(NEED_CATEGORY_LABELS) as NeedCategoryKey[]).map((category) => [
+      (Object.keys(NEED_CATEGORY_LABEL_KEYS) as NeedCategoryKey[]).map((category) => [
         category,
         { required: 0, fulfilled: 0, spend: 0 },
       ]),
@@ -558,7 +560,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
       const regionPops = worldBase.regionPopulationByRegion?.[regionId]?.pops ?? [];
       for (const pop of regionPops) {
         for (const state of Object.values(pop.professions ?? {})) {
-          for (const category of Object.keys(NEED_CATEGORY_LABELS) as NeedCategoryKey[]) {
+          for (const category of Object.keys(NEED_CATEGORY_LABEL_KEYS) as NeedCategoryKey[]) {
             const row = state.lastNeedsByCategory?.[category];
             if (!row) continue;
             byCategory[category].required = round3(byCategory[category].required + Math.max(0, Number(row.required ?? 0)));
@@ -575,11 +577,11 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
       }
     }
 
-    const categoryRows: NeedCategoryRow[] = (Object.keys(NEED_CATEGORY_LABELS) as NeedCategoryKey[]).map((category) => {
+    const categoryRows: NeedCategoryRow[] = (Object.keys(NEED_CATEGORY_LABEL_KEYS) as NeedCategoryKey[]).map((category) => {
       const row = byCategory[category];
       return {
         category,
-        label: NEED_CATEGORY_LABELS[category],
+        label: t(NEED_CATEGORY_LABEL_KEYS[category]),
         required: row.required,
         fulfilled: row.fulfilled,
         spend: row.spend,
@@ -822,7 +824,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
         padding: 0,
         formatter: (params: { seriesName: string; name: string; value: number; percent: number; color?: string }) => {
           const pieceColor = params.color ?? "#334155";
-          const peopleCount = formatInt((stats.totalPopulation * params.value) / 100);
+          const peopleCount = t("population.peopleCount", { count: formatInt((stats.totalPopulation * params.value) / 100) });
           return `
             <div style="
               background:${pieceColor}dd;
@@ -835,14 +837,14 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
             ">
               <div style="font-weight:700; margin-bottom:2px;">${params.seriesName}</div>
               <div>${params.name}: ${params.value.toFixed(2)}%</div>
-              <div style="opacity:0.92;">${peopleCount} чел.</div>
+              <div style="opacity:0.92;">${peopleCount}</div>
             </div>
           `;
         },
       },
       series: [
         {
-          name: activeTab.label,
+          name: activeTabLabel,
           type: "pie",
           radius: "48%",
           center: ["50%", "50%"],
@@ -892,7 +894,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
     return () => {
       window.removeEventListener("resize", onResize);
     };
-  }, [open, activeDimension, activeRows, activeTab.label, hoveredByDimension, selectedByDimension]);
+  }, [open, activeDimension, activeRows, activeTabLabel, hoveredByDimension, selectedByDimension, stats.totalPopulation, t]);
 
   useEffect(() => {
     return () => {
@@ -932,7 +934,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
         grid: { left: 56, right: 18, top: 16, bottom: 34 },
         xAxis: {
           type: "category",
-          data: ["Рождения", "Смерти"],
+          data: [t("population.births"), t("population.deaths")],
           axisLabel: { color: "#94a3b8" },
           axisLine: { lineStyle: { color: "#334155" } },
         },
@@ -943,7 +945,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
         },
         series: [
           {
-            name: mode === "country" ? "Страна" : "Мир",
+            name: mode === "country" ? t("population.scopeCountry") : t("population.scopeWorld"),
             type: "bar",
             data: [
               { value: totals.births, itemStyle: { color: "#34d399" } },
@@ -963,7 +965,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
         grid: { left: 56, right: 18, top: 16, bottom: 34 },
         xAxis: {
           type: "category",
-          data: ["Радикалы", "Лоялисты"],
+          data: [t("population.radicals"), t("population.loyalists")],
           axisLabel: { color: "#94a3b8" },
           axisLine: { lineStyle: { color: "#334155" } },
         },
@@ -974,7 +976,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
         },
         series: [
           {
-            name: mode === "country" ? "Страна" : "Мир",
+            name: mode === "country" ? t("population.scopeCountry") : t("population.scopeWorld"),
             type: "bar",
             data: [
               { value: totals.radicals, itemStyle: { color: "#fb7185" } },
@@ -990,25 +992,25 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [mode, open, populationTables.groupRows, section]);
+  }, [mode, open, populationTables.groupRows, section, t]);
 
   const renderDimensionStats = (dimension: PopulationDimensionKey) => {
-    const dimensionLabel = DIMENSION_LABELS.find((item) => item.key === dimension)?.label ?? "Статистика";
+    const dimensionLabel = t(DIMENSION_LABELS.find((item) => item.key === dimension)?.labelKey ?? "population.noData");
     const selectedId = selectedByDimension[dimension] ?? activeRows[0]?.id ?? null;
     const hoveredId = hoveredByDimension[dimension] ?? null;
 
     return (
       <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <AppCard className="bg-[#131a22]">
-          <div className="mb-2 text-xs text-white/60">{dimensionLabel}</div>
+        <AppCard className="arc-pop-card">
+          <div className="arc-pop-label mb-2">{dimensionLabel}</div>
           {activeRows.length === 0 ? (
-            <div className="flex h-[420px] items-center justify-center text-sm text-white/45">Нет данных</div>
+            <div className="arc-pop-muted flex h-[420px] items-center justify-center text-sm">{t("population.noData")}</div>
           ) : (
             <div ref={pieRef} className="h-[420px] w-full" />
           )}
         </AppCard>
-        <AppCard className="min-h-0 bg-[#131a22]">
-          <div className="mb-2 text-xs text-white/60">Легенда ({activeRows.length})</div>
+        <AppCard className="arc-pop-card min-h-0">
+          <div className="arc-pop-label mb-2">{t("population.legendCount", { count: activeRows.length })}</div>
           <div className="arc-scrollbar max-h-[420px] space-y-2 overflow-auto pr-1">
             {activeRows.map((row) => (
               <button
@@ -1019,10 +1021,10 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                 onMouseLeave={() => setHoveredByDimension((prev) => ({ ...prev, [dimension]: undefined }))}
                 className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-2 text-left transition ${
                   selectedId === row.id
-                    ? "border-arc-accent/50 bg-arc-accent/10"
+                    ? "border-[var(--arc-color-atlas-primary)] bg-[color-mix(in_srgb,var(--arc-color-atlas-primary)_10%,var(--arc-color-atlas-paper))]"
                     : hoveredId === row.id
-                      ? "border-white/25 bg-white/10"
-                      : "border-white/10 bg-black/25 hover:border-white/20"
+                      ? "border-[var(--arc-color-atlas-line-strong)] bg-[var(--arc-color-atlas-paper-soft)]"
+                      : "border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] hover:border-[var(--arc-color-atlas-line-strong)]"
                 }`}
               >
                 <span className="flex min-w-0 items-center gap-2">
@@ -1030,7 +1032,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                     <img
                       src={row.imageUrl}
                       alt=""
-                      className={`h-5 w-5 rounded-sm object-cover ${dimension === "racePct" ? "border border-white/15" : ""}`}
+                      className={`h-5 w-5 rounded-sm object-cover ${dimension === "racePct" ? "border border-[var(--arc-color-atlas-line)]" : ""}`}
                     />
                   ) : (
                     <span
@@ -1040,17 +1042,17 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                       {row.label.slice(0, 1).toUpperCase()}
                     </span>
                   )}
-                  <span className="truncate text-sm text-white/85">{row.label}</span>
+                  <span className="truncate text-sm text-[var(--arc-color-atlas-ink)]">{row.label}</span>
                 </span>
                 <span className="ml-2 shrink-0 text-right">
                   <span className="block tabular-nums text-xs text-arc-accent">{row.pct.toFixed(2)}%</span>
-                  <span className="block tabular-nums text-[11px] text-white/60">
-                    {formatInt((stats.totalPopulation * row.pct) / 100)} чел.
+                  <span className="arc-pop-muted block tabular-nums text-[11px]">
+                    {t("population.peopleCount", { count: formatInt((stats.totalPopulation * row.pct) / 100) })}
                   </span>
                 </span>
               </button>
             ))}
-            {activeRows.length === 0 && <div className="text-xs text-white/45">Нет данных</div>}
+            {activeRows.length === 0 && <div className="arc-pop-muted text-xs">{t("population.noData")}</div>}
           </div>
         </AppCard>
       </div>
@@ -1064,12 +1066,12 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
         {rows.map((row) => {
           const pct = total > 0 ? Math.max(0, Math.min(100, (row.value / total) * 100)) : 0;
           return (
-            <div key={row.id} className="rounded-lg border border-white/10 bg-black/25 p-2.5">
+            <div key={row.id} className="arc-pop-card p-2.5">
               <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="truncate text-xs text-white/80">{row.label}</span>
-                <span className="shrink-0 text-xs tabular-nums text-white/90">{formatInt(row.value)} дукат</span>
+                <span className="truncate text-xs text-[var(--arc-color-atlas-ink)]">{row.label}</span>
+                <span className="shrink-0 text-xs tabular-nums text-[var(--arc-color-atlas-ink)]">{formatInt(row.value)} {t("population.ducats")}</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/10">
+              <div className="h-2 overflow-hidden bg-[var(--arc-color-atlas-paper-deep)]">
                 <div
                   className="h-full rounded-full transition-all"
                   style={{
@@ -1078,7 +1080,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                   }}
                 />
               </div>
-              <div className="mt-1 text-[11px] tabular-nums text-white/55">{pct.toFixed(2)}%</div>
+              <div className="arc-pop-muted mt-1 text-[11px] tabular-nums">{pct.toFixed(2)}%</div>
             </div>
           );
         })}
@@ -1089,41 +1091,41 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
   const renderGroupsTable = () => (
     <div className="space-y-4">
       <div>
-        <div className="text-lg font-semibold text-white">Pop-группы</div>
-        <div className="text-xs text-white/50">Группы идентичности: культура, религия, раса и агрегаты по внутренним профессиям</div>
+        <div className="arc-pop-section-title">{t("population.popGroupsTitle")}</div>
+        <div className="arc-pop-section-subtitle">{t("population.popGroupsDescription")}</div>
       </div>
       <div className="grid gap-3 xl:grid-cols-2">
-        <AppCard className="bg-[#131a22]">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Рождения / смерти</div>
+        <AppCard className="arc-pop-card">
+          <div className="arc-pop-label mb-2">{t("population.birthsDeaths")}</div>
           <div ref={groupVitalsChartRef} className="h-[300px] w-full" />
         </AppCard>
-        <AppCard className="bg-[#131a22]">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Радикалы / лоялисты</div>
+        <AppCard className="arc-pop-card">
+          <div className="arc-pop-label mb-2">{t("population.radicalsLoyalists")}</div>
           <div ref={groupLoyaltyChartRef} className="h-[300px] w-full" />
         </AppCard>
       </div>
-      <AppCard className="bg-[#131a22]">
+      <AppCard className="arc-pop-card">
         <AppSectionHeader title={t("population.groupsByRegion")} icon={<Users size={14} />} />
         <AppTableShell className="max-h-[560px]">
           <AppTable className="min-w-[980px]">
-            <thead className="sticky top-0 z-10 bg-[#131a22] text-white/50">
+            <thead className="sticky top-0 z-10 bg-[var(--arc-color-atlas-paper-soft)] text-[var(--arc-color-atlas-muted)]">
               <tr>
                 <AppHeadCell>{t("population.regionColumn")}</AppHeadCell>
-                <AppHeadCell>Культура</AppHeadCell>
-                <AppHeadCell>Религия</AppHeadCell>
-                <AppHeadCell>Раса</AppHeadCell>
-                <AppHeadCell className="text-right">Численность</AppHeadCell>
-                <AppHeadCell className="text-right">Проф.</AppHeadCell>
+                <AppHeadCell>{t("population.cultureColumn")}</AppHeadCell>
+                <AppHeadCell>{t("population.religionColumn")}</AppHeadCell>
+                <AppHeadCell>{t("population.raceColumn")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.sizeColumn")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.professionsShort")}</AppHeadCell>
                 <AppHeadCell className="text-right">SoL</AppHeadCell>
-                <AppHeadCell className="text-right">Потребности</AppHeadCell>
-                <AppHeadCell className="text-right">Дукаты</AppHeadCell>
-                <AppHeadCell className="text-right">Рад./Лоял.</AppHeadCell>
-                <AppHeadCell className="text-right">Рожд./Смерт.</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.sectionNeeds")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.ducats")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.radicalsLoyalistsShort")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.birthsDeathsShort")}</AppHeadCell>
               </tr>
             </thead>
             <tbody>
               {populationTables.groupRows.map((row) => (
-                <tr key={row.id} className="text-white/80">
+                <tr key={row.id} className="text-[var(--arc-color-atlas-ink)]">
                   <AppCell>{row.regionName}</AppCell>
                   <AppCell>{row.culture}</AppCell>
                   <AppCell>{row.religion}</AppCell>
@@ -1135,12 +1137,12 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                   <AppCell className="text-right tabular-nums">{formatInt(row.ducats)}</AppCell>
                   <AppCell className="text-right tabular-nums">
                     <span className="text-rose-300">{formatInt(row.radicals)}</span>
-                    <span className="text-white/35"> / </span>
-                    <span className="text-emerald-300">{formatInt(row.loyalists)}</span>
+                    <span className="arc-pop-muted"> / </span>
+                    <span className="text-[var(--arc-color-atlas-good)]">{formatInt(row.loyalists)}</span>
                   </AppCell>
                   <AppCell className="text-right tabular-nums">
-                    <span className="text-emerald-300">{formatInt(row.births)}</span>
-                    <span className="text-white/35"> / </span>
+                    <span className="text-[var(--arc-color-atlas-good)]">{formatInt(row.births)}</span>
+                    <span className="arc-pop-muted"> / </span>
                     <span className="text-rose-300">{formatInt(row.deaths)}</span>
                   </AppCell>
                 </tr>
@@ -1148,7 +1150,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
               {populationTables.groupRows.length === 0 && (
                 <tr>
                   <td colSpan={11}>
-                    <AppEmptyState className="my-1">Нет данных</AppEmptyState>
+                    <AppEmptyState className="my-1">{t("population.noData")}</AppEmptyState>
                   </td>
                 </tr>
               )}
@@ -1162,30 +1164,30 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
   const renderNeedsTable = () => (
     <div className="space-y-4">
       <div>
-        <div className="text-lg font-semibold text-white">Профессии и потребности</div>
-        <div className="text-xs text-white/50">Покрытие по категориям, дефицитные товары, SoL и демография по профессиям внутри pop-групп</div>
+        <div className="arc-pop-section-title">{t("population.professionNeedsTitle")}</div>
+        <div className="arc-pop-section-subtitle">{t("population.professionNeedsDescription")}</div>
       </div>
       <div className="grid gap-3 xl:grid-cols-[1.2fr_0.8fr_0.8fr]">
-        <AppCard className="bg-[#131a22]">
-          <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">Покрытие потребностей по категориям</div>
+        <AppCard className="arc-pop-card">
+          <div className="arc-pop-label mb-3">{t("population.coverage")}</div>
           <AppTableShell>
             <AppTable className="min-w-[520px] text-xs">
-              <thead className="text-white/50">
+              <thead className="text-[var(--arc-color-atlas-muted)]">
                 <tr>
-                  <AppHeadCell>Категория</AppHeadCell>
-                  <AppHeadCell className="text-right">Нужно</AppHeadCell>
-                  <AppHeadCell className="text-right">Куплено</AppHeadCell>
-                  <AppHeadCell className="text-right">Покрытие</AppHeadCell>
-                  <AppHeadCell className="text-right">Расход</AppHeadCell>
+                  <AppHeadCell>{t("population.categoryColumn")}</AppHeadCell>
+                  <AppHeadCell className="text-right">{t("population.required")}</AppHeadCell>
+                  <AppHeadCell className="text-right">{t("population.fulfilled")}</AppHeadCell>
+                  <AppHeadCell className="text-right">{t("population.coverage")}</AppHeadCell>
+                  <AppHeadCell className="text-right">{t("population.expenseColumn")}</AppHeadCell>
                 </tr>
               </thead>
               <tbody>
                 {needsDiagnostics.categoryRows.map((row) => (
-                  <tr key={row.category} className="text-white/80">
+                  <tr key={row.category} className="text-[var(--arc-color-atlas-ink)]">
                     <AppCell>{row.label}</AppCell>
                     <AppCell className="text-right tabular-nums">{formatInt(row.required)}</AppCell>
                     <AppCell className="text-right tabular-nums">{formatInt(row.fulfilled)}</AppCell>
-                    <AppCell className={`text-right tabular-nums ${row.required <= 0 ? "text-white/40" : row.satisfaction < 0.75 ? "text-rose-300" : row.satisfaction < 0.95 ? "text-amber-200" : "text-emerald-300"}`}>
+                    <AppCell className={`text-right tabular-nums ${row.required <= 0 ? "arc-pop-muted" : row.satisfaction < 0.75 ? "text-rose-300" : row.satisfaction < 0.95 ? "text-[var(--arc-color-atlas-warning)]" : "text-[var(--arc-color-atlas-good)]"}`}>
                       {row.required <= 0 ? "—" : `${(row.satisfaction * 100).toFixed(1)}%`}
                     </AppCell>
                     <AppCell className="text-right tabular-nums">{formatInt(row.spend)}</AppCell>
@@ -1195,88 +1197,88 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
             </AppTable>
           </AppTableShell>
         </AppCard>
-        <AppCard className="bg-[#131a22]">
-          <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">Рыночный дефицит товаров</div>
+        <AppCard className="arc-pop-card">
+          <div className="arc-pop-label mb-3">{t("population.marketDeficitGoods")}</div>
           <div className="space-y-2">
             {needsDiagnostics.deficitRows.map((row) => (
-              <div key={row.goodId} className="flex items-center justify-between gap-3 rounded-lg bg-black/25 px-3 py-2 text-xs text-white/80">
+              <div key={row.goodId} className="arc-pop-card flex items-center justify-between gap-3 px-3 py-2 text-xs">
                 <span className="truncate">{row.goodName}</span>
                 <span className="tabular-nums text-rose-300">{formatInt(row.amount)}</span>
               </div>
             ))}
             {needsDiagnostics.deficitRows.length === 0 && (
-              <div className="rounded-lg bg-black/25 px-3 py-6 text-center text-sm text-white/45">Товары на рынке в целом доступны</div>
+              <div className="arc-pop-card px-3 py-6 text-center text-sm">{t("population.marketGoodsAvailable")}</div>
             )}
           </div>
         </AppCard>
-        <AppCard className="bg-[#131a22]">
-          <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">Нехватка денег на потребности</div>
+        <AppCard className="arc-pop-card">
+          <div className="arc-pop-label mb-3">{t("population.needBudgetShortage")}</div>
           <div className="space-y-2">
             {needsDiagnostics.budgetShortageRows.map((row) => (
-              <div key={row.goodId} className="flex items-center justify-between gap-3 rounded-lg bg-black/25 px-3 py-2 text-xs text-white/80">
+              <div key={row.goodId} className="arc-pop-card flex items-center justify-between gap-3 px-3 py-2 text-xs">
                 <span className="truncate">{row.goodName}</span>
-                <span className="tabular-nums text-amber-200">{formatInt(row.amount)}</span>
+                <span className="tabular-nums text-[var(--arc-color-atlas-warning)]">{formatInt(row.amount)}</span>
               </div>
             ))}
             {needsDiagnostics.budgetShortageRows.length === 0 && (
-              <div className="rounded-lg bg-black/25 px-3 py-6 text-center text-sm text-white/45">Бюджета населения хватает</div>
+              <div className="arc-pop-card px-3 py-6 text-center text-sm">{t("population.budgetEnough")}</div>
             )}
           </div>
         </AppCard>
       </div>
-      <AppCard className="bg-[#131a22]">
-        <AppSectionHeader title="Профессии по pop-группам" icon={<Briefcase size={14} />} />
+      <AppCard className="arc-pop-card">
+        <AppSectionHeader title={t("population.professionsByPopGroups")} icon={<Briefcase size={14} />} />
         <AppTableShell className="max-h-[560px]">
           <AppTable className="min-w-[1320px] text-xs">
-            <thead className="sticky top-0 z-10 bg-[#131a22] text-white/50">
+            <thead className="sticky top-0 z-10 bg-[var(--arc-color-atlas-paper-soft)] text-[var(--arc-color-atlas-muted)]">
               <tr>
                 <AppHeadCell>{t("population.regionColumn")}</AppHeadCell>
-                <AppHeadCell>Группа</AppHeadCell>
-                <AppHeadCell>Профессия</AppHeadCell>
-                <AppHeadCell className="text-right">Численность</AppHeadCell>
+                <AppHeadCell>{t("population.groupColumn")}</AppHeadCell>
+                <AppHeadCell>{t("population.professionColumn")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.sizeColumn")}</AppHeadCell>
                 <AppHeadCell className="text-right">SoL</AppHeadCell>
-                <AppHeadCell className="text-right">Удовл.</AppHeadCell>
-                <AppHeadCell className="text-right">Выж.</AppHeadCell>
-                <AppHeadCell className="text-right">База</AppHeadCell>
-                <AppHeadCell className="text-right">Комф.</AppHeadCell>
-                <AppHeadCell className="text-right">Роск.</AppHeadCell>
-                <AppHeadCell className="text-right">Кошелёк</AppHeadCell>
-                <AppHeadCell className="text-right">Доход</AppHeadCell>
-                <AppHeadCell className="text-right">Расходы</AppHeadCell>
-                <AppHeadCell className="text-right">Баланс</AppHeadCell>
-                <AppHeadCell className="text-right">Рад./Лоял.</AppHeadCell>
-                <AppHeadCell className="text-right">Рожд./Смерт.</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.satisfactionShort")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.survivalShort")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.categoryBasic")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.comfortShort")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.categoryLuxury")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.wallet")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.incomePerTurn")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.totalExpenses")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.balance")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.radicalsLoyalistsShort")}</AppHeadCell>
+                <AppHeadCell className="text-right">{t("population.birthsDeathsShort")}</AppHeadCell>
               </tr>
             </thead>
             <tbody>
               {populationTables.professionRows.map((row) => {
                 const balance = row.income - row.spend;
                 return (
-                  <tr key={row.id} className="text-white/80">
+                  <tr key={row.id} className="text-[var(--arc-color-atlas-ink)]">
                     <AppCell>{row.regionName}</AppCell>
-                    <AppCell className="max-w-[180px] truncate text-white/55">{row.groupId}</AppCell>
+                    <AppCell className="arc-pop-muted max-w-[180px] truncate">{row.groupId}</AppCell>
                     <AppCell>{row.profession}</AppCell>
                     <AppCell className="text-right tabular-nums">{formatInt(row.size)}</AppCell>
                     <AppCell className="text-right tabular-nums">{row.standardOfLiving.toFixed(2)}</AppCell>
-                    <AppCell className={`text-right tabular-nums ${row.satisfaction < 0.7 ? "text-rose-300" : row.satisfaction < 1 ? "text-amber-200" : "text-emerald-300"}`}>
+                    <AppCell className={`text-right tabular-nums ${row.satisfaction < 0.7 ? "text-rose-300" : row.satisfaction < 1 ? "text-[var(--arc-color-atlas-warning)]" : "text-[var(--arc-color-atlas-good)]"}`}>
                       {(row.satisfaction * 100).toFixed(1)}%
                     </AppCell>
-                    <AppCell className={`text-right tabular-nums ${row.categorySatisfaction.survival < 0.9 ? "text-rose-300" : "text-emerald-300"}`}>{(row.categorySatisfaction.survival * 100).toFixed(0)}%</AppCell>
-                    <AppCell className={`text-right tabular-nums ${row.categorySatisfaction.basic < 0.85 ? "text-rose-300" : row.categorySatisfaction.basic < 1 ? "text-amber-200" : "text-emerald-300"}`}>{(row.categorySatisfaction.basic * 100).toFixed(0)}%</AppCell>
-                    <AppCell className="text-right tabular-nums text-white/80">{(row.categorySatisfaction.comfort * 100).toFixed(0)}%</AppCell>
-                    <AppCell className="text-right tabular-nums text-white/65">{(row.categorySatisfaction.luxury * 100).toFixed(0)}%</AppCell>
+                    <AppCell className={`text-right tabular-nums ${row.categorySatisfaction.survival < 0.9 ? "text-rose-300" : "text-[var(--arc-color-atlas-good)]"}`}>{(row.categorySatisfaction.survival * 100).toFixed(0)}%</AppCell>
+                    <AppCell className={`text-right tabular-nums ${row.categorySatisfaction.basic < 0.85 ? "text-rose-300" : row.categorySatisfaction.basic < 1 ? "text-[var(--arc-color-atlas-warning)]" : "text-[var(--arc-color-atlas-good)]"}`}>{(row.categorySatisfaction.basic * 100).toFixed(0)}%</AppCell>
+                    <AppCell className="text-right tabular-nums text-[var(--arc-color-atlas-ink)]">{(row.categorySatisfaction.comfort * 100).toFixed(0)}%</AppCell>
+                    <AppCell className="arc-pop-muted text-right tabular-nums">{(row.categorySatisfaction.luxury * 100).toFixed(0)}%</AppCell>
                     <AppCell className="text-right tabular-nums">{formatInt(row.ducats)}</AppCell>
-                    <AppCell className="text-right tabular-nums text-emerald-300">+{formatInt(row.income)}</AppCell>
+                    <AppCell className="text-right tabular-nums text-[var(--arc-color-atlas-good)]">+{formatInt(row.income)}</AppCell>
                     <AppCell className="text-right tabular-nums text-rose-300">-{formatInt(row.spend)}</AppCell>
-                    <AppCell className={`text-right tabular-nums ${balance >= 0 ? "text-emerald-300" : "text-rose-300"}`}>{formatSignedInt(balance)}</AppCell>
+                    <AppCell className={`text-right tabular-nums ${balance >= 0 ? "text-[var(--arc-color-atlas-good)]" : "text-rose-300"}`}>{formatSignedInt(balance)}</AppCell>
                     <AppCell className="text-right tabular-nums">
                       <span className="text-rose-300">{formatInt(row.radicals)}</span>
-                      <span className="text-white/35"> / </span>
-                      <span className="text-emerald-300">{formatInt(row.loyalists)}</span>
+                      <span className="arc-pop-muted"> / </span>
+                      <span className="text-[var(--arc-color-atlas-good)]">{formatInt(row.loyalists)}</span>
                     </AppCell>
                     <AppCell className="text-right tabular-nums">
-                      <span className="text-emerald-300">{formatInt(row.births)}</span>
-                      <span className="text-white/35"> / </span>
+                      <span className="text-[var(--arc-color-atlas-good)]">{formatInt(row.births)}</span>
+                      <span className="arc-pop-muted"> / </span>
                       <span className="text-rose-300">{formatInt(row.deaths)}</span>
                     </AppCell>
                   </tr>
@@ -1285,7 +1287,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
               {populationTables.professionRows.length === 0 && (
                 <tr>
                   <td colSpan={16}>
-                    <AppEmptyState className="my-1">Нет данных</AppEmptyState>
+                    <AppEmptyState className="my-1">{t("population.noData")}</AppEmptyState>
                   </td>
                 </tr>
               )}
@@ -1297,18 +1299,18 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
   );
 
   return (
-    <AppModal open={open} onClose={onClose} modalKey="population" panelClassName="overflow-hidden" zIndexClassName="z-[205]">
-            <AppModalHeader title="Панель населения" description={subtitle} onClose={onClose} />
+    <AppModal open={open} onClose={onClose} modalKey="population" panelClassName="arc-pop-panel overflow-hidden" zIndexClassName="z-[205]">
+            <AppModalHeader title={t("population.panelTitle")} description={subtitle} onClose={onClose} />
 
             <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
               <AppSection className="p-3">
-                <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-400">Область</span>
+                <span className="arc-pop-label mb-2 block">{t("population.scope")}</span>
                 <div className="space-y-2">
                   <AppButton
                     type="button"
                     onClick={() => setMode("country")}
                     variant={mode === "country" ? "primary" : "ghost"}
-                    className={`w-full justify-start ${mode === "country" ? "bg-arc-accent/15 text-arc-accent" : ""}`}
+                    className="w-full justify-start"
                     icon={<MapPinned size={15} />}
                   >
                     <span>{countryName}</span>
@@ -1317,10 +1319,10 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                     type="button"
                     onClick={() => setMode("world")}
                     variant={mode === "world" ? "primary" : "ghost"}
-                    className={`w-full justify-start ${mode === "world" ? "bg-arc-accent/15 text-arc-accent" : ""}`}
+                    className="w-full justify-start"
                     icon={<Globe2 size={15} />}
                   >
-                    <span>Мир</span>
+                    <span>{t("population.scopeWorld")}</span>
                   </AppButton>
                 </div>
               </AppSection>
@@ -1337,10 +1339,10 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                         onClick={() => setSection(tab.id)}
                         variant={section === tab.id ? "primary" : "ghost"}
                         size="sm"
-                        className={`shrink-0 ${section === tab.id ? "bg-arc-accent/15 text-arc-accent" : ""}`}
+                        className="shrink-0"
                         icon={<TabIcon size={14} />}
                       >
-                        {tab.label}
+                        {t(tab.labelKey)}
                       </AppButton>
                     );
                   })}
@@ -1349,22 +1351,22 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
 
                 <AppSection className="overflow-auto p-4">
                   <div className="mb-4 grid gap-3 md:grid-cols-3">
-                    <AppCard className="bg-[#131a22]">
-                      <div className="text-[11px] uppercase tracking-wide text-white/50">Всего населения</div>
-                      <div className="mt-1 text-lg font-semibold text-white">{formatInt(stats.totalPopulation)}</div>
+                    <AppCard className="arc-pop-card">
+                      <div className="arc-pop-label">{t("population.totalPopulation")}</div>
+                      <div className="arc-pop-value mt-1 text-lg">{formatInt(stats.totalPopulation)}</div>
                     </AppCard>
-                    <AppCard className="bg-[#131a22]">
-                      <div className="text-[11px] uppercase tracking-wide text-white/50">Крупнейшая культура</div>
-                      <div className="mt-1 truncate text-sm font-semibold text-white">{topCulture?.label ?? "Нет данных"}</div>
-                      <div className="text-[11px] text-white/60">
-                        {topCulture ? `${topCulture.pct.toFixed(2)}% · ${formatInt(topCulture.count)} чел.` : "—"}
+                    <AppCard className="arc-pop-card">
+                      <div className="arc-pop-label">{t("population.largestCulture")}</div>
+                      <div className="arc-pop-value mt-1 truncate text-sm">{topCulture?.label ?? t("population.noData")}</div>
+                      <div className="arc-pop-muted text-[11px]">
+                        {topCulture ? `${topCulture.pct.toFixed(2)}% · ${t("population.peopleCount", { count: formatInt(topCulture.count) })}` : "—"}
                       </div>
                     </AppCard>
-                    <AppCard className="bg-[#131a22]">
-                      <div className="text-[11px] uppercase tracking-wide text-white/50">Доминирующая религия</div>
-                      <div className="mt-1 truncate text-sm font-semibold text-white">{topReligion?.label ?? "Нет данных"}</div>
-                      <div className="text-[11px] text-white/60">
-                        {topReligion ? `${topReligion.pct.toFixed(2)}% · ${formatInt(topReligion.count)} чел.` : "—"}
+                    <AppCard className="arc-pop-card">
+                      <div className="arc-pop-label">{t("population.dominantReligion")}</div>
+                      <div className="arc-pop-value mt-1 truncate text-sm">{topReligion?.label ?? t("population.noData")}</div>
+                      <div className="arc-pop-muted text-[11px]">
+                        {topReligion ? `${topReligion.pct.toFixed(2)}% · ${t("population.peopleCount", { count: formatInt(topReligion.count) })}` : "—"}
                       </div>
                     </AppCard>
                   </div>
@@ -1372,34 +1374,32 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                   {section === "general" && (
                     <>
                       <div className="mb-4">
-                        <div className="text-lg font-semibold text-white">{title}</div>
-                        <div className="text-xs text-white/50">Агрегированные данные по населению</div>
+                        <div className="arc-pop-section-title">{title}</div>
+                        <div className="arc-pop-section-subtitle">{t("population.aggregatedData")}</div>
                       </div>
 
                       <div className="mb-4 grid gap-3 md:grid-cols-2">
-                        <AppCard className="bg-[#131a22]">
-                          <div className="flex items-center gap-2 text-xs text-white/60">
+                        <AppCard className="arc-pop-card">
+                          <div className="arc-pop-muted flex items-center gap-2 text-xs">
                             <Users size={13} />
-                            <span>Общее население</span>
+                            <span>{t("population.totalPopulation")}</span>
                           </div>
-                          <div className="mt-2 text-2xl font-semibold text-white">{formatInt(stats.totalPopulation)}</div>
+                          <div className="arc-pop-value mt-2 text-2xl">{formatInt(stats.totalPopulation)}</div>
                         </AppCard>
-                        <AppCard className="bg-[#131a22]">
-                          <div className="flex items-center gap-2 text-xs text-white/60">
+                        <AppCard className="arc-pop-card">
+                          <div className="arc-pop-muted flex items-center gap-2 text-xs">
                             <BarChart3 size={13} />
                             <span>{t("population.regionsInScope")}</span>
                           </div>
-                          <div className="mt-2 text-2xl font-semibold text-white">{formatInt(stats.regionCount)}</div>
+                          <div className="arc-pop-value mt-2 text-2xl">{formatInt(stats.regionCount)}</div>
                         </AppCard>
                       </div>
 
                       <div className="space-y-3">
                         {DIMENSION_LABELS.map((dimension) => (
-                          <AppCard key={dimension.key} className="bg-[#131a22]">
-                            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{dimension.label}</div>
-                            <div className="text-sm text-white/70">
-                              Откройте вкладку <span className="font-semibold text-white">{dimension.label}</span> для детальной статистики.
-                            </div>
+                          <AppCard key={dimension.key} className="arc-pop-card">
+                            <div className="arc-pop-label mb-2">{t(dimension.labelKey)}</div>
+                            <div className="arc-pop-muted text-sm">{t("population.openTabPrompt", { tab: t(dimension.labelKey) })}</div>
                           </AppCard>
                         ))}
                       </div>
@@ -1413,58 +1413,58 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                   {section === "finance" && (
                     <div className="space-y-4">
                       <div>
-                        <div className="text-lg font-semibold text-white">Финансы населения</div>
-                        <div className="text-xs text-white/50">Казна населения, доходы/расходы за ход и сигналы по рискам</div>
+                        <div className="arc-pop-section-title">{t("population.financeTitle")}</div>
+                        <div className="arc-pop-section-subtitle">{t("population.financeDescription")}</div>
                       </div>
 
                       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-                        <AppCard className="bg-[#131a22]">
-                          <div className="text-[11px] uppercase tracking-wide text-white/50">Общий капитал населения</div>
-                          <div className="mt-1 text-lg font-semibold text-white">{formatInt(financeStats.totalTreasury)} дукат</div>
+                        <AppCard className="arc-pop-card">
+                          <div className="arc-pop-label">{t("population.totalCapital")}</div>
+                          <div className="arc-pop-value mt-1 text-lg">{formatInt(financeStats.totalTreasury)} {t("population.ducats")}</div>
                         </AppCard>
-                        <AppCard className="bg-[#131a22]">
-                          <div className="text-[11px] uppercase tracking-wide text-white/50">Изменение за последний ход</div>
+                        <AppCard className="arc-pop-card">
+                          <div className="arc-pop-label">{t("population.lastTurnChange")}</div>
                           <div
                             className={`mt-1 text-lg font-semibold ${
                               (treasuryDeltaByMode[mode] ?? 0) > 0
-                                ? "text-emerald-300"
+                                ? "text-[var(--arc-color-atlas-good)]"
                                 : (treasuryDeltaByMode[mode] ?? 0) < 0
                                   ? "text-rose-300"
-                                  : "text-white"
+                                  : "text-[var(--arc-color-atlas-ink)]"
                             }`}
                           >
-                            {treasuryDeltaByMode[mode] == null ? "—" : `${formatSignedInt(treasuryDeltaByMode[mode] ?? 0)} дукат`}
+                            {treasuryDeltaByMode[mode] == null ? "—" : `${formatSignedInt(treasuryDeltaByMode[mode] ?? 0)} ${t("population.ducats")}`}
                           </div>
                         </AppCard>
-                        <AppCard className="bg-[#131a22]">
-                          <div className="text-[11px] uppercase tracking-wide text-white/50">Доходы населения за ход</div>
-                          <div className="mt-1 text-lg font-semibold text-emerald-300">+{formatInt(financeStats.totalIncome)} дукат</div>
+                        <AppCard className="arc-pop-card">
+                          <div className="arc-pop-label">{t("population.incomePerTurn")}</div>
+                          <div className="mt-1 text-lg font-semibold text-[var(--arc-color-atlas-good)]">+{formatInt(financeStats.totalIncome)} {t("population.ducats")}</div>
                         </AppCard>
-                        <AppCard className="bg-[#131a22]">
-                          <div className="text-[11px] uppercase tracking-wide text-white/50">Расходы населения за ход</div>
-                          <div className="mt-1 text-lg font-semibold text-rose-300">-{formatInt(financeStats.totalExpenses)} дукат</div>
+                        <AppCard className="arc-pop-card">
+                          <div className="arc-pop-label">{t("population.totalExpenses")}</div>
+                          <div className="mt-1 text-lg font-semibold text-rose-300">-{formatInt(financeStats.totalExpenses)} {t("population.ducats")}</div>
                         </AppCard>
-                        <AppCard className="bg-[#131a22]">
-                          <div className="text-[11px] uppercase tracking-wide text-white/50">Чистый баланс</div>
-                          <div className={`mt-1 text-lg font-semibold ${financeStats.netBalance >= 0 ? "text-emerald-300" : "text-rose-300"}`}>
-                            {formatSignedInt(financeStats.netBalance)} дукат
+                        <AppCard className="arc-pop-card">
+                          <div className="arc-pop-label">{t("population.netBalance")}</div>
+                          <div className={`mt-1 text-lg font-semibold ${financeStats.netBalance >= 0 ? "text-[var(--arc-color-atlas-good)]" : "text-rose-300"}`}>
+                            {formatSignedInt(financeStats.netBalance)} {t("population.ducats")}
                           </div>
                         </AppCard>
                       </div>
 
                       <div className="grid gap-3 lg:grid-cols-2">
-                        <AppCard className="bg-[#131a22]">
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Структура доходов</div>
+                        <AppCard className="arc-pop-card">
+                          <div className="arc-pop-label mb-2">{t("population.incomeStructure")}</div>
                           {renderFlowRows(financeStats.incomeRows)}
                         </AppCard>
-                        <AppCard className="bg-[#131a22]">
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Структура расходов</div>
+                        <AppCard className="arc-pop-card">
+                          <div className="arc-pop-label mb-2">{t("population.expenseStructure")}</div>
                           {renderFlowRows(financeStats.expenseRows)}
                         </AppCard>
                       </div>
 
-                      <AppCard className="bg-[#131a22]">
-                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Сигналы (алерты)</div>
+                      <AppCard className="arc-pop-card">
+                        <div className="arc-pop-label mb-2">{t("population.financeAlerts")}</div>
                         <div className="space-y-2">
                           {negativeBalanceAlerts.length > 0 ? (
                             negativeBalanceAlerts.map((row) => (
@@ -1477,13 +1477,13 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                               </div>
                             ))
                           ) : (
-                            <AppCard className="bg-black/20 px-3 py-2 text-sm text-white/70">
+                            <AppCard className="arc-pop-card px-3 py-2 text-sm">
                               {t("population.noNegativeRegionBalance", { turns: NEGATIVE_BALANCE_STREAK_TARGET })}
                             </AppCard>
                           )}
                           {lowCapitalAlerts.length > 0 ? (
                             lowCapitalAlerts.map((row) => (
-                              <div key={`low-${row.regionId}`} className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                              <div key={`low-${row.regionId}`} className="arc-market-warning-card px-3 py-2 text-sm">
                                 {t("population.lowRegionCapitalAlert", {
                                   region: row.regionName,
                                   capital: row.capitalPerCapita.toFixed(3),
@@ -1491,7 +1491,7 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                               </div>
                             ))
                           ) : (
-                            <AppCard className="bg-black/20 px-3 py-2 text-sm text-white/70">
+                            <AppCard className="arc-pop-card px-3 py-2 text-sm">
                               {t("population.noLowRegionCapital")}
                             </AppCard>
                           )}
@@ -1505,12 +1505,12 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
                   {section === "branding" && (
                     <div className="space-y-4">
                       <div>
-                        <div className="text-lg font-semibold text-white">Логотип и стиль</div>
-                        <div className="text-xs text-white/50">Подготовка визуальных настроек панели населения</div>
+                        <div className="arc-pop-section-title">{t("population.brandingTitle")}</div>
+                        <div className="arc-pop-section-subtitle">{t("population.brandingDescription")}</div>
                       </div>
-                      <AppCard className="bg-[#131a22] p-4">
-                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Статус</div>
-                        <div className="text-sm text-white/75">Раздел зарезервирован под будущие механики визуализации населения.</div>
+                      <AppCard className="arc-pop-card p-4">
+                        <div className="arc-pop-label mb-2">{t("population.status")}</div>
+                        <div className="arc-pop-muted text-sm">{t("population.visualReserved")}</div>
                       </AppCard>
                     </div>
                   )}

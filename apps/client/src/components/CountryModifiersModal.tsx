@@ -7,6 +7,8 @@ import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppEmptyState, AppSection, AppToolbar } from "./ui/AppSurface";
 import { AppCell, AppHeadCell, AppTable, AppTableShell } from "./ui/AppTable";
+import { useUiText } from "../i18n/useUiText";
+import type { UiTextKey } from "../i18n/uiText";
 
 type Props = {
   open: boolean;
@@ -16,20 +18,20 @@ type Props = {
   onClose: () => void;
 };
 
-const STAT_LABEL: Record<ModifierStat, string> = {
-  culture_gain: "Прирост культуры",
-  science_gain: "Прирост науки",
-  religion_gain: "Прирост религии",
-  colonization_gain: "Прирост колонизации",
-  construction_gain: "Прирост строительства",
-  ducats_gain: "Прирост дукатов",
-  gold_gain: "Прирост золота",
-  technology_cost: "Стоимость технологий",
-  building_construction_cost: "Стоимость строительства",
-  building_output: "Выпуск зданий",
-  building_input: "Расходы зданий",
-  building_throughput: "Производительность зданий",
-  building_wage: "Зарплаты зданий",
+const STAT_LABEL_KEY: Record<ModifierStat, UiTextKey> = {
+  culture_gain: "modifiers.stat.culture_gain",
+  science_gain: "modifiers.stat.science_gain",
+  religion_gain: "modifiers.stat.religion_gain",
+  colonization_gain: "modifiers.stat.colonization_gain",
+  construction_gain: "modifiers.stat.construction_gain",
+  ducats_gain: "modifiers.stat.ducats_gain",
+  gold_gain: "modifiers.stat.gold_gain",
+  technology_cost: "modifiers.stat.technology_cost",
+  building_construction_cost: "modifiers.stat.building_construction_cost",
+  building_output: "modifiers.stat.building_output",
+  building_input: "modifiers.stat.building_input",
+  building_throughput: "modifiers.stat.building_throughput",
+  building_wage: "modifiers.stat.building_wage",
 };
 
 const MODE_LABEL: Record<ModifierMode, string> = {
@@ -38,38 +40,46 @@ const MODE_LABEL: Record<ModifierMode, string> = {
   mult: "x",
 };
 
-const SCOPE_LABEL: Record<ModifierScope, string> = {
-  country: "Страна",
-  province: "Провинция",
-  building: "Здание",
-  pop: "Население",
-  market: "Рынок",
+const SCOPE_LABEL_KEY: Record<ModifierScope, UiTextKey> = {
+  country: "modifiers.scope.country",
+  province: "modifiers.scope.province",
+  building: "modifiers.scope.building",
+  pop: "modifiers.scope.pop",
+  market: "modifiers.scope.market",
 };
 
-function formatEffectValue(effect: ModifierEffect): string {
-  if (effect.mode === "add_pct") {
-    const pct = effect.value * 100;
-    return `${pct >= 0 ? "+" : ""}${pct.toLocaleString("ru-RU", { maximumFractionDigits: 1 })}%`;
-  }
-  if (effect.mode === "mult") {
-    return `x${effect.value.toLocaleString("ru-RU", { maximumFractionDigits: 3 })}`;
-  }
-  return `${effect.value >= 0 ? "+" : ""}${effect.value.toLocaleString("ru-RU", { maximumFractionDigits: 3 })}`;
+function sourceKindLabelKey(sourceKind: ActiveModifierRow["sourceKind"]): UiTextKey {
+  if (sourceKind === "technology") return "modifiers.source.technology";
+  if (sourceKind === "law") return "modifiers.source.law";
+  if (sourceKind === "modifier") return "modifiers.source.modifier";
+  return "modifiers.source.event";
 }
 
-function formatTarget(effect: ModifierEffect): string {
+function formatEffectValue(effect: ModifierEffect, locale: string): string {
+  if (effect.mode === "add_pct") {
+    const pct = effect.value * 100;
+    return `${pct >= 0 ? "+" : ""}${pct.toLocaleString(locale, { maximumFractionDigits: 1 })}%`;
+  }
+  if (effect.mode === "mult") {
+    return `x${effect.value.toLocaleString(locale, { maximumFractionDigits: 3 })}`;
+  }
+  return `${effect.value >= 0 ? "+" : ""}${effect.value.toLocaleString(locale, { maximumFractionDigits: 3 })}`;
+}
+
+function formatTarget(effect: ModifierEffect, t: (key: UiTextKey, params?: Record<string, string | number>) => string): string {
   const target = effect.target;
-  if (!target) return "Все подходящие цели";
+  if (!target) return t("modifiers.target.all");
   const parts = [
-    target.buildingId ? `здание: ${target.buildingId}` : null,
-    target.goodId ? `товар: ${target.goodId}` : null,
-    target.professionId ? `профессия: ${target.professionId}` : null,
-    target.resourceCategoryId ? `категория: ${target.resourceCategoryId}` : null,
+    target.buildingId ? t("modifiers.target.building", { value: target.buildingId }) : null,
+    target.goodId ? t("modifiers.target.good", { value: target.goodId }) : null,
+    target.professionId ? t("modifiers.target.profession", { value: target.professionId }) : null,
+    target.resourceCategoryId ? t("modifiers.target.category", { value: target.resourceCategoryId }) : null,
   ].filter(Boolean);
-  return parts.length > 0 ? parts.join(", ") : "Все подходящие цели";
+  return parts.length > 0 ? parts.join(", ") : t("modifiers.target.all");
 }
 
 export function CountryModifiersModal({ open, token, countryId, countryName, onClose }: Props) {
+  const { locale, t } = useUiText();
   const [loading, setLoading] = useState(false);
   const [modifiers, setModifiers] = useState<ActiveModifierRow[]>([]);
 
@@ -79,7 +89,7 @@ export function CountryModifiersModal({ open, token, countryId, countryName, onC
       const result = await fetchCountryModifiers(token, countryId);
       setModifiers(result.modifiers);
     } catch {
-      toast.error("Не удалось загрузить модификаторы");
+      toast.error(t("modifiers.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -88,7 +98,7 @@ export function CountryModifiersModal({ open, token, countryId, countryName, onC
   useEffect(() => {
     if (!open) return;
     void load();
-  }, [open, token, countryId]);
+  }, [open, token, countryId, t]);
 
   const rows = useMemo(
     () =>
@@ -105,12 +115,12 @@ export function CountryModifiersModal({ open, token, countryId, countryName, onC
   return open ? (
     <AppModal open={open} onClose={onClose} modalKey="modifiers" zIndexClassName="z-[176]" panelClassName="w-full overflow-hidden md:p-5">
           <AppModalHeader
-            title="Модификаторы страны"
-            description={`${countryName} · ${rows.length.toLocaleString("ru-RU")} эффектов`}
+            title={t("modifiers.title")}
+            description={t("modifiers.description", { country: countryName, count: rows.length.toLocaleString(locale) })}
             onClose={onClose}
             actions={
               <>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-arc-accent">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] text-[var(--arc-color-gold)]">
                   <SlidersHorizontal size={19} />
                 </div>
                 <AppButton type="button" onClick={() => void load()} disabled={loading} variant="secondary" size="icon">
@@ -121,52 +131,44 @@ export function CountryModifiersModal({ open, token, countryId, countryName, onC
           />
 
           <AppToolbar>
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-white/70">
-              <span>Действующие эффекты: {rows.length.toLocaleString("ru-RU")}</span>
-              <span className="text-white/45">Источник, область, параметр и цель показаны отдельными колонками.</span>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--arc-color-text-soft)]">
+              <span>{t("modifiers.activeCount", { count: rows.length.toLocaleString(locale) })}</span>
+              <span className="text-[var(--arc-color-text-muted)]">{t("modifiers.description", { country: countryName, count: rows.length.toLocaleString(locale) })}</span>
             </div>
           </AppToolbar>
 
-          <AppSection className="flex-1 overflow-auto bg-[#08101a] p-0">
+          <AppSection className="flex-1 overflow-auto bg-[var(--arc-color-panel-soft)] p-0">
             {loading ? (
-              <div className="flex h-full items-center justify-center text-sm text-slate-400">Загрузка модификаторов...</div>
+              <div className="flex h-full items-center justify-center text-sm text-[var(--arc-color-text-soft)]">{t("modifiers.loading")}</div>
             ) : rows.length === 0 ? (
-              <AppEmptyState className="m-4">У страны пока нет действующих модификаторов</AppEmptyState>
+              <AppEmptyState className="m-4">{t("modifiers.empty")}</AppEmptyState>
             ) : (
               <AppTableShell>
               <AppTable className="min-w-full text-sm">
-                <thead className="sticky top-0 z-10 bg-[#101824] text-xs uppercase tracking-wide text-slate-400">
+                <thead className="sticky top-0 z-10 bg-[var(--arc-color-header-bottom)] text-xs uppercase tracking-wide text-[var(--arc-color-text-soft)]">
                   <tr>
-                    <AppHeadCell>Модификатор</AppHeadCell>
-                    <AppHeadCell>Источник</AppHeadCell>
-                    <AppHeadCell>Область</AppHeadCell>
-                    <AppHeadCell>Параметр</AppHeadCell>
-                    <AppHeadCell>Тип</AppHeadCell>
-                    <AppHeadCell>Значение</AppHeadCell>
-                    <AppHeadCell>Цель</AppHeadCell>
+                    <AppHeadCell>{t("modifiers.column.modifier")}</AppHeadCell>
+                    <AppHeadCell>{t("modifiers.column.source")}</AppHeadCell>
+                    <AppHeadCell>{t("modifiers.column.scope")}</AppHeadCell>
+                    <AppHeadCell>{t("modifiers.column.effect")}</AppHeadCell>
+                    <AppHeadCell>{t("modifiers.column.mode")}</AppHeadCell>
+                    <AppHeadCell>{t("modifiers.column.value")}</AppHeadCell>
+                    <AppHeadCell>{t("modifiers.column.target")}</AppHeadCell>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map(({ key, modifier, effect }) => (
-                    <tr key={key} className="text-slate-200">
-                      <AppCell className="font-medium text-white">{modifier.label}</AppCell>
+                    <tr key={key} className="text-[var(--arc-color-text-soft)]">
+                      <AppCell className="font-medium text-[var(--arc-color-text)]">{modifier.label}</AppCell>
                       <AppCell>
                         <div>{modifier.sourceName}</div>
-                        <div className="text-[11px] text-slate-500">
-                          {modifier.sourceKind === "technology"
-                            ? "Технология"
-                            : modifier.sourceKind === "law"
-                              ? "Закон"
-                              : modifier.sourceKind === "modifier"
-                                ? "Модификатор"
-                                : "Событие"}
-                        </div>
+                        <div className="text-[11px] text-[var(--arc-color-text-muted)]">{t(sourceKindLabelKey(modifier.sourceKind))}</div>
                       </AppCell>
-                      <AppCell>{SCOPE_LABEL[modifier.scope]}</AppCell>
-                      <AppCell>{STAT_LABEL[effect.stat]}</AppCell>
+                      <AppCell>{t(SCOPE_LABEL_KEY[modifier.scope])}</AppCell>
+                      <AppCell>{t(STAT_LABEL_KEY[effect.stat])}</AppCell>
                       <AppCell>{MODE_LABEL[effect.mode]}</AppCell>
-                      <AppCell className={`font-semibold ${effect.value >= 0 ? "text-emerald-300" : "text-rose-300"}`}>{formatEffectValue(effect)}</AppCell>
-                      <AppCell className="text-slate-400">{formatTarget(effect)}</AppCell>
+                      <AppCell className={`font-semibold ${effect.value >= 0 ? "text-[var(--arc-color-success-text)]" : "text-[var(--arc-color-danger-text)]"}`}>{formatEffectValue(effect, locale)}</AppCell>
+                      <AppCell className="text-[var(--arc-color-text-muted)]">{formatTarget(effect, t)}</AppCell>
                     </tr>
                   ))}
                 </tbody>

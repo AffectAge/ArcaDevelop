@@ -10,32 +10,23 @@ import type { Country, ServerStatus } from "@arcanorum/shared";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import { Tooltip } from "./Tooltip";
+import { useUiText } from "../i18n/useUiText";
+import type { UiTextKey } from "../i18n/uiText";
 
 const REMEMBER_LOGIN_KEY = "arc.auth.rememberedLogin";
 
-const loginSchema = z.object({
-  countryId: z.string().min(1, "Выберите страну"),
-  password: z.string().min(1, "Введите пароль"),
-  rememberMe: z.boolean(),
-});
+type LoginFormValues = {
+  countryId: string;
+  password: string;
+  rememberMe: boolean;
+};
 
-const registerSchema = z
-  .object({
-    countryName: z.string().min(2, "Минимум 2 символа"),
-    countryColor: z.string().min(1),
-    password: z.string().min(8, "Минимум 8 символов"),
-    confirmPassword: z.string().min(1, "Повторите пароль"),
-  })
-  .superRefine((val, ctx) => {
-    if (val.password !== val.confirmPassword) {
-      ctx.addIssue({ code: "custom", message: "Пароли не совпадают", path: ["confirmPassword"] });
-    }
-
-    const parsed = colord(val.countryColor);
-    if (!parsed.isValid()) {
-      ctx.addIssue({ code: "custom", message: "Введите валидный HEX-цвет", path: ["countryColor"] });
-    }
-  });
+type RegisterFormValues = {
+  countryName: string;
+  countryColor: string;
+  password: string;
+  confirmPassword: string;
+};
 
 export type AuthSuccess = {
   token: string;
@@ -57,39 +48,47 @@ type Props = {
   onOpenCivilopedia?: () => void;
 };
 
-const statusMeta: Record<ServerStatus, { text: string; cls: string }> = {
-  online: { text: "Онлайн", cls: "bg-emerald-400" },
-  offline: { text: "Оффлайн", cls: "bg-rose-400" },
-  maintenance: { text: "Технические работы", cls: "bg-amber-400" },
+const statusMeta: Record<ServerStatus, { labelKey: UiTextKey; cls: string }> = {
+  online: { labelKey: "auth.serverStatus.online", cls: "bg-[var(--arc-color-success-text)]" },
+  offline: { labelKey: "auth.serverStatus.offline", cls: "bg-[var(--arc-color-danger-text)]" },
+  maintenance: { labelKey: "auth.serverStatus.maintenance", cls: "bg-[var(--arc-color-warning-top)]" },
 };
 
 const presetColors = ["#4ade80", "#22d3ee", "#60a5fa", "#f59e0b", "#ef4444", "#a78bfa"];
+const AUTH_LABEL_CLASS = "mb-1 block text-xs text-[var(--arc-color-text-soft)]";
+const AUTH_INPUT_CLASS = "w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] outline-none transition hover:border-[var(--arc-color-gold)] focus:border-[var(--arc-color-gold)]";
+const AUTH_OPTION_CLASS = (active: boolean) =>
+  `relative cursor-pointer rounded-md px-3 py-2 pr-9 transition ${active ? "bg-[var(--arc-color-primary-bottom)] text-[var(--arc-color-text)]" : "text-[var(--arc-color-text-soft)]"}`;
+const AUTH_STATUS_OK_CLASS = "border-[var(--arc-color-success-border)] text-[var(--arc-color-success-text)] shadow-[0_0_14px_rgb(34_197_94_/_0.18)]";
+const AUTH_STATUS_IDLE_CLASS = "border-[var(--arc-color-gold-soft)] text-[var(--arc-color-text-muted)]";
 
 function FieldError({ text }: { text?: string }) {
   if (!text) {
     return null;
   }
 
-  return <p className="mt-1 text-xs text-rose-300">{text}</p>;
+  return <p className="mt-1 text-xs text-[var(--arc-color-danger-text)]">{text}</p>;
 }
 
 function FileField({
   label,
   file,
   hint,
+  selectLabel,
   onChange,
 }: {
   label: string;
   file: File | null;
   hint: string;
+  selectLabel: string;
   onChange: (file: File | null) => void;
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs text-slate-300">{label}</label>
-      <label className="panel-border flex cursor-pointer items-center gap-2 rounded-lg bg-black/35 px-3 py-2 text-sm text-slate-200 transition hover:border-arc-accent/40">
-        <Upload size={15} className="text-arc-accent" />
-        <span className="truncate">{file ? file.name : "Выбрать изображение"}</span>
+      <label className={AUTH_LABEL_CLASS}>{label}</label>
+      <label className="panel-border flex cursor-pointer items-center gap-2 rounded-lg bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] transition hover:border-[var(--arc-color-gold)]">
+        <Upload size={15} className="text-[var(--arc-color-gold)]" />
+        <span className="truncate">{file ? file.name : selectLabel}</span>
         <input
           type="file"
           accept="image/*"
@@ -97,7 +96,7 @@ function FileField({
           onChange={(event) => onChange(event.target.files?.[0] ?? null)}
         />
       </label>
-      <p className="mt-1 text-xs text-slate-500">{hint}</p>
+      <p className="mt-1 text-xs text-[var(--arc-color-text-muted)]">{hint}</p>
     </div>
   );
 }
@@ -128,6 +127,37 @@ async function isImageWithinRule(
 }
 
 export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
+  const { t } = useUiText();
+  const loginSchema = useMemo(
+    () =>
+      z.object({
+        countryId: z.string().min(1, t("auth.chooseCountry")),
+        password: z.string().min(1, t("auth.enterPassword")),
+        rememberMe: z.boolean(),
+      }),
+    [t],
+  );
+  const registerSchema = useMemo(
+    () =>
+      z
+        .object({
+          countryName: z.string().min(2, t("auth.min2")),
+          countryColor: z.string().min(1),
+          password: z.string().min(8, t("auth.min8")),
+          confirmPassword: z.string().min(1, t("auth.repeatPassword")),
+        })
+        .superRefine((val, ctx) => {
+          if (val.password !== val.confirmPassword) {
+            ctx.addIssue({ code: "custom", message: t("auth.passwordMismatch"), path: ["confirmPassword"] });
+          }
+
+          const parsed = colord(val.countryColor);
+          if (!parsed.isValid()) {
+            ctx.addIssue({ code: "custom", message: t("auth.invalidHex"), path: ["countryColor"] });
+          }
+        }),
+    [t],
+  );
   const [countries, setCountries] = useState<Country[]>([]);
   const [serverStatus, setServerStatus] = useState<ServerStatus>("offline");
   const [loading, setLoading] = useState(true);
@@ -142,12 +172,12 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
     countryName: "",
   });
 
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
+  const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { countryId: "", password: "", rememberMe: true },
   });
 
-  const registerForm = useForm<z.infer<typeof registerSchema>>({
+  const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { countryName: "", countryColor: "#4ade80", password: "", confirmPassword: "" },
   });
@@ -156,7 +186,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
     try {
       const raw = localStorage.getItem(REMEMBER_LOGIN_KEY);
       if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<z.infer<typeof loginSchema>>;
+      const parsed = JSON.parse(raw) as Partial<LoginFormValues>;
       if (typeof parsed.countryId === "string") {
         loginForm.setValue("countryId", parsed.countryId);
       }
@@ -262,7 +292,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
         throw new Error("COUNTRY_NOT_FOUND");
       }
 
-      toast.success("Успешный вход");
+      toast.success(t("auth.loginSuccess"));
       try {
         if (values.rememberMe) {
           localStorage.setItem(
@@ -290,25 +320,25 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
       const msg = err instanceof Error ? err.message : "LOGIN_FAILED";
       const [msgCode, lockReasonRaw] = msg.split("__REASON__");
       const lockReasonText = lockReasonRaw ? decodeURIComponent(lockReasonRaw) : "";
-      let text = "Сервер недоступен";
+      let text = t("auth.serverUnavailable");
 
       if (msgCode === "INVALID_PASSWORD") {
-        text = "Неверный пароль";
+        text = t("auth.invalidPassword");
       } else if (msgCode === "REGISTRATION_PENDING_APPROVAL") {
-        text = "Регистрация ожидает подтверждения администратора";
+        text = t("auth.registrationPendingApproval");
       } else if (msgCode === "ACCOUNT_LOCKED_PERMANENT" || msgCode === "ACCOUNT_LOCKED") {
-        text = "Аккаунт заблокирован бессрочно";
+        text = t("auth.accountLockedPermanent");
       } else if (msgCode.startsWith("ACCOUNT_LOCKED_TURN_")) {
         const turn = msgCode.replace("ACCOUNT_LOCKED_TURN_", "");
-        text = `Аккаунт заблокирован до хода #${turn}`;
+        text = t("auth.accountLockedTurn", { turn });
       } else if (msgCode.startsWith("ACCOUNT_LOCKED_TIME_")) {
         const raw = msgCode.replace("ACCOUNT_LOCKED_TIME_", "");
         const when = new Date(raw);
         text = Number.isNaN(when.getTime())
-          ? `Аккаунт заблокирован до ${raw}`
-          : `Аккаунт заблокирован до ${when.toLocaleString()}`;
+          ? t("auth.accountLockedTime", { time: raw })
+          : t("auth.accountLockedTime", { time: when.toLocaleString() });
       }
-      toast.error(text, lockReasonText ? { description: `Причина: ${lockReasonText}` } : undefined);
+      toast.error(text, lockReasonText ? { description: t("auth.lockReason", { reason: lockReasonText }) } : undefined);
     } finally {
       setSubmitting(false);
     }
@@ -316,12 +346,12 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
 
   const submitRegister = registerForm.handleSubmit(async (values) => {
     if (flagFile && !(await isImageWithinRule(flagFile, { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 }))) {
-      toast.error("Флаг: максимум 192x128, соотношение 3:2");
+      toast.error(t("auth.flagInvalid"));
       return;
     }
 
     if (crestFile && !(await isImageWithinRule(crestFile, { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 }))) {
-      toast.error("Герб: максимум 128x192, соотношение 2:3");
+      toast.error(t("auth.crestInvalid"));
       return;
     }
 
@@ -341,20 +371,20 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
       registerForm.reset({ countryName: "", countryColor: "#4ade80", password: "", confirmPassword: "" });
       if (country.isRegistrationApproved === false) {
         setRegistrationPendingModal({ open: true, countryName: country.name });
-        toast.success("Заявка на регистрацию отправлена администраторам");
+        toast.success(t("auth.registrationSent"));
       } else {
-        toast.success("Страна создана, теперь войдите");
+        toast.success(t("auth.countryCreated"));
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "REGISTER_FAILED";
       if (msg === "IMAGE_DIMENSIONS_TOO_LARGE") {
-        toast.error("Проверьте формат: флаг 192x128 (3:2), герб 128x192 (2:3)");
+        toast.error(t("auth.imageFormatInvalid"));
       } else if (msg === "FILE_TOO_LARGE") {
-        toast.error("Файл слишком большой (до 4MB)");
+        toast.error(t("auth.fileTooLarge"));
       } else if (msg === "ONLY_IMAGES") {
-        toast.error("Разрешены только изображения");
+        toast.error(t("auth.onlyImages"));
       } else {
-        toast.error("Ошибка регистрации");
+        toast.error(t("auth.registrationError"));
       }
     } finally {
       setSubmitting(false);
@@ -362,39 +392,37 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
   });
 
   return (
-    <motion.div layout transition={{ layout: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } }} className="glass panel-border relative z-20 w-[min(94vw,620px)] rounded-2xl p-6 shadow-2xl">
+    <motion.div layout transition={{ layout: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } }} className="glass panel-border relative z-20 w-[min(94vw,620px)] rounded-xl p-6 shadow-2xl">
       <AnimatePresence>
         {registrationPendingModal.open && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-30 flex items-center justify-center rounded-2xl bg-black/65 p-4 backdrop-blur-sm"
+            className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-[var(--arc-modal-backdrop)] p-4 backdrop-blur-sm"
           >
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
               transition={{ duration: 0.16, ease: "easeOut" }}
-              className="glass panel-border w-full max-w-[28rem] rounded-xl border-arc-accent/20 bg-[#0b111b] p-4 shadow-2xl"
+              className="glass panel-border w-full max-w-[28rem] rounded-xl border-[var(--arc-color-gold-soft)] bg-[var(--arc-color-panel)] p-4 shadow-2xl"
             >
-              <div className="mb-2 flex items-center justify-center gap-2 text-center text-sm font-semibold text-arc-accent">
+              <div className="mb-2 flex items-center justify-center gap-2 text-center text-sm font-semibold text-[var(--arc-color-gold)]">
                 <ShieldCheck size={15} />
-                <span>Заявка на регистрацию отправлена</span>
+                <span>{t("auth.registrationSent")}</span>
               </div>
-              <div className="mb-1 text-xs text-slate-200">
-                Страна <span className="text-white">{registrationPendingModal.countryName}</span> отправлена на подтверждение администраторам.
+              <div className="mb-1 text-xs text-[var(--arc-color-text-soft)]">
+                {t("auth.registrationSentMessage", { country: registrationPendingModal.countryName })}
               </div>
-              <div className="mb-4 text-xs text-slate-400">
-                Вы сможете войти в игру после одобрения заявки.
-              </div>
+              <div className="mb-4 text-xs text-[var(--arc-color-text-muted)]">{t("auth.registrationPendingDescription")}</div>
               <div className="flex justify-center">
                 <button
                   type="button"
                   onClick={() => setRegistrationPendingModal({ open: false, countryName: "" })}
                   className="inline-flex items-center justify-center rounded-lg bg-arc-accent px-4 py-2 text-sm font-semibold text-black transition hover:brightness-110"
                 >
-                  Буду ждать
+                  {t("auth.waitButton")}
                 </button>
               </div>
             </motion.div>
@@ -404,44 +432,44 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <div className="font-display text-5xl tracking-[0.18em]">ARCANORUM</div>
-          <div className="mt-1 text-xs text-slate-500">client v0.1.0</div>
+          <div className="mt-1 text-xs text-[var(--arc-color-text-muted)]">{t("auth.clientVersion")}</div>
         </div>
-        <div className="panel-border flex items-center gap-2 rounded-lg bg-black/30 px-3 py-2 text-xs text-slate-300">
+        <div className="panel-border flex items-center gap-2 rounded-lg bg-[var(--arc-overlay-30)] px-3 py-2 text-xs text-[var(--arc-color-text-soft)]">
           <Server size={14} />
           <span className={`h-2.5 w-2.5 rounded-full ${statusMeta[serverStatus].cls} ${serverStatus === "online" ? "pulse-status" : ""}`} />
-          {statusMeta[serverStatus].text}
+          {t(statusMeta[serverStatus].labelKey)}
         </div>
       </div>
 
       {loading ? (
-        <div className="rounded-xl bg-black/30 p-4 text-sm text-slate-300">
+        <div className="rounded-xl bg-[var(--arc-overlay-30)] p-4 text-sm text-[var(--arc-color-text-soft)]">
           <div className="mb-2 flex items-center justify-center gap-2">
             <LoaderCircle className="animate-spin" size={16} />
-            Загрузка игры...
+            {t("auth.loadingGame")}
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded bg-white/10">
+          <div className="h-2.5 w-full overflow-hidden rounded bg-[var(--arc-overlay-45)]">
             <div className="h-full rounded bg-arc-accent transition-all duration-300" style={{ width: `${loadingProgress}%` }} />
           </div>
-          <div className="mt-1 text-center text-xs text-slate-500">{loadingProgress}%</div>
+          <div className="mt-1 text-center text-xs text-[var(--arc-color-text-muted)]">{loadingProgress}%</div>
         </div>
       ) : (
         <Tab.Group>
-          <Tab.List className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-black/30 p-1">
+          <Tab.List className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-[var(--arc-overlay-30)] p-1">
             <Tab
               className={({ selected }) =>
-                `inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition ${selected ? "bg-arc-accent/20 text-arc-accent" : "text-slate-300 hover:text-white"}`
+                `inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition ${selected ? "bg-[var(--arc-color-primary-bottom)] text-[var(--arc-color-text)]" : "text-[var(--arc-color-text-soft)] hover:text-[var(--arc-color-text)]"}`
               }
             >
               <LogIn size={15} />
-              Вход
+              {t("auth.login")}
             </Tab>
             <Tab
               className={({ selected }) =>
-                `inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition ${selected ? "bg-arc-accent/20 text-arc-accent" : "text-slate-300 hover:text-white"}`
+                `inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition ${selected ? "bg-[var(--arc-color-primary-bottom)] text-[var(--arc-color-text)]" : "text-[var(--arc-color-text-soft)] hover:text-[var(--arc-color-text)]"}`
               }
             >
               <UserPlus size={15} />
-              Регистрация
+              {t("auth.register")}
             </Tab>
           </Tab.List>
 
@@ -451,24 +479,24 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: "easeOut" }}>
               <form onSubmit={submitLogin} className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-xs text-slate-300">Страна</label>
+                  <label className={AUTH_LABEL_CLASS}>{t("auth.country")}</label>
                   <Listbox
                     value={selectedCountryId}
                     onChange={(value: string) => loginForm.setValue("countryId", value, { shouldDirty: true, shouldValidate: true })}
                   >
                     <div className="relative">
-                      <Listbox.Button className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 pr-10 text-left text-sm text-slate-100 outline-none transition hover:border-white/20 focus:border-arc-accent/60">
-                        {selectedCountry ? selectedCountry.name : "Выберите страну"}
+                      <Listbox.Button className={`${AUTH_INPUT_CLASS} pr-10 text-left`}>
+                        {selectedCountry ? selectedCountry.name : t("auth.selectCountry")}
                       </Listbox.Button>
-                      <Listbox.Options className="arc-scrollbar panel-border absolute z-30 mt-2 max-h-56 w-full overflow-auto rounded-lg bg-arc-panel/95 p-1 text-sm shadow-2xl outline-none">
+                      <Listbox.Options className="arc-scrollbar panel-border absolute z-30 mt-2 max-h-56 w-full overflow-auto rounded-lg bg-[var(--arc-color-panel)] p-1 text-sm shadow-2xl outline-none">
                         <Listbox.Option
                           value=""
-                          className={({ active }) => `relative cursor-pointer rounded-md px-3 py-2 pr-9 transition ${active ? "bg-arc-accent/15 text-arc-accent" : "text-slate-300"}`}
+                          className={({ active }) => AUTH_OPTION_CLASS(active)}
                         >
                           {({ selected }) => (
                             <>
-                              <span className={selected ? "text-arc-accent" : ""}>Выберите страну</span>
-                              {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-arc-accent" />}
+                              <span className={selected ? "text-[var(--arc-color-gold)]" : ""}>{t("auth.selectCountry")}</span>
+                              {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--arc-color-gold)]" />}
                             </>
                           )}
                         </Listbox.Option>
@@ -476,12 +504,12 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                           <Listbox.Option
                             key={country.id}
                             value={country.id}
-                            className={({ active }) => `relative cursor-pointer rounded-md px-3 py-2 pr-9 transition ${active ? "bg-arc-accent/15 text-arc-accent" : "text-slate-300"}`}
+                            className={({ active }) => AUTH_OPTION_CLASS(active)}
                           >
                             {({ selected }) => (
                               <>
-                                <span className={selected ? "text-arc-accent" : ""}>{country.name}</span>
-                                {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-arc-accent" />}
+                                <span className={selected ? "text-[var(--arc-color-gold)]" : ""}>{country.name}</span>
+                                {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--arc-color-gold)]" />}
                               </>
                             )}
                           </Listbox.Option>
@@ -493,24 +521,24 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs text-slate-300">Пароль</label>
-                  <input type="password" className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm outline-none transition focus:border-arc-accent/60" {...loginForm.register("password")} />
+                  <label className={AUTH_LABEL_CLASS}>{t("auth.password")}</label>
+                  <input type="password" className={AUTH_INPUT_CLASS} {...loginForm.register("password")} />
                   <FieldError text={loginForm.formState.errors.password?.message} />
                   <div className="mt-2 flex gap-2">
                     <Tooltip
                       content={
                         passwordChecks.length
-                          ? "Длина пароля подходит (минимум 8 символов)"
-                          : "Нужно минимум 8 символов"
+                          ? t("auth.passwordLengthOk")
+                          : t("auth.passwordLengthNeed")
                       }
                     >
                       <span
-                        className={`group inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-white/5 transition ${
+                        className={`group inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-[var(--arc-overlay-30)] transition ${
                           passwordChecks.length
-                            ? "border-emerald-400/40 text-emerald-500 shadow-[0_0_14px_rgba(110,231,183,0.2)]"
-                            : "border-white/10 text-slate-500"
+                            ? AUTH_STATUS_OK_CLASS
+                            : AUTH_STATUS_IDLE_CLASS
                         }`}
-                        aria-label="Проверка длины пароля"
+                        aria-label={t("auth.passwordLengthAria")}
                       >
                         <Ruler size={14} />
                       </span>
@@ -518,17 +546,17 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                     <Tooltip
                       content={
                         passwordChecks.complexity
-                          ? "Сложность пароля подходит (буквы и цифры)"
-                          : "Добавьте буквы и цифры для сложности"
+                          ? t("auth.passwordComplexityOk")
+                          : t("auth.passwordComplexityLoginNeed")
                       }
                     >
                       <span
-                        className={`group inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-white/5 transition ${
+                        className={`group inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-[var(--arc-overlay-30)] transition ${
                           passwordChecks.complexity
-                            ? "border-emerald-400/40 text-emerald-500 shadow-[0_0_14px_rgba(110,231,183,0.2)]"
-                            : "border-white/10 text-slate-500"
+                            ? AUTH_STATUS_OK_CLASS
+                            : AUTH_STATUS_IDLE_CLASS
                         }`}
-                        aria-label="Проверка сложности пароля"
+                        aria-label={t("auth.passwordComplexityAria")}
                       >
                         <Sparkles size={14} />
                       </span>
@@ -536,22 +564,22 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                   </div>
                 </div>
 
-                <label className="flex items-center gap-2 text-xs text-slate-300">
+                <label className="flex items-center gap-2 text-xs text-[var(--arc-color-text-soft)]">
                   <input type="checkbox" className="accent-arc-accent" {...loginForm.register("rememberMe")} />
-                  Запомнить меня
+                  {t("auth.rememberMe")}
                 </label>
 
                 <button disabled={submitting} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-arc-accent px-3 py-2 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-60">
                   <ShieldCheck size={15} />
-                  {submitting ? "Вход..." : "Войти"}
+                  {submitting ? t("auth.loginPending") : t("auth.enterGame")}
                 </button>
                 <button
                   type="button"
                   onClick={onOpenCivilopedia}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 transition hover:border-arc-accent/30 hover:text-arc-accent"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-3 py-2 text-sm text-[var(--arc-color-text-soft)] transition hover:border-[var(--arc-color-gold)] hover:text-[var(--arc-color-gold)]"
                 >
                   <BookOpen size={15} />
-                  Хранилище знаний
+                  {t("auth.knowledge")}
                 </button>
               </form>
               </motion.div>
@@ -561,24 +589,24 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: "easeOut" }}>
               <form onSubmit={submitRegister} className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-xs text-slate-300">Название страны</label>
-                  <input className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm outline-none transition focus:border-arc-accent/60" {...registerForm.register("countryName")} />
+                  <label className={AUTH_LABEL_CLASS}>{t("auth.countryName")}</label>
+                  <input className={AUTH_INPUT_CLASS} {...registerForm.register("countryName")} />
                   <FieldError text={registerForm.formState.errors.countryName?.message} />
                 </div>
 
                 <div>
-                  <label className="mb-1 flex items-center gap-2 text-xs text-slate-300">
-                    <Palette size={13} /> Цвет страны
+                  <label className="mb-1 flex items-center gap-2 text-xs text-[var(--arc-color-text-soft)]">
+                    <Palette size={13} /> {t("auth.countryColor")}
                   </label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
                       value={colord(registerColor).isValid() ? colord(registerColor).toHex() : "#4ade80"}
                       onChange={(e) => registerForm.setValue("countryColor", e.target.value, { shouldDirty: true, shouldValidate: true })}
-                      className="panel-border h-10 w-12 cursor-pointer rounded-lg bg-black/35 p-1"
+                      className="panel-border h-10 w-12 cursor-pointer rounded-lg bg-[var(--arc-overlay-35)] p-1"
                     />
                     <input
-                      className="flex-1 rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm outline-none transition focus:border-arc-accent/60"
+                      className={AUTH_INPUT_CLASS}
                       placeholder="#4ade80"
                       {...registerForm.register("countryColor")}
                     />
@@ -595,7 +623,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                         onClick={() => registerForm.setValue("countryColor", color, { shouldDirty: true, shouldValidate: true })}
                         className="panel-border h-6 w-6 rounded-full transition hover:scale-110"
                         style={{ backgroundColor: color }}
-                        aria-label={`Выбрать ${color}`}
+                        aria-label={t("auth.presetColor", { color })}
                       />
                     ))}
                   </div>
@@ -604,37 +632,39 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
 
                 <div className="grid gap-3 md:grid-cols-2">
                   <FileField
-                    label="Флаг"
+                    label={t("auth.flag")}
                     file={flagFile}
-                    hint="PNG/JPG/WEBP до 4MB, максимум 192x128, соотношение 3:2"
+                    hint={t("auth.flagHint")}
+                    selectLabel={t("auth.selectImage")}
                     onChange={setFlagFile}
                   />
                   <FileField
-                    label="Герб"
+                    label={t("auth.crest")}
                     file={crestFile}
-                    hint="PNG/JPG/WEBP до 4MB, максимум 128x192, соотношение 2:3"
+                    hint={t("auth.crestHint")}
+                    selectLabel={t("auth.selectImage")}
                     onChange={setCrestFile}
                   />
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <div className="panel-border rounded-lg bg-black/25 p-2">
-                    <div className="mb-2 text-xs text-slate-400">Предпросмотр флага</div>
-                    <div className="h-20 overflow-hidden rounded-md bg-black/30">
+                  <div className="panel-border rounded-lg bg-[var(--arc-overlay-30)] p-2">
+                    <div className="mb-2 text-xs text-[var(--arc-color-text-muted)]">{t("auth.flagPreview")}</div>
+                    <div className="h-20 overflow-hidden rounded-md bg-[var(--arc-overlay-35)]">
                       {flagPreviewUrl ? (
                         <img src={flagPreviewUrl} alt="flag preview" className="h-full w-full object-contain p-1" />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-xs text-slate-500">Не выбран</div>
+                        <div className="flex h-full items-center justify-center text-xs text-[var(--arc-color-text-muted)]">{t("auth.noFileSelected")}</div>
                       )}
                     </div>
                   </div>
-                  <div className="panel-border rounded-lg bg-black/25 p-2">
-                    <div className="mb-2 text-xs text-slate-400">Предпросмотр герба</div>
-                    <div className="h-20 overflow-hidden rounded-md bg-black/30">
+                  <div className="panel-border rounded-lg bg-[var(--arc-overlay-30)] p-2">
+                    <div className="mb-2 text-xs text-[var(--arc-color-text-muted)]">{t("auth.crestPreview")}</div>
+                    <div className="h-20 overflow-hidden rounded-md bg-[var(--arc-overlay-35)]">
                       {crestPreviewUrl ? (
                         <img src={crestPreviewUrl} alt="crest preview" className="h-full w-full object-contain p-1" />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-xs text-slate-500">Не выбран</div>
+                        <div className="flex h-full items-center justify-center text-xs text-[var(--arc-color-text-muted)]">{t("auth.noFileSelected")}</div>
                       )}
                     </div>
                   </div>
@@ -642,24 +672,24 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
 
                 <div className="grid gap-3 md:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-xs text-slate-300">Пароль</label>
-                    <input type="password" className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm outline-none transition focus:border-arc-accent/60" {...registerForm.register("password")} />
+                    <label className={AUTH_LABEL_CLASS}>{t("auth.password")}</label>
+                    <input type="password" className={AUTH_INPUT_CLASS} {...registerForm.register("password")} />
                     <FieldError text={registerForm.formState.errors.password?.message} />
                     <div className="mt-2 flex gap-2">
                       <Tooltip
                         content={
                           registerPasswordChecks.length
-                            ? "Длина пароля подходит (минимум 8 символов)"
-                            : "Нужно минимум 8 символов"
+                            ? t("auth.passwordLengthOk")
+                            : t("auth.passwordLengthNeed")
                         }
                       >
                         <span
-                          className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-white/5 transition ${
+                          className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-[var(--arc-overlay-30)] transition ${
                             registerPasswordChecks.length
-                              ? "border-emerald-400/40 text-emerald-500 shadow-[0_0_14px_rgba(110,231,183,0.2)]"
-                              : "border-white/10 text-slate-500"
+                              ? AUTH_STATUS_OK_CLASS
+                              : AUTH_STATUS_IDLE_CLASS
                           }`}
-                          aria-label="Проверка длины пароля"
+                          aria-label={t("auth.passwordLengthAria")}
                         >
                           <Ruler size={14} />
                         </span>
@@ -667,17 +697,17 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                       <Tooltip
                         content={
                           registerPasswordChecks.complexity
-                            ? "Сложность пароля подходит (буквы, цифры и спецсимвол)"
-                            : "Добавьте заглавную букву, цифру и спецсимвол"
+                            ? t("auth.passwordComplexityOk")
+                            : t("auth.passwordComplexityNeed")
                         }
                       >
                         <span
-                          className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-white/5 transition ${
+                          className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-[var(--arc-overlay-30)] transition ${
                             registerPasswordChecks.complexity
-                              ? "border-emerald-400/40 text-emerald-500 shadow-[0_0_14px_rgba(110,231,183,0.2)]"
-                              : "border-white/10 text-slate-500"
+                              ? AUTH_STATUS_OK_CLASS
+                              : AUTH_STATUS_IDLE_CLASS
                           }`}
-                          aria-label="Проверка сложности пароля"
+                          aria-label={t("auth.passwordComplexityAria")}
                         >
                           <Sparkles size={14} />
                         </span>
@@ -685,23 +715,23 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs text-slate-300">Повтор пароля</label>
-                    <input type="password" className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm outline-none transition focus:border-arc-accent/60" {...registerForm.register("confirmPassword")} />
+                    <label className={AUTH_LABEL_CLASS}>{t("auth.repeatPassword")}</label>
+                    <input type="password" className={AUTH_INPUT_CLASS} {...registerForm.register("confirmPassword")} />
                     <FieldError text={registerForm.formState.errors.confirmPassword?.message} />
                   </div>
                 </div>
 
                 <button disabled={submitting} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-arc-accent px-3 py-2 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-60">
                   <UserPlus size={15} />
-                  {submitting ? "Создание..." : "Создать страну"}
+                  {submitting ? t("auth.creating") : t("auth.createCountry")}
                 </button>
                 <button
                   type="button"
                   onClick={onOpenCivilopedia}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 transition hover:border-arc-accent/30 hover:text-arc-accent"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-3 py-2 text-sm text-[var(--arc-color-text-soft)] transition hover:border-[var(--arc-color-gold)] hover:text-[var(--arc-color-gold)]"
                 >
                   <BookOpen size={15} />
-                  Хранилище знаний
+                  {t("auth.knowledge")}
                 </button>
               </form>
               </motion.div>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Coins, Flag, Image as ImageIcon, Map, Palette, RefreshCcw, Save, ScrollText, Timer, Wallet, Monitor } from "lucide-react";
 import { toast } from "sonner";
+import type { UiTextKey } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 import { adminRecalculateAutoRegionCosts, adminUploadResourceIcons, adminUploadUiBackground, applyAdminScenario, fetchAdminScenarios, fetchGameSettings, type GameSettings, type ResourceIconsMap, type ScenarioDescriptor, updateGameSettings } from "../lib/api";
 import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
@@ -15,16 +17,46 @@ type Props = {
 };
 
 const categories = [
-  { id: "scenarios", label: "Сценарии", icon: Map },
-  { id: "economy", label: "Экономика", icon: Wallet },
-  { id: "turnTimer", label: "Таймер хода", icon: Timer },
-  { id: "colonization", label: "Колонизация", icon: Flag },
-  { id: "registration", label: "Регистрация", icon: Flag },
-  { id: "customization", label: "Кастомизация", icon: Palette },
-  { id: "eventLog", label: "Журнал событий", icon: ScrollText },
-  { id: "background", label: "Фон интерфейса", icon: Monitor },
-  { id: "resourceIcons", label: "Иконки очков", icon: ImageIcon },
+  { id: "scenarios", labelKey: "gameSettings.category.scenarios", icon: Map },
+  { id: "economy", labelKey: "gameSettings.category.economy", icon: Wallet },
+  { id: "turnTimer", labelKey: "gameSettings.category.turnTimer", icon: Timer },
+  { id: "colonization", labelKey: "gameSettings.category.colonization", icon: Flag },
+  { id: "registration", labelKey: "gameSettings.category.registration", icon: Flag },
+  { id: "customization", labelKey: "gameSettings.category.customization", icon: Palette },
+  { id: "eventLog", labelKey: "gameSettings.category.eventLog", icon: ScrollText },
+  { id: "background", labelKey: "gameSettings.category.background", icon: Monitor },
+  { id: "resourceIcons", labelKey: "gameSettings.category.resourceIcons", icon: ImageIcon },
 ] as const;
+
+const panelClass = "space-y-4 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4";
+const nestedPanelClass = "rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2";
+const inputClass = "w-full rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2 text-sm text-[rgb(var(--theme-text-primary))]";
+const labelClass = "mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]";
+const sectionTitleClass = "flex items-center gap-2 text-sm text-[rgb(var(--theme-text-primary))]";
+const mutedTextClass = "text-xs text-[rgb(var(--theme-text-muted))]";
+const toggleClass = (enabled: boolean) =>
+  `relative inline-flex h-7 w-12 items-center rounded-full border transition ${
+    enabled
+      ? "border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))]"
+      : "border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))]"
+  }`;
+const toggleKnobClass = (enabled: boolean) =>
+  `h-5 w-5 rounded-full transition ${
+    enabled
+      ? "translate-x-6 bg-[rgb(var(--theme-success))] shadow-[0_0_12px_rgb(var(--theme-success-soft))]"
+      : "translate-x-1 bg-[rgb(var(--theme-text-muted))]"
+  }`;
+
+const resourceLabelKeyById: Record<keyof ResourceIconsMap, UiTextKey> = {
+  population: "gameSettings.resource.population",
+  culture: "shell.resource.culture",
+  science: "shell.resource.science",
+  religion: "shell.resource.religion",
+  colonization: "shell.resource.colonization",
+  construction: "shell.resource.construction",
+  ducats: "shell.resource.ducats",
+  gold: "shell.resource.gold",
+};
 
 async function isImageWithinMaxSize(file: File, maxSize = 64): Promise<boolean> {
   return new Promise((resolve) => {
@@ -44,6 +76,7 @@ async function isImageWithinMaxSize(file: File, maxSize = 64): Promise<boolean> 
 }
 
 export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated, onSettingsUpdated }: Props) {
+  const { t } = useUiText();
   const [activeCategory, setActiveCategory] = useState<(typeof categories)[number]["id"]>("economy");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -146,7 +179,7 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
         setResourceIconFiles({});
       })
       .catch(() => {
-        if (!cancelled) toast.error("Не удалось загрузить настройки игры");
+        if (!cancelled) toast.error(t("gameSettings.loadFailed"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -160,7 +193,7 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
         setActiveScenarioId(result.activeScenarioId);
       })
       .catch(() => {
-        if (!cancelled) toast.error("Не удалось загрузить сценарии");
+        if (!cancelled) toast.error(t("gameSettings.scenariosLoadFailed"));
       })
       .finally(() => {
         if (!cancelled) setLoadingScenarios(false);
@@ -169,7 +202,7 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
     return () => {
       cancelled = true;
     };
-  }, [open, token]);
+  }, [open, t, token]);
 
   const saveEconomy = async () => {
     setSaving(true);
@@ -209,9 +242,9 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
       setExplorationDurationTurns(updated.economy.explorationDurationTurns ?? 1);
       setExplorationRollsPerExpedition(updated.economy.explorationRollsPerExpedition ?? 3);
       onSettingsUpdated?.(updated);
-      toast.success("Настройки экономики сохранены");
+      toast.success(t("gameSettings.economySaved"));
     } catch {
-      toast.error("Не удалось сохранить настройки экономики");
+      toast.error(t("gameSettings.economySaveFailed"));
     } finally {
       setSaving(false);
     }
@@ -244,9 +277,9 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
       setColonizationSettlementPopulationOnCapture(updated.colonization.settlementPopulationOnCapture ?? 1_000);
       setShowAntarctica(updated.map?.showAntarctica ?? true);
       onSettingsUpdated?.(updated);
-      toast.success("Настройки колонизации сохранены");
+      toast.success(t("gameSettings.colonizationSaved"));
     } catch {
-      toast.error("Не удалось сохранить настройки колонизации");
+      toast.error(t("gameSettings.colonizationSaveFailed"));
     } finally {
       setSaving(false);
     }
@@ -256,9 +289,9 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
     setSaving(true);
     try {
       const result = await adminRecalculateAutoRegionCosts(token);
-      toast.success(`Пересчитаны авто-цены: ${result.updatedCount}`);
+      toast.success(t("gameSettings.autoCostsRecalculated", { count: result.updatedCount }));
     } catch {
-      toast.error("Не удалось пересчитать авто-цены");
+      toast.error(t("gameSettings.autoCostsRecalculateFailed"));
     } finally {
       setSaving(false);
     }
@@ -282,9 +315,9 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
       setCrestDucats(updated.customization.crestDucats);
       setProvinceRenameDucats(updated.customization.provinceRenameDucats ?? 25);
       onSettingsUpdated?.(updated);
-      toast.success("Цены кастомизации сохранены");
+      toast.success(t("gameSettings.customizationSaved"));
     } catch {
-      toast.error("Не удалось сохранить цены кастомизации");
+      toast.error(t("gameSettings.customizationSaveFailed"));
     } finally {
       setSaving(false);
     }
@@ -298,9 +331,9 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
       });
       setEventLogRetentionTurns(updated.eventLog.retentionTurns);
       onSettingsUpdated?.(updated);
-      toast.success("Настройки журнала событий сохранены");
+      toast.success(t("gameSettings.eventLogSaved"));
     } catch {
-      toast.error("Не удалось сохранить настройки журнала событий");
+      toast.error(t("gameSettings.eventLogSaveFailed"));
     } finally {
       setSaving(false);
     }
@@ -314,9 +347,9 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
       });
       setRequireAdminApprovalForRegistration(updated.registration?.requireAdminApproval ?? false);
       onSettingsUpdated?.(updated);
-      toast.success("Настройки регистрации сохранены");
+      toast.success(t("gameSettings.registrationSaved"));
     } catch {
-      toast.error("Не удалось сохранить настройки регистрации");
+      toast.error(t("gameSettings.registrationSaveFailed"));
     } finally {
       setSaving(false);
     }
@@ -336,15 +369,15 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
       setTurnTimerSeconds(updated.turnTimer.secondsPerTurn);
       setTurnTimerPauseWhenNoPlayersOnline(updated.turnTimer.pauseWhenNoPlayersOnline ?? false);
       onSettingsUpdated?.(updated);
-      toast.success("Таймер хода сохранён");
+      toast.success(t("gameSettings.turnTimerSaved"));
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
       if (message.includes("GAME_SETTINGS_INVALID")) {
-        toast.error("Не удалось сохранить таймер хода", {
-          description: "Допустимый диапазон: от 10 до 2 592 000 секунд (до 30 дней)",
+        toast.error(t("gameSettings.turnTimerSaveFailed"), {
+          description: t("gameSettings.turnTimerRange"),
         });
       } else {
-        toast.error("Не удалось сохранить таймер хода");
+        toast.error(t("gameSettings.turnTimerSaveFailed"));
       }
     } finally {
       setSaving(false);
@@ -354,14 +387,14 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
   const saveResourceIcons = async () => {
     const selected = Object.entries(resourceIconFiles).filter(([, f]) => f) as Array<[keyof ResourceIconsMap, File]>;
     if (selected.length === 0) {
-      toast.error("Сначала выберите хотя бы одну иконку");
+      toast.error(t("gameSettings.resourceIconSelectFirst"));
       return;
     }
 
     for (const [key, file] of selected) {
       const ok = await isImageWithinMaxSize(file, 64);
       if (!ok) {
-        toast.error(`Иконка "${key}" должна быть максимум 64x64`);
+        toast.error(t("gameSettings.resourceIconTooLargeFor", { resource: t(resourceLabelKeyById[key]) }));
         return;
       }
     }
@@ -372,13 +405,13 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
       setResourceIcons(updated.resourceIcons);
       setResourceIconFiles({});
       onResourceIconsUpdated?.(updated.resourceIcons);
-      toast.success("Иконки очков обновлены");
+      toast.success(t("gameSettings.resourceIconsSaved"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "RESOURCE_ICONS_UPDATE_FAILED";
       if (msg === "IMAGE_DIMENSIONS_TOO_LARGE") {
-        toast.error("Иконка должна быть максимум 64x64");
+        toast.error(t("gameSettings.resourceIconTooLarge"));
       } else {
-        toast.error("Не удалось обновить иконки очков");
+        toast.error(t("gameSettings.resourceIconsSaveFailed"));
       }
     } finally {
       setSaving(false);
@@ -387,12 +420,12 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
 
   const saveUiBackground = async () => {
     if (!uiBackgroundFile) {
-      toast.error("Сначала выберите изображение");
+      toast.error(t("gameSettings.backgroundSelectFirst"));
       return;
     }
     const ok = await isImageWithinMaxSize(uiBackgroundFile, 4096);
     if (!ok) {
-      toast.error("Фоновое изображение должно быть максимум 4096x4096");
+      toast.error(t("gameSettings.backgroundTooLarge"));
       return;
     }
     setSaving(true);
@@ -402,13 +435,13 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
       setUiBackgroundFile(null);
       const next = await fetchGameSettings(token);
       onSettingsUpdated?.(next);
-      toast.success("Фон интерфейса обновлён");
+      toast.success(t("gameSettings.backgroundSaved"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "UI_BACKGROUND_UPDATE_FAILED";
       if (msg === "IMAGE_DIMENSIONS_TOO_LARGE") {
-        toast.error("Фоновое изображение должно быть максимум 4096x4096");
+        toast.error(t("gameSettings.backgroundTooLarge"));
       } else {
-        toast.error("Не удалось обновить фон интерфейса");
+        toast.error(t("gameSettings.backgroundSaveFailed"));
       }
     } finally {
       setSaving(false);
@@ -422,9 +455,9 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
       setUiBackgroundImageUrl(updated.map.backgroundImageUrl ?? null);
       setUiBackgroundFile(null);
       onSettingsUpdated?.(updated);
-      toast.success("Фон интерфейса удалён");
+      toast.success(t("gameSettings.backgroundCleared"));
     } catch {
-      toast.error("Не удалось удалить фон интерфейса");
+      toast.error(t("gameSettings.backgroundClearFailed"));
     } finally {
       setSaving(false);
     }
@@ -432,36 +465,27 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
 
   const applyScenario = async (scenario: ScenarioDescriptor) => {
     const confirmed = window.confirm(
-      `Начать новую игру по сценарию "${scenario.name}"?\n\nТекущее состояние мира, очереди и прогресс будут сброшены.`,
+      t("gameSettings.applyScenarioConfirm", { scenario: scenario.name }),
     );
     if (!confirmed) return;
     setApplyingScenarioId(scenario.id);
     try {
       const result = await applyAdminScenario(token, scenario.id);
       setActiveScenarioId(result.activeScenarioId);
-      toast.success("Сценарий применён", { description: "Страница будет перезагружена для новой карты" });
+      toast.success(t("gameSettings.scenarioApplied"), { description: t("gameSettings.scenarioAppliedDescription") });
       window.setTimeout(() => window.location.reload(), 500);
     } catch {
-      toast.error("Не удалось применить сценарий");
+      toast.error(t("gameSettings.scenarioApplyFailed"));
     } finally {
       setApplyingScenarioId(null);
     }
   };
 
-  const resourceLabels: Array<[keyof ResourceIconsMap, string]> = [
-    ["population", "Население"],
-    ["culture", "Культура"],
-    ["science", "Наука"],
-    ["religion", "Религия"],
-    ["colonization", "Колонизация"],
-    ["construction", "Строительство"],
-    ["ducats", "Дукаты"],
-    ["gold", "Золото"],
-  ];
+  const resourceLabels = Object.entries(resourceLabelKeyById) as Array<[keyof ResourceIconsMap, UiTextKey]>;
 
   return (
     <AppModal open={open} onClose={onClose} modalKey="game-settings" zIndexClassName="z-[125]" paddingClassName="p-4" panelClassName="rounded-none">
-          <AppModalHeader title="Настройки игры" onClose={onClose} />
+          <AppModalHeader title={t("gameSettings.title")} onClose={onClose} />
 
           <div className="grid h-[calc(100vh-92px)] gap-4 md:grid-cols-[260px_1fr]">
             <AppSection className="arc-scrollbar overflow-auto p-2">
@@ -474,30 +498,28 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                   className="mb-2 w-full justify-start"
                   icon={<cat.icon size={14} />}
                 >
-                  {cat.label}
+                  {t(cat.labelKey)}
                 </AppButton>
               ))}
             </AppSection>
 
             <AppSection className="arc-scrollbar overflow-auto p-4">
               {loading ? (
-                <div className="text-sm text-slate-400">Загрузка настроек...</div>
+                <div className="text-sm text-[rgb(var(--theme-text-muted))]">{t("gameSettings.loading")}</div>
               ) : (
                 <div className="space-y-4">
                   {activeCategory === "scenarios" && (
-                    <div className="space-y-4 rounded-lg border border-white/10 bg-black/20 p-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-200">
-                        <Map size={15} className="text-arc-accent" />
-                        Сценарии новой игры
+                    <div className={panelClass}>
+                      <div className={sectionTitleClass}>
+                        <Map size={15} className="text-[rgb(var(--theme-accent))]" />
+                        {t("gameSettings.scenariosTitle")}
                       </div>
-                      <div className="text-xs text-slate-400">
-                        Сценарий переключает карту, content library и стартовые setup-файлы. Применение сценария создаёт новую игру и сбрасывает текущее состояние мира.
-                      </div>
+                      <div className={mutedTextClass}>{t("gameSettings.scenariosDescription")}</div>
                       {loadingScenarios ? (
-                        <div className="text-sm text-slate-400">Загрузка сценариев...</div>
+                        <div className="text-sm text-[rgb(var(--theme-text-muted))]">{t("gameSettings.scenariosLoading")}</div>
                       ) : scenarios.length === 0 ? (
-                        <div className="rounded-lg border border-white/10 bg-black/25 p-4 text-sm text-slate-300">
-                          Сценарии не найдены. Добавь папки в apps/server/data/scenarios.
+                        <div className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-4 text-sm text-[rgb(var(--theme-text-secondary))]">
+                          {t("gameSettings.scenariosEmpty")}
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -505,27 +527,27 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                             const isActive = scenario.id === activeScenarioId || scenario.active;
                             const canApply = scenario.map.hasVectorTiles && scenario.map.hasProvinces && !isActive;
                             return (
-                              <div key={scenario.id} className="rounded-lg border border-white/10 bg-black/25 p-4">
+                              <div key={scenario.id} className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-4">
                                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                                   <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <div className="truncate text-sm font-semibold text-white">{scenario.name}</div>
-                                      {isActive && <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200">Активен</span>}
-                                      {scenario.startDate && <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-300">{scenario.startDate}</span>}
+                                      <div className="truncate text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{scenario.name}</div>
+                                      {isActive && <span className="rounded-full border border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] px-2 py-0.5 text-[11px] text-[rgb(var(--theme-success))]">{t("gameSettings.scenarioActive")}</span>}
+                                      {scenario.startDate && <span className="rounded-full border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-3))] px-2 py-0.5 text-[11px] text-[rgb(var(--theme-text-secondary))]">{scenario.startDate}</span>}
                                     </div>
-                                    {scenario.description && <div className="mt-1 text-xs text-slate-400">{scenario.description}</div>}
-                                    <div className="mt-3 grid gap-2 text-xs text-slate-300 md:grid-cols-2 xl:grid-cols-4">
-                                      <div className="rounded-md border border-white/10 bg-black/25 px-3 py-2">Ход старта: {scenario.startTurn}</div>
-                                      <div className="rounded-md border border-white/10 bg-black/25 px-3 py-2">Карта: {scenario.map.root}</div>
-                                      <div className={`rounded-md border px-3 py-2 ${scenario.map.hasVectorTiles ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200" : "border-rose-400/30 bg-rose-500/10 text-rose-200"}`}>
-                                        MVT {scenario.map.hasVectorTiles ? "есть" : "нет"}
+                                    {scenario.description && <div className="mt-1 text-xs text-[rgb(var(--theme-text-muted))]">{scenario.description}</div>}
+                                    <div className="mt-3 grid gap-2 text-xs text-[rgb(var(--theme-text-secondary))] md:grid-cols-2 xl:grid-cols-4">
+                                      <div className={nestedPanelClass}>{t("gameSettings.scenarioStartTurn", { turn: scenario.startTurn })}</div>
+                                      <div className={nestedPanelClass}>{t("gameSettings.scenarioMap", { map: scenario.map.root })}</div>
+                                      <div className={`rounded-md border px-3 py-2 ${scenario.map.hasVectorTiles ? "border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] text-[rgb(var(--theme-success))]" : "border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] text-[rgb(var(--theme-danger))]"}`}>
+                                        {t("gameSettings.scenarioMvt", { value: scenario.map.hasVectorTiles ? t("gameSettings.yes") : t("gameSettings.no") })}
                                       </div>
-                                      <div className={`rounded-md border px-3 py-2 ${scenario.map.hasRasterTiles ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-black/25"}`}>
-                                        Raster {scenario.map.hasRasterTiles ? "есть" : "нет"}
+                                      <div className={`rounded-md border px-3 py-2 ${scenario.map.hasRasterTiles ? "border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] text-[rgb(var(--theme-success))]" : "border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))]"}`}>
+                                        {t("gameSettings.scenarioRaster", { value: scenario.map.hasRasterTiles ? t("gameSettings.yes") : t("gameSettings.no") })}
                                       </div>
                                     </div>
-                                    <div className="mt-2 text-xs text-slate-500">
-                                      Content: {scenario.contentFiles.length || 0} файлов · Setup: {scenario.setupFiles.length || 0} файлов
+                                    <div className="mt-2 text-xs text-[rgb(var(--theme-text-muted))]">
+                                      {t("gameSettings.scenarioFiles", { content: scenario.contentFiles.length || 0, setup: scenario.setupFiles.length || 0 })}
                                     </div>
                                   </div>
                                   <AppButton
@@ -535,7 +557,7 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                                     icon={<RefreshCcw size={14} />}
                                     className="shrink-0"
                                   >
-                                    {isActive ? "Выбран" : applyingScenarioId === scenario.id ? "Запуск..." : "Начать"}
+                                    {isActive ? t("gameSettings.scenarioSelected") : applyingScenarioId === scenario.id ? t("gameSettings.scenarioStarting") : t("gameSettings.scenarioStart")}
                                   </AppButton>
                                 </div>
                               </div>
@@ -547,49 +569,49 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                   )}
 
                   {activeCategory === "economy" && (
-                    <div className="space-y-4 rounded-lg border border-white/10 bg-black/20 p-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-200">
-                        <Coins size={15} className="text-arc-accent" />
-                        Базовый доход за каждый резолв хода
+                    <div className={panelClass}>
+                      <div className={sectionTitleClass}>
+                        <Coins size={15} className="text-[rgb(var(--theme-accent))]" />
+                        {t("gameSettings.economyTitle")}
                       </div>
                       <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-7">
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Культура / ход</label>
-                          <input type="number" min={0} value={baseCulturePerTurn} onChange={(e) => setBaseCulturePerTurn(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                          <label className={labelClass}>{t("gameSettings.economy.culturePerTurn")}</label>
+                          <input type="number" min={0} value={baseCulturePerTurn} onChange={(e) => setBaseCulturePerTurn(Math.max(0, Number(e.target.value) || 0))} className={inputClass} />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Наука / ход</label>
-                          <input type="number" min={0} value={baseSciencePerTurn} onChange={(e) => setBaseSciencePerTurn(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                          <label className={labelClass}>{t("gameSettings.economy.sciencePerTurn")}</label>
+                          <input type="number" min={0} value={baseSciencePerTurn} onChange={(e) => setBaseSciencePerTurn(Math.max(0, Number(e.target.value) || 0))} className={inputClass} />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Религия / ход</label>
-                          <input type="number" min={0} value={baseReligionPerTurn} onChange={(e) => setBaseReligionPerTurn(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                          <label className={labelClass}>{t("gameSettings.economy.religionPerTurn")}</label>
+                          <input type="number" min={0} value={baseReligionPerTurn} onChange={(e) => setBaseReligionPerTurn(Math.max(0, Number(e.target.value) || 0))} className={inputClass} />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Очки строительства / ход</label>
-                          <input type="number" min={0} value={baseConstructionPerTurn} onChange={(e) => setBaseConstructionPerTurn(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                          <label className={labelClass}>{t("gameSettings.economy.constructionPerTurn")}</label>
+                          <input type="number" min={0} value={baseConstructionPerTurn} onChange={(e) => setBaseConstructionPerTurn(Math.max(0, Number(e.target.value) || 0))} className={inputClass} />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Дукаты / ход</label>
-                          <input type="number" min={0} value={baseDucatsPerTurn} onChange={(e) => setBaseDucatsPerTurn(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                          <label className={labelClass}>{t("gameSettings.economy.ducatsPerTurn")}</label>
+                          <input type="number" min={0} value={baseDucatsPerTurn} onChange={(e) => setBaseDucatsPerTurn(Math.max(0, Number(e.target.value) || 0))} className={inputClass} />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Золото / ход</label>
-                          <input type="number" min={0} value={baseGoldPerTurn} onChange={(e) => setBaseGoldPerTurn(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                          <label className={labelClass}>{t("gameSettings.economy.goldPerTurn")}</label>
+                          <input type="number" min={0} value={baseGoldPerTurn} onChange={(e) => setBaseGoldPerTurn(Math.max(0, Number(e.target.value) || 0))} className={inputClass} />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Снос постройки (% строительства)</label>
+                          <label className={labelClass}>{t("gameSettings.economy.demolitionCost")}</label>
                           <input
                             type="number"
                             min={0}
                             max={100}
                             value={demolitionCostConstructionPercent}
                             onChange={(e) => setDemolitionCostConstructionPercent(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                            className={inputClass}
                           />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Сглаживание цены рынка (0..1)</label>
+                          <label className={labelClass}>{t("gameSettings.economy.marketSmoothing")}</label>
                           <input
                             type="number"
                             min={0}
@@ -597,46 +619,46 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                             step={0.01}
                             value={marketPriceSmoothing}
                             onChange={(e) => setMarketPriceSmoothing(Math.min(1, Math.max(0, Number(e.target.value) || 0)))}
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                            className={inputClass}
                           />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Потеря прочности/ход (неактивные)</label>
+                          <label className={labelClass}>{t("gameSettings.economy.durabilityDecay")}</label>
                           <input
                             type="number"
                             min={0}
                             step={0.1}
                             value={buildingDurabilityDecayPerTurn}
                             onChange={(e) => setBuildingDurabilityDecayPerTurn(Math.max(0, Number(e.target.value) || 0))}
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                            className={inputClass}
                           />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Восстановление прочности/ход (активные)</label>
+                          <label className={labelClass}>{t("gameSettings.economy.durabilityRecovery")}</label>
                           <input
                             type="number"
                             min={0}
                             step={0.1}
                             value={buildingDurabilityRecoveryPerTurn}
                             onChange={(e) => setBuildingDurabilityRecoveryPerTurn(Math.max(0, Number(e.target.value) || 0))}
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                            className={inputClass}
                           />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Эффект загрязнения / 1000</label>
+                          <label className={labelClass}>{t("gameSettings.economy.pollutionEffect")}</label>
                           <input
                             type="number"
                             min={0}
                             step={0.01}
                             value={pollutionProductivityEffectPer1000}
                             onChange={(e) => setPollutionProductivityEffectPer1000(Math.max(0, Number(e.target.value) || 0))}
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                            className={inputClass}
                           />
                         </div>
                       </div>
                       <div className="grid gap-3 md:grid-cols-4">
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Базовый шанс пустой разведки (%)</label>
+                          <label className={labelClass}>{t("gameSettings.economy.explorationEmptyChance")}</label>
                           <input
                             type="number"
                             min={0}
@@ -644,11 +666,11 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                             step={0.1}
                             value={explorationBaseEmptyChancePct}
                             onChange={(e) => setExplorationBaseEmptyChancePct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                            className={inputClass}
                           />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Рост шанса пусто за попытку (%)</label>
+                          <label className={labelClass}>{t("gameSettings.economy.explorationDepletion")}</label>
                           <input
                             type="number"
                             min={0}
@@ -658,21 +680,21 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                             onChange={(e) =>
                               setExplorationDepletionPerAttemptPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))
                             }
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                            className={inputClass}
                           />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Длительность разведки (ходы)</label>
+                          <label className={labelClass}>{t("gameSettings.economy.explorationDuration")}</label>
                           <input
                             type="number"
                             min={1}
                             value={explorationDurationTurns}
                             onChange={(e) => setExplorationDurationTurns(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                            className={inputClass}
                           />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Роллов за разведку</label>
+                          <label className={labelClass}>{t("gameSettings.economy.explorationRolls")}</label>
                           <input
                             type="number"
                             min={1}
@@ -680,47 +702,39 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                             onChange={(e) =>
                               setExplorationRollsPerExpedition(Math.max(1, Math.floor(Number(e.target.value) || 1)))
                             }
-                            className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                            className={inputClass}
                           />
                         </div>
                       </div>
                       <AppButton onClick={() => void saveEconomy()} disabled={saving} variant="primary" icon={<Save size={14} />}>
-                        Сохранить
+                        {t("common.save")}
                       </AppButton>
                     </div>
                   )}
 
                   {activeCategory === "turnTimer" && (
-                    <div className="space-y-4 rounded-lg border border-white/10 bg-black/20 p-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-200">
-                        <RefreshCcw size={15} className="text-arc-accent" />
-                        Автоматический переход хода по таймеру
+                    <div className={panelClass}>
+                      <div className={sectionTitleClass}>
+                        <RefreshCcw size={15} className="text-[rgb(var(--theme-accent))]" />
+                        {t("gameSettings.turnTimerTitle")}
                       </div>
-                      <label className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                      <label className="flex items-center justify-between gap-3 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2">
                         <div>
-                          <div className="text-sm text-slate-100">Включить авто-переход хода</div>
-                          <div className="text-xs text-slate-500">Сервер завершит ход по таймеру даже если не все страны нажали следующий ход</div>
+                          <div className="text-sm text-[rgb(var(--theme-text-primary))]">{t("gameSettings.turnTimerEnabled")}</div>
+                          <div className={mutedTextClass}>{t("gameSettings.turnTimerEnabledDescription")}</div>
                         </div>
                         <button
                           type="button"
                           onClick={() => setTurnTimerEnabled((v) => !v)}
-                          className={`relative inline-flex h-7 w-12 items-center rounded-full border transition ${
-                            turnTimerEnabled ? "border-emerald-400/50 bg-emerald-500/20" : "border-white/10 bg-white/5"
-                          }`}
+                          className={toggleClass(turnTimerEnabled)}
                           aria-pressed={turnTimerEnabled}
-                          aria-label={turnTimerEnabled ? "Выключить таймер хода" : "Включить таймер хода"}
+                          aria-label={turnTimerEnabled ? t("gameSettings.turnTimerDisable") : t("gameSettings.turnTimerEnable")}
                         >
-                          <span
-                            className={`h-5 w-5 rounded-full transition ${
-                              turnTimerEnabled
-                                ? "translate-x-6 bg-emerald-500 shadow-[0_0_12px_rgba(110,231,183,0.45)]"
-                                : "translate-x-1 bg-white/60"
-                            }`}
-                          />
+                          <span className={toggleKnobClass(turnTimerEnabled)} />
                         </button>
                       </label>
                       <div>
-                        <label className="mb-1 block text-xs text-slate-300">Секунд на ход</label>
+                        <label className={labelClass}>{t("gameSettings.turnTimerSeconds")}</label>
                         <input
                           type="number"
                           min={10}
@@ -731,125 +745,97 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                               Math.min(2_592_000, Math.max(10, Number(e.target.value) || 10)),
                             )
                           }
-                          className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm"
+                          className={inputClass}
                         />
-                        <div className="mt-1 text-xs text-slate-500">
-                          Диапазон: 10–2 592 000 секунд (до 30 дней). Таймер сбрасывается после каждого резолва хода.
-                        </div>
+                        <div className={`mt-1 ${mutedTextClass}`}>{t("gameSettings.turnTimerRange")}</div>
                       </div>
-                      <label className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                      <label className="flex items-center justify-between gap-3 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2">
                         <div>
-                          <div className="text-sm text-slate-100">Пауза таймера без игроков онлайн</div>
-                          <div className="text-xs text-slate-500">Если включено, авто-таймер не тикает, пока онлайн 0 игроков.</div>
+                          <div className="text-sm text-[rgb(var(--theme-text-primary))]">{t("gameSettings.turnTimerPauseOffline")}</div>
+                          <div className={mutedTextClass}>{t("gameSettings.turnTimerPauseOfflineDescription")}</div>
                         </div>
                         <button
                           type="button"
                           onClick={() => setTurnTimerPauseWhenNoPlayersOnline((v) => !v)}
-                          className={`relative inline-flex h-7 w-12 items-center rounded-full border transition ${
-                            turnTimerPauseWhenNoPlayersOnline ? "border-emerald-400/50 bg-emerald-500/20" : "border-white/10 bg-white/5"
-                          }`}
+                          className={toggleClass(turnTimerPauseWhenNoPlayersOnline)}
                           aria-pressed={turnTimerPauseWhenNoPlayersOnline}
                           aria-label={
                             turnTimerPauseWhenNoPlayersOnline
-                              ? "Выключить паузу таймера без игроков"
-                              : "Включить паузу таймера без игроков"
+                              ? t("gameSettings.turnTimerPauseDisable")
+                              : t("gameSettings.turnTimerPauseEnable")
                           }
                         >
-                          <span
-                            className={`h-5 w-5 rounded-full transition ${
-                              turnTimerPauseWhenNoPlayersOnline
-                                ? "translate-x-6 bg-emerald-500 shadow-[0_0_12px_rgba(110,231,183,0.45)]"
-                                : "translate-x-1 bg-white/60"
-                            }`}
-                          />
+                          <span className={toggleKnobClass(turnTimerPauseWhenNoPlayersOnline)} />
                         </button>
                       </label>
                       <AppButton onClick={() => void saveTurnTimer()} disabled={saving} variant="primary" icon={<Save size={14} />}>
-                        Сохранить
+                        {t("common.save")}
                       </AppButton>
                     </div>
                   )}
 
                   {activeCategory === "colonization" && (
-                    <div className="space-y-4 rounded-lg border border-white/10 bg-black/20 p-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-200">
-                        <Flag size={15} className="text-arc-accent" />
-                        Лимиты колонизации
+                    <div className={panelClass}>
+                      <div className={sectionTitleClass}>
+                        <Flag size={15} className="text-[rgb(var(--theme-accent))]" />
+                        {t("gameSettings.colonizationTitle")}
                       </div>
                       <div className="grid gap-3 md:grid-cols-2">
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Макс. одновременных колонизаций</label>
-                          <input type="number" min={1} value={maxActiveColonizations} onChange={(e) => setMaxActiveColonizations(Math.max(1, Number(e.target.value) || 1))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                          <label className={labelClass}>{t("gameSettings.colonization.maxActive")}</label>
+                          <input type="number" min={1} value={maxActiveColonizations} onChange={(e) => setMaxActiveColonizations(Math.max(1, Number(e.target.value) || 1))} className={inputClass} />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Прирост очков колонизации / ход</label>
-                          <input type="number" min={0} value={colonizationPointsPerTurn} onChange={(e) => setColonizationPointsPerTurn(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                          <label className={labelClass}>{t("gameSettings.colonization.pointsPerTurn")}</label>
+                          <input type="number" min={0} value={colonizationPointsPerTurn} onChange={(e) => setColonizationPointsPerTurn(Math.max(0, Number(e.target.value) || 0))} className={inputClass} />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Цена (очки колонизации) за 1000 км²</label>
-                          <input type="number" min={1} value={colonizationPointsCostPer1000Km2} onChange={(e) => setColonizationPointsCostPer1000Km2(Math.max(1, Number(e.target.value) || 1))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                          <label className={labelClass}>{t("gameSettings.colonization.pointsCost")}</label>
+                          <input type="number" min={1} value={colonizationPointsCostPer1000Km2} onChange={(e) => setColonizationPointsCostPer1000Km2(Math.max(1, Number(e.target.value) || 1))} className={inputClass} />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Цена (дукаты) за 1000 км²</label>
-                          <input type="number" min={0} value={colonizationDucatsCostPer1000Km2} onChange={(e) => setColonizationDucatsCostPer1000Km2(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                          <label className={labelClass}>{t("gameSettings.colonization.ducatsCost")}</label>
+                          <input type="number" min={0} value={colonizationDucatsCostPer1000Km2} onChange={(e) => setColonizationDucatsCostPer1000Km2(Math.max(0, Number(e.target.value) || 0))} className={inputClass} />
                         </div>
                         <div>
-                          <label className="mb-1 block text-xs text-slate-300">Поселенцы при захвате пустого региона</label>
-                          <input type="number" min={0} max={1_000_000_000} value={colonizationSettlementPopulationOnCapture} onChange={(e) => setColonizationSettlementPopulationOnCapture(Math.max(0, Math.min(1_000_000_000, Number(e.target.value) || 0)))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                          <label className={labelClass}>{t("gameSettings.colonization.settlersOnCapture")}</label>
+                          <input type="number" min={0} max={1_000_000_000} value={colonizationSettlementPopulationOnCapture} onChange={(e) => setColonizationSettlementPopulationOnCapture(Math.max(0, Math.min(1_000_000_000, Number(e.target.value) || 0)))} className={inputClass} />
                         </div>
-                        <label className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                        <label className="flex items-center justify-between gap-3 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2">
                           <div>
-                            <div className="text-sm text-slate-100">Стартовые поселенцы</div>
-                            <div className="text-xs text-slate-500">Добавляет население только при первом захвате пустого региона</div>
+                            <div className="text-sm text-[rgb(var(--theme-text-primary))]">{t("gameSettings.colonization.settlersEnabled")}</div>
+                            <div className={mutedTextClass}>{t("gameSettings.colonization.settlersDescription")}</div>
                           </div>
                           <button
                             type="button"
                             onClick={() => setColonizationSettlementEnabled((v) => !v)}
-                            className={`relative inline-flex h-7 w-12 items-center rounded-full border transition ${
-                              colonizationSettlementEnabled ? "border-emerald-400/50 bg-emerald-500/20" : "border-white/10 bg-white/5"
-                            }`}
+                            className={toggleClass(colonizationSettlementEnabled)}
                             aria-pressed={colonizationSettlementEnabled}
-                            aria-label={colonizationSettlementEnabled ? "Отключить стартовых поселенцев" : "Включить стартовых поселенцев"}
+                            aria-label={colonizationSettlementEnabled ? t("gameSettings.colonization.settlersDisable") : t("gameSettings.colonization.settlersEnable")}
                           >
-                            <span
-                              className={`h-5 w-5 rounded-full transition ${
-                                colonizationSettlementEnabled
-                                  ? "translate-x-6 bg-emerald-500 shadow-[0_0_12px_rgba(110,231,183,0.45)]"
-                                  : "translate-x-1 bg-white/60"
-                              }`}
-                            />
+                            <span className={toggleKnobClass(colonizationSettlementEnabled)} />
                           </button>
                         </label>
-                        <label className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                        <label className="flex items-center justify-between gap-3 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2">
                           <div>
-                            <div className="text-sm text-slate-100">Показывать Антарктиду</div>
-                            <div className="text-xs text-slate-500">Скрывает провинции Антарктиды на карте для всех игроков</div>
+                            <div className="text-sm text-[rgb(var(--theme-text-primary))]">{t("gameSettings.map.showAntarctica")}</div>
+                            <div className={mutedTextClass}>{t("gameSettings.map.showAntarcticaDescription")}</div>
                           </div>
                           <button
                             type="button"
                             onClick={() => setShowAntarctica((v) => !v)}
-                            className={`relative inline-flex h-7 w-12 items-center rounded-full border transition ${
-                              showAntarctica ? "border-emerald-400/50 bg-emerald-500/20" : "border-white/10 bg-white/5"
-                            }`}
+                            className={toggleClass(showAntarctica)}
                             aria-pressed={showAntarctica}
-                            aria-label={showAntarctica ? "Скрыть Антарктиду" : "Показать Антарктиду"}
+                            aria-label={showAntarctica ? t("gameSettings.map.hideAntarctica") : t("gameSettings.map.showAntarcticaAction")}
                           >
-                            <span
-                              className={`h-5 w-5 rounded-full transition ${
-                                showAntarctica
-                                  ? "translate-x-6 bg-emerald-500 shadow-[0_0_12px_rgba(110,231,183,0.45)]"
-                                  : "translate-x-1 bg-white/60"
-                              }`}
-                            />
+                            <span className={toggleKnobClass(showAntarctica)} />
                           </button>
                         </label>
                       </div>
-                      <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400">
-                        Базовая стоимость провинции рассчитывается от площади: `ставка за 1000 км² × площадь / 1000`. Ручная стоимость провинции в админ-редакторе остаётся как override.
-                      </div>
+                      <div className={`${nestedPanelClass} text-xs text-[rgb(var(--theme-text-muted))]`}>{t("gameSettings.colonization.costNote")}</div>
                       <div className="flex flex-wrap gap-2">
                         <AppButton onClick={() => void saveColonization()} disabled={saving} variant="primary" icon={<Save size={14} />}>
-                          Сохранить
+                          {t("common.save")}
                         </AppButton>
                         <AppButton
                           type="button"
@@ -858,100 +844,92 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                           variant="secondary"
                           icon={<RefreshCcw size={14} />}
                         >
-                          Пересчитать все авто-цены
+                          {t("gameSettings.recalculateAutoCosts")}
                         </AppButton>
                       </div>
                     </div>
                   )}
 
                   {activeCategory === "customization" && (
-                    <div className="space-y-4 rounded-lg border border-white/10 bg-black/20 p-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-200">
-                        <Coins size={15} className="text-arc-accent" />
-                        Цены на изменение страны за дукаты
+                    <div className={panelClass}>
+                      <div className={sectionTitleClass}>
+                        <Coins size={15} className="text-[rgb(var(--theme-accent))]" />
+                        {t("gameSettings.customizationTitle")}
                       </div>
                       <div className="grid gap-3 md:grid-cols-2">
-                        <div><label className="mb-1 block text-xs text-slate-300">Переименование страны</label><input type="number" min={0} value={renameDucats} onChange={(e) => setRenameDucats(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" /></div>
-                        <div><label className="mb-1 block text-xs text-slate-300">Смена цвета</label><input type="number" min={0} value={recolorDucats} onChange={(e) => setRecolorDucats(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" /></div>
-                        <div><label className="mb-1 block text-xs text-slate-300">Смена флага</label><input type="number" min={0} value={flagDucats} onChange={(e) => setFlagDucats(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" /></div>
-                        <div><label className="mb-1 block text-xs text-slate-300">Смена герба</label><input type="number" min={0} value={crestDucats} onChange={(e) => setCrestDucats(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" /></div>
-                        <div><label className="mb-1 block text-xs text-slate-300">Переименование провинции</label><input type="number" min={0} value={provinceRenameDucats} onChange={(e) => setProvinceRenameDucats(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" /></div>
+                        <div><label className={labelClass}>{t("gameSettings.customization.renameCountry")}</label><input type="number" min={0} value={renameDucats} onChange={(e) => setRenameDucats(Math.max(0, Number(e.target.value) || 0))} className={inputClass} /></div>
+                        <div><label className={labelClass}>{t("gameSettings.customization.recolor")}</label><input type="number" min={0} value={recolorDucats} onChange={(e) => setRecolorDucats(Math.max(0, Number(e.target.value) || 0))} className={inputClass} /></div>
+                        <div><label className={labelClass}>{t("gameSettings.customization.flag")}</label><input type="number" min={0} value={flagDucats} onChange={(e) => setFlagDucats(Math.max(0, Number(e.target.value) || 0))} className={inputClass} /></div>
+                        <div><label className={labelClass}>{t("gameSettings.customization.crest")}</label><input type="number" min={0} value={crestDucats} onChange={(e) => setCrestDucats(Math.max(0, Number(e.target.value) || 0))} className={inputClass} /></div>
+                        <div><label className={labelClass}>{t("gameSettings.customization.renameProvince")}</label><input type="number" min={0} value={provinceRenameDucats} onChange={(e) => setProvinceRenameDucats(Math.max(0, Number(e.target.value) || 0))} className={inputClass} /></div>
                       </div>
                       <AppButton onClick={() => void saveCustomization()} disabled={saving} variant="primary" icon={<Save size={14} />}>
-                        Сохранить
+                        {t("common.save")}
                       </AppButton>
                     </div>
                   )}
 
                   {activeCategory === "registration" && (
-                    <div className="space-y-4 rounded-lg border border-white/10 bg-black/20 p-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-200">
-                        <Flag size={15} className="text-arc-accent" />
-                        Регистрация новых стран
+                    <div className={panelClass}>
+                      <div className={sectionTitleClass}>
+                        <Flag size={15} className="text-[rgb(var(--theme-accent))]" />
+                        {t("gameSettings.registrationTitle")}
                       </div>
-                      <label className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                      <label className="flex items-center justify-between gap-3 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2">
                         <div>
-                          <div className="text-sm text-slate-100">Требовать подтверждение администратора</div>
-                          <div className="text-xs text-slate-500">Новые страны регистрируются, но не могут войти до одобрения админом</div>
+                          <div className="text-sm text-[rgb(var(--theme-text-primary))]">{t("gameSettings.registrationRequireApproval")}</div>
+                          <div className={mutedTextClass}>{t("gameSettings.registrationRequireApprovalDescription")}</div>
                         </div>
                         <button
                           type="button"
                           onClick={() => setRequireAdminApprovalForRegistration((v) => !v)}
-                          className={`relative inline-flex h-7 w-12 items-center rounded-full border transition ${
-                            requireAdminApprovalForRegistration ? "border-emerald-400/50 bg-emerald-500/20" : "border-white/10 bg-white/5"
-                          }`}
+                          className={toggleClass(requireAdminApprovalForRegistration)}
                           aria-pressed={requireAdminApprovalForRegistration}
-                          aria-label={requireAdminApprovalForRegistration ? "Выключить подтверждение регистрации" : "Включить подтверждение регистрации"}
+                          aria-label={requireAdminApprovalForRegistration ? t("gameSettings.registrationApprovalDisable") : t("gameSettings.registrationApprovalEnable")}
                         >
-                          <span
-                            className={`h-5 w-5 rounded-full transition ${
-                              requireAdminApprovalForRegistration
-                                ? "translate-x-6 bg-emerald-500 shadow-[0_0_12px_rgba(110,231,183,0.45)]"
-                                : "translate-x-1 bg-white/60"
-                            }`}
-                          />
+                          <span className={toggleKnobClass(requireAdminApprovalForRegistration)} />
                         </button>
                       </label>
                       <AppButton onClick={() => void saveRegistrationSettings()} disabled={saving} variant="primary" icon={<Save size={14} />}>
-                        Сохранить
+                        {t("common.save")}
                       </AppButton>
                     </div>
                   )}
 
                   {activeCategory === "eventLog" && (
-                    <div className="space-y-4 rounded-lg border border-white/10 bg-black/20 p-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-200">
-                        <Coins size={15} className="text-arc-accent" />
-                        Глобальные настройки журнала событий
+                    <div className={panelClass}>
+                      <div className={sectionTitleClass}>
+                        <Coins size={15} className="text-[rgb(var(--theme-accent))]" />
+                        {t("gameSettings.eventLogTitle")}
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs text-slate-300">Хранить события за последние (ходов)</label>
-                        <input type="number" min={1} max={100} value={eventLogRetentionTurns} onChange={(e) => setEventLogRetentionTurns(Math.max(1, Number(e.target.value) || 1))} className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-sm" />
+                        <label className={labelClass}>{t("gameSettings.eventLogRetention")}</label>
+                        <input type="number" min={1} max={100} value={eventLogRetentionTurns} onChange={(e) => setEventLogRetentionTurns(Math.max(1, Number(e.target.value) || 1))} className={inputClass} />
                       </div>
                       <AppButton onClick={() => void saveEventLogSettings()} disabled={saving} variant="primary" icon={<Save size={14} />}>
-                        Сохранить
+                        {t("common.save")}
                       </AppButton>
                     </div>
                   )}
 
                   {activeCategory === "background" && (
-                    <div className="space-y-4 rounded-lg border border-white/10 bg-black/20 p-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-200">
-                        <Monitor size={15} className="text-arc-accent" />
-                        Фоновое изображение интерфейса (макс. 4096x4096)
+                    <div className={panelClass}>
+                      <div className={sectionTitleClass}>
+                        <Monitor size={15} className="text-[rgb(var(--theme-accent))]" />
+                        {t("gameSettings.backgroundTitle")}
                       </div>
-                      <div className="panel-border rounded-lg bg-black/25 p-3">
-                        <div className="mb-2 text-xs text-slate-400">Текущий фон</div>
-                        <div className="flex h-40 items-center justify-center overflow-hidden rounded-md border border-white/10 bg-black/30">
+                      <div className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-3">
+                        <div className="mb-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("gameSettings.backgroundCurrent")}</div>
+                        <div className="flex h-40 items-center justify-center overflow-hidden rounded-md border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-3))]">
                           {uiBackgroundImageUrl ? (
-                            <img src={uiBackgroundImageUrl} alt="" className="h-full w-full object-cover" />
+                            <img src={uiBackgroundImageUrl} alt={t("gameSettings.backgroundCurrent")} className="h-full w-full object-cover" />
                           ) : (
-                            <div className="text-xs text-slate-500">Фон не установлен</div>
+                            <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("gameSettings.backgroundEmpty")}</div>
                           )}
                         </div>
                       </div>
-                      <label className="panel-border flex cursor-pointer items-center justify-center rounded-lg bg-white/5 px-3 py-2 text-sm text-slate-200 transition hover:border-arc-accent/40">
-                        Выбрать изображение
+                      <label className="flex cursor-pointer items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2 text-sm text-[rgb(var(--theme-text-primary))] transition hover:border-[rgb(var(--theme-accent))]">
+                        {t("gameSettings.chooseImage")}
                         <input
                           type="file"
                           accept="image/*"
@@ -959,10 +937,10 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                           onChange={(e) => setUiBackgroundFile(e.target.files?.[0] ?? null)}
                         />
                       </label>
-                      {uiBackgroundFile ? <div className="text-xs text-emerald-500">Выбран файл: {uiBackgroundFile.name}</div> : null}
+                      {uiBackgroundFile ? <div className="text-xs text-[rgb(var(--theme-success))]">{t("gameSettings.fileSelected", { file: uiBackgroundFile.name })}</div> : null}
                       <div className="flex flex-wrap gap-2">
                         <AppButton onClick={saveUiBackground} disabled={saving || !uiBackgroundFile} variant="primary" icon={<Save size={14} />}>
-                          Загрузить фон
+                          {t("gameSettings.backgroundUpload")}
                         </AppButton>
                         <AppButton
                           type="button"
@@ -970,28 +948,28 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                           disabled={saving || (!uiBackgroundImageUrl && !uiBackgroundFile)}
                           variant="danger"
                         >
-                          Удалить фон
+                          {t("gameSettings.backgroundDelete")}
                         </AppButton>
                       </div>
                     </div>
                   )}
 
                   {activeCategory === "resourceIcons" && (
-                    <div className="space-y-4 rounded-lg border border-white/10 bg-black/20 p-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-200">
-                        <Coins size={15} className="text-arc-accent" />
-                        Иконки очков в верхней панели (макс. 64x64)
+                    <div className={panelClass}>
+                      <div className={sectionTitleClass}>
+                        <Coins size={15} className="text-[rgb(var(--theme-accent))]" />
+                        {t("gameSettings.resourceIconsTitle")}
                       </div>
 
                       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                        {resourceLabels.map(([key, label]) => (
-                          <div key={key} className="panel-border rounded-lg bg-black/25 p-3">
-                            <div className="mb-2 text-xs text-slate-300">{label}</div>
-                            <div className="mb-2 flex h-16 items-center justify-center rounded-md bg-black/35">
-                              {resourceIcons[key] ? <img src={resourceIcons[key] ?? undefined} alt="" className="h-12 w-12 object-contain" /> : <div className="text-xs text-slate-500">Нет иконки</div>}
+                        {resourceLabels.map(([key, labelKey]) => (
+                          <div key={key} className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-3">
+                            <div className="mb-2 text-xs text-[rgb(var(--theme-text-secondary))]">{t(labelKey)}</div>
+                            <div className="mb-2 flex h-16 items-center justify-center rounded-md bg-[rgb(var(--theme-surface-3))]">
+                              {resourceIcons[key] ? <img src={resourceIcons[key] ?? undefined} alt={t(labelKey)} className="h-12 w-12 object-contain" /> : <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("gameSettings.resourceIconEmpty")}</div>}
                             </div>
-                            <label className="panel-border flex cursor-pointer items-center justify-center rounded-lg bg-white/5 px-2 py-2 text-xs text-slate-200 transition hover:border-arc-accent/40">
-                              Выбрать файл
+                            <label className="flex cursor-pointer items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-3))] px-2 py-2 text-xs text-[rgb(var(--theme-text-primary))] transition hover:border-[rgb(var(--theme-accent))]">
+                              {t("gameSettings.chooseFile")}
                               <input
                                 type="file"
                                 accept="image/*"
@@ -999,13 +977,13 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                                 onChange={(e) => setResourceIconFiles((prev) => ({ ...prev, [key]: e.target.files?.[0] ?? null }))}
                               />
                             </label>
-                            {resourceIconFiles[key] ? <div className="mt-1 truncate text-[10px] text-emerald-500">{resourceIconFiles[key]?.name}</div> : null}
+                            {resourceIconFiles[key] ? <div className="mt-1 truncate text-[10px] text-[rgb(var(--theme-success))]">{resourceIconFiles[key]?.name}</div> : null}
                           </div>
                         ))}
                       </div>
 
                       <AppButton onClick={saveResourceIcons} disabled={saving} variant="primary" icon={<Save size={14} />}>
-                        Загрузить иконки
+                        {t("gameSettings.resourceIconsUpload")}
                       </AppButton>
                     </div>
                   )}
