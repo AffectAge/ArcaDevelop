@@ -44,6 +44,8 @@ export function createGameSettingsPatchSchema(maxSettingNumber: number) {
         pointsPerTurn: z.coerce.number().int().min(0).max(maxSettingNumber).optional(),
         pointsCostPer1000Km2: z.coerce.number().int().min(1).max(maxSettingNumber).optional(),
         ducatsCostPer1000Km2: z.coerce.number().int().min(0).max(maxSettingNumber).optional(),
+        settlementEnabled: z.boolean().optional(),
+        settlementPopulationOnCapture: z.coerce.number().int().min(0).max(1_000_000_000).optional(),
       })
       .optional(),
     customization: z

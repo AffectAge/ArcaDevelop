@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Handshake, Landmark, ScrollText, ShieldAlert } from "lucide-react";
+import { useUiText } from "../i18n/useUiText";
+import type { UiTextKey } from "../i18n/uiText";
 
 export type InAppUiNotification = {
   id: string;
@@ -75,64 +77,56 @@ function iconForCategory(category: InAppUiNotification["category"]) {
 function colorForCategory(category: InAppUiNotification["category"]) {
   switch (category) {
     case "registration":
-      return "text-rose-300 border-rose-900/80";
+      return "arc-notification-chip--registration";
     case "politics":
-      return "text-sky-300 border-sky-400/70";
+      return "arc-notification-chip--politics";
     case "economy":
-      return "text-emerald-500 border-emerald-400/70";
+      return "arc-notification-chip--economy";
     case "diplomacy":
-      return "text-amber-200 border-amber-400/70";
+      return "arc-notification-chip--diplomacy";
     default:
-      return "text-slate-200 border-slate-400/70";
+      return "arc-notification-chip--system";
   }
 }
 
-function glowColorForCategory(category: InAppUiNotification["category"]) {
-  switch (category) {
-    case "registration":
-      return "rgba(127, 29, 29, 0.55)";
-    case "politics":
-      return "rgba(56, 189, 248, 0.55)";
-    case "economy":
-      return "rgba(52, 211, 153, 0.55)";
-    case "diplomacy":
-      return "rgba(251, 191, 36, 0.55)";
-    default:
-      return "rgba(148, 163, 184, 0.4)";
-  }
+function quickActionClass(kind?: "primary" | "secondary" | "danger") {
+  if (kind === "danger") return "arc-notification-quick arc-notification-quick--danger";
+  if (kind === "primary") return "arc-notification-quick arc-notification-quick--primary";
+  return "arc-notification-quick";
 }
 
-function tooltipText(item: InAppUiNotification): string {
+function notificationFallbackKey(item: InAppUiNotification): UiTextKey {
+  if (item.action.type === "registration-approval") return "notifications.fallback.registration";
+  if (item.action.type === "country-event") return "notifications.fallback.countryEvent";
+  if (item.action.type === "election-results") return "notifications.fallback.electionResults";
+  if (item.action.type === "diplomacy-proposal") return "notifications.fallback.diplomacy";
+  return "notifications.fallback.generic";
+}
+
+function notificationText(item: InAppUiNotification, t: (key: UiTextKey, params?: Record<string, string | number>) => string): string {
+  if (item.title && item.message) return `${item.title}: ${item.message}`;
+  if (item.title || item.message) return item.title ?? item.message ?? "";
   if (item.action.type === "registration-approval") {
-    return `Заявка на регистрацию: ${item.action.country.name}`;
-  }
-  if (item.action.type === "country-event") {
-    return item.title && item.message ? `${item.title}: ${item.message}` : item.title ?? "Новое событие";
+    return t("notifications.registrationRequest", { country: item.action.country.name });
   }
   if (item.action.type === "election-results") {
-    return item.title && item.message ? `${item.title}: ${item.message}` : `Результаты выборов: сформирован парламент на ${item.action.seatsTotal} мест`;
+    return t("notifications.electionResults", { seats: item.action.seatsTotal });
   }
-  if (item.action.type === "diplomacy-proposal") {
-    return item.title && item.message ? `${item.title}: ${item.message}` : item.title ?? "Дипломатический договор";
-  }
-  if (item.title && item.message) {
-    return `${item.title}: ${item.message}`;
-  }
-  return item.title ?? item.message ?? "Уведомление";
+  return t(notificationFallbackKey(item));
 }
 
-function categoryLabel(category: InAppUiNotification["category"]): string {
+function categoryLabelKey(category: InAppUiNotification["category"]): UiTextKey {
   switch (category) {
     case "registration":
-      return "Регистрация";
+      return "notifications.category.registration";
     case "politics":
-      return "Политика";
+      return "notifications.category.politics";
     case "economy":
-      return "Экономика";
+      return "notifications.category.economy";
     case "diplomacy":
-      return "Дипломатия";
+      return "notifications.category.diplomacy";
     default:
-      return "Система";
+      return "notifications.category.system";
   }
 }
 
@@ -146,6 +140,7 @@ export function InAppNotificationTray({
   pendingDecisionCount = 0,
   onOpenHistory,
 }: Props) {
+  const { t } = useUiText();
   const showHistoryButton = historyCount > 0 && Boolean(onOpenHistory);
   return (
     <div className="pointer-events-none absolute left-4 z-[110]" style={{ top: topOffsetPx }}>
@@ -162,10 +157,8 @@ export function InAppNotificationTray({
             <button
               type="button"
               onClick={onOpenHistory}
-              className={`group relative inline-flex h-10 w-10 items-start justify-start overflow-hidden rounded-xl border bg-[#131a22] px-3 py-[11px] shadow-xl shadow-black/35 transition-[width,height,transform] duration-200 hover:h-[56px] hover:w-[220px] hover:scale-[1.03] ${
-                pendingDecisionCount > 0 ? "text-rose-300 border-rose-900/80" : "text-slate-200 border-slate-400/70"
-              }`}
-              aria-label="Открыть историю уведомлений"
+              className={`arc-notification-chip group ${pendingDecisionCount > 0 ? "arc-notification-chip--registration" : "arc-notification-chip--system"}`}
+              aria-label={t("notifications.openHistory")}
             >
               <Bell
                 size={17}
@@ -173,10 +166,10 @@ export function InAppNotificationTray({
               />
               <span className="relative z-10 ml-6 min-w-0">
                 <span className="block max-w-0 overflow-hidden whitespace-nowrap text-xs font-medium opacity-0 transition-all duration-200 group-hover:max-w-[170px] group-hover:opacity-100">
-                  История уведомлений
+                  {t("notifications.history")}
                 </span>
-                <span className="block max-h-0 max-w-[170px] overflow-hidden text-[10px] leading-3 text-white/70 opacity-0 transition-all duration-200 group-hover:mt-0.5 group-hover:max-h-8 group-hover:opacity-100">
-                  Открыть список прошлых уведомлений
+                <span className="arc-notification-chip-description block max-h-0 max-w-[170px] overflow-hidden text-[10px] leading-3 opacity-0 transition-all duration-200 group-hover:mt-0.5 group-hover:max-h-8 group-hover:opacity-100">
+                  {t("notifications.openHistoryDescription")}
                 </span>
               </span>
             </button>
@@ -188,9 +181,8 @@ export function InAppNotificationTray({
             const Icon = iconForCategory(item.category);
             const colorClass = colorForCategory(item.category);
             const isUnread = !viewedIds?.has(item.id);
-            const glowColor = glowColorForCategory(item.category);
-            const label = categoryLabel(item.category);
-            const hoverText = tooltipText(item);
+            const label = t(categoryLabelKey(item.category));
+            const hoverText = notificationText(item, t);
             return (
               <motion.div
                 key={item.id}
@@ -204,15 +196,8 @@ export function InAppNotificationTray({
                 <button
                   type="button"
                   onClick={() => onClickItem(item)}
-                  className={`group relative inline-flex h-10 w-10 items-start justify-start overflow-hidden rounded-xl border bg-[#131a22] px-3 py-[11px] shadow-xl shadow-black/35 transition-[width,height,transform] duration-200 hover:h-[92px] hover:w-[260px] hover:scale-[1.03] ${colorClass}`}
-                  style={
-                    isUnread
-                      ? {
-                          boxShadow: `0 0 0 1px ${glowColor} inset, 0 0 20px ${glowColor}, 0 0 34px ${glowColor}, 0 10px 24px rgba(0,0,0,0.35)`,
-                        }
-                      : undefined
-                  }
-                  aria-label={tooltipText(item)}
+                  className={`arc-notification-chip group ${colorClass} ${isUnread ? "arc-notification-chip--unread" : ""}`}
+                  aria-label={hoverText}
                 >
                   <Icon
                     size={17}
@@ -222,7 +207,7 @@ export function InAppNotificationTray({
                     <span className="block max-w-0 overflow-hidden whitespace-nowrap text-xs font-medium opacity-0 transition-all duration-200 group-hover:max-w-[180px] group-hover:opacity-100">
                       {label}
                     </span>
-                    <span className="arc-scrollbar block max-h-0 max-w-[200px] overflow-hidden text-[10px] leading-3 text-white/70 opacity-0 transition-all duration-200 group-hover:mt-0.5 group-hover:max-h-[56px] group-hover:overflow-y-auto group-hover:opacity-100">
+                    <span className="arc-scrollbar arc-notification-chip-description block max-h-0 max-w-[200px] overflow-hidden text-[10px] leading-3 opacity-0 transition-all duration-200 group-hover:mt-0.5 group-hover:max-h-[56px] group-hover:overflow-y-auto group-hover:opacity-100">
                       {hoverText}
                     </span>
                     {item.quickActions && item.quickActions.length > 0 && (
@@ -242,13 +227,7 @@ export function InAppNotificationTray({
                               event.stopPropagation();
                               onQuickAction?.(item, action.id);
                             }}
-                            className={`rounded border px-1.5 py-0.5 text-[10px] ${
-                              action.kind === "danger"
-                                ? "border-rose-400/35 bg-rose-500/15 text-rose-200"
-                                : action.kind === "primary"
-                                  ? "border-emerald-400/35 bg-emerald-500/15 text-emerald-200"
-                                  : "border-white/15 bg-white/10 text-white/75"
-                            }`}
+                            className={quickActionClass(action.kind)}
                           >
                             {action.label}
                           </span>

@@ -8,6 +8,8 @@ import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard, AppEmptyState, AppSection, AppSectionHeader, AppToolbar } from "./ui/AppSurface";
 import { AppCell, AppHeadCell, AppTable, AppTableShell } from "./ui/AppTable";
+import { useUiText } from "../i18n/useUiText";
+import type { UiLocale, UiTextKey } from "../i18n/uiText";
 
 type DucatExpenses = {
   customization: number;
@@ -52,32 +54,33 @@ type HistoryRow = {
 
 type BudgetCategoryRow = {
   key: string;
-  label: string;
+  labelKey: UiTextKey;
   value: number;
 };
 
-function formatInt(value: number): string {
-  return new Intl.NumberFormat("ru-RU").format(Math.max(0, Math.floor(value)));
+function formatInt(value: number, locale: UiLocale): string {
+  return new Intl.NumberFormat(locale === "ru" ? "ru-RU" : "en-US").format(Math.max(0, Math.floor(value)));
 }
 
-function formatSigned(value: number): string {
+function formatSigned(value: number, locale: UiLocale): string {
   const rounded = Math.round(value);
-  if (rounded > 0) return `+${new Intl.NumberFormat("ru-RU").format(rounded)}`;
-  if (rounded < 0) return `-${new Intl.NumberFormat("ru-RU").format(Math.abs(rounded))}`;
+  const formatted = new Intl.NumberFormat(locale === "ru" ? "ru-RU" : "en-US").format(Math.abs(rounded));
+  if (rounded > 0) return `+${formatted}`;
+  if (rounded < 0) return `-${formatted}`;
   return "0";
 }
 
 function netClass(value: number): string {
-  if (value > 0) return "text-emerald-400";
-  if (value < 0) return "text-rose-300";
-  return "text-slate-200";
+  if (value > 0) return "arc-budget-value--good";
+  if (value < 0) return "arc-budget-value--bad";
+  return "arc-budget-value--neutral";
 }
 
-const TABS: Array<{ id: TabId; label: string; icon: typeof Wallet }> = [
-  { id: "summary", label: "Сводка", icon: Wallet },
-  { id: "expenses", label: "Расходы", icon: ReceiptText },
-  { id: "subsidies", label: "Субсидии", icon: Landmark },
-  { id: "history", label: "История", icon: ListFilter },
+const TABS: Array<{ id: TabId; labelKey: UiTextKey; icon: typeof Wallet }> = [
+  { id: "summary", labelKey: "budget.tab.summary", icon: Wallet },
+  { id: "expenses", labelKey: "budget.tab.expenses", icon: ReceiptText },
+  { id: "subsidies", labelKey: "budget.tab.subsidies", icon: Landmark },
+  { id: "history", labelKey: "budget.tab.history", icon: ListFilter },
 ];
 
 const INCOME_CHART_COLORS = ["#34d399", "#22d3ee", "#60a5fa", "#a78bfa", "#f59e0b"];
@@ -96,6 +99,7 @@ export function StateBudgetModal({
   subsidyItems,
   ducatIconUrl,
 }: Props) {
+  const { locale, t } = useUiText();
   const [activeTab, setActiveTab] = useState<TabId>("summary");
   const [buildingNameById, setBuildingNameById] = useState<Record<string, string>>({});
   const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
@@ -113,7 +117,7 @@ export function StateBudgetModal({
     () => [
       {
         key: "base-income",
-        label: "Базовый доход государства",
+        labelKey: "budget.category.baseIncome",
         value: Math.max(0, Math.floor(projectedIncomeDucats ?? 0)),
       },
     ],
@@ -121,11 +125,11 @@ export function StateBudgetModal({
   );
   const expenseRows = useMemo<BudgetCategoryRow[]>(
     () => [
-      { key: "subsidies", label: "Государственные субсидии", value: Math.max(0, Math.floor(ducatExpenses.subsidies ?? 0)) },
-      { key: "construction", label: "Строительные проекты", value: Math.max(0, Math.floor(ducatExpenses.construction ?? 0)) },
-      { key: "colonization", label: "Поддержка колонизаций", value: Math.max(0, Math.floor(ducatExpenses.colonizationSupport ?? 0)) },
-      { key: "province-rename", label: "Переименование провинций", value: Math.max(0, Math.floor(ducatExpenses.provinceRename ?? 0)) },
-      { key: "customization", label: "Кастомизация страны", value: Math.max(0, Math.floor(ducatExpenses.customization ?? 0)) },
+      { key: "subsidies", labelKey: "budget.category.subsidies", value: Math.max(0, Math.floor(ducatExpenses.subsidies ?? 0)) },
+      { key: "construction", labelKey: "budget.category.construction", value: Math.max(0, Math.floor(ducatExpenses.construction ?? 0)) },
+      { key: "colonization", labelKey: "budget.category.colonization", value: Math.max(0, Math.floor(ducatExpenses.colonizationSupport ?? 0)) },
+      { key: "province-rename", labelKey: "budget.category.provinceRename", value: Math.max(0, Math.floor(ducatExpenses.provinceRename ?? 0)) },
+      { key: "customization", labelKey: "budget.category.customization", value: Math.max(0, Math.floor(ducatExpenses.customization ?? 0)) },
     ],
     [
       ducatExpenses.colonizationSupport,
@@ -147,15 +151,15 @@ export function StateBudgetModal({
     () =>
       incomeRows
         .filter((row) => row.value > 0)
-        .map((row, index) => ({ ...row, color: INCOME_CHART_COLORS[index % INCOME_CHART_COLORS.length] })),
-    [incomeRows],
+        .map((row, index) => ({ ...row, label: t(row.labelKey), color: INCOME_CHART_COLORS[index % INCOME_CHART_COLORS.length] })),
+    [incomeRows, t],
   );
   const expenseChartRows = useMemo(
     () =>
       expenseRows
         .filter((row) => row.value > 0)
-        .map((row, index) => ({ ...row, color: EXPENSE_CHART_COLORS[index % EXPENSE_CHART_COLORS.length] })),
-    [expenseRows],
+        .map((row, index) => ({ ...row, label: t(row.labelKey), color: EXPENSE_CHART_COLORS[index % EXPENSE_CHART_COLORS.length] })),
+    [expenseRows, t],
   );
 
   useEffect(() => {
@@ -226,7 +230,7 @@ export function StateBudgetModal({
             borderWidth: 1,
             textStyle: { color: "#e2e8f0", fontSize: 11 },
             formatter: (params: { name: string; value: number; percent: number }) =>
-              `${params.name}<br/>${formatInt(params.value)} дукат (${Math.round(params.percent)}%)`,
+              `${params.name}<br/>${formatInt(params.value, locale)} ${t("shell.resource.ducats")} (${Math.round(params.percent)}%)`,
           },
           legend: {
             bottom: 0,
@@ -264,12 +268,12 @@ export function StateBudgetModal({
       );
     };
 
-    applyPie(incomePieRef.current, incomeChartRef, "Доходы", incomeChartRows);
-    applyPie(expensePieRef.current, expenseChartRef, "Расходы", expenseChartRows);
+    applyPie(incomePieRef.current, incomeChartRef, t("budget.chart.income"), incomeChartRows);
+    applyPie(expensePieRef.current, expenseChartRef, t("budget.chart.expenses"), expenseChartRows);
 
     const applyAndResize = () => {
-      applyPie(incomePieRef.current, incomeChartRef, "Доходы", incomeChartRows);
-      applyPie(expensePieRef.current, expenseChartRef, "Расходы", expenseChartRows);
+      applyPie(incomePieRef.current, incomeChartRef, t("budget.chart.income"), incomeChartRows);
+      applyPie(expensePieRef.current, expenseChartRef, t("budget.chart.expenses"), expenseChartRows);
       incomeChartRef.current?.resize();
       expenseChartRef.current?.resize();
     };
@@ -302,7 +306,7 @@ export function StateBudgetModal({
       observers.forEach((observer) => observer.disconnect());
       window.removeEventListener("resize", onResize);
     };
-  }, [activeTab, expenseChartRows, incomeChartRows, open]);
+  }, [activeTab, expenseChartRows, incomeChartRows, locale, open, t]);
 
   useEffect(() => {
     if (open) return;
@@ -335,11 +339,25 @@ export function StateBudgetModal({
     [buildingNameById, subsidyItems],
   );
 
+  const expenseDetailRows = [
+    { key: "subsidies", labelKey: "budget.category.subsidies" as const, value: ducatExpenses.subsidies },
+    { key: "construction", labelKey: "budget.category.construction" as const, value: ducatExpenses.construction },
+    { key: "colonization", labelKey: "budget.category.colonization" as const, value: ducatExpenses.colonizationSupport },
+    { key: "rename", labelKey: "budget.category.provinceRename" as const, value: ducatExpenses.provinceRename },
+    { key: "customization", labelKey: "budget.category.customization" as const, value: ducatExpenses.customization },
+  ];
+
   return (
-    <AppModal open={open} onClose={onClose} modalKey="budget" zIndexClassName="z-[130]">
+    <AppModal
+      open={open}
+      onClose={onClose}
+      modalKey="budget"
+      zIndexClassName="z-[130]"
+      panelClassName="arc-budget-panel"
+    >
             <AppModalHeader
-              title="Бюджет дукатов государства"
-              description={`${countryName} (${countryId}) • Ход #${turnId}`}
+              title={t("budget.title")}
+              description={`${countryName} (${countryId}) · ${t("shell.turn", { turn: turnId })}`}
               onClose={onClose}
             />
 
@@ -356,7 +374,7 @@ export function StateBudgetModal({
                     size="sm"
                     icon={<Icon size={14} />}
                   >
-                    {tab.label}
+                    {t(tab.labelKey)}
                   </AppButton>
                 );
               })}
@@ -366,60 +384,60 @@ export function StateBudgetModal({
             {activeTab === "summary" && (
               <div className="space-y-3">
                 <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
-                  <AppCard className="bg-black/20">
-                    <div className="text-[11px] text-white/55">Казна сейчас</div>
-                    <div className="mt-1 flex items-center gap-2 text-lg font-semibold text-white">
+                  <AppCard className="arc-budget-metric-card">
+                    <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">{t("budget.metric.currentTreasury")}</div>
+                    <div className="mt-1 flex items-center gap-2 text-lg font-semibold text-[var(--arc-color-atlas-ink)]">
                       {ducatIconUrl ? <img src={ducatIconUrl} alt="" className="h-4 w-4 object-contain" /> : null}
-                      {formatInt(currentDucats)}
+                      {formatInt(currentDucats, locale)}
                     </div>
                   </AppCard>
-                  <AppCard className="bg-black/20">
-                    <div className="text-[11px] text-white/55">Доходы за ход</div>
-                    <div className="mt-1 text-lg font-semibold text-emerald-400">+{formatInt(projectedIncomeDucats)}</div>
+                  <AppCard className="arc-budget-metric-card">
+                    <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">{t("budget.metric.turnIncome")}</div>
+                    <div className="arc-budget-value--good mt-1 text-lg font-semibold">+{formatInt(projectedIncomeDucats, locale)}</div>
                   </AppCard>
-                  <AppCard className="bg-black/20">
-                    <div className="text-[11px] text-white/55">Расходы за ход</div>
-                    <div className="mt-1 text-lg font-semibold text-rose-300">-{formatInt(ducatExpenses.total)}</div>
+                  <AppCard className="arc-budget-metric-card">
+                    <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">{t("budget.metric.turnExpenses")}</div>
+                    <div className="arc-budget-value--bad mt-1 text-lg font-semibold">-{formatInt(ducatExpenses.total, locale)}</div>
                   </AppCard>
-                  <AppCard className="bg-black/20">
-                    <div className="text-[11px] text-white/55">Прогноз на конец хода</div>
-                    <div className={`mt-1 text-lg font-semibold ${netClass(net)}`}>{formatInt(projectedEnd)}</div>
-                    <div className={`mt-1 text-xs ${netClass(net)}`}>Итог: {formatSigned(net)}</div>
+                  <AppCard className="arc-budget-metric-card">
+                    <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">{t("budget.metric.projectedEnd")}</div>
+                    <div className={`mt-1 text-lg font-semibold ${netClass(net)}`}>{formatInt(projectedEnd, locale)}</div>
+                    <div className={`mt-1 text-xs ${netClass(net)}`}>{t("budget.metric.net", { value: formatSigned(net, locale) })}</div>
                   </AppCard>
                 </div>
 
                 <div className="grid gap-3 lg:grid-cols-2">
                   <AppSection>
-                    <AppSectionHeader title="График доходов по категориям" icon={<Wallet size={14} />} />
+                    <AppSectionHeader title={t("budget.chart.incomeByCategory")} icon={<Wallet size={14} />} />
                     <div ref={incomePieRef} className="h-[320px] w-full" />
                   </AppSection>
                   <AppSection>
-                    <AppSectionHeader title="График расходов по категориям" icon={<ReceiptText size={14} />} />
+                    <AppSectionHeader title={t("budget.chart.expensesByCategory")} icon={<ReceiptText size={14} />} />
                     <div ref={expensePieRef} className="h-[320px] w-full" />
                   </AppSection>
                 </div>
 
                 <div className="grid gap-3 lg:grid-cols-2">
                   <AppSection>
-                    <AppSectionHeader title="Доходы по категориям" icon={<Wallet size={14} />} />
+                    <AppSectionHeader title={t("budget.table.incomeByCategory")} icon={<Wallet size={14} />} />
                     <AppTableShell>
                       <AppTable>
                         <thead>
                           <tr>
-                            <AppHeadCell>Категория</AppHeadCell>
-                            <AppHeadCell className="text-right">Сумма</AppHeadCell>
+                            <AppHeadCell>{t("budget.table.category")}</AppHeadCell>
+                            <AppHeadCell className="text-right">{t("budget.table.amount")}</AppHeadCell>
                           </tr>
                         </thead>
                         <tbody>
                         {incomeRows.map((row) => (
                           <tr key={row.key}>
-                            <AppCell>{row.label}</AppCell>
-                            <AppCell className="text-right font-semibold text-emerald-400">+{formatInt(row.value)}</AppCell>
+                            <AppCell>{t(row.labelKey)}</AppCell>
+                            <AppCell className="arc-budget-value--good text-right font-semibold">+{formatInt(row.value, locale)}</AppCell>
                           </tr>
                         ))}
                           <tr>
-                            <AppCell className="font-semibold text-white">Итого доходов</AppCell>
-                            <AppCell className="text-right font-semibold text-emerald-400">+{formatInt(incomeTableTotal)}</AppCell>
+                            <AppCell className="font-semibold text-[var(--arc-color-atlas-ink)]">{t("budget.total.income")}</AppCell>
+                            <AppCell className="arc-budget-value--good text-right font-semibold">+{formatInt(incomeTableTotal, locale)}</AppCell>
                           </tr>
                         </tbody>
                       </AppTable>
@@ -427,25 +445,25 @@ export function StateBudgetModal({
                   </AppSection>
 
                   <AppSection>
-                    <AppSectionHeader title="Расходы по категориям" icon={<ReceiptText size={14} />} />
+                    <AppSectionHeader title={t("budget.table.expensesByCategory")} icon={<ReceiptText size={14} />} />
                     <AppTableShell>
                       <AppTable>
                         <thead>
                           <tr>
-                            <AppHeadCell>Категория</AppHeadCell>
-                            <AppHeadCell className="text-right">Сумма</AppHeadCell>
+                            <AppHeadCell>{t("budget.table.category")}</AppHeadCell>
+                            <AppHeadCell className="text-right">{t("budget.table.amount")}</AppHeadCell>
                           </tr>
                         </thead>
                         <tbody>
                         {expenseRows.map((row) => (
                           <tr key={row.key}>
-                            <AppCell>{row.label}</AppCell>
-                            <AppCell className="text-right font-semibold text-rose-300">-{formatInt(row.value)}</AppCell>
+                            <AppCell>{t(row.labelKey)}</AppCell>
+                            <AppCell className="arc-budget-value--bad text-right font-semibold">-{formatInt(row.value, locale)}</AppCell>
                           </tr>
                         ))}
                           <tr>
-                            <AppCell className="font-semibold text-white">Итого расходов</AppCell>
-                            <AppCell className="text-right font-semibold text-rose-300">-{formatInt(expenseTableTotal)}</AppCell>
+                            <AppCell className="font-semibold text-[var(--arc-color-atlas-ink)]">{t("budget.total.expenses")}</AppCell>
+                            <AppCell className="arc-budget-value--bad text-right font-semibold">-{formatInt(expenseTableTotal, locale)}</AppCell>
                           </tr>
                         </tbody>
                       </AppTable>
@@ -457,43 +475,38 @@ export function StateBudgetModal({
 
             {activeTab === "expenses" && (
               <div className="space-y-2">
-                {[
-                  { key: "subsidies", label: "Государственные субсидии", value: ducatExpenses.subsidies },
-                  { key: "construction", label: "Строительные проекты", value: ducatExpenses.construction },
-                  { key: "colonization", label: "Поддержка колонизаций", value: ducatExpenses.colonizationSupport },
-                  { key: "rename", label: "Переименование провинций", value: ducatExpenses.provinceRename },
-                  { key: "customization", label: "Кастомизация страны", value: ducatExpenses.customization },
-                ]
+                {expenseDetailRows
                   .filter((row) => row.value > 0)
                   .map((row) => (
-                    <AppCard key={row.key} className="flex items-center justify-between bg-black/20 px-3 py-2 text-sm">
-                      <span className="text-white/85">{row.label}</span>
-                      <span className="text-rose-300">-{formatInt(row.value)} дукат</span>
+                    <AppCard key={row.key} className="arc-budget-list-row">
+                      <span>{t(row.labelKey)}</span>
+                      <span className="arc-budget-value--bad">-{formatInt(row.value, locale)} {t("shell.resource.ducats")}</span>
                     </AppCard>
                   ))}
-                <AppCard className="flex items-center justify-between border-white/20 bg-black/30 px-3 py-2 text-sm font-semibold">
-                  <span className="text-white">Итого расходов</span>
-                  <span className="text-rose-300">-{formatInt(ducatExpenses.total)} дукат</span>
+                <AppCard className="arc-budget-list-row arc-budget-list-row--total">
+                  <span>{t("budget.total.expenses")}</span>
+                  <span className="arc-budget-value--bad">-{formatInt(ducatExpenses.total, locale)} {t("shell.resource.ducats")}</span>
                 </AppCard>
               </div>
             )}
 
             {activeTab === "subsidies" && (
               <div className="space-y-2">
-                <AppCard className="bg-black/20 px-3 py-2 text-sm text-white/85">
-                  Выплачено субсидий в этом ходу: <span className="font-semibold text-emerald-400">{formatInt(subsidyTotal)} дукат</span>
+                <AppCard className="arc-budget-list-row">
+                  <span>{t("budget.subsidies.paidThisTurn")}</span>
+                  <span className="arc-budget-value--good">{formatInt(subsidyTotal, locale)} {t("shell.resource.ducats")}</span>
                 </AppCard>
                 <div className="arc-scrollbar max-h-[45vh] space-y-2 overflow-auto pr-1">
                   {subsidyRows.length === 0 ? (
-                    <AppEmptyState>В этом ходу субсидий не выплачено.</AppEmptyState>
+                    <AppEmptyState>{t("budget.subsidies.empty")}</AppEmptyState>
                   ) : (
                     subsidyRows.map((row) => (
-                      <AppCard key={row.instanceId} className="bg-black/20 px-3 py-2 text-sm">
+                      <AppCard key={row.instanceId} className="arc-budget-subsidy-row">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-white">{row.buildingName}</span>
-                          <span className="text-emerald-400">+{formatInt(row.amountInt)} дукат</span>
+                          <span>{row.buildingName}</span>
+                          <span className="arc-budget-value--good">+{formatInt(row.amountInt, locale)} {t("shell.resource.ducats")}</span>
                         </div>
-                        <div className="mt-1 text-xs text-white/55">Region ID: {row.regionName}</div>
+                        <div className="mt-1 text-xs text-[var(--arc-color-atlas-muted)]">{t("budget.subsidies.region", { region: row.regionName })}</div>
                       </AppCard>
                     ))
                   )}
@@ -504,28 +517,28 @@ export function StateBudgetModal({
             {activeTab === "history" && (
               <div className="arc-scrollbar max-h-[45vh] space-y-2 overflow-auto pr-1">
                 {historyRows.map((row) => (
-                  <AppCard key={row.turnId} className="bg-black/20 px-3 py-2 text-sm">
-                    <div className="mb-1 text-xs text-white/55">Ход #{row.turnId}</div>
+                  <AppCard key={row.turnId} className="arc-budget-history-row">
+                    <div className="mb-1 text-xs text-[var(--arc-color-atlas-muted)]">{t("shell.turn", { turn: row.turnId })}</div>
                     <div className="grid gap-2 md:grid-cols-5">
                       <div>
-                        <div className="text-[11px] text-white/50">Казна</div>
-                        <div className="text-white">{formatInt(row.treasuryStart)}</div>
+                        <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">{t("budget.history.treasury")}</div>
+                        <div>{formatInt(row.treasuryStart, locale)}</div>
                       </div>
                       <div>
-                        <div className="text-[11px] text-white/50">Доходы</div>
-                        <div className="text-emerald-400">+{formatInt(row.income)}</div>
+                        <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">{t("budget.history.income")}</div>
+                        <div className="arc-budget-value--good">+{formatInt(row.income, locale)}</div>
                       </div>
                       <div>
-                        <div className="text-[11px] text-white/50">Расходы</div>
-                        <div className="text-rose-300">-{formatInt(row.expenses)}</div>
+                        <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">{t("budget.history.expenses")}</div>
+                        <div className="arc-budget-value--bad">-{formatInt(row.expenses, locale)}</div>
                       </div>
                       <div>
-                        <div className="text-[11px] text-white/50">Итог</div>
-                        <div className={netClass(row.net)}>{formatSigned(row.net)}</div>
+                        <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">{t("budget.history.net")}</div>
+                        <div className={netClass(row.net)}>{formatSigned(row.net, locale)}</div>
                       </div>
                       <div>
-                        <div className="text-[11px] text-white/50">Прогноз</div>
-                        <div className={netClass(row.net)}>{formatInt(row.projectedEnd)}</div>
+                        <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">{t("budget.history.projected")}</div>
+                        <div className={netClass(row.net)}>{formatInt(row.projectedEnd, locale)}</div>
                       </div>
                     </div>
                   </AppCard>

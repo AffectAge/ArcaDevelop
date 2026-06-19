@@ -24,6 +24,8 @@ import { Tooltip } from "./Tooltip";
 import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppEmptyState, AppSection, AppToolbar } from "./ui/AppSurface";
+import { tUi } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 
 type Props = {
   open: boolean;
@@ -97,7 +99,7 @@ const getRelativeDeltaPct = (history: number[]): number => {
   return ((curr - prev) / prev) * 100;
 };
 
-const buildTop10WithOthers = (input: Record<string, number>, labelByCountryId: Record<string, string>) => {
+const buildTop10WithOthers = (input: Record<string, number>, labelByCountryId: Record<string, string>, otherLabel: string) => {
   const rows = Object.entries(input)
     .map(([countryId, value]) => ({ countryId, value: Math.max(0, Number(value)) }))
     .filter((row) => row.value > 0)
@@ -107,16 +109,18 @@ const buildTop10WithOthers = (input: Record<string, number>, labelByCountryId: R
     value: row.value,
   }));
   const others = rows.slice(10).reduce((sum, row) => sum + row.value, 0);
-  if (others > 0) top.push({ name: "Другие", value: others });
+  if (others > 0) top.push({ name: otherLabel, value: others });
   return top;
 };
 
 function TradePartnersChart({
   items,
   color,
+  otherLabel,
 }: {
   items: Array<{ name: string; value: number }>;
   color: string;
+  otherLabel: string;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<EChartsType | null>(null);
@@ -184,7 +188,7 @@ function TradePartnersChart({
           data: data.map((item) => ({
             value: item.value,
             itemStyle: {
-              color: item.name === "Другие" ? "rgba(148,163,184,0.55)" : color,
+              color: item.name === otherLabel ? "rgba(148,163,184,0.55)" : color,
             },
           })),
           barMaxWidth: 22,
@@ -212,7 +216,7 @@ function TradePartnersChart({
     return () => {
       window.removeEventListener("resize", onResize);
     };
-  }, [items, color]);
+  }, [items, color, otherLabel]);
 
   useEffect(() => {
     return () => {
@@ -221,7 +225,7 @@ function TradePartnersChart({
     };
   }, []);
 
-  return <div ref={ref} className="h-[240px] w-full rounded bg-black/20" />;
+  return <div ref={ref} className="arc-market-chart-frame h-[240px] w-full rounded" />;
 }
 
 function Sparkline({
@@ -303,7 +307,7 @@ function Sparkline({
           const value = Number(p?.value ?? 0);
           const startTurn = typeof currentTurnId === "number" ? Math.max(1, currentTurnId - data.length + 1) : null;
           const turn = startTurn != null ? startTurn + idx : null;
-          const turnLabel = turn != null ? `Ход ${turn}` : `Точка ${idx + 1}`;
+          const turnLabel = turn != null ? tUi("market.turnLabel", { turn }) : tUi("market.pointLabel", { point: idx + 1 });
           const shared = turn != null ? renderSharedTooltipHtml?.(turn) : "";
           return `
             <div style="
@@ -446,16 +450,17 @@ function Sparkline({
 
   return (
     <div className="flex items-stretch gap-2">
-      <div className="flex h-[50px] w-10 flex-col justify-between text-right text-[9px] leading-none text-white/45">
+      <div className="arc-market-chart-axis flex h-[50px] w-10 flex-col justify-between text-right text-[9px] leading-none">
         <span>{formatCompact(max)}</span>
         <span>{formatCompact(min)}</span>
       </div>
-      <div ref={chartRef} className="h-[50px] w-full rounded bg-black/20" />
+      <div ref={chartRef} className="arc-market-chart-frame h-[50px] w-full rounded" />
     </div>
   );
 }
 
-export function MarketModal({ open, onClose, token, countryId, countryName, mode = "both", title = "Рынок" }: Props) {
+export function MarketModal({ open, onClose, token, countryId, countryName, mode = "both", title }: Props) {
+  const { t } = useUiText();
   const [overview, setOverview] = useState<MarketOverviewResponse | null>(null);
   const [incomingInvites, setIncomingInvites] = useState<MarketInvite[]>([]);
   const [marketsCatalog, setMarketsCatalog] = useState<MarketCatalogItem[]>([]);
@@ -552,10 +557,10 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
     const exportsRaw = effectiveTab === "country" ? bucket.countryExportsByCountry ?? {} : bucket.globalExportsByMarket ?? {};
     const labelMap = effectiveTab === "country" ? countryNameById : marketNameById;
     return {
-      imports: buildTop10WithOthers(importsRaw, labelMap),
-      exports: buildTop10WithOthers(exportsRaw, labelMap),
+      imports: buildTop10WithOthers(importsRaw, labelMap, t("market.other")),
+      exports: buildTop10WithOthers(exportsRaw, labelMap, t("market.other")),
     };
-  }, [selectedRow, overview?.tradeByGood, effectiveTab, countryNameById, marketNameById]);
+  }, [selectedRow, overview?.tradeByGood, effectiveTab, countryNameById, marketNameById, t]);
 
   useEffect(() => {
     if (!rows.some((row) => row.goodId === selectedGoodId)) {
@@ -573,9 +578,9 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
       setPendingInviteActionId(inviteId);
       await respondMarketInvite(token, inviteId, action);
       await load();
-      toast.success(action === "accept" ? "Приглашение принято" : "Приглашение отклонено");
+      toast.success(action === "accept" ? t("market.inviteAccepted") : t("market.inviteRejected"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось обработать приглашение");
+      toast.error(error instanceof Error ? error.message : t("market.inviteFailed"));
     } finally {
       setPendingInviteActionId(null);
     }
@@ -588,14 +593,14 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
       setPendingJoin(true);
       const result = await joinMarket(token, marketId);
       if (result.mode === "joined") {
-        toast.success("Вы вступили в рынок");
+        toast.success(t("market.joined"));
       } else {
-        toast.success("Запрос на вступление отправлен");
+        toast.success(t("market.joinRequestSent"));
       }
       setSelectedMarketId("");
       await load();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось вступить в рынок");
+      toast.error(error instanceof Error ? error.message : t("market.joinFailed"));
     } finally {
       setPendingJoin(false);
     }
@@ -609,10 +614,10 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
     try {
       setPendingLeave(true);
       await leaveMarket(token, marketId);
-      toast.success("Вы вышли из рынка");
+      toast.success(t("market.left"));
       await load();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Не удалось выйти из рынка");
+      toast.error(error instanceof Error ? error.message : t("market.leaveFailed"));
     } finally {
       setPendingLeave(false);
     }
@@ -642,10 +647,10 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
 
   return (
     <>
-      <AppModal open={open} onClose={onClose} modalKey={mode === "global" ? "global-market" : "market"} zIndexClassName="z-[170]" panelClassName="overflow-hidden">
+      <AppModal open={open} onClose={onClose} modalKey={mode === "global" ? "global-market" : "market"} zIndexClassName="z-[170]" panelClassName="arc-market-panel overflow-hidden">
             <AppModalHeader
-              title={title}
-              description={effectiveTab === "country" ? `Наш рынок (${countryName})` : "Глобальный рынок"}
+              title={title ?? t("market.title")}
+              description={effectiveTab === "country" ? t("market.countryDescription", { country: countryName }) : t("market.globalDescription")}
               onClose={onClose}
               actions={
                 <>
@@ -657,7 +662,7 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                     size="sm"
                     icon={<Settings2 size={13} />}
                   >
-                    Управление
+                    {t("market.management")}
                   </AppButton>
                 )}
                 {mode !== "global" && currentMarket && (
@@ -668,7 +673,7 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                     size="sm"
                     icon={<ShieldBan size={13} />}
                   >
-                    Санкции
+                    {t("market.sanctions")}
                   </AppButton>
                 )}
                 {mode !== "global" && currentMarket && (
@@ -679,7 +684,7 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                     size="sm"
                     icon={<Settings2 size={13} />}
                   >
-                    Членство
+                    {t("market.membership")}
                   </AppButton>
                 )}
                 <AppButton
@@ -689,7 +694,7 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                   size="sm"
                   icon={<AlertTriangle size={13} />}
                 >
-                  Алерты
+                  {t("market.alerts")}
                 </AppButton>
                 </>
               }
@@ -704,26 +709,16 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                       onClick={() => setTab("country")}
                       variant={effectiveTab === "country" ? "primary" : "ghost"}
                       size="sm"
-                      className={
-                        effectiveTab === "country"
-                          ? ""
-                          : "hover:border-emerald-400/35"
-                      }
                     >
-                      Наш рынок
+                      {t("market.countryTab")}
                     </AppButton>
                     <AppButton
                       type="button"
                       onClick={() => setTab("global")}
                       variant={effectiveTab === "global" ? "primary" : "ghost"}
                       size="sm"
-                      className={
-                        effectiveTab === "global"
-                          ? ""
-                          : "hover:border-cyan-400/35"
-                      }
                     >
-                      Глобальный
+                      {t("market.globalTab")}
                     </AppButton>
                   </>
                 )}
@@ -735,7 +730,7 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                     variant={quickFilter === "all" ? "secondary" : "ghost"}
                     size="sm"
                   >
-                    Все
+                    {t("market.all")}
                   </AppButton>
                   <AppButton
                     type="button"
@@ -743,17 +738,17 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                     variant={quickFilter === "critical" ? "danger" : "ghost"}
                     size="sm"
                   >
-                    Критические
+                    {t("market.critical")}
                   </AppButton>
-                  <div className="h-6 w-px bg-white/10" />
+                  <div className="h-6 w-px bg-[var(--arc-color-atlas-line)]" />
                   <div className="w-[210px]">
                     <CustomSelect
                       value={sortMode}
                       onChange={(value) => setSortMode(value as SortMode)}
                       options={[
-                        { value: "deficit", label: "Сортировка: Дефицит" },
-                        { value: "price", label: "Сортировка: Цена" },
-                        { value: "volatility", label: "Сортировка: Волатильность" },
+                        { value: "deficit", label: t("market.sortDeficit") },
+                        { value: "price", label: t("market.sortPrice") },
+                        { value: "volatility", label: t("market.sortVolatility") },
                       ]}
                       buttonClassName="h-8 text-xs"
                     />
@@ -761,15 +756,15 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">
-                  <Tooltip content="Количество товаров с покрытием спроса ниже 50%.">
+                <span className="arc-market-summary-chip arc-market-summary-chip--danger">
+                  <Tooltip content={t("market.criticalGoodsTooltip")}>
                     <span className="inline-flex items-center gap-1.5">
                       <AlertTriangle size={13} /> {criticalCount}
                     </span>
                   </Tooltip>
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-1 text-xs text-cyan-200">
-                  <Tooltip content="Количество товаров в текущей выборке таблицы.">
+                <span className="arc-market-summary-chip arc-market-summary-chip--primary">
+                  <Tooltip content={t("market.goodsInSelectionTooltip")}>
                     <span className="inline-flex items-center gap-1.5">
                       <ArrowDownUp size={13} /> {rows.length}
                     </span>
@@ -780,9 +775,9 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
 
             <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 xl:grid-cols-[1.45fr_1fr]">
               <AppSection className="arc-scrollbar overflow-auto p-0">
-                <div className="border-b border-white/10 bg-black/35 px-3 py-2 text-xs font-semibold text-white/70">
-                  <Tooltip content="Товар из каталога контента.">
-                    <div>Товар</div>
+                <div className="arc-market-table-header">
+                  <Tooltip content={t("market.goodCatalogTooltip")}>
+                    <div>{t("market.good")}</div>
                   </Tooltip>
                 </div>
                 <div className="space-y-1 p-2">
@@ -790,23 +785,23 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                     <div
                       key={row.goodId}
                       onClick={() => setSelectedGoodId(row.goodId)}
-                      className={`flex items-center rounded-lg border px-3 py-2 text-sm ${
+                      className={`arc-market-good-row ${
                         row.coverage < 50
-                          ? "border-red-400/35 bg-red-500/10"
+                          ? "arc-market-good-row--critical"
                           : row.goodId === selectedGoodId
-                            ? "border-arc-accent/40 bg-arc-accent/10"
-                            : "border-white/10 bg-black/25"
+                            ? "arc-market-good-row--selected"
+                            : ""
                       }`}
                     >
-                      <div className="flex items-center gap-2 text-white/85">
-                        {row.coverage < 50 ? <TrendingDown size={14} className="text-red-300" /> : <LineChart size={14} className="text-emerald-300" />}
+                      <div className="flex items-center gap-2">
+                        {row.coverage < 50 ? <TrendingDown size={14} className="text-[var(--arc-color-atlas-danger)]" /> : <LineChart size={14} className="text-[var(--arc-color-atlas-good)]" />}
                         <span className="truncate">{row.goodName}</span>
                       </div>
                     </div>
                   ))}
                   {rows.length === 0 && (
                     <AppEmptyState>
-                      Нет данных по выбранным фильтрам.
+                      {t("market.emptyRows")}
                     </AppEmptyState>
                   )}
                 </div>
@@ -814,41 +809,41 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
 
               <div className="grid min-h-0 grid-cols-1 gap-3 pr-1 2xl:grid-cols-2">
                 <AppSection className="arc-scrollbar h-full overflow-auto">
-                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-white/70">
-                      <BarChart3 size={13} className="text-arc-accent" />
-                      Торговые партнеры
+                    <div className="arc-market-section-title mb-2">
+                      <BarChart3 size={13} className="text-[var(--arc-color-atlas-primary)]" />
+                      {t("market.tradePartners")}
                     </div>
                     {selectedRow ? (
                       <div className="space-y-3 text-xs">
-                        <div className="rounded-lg border border-white/10 bg-black/25 p-2">
-                          <div className="mb-1 font-semibold text-emerald-200">
-                            {effectiveTab === "country" ? "Импорт из стран (топ 10)" : "Импорт из рынков (топ 10)"}
+                        <div className="arc-market-card">
+                          <div className="arc-market-card-title">
+                            {effectiveTab === "country" ? t("market.importCountriesTop") : t("market.importMarketsTop")}
                           </div>
-                          <TradePartnersChart items={tradePartners.imports} color="#34d399" />
+                          <TradePartnersChart items={tradePartners.imports} color="#34d399" otherLabel={t("market.other")} />
                         </div>
-                        <div className="rounded-lg border border-white/10 bg-black/25 p-2">
-                          <div className="mb-1 font-semibold text-cyan-200">
-                            {effectiveTab === "country" ? "Экспорт в страны (топ 10)" : "Экспорт в рынки (топ 10)"}
+                        <div className="arc-market-card">
+                          <div className="arc-market-card-title">
+                            {effectiveTab === "country" ? t("market.exportCountriesTop") : t("market.exportMarketsTop")}
                           </div>
-                          <TradePartnersChart items={tradePartners.exports} color="#22d3ee" />
+                          <TradePartnersChart items={tradePartners.exports} color="#22d3ee" otherLabel={t("market.other")} />
                         </div>
                       </div>
                     ) : (
-                      <div className="text-xs text-white/45">Выберите товар в таблице.</div>
+                      <div className="arc-market-muted text-xs">{t("market.noSelectedGood")}</div>
                     )}
                   </AppSection>
 
                 <AppSection className="arc-scrollbar h-full overflow-auto">
-                  <Tooltip content="Исторические ряды по выбранному товару за последние ходы.">
-                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-white/70">
-                      <LineChart size={13} className="text-cyan-300" />
-                      История товара
+                  <Tooltip content={t("market.historyTooltip")}>
+                    <div className="arc-market-section-title mb-2">
+                      <LineChart size={13} className="text-[var(--arc-color-atlas-primary)]" />
+                      {t("market.history")}
                     </div>
                   </Tooltip>
                   {selectedRow ? (
                     <div className="space-y-2 text-xs">
-                      <div className="text-white/85">
-                        {selectedRow.goodName} · последние {MARKET_METRIC_WINDOW_TURNS} ходов
+                      <div className="arc-market-value">
+                        {t("market.recentTurns", { good: selectedRow.goodName, turns: MARKET_METRIC_WINDOW_TURNS })}
                       </div>
                       {(() => {
                         const demandHistory =
@@ -861,7 +856,7 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                         const series = [
                           {
                             key: "price",
-                            label: "Цена за ед.",
+                            label: t("market.metric.price"),
                             value: effectiveTab === "country" ? selectedRow.countryPrice : selectedRow.globalPrice,
                             history:
                               (effectiveTab === "country" ? selectedRow.countryPriceHistory : selectedRow.globalPriceHistory) ?? [],
@@ -869,21 +864,21 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                           },
                           {
                             key: "demand",
-                            label: "Спрос",
+                            label: t("market.metric.demand"),
                             value: currentDemand,
                             history: demandHistory,
                             stroke: "#f59e0b",
                           },
                           {
                             key: "offer",
-                            label: "Предложение",
+                            label: t("market.metric.offer"),
                             value: currentOffer,
                             history: offerHistory,
                             stroke: "#34d399",
                           },
                           {
                             key: "coverage",
-                            label: "Покрытие",
+                            label: t("market.metric.coverage"),
                             value: effectiveTab === "country" ? selectedRow.countryCoveragePct : selectedRow.globalCoveragePct,
                             history: coverageHistory,
                             stroke: "#f472b6",
@@ -891,7 +886,7 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                           },
                           {
                             key: "prodFact",
-                            label: "Произв. факт",
+                            label: t("market.metric.productionFact"),
                             value:
                               ((effectiveTab === "country"
                                 ? selectedRow.countryProductionFactHistory
@@ -904,7 +899,7 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                           },
                           {
                             key: "prodMax",
-                            label: "Произв. макс",
+                            label: t("market.metric.productionMax"),
                             value:
                               ((effectiveTab === "country"
                                 ? selectedRow.countryProductionMaxHistory
@@ -938,18 +933,18 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                           return `<div style="display:flex;flex-direction:column;gap:2px;min-width:180px;">${rows.join("")}</div>`;
                         };
                         return series.map((metric) => (
-                          <div key={metric.key} className="rounded-lg border border-white/10 bg-black/25 p-2">
+                          <div key={metric.key} className="arc-market-card">
                             <div className="mb-1 flex items-center justify-between">
-                              <span className="text-white/70">{metric.label}</span>
+                              <span className="arc-market-muted">{metric.label}</span>
                               <span className="inline-flex items-center gap-2">
-                                <span className="font-bold text-white/85">
+                                <span className="arc-market-value font-bold">
                                   {metric.suffix ? `${metric.value.toFixed(1)}${metric.suffix}` : formatCompact(metric.value)}
                                 </span>
                                 <span
                                   className={`text-[11px] font-semibold ${
                                     (metric.key === "coverage" ? getRelativeDeltaPct(metric.history) : getLastDelta(metric.history)) >= 0
-                                      ? "text-emerald-300"
-                                      : "text-red-300"
+                                      ? "arc-market-delta--good"
+                                      : "arc-market-delta--bad"
                                   }`}
                                 >
                                   {(() => {
@@ -983,7 +978,7 @@ export function MarketModal({ open, onClose, token, countryId, countryName, mode
                       })()}
                     </div>
                   ) : (
-                    <div className="text-xs text-white/45">Выберите товар в таблице.</div>
+                    <div className="arc-market-muted text-xs">{t("market.noSelectedGood")}</div>
                   )}
                 </AppSection>
 

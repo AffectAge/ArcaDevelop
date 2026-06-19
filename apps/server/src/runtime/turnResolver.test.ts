@@ -1,7 +1,7 @@
 import type { EventLogEntry, Order } from "@arcanorum/shared";
 import { WORLD_DELTA_MASK } from "@arcanorum/shared";
 import { describe, expect, it } from "vitest";
-import { TURN_RESOLVE_WORLD_DELTA_MASK } from "./turnRuntime";
+import { TURN_RESOLVE_WORLD_DELTA_MASK, runAiTurnBeforeResolveIfEnabled } from "./turnRuntime";
 import { resolveTurnWithPipeline, type ColonizationCaptureResult } from "./turnResolver";
 
 describe("turnResolver", () => {
@@ -16,6 +16,39 @@ describe("turnResolver", () => {
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.regionConstructionQueueByRegion).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.regionResourceDepositsByRegion).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.divisionsById).toBeTruthy();
+  });
+
+
+  it("runs the AI before-resolve hook only when AI settings are enabled", async () => {
+    const calls: unknown[] = [];
+    const aiSettings = {
+      enabled: true,
+      maxCountriesPerTick: 3,
+      maxDecisionCandidatesPerCountry: 5,
+      contextCacheTtlTurns: 2,
+    };
+
+    expect(
+      await runAiTurnBeforeResolveIfEnabled({
+        turnId: 9,
+        aiSettings,
+        runAiTurnBeforeResolve: (params) => {
+          calls.push(params);
+        },
+      }),
+    ).toBe(true);
+    expect(calls).toEqual([{ turnId: 9, aiSettings }]);
+
+    expect(
+      await runAiTurnBeforeResolveIfEnabled({
+        turnId: 10,
+        aiSettings: { ...aiSettings, enabled: false },
+        runAiTurnBeforeResolve: (params) => {
+          calls.push(params);
+        },
+      }),
+    ).toBe(false);
+    expect(calls).toHaveLength(1);
   });
 
   it("runs turn pipeline in order, carries order state, advances turn, and cleans resolved turn", () => {

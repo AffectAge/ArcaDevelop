@@ -1,10 +1,11 @@
 {
   "schemaVersion": 1,
   "scenarioId": "my_map",
-  "authoredHash": "9f63a3df93b4643ff3d65213927a26c8b132aa3037233d4f19e6234ddceec944",
-  "generatedAt": "2026-06-15T18:51:55.407Z",
+  "authoredHash": "ba8ce73f8ebbeb91ec2a90c1aa4e95f132d26806a6c588436a8b241bd1e39061",
+  "generatedAt": "2026-06-17T17:05:25.416Z",
   "files": [
     "common/defines.json",
+    "history/countries/ai_colonizers.json",
     "history/provinces/1.json",
     "history/provinces/10.json",
     "history/provinces/100.json",
@@ -6133,7 +6134,7 @@
   "counts": {
     "provinces": 6119,
     "regions": 1,
-    "countries": 0,
+    "countries": 1,
     "contentEntries": 0,
     "arcawikiEntries": 0
   }

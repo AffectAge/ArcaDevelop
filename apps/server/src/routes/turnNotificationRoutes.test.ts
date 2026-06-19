@@ -24,6 +24,8 @@ describe("turnNotificationRoutes", () => {
       now,
       readySet: new Set(["blocked", "ignored", "ready"]),
       onlineCountryIds: new Set(["ready"]),
+      aiControlledCountryIds: new Set(),
+      getCountryResources: () => null,
       getCountryBlockInfo: (country, turnId) =>
         country.blockedUntilTurn != null && turnId <= country.blockedUntilTurn
           ? { blocked: true, reason: "TURN", blockedUntilTurn: country.blockedUntilTurn, blockedUntilAt: null }
@@ -44,6 +46,24 @@ describe("turnNotificationRoutes", () => {
     expect(items.find((item) => item.id === "ready")).toMatchObject({ online: true, lastLoginAt: "login" });
   });
 
+  it("treats AI countries as online and ready without a socket or ready marker", () => {
+    const items = buildTurnStatusItems({
+      countries: [makeCountry({ id: "ai" }), makeCountry({ id: "player" })],
+      turnId: 2,
+      now: new Date("2026-01-01T00:00:00.000Z"),
+      readySet: new Set(),
+      onlineCountryIds: new Set(),
+      aiControlledCountryIds: new Set(["ai"]),
+      getCountryResources: () => null,
+      getCountryBlockInfo: () => ({ blocked: false, reason: null, blockedUntilTurn: null, blockedUntilAt: null }),
+      getCountrySkipInfo: () => ({ ignored: false, ignoreUntilTurn: null }),
+      getLastLoginAt: () => null,
+    });
+
+    expect(items.find((item) => item.id === "ai")).toMatchObject({ status: "ready", online: true });
+    expect(items.find((item) => item.id === "player")).toMatchObject({ status: "waiting", online: false });
+  });
+
   it("serves turn status through injected dependencies", async () => {
     const cleanupExpiredPunishments = vi.fn().mockResolvedValue(undefined);
     const app = express();
@@ -53,6 +73,7 @@ describe("turnNotificationRoutes", () => {
       getTurnStatusCountries: async () => [makeCountry({ id: "ready" })],
       getReadySetForTurn: () => new Set(["ready"]),
       getOnlineCountryIds: () => new Set(["ready"]),
+      getAiControlledCountryIds: () => new Set(),
       getLastLoginAt: () => "login",
     });
 
@@ -145,6 +166,8 @@ function makeDeps() {
     getTurnStatusCountries: async () => [],
     getReadySetForTurn: () => new Set<string>(),
     getOnlineCountryIds: () => new Set<string>(),
+    getAiControlledCountryIds: () => new Set<string>(),
+    getCountryResources: () => null,
     getCountryBlockInfo: () => ({
       blocked: false,
       reason: null,

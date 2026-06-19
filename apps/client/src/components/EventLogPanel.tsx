@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { Tooltip } from "./Tooltip";
 import { fetchCountries } from "../lib/api";
+import type { UiTextKey } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 
 type Props = {
   entries: EventLogEntry[];
@@ -30,13 +32,13 @@ type Props = {
   onClear: () => void;
 };
 
-const categories: Array<{ id: EventCategory; label: string; icon: LucideIcon; colorCls: string }> = [
-  { id: "system", label: "Система", icon: Megaphone, colorCls: "text-cyan-300" },
-  { id: "colonization", label: "Колонизация", icon: Flag, colorCls: "text-emerald-500" },
-  { id: "politics", label: "Политика", icon: Gavel, colorCls: "text-amber-300" },
-  { id: "economy", label: "Экономика", icon: Coins, colorCls: "text-yellow-300" },
-  { id: "military", label: "Война", icon: Shield, colorCls: "text-rose-300" },
-  { id: "diplomacy", label: "Дипломатия", icon: Globe2, colorCls: "text-violet-300" },
+const categories: Array<{ id: EventCategory; labelKey: UiTextKey; icon: LucideIcon; colorCls: string; accentCls: string }> = [
+  { id: "system", labelKey: "shell.story.category.system", icon: Megaphone, colorCls: "text-[var(--arc-color-text-soft)]", accentCls: "bg-[var(--arc-color-text-soft)]" },
+  { id: "colonization", labelKey: "shell.story.category.colonization", icon: Flag, colorCls: "text-[var(--arc-color-success-text)]", accentCls: "bg-[var(--arc-color-success-text)]" },
+  { id: "politics", labelKey: "shell.story.category.politics", icon: Gavel, colorCls: "text-[var(--arc-color-gold)]", accentCls: "bg-[var(--arc-color-gold)]" },
+  { id: "economy", labelKey: "shell.story.category.economy", icon: Coins, colorCls: "text-[var(--arc-color-gold-warm)]", accentCls: "bg-[var(--arc-color-gold-warm)]" },
+  { id: "military", labelKey: "shell.story.category.military", icon: Shield, colorCls: "text-[var(--arc-color-danger-text)]", accentCls: "bg-[var(--arc-color-danger-text)]" },
+  { id: "diplomacy", labelKey: "shell.story.category.diplomacy", icon: Globe2, colorCls: "text-[var(--arc-color-primary-top)]", accentCls: "bg-[var(--arc-color-primary-top)]" },
 ];
 
 const priorityWeight = { low: 0, medium: 1, high: 2 } as const;
@@ -44,10 +46,16 @@ const allPriorityIds = ["low", "medium", "high"] as const;
 const allCategoryIds = categories.map((c) => c.id);
 
 const priorityMeta = {
-  low: { label: "Низкий", colorCls: "text-[var(--arc-color-text-soft)]", chipCls: "arc-hud-chip text-[var(--arc-color-text-paper)]" },
-  medium: { label: "Средний", colorCls: "text-[var(--arc-color-warning-top)]", chipCls: "border-[var(--arc-color-warning-border)] bg-gradient-to-b from-[var(--arc-color-warning-top)] to-[var(--arc-color-warning-bottom)] text-[var(--arc-color-text-paper)]" },
-  high: { label: "Высокий", colorCls: "text-[var(--arc-color-danger-text)]", chipCls: "border-[var(--arc-color-danger-border)] bg-gradient-to-b from-[var(--arc-color-danger-top)] to-[var(--arc-color-danger-bottom)] text-[var(--arc-color-danger-text)]" },
+  low: { labelKey: "shell.story.priority.low", tooltipKey: "eventLog.priorityLow", colorCls: "text-[var(--arc-color-text-soft)]", chipCls: "arc-hud-chip text-[var(--arc-color-text-paper)]" },
+  medium: { labelKey: "shell.story.priority.medium", tooltipKey: "eventLog.priorityMedium", colorCls: "text-[var(--arc-color-warning-top)]", chipCls: "border-[var(--arc-color-warning-border)] bg-gradient-to-b from-[var(--arc-color-warning-top)] to-[var(--arc-color-warning-bottom)] text-[var(--arc-color-text-paper)]" },
+  high: { labelKey: "shell.story.priority.high", tooltipKey: "eventLog.priorityHigh", colorCls: "text-[var(--arc-color-danger-text)]", chipCls: "border-[var(--arc-color-danger-border)] bg-gradient-to-b from-[var(--arc-color-danger-top)] to-[var(--arc-color-danger-bottom)] text-[var(--arc-color-danger-text)]" },
 } as const;
+
+const scopeOptions: Array<{ id: EventCountryScope; labelKey: UiTextKey }> = [
+  { id: "all", labelKey: "eventLog.scope.all" },
+  { id: "own", labelKey: "eventLog.scope.own" },
+  { id: "foreign", labelKey: "eventLog.scope.foreign" },
+];
 
 function dedupeEntries(entries: EventLogEntry[]): Array<{ entry: EventLogEntry; count: number }> {
   const grouped = new Map<string, { entry: EventLogEntry; count: number }>();
@@ -104,6 +112,7 @@ function ScopeIcon({ scope }: { scope: EventCountryScope }) {
 }
 
 export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }: Props) {
+  const { t } = useUiText();
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem("arc.ui.eventLog.collapsed") === "1";
@@ -363,7 +372,7 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
             transition={{ duration: 0.18, ease: "easeOut" }}
             className="pointer-events-auto flex justify-end"
           >
-            <Tooltip content="Развернуть журнал событий" placement="left">
+            <Tooltip content={t("eventLog.expand")} placement="left">
               <motion.button
                 type="button"
                 onClick={() => setCollapsed(false)}
@@ -389,8 +398,8 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                 <span className="arc-hud-button-solid inline-flex h-8 w-8 items-center justify-center rounded-lg">
                   <Bell size={15} />
                 </span>
-                <div className="text-base font-semibold text-[var(--arc-color-text)]">Журнал событий</div>
-                <Tooltip content="Количество записей в журнале" placement="bottom">
+                <div className="text-base font-semibold text-[var(--arc-color-text)]">{t("eventLog.title")}</div>
+                <Tooltip content={t("eventLog.countTooltip")} placement="bottom">
                   <motion.span
                     animate={
                       newEventsPulse
@@ -405,21 +414,21 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                 </Tooltip>
               </div>
               <div className="flex items-center gap-1">
-                <IconBtn icon={Scissors} onClick={onTrimOld} tooltip="Скрыть старые" />
+                <IconBtn icon={Scissors} onClick={onTrimOld} tooltip={t("eventLog.trimOld")} />
                 <IconBtn
                   icon={ArrowUpDown}
                   onClick={() => setSortMode((s) => (s === "time" ? "priority" : "time"))}
-                  tooltip={sortMode === "time" ? "Сортировка: по времени" : "Сортировка: по важности"}
+                  tooltip={sortMode === "time" ? t("eventLog.sortTime") : t("eventLog.sortPriority")}
                 />
-                <IconBtn icon={Trash2} onClick={onClear} tooltip="Очистить журнал" tone="danger" />
-                <IconBtn icon={ChevronRight} onClick={() => setCollapsed(true)} tooltip="Свернуть журнал" />
+                <IconBtn icon={Trash2} onClick={onClear} tooltip={t("eventLog.clear")} tone="danger" />
+                <IconBtn icon={ChevronRight} onClick={() => setCollapsed(true)} tooltip={t("eventLog.collapse")} />
               </div>
             </div>
 
             <div className="arc-hud-content arc-hud-chip mb-3 rounded-xl p-2.5">
               <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-[var(--arc-color-text-muted)]">
                 <Filter size={13} />
-                Категории
+                {t("eventLog.categories")}
               </div>
               <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => {
@@ -442,7 +451,7 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                   );
 
                   return (
-                    <Tooltip key={cat.id} content={cat.id === "system" ? "Системные события всегда видимы" : cat.label} placement="top">
+                    <Tooltip key={cat.id} content={cat.id === "system" ? t("eventLog.systemAlwaysVisible") : t(cat.labelKey)} placement="top">
                       {button}
                     </Tooltip>
                   );
@@ -452,8 +461,8 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
 
             <div className="arc-hud-content arc-hud-chip mb-3 rounded-xl p-2.5">
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wide text-[var(--arc-color-text-muted)]">Приоритет</div>
-                <Tooltip content="Объединять одинаковые события в одну запись с счетчиком xN" placement="top">
+                <div className="text-xs uppercase tracking-wide text-[var(--arc-color-text-muted)]">{t("eventLog.priority")}</div>
+                <Tooltip content={t("eventLog.groupDuplicatesTooltip")} placement="top">
                   <button
                     type="button"
                     onClick={() => setGroupDuplicates((v) => !v)}
@@ -463,7 +472,7 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                         : "arc-hud-button"
                     }`}
                   >
-                    {groupDuplicates ? "Группировка: вкл" : "Группировка: выкл"}
+                    {groupDuplicates ? t("eventLog.groupDuplicatesOn") : t("eventLog.groupDuplicatesOff")}
                   </button>
                 </Tooltip>
               </div>
@@ -472,7 +481,7 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                   const enabled = enabledPriorities.has(priority);
                   const meta = priorityMeta[priority];
                   return (
-                    <Tooltip key={priority} content={`Показать события с приоритетом: ${meta.label.toLowerCase()}`} placement="top">
+                    <Tooltip key={priority} content={t("eventLog.priorityTooltip", { priority: t(meta.labelKey).toLowerCase() })} placement="top">
                       <button
                         type="button"
                         onClick={() => togglePriority(priority)}
@@ -480,7 +489,7 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                           enabled ? meta.chipCls : "arc-hud-button"
                         }`}
                       >
-                        {meta.label}
+                        {t(meta.labelKey)}
                       </button>
                     </Tooltip>
                   );
@@ -490,16 +499,12 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
 
             <div className="arc-hud-content arc-hud-chip mb-3 rounded-xl p-2.5">
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wide text-[var(--arc-color-text-muted)]">Принадлежность</div>
-                <div className="text-[10px] text-[var(--arc-color-text-muted)]">Фильтр по стране</div>
+                <div className="text-xs uppercase tracking-wide text-[var(--arc-color-text-muted)]">{t("eventLog.countryScope")}</div>
+                <div className="text-[10px] text-[var(--arc-color-text-muted)]">{t("eventLog.countryFilter")}</div>
               </div>
               <div className="grid grid-cols-3 gap-2 rounded-xl border border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-toolbar)] p-1">
-                {([
-                  { id: "all", label: "Все" },
-                  { id: "own", label: "Наши" },
-                  { id: "foreign", label: "Чужие" },
-                ] as const).map((scope) => (
-                  <Tooltip key={scope.id} content={`Показать: ${scope.label.toLowerCase()} события`} placement="top">
+                {scopeOptions.map((scope) => (
+                  <Tooltip key={scope.id} content={t("eventLog.scopeTooltip", { scope: t(scope.labelKey).toLowerCase() })} placement="top">
                     <motion.button
                       type="button"
                       onClick={() => setCountryScope(scope.id)}
@@ -513,7 +518,7 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                     >
                       <span className="relative z-10 flex flex-col items-center gap-1">
                         <ScopeIcon scope={scope.id} />
-                        <span className="text-[11px] leading-none">{scope.label}</span>
+                        <span className="text-[11px] leading-none">{t(scope.labelKey)}</span>
                       </span>
                     </motion.button>
                   </Tooltip>
@@ -524,7 +529,7 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
             <div className="arc-hud-content arc-scrollbar max-h-[52vh] space-y-2 overflow-auto pr-1">
               {filteredAndGrouped.length === 0 ? (
                 <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="arc-hud-chip rounded-xl p-4 text-base">
-                  Нет событий
+                  {t("eventLog.empty")}
                 </motion.div>
               ) : (
                 <AnimatePresence initial={false}>
@@ -537,18 +542,8 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                         : entry.priority === "medium"
                           ? "text-[var(--arc-color-warning-top)]"
                           : "text-[var(--arc-color-text-muted)]";
-                    const categoryAccent =
-                      entry.category === "politics"
-                        ? "bg-sky-300"
-                        : entry.category === "economy"
-                          ? "bg-emerald-400"
-                          : entry.category === "system"
-                            ? "bg-slate-300"
-                            : entry.category === "military"
-                              ? "bg-rose-300"
-                              : entry.category === "diplomacy"
-                                ? "bg-violet-300"
-                                : "bg-emerald-400";
+                    const categoryLabel = t(categoryMeta.labelKey);
+                    const categoryAccent = categoryMeta.accentCls;
                     const localDate = new Date(entry.timestamp);
                     const messageKey = `${entry.id}-${entry.timestamp}-${count}`;
                     const isLongMessage = (entry.message?.length ?? 0) > 180;
@@ -566,16 +561,16 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                         <span className={`pointer-events-none absolute inset-y-2 left-0.5 w-0.5 rounded-full ${categoryAccent} opacity-85`} />
                         <div className="mb-1.5 flex items-start justify-between gap-2">
                           <div className="flex min-w-0 items-center gap-2">
-                            <Tooltip content={`Категория: ${categoryMeta.label}`} placement="top">
+                            <Tooltip content={t("eventLog.category", { category: categoryLabel })} placement="top">
                               <span className="inline-flex">
                                 <CatIcon size={16} className={categoryMeta.colorCls} />
                               </span>
                             </Tooltip>
-                            <Tooltip content={`Событие зафиксировано на ходу #${entry.turn}`} placement="top">
-                              <span className="text-xs text-[var(--arc-color-text-muted)]">Ход #{entry.turn}</span>
+                            <Tooltip content={t("eventLog.turnTooltip", { turn: entry.turn })} placement="top">
+                              <span className="text-xs text-[var(--arc-color-text-muted)]">{t("eventLog.turn", { turn: entry.turn })}</span>
                             </Tooltip>
                             {count > 1 && (
-                              <Tooltip content="Сколько одинаковых событий объединено" placement="top">
+                              <Tooltip content={t("eventLog.duplicateCount")} placement="top">
                                 <span className="rounded border border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-toolbar)] px-1.5 py-0.5 text-xs text-[var(--arc-color-text-paper)]">x{count}</span>
                               </Tooltip>
                             )}
@@ -583,11 +578,7 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                           <div className="flex items-center gap-1.5 text-xs">
                             <Tooltip
                               content={
-                                entry.priority === "high"
-                                  ? "Высокий приоритет"
-                                  : entry.priority === "medium"
-                                    ? "Средний приоритет"
-                                    : "Низкий приоритет"
+                                t(priorityMeta[entry.priority].tooltipKey)
                               }
                               placement="top"
                             >
@@ -596,9 +587,9 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                               </span>
                             </Tooltip>
                             {entry.visibility === "private" && (
-                              <Tooltip content="Приватное событие (видно только вашей стране)" placement="top">
+                              <Tooltip content={t("eventLog.privateTooltip")} placement="top">
                                 <span className="inline-flex">
-                                  <Lock size={13} className="text-violet-300" />
+                                  <Lock size={13} className="text-[var(--arc-color-gold)]" />
                                 </span>
                               </Tooltip>
                             )}
@@ -609,13 +600,13 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                         <div className="pr-3">
                           <div className={`text-sm leading-relaxed text-[var(--arc-color-text-paper)] ${isLongMessage && !isMessageExpanded ? "line-clamp-3" : ""}`}>{entry.message}</div>
                           {isLongMessage && (
-                            <Tooltip content={isMessageExpanded ? "Скрыть полное сообщение" : "Развернуть полное сообщение"} placement="top">
+                            <Tooltip content={isMessageExpanded ? t("eventLog.hideMessage") : t("eventLog.expandMessage")} placement="top">
                               <button
                                 type="button"
                                 onClick={() => toggleMessageExpanded(messageKey)}
                                 className="mt-1 text-xs font-semibold text-[var(--arc-color-primary-top)] transition hover:brightness-110"
                               >
-                                {isMessageExpanded ? "Свернуть" : "Показать полностью"}
+                                {isMessageExpanded ? t("common.close") : t("eventLog.expandMessage")}
                               </button>
                             </Tooltip>
                           )}
@@ -623,15 +614,15 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
 
                         <div className="mt-2.5 flex items-center justify-between gap-2 text-xs text-[var(--arc-color-text-muted)]">
                           <div className="flex items-center gap-2">
-                            <Tooltip content="Категория события" placement="top">
+                            <Tooltip content={t("eventLog.category", { category: categoryLabel })} placement="top">
                               <span className={`inline-flex items-center gap-1 ${categoryMeta.colorCls}`}>
                                 <span className={`h-1.5 w-1.5 rounded-full ${categoryAccent}`} />
-                                {categoryMeta.label}
+                                {categoryLabel}
                               </span>
                             </Tooltip>
                             {entry.countryId ? (
                               <Tooltip
-                                content={countriesById[entry.countryId]?.name ? `Страна: ${countriesById[entry.countryId].name}` : "Страна, к которой относится событие"}
+                                content={countriesById[entry.countryId]?.name ? t("eventLog.countryTooltip", { country: countriesById[entry.countryId].name }) : t("eventLog.countryFilter")}
                                 placement="top"
                               >
                                 <span className="inline-flex max-w-[10.5rem] items-center gap-1.5 rounded border border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-toolbar)] px-1.5 py-0.5 text-[var(--arc-color-text-paper)]">
@@ -644,7 +635,7 @@ export function EventLogPanel({ entries, currentCountryId, onTrimOld, onClear }:
                                   ) : (
                                     <span
                                       className="h-3 w-3 rounded-full"
-                                      style={{ backgroundColor: countriesById[entry.countryId]?.color ?? "#94a3b8" }}
+                                      style={{ backgroundColor: countriesById[entry.countryId]?.color ?? "var(--arc-color-text-muted)" }}
                                     />
                                   )}
                                   <span className="truncate">

@@ -1,6 +1,8 @@
 import { BookOpen, FlaskConical, Landmark, Coins, CircleDollarSign, ListChecks, LogOut, ShieldAlert, SkipForward, SlidersHorizontal, Cog, Flag, Sliders, Clock3, Palette, Hammer, Users, type LucideIcon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import type { UiTextKey } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 
 type Resources = {
   culture: number;
@@ -43,14 +45,14 @@ type Props = {
 };
 
 const cards = [
-  { key: "culture", label: "Культура", icon: BookOpen, tip: "Очки культуры для развития традиций" },
-  { key: "science", label: "Наука", icon: FlaskConical, tip: "Очки науки ускоряют исследования" },
-  { key: "religion", label: "Религия", icon: Landmark, tip: "Религия влияет на стабильность и миссии" },
-  { key: "colonization", label: "Колонизация", icon: Flag, tip: "Очки колонизации за ход" },
-  { key: "construction", label: "Строительство", icon: Hammer, tip: "Очки строительства для производственных приказов" },
-  { key: "ducats", label: "Дукаты", icon: Coins, tip: "Планировочный бюджет текущего хода" },
-  { key: "gold", label: "Золото", icon: CircleDollarSign, tip: "Госказна для больших проектов" },
-] as const;
+  { key: "culture", labelKey: "shell.resource.culture", icon: BookOpen, tipKey: "topBar.resourceTip.culture" },
+  { key: "science", labelKey: "shell.resource.science", icon: FlaskConical, tipKey: "topBar.resourceTip.science" },
+  { key: "religion", labelKey: "shell.resource.religion", icon: Landmark, tipKey: "topBar.resourceTip.religion" },
+  { key: "colonization", labelKey: "shell.resource.colonization", icon: Flag, tipKey: "topBar.resourceTip.colonization" },
+  { key: "construction", labelKey: "shell.resource.construction", icon: Hammer, tipKey: "topBar.resourceTip.construction" },
+  { key: "ducats", labelKey: "shell.resource.ducats", icon: Coins, tipKey: "topBar.resourceTip.ducats" },
+  { key: "gold", labelKey: "shell.resource.gold", icon: CircleDollarSign, tipKey: "topBar.resourceTip.gold" },
+] as const satisfies ReadonlyArray<{ key: keyof Resources; labelKey: UiTextKey; icon: LucideIcon; tipKey: UiTextKey }>;
 
 function formatCompact(value: number): string {
   const sign = value < 0 ? "-" : "";
@@ -85,23 +87,23 @@ function formatPercent(value: number): string {
   return `${value.toFixed(digits).replace(/\.0+$/, "").replace(/(\.\d)0$/, "$1")}%`;
 }
 
-function formatAreaKm2(value: number): string {
-  return `${new Intl.NumberFormat("ru-RU").format(Math.max(0, Math.round(value)))} км²`;
+function formatAreaKm2(value: number, locale: string): string {
+  return `${new Intl.NumberFormat(locale).format(Math.max(0, Math.round(value)))} km²`;
 }
 
-function formatCountdown(secondsLeft: number): string {
+function formatCountdown(secondsLeft: number, t: (key: UiTextKey) => string): string {
   const sec = Math.max(0, Math.floor(secondsLeft));
   const days = Math.floor(sec / 86_400);
   const hours = Math.floor((sec % 86_400) / 3_600);
   const minutes = Math.floor((sec % 3_600) / 60);
   const seconds = sec % 60;
   if (days > 0) {
-    return `${days}д ${hours}ч ${minutes}м ${seconds}с`;
+    return `${days}${t("topBar.time.day")} ${hours}${t("topBar.time.hour")} ${minutes}${t("topBar.time.minute")} ${seconds}${t("topBar.time.second")}`;
   }
   if (hours > 0) {
-    return `${hours}ч ${minutes}м ${seconds}с`;
+    return `${hours}${t("topBar.time.hour")} ${minutes}${t("topBar.time.minute")} ${seconds}${t("topBar.time.second")}`;
   }
-  return `${minutes}м ${seconds}с`;
+  return `${minutes}${t("topBar.time.minute")} ${seconds}${t("topBar.time.second")}`;
 }
 
 type TopIconActionButtonProps = {
@@ -161,6 +163,7 @@ export function TopBar({
   countryDetails,
   turnTimer,
 }: Props) {
+  const { locale, t } = useUiText();
   const hoverOpenTimerRef = useRef<number | null>(null);
   const countryHoverTimerRef = useRef<number | null>(null);
   const populationHoverTimerRef = useRef<number | null>(null);
@@ -253,13 +256,13 @@ export function TopBar({
     turnTimerRemainingSec === null
       ? "text-[var(--arc-color-text-soft)]"
       : turnTimerRemainingSec <= 15
-        ? "text-[var(--arc-color-danger-text)]"
+          ? "text-[var(--arc-color-danger-text)]"
         : turnTimerRemainingSec <= 60
-          ? "text-[var(--arc-color-warning)]"
-          : "text-[var(--arc-color-success)]";
+          ? "text-[var(--arc-color-gold)]"
+          : "text-[var(--arc-color-success-text)]";
   const populationNetColorClass =
     populationNetGrowth > 0
-      ? "text-[var(--arc-color-success)]"
+      ? "text-[var(--arc-color-success-text)]"
       : populationNetGrowth < 0
         ? "text-[var(--arc-color-danger-text)]"
         : "text-[var(--arc-color-text-soft)]";
@@ -275,7 +278,7 @@ export function TopBar({
             onClick={onOpenCountryCustomization}
             className="flex items-center gap-3 rounded-lg px-1 py-1 text-left text-[var(--arc-color-text)] transition hover:bg-[var(--arc-overlay-30)]"
             aria-expanded={countryHovered}
-            aria-label="Открыть детали страны"
+            aria-label={t("topBar.openCountryDetails")}
           >
             <img src={flagUrl || "/placeholder-flag.svg"} alt="flag" className="h-8 w-12 rounded object-cover" />
             <img src={crestUrl || "/placeholder-crest.svg"} alt="crest" className="h-8 w-[1.333rem] rounded object-cover" />
@@ -295,18 +298,18 @@ export function TopBar({
                     <img src={flagUrl || "/placeholder-flag.svg"} alt="" className="h-4 w-6 rounded object-cover" />
                     <span className="font-semibold">{countryName}</span>
                   </div>
-                  <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-text-soft)]">Детали страны и её владений</div>
+                  <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-text-soft)]">{t("topBar.countryDetails")}</div>
                   <div className="arc-hud-content space-y-1 text-[var(--arc-color-text-soft)]">
                     <div className="flex items-center justify-between gap-3">
-                      <span>Провинций под контролем</span>
+                      <span>{t("topBar.controlledProvinces")}</span>
                       <span className="text-[var(--arc-color-text)]">{countryDetails?.provinceCount ?? 0}</span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span>Общая площадь</span>
-                      <span className="text-[var(--arc-color-text)]">{formatAreaKm2(countryDetails?.totalAreaKm2 ?? 0)}</span>
+                      <span>{t("topBar.totalArea")}</span>
+                      <span className="text-[var(--arc-color-text)]">{formatAreaKm2(countryDetails?.totalAreaKm2 ?? 0, locale)}</span>
                     </div>
                     <div className="mt-1 flex items-center justify-between gap-3 border-t border-[var(--arc-color-brown)] pt-1">
-                      <span>Текущий ход</span>
+                      <span>{t("topBar.currentTurn")}</span>
                       <span className="text-[var(--arc-color-gold)]">#{turnId}</span>
                     </div>
                   </div>
@@ -322,7 +325,7 @@ export function TopBar({
               type="button"
               className="arc-hud-chip flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition hover:border-[var(--arc-color-gold)]"
               aria-expanded={populationHovered}
-              aria-label={`Население: ${formatCompact(populationTotal)}, прирост ${formatSignedCompact(populationNetGrowth)}`}
+              aria-label={t("topBar.populationAria", { population: formatCompact(populationTotal), growth: formatSignedCompact(populationNetGrowth) })}
             >
               {populationIconUrl ? (
                 <img src={populationIconUrl} alt="" className="h-[18px] w-[18px] rounded-sm object-contain" />
@@ -369,30 +372,30 @@ export function TopBar({
                       ) : (
                         <Users size={14} className="text-[var(--arc-color-gold)]" />
                       )}
-                      <span className="font-semibold">Население</span>
+                      <span className="font-semibold">{t("shell.metric.population")}</span>
                     </div>
                     <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-text-soft)]">
-                      Общее население, рождаемость и смертность за последний ход
+                      {t("topBar.populationDescription")}
                     </div>
                     <div className="arc-hud-content space-y-1 text-[var(--arc-color-text-soft)]">
                       <div className="flex items-center justify-between gap-3">
-                        <span>Всего жителей</span>
+                        <span>{t("population.totalPopulation")}</span>
                         <span className="text-[var(--arc-color-text)]">{formatCompact(populationTotal)}</span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>Рождаемость</span>
-                        <span className="text-[var(--arc-color-success)]">
+                        <span>{t("population.births")}</span>
+                        <span className="text-[var(--arc-color-success-text)]">
                           +{formatCompact(populationBirths)} · {formatPercent(populationBirthRatePct)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>Смертность</span>
+                        <span>{t("population.deaths")}</span>
                         <span className="text-[var(--arc-color-danger-text)]">
                           -{formatCompact(populationDeaths)} · {formatPercent(populationDeathRatePct)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span>Чистый прирост</span>
+                        <span>{t("topBar.netGrowth")}</span>
                         <span className={populationNetColorClass}>{formatSignedCompact(populationNetGrowth)}</span>
                       </div>
                     </div>
@@ -408,8 +411,9 @@ export function TopBar({
             const expense = Math.max(0, Math.floor(resourceExpenseByTurn?.[card.key] ?? 0));
             const net = growth - expense;
             const netColorClass =
-              net > 0 ? "text-[var(--arc-color-success)]" : net < 0 ? "text-[var(--arc-color-danger-text)]" : "text-[var(--arc-color-text-soft)]";
-            const netDetailColorClass = net > 0 ? "text-[var(--arc-color-success)]" : net < 0 ? "text-[var(--arc-color-danger-text)]" : "text-[var(--arc-color-text)]";
+              net > 0 ? "text-[var(--arc-color-success-text)]" : net < 0 ? "text-[var(--arc-color-danger-text)]" : "text-[var(--arc-color-text-soft)]";
+            const netDetailColorClass = net > 0 ? "text-[var(--arc-color-success-text)]" : net < 0 ? "text-[var(--arc-color-danger-text)]" : "text-[var(--arc-color-text)]";
+            const label = t(card.labelKey);
             return (
               <div
                 key={card.key}
@@ -421,7 +425,7 @@ export function TopBar({
                     type="button"
                     className="arc-hud-chip flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition hover:border-[var(--arc-color-gold)]"
                     aria-expanded={hoveredResource === card.key}
-                    aria-label={`${card.label}: открыть детали`}
+                    aria-label={t("topBar.openResourceDetails", { resource: label })}
                   >
                     {customIconUrl ? (
                       <img src={customIconUrl} alt="" className="h-[18px] w-[18px] rounded-sm object-contain" />
@@ -470,38 +474,38 @@ export function TopBar({
                             ) : (
                               <Icon size={14} className="text-[var(--arc-color-gold)]" />
                             )}
-                            <span className="font-semibold">{card.label}</span>
+                            <span className="font-semibold">{label}</span>
                           </div>
-                          <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-text-soft)]">{card.tip}</div>
+                          <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-text-soft)]">{t(card.tipKey)}</div>
                           <div className="arc-hud-content space-y-1 text-[var(--arc-color-text-soft)]">
                             <div className="flex items-center justify-between gap-3">
-                              <span>Текущее значение</span>
+                              <span>{t("topBar.currentValue")}</span>
                               <span className="text-[var(--arc-color-text)]">{formatCompact(resources[card.key])}</span>
                             </div>
                             <div className="flex items-center justify-between gap-3">
-                              <span>Прирост за ход</span>
-                              <span className="text-[var(--arc-color-success)]">+{formatCompact(growth)}</span>
+                              <span>{t("topBar.growthPerTurn")}</span>
+                              <span className="text-[var(--arc-color-success-text)]">+{formatCompact(growth)}</span>
                             </div>
                             <div className="flex items-center justify-between gap-3">
-                              <span>Расход за ход</span>
+                              <span>{t("topBar.expensePerTurn")}</span>
                               <span className="text-[var(--arc-color-danger-text)]">-{formatCompact(expense)}</span>
                             </div>
                             <div className="mt-1 flex items-center justify-between gap-3 border-t border-[var(--arc-color-brown)] pt-1">
-                              <span>Итог за ход</span>
+                              <span>{t("topBar.netPerTurn")}</span>
                               <span className={netDetailColorClass}>
                                 {net >= 0 ? `+${formatCompact(net)}` : formatCompact(net)}
                               </span>
                             </div>
                             {card.key === "colonization" && colonizationLimit && (
                               <div className="mt-1 flex items-center justify-between gap-3 border-t border-[var(--arc-color-brown)] pt-1">
-                                <span>Лимит колонизаций</span>
+                                <span>{t("topBar.colonizationLimit")}</span>
                                 <span
                                   className={
                                     colonizationLimit.active >= colonizationLimit.max
                                       ? "text-[var(--arc-color-danger-text)]"
                                       : colonizationLimit.active > 0
-                                        ? "text-[var(--arc-color-warning)]"
-                                        : "text-[var(--arc-color-success)]"
+                                        ? "text-[var(--arc-color-gold)]"
+                                        : "text-[var(--arc-color-success-text)]"
                                   }
                                 >
                                   {colonizationLimit.active} / {colonizationLimit.max}
@@ -519,34 +523,34 @@ export function TopBar({
         </div>
 
         <div className="flex justify-end gap-2">
-          <TopIconActionButton label="Хранилище знаний" onClick={onOpenCivilopedia} icon={BookOpen} />
-          <TopIconActionButton label="Настройки клиента" onClick={onOpenClientSettings} icon={Sliders} />
+          <TopIconActionButton label={t("topBar.knowledgeBase")} onClick={onOpenCivilopedia} icon={BookOpen} />
+          <TopIconActionButton label={t("topBar.clientSettings")} onClick={onOpenClientSettings} icon={Sliders} />
 
-          {isAdmin && <TopIconActionButton label="Панель администратора" onClick={onOpenAdminPanel} icon={SlidersHorizontal} variant="admin" />}
-          {isAdmin && <TopIconActionButton label="Панель контента" onClick={onOpenContentPanel} icon={Palette} variant="admin" />}
-          {isAdmin && <TopIconActionButton label="Настройки игры" onClick={onOpenGameSettings} icon={Cog} variant="admin" />}
-          {isAdmin && <TopIconActionButton label="Админ: форс-резолв" onClick={onAdminForceResolve} icon={ShieldAlert} variant="admin" />}
+          {isAdmin && <TopIconActionButton label={t("shell.adminPanel")} onClick={onOpenAdminPanel} icon={SlidersHorizontal} variant="admin" />}
+          {isAdmin && <TopIconActionButton label={t("topBar.contentPanel")} onClick={onOpenContentPanel} icon={Palette} variant="admin" />}
+          {isAdmin && <TopIconActionButton label={t("topBar.gameSettings")} onClick={onOpenGameSettings} icon={Cog} variant="admin" />}
+          {isAdmin && <TopIconActionButton label={t("topBar.adminForceResolve")} onClick={onAdminForceResolve} icon={ShieldAlert} variant="admin" />}
 
-          <TopIconActionButton label="Выход" onClick={onLogout} icon={LogOut} />
-          <TopIconActionButton label="Статусы стран" onClick={onOpenTurnStatus} icon={ListChecks} />
+          <TopIconActionButton label={t("topBar.logout")} onClick={onLogout} icon={LogOut} />
+          <TopIconActionButton label={t("shell.action.turnStatus")} onClick={onOpenTurnStatus} icon={ListChecks} />
 
           <button
             onClick={onNextTurn}
             className={`group inline-flex h-10 items-center justify-start overflow-hidden rounded-lg border border-[var(--arc-color-primary-border)] bg-gradient-to-b from-[var(--arc-color-primary-top)] to-[var(--arc-color-primary-bottom)] text-[var(--arc-color-text)] shadow-[var(--arc-shadow-inset-button)] transition-[width,filter] hover:brightness-110 ${
               turnTimer?.enabled && turnTimerRemainingSec !== null ? "gap-2 px-3" : "w-10 px-3 hover:w-[190px]"
             }`}
-            aria-label={`Следующий ход #${turnId}`}
+            aria-label={t("topBar.nextTurn", { turn: turnId })}
             type="button"
           >
             <SkipForward size={16} className="shrink-0" />
             {turnTimer?.enabled && turnTimerRemainingSec !== null ? (
               <span className="inline-flex items-center gap-1 text-xs font-semibold tabular-nums">
                 <Clock3 size={13} className="text-[var(--arc-color-text-soft)]" />
-                <span className={turnTimerColorClass}>{formatCountdown(turnTimerRemainingSec)}</span>
+                <span className={turnTimerColorClass}>{formatCountdown(turnTimerRemainingSec, t)}</span>
               </span>
             ) : (
               <span className="ml-2 max-w-0 overflow-hidden whitespace-nowrap text-xs font-semibold opacity-0 transition-all duration-150 group-hover:max-w-[140px] group-hover:opacity-100">
-                Следующий ход #{turnId}
+                {t("topBar.nextTurn", { turn: turnId })}
               </span>
             )}
           </button>

@@ -4,6 +4,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { WorldBase } from "@arcanorum/shared";
 import type { PersistedContentLibrary } from "../persistence/contentLibraryFile";
 import {
+  buildAiControlledCountryIdsFromHistory,
   buildScenarioCountryMetadata,
   type ScenarioHistory,
 } from "../scenarios/scenarioHistoryLoader";
@@ -27,6 +28,7 @@ type ScenarioServerRuntimeParams = {
   getPersistedContentLibrary: () => PersistedContentLibrary | null;
   defaultWorldBase: (currentTurnId: number) => WorldBase;
   addEconomyTickCountry: (countryId: string) => void;
+  setAiControlledCountryIds: (countryIds: string[]) => void;
   invalidateCountryQueryCache: () => void;
   normalizeResourcesByCountryMap: (input: unknown) => WorldBase["resourcesByCountry"];
   normalizeRegionColonizationMap: (input: unknown) => WorldBase["regionColonizationByRegion"];
@@ -109,6 +111,7 @@ export function createScenarioServerRuntime(params: ScenarioServerRuntimeParams)
     scenarioDir: string | null,
     history: ScenarioHistory | null,
   ): Promise<void> {
+    params.setAiControlledCountryIds(buildAiControlledCountryIdsFromHistory(history));
     if (!scenarioDir || !history) return;
     const countries = buildScenarioCountryMetadata(scenarioDir, history);
     if (countries.length === 0) return;

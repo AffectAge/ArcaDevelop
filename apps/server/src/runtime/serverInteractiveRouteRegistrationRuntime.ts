@@ -53,6 +53,7 @@ type ServerInteractiveRouteRegistrationRuntimeParams = {
   getWorldStateVersion: () => number;
   getWorldBase: () => WorldBase;
   getGameSettings: () => GameSettings;
+  getAiControlledCountryIds: Parameters<typeof registerWebSocketRouteComposition>[0]["getAiControlledCountryIds"];
   pushAdminAuditLog: Parameters<typeof registerAccountControlRouteComposition>[0]["pushAdminAuditLog"];
   validateImageRule: Parameters<typeof registerAccountControlRouteComposition>[0]["validateImageRule"];
   removeUploadedFile: Parameters<typeof registerAccountControlRouteComposition>[0]["removeUploadedFile"];
@@ -131,6 +132,7 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
     onlinePlayers: params.sessionStateRuntime.onlinePlayers,
     getWorldBase: params.getWorldBase,
     getGameSettings: params.getGameSettings,
+    getAiControlledCountryIds: params.getAiControlledCountryIds,
     getTurnId: params.getTurnId,
     getWorldStateVersion: params.getWorldStateVersion,
     getOrdersByTurn: () => params.turnStateRuntime.ordersByTurn,

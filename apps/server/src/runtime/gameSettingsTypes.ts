@@ -252,6 +252,12 @@ export type GameSettings = {
     shipTypes: MilitaryContentEntry[];
     aircraftTypes: MilitaryContentEntry[];
   };
+  ai: {
+    enabled: boolean;
+    maxCountriesPerTick: number;
+    maxDecisionCandidatesPerCountry: number;
+    contextCacheTtlTurns: number;
+  };
   civilopedia: {
     categories: string[];
     entries: Array<{
@@ -330,6 +336,8 @@ export type GameSettings = {
     pointsPerTurn: number;
     pointsCostPer1000Km2: number;
     ducatsCostPer1000Km2: number;
+    settlementEnabled: boolean;
+    settlementPopulationOnCapture: number;
   };
   customization: {
     renameDucats: number;

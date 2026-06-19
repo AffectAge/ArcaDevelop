@@ -45,6 +45,8 @@ Scenario country files may define player-facing metadata and starting resources,
 
 Country `color` is required as `#RRGGBB`. `nameKey` is resolved through scenario localization. Scenario application creates landless country runtime state when needed, even if the country owns no region.
 
+AI-controlled countries are treated as online and turn-ready by the server turn-status and resolve gating flows. This keeps unattended AI countries from blocking turn advancement while still requiring their gameplay actions to pass through the normal validated order pipeline.
+
 ## Switching Control
 
 Admins can switch control mode. Scenario defines may enable automatic temporary AI takeover after missed turns or offline time.

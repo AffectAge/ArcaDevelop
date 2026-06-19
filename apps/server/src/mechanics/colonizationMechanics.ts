@@ -1,4 +1,4 @@
-import type { Order, WorldBase } from "@arcanorum/shared";
+import type { Order, RegionPopulation, WorldBase } from "@arcanorum/shared";
 import {
   dropTurnOrderIndexes,
   removeOrderFromTurnIndexes,
@@ -32,13 +32,19 @@ export type RegionColonizationWorldState = Pick<
 
 export type ColonizationTurnWorldState = Pick<
   WorldBase,
-  "colonyProgressByRegion" | "regionOwner" | "regionController" | "provinceOwner" | "resourcesByCountry"
+  | "colonyProgressByRegion"
+  | "regionOwner"
+  | "regionController"
+  | "provinceOwner"
+  | "resourcesByCountry"
+  | "regionPopulationByRegion"
 >;
 
 export type ColonizationCaptureResult = {
   regionId: string;
   winnerCountryId: string;
   previousOwnerId: string | null;
+  settlementCreated?: boolean;
 };
 
 export type ColonizationRejectedOrder = {
@@ -395,6 +401,9 @@ export function resolveColonizationCapturesTurn(params: {
   worldBase: ColonizationTurnWorldState;
   activeColonizeRegionsByCountry: Map<string, Set<string>>;
   getRegionColonizationConfig: (regionId: string) => RegionColonizationConfig;
+  settlementEnabled: boolean;
+  settlementPopulationOnCapture: number;
+  buildSettlementPopulation: (regionId: string, countryId: string, total: number) => RegionPopulation;
 }): ColonizationCaptureResult[] {
   const captures: ColonizationCaptureResult[] = [];
   for (const regionId of params.touchedRegionIds) {
@@ -426,11 +435,40 @@ export function resolveColonizationCapturesTurn(params: {
     const previousOwnerId = params.worldBase.regionOwner[regionId] ?? null;
     params.worldBase.regionOwner[regionId] = winnerCountryId;
     params.worldBase.regionController[regionId] = winnerCountryId;
+    const settlementCreated = maybeCreateColonizationSettlement({
+      regionId,
+      winnerCountryId,
+      worldBase: params.worldBase,
+      settlementEnabled: params.settlementEnabled,
+      settlementPopulationOnCapture: params.settlementPopulationOnCapture,
+      buildSettlementPopulation: params.buildSettlementPopulation,
+    });
     delete params.worldBase.colonyProgressByRegion[regionId];
     removeRegionFromActiveColonizationIndex(params.activeColonizeRegionsByCountry, regionId);
-    captures.push({ regionId, winnerCountryId, previousOwnerId });
+    captures.push({ regionId, winnerCountryId, previousOwnerId, settlementCreated });
   }
   return captures;
+}
+
+function maybeCreateColonizationSettlement(params: {
+  regionId: string;
+  winnerCountryId: string;
+  worldBase: ColonizationTurnWorldState;
+  settlementEnabled: boolean;
+  settlementPopulationOnCapture: number;
+  buildSettlementPopulation: (regionId: string, countryId: string, total: number) => RegionPopulation;
+}): boolean {
+  const total = Math.max(0, Math.floor(params.settlementPopulationOnCapture));
+  if (!params.settlementEnabled || total <= 0) return false;
+  const existingPopulation = params.worldBase.regionPopulationByRegion[params.regionId];
+  const existingTotal = (existingPopulation?.pops ?? []).reduce((sum, pop) => sum + Math.max(0, Number(pop.size ?? 0)), 0);
+  if (existingTotal > 0) return false;
+  params.worldBase.regionPopulationByRegion[params.regionId] = params.buildSettlementPopulation(
+    params.regionId,
+    params.winnerCountryId,
+    total,
+  );
+  return true;
 }
 
 export function resolveColonizeOrder(params: {

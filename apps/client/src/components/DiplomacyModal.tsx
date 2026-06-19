@@ -18,7 +18,8 @@ import { Tooltip } from "./Tooltip";
 import { AppButton } from "./ui/AppButton";
 import { AppInput, AppTextarea } from "./ui/AppForm";
 import { AppModal } from "./ui/AppModal";
-import { tUi } from "../i18n/uiText";
+import { tUi, type UiTextKey } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 
 type Props = {
   open: boolean;
@@ -72,54 +73,59 @@ type ClauseDraft =
       text: string;
     };
 
-const CLAUSE_KIND_OPTIONS: Array<{ value: TreatyClauseKind; label: string; category: "Экономика" | "Территории" | "Инфраструктура" | "Прочее"; icon: LucideIcon }> = [
-  { value: "transfer_money", label: "Передача денег", category: "Экономика", icon: Coins },
-  { value: "transfer_region", label: tUi("diplomacy.transferRegion"), category: "Территории", icon: Landmark },
-  { value: "infrastructure_transit", label: "Права транзита", category: "Инфраструктура", icon: Route },
-  { value: "infrastructure_construction_rights", label: "Строительство коридоров", category: "Инфраструктура", icon: Landmark },
-  { value: "text_note", label: "Текстовый пункт", category: "Прочее", icon: FileText },
+const CLAUSE_KIND_OPTIONS: Array<{ value: TreatyClauseKind; labelKey: UiTextKey; categoryKey: UiTextKey; icon: LucideIcon }> = [
+  { value: "transfer_money", labelKey: "diplomacy.clauseTransferMoney", categoryKey: "diplomacy.categoryEconomy", icon: Coins },
+  { value: "transfer_region", labelKey: "diplomacy.transferRegion", categoryKey: "diplomacy.categoryTerritory", icon: Landmark },
+  { value: "infrastructure_transit", labelKey: "diplomacy.clauseTransit", categoryKey: "diplomacy.categoryInfrastructure", icon: Route },
+  { value: "infrastructure_construction_rights", labelKey: "diplomacy.clauseConstructionRights", categoryKey: "diplomacy.categoryInfrastructure", icon: Landmark },
+  { value: "text_note", labelKey: "diplomacy.clauseTextNote", categoryKey: "diplomacy.categoryOther", icon: FileText },
 ];
 
-const CLAUSE_CATEGORIES = ["Экономика", "Территории", "Инфраструктура", "Прочее"] as const;
-
-const TRANSPORT_MODE_OPTIONS: Array<{ value: TreatyTransportMode; label: string }> = [
-  { value: "land", label: "Сухопутный транспорт" },
-  { value: "sea", label: "Море" },
-  { value: "air", label: "Воздух" },
-  { value: "pipeline", label: "Трубы" },
-  { value: "powerGrid", label: "Электросети" },
+const CLAUSE_CATEGORY_KEYS: UiTextKey[] = [
+  "diplomacy.categoryEconomy",
+  "diplomacy.categoryTerritory",
+  "diplomacy.categoryInfrastructure",
+  "diplomacy.categoryOther",
 ];
 
-const CONSTRUCTION_EXPIRATION_POLICY_OPTIONS: Array<{ value: TreatyConstructionExpirationPolicy; label: string; description: string }> = [
+const TRANSPORT_MODE_OPTIONS: Array<{ value: TreatyTransportMode; labelKey: UiTextKey }> = [
+  { value: "land", labelKey: "diplomacy.transportLand" },
+  { value: "sea", labelKey: "diplomacy.transportSea" },
+  { value: "air", labelKey: "diplomacy.transportAir" },
+  { value: "pipeline", labelKey: "diplomacy.transportPipeline" },
+  { value: "powerGrid", labelKey: "diplomacy.transportPowerGrid" },
+];
+
+const CONSTRUCTION_EXPIRATION_POLICY_OPTIONS: Array<{ value: TreatyConstructionExpirationPolicy; labelKey: UiTextKey; descriptionKey: UiTextKey }> = [
   {
     value: "disable_without_transit",
-    label: "Отключить без транзита",
-    description: "Построенные участки остаются у строителя, но без транзита перестают работать.",
+    labelKey: "diplomacy.policyDisableWithoutTransit",
+    descriptionKey: "diplomacy.policyDisableWithoutTransitDescription",
   },
   {
     value: "nationalize_to_territory_owner",
-    label: "Национализировать",
-    description: "После окончания договора коридор переходит владельцу территории.",
+    labelKey: "diplomacy.policyNationalize",
+    descriptionKey: "diplomacy.policyNationalizeDescription",
   },
 ];
 
-const STATUS_LABEL: Record<DiplomacyProposal["status"], string> = {
-  pending: "Ожидает подписи",
-  accepted: "Подписан",
-  renewal_pending: "Ожидает продления",
-  rejected: "Отклонён",
-  expired: "Истёк",
-  failed: "Не исполнен",
+const STATUS_LABEL_KEY: Record<DiplomacyProposal["status"], UiTextKey> = {
+  pending: "diplomacy.status.pending",
+  accepted: "diplomacy.status.accepted",
+  renewal_pending: "diplomacy.status.renewalPending",
+  rejected: "diplomacy.status.rejected",
+  expired: "diplomacy.status.expired",
+  failed: "diplomacy.status.failed",
 };
 
-const RESOURCE_LABEL: Record<TreatyMoneyResource, string> = {
-  ducats: "Дукаты",
-  gold: "Золото",
+const RESOURCE_LABEL_KEY: Record<TreatyMoneyResource, UiTextKey> = {
+  ducats: "diplomacy.resourceDucats",
+  gold: "diplomacy.resourceGold",
 };
 
-const MONEY_CADENCE_LABEL: Record<TreatyMoneyPaymentCadence, string> = {
-  once: "разово",
-  per_turn: "за ход",
+const MONEY_CADENCE_LABEL_KEY: Record<TreatyMoneyPaymentCadence, UiTextKey> = {
+  once: "diplomacy.paymentOnce",
+  per_turn: "diplomacy.paymentPerTurn",
 };
 
 function makeId() {
@@ -145,9 +151,20 @@ function formatNumber(value: number) {
   return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 3 }).format(value);
 }
 
-function clauseSummary(clause: TreatyClause, countries: Country[], worldBase: WorldBase | null) {
+function clauseSummary(
+  clause: TreatyClause,
+  countries: Country[],
+  worldBase: WorldBase | null,
+  t: (key: UiTextKey, params?: Record<string, string | number>) => string,
+) {
   if (clause.kind === "transfer_money") {
-    return `${countryLabel(countries, clause.fromCountryId)} передаёт ${countryLabel(countries, clause.toCountryId)} ${formatNumber(clause.amount)} ${RESOURCE_LABEL[clause.resource].toLowerCase()} ${MONEY_CADENCE_LABEL[clause.paymentCadence]}`;
+    return t("diplomacy.summaryMoney", {
+      from: countryLabel(countries, clause.fromCountryId),
+      to: countryLabel(countries, clause.toCountryId),
+      amount: formatNumber(clause.amount),
+      resource: t(RESOURCE_LABEL_KEY[clause.resource]).toLowerCase(),
+      cadence: t(MONEY_CADENCE_LABEL_KEY[clause.paymentCadence]),
+    });
   }
   if (clause.kind === "transfer_region") {
     return tUi("diplomacy.transferRegionSummary", {
@@ -158,16 +175,32 @@ function clauseSummary(clause: TreatyClause, countries: Country[], worldBase: Wo
   }
   if (clause.kind === "infrastructure_transit") {
     const modes = clause.transportModes
-      .map((mode) => TRANSPORT_MODE_OPTIONS.find((option) => option.value === mode)?.label ?? mode)
+      .map((mode) => {
+        const option = TRANSPORT_MODE_OPTIONS.find((entry) => entry.value === mode);
+        return option ? t(option.labelKey) : mode;
+      })
       .join(", ");
-    return `${countryLabel(countries, clause.fromCountryId)} предоставляет ${countryLabel(countries, clause.toCountryId)} транзит: ${modes}`;
+    return t("diplomacy.summaryTransit", {
+      from: countryLabel(countries, clause.fromCountryId),
+      to: countryLabel(countries, clause.toCountryId),
+      modes,
+    });
   }
   if (clause.kind === "infrastructure_construction_rights") {
     const modes = clause.transportModes
-      .map((mode) => TRANSPORT_MODE_OPTIONS.find((option) => option.value === mode)?.label ?? mode)
+      .map((mode) => {
+        const option = TRANSPORT_MODE_OPTIONS.find((entry) => entry.value === mode);
+        return option ? t(option.labelKey) : mode;
+      })
       .join(", ");
-    const policy = CONSTRUCTION_EXPIRATION_POLICY_OPTIONS.find((option) => option.value === clause.expirationPolicy)?.label ?? clause.expirationPolicy;
-    return `${countryLabel(countries, clause.fromCountryId)} разрешает ${countryLabel(countries, clause.toCountryId)} строительство коридоров: ${modes}. После окончания: ${policy}`;
+    const policyOption = CONSTRUCTION_EXPIRATION_POLICY_OPTIONS.find((option) => option.value === clause.expirationPolicy);
+    const policy = policyOption ? t(policyOption.labelKey) : clause.expirationPolicy;
+    return t("diplomacy.summaryConstructionRights", {
+      from: countryLabel(countries, clause.fromCountryId),
+      to: countryLabel(countries, clause.toCountryId),
+      modes,
+      policy,
+    });
   }
   return clause.text;
 }
@@ -236,6 +269,7 @@ function clauseToDraft(clause: TreatyClause): ClauseDraft {
 }
 
 export function DiplomacyModal({ open, token, countryId, countryName, worldBase, focusProposalId, revisionDraft, onFocusedProposalHandled, onRevisionDraftHandled, onProposalRevised, onClose }: Props) {
+  const { t } = useUiText();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [countries, setCountries] = useState<Country[]>([]);
@@ -269,7 +303,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
       setProposals(proposalsResult.proposals);
       setTargetCountryId((prev) => prev || countriesResult.find((country) => country.id !== countryId)?.id || "");
     } catch {
-      toast.error("Не удалось загрузить дипломатию");
+      toast.error(t("diplomacy.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -326,7 +360,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
   const addClause = (kind: TreatyClauseKind, ownerId = countryId) => {
     const otherId = getOppositePartyId(ownerId);
     if (kind !== "text_note" && (!ownerId || !otherId || ownerId === otherId)) {
-      toast.error("Сначала выберите вторую сторону договора");
+      toast.error(t("diplomacy.selectOtherPartyFirst"));
       return;
     }
     if (kind === "transfer_money") {
@@ -379,11 +413,11 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
 
   const sendProposal = async () => {
     if (!targetCountryId) {
-      toast.error("Выберите страну для договора");
+      toast.error(t("diplomacy.selectCountryForTreaty"));
       return;
     }
     if (submitClauses.length !== clauses.length || submitClauses.length === 0) {
-      toast.error("Заполните пункты договора");
+      toast.error(t("diplomacy.fillClauses"));
       return;
     }
     setSaving(true);
@@ -403,12 +437,12 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
       setEditingProposalId(null);
       setNewProposalOpen(false);
       setActiveTab("outgoing");
-      toast.success(editingProposalId ? "Новая версия договора отправлена" : "Договор отправлен");
+      toast.success(editingProposalId ? t("diplomacy.updateSent") : t("diplomacy.sent"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "CREATE_DIPLOMACY_PROPOSAL_FAILED";
       if (msg === "REGION_NOT_OWNED") toast.error(tUi("diplomacy.regionNotOwned"));
-      else if (msg === "CLAUSE_COUNTRY_OUTSIDE_PARTIES") toast.error("В пункте указана страна вне договора");
-      else toast.error("Не удалось отправить договор");
+      else if (msg === "CLAUSE_COUNTRY_OUTSIDE_PARTIES") toast.error(t("diplomacy.clauseOutsideParties"));
+      else toast.error(t("diplomacy.sendFailed"));
     } finally {
       setSaving(false);
     }
@@ -419,12 +453,12 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
     try {
       const result = await acceptDiplomacyProposal(token, proposalId);
       setProposals(result.proposals);
-      toast.success("Договор подписан");
+      toast.success(t("diplomacy.signed"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "ACCEPT_DIPLOMACY_PROPOSAL_FAILED";
-      if (msg === "INSUFFICIENT_FUNDS") toast.error("У одной из сторон не хватает денег");
+      if (msg === "INSUFFICIENT_FUNDS") toast.error(t("diplomacy.insufficientFunds"));
       else if (msg === "REGION_NOT_OWNED") toast.error(tUi("diplomacy.regionNotOwned"));
-      else toast.error("Не удалось подписать договор");
+      else toast.error(t("diplomacy.signFailed"));
       void load();
     } finally {
       setSaving(false);
@@ -436,9 +470,9 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
     try {
       const result = await rejectDiplomacyProposal(token, proposalId);
       setProposals(result.proposals);
-      toast.success("Договор отклонён");
+      toast.success(t("diplomacy.rejected"));
     } catch {
-      toast.error("Не удалось отклонить договор");
+      toast.error(t("diplomacy.rejectFailed"));
     } finally {
       setSaving(false);
     }
@@ -449,9 +483,9 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
     try {
       const result = await renewDiplomacyProposal(token, proposalId);
       setProposals(result.proposals);
-      toast.success(result.proposal.status === "accepted" ? "Договор продлён" : "Согласие на продление отправлено");
+      toast.success(result.proposal.status === "accepted" ? t("diplomacy.renewAccepted") : t("diplomacy.renewSent"));
     } catch {
-      toast.error("Не удалось продлить договор");
+      toast.error(t("diplomacy.renewFailed"));
     } finally {
       setSaving(false);
     }
@@ -462,9 +496,9 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
     try {
       const result = await declineDiplomacyProposalRenewal(token, proposalId);
       setProposals(result.proposals);
-      toast.success("Продление отклонено");
+      toast.success(t("diplomacy.renewDeclined"));
     } catch {
-      toast.error("Не удалось отклонить продление");
+      toast.error(t("diplomacy.renewDeclineFailed"));
     } finally {
       setSaving(false);
     }
@@ -475,7 +509,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
       clause.kind === "text_note" ? null : (
         <div className="mb-3 rounded-lg border border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-muted)] px-3 py-2">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">
-            {clause.fromCountryId === countryId ? "Ваша сторона" : "Вторая сторона"}
+            {clause.fromCountryId === countryId ? t("diplomacy.partyOurs") : t("diplomacy.partyTheirs")}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--arc-color-text-paper)]">
             <span>{countryLabel(countries, clause.fromCountryId)}</span>
@@ -499,14 +533,14 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
       return (
         <div className="rounded-xl border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-soft)]/80 p-3 shadow-[var(--arc-shadow-inset-soft)]">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">Текстовый пункт</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">{t("diplomacy.clauseTextNote")}</span>
             {removeButton}
           </div>
           <AppTextarea
             value={clause.text}
             onChange={(e) => updateClause(index, { ...clause, text: e.target.value })}
             rows={3}
-            placeholder="Например: стороны обязуются не вмешиваться в колонизацию региона..."
+            placeholder={t("diplomacy.textNotePlaceholder")}
             className="border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-muted)] text-[var(--arc-color-text-paper)] placeholder:text-[var(--arc-color-text-muted)]/45"
           />
         </div>
@@ -524,13 +558,13 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
         <div className="rounded-xl border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-soft)]/80 p-3 shadow-[var(--arc-shadow-inset-soft)]">
           <div className="mb-2 flex items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">
-              {isConstructionRights ? "Строительство коридоров" : "Транзит инфраструктуры"}
+              {isConstructionRights ? t("diplomacy.clauseConstructionRights") : t("diplomacy.clauseTransit")}
             </span>
             {removeButton}
           </div>
           {directionCard}
           <div className="mt-3">
-            <div className="mb-1 text-[11px] text-[var(--arc-color-text-muted)]">Типы транспорта</div>
+            <div className="mb-1 text-[11px] text-[var(--arc-color-text-muted)]">{t("diplomacy.transportModes")}</div>
             <div className="flex flex-wrap gap-1.5">
               {TRANSPORT_MODE_OPTIONS.map((mode) => {
                 const active = clause.transportModes.includes(mode.value);
@@ -545,7 +579,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
                         : "border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-muted)] text-[var(--arc-color-text-muted)] hover:border-[var(--arc-color-primary-top)] hover:text-[var(--arc-color-text-paper)]"
                     }`}
                   >
-                    {mode.label}
+                    {t(mode.labelKey)}
                   </button>
                 );
               })}
@@ -553,15 +587,18 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
           </div>
           {isConstructionRights && (
             <div className="mt-3 rounded-lg border border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-muted)] p-2">
-              <div className="mb-1 text-[11px] text-[var(--arc-color-text-muted)]">Что произойдёт после окончания договора</div>
+              <div className="mb-1 text-[11px] text-[var(--arc-color-text-muted)]">{t("diplomacy.constructionExpiration")}</div>
               <CustomSelect
                 value={clause.expirationPolicy}
                 onChange={(value) => updateClause(index, { ...clause, expirationPolicy: value as TreatyConstructionExpirationPolicy })}
-                options={CONSTRUCTION_EXPIRATION_POLICY_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+                options={CONSTRUCTION_EXPIRATION_POLICY_OPTIONS.map((option) => ({ value: option.value, label: t(option.labelKey) }))}
                 buttonClassName="h-[38px] border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-soft)] text-[var(--arc-color-text-paper)]"
               />
               <div className="mt-1 text-[11px] leading-snug text-[var(--arc-color-text-muted)]">
-                {CONSTRUCTION_EXPIRATION_POLICY_OPTIONS.find((option) => option.value === clause.expirationPolicy)?.description}
+                {(() => {
+                  const option = CONSTRUCTION_EXPIRATION_POLICY_OPTIONS.find((entry) => entry.value === clause.expirationPolicy);
+                  return option ? t(option.descriptionKey) : "";
+                })()}
               </div>
             </div>
           )}
@@ -576,7 +613,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
       <div className="rounded-xl border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-soft)]/80 p-3 shadow-[var(--arc-shadow-inset-soft)]">
         <div className="mb-2 flex items-center justify-between gap-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">
-            {clause.kind === "transfer_money" ? "Передача денег" : tUi("diplomacy.transferRegion")}
+            {clause.kind === "transfer_money" ? t("diplomacy.clauseTransferMoney") : t("diplomacy.transferRegion")}
           </span>
           {removeButton}
         </div>
@@ -587,8 +624,8 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
               value={clause.resource}
               onChange={(value) => updateClause(index, { ...clause, resource: value as TreatyMoneyResource })}
               options={[
-                { value: "ducats", label: "Дукаты" },
-                { value: "gold", label: "Золото" },
+                { value: "ducats", label: t("diplomacy.resourceDucats") },
+                { value: "gold", label: t("diplomacy.resourceGold") },
               ]}
               buttonClassName="h-[38px] border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-muted)] text-[var(--arc-color-text-paper)]"
             />
@@ -596,8 +633,8 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
               value={clause.paymentCadence}
               onChange={(value) => updateClause(index, { ...clause, paymentCadence: value as TreatyMoneyPaymentCadence })}
               options={[
-                { value: "once", label: "Разово при подписании" },
-                { value: "per_turn", label: "Каждый ход" },
+                { value: "once", label: t("diplomacy.paymentOnce") },
+                { value: "per_turn", label: t("diplomacy.paymentPerTurn") },
               ]}
               buttonClassName="h-[38px] border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-muted)] text-[var(--arc-color-text-paper)]"
             />
@@ -628,18 +665,18 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
     <aside className="min-h-0 rounded-t-xl border border-[var(--arc-color-gold-soft)] bg-[var(--arc-color-panel-soft)] shadow-2xl">
       <div className="border-b border-[var(--arc-color-gold)] bg-gradient-to-b from-[var(--arc-color-header-top)] to-[var(--arc-color-header-bottom)] px-4 py-3 text-center">
         <div className="font-display text-2xl text-[var(--arc-color-text-soft)]">
-          {title} <span className="text-[var(--arc-color-gold-warm)]">статьи</span>
+          {title} <span className="text-[var(--arc-color-gold-warm)]">{t("diplomacy.articleSuffix")}</span>
         </div>
         <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">{subtitle}</div>
       </div>
       <div className="arc-scrollbar max-h-[calc(82vh-10rem)] overflow-auto p-3">
-        {CLAUSE_CATEGORIES.map((category) => (
-          <div key={`${align}-${category}`} className="mb-4 last:mb-0">
+        {CLAUSE_CATEGORY_KEYS.map((categoryKey) => (
+          <div key={`${align}-${categoryKey}`} className="mb-4 last:mb-0">
             <div className="mb-2 rounded-md border border-[var(--arc-color-primary-top)] bg-[var(--arc-color-panel-soft)] px-3 py-2 text-center text-sm font-semibold uppercase tracking-wide text-[var(--arc-color-text-soft)]">
-              {category}
+              {t(categoryKey)}
             </div>
             <div className="space-y-2">
-              {CLAUSE_KIND_OPTIONS.filter((option) => option.category === category).map((option) => {
+              {CLAUSE_KIND_OPTIONS.filter((option) => option.categoryKey === categoryKey).map((option) => {
                 const Icon = option.icon;
                 return (
                   <button
@@ -650,7 +687,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
                     className="group grid w-full grid-cols-[38px_minmax(0,1fr)_28px] items-center gap-2 rounded-lg border border-[var(--arc-color-primary-top)] bg-gradient-to-b from-[var(--arc-color-primary-top)] to-[var(--arc-color-primary-bottom)] px-2 py-2 text-left text-[var(--arc-color-text)] shadow-[var(--arc-shadow-inset-button)] transition hover:border-[var(--arc-color-gold)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     <span className="grid h-9 w-9 place-items-center rounded-full border border-[var(--arc-color-gold)] bg-[var(--arc-overlay-45)] text-[var(--arc-color-gold)]"><Icon size={18} /></span>
-                    <span className="truncate text-sm font-semibold">{option.label}</span>
+                    <span className="truncate text-sm font-semibold">{t(option.labelKey)}</span>
                     <Plus size={18} className="text-[var(--arc-color-gold)]" />
                   </button>
                 );
@@ -694,10 +731,10 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
               <Handshake size={22} className="shrink-0 text-[var(--arc-color-gold)]" />
               <span className="inline-flex items-center gap-2 truncate text-xl font-semibold text-[var(--arc-color-text)]">
                 {countryFlag(targetCountry)}
-                {targetCountry ? targetCountry.name : "Выберите страну"}
+                {targetCountry ? targetCountry.name : t("diplomacy.countrySelect")}
               </span>
             </div>
-            <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">{editingProposalId ? "Редакция дипломатического соглашения" : "Дипломатическое соглашение"}</div>
+            <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">{editingProposalId ? t("diplomacy.editingAgreement") : t("diplomacy.diplomaticAgreement")}</div>
           </div>
           <div className="grid h-10 w-10 place-items-center rounded-full border border-[var(--arc-color-gold)] bg-[var(--arc-overlay-35)] text-[var(--arc-color-gold)]">
             <ScrollText size={18} />
@@ -705,31 +742,31 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
         </div>
 
         <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
-          {renderArticleColumn("Ваши", countryName, countryId, "left")}
+          {renderArticleColumn(t("diplomacy.ourArticles"), countryName, countryId, "left")}
 
           <main className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--arc-color-gold-soft)] bg-[var(--arc-color-paper)] text-[var(--arc-color-text-paper)] shadow-2xl">
             <div className="border-b border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-toolbar)] px-4 py-3">
               <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_150px]">
                 <label className="block">
-                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">Название договора</span>
+                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">{t("diplomacy.proposalName")}</span>
                   <AppInput
                     value={proposalName}
                     onChange={(e) => setProposalName(e.target.value)}
-                    placeholder="По умолчанию: договор с номером"
+                    placeholder={t("diplomacy.proposalNamePlaceholder")}
                     className="h-[42px] border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-muted)] text-[var(--arc-color-text-paper)] placeholder:text-[var(--arc-color-text-muted)]/45"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">Вторая сторона</span>
+                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">{t("diplomacy.secondParty")}</span>
                   <CustomSelect
                     value={targetCountryId}
                     onChange={retargetClauses}
-                    options={[{ value: "", label: "Выберите страну" }, ...countryOptions]}
+                    options={[{ value: "", label: t("diplomacy.countrySelect") }, ...countryOptions]}
                     buttonClassName="h-[42px] border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-muted)] text-[var(--arc-color-text-paper)]"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">Срок</span>
+                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">{t("diplomacy.durationLabel")}</span>
                   <AppInput
                     value={expiresInTurns}
                     onChange={(e) => setExpiresInTurns(e.target.value)}
@@ -743,22 +780,24 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
             <div className="arc-scrollbar min-h-0 flex-1 overflow-auto p-4">
               <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm text-[var(--arc-color-text-muted)]">
                 <div className="h-px bg-[var(--arc-color-brown)]" />
-                <span className="rounded-md border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-muted)] px-4 py-2 font-semibold">Действует {Math.max(1, Math.floor(Number(expiresInTurns || "3")))} ход.</span>
+                <span className="rounded-md border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-muted)] px-4 py-2 font-semibold">
+                  {t("diplomacy.durationActive", { turns: Math.max(1, Math.floor(Number(expiresInTurns || "3"))) })}
+                </span>
                 <div className="h-px bg-[var(--arc-color-brown)]" />
               </div>
               {clauses.length === 0 ? (
                 <div className="grid min-h-[360px] place-items-center rounded-xl border border-dashed border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-empty)] p-6 text-center text-[var(--arc-color-text-muted)]">
                   <div>
                     <ScrollText size={34} className="mx-auto mb-3 text-[var(--arc-color-text-muted)]" />
-                    <div className="font-semibold">Добавьте статьи договора</div>
-                    <div className="mt-1 text-sm">Выберите пункт слева или справа, чтобы собрать предложение.</div>
+                    <div className="font-semibold">{t("diplomacy.addTreatyClauses")}</div>
+                    <div className="mt-1 text-sm">{t("diplomacy.selectClauseFromSides")}</div>
                   </div>
                 </div>
               ) : (
                 <div className="grid gap-4 xl:grid-cols-2">
                   {[
-                    { id: "ours", title: "Ваши условия", party: currentCountry, clauses: clauses.map((clause, index) => ({ clause, index })).filter(({ clause }) => clause.kind === "text_note" || clause.fromCountryId === countryId) },
-                    { id: "theirs", title: "Условия второй стороны", party: targetCountry, clauses: clauses.map((clause, index) => ({ clause, index })).filter(({ clause }) => clause.kind !== "text_note" && clause.fromCountryId === targetCountryId) },
+                    { id: "ours", title: t("diplomacy.ourConditions"), party: currentCountry, clauses: clauses.map((clause, index) => ({ clause, index })).filter(({ clause }) => clause.kind === "text_note" || clause.fromCountryId === countryId) },
+                    { id: "theirs", title: t("diplomacy.theirConditions"), party: targetCountry, clauses: clauses.map((clause, index) => ({ clause, index })).filter(({ clause }) => clause.kind !== "text_note" && clause.fromCountryId === targetCountryId) },
                   ].map((column) => (
                     <section key={column.id} className="min-h-[220px] rounded-xl border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-empty)] p-3">
                       <div className="mb-3 flex items-center gap-2 border-b border-[var(--arc-color-brown)] pb-2 text-sm font-semibold text-[var(--arc-color-text-muted)]">
@@ -767,7 +806,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
                       </div>
                       {column.clauses.length === 0 ? (
                         <div className="grid min-h-[150px] place-items-center rounded-lg border border-dashed border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-soft)]/45 p-4 text-center text-sm text-[var(--arc-color-text-muted)]">
-                          Добавьте пункт из {column.id === "ours" ? "левой" : "правой"} колонки.
+                          {t("diplomacy.addClauseFromColumn", { side: column.id === "ours" ? t("diplomacy.leftSide") : t("diplomacy.rightSide") })}
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -781,7 +820,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
             </div>
 
             <div className="border-t border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-toolbar)] p-3">
-              <Tooltip content="Отправляет договор второй стороне сразу, без сохранения черновика.">
+              <Tooltip content={t("diplomacy.sendTooltip")}>
                 <button
                   type="button"
                   onClick={() => void sendProposal()}
@@ -789,13 +828,13 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
                   className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-[var(--arc-color-primary-border)] bg-gradient-to-b from-[var(--arc-color-primary-top)] to-[var(--arc-color-primary-bottom)] px-5 text-[var(--arc-color-text)] shadow-[var(--arc-shadow-inset-button)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-55"
                 >
                   <Send size={16} />
-                  <span className="font-semibold">{editingProposalId ? "Вернуть с новыми условиями" : "Отправить договор"}</span>
+                  <span className="font-semibold">{editingProposalId ? t("diplomacy.submitRevision") : t("diplomacy.submitAgreement")}</span>
                 </button>
               </Tooltip>
             </div>
           </main>
 
-          {renderArticleColumn(targetCountry?.name ?? "Вторая сторона", "Их статьи", targetCountryId, "right")}
+          {renderArticleColumn(targetCountry?.name ?? t("diplomacy.partyTheirs"), t("diplomacy.theirArticles"), targetCountryId, "right")}
         </div>
       </div>
     </AppModal>
@@ -817,8 +856,8 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
             <Handshake size={18} />
           </div>
           <div className="min-w-0 text-center">
-            <div className="font-display text-2xl text-[var(--arc-color-text)]">Дипломатия</div>
-            <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">Конструктор договоров между живыми игроками</div>
+            <div className="font-display text-2xl text-[var(--arc-color-text)]">{t("diplomacy.title")}</div>
+            <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">{t("diplomacy.subtitle")}</div>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -827,7 +866,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
               className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--arc-color-primary-border)] bg-gradient-to-b from-[var(--arc-color-primary-top)] to-[var(--arc-color-primary-bottom)] px-4 text-sm font-semibold text-[var(--arc-color-text)] shadow-[var(--arc-shadow-inset-button)] transition hover:brightness-110"
             >
               <Plus size={15} />
-              Новый договор
+              {t("diplomacy.newAgreement")}
             </button>
             <button
               type="button"
@@ -844,9 +883,9 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap gap-2">
                 {[
-                  ["incoming", "Входящие"],
-                  ["outgoing", "Исходящие"],
-                  ["active", "Активные договоры"],
+                  ["incoming", t("diplomacy.incomingTab")],
+                  ["outgoing", t("diplomacy.outgoingTab")],
+                  ["active", t("diplomacy.activeTab")],
                 ].map(([key, label]) => {
                   const active = activeTab === key;
                   return (
@@ -872,7 +911,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
                 className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-muted)] px-3 text-sm font-semibold text-[var(--arc-color-text-muted)] transition hover:border-[var(--arc-color-primary-top)] hover:text-[var(--arc-color-text-paper)] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <RefreshCw size={13} />
-                Обновить
+                {t("common.refresh")}
               </button>
             </div>
           </div>
@@ -882,8 +921,8 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
                   <div className="grid min-h-[360px] place-items-center rounded-xl border border-dashed border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-empty)] p-6 text-center text-[var(--arc-color-text-muted)]">
                     <div>
                       <ScrollText size={34} className="mx-auto mb-3 text-[var(--arc-color-text-muted)]" />
-                      <div className="font-semibold">Договоров здесь пока нет.</div>
-                      <div className="mt-1 text-sm">Создайте новый договор или проверьте другую вкладку.</div>
+                      <div className="font-semibold">{t("diplomacy.emptyList")}</div>
+                      <div className="mt-1 text-sm">{t("diplomacy.createOrCheckOtherTab")}</div>
                     </div>
                   </div>
                 ) : (
@@ -895,24 +934,28 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
                             {countryLabel(countries, proposal.fromCountryId)} ↔ {countryLabel(countries, proposal.toCountryId)}
                           </div>
                           <div className="mt-1 text-xs text-[var(--arc-color-text-muted)]">
-                            {STATUS_LABEL[proposal.status]} · ход {proposal.createdTurnId} - {proposal.expiresTurnId}
+                            {t("diplomacy.statusLine", {
+                              status: t(STATUS_LABEL_KEY[proposal.status]),
+                              from: proposal.createdTurnId,
+                              to: proposal.expiresTurnId,
+                            })}
                           </div>
                           {proposal.status === "renewal_pending" && (
                             <div className="mt-1 text-[11px] text-[var(--arc-color-warning-border)]">
-                              Срок закончился. Согласились: {proposal.renewalAcceptedByCountryIds?.length ?? 0}/2
+                              {t("diplomacy.expiredRenewal", { count: proposal.renewalAcceptedByCountryIds?.length ?? 0 })}
                             </div>
                           )}
                         </div>
                         {proposal.status === "pending" && (proposal.pendingResponderCountryId ?? proposal.toCountryId) === countryId && (
                           <div className="flex gap-2">
                             <AppButton type="button" disabled={saving} onClick={() => void acceptProposal(proposal.id)} variant="primary" size="sm" icon={<Check size={13} />}>
-                              Подписать
+                              {t("diplomacy.accept")}
                             </AppButton>
                             <AppButton type="button" disabled={saving} onClick={() => beginReviseProposal(proposal)} variant="secondary" size="sm" icon={<RefreshCw size={13} />}>
-                              Изменить
+                              {t("diplomacy.edit")}
                             </AppButton>
                             <AppButton type="button" disabled={saving} onClick={() => void rejectProposal(proposal.id)} variant="danger" size="sm" icon={<X size={13} />}>
-                              Отклонить
+                              {t("diplomacy.reject")}
                             </AppButton>
                           </div>
                         )}
@@ -926,7 +969,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
                               size="sm"
                               icon={<Check size={13} />}
                             >
-                              {proposal.renewalAcceptedByCountryIds?.includes(countryId) ? "Ожидаем вторую сторону" : "Продлить"}
+                              {proposal.renewalAcceptedByCountryIds?.includes(countryId) ? t("diplomacy.waitingOtherSide") : t("diplomacy.renew")}
                             </AppButton>
                             <AppButton
                               type="button"
@@ -936,7 +979,7 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
                               size="sm"
                               icon={<X size={13} />}
                             >
-                              Не продлевать
+                              {t("diplomacy.declineRenewal")}
                             </AppButton>
                           </div>
                         )}
@@ -944,12 +987,15 @@ export function DiplomacyModal({ open, token, countryId, countryName, worldBase,
                       <div className="mt-3 space-y-2">
                         {(proposal.revision ?? 1) > 1 && (
                           <div className="rounded-lg border border-[var(--arc-color-warning-border)] bg-[var(--arc-color-warning-top)] px-3 py-2 text-xs text-[var(--arc-color-text-muted)]">
-                            Переговоры: версия {proposal.revision}. Ход ответа: {proposal.pendingResponderCountryId ? countryLabel(countries, proposal.pendingResponderCountryId) : "нет"}.
+                            {t("diplomacy.negotiationMeta", {
+                              revision: proposal.revision ?? 1,
+                              responder: proposal.pendingResponderCountryId ? countryLabel(countries, proposal.pendingResponderCountryId) : t("diplomacy.noResponder"),
+                            })}
                           </div>
                         )}
                         {proposal.clauses.map((clause) => (
                           <div key={clause.id} className="rounded-lg border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-muted)] px-3 py-2 text-sm leading-5 text-[var(--arc-color-text-paper)]">
-                            {clauseSummary(clause, countries, worldBase)}
+                            {clauseSummary(clause, countries, worldBase, t)}
                           </div>
                         ))}
                       </div>

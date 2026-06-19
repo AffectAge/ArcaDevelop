@@ -32,7 +32,7 @@ Runs typecheck across workspaces through `npm run typecheck -ws`.
 npm run lint
 ```
 
-Runs ESLint for the currently wired server app/scenario/map/lifecycle/security/persistence/runtime/routes/uploads modules, shared package sources, and project check scripts. This is a partial lint pass, not whole-repository lint coverage.
+Runs ESLint for the currently wired server AI/app/scenario/map/lifecycle/security/persistence/runtime/routes/uploads modules, shared package sources, and project check scripts. This is a partial lint pass, not whole-repository lint coverage.
 
 ```bash
 npm run map:from-geojson

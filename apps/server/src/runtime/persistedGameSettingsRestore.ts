@@ -85,6 +85,7 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
       shipTypes: normalizeContentShipTypes((next as Partial<{ content?: { shipTypes?: unknown } }>).content?.shipTypes),
       aircraftTypes: normalizeContentAircraftTypes((next as Partial<{ content?: { aircraftTypes?: unknown } }>).content?.aircraftTypes),
     },
+    ai: restoreAi(next, defaults),
     civilopedia: {
       categories: normalizeCivilopediaCategories(
         (next as Partial<{ civilopedia?: { categories?: unknown } }>).civilopedia?.categories,
@@ -111,6 +112,14 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
         typeof next.colonization?.ducatsCostPer1000Km2 === "number"
           ? Math.max(0, Math.floor(next.colonization.ducatsCostPer1000Km2))
           : defaults.colonization.ducatsCostPer1000Km2,
+      settlementEnabled:
+        typeof next.colonization?.settlementEnabled === "boolean"
+          ? next.colonization.settlementEnabled
+          : defaults.colonization.settlementEnabled,
+      settlementPopulationOnCapture:
+        typeof next.colonization?.settlementPopulationOnCapture === "number"
+          ? Math.max(0, Math.min(1_000_000_000, Math.floor(next.colonization.settlementPopulationOnCapture)))
+          : defaults.colonization.settlementPopulationOnCapture,
     },
     customization: {
       renameDucats: numberOrDefault(next.customization?.renameDucats, defaults.customization.renameDucats),
@@ -151,6 +160,24 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
           : defaults.map.backgroundImageUrl,
     },
     resourceIcons: restoreResourceIcons(next, defaults),
+  };
+}
+
+function restoreAi(next: Partial<GameSettings>, defaults: GameSettings): GameSettings["ai"] {
+  return {
+    enabled: typeof next.ai?.enabled === "boolean" ? next.ai.enabled : defaults.ai.enabled,
+    maxCountriesPerTick:
+      typeof next.ai?.maxCountriesPerTick === "number" && Number.isFinite(next.ai.maxCountriesPerTick)
+        ? Math.max(1, Math.min(1_000, Math.floor(next.ai.maxCountriesPerTick)))
+        : defaults.ai.maxCountriesPerTick,
+    maxDecisionCandidatesPerCountry:
+      typeof next.ai?.maxDecisionCandidatesPerCountry === "number" && Number.isFinite(next.ai.maxDecisionCandidatesPerCountry)
+        ? Math.max(1, Math.min(1_000, Math.floor(next.ai.maxDecisionCandidatesPerCountry)))
+        : defaults.ai.maxDecisionCandidatesPerCountry,
+    contextCacheTtlTurns:
+      typeof next.ai?.contextCacheTtlTurns === "number" && Number.isFinite(next.ai.contextCacheTtlTurns)
+        ? Math.max(1, Math.min(100, Math.floor(next.ai.contextCacheTtlTurns)))
+        : defaults.ai.contextCacheTtlTurns,
   };
 }
 

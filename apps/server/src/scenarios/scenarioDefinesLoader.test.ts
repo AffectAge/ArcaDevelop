@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyScenarioDefinesToGameSettings,
   loadScenarioDefines,
+  normalizeScenarioAiDefines,
   normalizeScenarioAuditLogDefines,
   normalizeScenarioColonizationDefines,
   normalizeScenarioCustomizationDefines,
@@ -14,6 +15,7 @@ import {
   normalizeScenarioMilitaryDefines,
   normalizeScenarioRegistrationDefines,
   normalizeScenarioTurnTimerDefines,
+  type AiSettings,
   type AuditLogSettings,
   type ColonizationSettings,
   type CustomizationSettings,
@@ -24,6 +26,12 @@ import {
   type TurnTimerSettings,
 } from "./scenarioDefinesLoader";
 
+const baseAi: AiSettings = {
+  enabled: true,
+  maxCountriesPerTick: 50,
+  maxDecisionCandidatesPerCountry: 20,
+  contextCacheTtlTurns: 1,
+};
 const baseEconomy: EconomySettings = {
   baseCulturePerTurn: 1,
   baseSciencePerTurn: 1,
@@ -50,6 +58,8 @@ const baseColonization: ColonizationSettings = {
   pointsPerTurn: 30,
   pointsCostPer1000Km2: 5,
   ducatsCostPer1000Km2: 5,
+  settlementEnabled: true,
+  settlementPopulationOnCapture: 1_000,
 };
 const baseCustomization: CustomizationSettings = {
   renameDucats: 20,
@@ -144,6 +154,31 @@ describe("scenarioDefinesLoader", () => {
     ).toThrow("INVALID_SCENARIO_AUDIT_LOG_MAX_ENTRIES");
   });
 
+  it("normalizes AI defines", () => {
+    expect(
+      normalizeScenarioAiDefines(
+        { enabled: false, maxCountriesPerTick: 25, maxDecisionCandidatesPerCountry: 12, contextCacheTtlTurns: 3 },
+        baseAi,
+      ),
+    ).toEqual({ enabled: false, maxCountriesPerTick: 25, maxDecisionCandidatesPerCountry: 12, contextCacheTtlTurns: 3 });
+  });
+
+  it("rejects invalid AI defines", () => {
+    expect(() =>
+      normalizeScenarioAiDefines(
+        { maxCountriesPerTick: 0 },
+        baseAi,
+      ),
+    ).toThrow("INVALID_SCENARIO_AI_MAX_COUNTRIES_PER_TICK");
+
+    expect(() =>
+      normalizeScenarioAiDefines(
+        { enabled: "yes" },
+        baseAi,
+      ),
+    ).toThrow("INVALID_SCENARIO_AI_ENABLED");
+  });
+
   it("normalizes economy defines", () => {
     expect(
       normalizeScenarioEconomyDefines(
@@ -188,11 +223,25 @@ describe("scenarioDefinesLoader", () => {
   it("normalizes colonization and customization defines", () => {
     expect(
       normalizeScenarioColonizationDefines(
-        { maxActiveColonizations: 4, pointsPerTurn: 45, pointsCostPer1000Km2: 6, ducatsCostPer1000Km2: 7 },
+        {
+          maxActiveColonizations: 4,
+          pointsPerTurn: 45,
+          pointsCostPer1000Km2: 6,
+          ducatsCostPer1000Km2: 7,
+          settlementEnabled: false,
+          settlementPopulationOnCapture: 2_500,
+        },
         baseColonization,
         options,
       ),
-    ).toEqual({ maxActiveColonizations: 4, pointsPerTurn: 45, pointsCostPer1000Km2: 6, ducatsCostPer1000Km2: 7 });
+    ).toEqual({
+      maxActiveColonizations: 4,
+      pointsPerTurn: 45,
+      pointsCostPer1000Km2: 6,
+      ducatsCostPer1000Km2: 7,
+      settlementEnabled: false,
+      settlementPopulationOnCapture: 2_500,
+    });
 
     expect(
       normalizeScenarioCustomizationDefines(
@@ -211,6 +260,22 @@ describe("scenarioDefinesLoader", () => {
         options,
       ),
     ).toThrow("INVALID_SCENARIO_COLONIZATION_MAX_ACTIVE");
+
+    expect(() =>
+      normalizeScenarioColonizationDefines(
+        { settlementEnabled: "yes" },
+        baseColonization,
+        options,
+      ),
+    ).toThrow("INVALID_SCENARIO_COLONIZATION_SETTLEMENT_ENABLED");
+
+    expect(() =>
+      normalizeScenarioColonizationDefines(
+        { settlementPopulationOnCapture: -1 },
+        baseColonization,
+        options,
+      ),
+    ).toThrow("INVALID_SCENARIO_COLONIZATION_SETTLEMENT_POPULATION");
 
     expect(() =>
       normalizeScenarioCustomizationDefines(
@@ -285,6 +350,7 @@ describe("scenarioDefinesLoader", () => {
 
   it("merges scenario defines into game settings without mutating other settings", () => {
     const settings = {
+      ai: baseAi,
       economy: baseEconomy,
       auditLog: baseAuditLog,
       colonization: baseColonization,
@@ -300,6 +366,7 @@ describe("scenarioDefinesLoader", () => {
       applyScenarioDefinesToGameSettings(
         settings,
         {
+          ai: { maxCountriesPerTick: 30 },
           economy: { baseGoldPerTurn: 12, marketPriceSmoothing: 0.4 },
           auditLog: { maxEntries: 25, retentionTurns: 4 },
           colonization: { pointsPerTurn: 60 },
@@ -312,6 +379,7 @@ describe("scenarioDefinesLoader", () => {
         options,
       ),
     ).toMatchObject({
+      ai: { maxCountriesPerTick: 30, enabled: true },
       economy: { baseGoldPerTurn: 12, marketPriceSmoothing: 0.4, baseCulturePerTurn: 1 },
       auditLog: { maxEntries: 25, retentionTurns: 4 },
       colonization: { pointsPerTurn: 60, maxActiveColonizations: 3 },

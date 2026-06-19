@@ -19176,6 +19176,11 @@
       "name": "Itasy"
     }
   },
+  "country": {
+    "ai_colonizers": {
+      "name": "ИИ-колонизаторы"
+    }
+  },
   "races": {
     "default": {
       "name": "Люди"

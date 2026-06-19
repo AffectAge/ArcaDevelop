@@ -81,6 +81,14 @@ export function buildResourcesByCountryFromHistory(history: ScenarioHistory): Re
   return resourcesByCountry;
 }
 
+export function buildAiControlledCountryIdsFromHistory(history: ScenarioHistory | null): string[] {
+  if (!history) return [];
+  return history.countries
+    .filter((country) => country.data.controlMode === "ai")
+    .map((country) => country.id)
+    .sort((left, right) => left.localeCompare(right));
+}
+
 export function buildProvinceOwnerFromRegionHistory(history: ScenarioHistory): Record<string, string> {
   const provinceOwner: Record<string, string> = {};
   for (const region of history.regions) {

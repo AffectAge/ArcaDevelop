@@ -7,6 +7,8 @@ import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard, AppEmptyState } from "./ui/AppSurface";
 import { EventStoryModal } from "./ui/EventStoryModal";
+import { useUiText } from "../i18n/useUiText";
+import type { UiTextKey } from "../i18n/uiText";
 
 type Props = {
   open: boolean;
@@ -15,44 +17,53 @@ type Props = {
   onClose: () => void;
 };
 
-const RESOURCE_LABEL: Record<keyof ResourceTotals, string> = {
-  culture: "Культура",
-  science: "Наука",
-  religion: "Религия",
-  colonization: "Колонизация",
-  construction: "Строительство",
-  ducats: "Дукаты",
-  gold: "Золото",
+const RESOURCE_LABEL_KEY: Record<keyof ResourceTotals, UiTextKey> = {
+  culture: "decisions.resource.culture",
+  science: "decisions.resource.science",
+  religion: "decisions.resource.religion",
+  colonization: "decisions.resource.colonization",
+  construction: "decisions.resource.construction",
+  ducats: "decisions.resource.ducats",
+  gold: "decisions.resource.gold",
 };
 
-const CATEGORY_LABEL: Record<string, string> = {
-  politics: "Политика",
-  economy: "Экономика",
-  military: "Армия",
-  diplomacy: "Дипломатия",
-  colonization: "Колонизация",
-  culture: "Культура",
-  religion: "Религия",
-  technology: "Технологии",
+const CATEGORY_LABEL_KEY: Record<string, UiTextKey> = {
+  politics: "decisions.category.politics",
+  economy: "decisions.category.economy",
+  military: "decisions.category.military",
+  diplomacy: "decisions.category.diplomacy",
+  colonization: "decisions.category.colonization",
+  culture: "decisions.category.culture",
+  religion: "decisions.category.religion",
+  technology: "decisions.category.technology",
 };
 
-function formatResourceMap(values?: Partial<ResourceTotals>) {
-  return Object.entries(values ?? {})
-    .filter(([, value]) => Number(value) > 0)
-    .map(([key, value]) => `${RESOURCE_LABEL[key as keyof ResourceTotals] ?? key}: ${value}`);
+function categoryLabel(category: string, t: (key: UiTextKey, params?: Record<string, string | number>) => string): string {
+  const key = CATEGORY_LABEL_KEY[category];
+  return key ? t(key) : category;
 }
 
-function formatEffects(decision: CountryDecisionView["decision"]) {
+function formatResourceMap(values: Partial<ResourceTotals> | undefined, t: (key: UiTextKey, params?: Record<string, string | number>) => string) {
+  return Object.entries(values ?? {})
+    .filter(([, value]) => Number(value) > 0)
+    .map(([key, value]) => {
+      const labelKey = RESOURCE_LABEL_KEY[key as keyof ResourceTotals];
+      return `${labelKey ? t(labelKey) : key}: ${value}`;
+    });
+}
+
+function formatEffects(decision: CountryDecisionView["decision"], t: (key: UiTextKey, params?: Record<string, string | number>) => string) {
   return (decision.effects ?? []).map((effect) => {
     if (effect.type === "resource_delta") {
       const amount = effect.amount >= 0 ? `+${effect.amount}` : String(effect.amount);
-      return `${amount} ${RESOURCE_LABEL[effect.resource]}`;
+      return `${amount} ${t(RESOURCE_LABEL_KEY[effect.resource])}`;
     }
-    return "Эффект";
+    return t("decisions.effectFallback");
   });
 }
 
 export function CountryDecisionsModal({ open, token, countryId, onClose }: Props) {
+  const { t } = useUiText();
   const [loading, setLoading] = useState(false);
   const [takingId, setTakingId] = useState<string | null>(null);
   const [decisions, setDecisions] = useState<CountryDecisionView[]>([]);
@@ -71,7 +82,7 @@ export function CountryDecisionsModal({ open, token, countryId, onClose }: Props
         setRecord(result.record);
       })
       .catch(() => {
-        if (!cancelled) toast.error("Не удалось загрузить решения");
+        if (!cancelled) toast.error(t("decisions.loadFailed"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -79,7 +90,7 @@ export function CountryDecisionsModal({ open, token, countryId, onClose }: Props
     return () => {
       cancelled = true;
     };
-  }, [countryId, open, token]);
+  }, [countryId, open, token, t]);
 
   const available = useMemo(() => decisions.filter((decision) => decision.available), [decisions]);
   const locked = useMemo(() => decisions.filter((decision) => !decision.available), [decisions]);
@@ -91,9 +102,9 @@ export function CountryDecisionsModal({ open, token, countryId, onClose }: Props
       setDecisions(result.decisions);
       setRecord(result.record);
       setSelectedDecisionId(null);
-      toast.success("Решение принято");
+      toast.success(t("decisions.taken"));
     } catch (error) {
-      toast.error("Не удалось принять решение", { description: error instanceof Error ? error.message : undefined });
+      toast.error(t("decisions.takeFailed"), { description: error instanceof Error ? error.message : undefined });
     } finally {
       setTakingId(null);
     }
@@ -105,72 +116,72 @@ export function CountryDecisionsModal({ open, token, countryId, onClose }: Props
   return (
     <>
     <AppModal open={open} onClose={onClose} modalKey="decisions" zIndexClassName="z-[170]">
-      <AppModalHeader title="Решения страны" description="Доступные действия, заданные в панели контента" onClose={onClose} />
+      <AppModalHeader title={t("decisions.title")} description={t("shell.action.decisionsDescription")} onClose={onClose} />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <AppButton variant={tab === "available" ? "primary" : "ghost"} onClick={() => setTab("available")} icon={<CheckCircle2 size={14} />}>
-          Доступные
+          {t("decisions.available")}
         </AppButton>
         <AppButton variant={tab === "locked" ? "primary" : "ghost"} onClick={() => setTab("locked")} icon={<Clock size={14} />}>
-          Недоступные
+          {t("decisions.locked")}
         </AppButton>
         <AppButton variant={tab === "history" ? "primary" : "ghost"} onClick={() => setTab("history")} icon={<RefreshCcw size={14} />}>
-          История
+          {t("decisions.history")}
         </AppButton>
       </div>
 
       {loading ? (
-        <AppEmptyState title="Загрузка решений">Проверяем условия для страны.</AppEmptyState>
+        <AppEmptyState title={t("decisions.loading")}>{t("decisions.loadingDescription")}</AppEmptyState>
       ) : tab === "history" ? (
         <div className="space-y-2">
           {(record?.history ?? []).length === 0 ? (
-            <AppEmptyState title="История пуста">Страна ещё не принимала решений.</AppEmptyState>
+            <AppEmptyState title={t("decisions.historyEmpty")}>{t("decisions.historyEmptyDescription")}</AppEmptyState>
           ) : (
             (record?.history ?? []).map((item) => (
               <AppCard key={`${item.decisionId}-${item.takenTurnId}`} className="p-3">
-                <div className="text-sm font-semibold text-white">{item.label}</div>
-                <div className="mt-1 text-xs text-white/50">Ход {item.takenTurnId}</div>
+                <div className="text-sm font-semibold text-[var(--arc-color-text)]">{item.label}</div>
+                <div className="mt-1 text-xs text-[var(--arc-color-text-muted)]">{t("decisions.turn", { turn: item.takenTurnId })}</div>
               </AppCard>
             ))
           )}
         </div>
       ) : rows.length === 0 ? (
-        <AppEmptyState title="Нет решений">{tab === "available" ? "Сейчас нет доступных решений." : "Недоступных решений нет."}</AppEmptyState>
+        <AppEmptyState title={t("decisions.emptyTitle")}>{tab === "available" ? t("decisions.emptyAvailable") : t("decisions.emptyLocked")}</AppEmptyState>
       ) : (
         <div className="grid gap-3 xl:grid-cols-2">
           {rows.map((item) => {
-            const costs = formatResourceMap(item.decision.costs);
-            const effects = formatEffects(item.decision);
+            const costs = formatResourceMap(item.decision.costs, t);
+            const effects = formatEffects(item.decision, t);
             return (
               <AppCard key={item.id} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-black/25" style={{ color: item.color }}>
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]" style={{ color: item.color }}>
                         <Landmark size={16} />
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-white">{item.name}</div>
-                        <div className="text-xs text-white/45">{CATEGORY_LABEL[item.decision.category] ?? item.decision.category}</div>
+                        <div className="text-sm font-semibold text-[var(--arc-color-text)]">{item.name}</div>
+                        <div className="text-xs text-[var(--arc-color-text-muted)]">{categoryLabel(item.decision.category, t)}</div>
                       </div>
                     </div>
-                    {item.description ? <div className="mt-3 text-sm leading-relaxed text-white/65">{item.description}</div> : null}
+                    {item.description ? <div className="mt-3 text-sm leading-relaxed text-[var(--arc-color-text-soft)]">{item.description}</div> : null}
                   </div>
                   <AppButton disabled={takingId === item.id} onClick={() => setSelectedDecisionId(item.id)} variant={item.available ? "primary" : "ghost"}>
-                    Открыть
+                    {t("decisions.open")}
                   </AppButton>
                 </div>
-                <div className="mt-3 grid gap-2 text-xs text-white/60 md:grid-cols-2">
-                  <div className="rounded-lg border border-white/10 bg-black/20 p-2">
-                    <div className="mb-1 text-white/35">Стоимость</div>
-                    {costs.length > 0 ? costs.join(", ") : "Нет"}
+                <div className="mt-3 grid gap-2 text-xs text-[var(--arc-color-text-soft)] md:grid-cols-2">
+                  <div className="rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] p-2">
+                    <div className="mb-1 text-[var(--arc-color-text-muted)]">{t("decisions.cost")}</div>
+                    {costs.length > 0 ? costs.join(", ") : t("decisions.none")}
                   </div>
-                  <div className="rounded-lg border border-white/10 bg-black/20 p-2">
-                    <div className="mb-1 text-white/35">Эффекты</div>
-                    {effects.length > 0 ? effects.join(", ") : "Нет"}
+                  <div className="rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] p-2">
+                    <div className="mb-1 text-[var(--arc-color-text-muted)]">{t("decisions.effects")}</div>
+                    {effects.length > 0 ? effects.join(", ") : t("decisions.none")}
                   </div>
                 </div>
-                {!item.available && item.reason ? <div className="mt-3 text-xs text-amber-200">{item.reason}</div> : null}
+                {!item.available && item.reason ? <div className="mt-3 text-xs text-[var(--arc-color-warning-top)]">{item.reason}</div> : null}
               </AppCard>
             );
           })}
@@ -180,24 +191,24 @@ export function CountryDecisionsModal({ open, token, countryId, onClose }: Props
     <EventStoryModal
       open={Boolean(selectedDecision)}
       onClose={() => setSelectedDecisionId(null)}
-      title={selectedDecision?.name ?? "Решение"}
-      subtitle={selectedDecision ? `Решение страны · ${CATEGORY_LABEL[selectedDecision.decision.category] ?? selectedDecision.decision.category}` : null}
+      title={selectedDecision?.name ?? t("decisions.title")}
+      subtitle={selectedDecision ? t("decisions.storySubtitle", { category: categoryLabel(selectedDecision.decision.category, t) }) : null}
       body={selectedDecision?.description ?? null}
       imageUrl={selectedDecision?.logoUrl ?? null}
       imageCaption={selectedDecision?.name ?? null}
-      categoryLabel={selectedDecision ? CATEGORY_LABEL[selectedDecision.decision.category] ?? selectedDecision.decision.category : null}
-      importantLabel={selectedDecision?.available ? null : selectedDecision?.reason ?? "Недоступно"}
+      categoryLabel={selectedDecision ? categoryLabel(selectedDecision.decision.category, t) : null}
+      importantLabel={selectedDecision?.available ? null : selectedDecision?.reason ?? t("decisions.notAvailable")}
       accentColor={selectedDecision?.color ?? "#4ade80"}
       options={
         selectedDecision
           ? [
               {
                 id: "take",
-                label: selectedDecision.available ? "Принять решение" : "Решение недоступно",
+                label: selectedDecision.available ? t("decisions.take") : t("decisions.notAvailable"),
                 description: selectedDecision.reason ?? undefined,
                 effects: [
-                  ...formatResourceMap(selectedDecision.decision.costs).map((row) => `Стоимость: ${row}`),
-                  ...formatEffects(selectedDecision.decision),
+                  ...formatResourceMap(selectedDecision.decision.costs, t).map((row) => `${t("decisions.cost")}: ${row}`),
+                  ...formatEffects(selectedDecision.decision, t),
                 ],
                 buttonColor: selectedDecision.color,
                 disabled: !selectedDecision.available || Boolean(takingId),

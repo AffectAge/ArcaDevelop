@@ -29,6 +29,8 @@ export type PatchableGameSettings = {
     pointsPerTurn: number;
     pointsCostPer1000Km2: number;
     ducatsCostPer1000Km2: number;
+    settlementEnabled: boolean;
+    settlementPopulationOnCapture: number;
   };
   customization: {
     renameDucats: number;
@@ -167,6 +169,10 @@ function applyColonizationPatch(
   assignNumberIfPresent(colonization, "pointsPerTurn", settings.colonization);
   assignNumberIfPresent(colonization, "pointsCostPer1000Km2", settings.colonization);
   assignNumberIfPresent(colonization, "ducatsCostPer1000Km2", settings.colonization);
+  if (typeof colonization.settlementEnabled === "boolean") {
+    settings.colonization.settlementEnabled = colonization.settlementEnabled;
+  }
+  assignNumberIfPresent(colonization, "settlementPopulationOnCapture", settings.colonization);
   const priceFormulaChanged =
     previousCostPer1000Km2.pointsCostPer1000Km2 !== settings.colonization.pointsCostPer1000Km2 ||
     previousCostPer1000Km2.ducatsCostPer1000Km2 !== settings.colonization.ducatsCostPer1000Km2;
@@ -237,12 +243,12 @@ function getChangedSections(patch: GameSettingsPatchInput): string[] {
   ].filter((value): value is string => Boolean(value));
 }
 
-function assignNumberIfPresent(
+function assignNumberIfPresent<T extends object>(
   source: Record<string, unknown> | null | undefined,
-  key: string,
-  target: Record<string, number>,
+  key: keyof T & string,
+  target: T,
 ): void {
   if (typeof source?.[key] === "number") {
-    target[key] = source[key];
+    Object.assign(target, { [key]: source[key] });
   }
 }

@@ -40,6 +40,7 @@ type WebSocketRuntimeParams = {
   parseAuthToken: (token: string) => AuthHeaderPayload | null;
   findCountryForAuth: (countryId: string) => Promise<WebSocketCountryRecord | null>;
   listResolveStatusCountries: () => Promise<ResolveStatusCountryRecord[]>;
+  getAiControlledCountryIds: () => Set<string>;
   ensureCountryInWorldBase: (countryId: string) => void;
   getLastLoginAt: (countryId: string) => string | null;
   setLastLoginAt: (countryId: string, timestamp: string) => void;
@@ -47,7 +48,7 @@ type WebSocketRuntimeParams = {
   sendPendingRegistrationNotificationsToAdminSocket: (socket: WebSocket, adminCountryId: string) => Promise<void>;
   broadcast: (message: WsOutMessage) => void;
   broadcastTurnResolveStarted: (reason: "manual" | "admin" | "auto") => void;
-  resolveAndBroadcastCurrentTurn: () => boolean;
+  resolveAndBroadcastCurrentTurn: () => Promise<boolean>;
   cleanupExpiredPunishments: (currentTurn: number, now: Date) => Promise<void>;
   getCountryBlockInfo: (
     country: { isLocked: boolean; blockedUntilTurn: number | null; blockedUntilAt: Date | null },
@@ -149,7 +150,7 @@ export function registerWebSocketRuntime(params: WebSocketRuntimeParams): void {
       }
 
       if (msg.type === "ORDER_DELTA") {
-        await handleOrderDelta({ params, msg, send, playerId, playerCountryId });
+        await submitOrderDeltaToRuntime({ params, msg, send, playerId, playerCountryId });
         return;
       }
 
@@ -159,7 +160,7 @@ export function registerWebSocketRuntime(params: WebSocketRuntimeParams): void {
           return;
         }
         params.broadcastTurnResolveStarted("admin");
-        params.resolveAndBroadcastCurrentTurn();
+        await params.resolveAndBroadcastCurrentTurn();
         return;
       }
 
@@ -288,7 +289,21 @@ function handleReplayRequest(input: {
   for (const delta of replay.deltas) input.send(delta);
 }
 
-async function handleOrderDelta(input: {
+export async function submitAiOrderDeltaToRuntime(input: {
+  params: WebSocketRuntimeParams;
+  msg: OrderDelta;
+  send: (message: WsOutMessage) => void;
+}): Promise<void> {
+  await submitOrderDeltaToRuntime({
+    params: input.params,
+    msg: input.msg,
+    send: input.send,
+    playerId: input.msg.order.playerId,
+    playerCountryId: input.msg.order.countryId,
+  });
+}
+
+export async function submitOrderDeltaToRuntime(input: {
   params: WebSocketRuntimeParams;
   msg: OrderDelta;
   send: (message: WsOutMessage) => void;
@@ -521,7 +536,11 @@ async function handleRequestResolve(input: {
   if (activeCountryIds.has(playerCountryId)) readySet.add(playerCountryId);
   if (readySet.size !== readySizeBefore) params.savePersistentState();
 
-  const readyCount = [...readySet].filter((countryId) => activeCountryIds.has(countryId)).length;
+  const readyCount = countResolveReadyCountries({
+    activeCountryIds,
+    readySet,
+    aiControlledCountryIds: params.getAiControlledCountryIds(),
+  });
   const totalCount = activeCountryIds.size;
   if (readyCount < totalCount) {
     send({
@@ -533,5 +552,15 @@ async function handleRequestResolve(input: {
   }
 
   params.broadcastTurnResolveStarted("manual");
-  params.resolveAndBroadcastCurrentTurn();
+  await params.resolveAndBroadcastCurrentTurn();
+}
+
+export function countResolveReadyCountries(params: {
+  activeCountryIds: Set<string>;
+  readySet: Set<string>;
+  aiControlledCountryIds: Set<string>;
+}): number {
+  return [...params.activeCountryIds].filter(
+    (countryId) => params.readySet.has(countryId) || params.aiControlledCountryIds.has(countryId),
+  ).length;
 }

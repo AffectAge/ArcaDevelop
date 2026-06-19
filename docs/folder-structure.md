@@ -57,6 +57,7 @@ Folder responsibilities:
 
 - `app`: Express app creation, middleware, HTTP wiring.
 - `runtime`: world runtime, turn state, scenario activation, orchestration.
+- `ai`: deterministic AI context builders, indexes, fixture harnesses, rule filters, scoring, plans, and future AI order generation.
 - `ws`: WebSocket auth, routing, ACK/replay, interest management.
 - `routes`: HTTP route modules only; keep handlers thin.
 - `domain`: pure or mostly pure mechanics and domain rules.
@@ -69,7 +70,7 @@ Folder responsibilities:
 - `observability`: metrics, diagnostics, bounded logs.
 - `testing`: test fixtures and deterministic scenario helpers.
 
-Current migration note: `apps/server/src/runtime` has started with small runtime primitives such as bounded TTL caches. Keep generic runtime helpers there when they are not persistence adapters, route handlers, security rules, or domain mechanics.
+Current migration note: `apps/server/src/runtime` has started with small runtime primitives such as bounded TTL caches. `apps/server/src/ai` contains the first deterministic AI context/index and fixture harness modules. Keep generic runtime helpers in `runtime` when they are not persistence adapters, route handlers, security rules, or domain mechanics.
 
 ## Target Client Layout After Refactor
 

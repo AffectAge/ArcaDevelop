@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import { useUiText } from "../i18n/useUiText";
 import type { MarketOverviewAlert } from "../lib/api";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard, AppEmptyState } from "./ui/AppSurface";
@@ -10,6 +11,8 @@ type Props = {
 };
 
 export function MarketAlertsModal({ open, onClose, alerts }: Props) {
+  const { t } = useUiText();
+
   if (!open) return null;
 
   return (
@@ -18,12 +21,12 @@ export function MarketAlertsModal({ open, onClose, alerts }: Props) {
       open={open}
       onClose={onClose}
       zIndexClassName="z-[178]"
-      panelClassName="arc-scrollbar max-h-[min(92vh,760px)] w-[min(92vw,780px)] overflow-auto"
+      panelClassName="arc-market-subpanel arc-scrollbar max-h-[min(92vh,760px)] w-[min(92vw,780px)] overflow-auto"
       paddingClassName="p-4 md:p-6 flex items-center justify-center"
     >
           <AppModalHeader
-            title="Алерты рынка"
-            description="События дефицита, перегруза и неактивности зданий"
+            title={t("market.alertsTitle")}
+            description={t("market.alertsDescription")}
             onClose={onClose}
           />
 
@@ -31,11 +34,7 @@ export function MarketAlertsModal({ open, onClose, alerts }: Props) {
             {alerts.map((alert) => (
               <AppCard
                 key={alert.id}
-                className={`text-xs ${
-                  alert.severity === "critical"
-                    ? "border-red-400/35 bg-red-500/10 text-red-100"
-                    : "border-amber-400/35 bg-amber-500/10 text-amber-100"
-                }`}
+                className={`text-xs ${alert.severity === "critical" ? "arc-market-danger-card" : "arc-market-warning-card"}`}
               >
                 <div className="mb-0.5 inline-flex items-center gap-1.5 font-semibold">
                   <AlertTriangle size={13} />
@@ -44,7 +43,7 @@ export function MarketAlertsModal({ open, onClose, alerts }: Props) {
                 <div>{alert.message}</div>
               </AppCard>
             ))}
-            {alerts.length === 0 && <AppEmptyState>Нет алертов.</AppEmptyState>}
+            {alerts.length === 0 && <AppEmptyState>{t("market.noAlerts")}</AppEmptyState>}
           </div>
     </AppModal>
   );

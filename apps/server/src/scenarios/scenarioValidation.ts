@@ -161,6 +161,8 @@ const VALIDATION_COLONIZATION_DEFAULTS = {
   pointsPerTurn: 30,
   pointsCostPer1000Km2: 5,
   ducatsCostPer1000Km2: 5,
+  settlementEnabled: true,
+  settlementPopulationOnCapture: 1_000,
 };
 const VALIDATION_CUSTOMIZATION_DEFAULTS = {
   renameDucats: 20,

@@ -3,6 +3,12 @@ import { resolve } from "node:path";
 import { z } from "zod";
 
 export type ScenarioDefines = {
+  ai?: {
+    enabled?: unknown;
+    maxCountriesPerTick?: unknown;
+    maxDecisionCandidatesPerCountry?: unknown;
+    contextCacheTtlTurns?: unknown;
+  };
   economy?: {
     baseCulturePerTurn?: unknown;
     baseSciencePerTurn?: unknown;
@@ -29,6 +35,8 @@ export type ScenarioDefines = {
     pointsPerTurn?: unknown;
     pointsCostPer1000Km2?: unknown;
     ducatsCostPer1000Km2?: unknown;
+    settlementEnabled?: unknown;
+    settlementPopulationOnCapture?: unknown;
   };
   customization?: {
     renameDucats?: unknown;
@@ -67,6 +75,12 @@ export type ScenarioDefineFieldSpec = {
 export type ScenarioDefinesSupportedSections = Record<string, Record<string, ScenarioDefineFieldSpec>>;
 
 export const SCENARIO_DEFINES_SUPPORTED_SECTIONS = {
+  ai: {
+    enabled: { type: "boolean" },
+    maxCountriesPerTick: { type: "integer", min: 1, max: 1_000 },
+    maxDecisionCandidatesPerCountry: { type: "integer", min: 1, max: 1_000 },
+    contextCacheTtlTurns: { type: "integer", min: 1, max: 100 },
+  },
   economy: {
     baseCulturePerTurn: { type: "integer", min: 0, max: 1_000_000_000_000 },
     baseSciencePerTurn: { type: "integer", min: 0, max: 1_000_000_000_000 },
@@ -93,6 +107,8 @@ export const SCENARIO_DEFINES_SUPPORTED_SECTIONS = {
     pointsPerTurn: { type: "integer", min: 0, max: 1_000_000_000_000 },
     pointsCostPer1000Km2: { type: "integer", min: 1, max: 1_000_000_000_000 },
     ducatsCostPer1000Km2: { type: "integer", min: 0, max: 1_000_000_000_000 },
+    settlementEnabled: { type: "boolean" },
+    settlementPopulationOnCapture: { type: "integer", min: 0, max: 1_000_000_000 },
   },
   customization: {
     renameDucats: { type: "integer", min: 0, max: 1_000_000_000_000 },
@@ -123,6 +139,7 @@ export type AuditLogSettings = {
 };
 
 export type SettingsWithScenarioDefines = {
+  ai: AiSettings;
   economy: EconomySettings;
   auditLog: AuditLogSettings;
   colonization: ColonizationSettings;
@@ -131,6 +148,13 @@ export type SettingsWithScenarioDefines = {
   registration: RegistrationSettings;
   eventLog: EventLogSettings;
   turnTimer: TurnTimerSettings;
+};
+
+export type AiSettings = {
+  enabled: boolean;
+  maxCountriesPerTick: number;
+  maxDecisionCandidatesPerCountry: number;
+  contextCacheTtlTurns: number;
 };
 
 export type EconomySettings = {
@@ -156,6 +180,8 @@ export type ColonizationSettings = {
   pointsPerTurn: number;
   pointsCostPer1000Km2: number;
   ducatsCostPer1000Km2: number;
+  settlementEnabled: boolean;
+  settlementPopulationOnCapture: number;
 };
 
 export type CustomizationSettings = {
@@ -186,6 +212,15 @@ export type TurnTimerSettings = {
 
 const scenarioDefinesShapeSchema = z
   .object({
+    ai: z
+      .object({
+        enabled: z.unknown().optional(),
+        maxCountriesPerTick: z.unknown().optional(),
+        maxDecisionCandidatesPerCountry: z.unknown().optional(),
+        contextCacheTtlTurns: z.unknown().optional(),
+      })
+      .strict()
+      .optional(),
     economy: z
       .object({
         baseCulturePerTurn: z.unknown().optional(),
@@ -219,6 +254,8 @@ const scenarioDefinesShapeSchema = z
         pointsPerTurn: z.unknown().optional(),
         pointsCostPer1000Km2: z.unknown().optional(),
         ducatsCostPer1000Km2: z.unknown().optional(),
+        settlementEnabled: z.unknown().optional(),
+        settlementPopulationOnCapture: z.unknown().optional(),
       })
       .strict()
       .optional(),
@@ -285,6 +322,7 @@ export function applyScenarioDefinesToGameSettings<TSettings extends SettingsWit
   defines: ScenarioDefines | null,
   options: ScenarioDefinesOptions,
 ): TSettings & {
+  ai: AiSettings;
   economy: EconomySettings;
   auditLog: AuditLogSettings;
   colonization: ColonizationSettings;
@@ -296,6 +334,7 @@ export function applyScenarioDefinesToGameSettings<TSettings extends SettingsWit
 } {
   if (!defines) return settings;
 
+  const ai = normalizeScenarioAiDefines(defines.ai, settings.ai) ?? settings.ai;
   const economy = normalizeScenarioEconomyDefines(defines.economy, settings.economy, options) ?? settings.economy;
   const auditLog = normalizeScenarioAuditLogDefines(defines.auditLog, settings.auditLog, options) ?? settings.auditLog;
   const colonization = normalizeScenarioColonizationDefines(defines.colonization, settings.colonization, options) ?? settings.colonization;
@@ -307,6 +346,7 @@ export function applyScenarioDefinesToGameSettings<TSettings extends SettingsWit
 
   return {
     ...settings,
+    ai,
     economy,
     auditLog,
     colonization,
@@ -315,6 +355,45 @@ export function applyScenarioDefinesToGameSettings<TSettings extends SettingsWit
     registration,
     eventLog,
     turnTimer,
+  };
+}
+
+export function normalizeScenarioAiDefines(
+  aiDefines: ScenarioDefines["ai"] | undefined,
+  defaults: AiSettings,
+): AiSettings | null {
+  if (aiDefines == null) return null;
+  if (typeof aiDefines !== "object" || Array.isArray(aiDefines)) {
+    throw new Error("INVALID_SCENARIO_AI_DEFINES");
+  }
+
+  return {
+    enabled: normalizeBoolean(
+      aiDefines.enabled,
+      defaults.enabled,
+      "INVALID_SCENARIO_AI_ENABLED",
+    ),
+    maxCountriesPerTick: normalizeIntegerInRange(
+      aiDefines.maxCountriesPerTick,
+      defaults.maxCountriesPerTick,
+      1,
+      1_000,
+      "INVALID_SCENARIO_AI_MAX_COUNTRIES_PER_TICK",
+    ),
+    maxDecisionCandidatesPerCountry: normalizeIntegerInRange(
+      aiDefines.maxDecisionCandidatesPerCountry,
+      defaults.maxDecisionCandidatesPerCountry,
+      1,
+      1_000,
+      "INVALID_SCENARIO_AI_MAX_DECISION_CANDIDATES_PER_COUNTRY",
+    ),
+    contextCacheTtlTurns: normalizeIntegerInRange(
+      aiDefines.contextCacheTtlTurns,
+      defaults.contextCacheTtlTurns,
+      1,
+      100,
+      "INVALID_SCENARIO_AI_CONTEXT_CACHE_TTL_TURNS",
+    ),
   };
 }
 
@@ -500,6 +579,18 @@ export function normalizeScenarioColonizationDefines(
       0,
       options.maxSettingNumber,
       "INVALID_SCENARIO_COLONIZATION_DUCATS_COST",
+    ),
+    settlementEnabled: normalizeBoolean(
+      colonizationDefines.settlementEnabled,
+      defaults.settlementEnabled,
+      "INVALID_SCENARIO_COLONIZATION_SETTLEMENT_ENABLED",
+    ),
+    settlementPopulationOnCapture: normalizeIntegerInRange(
+      colonizationDefines.settlementPopulationOnCapture,
+      defaults.settlementPopulationOnCapture,
+      0,
+      1_000_000_000,
+      "INVALID_SCENARIO_COLONIZATION_SETTLEMENT_POPULATION",
     ),
   };
 }

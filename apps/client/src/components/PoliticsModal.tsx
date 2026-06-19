@@ -4,6 +4,8 @@ import { Landmark, Vote } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { CountryParliament, CountryParliamentPowers, WorldBase } from "@arcanorum/shared";
+import type { UiTextKey } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 import { fetchPolitics, startLawBill, type ContentEntry, type PoliticsResponse } from "../lib/api";
 import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
@@ -32,12 +34,12 @@ type PartyVotePreview = {
 
 type PoliticsTab = "overview" | "powers" | "laws" | "parties" | "interestGroups";
 
-const POLITICS_TABS: Array<{ id: PoliticsTab; label: string }> = [
-  { id: "overview", label: "Обзор" },
-  { id: "powers", label: "Полномочия" },
-  { id: "laws", label: "Законы" },
-  { id: "parties", label: "Партии" },
-  { id: "interestGroups", label: "Группы интересов" },
+const POLITICS_TABS: Array<{ id: PoliticsTab; labelKey: UiTextKey }> = [
+  { id: "overview", labelKey: "politics.tab.overview" },
+  { id: "powers", labelKey: "politics.tab.powers" },
+  { id: "laws", labelKey: "politics.tab.laws" },
+  { id: "parties", labelKey: "politics.tab.parties" },
+  { id: "interestGroups", labelKey: "politics.tab.interestGroups" },
 ];
 
 const DEFAULT_PARLIAMENT_POWERS: CountryParliamentPowers = {
@@ -51,41 +53,47 @@ const DEFAULT_PARLIAMENT_POWERS: CountryParliamentPowers = {
 
 const POWER_LABELS = {
   laws: {
-    none: "Не участвует",
-    advisory: "Совещательный голос",
-    approve: "Утверждает законы",
-    initiate: "Инициирует и утверждает",
+    none: "politics.power.none",
+    advisory: "politics.power.laws.advisory",
+    approve: "politics.power.laws.approve",
+    initiate: "politics.power.laws.initiate",
   },
   budget: {
-    none: "Не участвует",
-    approve_taxes: "Утверждает налоги",
-    approve_budget: "Утверждает бюджет",
-    control_budget: "Контролирует бюджет",
+    none: "politics.power.none",
+    approve_taxes: "politics.power.budget.approveTaxes",
+    approve_budget: "politics.power.budget.approveBudget",
+    control_budget: "politics.power.budget.controlBudget",
   },
   diplomacy: {
-    none: "Не участвует",
-    ratify_territory: "Ратифицирует территории",
-    ratify_major_treaties: "Ратифицирует крупные договоры",
-    ratify_all: "Ратифицирует все договоры",
+    none: "politics.power.none",
+    ratify_territory: "politics.power.diplomacy.ratifyTerritory",
+    ratify_major_treaties: "politics.power.diplomacy.ratifyMajorTreaties",
+    ratify_all: "politics.power.diplomacy.ratifyAll",
   },
   war: {
-    none: "Не участвует",
-    approve: "Утверждает войну",
-    declare: "Может объявлять войну",
+    none: "politics.power.none",
+    approve: "politics.power.war.approve",
+    declare: "politics.power.war.declare",
   },
   government: {
-    none: "Не участвует",
-    confidence_vote: "Вотум доверия",
-    appoint_government: "Назначает правительство",
+    none: "politics.power.none",
+    confidence_vote: "politics.power.government.confidenceVote",
+    appoint_government: "politics.power.government.appointGovernment",
   },
-} as const;
+} as const satisfies {
+  laws: Record<NonNullable<CountryParliamentPowers["laws"]>, UiTextKey>;
+  budget: Record<NonNullable<CountryParliamentPowers["budget"]>, UiTextKey>;
+  diplomacy: Record<NonNullable<CountryParliamentPowers["diplomacy"]>, UiTextKey>;
+  war: Record<NonNullable<CountryParliamentPowers["war"]>, UiTextKey>;
+  government: Record<NonNullable<CountryParliamentPowers["government"]>, UiTextKey>;
+};
 
 function getParliamentPowers(parliament: CountryParliament | null): CountryParliamentPowers {
   return { ...DEFAULT_PARLIAMENT_POWERS, ...(parliament?.powers ?? {}) };
 }
 
-function lawActionLabel(powers: CountryParliamentPowers) {
-  return powers.laws === "none" || powers.laws === "advisory" ? "Принять" : "На голосование";
+function lawActionLabelKey(powers: CountryParliamentPowers): UiTextKey {
+  return powers.laws === "none" || powers.laws === "advisory" ? "politics.lawAction.enact" : "politics.lawAction.vote";
 }
 
 
@@ -104,6 +112,7 @@ function voteColor(yesPct: number, noPct: number): string {
 }
 
 export function PoliticsModal({ open, token, countryId, countryName, worldBase, onClose }: Props) {
+  const { t, locale } = useUiText();
   const [data, setData] = useState<PoliticsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [savingLawId, setSavingLawId] = useState<string | null>(null);
@@ -121,7 +130,7 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
         if (!cancelled) setData(next);
       })
       .catch(() => {
-        if (!cancelled) toast.error("Не удалось загрузить политику");
+        if (!cancelled) toast.error(t("politics.loadFailed"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -129,10 +138,17 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
     return () => {
       cancelled = true;
     };
-  }, [countryId, open, token]);
+  }, [countryId, open, t, token]);
 
   const parliament: CountryParliament | null = worldBase?.parliamentByCountry?.[countryId] ?? data?.parliament ?? null;
   const parliamentPowers = useMemo(() => getParliamentPowers(parliament), [parliament]);
+  const lawActionLabel = t(lawActionLabelKey(parliamentPowers));
+  const turnsUntilElection = parliament ? Math.max(0, parliament.nextElectionTurn - (worldBase?.turnId ?? 0)) : 0;
+  const formatInteger = useCallback(
+    (value: number) => value.toLocaleString(locale === "ru" ? "ru-RU" : "en-US"),
+    [locale],
+  );
+  const voteLabel = useCallback((key: UiTextKey, value: number | string) => t(key, { value }), [t]);
   const partyById = useMemo(() => new Map((data?.parties ?? []).map((party) => [party.id, party] as const)), [data?.parties]);
   const interestGroupById = useMemo(() => new Map((data?.interestGroups ?? []).map((group) => [group.id, group] as const)), [data?.interestGroups]);
   const lawById = useMemo(() => new Map((data?.laws ?? []).map((law) => [law.id, law] as const)), [data?.laws]);
@@ -295,8 +311,8 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
             const voteLine =
               yes == null || no == null || abstain == null
                 ? ""
-                : `<br/>За: ${(yes * 100).toFixed(1)}% | Против: ${(no * 100).toFixed(1)}% | Возд.: ${(abstain * 100).toFixed(1)}%`;
-            return `${params.name ?? ""}: ${params.value ?? 0} мест${voteLine}`;
+                : `<br/>${t("politics.vote.yes")}: ${(yes * 100).toFixed(1)}% | ${t("politics.vote.no")}: ${(no * 100).toFixed(1)}% | ${t("politics.vote.abstainShort")}: ${(abstain * 100).toFixed(1)}%`;
+            return t("politics.chartTooltip", { name: params.name ?? "", seats: params.value ?? 0 }) + voteLine;
           },
           backgroundColor: "rgba(8, 12, 18, 0.94)",
           borderColor: "rgba(255,255,255,0.12)",
@@ -349,7 +365,7 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
       observer.disconnect();
       window.removeEventListener("resize", resize);
     };
-  }, [activeTab, open, parliamentChartData]);
+  }, [activeTab, open, parliamentChartData, t]);
 
   useEffect(() => {
     if (open) return;
@@ -363,12 +379,12 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
       const result = await startLawBill(token, countryId, lawId);
       setData((prev) => (prev ? { ...prev, parliament: result.parliament } : prev));
       setSelectedLawId(lawId);
-      toast.success("Законопроект внесён в парламент");
+      toast.success(t("politics.billStarted"));
     } catch (err) {
       const message = err instanceof Error ? err.message : "START_LAW_BILL_FAILED";
-      if (message === "LAW_ALREADY_ACTIVE") toast.error("Этот закон уже действует");
-      else if (message === "LAW_ALREADY_IN_VOTE") toast.error("Этот закон уже на голосовании");
-      else toast.error("Не удалось внести законопроект");
+      if (message === "LAW_ALREADY_ACTIVE") toast.error(t("politics.lawAlreadyActive"));
+      else if (message === "LAW_ALREADY_IN_VOTE") toast.error(t("politics.lawAlreadyInVote"));
+      else toast.error(t("politics.billStartFailed"));
     } finally {
       setSavingLawId(null);
     }
@@ -378,11 +394,11 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
   return open ? (
         <AppModal open={open} onClose={onClose} modalKey="politics" zIndexClassName="z-[180]" panelClassName="w-full overflow-hidden md:p-5">
               <AppModalHeader
-                title={`Политика: ${countryName}`}
-                description={`Выборы через ${parliament ? Math.max(0, parliament.nextElectionTurn - (worldBase?.turnId ?? 0)) : 0} ходов до следующего пересчёта.`}
+                title={t("politics.title", { country: countryName })}
+                description={t("politics.description", { turns: turnsUntilElection })}
                 onClose={onClose}
                 actions={
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-arc-accent">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] text-[rgb(var(--theme-accent))]">
                     <Landmark size={18} />
                   </div>
                 }
@@ -396,15 +412,15 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                     onClick={() => setActiveTab(tab.id)}
                     variant={activeTab === tab.id ? "primary" : "ghost"}
                     size="md"
-                    className={activeTab === tab.id ? "bg-arc-accent/15 text-arc-accent" : ""}
+                    className={activeTab === tab.id ? "bg-[rgb(var(--theme-accent-soft))] text-[rgb(var(--theme-accent))]" : ""}
                   >
-                    {tab.label}
+                    {t(tab.labelKey)}
                   </AppButton>
                 ))}
                 </div>
               </AppToolbar>
 
-              {loading && <AppEmptyState className="py-4 text-white/60">Загрузка...</AppEmptyState>}
+              {loading && <AppEmptyState className="py-4 text-[rgb(var(--theme-text-muted))]">{t("politics.loading")}</AppEmptyState>}
 
               {!loading && parliament && (
                 <div className="arc-scrollbar min-h-0 flex-1 overflow-auto pr-1">
@@ -413,40 +429,40 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                       <AppSection className="p-4">
                         <div className="mb-3 flex items-center justify-between">
                           <div>
-                            <div className="text-sm font-semibold text-white">Парламент</div>
-                            <div className="mt-1 text-xs text-white/45">
-                              {selectedVotingLaw ? `Прогноз голосования: ${selectedVotingLaw.name}` : "Распределение мест по партиям"}
+                            <div className="text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("politics.parliament")}</div>
+                            <div className="mt-1 text-xs text-[rgb(var(--theme-text-muted))]">
+                              {selectedVotingLaw ? t("politics.voteForecast", { law: selectedVotingLaw.name }) : t("politics.seatDistribution")}
                             </div>
                           </div>
-                          <div className="text-xs text-white/45">{parliament.seatsTotal} мест</div>
+                          <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("politics.seatCount", { seats: parliament.seatsTotal })}</div>
                         </div>
                         <div className="relative h-[360px] overflow-hidden">
                           <div ref={parliamentChartRef} className="h-full w-full" />
                           <div className="pointer-events-none absolute inset-x-0 bottom-10 text-center">
-                            <div className="text-3xl font-semibold tabular-nums text-white">{parliament.seatsTotal}</div>
-                            <div className="text-xs uppercase tracking-wide text-white/45">мест</div>
+                            <div className="text-3xl font-semibold tabular-nums text-[rgb(var(--theme-text-primary))]">{parliament.seatsTotal}</div>
+                            <div className="text-xs uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("politics.seats")}</div>
                           </div>
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
                           {selectedVotingLaw ? (
                             <>
-                              <span className="rounded-md bg-emerald-500/10 px-2 py-1 text-emerald-300">Зелёный: большинство партии за</span>
-                              <span className="rounded-md bg-rose-500/10 px-2 py-1 text-rose-300">Красный: большинство против</span>
-                              <span className="rounded-md bg-white/5 px-2 py-1 text-white/55">Серый: в основном воздержание</span>
+                              <span className="rounded-md bg-[rgb(var(--theme-success-soft))] px-2 py-1 text-[rgb(var(--theme-success))]">{t("politics.legend.support")}</span>
+                              <span className="rounded-md bg-[rgb(var(--theme-danger-soft))] px-2 py-1 text-[rgb(var(--theme-danger))]">{t("politics.legend.oppose")}</span>
+                              <span className="rounded-md bg-[rgb(var(--theme-surface-2))] px-2 py-1 text-[rgb(var(--theme-text-muted))]">{t("politics.legend.abstain")}</span>
                             </>
                           ) : (
-                            <span className="rounded-md bg-white/5 px-2 py-1 text-white/55">Обычный режим: цвета партий</span>
+                            <span className="rounded-md bg-[rgb(var(--theme-surface-2))] px-2 py-1 text-[rgb(var(--theme-text-muted))]">{t("politics.legend.partyColors")}</span>
                           )}
                         </div>
                       </AppSection>
 
                       <AppSection className="p-4">
-                        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
-                          <Vote size={16} className="text-arc-accent" />
-                          Законопроекты на голосовании
+                        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[rgb(var(--theme-text-primary))]">
+                          <Vote size={16} className="text-[rgb(var(--theme-accent))]" />
+                          {t("politics.currentBills")}
                         </div>
                         {currentBills.length === 0 ? (
-                          <AppEmptyState>Сейчас парламент не рассматривает законы.</AppEmptyState>
+                          <AppEmptyState>{t("politics.noCurrentBills")}</AppEmptyState>
                         ) : (
                           <div className="space-y-2">
                             {currentBills.map((bill) => {
@@ -459,21 +475,21 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                                   onClick={() => setSelectedLawId(bill.lawId)}
                                   className={`w-full rounded-lg border p-3 text-left transition ${
                                     selectedVotingLaw?.id === bill.lawId
-                                      ? "border-arc-accent/30 bg-arc-accent/10"
-                                      : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
+                                      ? "border-[rgb(var(--theme-accent))] bg-[rgb(var(--theme-accent-soft))]"
+                                      : "border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] hover:bg-[rgb(var(--theme-surface-3))]"
                                   }`}
                                 >
                                   <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <div className="font-medium text-white">{law.name}</div>
-                                    <div className="text-xs text-white/45">{bill.status}</div>
+                                    <div className="font-medium text-[rgb(var(--theme-text-primary))]">{law.name}</div>
+                                    <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("politics.billStatusDebating")}</div>
                                   </div>
-                                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
-                                    <div className="h-full rounded-full bg-arc-accent" style={{ width: `${Math.max(0, Math.min(100, bill.progress))}%` }} />
+                                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[rgb(var(--theme-surface-3))]">
+                                    <div className="h-full rounded-full bg-[rgb(var(--theme-accent))]" style={{ width: `${Math.max(0, Math.min(100, bill.progress))}%` }} />
                                   </div>
                                   <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-                                    <div className="rounded-md bg-emerald-500/10 px-2 py-1 text-emerald-300">За: {bill.yesSeats}</div>
-                                    <div className="rounded-md bg-rose-500/10 px-2 py-1 text-rose-300">Против: {bill.noSeats}</div>
-                                    <div className="rounded-md bg-white/5 px-2 py-1 text-white/55">Возд.: {bill.abstainSeats}</div>
+                                    <div className="rounded-md bg-[rgb(var(--theme-success-soft))] px-2 py-1 text-[rgb(var(--theme-success))]">{voteLabel("politics.vote.yesValue", bill.yesSeats)}</div>
+                                    <div className="rounded-md bg-[rgb(var(--theme-danger-soft))] px-2 py-1 text-[rgb(var(--theme-danger))]">{voteLabel("politics.vote.noValue", bill.noSeats)}</div>
+                                    <div className="rounded-md bg-[rgb(var(--theme-surface-2))] px-2 py-1 text-[rgb(var(--theme-text-muted))]">{voteLabel("politics.vote.abstainValue", bill.abstainSeats)}</div>
                                   </div>
                                 </button>
                               );
@@ -487,83 +503,91 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                   {activeTab === "powers" && (
                     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
                       <AppSection className="p-4">
-                        <div className="mb-3 text-sm font-semibold text-white">Полномочия парламента</div>
+                        <div className="mb-3 text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("politics.parliamentPowers")}</div>
                         <div className="grid gap-3 md:grid-cols-2">
                           {[
                             {
-                              title: "Законы",
-                              value: POWER_LABELS.laws[parliamentPowers.laws],
+                              title: t("politics.powerDomain.laws"),
+                              value: t(POWER_LABELS.laws[parliamentPowers.laws]),
                               description:
                                 parliamentPowers.laws === "none" || parliamentPowers.laws === "advisory"
-                                  ? "Законы можно принимать напрямую. Парламент не блокирует решение."
-                                  : "Новые законы проходят через парламентское голосование.",
+                                  ? t("politics.powerDescription.lawsDirect")
+                                  : t("politics.powerDescription.lawsVote"),
                             },
                             {
-                              title: "Бюджет",
-                              value: POWER_LABELS.budget[parliamentPowers.budget],
+                              title: t("politics.powerDomain.budget"),
+                              value: t(POWER_LABELS.budget[parliamentPowers.budget]),
                               description:
                                 parliamentPowers.budget === "none"
-                                  ? "Бюджетные решения остаются за правителем."
-                                  : "Часть бюджетных решений должна получать политическое одобрение.",
+                                  ? t("politics.powerDescription.budgetDirect")
+                                  : t("politics.powerDescription.budgetVote"),
                             },
                             {
-                              title: "Дипломатия",
-                              value: POWER_LABELS.diplomacy[parliamentPowers.diplomacy],
+                              title: t("politics.powerDomain.diplomacy"),
+                              value: t(POWER_LABELS.diplomacy[parliamentPowers.diplomacy]),
                               description:
                                 parliamentPowers.diplomacy === "none"
-                                  ? "Договоры подписываются без ратификации."
-                                  : "Важные договоры могут требовать ратификации парламента.",
+                                  ? t("politics.powerDescription.diplomacyDirect")
+                                  : t("politics.powerDescription.diplomacyVote"),
                             },
                             {
-                              title: "Война",
-                              value: POWER_LABELS.war[parliamentPowers.war],
+                              title: t("politics.powerDomain.war"),
+                              value: t(POWER_LABELS.war[parliamentPowers.war]),
                               description:
                                 parliamentPowers.war === "none"
-                                  ? "Военные решения принимает правитель."
-                                  : "Военные решения зависят от парламентского мандата.",
+                                  ? t("politics.powerDescription.warDirect")
+                                  : t("politics.powerDescription.warVote"),
                             },
                             {
-                              title: "Правительство",
-                              value: POWER_LABELS.government[parliamentPowers.government],
+                              title: t("politics.powerDomain.government"),
+                              value: t(POWER_LABELS.government[parliamentPowers.government]),
                               description:
                                 parliamentPowers.government === "none"
-                                  ? "Состав правительства не зависит от парламента."
-                                  : "Парламент влияет на устойчивость или назначение правительства.",
+                                  ? t("politics.powerDescription.governmentDirect")
+                                  : t("politics.powerDescription.governmentVote"),
                             },
                           ].map((item) => (
-                            <AppCard key={item.title} className="bg-white/[0.03] p-4">
-                              <div className="text-xs uppercase tracking-wide text-white/45">{item.title}</div>
-                              <div className="mt-1 text-sm font-semibold text-white">{item.value}</div>
-                              <div className="mt-3 text-xs leading-relaxed text-white/55">{item.description}</div>
+                            <AppCard key={item.title} className="bg-[rgb(var(--theme-surface-2))] p-4">
+                              <div className="text-xs uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{item.title}</div>
+                              <div className="mt-1 text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{item.value}</div>
+                              <div className="mt-3 text-xs leading-relaxed text-[rgb(var(--theme-text-muted))]">{item.description}</div>
                             </AppCard>
                           ))}
                         </div>
                       </AppSection>
 
                       <AppSection className="p-4">
-                        <div className="mb-3 text-sm font-semibold text-white">Текущие ограничения</div>
+                        <div className="mb-3 text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("politics.currentLimits")}</div>
                         <div className="space-y-2 text-sm">
-                          <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white/70">
-                            Законы: {parliamentPowers.laws === "none" || parliamentPowers.laws === "advisory" ? "можно принимать напрямую" : "нужно голосование"}
+                          <div className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2 text-[rgb(var(--theme-text-secondary))]">
+                            {t("politics.limit.laws", {
+                              value:
+                                parliamentPowers.laws === "none" || parliamentPowers.laws === "advisory"
+                                  ? t("politics.limit.lawsDirect")
+                                  : t("politics.limit.lawsVote"),
+                            })}
                           </div>
-                          <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white/70">
-                            Территориальные договоры: {parliamentPowers.diplomacy === "none" ? "без ратификации" : "требуют политической ратификации"}
+                          <div className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2 text-[rgb(var(--theme-text-secondary))]">
+                            {t("politics.limit.treaties", {
+                              value: parliamentPowers.diplomacy === "none" ? t("politics.limit.noRatification") : t("politics.limit.ratificationRequired"),
+                            })}
                           </div>
-                          <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white/70">
-                            Крупные выплаты:{" "}
-                            {parliamentPowers.moneyTransferRatificationThreshold
-                              ? `от ${parliamentPowers.moneyTransferRatificationThreshold.toLocaleString("ru-RU")} требуют контроля`
-                              : "без отдельного порога"}
+                          <div className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2 text-[rgb(var(--theme-text-secondary))]">
+                            {t("politics.limit.transfers", {
+                              value: parliamentPowers.moneyTransferRatificationThreshold
+                                ? t("politics.limit.transferThreshold", { value: formatInteger(parliamentPowers.moneyTransferRatificationThreshold) })
+                                : t("politics.limit.noThreshold"),
+                            })}
                           </div>
                         </div>
                         <div className="mt-5">
-                          <div className="mb-3 text-sm font-semibold text-white">Активные законы-источники</div>
+                          <div className="mb-3 text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("politics.activePowerLaws")}</div>
                           <div className="space-y-2">
                             {["laws", "budget", "diplomacy", "war", "government"].map((domain) => {
                               const law = activePowerLawByDomain.get(domain);
                               return (
-                                <div key={domain} className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white/70">
-                                  {law?.name ?? "Используется базовое полномочие"}
+                                <div key={domain} className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2 text-sm text-[rgb(var(--theme-text-secondary))]">
+                                  {law?.name ?? t("politics.defaultPower")}
                                 </div>
                               );
                             })}
@@ -576,17 +600,17 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                   {activeTab === "laws" && (
                     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
                       <AppSection className="p-4">
-                        <div className="mb-3 text-sm font-semibold text-white">Законы</div>
+                        <div className="mb-3 text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("politics.laws")}</div>
                         <div className="space-y-3">
                           {(data?.lawGroups ?? []).length === 0 ? (
-                            <AppEmptyState>Создайте группы законов и законы в панели контента.</AppEmptyState>
+                            <AppEmptyState>{t("politics.noLawGroups")}</AppEmptyState>
                           ) : (
                             (data?.lawGroups ?? []).map((group) => {
                               const activeLawId = parliament.activeLawByGroupId[group.id];
                               const laws = lawsByGroup.get(group.id) ?? [];
                               return (
-                                <AppCard key={group.id} className="bg-white/[0.03]">
-                                  <div className="mb-2 text-sm font-medium text-white">{group.name}</div>
+                                <AppCard key={group.id} className="bg-[rgb(var(--theme-surface-2))]">
+                                  <div className="mb-2 text-sm font-medium text-[rgb(var(--theme-text-primary))]">{group.name}</div>
                                   <div className="space-y-2">
                                     {laws.map((law) => {
                                       const isActive = activeLawId === law.id;
@@ -602,16 +626,16 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                                             if (event.key === "Enter" || event.key === " ") setSelectedLawId(law.id);
                                           }}
                                           className={`rounded-md px-2 py-2 text-left transition ${
-                                            selectedLawId === law.id ? "bg-arc-accent/10 ring-1 ring-arc-accent/30" : "bg-black/20 hover:bg-white/[0.06]"
+                                            selectedLawId === law.id ? "bg-[rgb(var(--theme-accent-soft))] ring-1 ring-[rgb(var(--theme-accent))]" : "bg-[rgb(var(--theme-surface-1))] hover:bg-[rgb(var(--theme-surface-3))]"
                                           }`}
                                         >
                                           <div className="flex items-center justify-between gap-2">
                                             <div className="min-w-0">
-                                              <div className="truncate text-sm text-white/85">{law.name}</div>
+                                              <div className="truncate text-sm text-[rgb(var(--theme-text-primary))]">{law.name}</div>
                                               <div className="mt-1 flex flex-wrap gap-1 text-[11px]">
-                                                {isActive && <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-300">Действует</span>}
-                                                {isVoting && <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-amber-300">На голосовании</span>}
-                                                {!isActive && !isVoting && <span className="rounded bg-white/5 px-1.5 py-0.5 text-white/45">Не принят</span>}
+                                                {isActive && <span className="rounded bg-[rgb(var(--theme-success-soft))] px-1.5 py-0.5 text-[rgb(var(--theme-success))]">{t("politics.lawStatus.active")}</span>}
+                                                {isVoting && <span className="rounded bg-[rgb(var(--theme-warning-soft))] px-1.5 py-0.5 text-[rgb(var(--theme-warning))]">{t("politics.lawStatus.voting")}</span>}
+                                                {!isActive && !isVoting && <span className="rounded bg-[rgb(var(--theme-surface-3))] px-1.5 py-0.5 text-[rgb(var(--theme-text-muted))]">{t("politics.lawStatus.inactive")}</span>}
                                               </div>
                                             </div>
                                             <button
@@ -621,16 +645,16 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                                                 void handleStartBill(law.id);
                                               }}
                                               disabled={isActive || isVoting || savingLawId === law.id}
-                                              className="rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
+                                              className="rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))] disabled:cursor-not-allowed disabled:opacity-45"
                                             >
-                                              {lawActionLabel(parliamentPowers)}
+                                              {lawActionLabel}
                                             </button>
                                           </div>
                                           {totals && (
                                             <div className="mt-2 grid grid-cols-3 gap-2 text-center text-[11px]">
-                                              <span className="rounded bg-emerald-500/10 px-2 py-1 text-emerald-300">За {totals.yesSeats}</span>
-                                              <span className="rounded bg-rose-500/10 px-2 py-1 text-rose-300">Против {totals.noSeats}</span>
-                                              <span className="rounded bg-white/5 px-2 py-1 text-white/55">Возд. {totals.abstainSeats}</span>
+                                              <span className="rounded bg-[rgb(var(--theme-success-soft))] px-2 py-1 text-[rgb(var(--theme-success))]">{voteLabel("politics.vote.yesCompact", totals.yesSeats)}</span>
+                                              <span className="rounded bg-[rgb(var(--theme-danger-soft))] px-2 py-1 text-[rgb(var(--theme-danger))]">{voteLabel("politics.vote.noCompact", totals.noSeats)}</span>
+                                              <span className="rounded bg-[rgb(var(--theme-surface-3))] px-2 py-1 text-[rgb(var(--theme-text-muted))]">{voteLabel("politics.vote.abstainCompact", totals.abstainSeats)}</span>
                                             </div>
                                           )}
                                         </div>
@@ -645,43 +669,43 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                       </AppSection>
 
                       <AppSection className="p-4">
-                        <div className="mb-3 text-sm font-semibold text-white">Выбранный закон</div>
+                        <div className="mb-3 text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("politics.selectedLaw")}</div>
                         {!selectedLaw ? (
-                          <AppEmptyState>Выберите закон в списке.</AppEmptyState>
+                          <AppEmptyState>{t("politics.selectLaw")}</AppEmptyState>
                         ) : (
                           <div className="space-y-4">
                             <div>
-                              <div className="text-lg font-semibold text-white">{selectedLaw.name}</div>
-                              <div className="mt-1 text-xs text-white/45">{selectedLawGroup?.name ?? "Без группы"}</div>
-                              {selectedLaw.description && <p className="mt-3 text-sm leading-relaxed text-white/65">{selectedLaw.description}</p>}
+                              <div className="text-lg font-semibold text-[rgb(var(--theme-text-primary))]">{selectedLaw.name}</div>
+                              <div className="mt-1 text-xs text-[rgb(var(--theme-text-muted))]">{selectedLawGroup?.name ?? t("politics.noGroup")}</div>
+                              {selectedLaw.description && <p className="mt-3 text-sm leading-relaxed text-[rgb(var(--theme-text-secondary))]">{selectedLaw.description}</p>}
                             </div>
                             <div className="grid grid-cols-3 gap-2 text-center text-xs">
                               {(() => {
                                 const totals = lawVoteTotalsById.get(selectedLaw.id) ?? { yesSeats: 0, noSeats: 0, abstainSeats: 0 };
                                 return (
                                   <>
-                                    <span className="rounded-md bg-emerald-500/10 px-2 py-2 text-emerald-300">За {totals.yesSeats}</span>
-                                    <span className="rounded-md bg-rose-500/10 px-2 py-2 text-rose-300">Против {totals.noSeats}</span>
-                                    <span className="rounded-md bg-white/5 px-2 py-2 text-white/55">Возд. {totals.abstainSeats}</span>
+                                    <span className="rounded-md bg-[rgb(var(--theme-success-soft))] px-2 py-2 text-[rgb(var(--theme-success))]">{voteLabel("politics.vote.yesCompact", totals.yesSeats)}</span>
+                                    <span className="rounded-md bg-[rgb(var(--theme-danger-soft))] px-2 py-2 text-[rgb(var(--theme-danger))]">{voteLabel("politics.vote.noCompact", totals.noSeats)}</span>
+                                    <span className="rounded-md bg-[rgb(var(--theme-surface-3))] px-2 py-2 text-[rgb(var(--theme-text-muted))]">{voteLabel("politics.vote.abstainCompact", totals.abstainSeats)}</span>
                                   </>
                                 );
                               })()}
                             </div>
                             <div>
-                              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Группы интересов</div>
+                              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("politics.interestGroups")}</div>
                               <div className="space-y-2">
                                 {(parliament.interestGroups ?? []).map((group) => {
                                   const entry = interestGroupById.get(group.groupId);
                                   const preference = entry?.lawPreferences?.[selectedLaw.id] ?? 0;
                                   if (preference === 0) return null;
                                   return (
-                                    <div key={group.groupId} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] px-2 py-2 text-xs">
+                                    <div key={group.groupId} className="flex items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-2 text-xs">
                                       <div className="flex min-w-0 items-center gap-2">
                                         <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry?.color ?? "#94a3b8" }} />
-                                        <span className="truncate text-white/80">{entry?.name ?? group.groupId}</span>
+                                        <span className="truncate text-[rgb(var(--theme-text-primary))]">{entry?.name ?? group.groupId}</span>
                                       </div>
-                                      <span className={preference > 0 ? "text-emerald-300" : "text-rose-300"}>
-                                        {preference > 0 ? "Поддерживает" : "Против"} {Math.abs(preference)}
+                                      <span className={preference > 0 ? "text-[rgb(var(--theme-success))]" : "text-[rgb(var(--theme-danger))]"}>
+                                        {preference > 0 ? t("politics.preference.supports") : t("politics.preference.opposes")} {Math.abs(preference)}
                                       </span>
                                     </div>
                                   );
@@ -692,9 +716,9 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                               type="button"
                               onClick={() => void handleStartBill(selectedLaw.id)}
                               disabled={parliament.activeLawByGroupId[selectedLaw.lawGroupId ?? ""] === selectedLaw.id || currentBillByLawId.has(selectedLaw.id) || savingLawId === selectedLaw.id}
-                              className="w-full rounded-lg bg-arc-accent px-3 py-2 text-sm font-semibold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="w-full rounded-lg bg-[rgb(var(--theme-accent))] px-3 py-2 text-sm font-semibold text-[rgb(var(--theme-accent-contrast))] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              {currentBillByLawId.has(selectedLaw.id) ? "Уже на голосовании" : lawActionLabel(parliamentPowers)}
+                              {currentBillByLawId.has(selectedLaw.id) ? t("politics.lawAlreadyInVote") : lawActionLabel}
                             </button>
                           </div>
                         )}
@@ -705,7 +729,7 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                   {activeTab === "parties" && (
                     <div className="grid gap-4 xl:grid-cols-[minmax(0,520px)_1fr]">
                       <AppSection className="p-4">
-                        <div className="mb-3 text-sm font-semibold text-white">Парламент</div>
+                        <div className="mb-3 text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("politics.parliament")}</div>
                         <div className="relative h-[360px] overflow-hidden">
                           <div ref={parliamentChartRef} className="h-full w-full" />
                         </div>
@@ -719,21 +743,21 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                             <AppCard key={row.partyId} className="p-4">
                               <div className="flex items-center justify-between gap-3">
                                 <div className="flex min-w-0 items-center gap-2">
-                                  <span className="h-3 w-3 rounded-full border border-white/20" style={{ backgroundColor: party?.color ?? "#94a3b8" }} />
-                                  <span className="truncate text-sm font-semibold text-white">{party?.name ?? row.partyId}</span>
+                                  <span className="h-3 w-3 rounded-full border border-[rgb(var(--theme-border-subtle))]" style={{ backgroundColor: party?.color ?? "#94a3b8" }} />
+                                  <span className="truncate text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{party?.name ?? row.partyId}</span>
                                 </div>
-                                <span className="rounded bg-white/5 px-2 py-1 text-xs text-white/60">{inGovernment ? "Правительство" : "Оппозиция"}</span>
+                                <span className="rounded bg-[rgb(var(--theme-surface-2))] px-2 py-1 text-xs text-[rgb(var(--theme-text-muted))]">{inGovernment ? t("politics.party.government") : t("politics.party.opposition")}</span>
                               </div>
                               <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-                                <span className="rounded bg-white/5 px-2 py-2 text-white/70">{row.seats} мест</span>
-                                <span className="rounded bg-white/5 px-2 py-2 text-white/70">{pct(row.voteShare)}</span>
-                                <span className="rounded bg-white/5 px-2 py-2 text-white/70">Дисц. {((party?.discipline ?? 0.85) * 100).toFixed(0)}%</span>
+                                <span className="rounded bg-[rgb(var(--theme-surface-2))] px-2 py-2 text-[rgb(var(--theme-text-secondary))]">{t("politics.seatCount", { seats: row.seats })}</span>
+                                <span className="rounded bg-[rgb(var(--theme-surface-2))] px-2 py-2 text-[rgb(var(--theme-text-secondary))]">{pct(row.voteShare)}</span>
+                                <span className="rounded bg-[rgb(var(--theme-surface-2))] px-2 py-2 text-[rgb(var(--theme-text-secondary))]">{t("politics.discipline", { value: ((party?.discipline ?? 0.85) * 100).toFixed(0) })}</span>
                               </div>
                               {preview && (
                                 <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
-                                  <span className="rounded bg-emerald-500/10 px-2 py-1 text-emerald-300">За {(preview.yesPct * 100).toFixed(0)}%</span>
-                                  <span className="rounded bg-rose-500/10 px-2 py-1 text-rose-300">Против {(preview.noPct * 100).toFixed(0)}%</span>
-                                  <span className="rounded bg-white/5 px-2 py-1 text-white/55">Возд. {(preview.abstainPct * 100).toFixed(0)}%</span>
+                                  <span className="rounded bg-[rgb(var(--theme-success-soft))] px-2 py-1 text-[rgb(var(--theme-success))]">{voteLabel("politics.vote.yesCompact", `${(preview.yesPct * 100).toFixed(0)}%`)}</span>
+                                  <span className="rounded bg-[rgb(var(--theme-danger-soft))] px-2 py-1 text-[rgb(var(--theme-danger))]">{voteLabel("politics.vote.noCompact", `${(preview.noPct * 100).toFixed(0)}%`)}</span>
+                                  <span className="rounded bg-[rgb(var(--theme-surface-3))] px-2 py-1 text-[rgb(var(--theme-text-muted))]">{voteLabel("politics.vote.abstainCompact", `${(preview.abstainPct * 100).toFixed(0)}%`)}</span>
                                 </div>
                               )}
                             </AppCard>
@@ -748,7 +772,7 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                         {(parliament.interestGroups ?? []).length === 0 ? (
                           <AppEmptyState>
-                            Создайте группы интересов в панели контента и настройте веса профессий.
+                            {t("politics.noInterestGroups")}
                           </AppEmptyState>
                         ) : (
                           (parliament.interestGroups ?? []).map((group) => {
@@ -759,23 +783,30 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                               <AppCard key={group.groupId} className="p-4">
                                 <div className="flex items-center justify-between gap-3">
                                   <div className="flex min-w-0 items-center gap-2">
-                                    <span className="h-3 w-3 rounded-full border border-white/20" style={{ backgroundColor: entry?.color ?? "#94a3b8" }} />
-                                    <span className="truncate text-sm font-semibold text-white">{entry?.name ?? group.groupId}</span>
+                                    <span className="h-3 w-3 rounded-full border border-[rgb(var(--theme-border-subtle))]" style={{ backgroundColor: entry?.color ?? "#94a3b8" }} />
+                                    <span className="truncate text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{entry?.name ?? group.groupId}</span>
                                   </div>
-                                  <span className="text-sm tabular-nums text-white">{pct(group.clout)}</span>
+                                  <span className="text-sm tabular-nums text-[rgb(var(--theme-text-primary))]">{pct(group.clout)}</span>
                                 </div>
-                                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[rgb(var(--theme-surface-3))]">
                                   <div className="h-full rounded-full" style={{ width: `${Math.min(100, group.clout * 100)}%`, backgroundColor: entry?.color ?? "#94a3b8" }} />
                                 </div>
                                 <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
-                                  <span className="rounded bg-white/5 px-2 py-1 text-white/60">Сила {Math.round(group.rawPower)}</span>
-                                  <span className="rounded bg-emerald-500/10 px-2 py-1 text-emerald-300">Лоял. {group.loyalists}</span>
-                                  <span className="rounded bg-rose-500/10 px-2 py-1 text-rose-300">Рад. {group.radicals}</span>
+                                  <span className="rounded bg-[rgb(var(--theme-surface-2))] px-2 py-1 text-[rgb(var(--theme-text-muted))]">{t("politics.rawPower", { value: Math.round(group.rawPower) })}</span>
+                                  <span className="rounded bg-[rgb(var(--theme-success-soft))] px-2 py-1 text-[rgb(var(--theme-success))]">{t("politics.loyalists", { value: group.loyalists })}</span>
+                                  <span className="rounded bg-[rgb(var(--theme-danger-soft))] px-2 py-1 text-[rgb(var(--theme-danger))]">{t("politics.radicals", { value: group.radicals })}</span>
                                 </div>
-                                <div className="mt-3 text-xs text-white/50">Партия: {party?.name ?? "нет"}</div>
+                                <div className="mt-3 text-xs text-[rgb(var(--theme-text-muted))]">{t("politics.partyLabel", { party: party?.name ?? t("politics.none") })}</div>
                                 {selectedLaw && (
-                                  <div className={`mt-2 text-xs ${preference > 0 ? "text-emerald-300" : preference < 0 ? "text-rose-300" : "text-white/45"}`}>
-                                    К выбранному закону: {preference > 0 ? `за ${preference}` : preference < 0 ? `против ${Math.abs(preference)}` : "нейтральна"}
+                                  <div className={`mt-2 text-xs ${preference > 0 ? "text-[rgb(var(--theme-success))]" : preference < 0 ? "text-[rgb(var(--theme-danger))]" : "text-[rgb(var(--theme-text-muted))]"}`}>
+                                    {t("politics.selectedLawPreference", {
+                                      value:
+                                        preference > 0
+                                          ? t("politics.preference.for", { value: preference })
+                                          : preference < 0
+                                            ? t("politics.preference.against", { value: Math.abs(preference) })
+                                            : t("politics.preference.neutral"),
+                                    })}
                                   </div>
                                 )}
                               </AppCard>
@@ -784,14 +815,14 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
                         )}
                       </section>
                       <AppSection className="p-4">
-                        <div className="mb-3 text-sm font-semibold text-white">О выбранном законе</div>
+                        <div className="mb-3 text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("politics.aboutSelectedLaw")}</div>
                         {selectedLaw ? (
                           <div>
-                            <div className="font-semibold text-white">{selectedLaw.name}</div>
-                            <p className="mt-2 text-sm text-white/55">{selectedLaw.description || "Описание не задано."}</p>
+                            <div className="font-semibold text-[rgb(var(--theme-text-primary))]">{selectedLaw.name}</div>
+                            <p className="mt-2 text-sm text-[rgb(var(--theme-text-muted))]">{selectedLaw.description || t("politics.noDescription")}</p>
                           </div>
                         ) : (
-                          <AppEmptyState>Выберите закон, чтобы увидеть отношение групп.</AppEmptyState>
+                          <AppEmptyState>{t("politics.selectLawForGroups")}</AppEmptyState>
                         )}
                       </AppSection>
                     </div>

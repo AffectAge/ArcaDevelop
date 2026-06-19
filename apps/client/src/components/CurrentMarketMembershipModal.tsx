@@ -1,4 +1,5 @@
 import { Globe2, LogOut, ShieldAlert } from "lucide-react";
+import { useUiText } from "../i18n/useUiText";
 import type { MarketCatalogItem, MarketInvite } from "../lib/api";
 import { CustomSelect } from "./CustomSelect";
 import { AppButton } from "./ui/AppButton";
@@ -40,6 +41,8 @@ export function CurrentMarketMembershipModal({
   pendingJoin,
   onJoin,
 }: Props) {
+  const { t } = useUiText();
+
   if (!open) return null;
 
   const isOwner = Boolean(currentMarket && currentMarket.ownerCountryId === countryId);
@@ -50,33 +53,33 @@ export function CurrentMarketMembershipModal({
       open={open}
       onClose={onClose}
       zIndexClassName="z-[179]"
-      panelClassName="w-[min(92vw,700px)]"
+      panelClassName="arc-market-subpanel w-[min(92vw,700px)]"
       paddingClassName="p-4 md:p-6 flex items-center justify-center"
     >
           <AppModalHeader
-            title="Текущее членство"
-            description="Информация о текущем рынке и выход из него"
+            title={t("market.membershipTitle")}
+            description={t("market.membershipDescription")}
             onClose={onClose}
           />
 
           {!currentMarket ? (
-            <AppEmptyState>Ваша страна сейчас не состоит в рынке.</AppEmptyState>
+            <AppEmptyState>{t("market.notMember")}</AppEmptyState>
           ) : (
             <div className="space-y-3">
-              <AppCard className="bg-black/25 text-sm text-white/75">
-                <div className="font-semibold text-white/90">{currentMarket.name}</div>
-                <div className="mt-1 text-xs text-white/60">
-                  Видимость: {currentMarket.visibility} · Участников: {currentMarket.membersCount}
+              <AppCard className="arc-market-soft-card text-sm">
+                <div className="font-semibold text-[var(--arc-color-atlas-ink)]">{currentMarket.name}</div>
+                <div className="mt-1 text-xs">
+                  {t("market.visibilityMembers", { visibility: currentMarket.visibility, members: currentMarket.membersCount })}
                 </div>
-                <div className="mt-1 text-xs text-white/60">Владелец: {currentMarket.ownerCountryName}</div>
+                <div className="mt-1 text-xs">{t("market.ownerLabel", { country: currentMarket.ownerCountryName })}</div>
               </AppCard>
 
               {isOwner ? (
-                <AppCard className="border-amber-400/35 bg-amber-500/10 text-xs text-amber-200">
+                <AppCard className="arc-market-warning-card text-xs">
                   <div className="mb-1 inline-flex items-center gap-1.5 font-semibold">
-                    <ShieldAlert size={13} /> Вы владелец рынка
+                    <ShieldAlert size={13} /> {t("market.ownerWarningTitle")}
                   </div>
-                  <div>Для выхода сначала передайте владение рынком в модалке «Управление».</div>
+                  <div>{t("market.ownerWarningBody")}</div>
                 </AppCard>
               ) : (
                 <div className="flex justify-end">
@@ -88,18 +91,18 @@ export function CurrentMarketMembershipModal({
                     size="sm"
                     icon={<LogOut size={13} />}
                   >
-                    Выйти из рынка
+                    {t("market.leaveMarket")}
                   </AppButton>
                 </div>
               )}
 
               <AppSection>
-                <div className="mb-2 text-sm font-semibold text-white/85">Входящие приглашения</div>
+                <div className="arc-market-section-title mb-2">{t("market.incomingInvites")}</div>
                 <div className="space-y-2">
                   {incomingInvites.map((invite) => (
-                    <AppCard key={invite.id} className="bg-black/25 p-2 text-xs text-white/70">
-                      <div className="font-semibold text-white/85">{invite.marketName ?? invite.marketId}</div>
-                      <div className="text-white/50">От: {invite.fromCountryName ?? invite.fromCountryId}</div>
+                    <AppCard key={invite.id} className="arc-market-soft-card p-2 text-xs">
+                      <div className="font-semibold text-[var(--arc-color-atlas-ink)]">{invite.marketName ?? invite.marketId}</div>
+                      <div>{t("market.fromLabel", { country: invite.fromCountryName ?? invite.fromCountryId })}</div>
                       <div className="mt-2 flex items-center gap-2">
                         <AppButton
                           type="button"
@@ -109,7 +112,7 @@ export function CurrentMarketMembershipModal({
                           size="sm"
                           className="h-7"
                         >
-                          Принять
+                          {t("market.accept")}
                         </AppButton>
                         <AppButton
                           type="button"
@@ -119,19 +122,19 @@ export function CurrentMarketMembershipModal({
                           size="sm"
                           className="h-7"
                         >
-                          Отклонить
+                          {t("market.reject")}
                         </AppButton>
                       </div>
                     </AppCard>
                   ))}
-                  {incomingInvites.length === 0 && <AppEmptyState>Приглашений нет.</AppEmptyState>}
+                  {incomingInvites.length === 0 && <AppEmptyState>{t("market.noInvites")}</AppEmptyState>}
                 </div>
               </AppSection>
 
               <AppSection>
-                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-white/85">
-                  <Globe2 size={14} className="text-cyan-300" />
-                  Рынки мира
+                <div className="arc-market-section-title mb-2">
+                  <Globe2 size={14} className="text-[var(--arc-color-atlas-primary)]" />
+                  {t("market.worldMarkets")}
                 </div>
                 <div className="space-y-2">
                   <CustomSelect
@@ -141,13 +144,16 @@ export function CurrentMarketMembershipModal({
                       value: market.id,
                       label: `${market.name} [${market.visibility}]`,
                     }))}
-                    placeholder="Выберите рынок"
+                    placeholder={t("market.selectMarket")}
                     buttonClassName="h-9 text-xs"
                   />
                   {selectedMarket && (
-                    <AppCard className="bg-black/25 px-3 py-2 text-[11px] text-white/65">
-                      Владелец: {selectedMarket.ownerCountryName} · Участников: {selectedMarket.membersCount}
-                      {selectedMarket.hasPendingJoinRequest ? " · Запрос уже отправлен" : ""}
+                    <AppCard className="arc-market-soft-card px-3 py-2 text-[11px]">
+                      {t("market.selectedMarketSummary", {
+                        owner: selectedMarket.ownerCountryName,
+                        members: selectedMarket.membersCount,
+                        pending: selectedMarket.hasPendingJoinRequest ? t("market.joinRequestAlreadySent") : "",
+                      })}
                     </AppCard>
                   )}
                 </div>
@@ -159,12 +165,10 @@ export function CurrentMarketMembershipModal({
                     variant="secondary"
                     size="sm"
                   >
-                    {selectedMarket?.visibility === "private" ? "Отправить запрос" : "Вступить"}
+                    {selectedMarket?.visibility === "private" ? t("market.sendRequest") : t("market.joinMarket")}
                   </AppButton>
                 </div>
-                <div className="mt-1 text-[11px] text-white/50">
-                  Публичный рынок: мгновенное вступление. Приватный рынок: отправка запроса владельцу.
-                </div>
+                <div className="arc-market-muted mt-1 text-[11px]">{t("market.membershipHint")}</div>
               </AppSection>
             </div>
           )}

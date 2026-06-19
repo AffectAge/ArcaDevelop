@@ -5,15 +5,13 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import type { DiplomacyProposal, OrderDelta, WsOutMessage } from "@arcanorum/shared";
 import { AuthPanel, type AuthSuccess } from "./components/AuthPanel";
-import { MapView } from "./components/MapView";
-import { TopBar } from "./components/TopBar";
-import { SideNav } from "./components/SideNav";
+import { MapView, type MapModeId } from "./components/MapView";
+import { StrategyShell, type StrategyMode } from "./components/strategy-shell/StrategyShell";
 import { CommandPalette } from "./components/CommandPalette";
 import { AdminPanel } from "./components/AdminPanel";
 import { TurnStatusModal } from "./components/TurnStatusModal";
 import { GameSettingsPanel } from "./components/GameSettingsPanel";
 import { CountryCustomizationModal } from "./components/CountryCustomizationModal";
-import { EventLogPanel } from "./components/EventLogPanel";
 import { ClientSettingsModal } from "./components/ClientSettingsModal";
 import { CivilopediaModal } from "./components/CivilopediaModal";
 import { ContentPanel } from "./components/ContentPanel";
@@ -42,6 +40,7 @@ import {
   fetchCurrentTurnOrders,
   fetchPendingUiNotifications,
   fetchProvinceIndex,
+  fetchTurnStatus,
   fetchPublicGameUiSettings,
   fetchWorldSnapshot,
   markUiNotificationViewed,
@@ -49,9 +48,12 @@ import {
   rejectDiplomacyProposal,
   type ContentEntry,
   type ResourceIconsMap,
+  type TurnStatusItem,
 } from "./lib/api";
 import { useWs } from "./lib/useWs";
 import { useGameStore } from "./store/gameStore";
+import type { UiTextKey } from "./i18n/uiText";
+import { useUiText } from "./i18n/useUiText";
 
 type SessionCountry = {
   name: string;
@@ -65,8 +67,15 @@ type RegistrationApprovalCountry = Extract<
   { type: "registration-approval" }
 >["country"];
 type ElectionResultsAction = Extract<InAppUiNotification["action"], { type: "election-results" }>;
+type TurnReadinessPreview = {
+  turnId: number;
+  readyCount: number;
+  requiredCount: number;
+  countries: TurnStatusItem[];
+};
 
 const RESOLVE_START_TIMEOUT_MS = 12_000;
+const TURN_READINESS_POLL_MS = 5_000;
 
 function notificationSemanticKey(item: InAppUiNotification): string {
   if (item.action.type === "country-event") {
@@ -93,7 +102,26 @@ function dedupeNotifications(items: InAppUiNotification[]): InAppUiNotification[
   return result;
 }
 
+function getStoryCategoryKey(category: string): UiTextKey {
+  switch (category) {
+    case "colonization":
+      return "shell.story.category.colonization";
+    case "politics":
+      return "shell.story.category.politics";
+    case "economy":
+      return "shell.story.category.economy";
+    case "military":
+      return "shell.story.category.military";
+    case "diplomacy":
+      return "shell.story.category.diplomacy";
+    case "system":
+    default:
+      return "shell.story.category.system";
+  }
+}
+
 export default function App() {
+  const { t } = useUiText();
   const worldResyncInFlightRef = useRef(false);
   const replayRequestInFlightRef = useRef(false);
   const resolveStartTimeoutRef = useRef<number | null>(null);
@@ -120,6 +148,26 @@ export default function App() {
     action: ElectionResultsAction | null;
   }>({ open: false, action: null });
   const [country, setCountry] = useState<SessionCountry | null>(null);
+  const [activeStrategyMode, setActiveStrategyMode] = useState<StrategyMode>("overview");
+  const strategyMapModeId = useMemo<MapModeId>(() => {
+    switch (activeStrategyMode) {
+      case "construction":
+        return "infrastructure";
+      case "population":
+        return "population";
+      case "market":
+        return "markets";
+      case "diplomacy":
+        return "diplomacy";
+      case "army":
+        return "military";
+      case "governance":
+        return "regions";
+      case "overview":
+      default:
+        return "political";
+    }
+  }, [activeStrategyMode]);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [contentPanelOpen, setContentPanelOpen] = useState(false);
@@ -203,6 +251,7 @@ export default function App() {
     secondsPerTurn: 300,
     startedAtMs: null,
   });
+  const [turnReadinessPreview, setTurnReadinessPreview] = useState<TurnReadinessPreview | null>(null);
 
   const auth = useGameStore((s) => s.auth);
   const wsResumeFromWorldStateVersion = useGameStore((s) => (s.worldBase ? s.worldStateVersion : null));
@@ -226,8 +275,6 @@ export default function App() {
   );
   const addEvent = useGameStore((s) => s.addEvent);
   const pruneLogEntries = useGameStore((s) => s.pruneLogEntries);
-  const trimOldLogEntries = useGameStore((s) => s.trimOldLogEntries);
-  const clearEventLog = useGameStore((s) => s.clearEventLog);
   const eventLogRetentionTurns = useGameStore((s) => s.eventLogRetentionTurns);
   const setEventLogRetentionTurns = useGameStore((s) => s.setEventLogRetentionTurns);
   const turnResolveOverlayRef = useRef(turnResolveOverlay);
@@ -237,6 +284,7 @@ export default function App() {
       setUiNotifications([]);
       setUiNotificationHistory([]);
       setViewedUiNotificationIds(new Set());
+      setTurnReadinessPreview(null);
       return;
     }
     const belongsToCurrentCountry = (item: InAppUiNotification) =>
@@ -247,6 +295,33 @@ export default function App() {
       next.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       return next.slice(0, 200);
     });
+  }, [auth?.countryId]);
+
+  useEffect(() => {
+    if (!auth?.countryId) {
+      return;
+    }
+
+    let cancelled = false;
+    const loadTurnReadiness = async () => {
+      try {
+        const data = await fetchTurnStatus();
+        if (!cancelled) {
+          setTurnReadinessPreview(data);
+        }
+      } catch {
+        if (!cancelled) {
+          setTurnReadinessPreview(null);
+        }
+      }
+    };
+
+    loadTurnReadiness();
+    const timer = window.setInterval(loadTurnReadiness, TURN_READINESS_POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, [auth?.countryId]);
 
   useEffect(() => {
@@ -269,18 +344,18 @@ export default function App() {
         }
         toast.warning(
           source === "auto"
-            ? "Авто-резолв не подтвержден сервером"
-            : "Резолв не подтвержден сервером",
+            ? t("shell.resolveAutoUnconfirmed")
+            : t("shell.resolveManualUnconfirmed"),
           {
             description:
               source === "auto"
-                ? "TURN_RESOLVE_STARTED не пришел вовремя. Действия остаются доступны."
-                : "TURN_RESOLVE_STARTED не пришел вовремя.",
+                ? t("shell.resolveTimeoutAutoDescription")
+                : t("shell.resolveTimeoutManualDescription"),
           },
         );
       }, RESOLVE_START_TIMEOUT_MS);
     },
-    [clearResolveStartTimeout],
+    [clearResolveStartTimeout, t],
   );
 
   const hydrateCurrentTurnOrders = useCallback(
@@ -312,14 +387,14 @@ export default function App() {
       resetOverlay(snapshot.turnId);
       await hydrateCurrentTurnOrders(token);
       setTurnTimerUi((prev) => ({ ...prev, startedAtMs: Date.now() }));
-      toast.warning("Состояние мира синхронизировано заново");
+      toast.warning(t("shell.worldResynced"));
     } catch {
-      toast.error("Не удалось синхронизировать мир, выполняется перезагрузка");
+      toast.error(t("shell.worldResyncFailed"));
       window.location.reload();
     } finally {
       worldResyncInFlightRef.current = false;
     }
-  }, [hydrateCurrentTurnOrders, resetOverlay, setWorldBase]);
+  }, [hydrateCurrentTurnOrders, resetOverlay, setWorldBase, t]);
 
   const onWsMessage = useCallback(
     (msg: WsOutMessage) => {
@@ -330,7 +405,7 @@ export default function App() {
           setWorldBase(msg.worldBase, msg.turnId, msg.worldStateVersion);
           setPendingDeltaAckVersion(msg.worldStateVersion);
         } else if (!useGameStore.getState().worldBase) {
-          toast.warning("Локальный state отсутствует, выполняется snapshot-ресинк");
+          toast.warning(t("shell.localStateMissing"));
           void resyncWorldState();
         }
         replayRequestInFlightRef.current = false;
@@ -342,11 +417,11 @@ export default function App() {
         if (msg.clientSettings?.eventLogRetentionTurns) {
           setEventLogRetentionTurns(msg.clientSettings.eventLogRetentionTurns);
         }
-        addEvent({ category: "system", title: "Подключение", message: "Соединение с игровым сервером установлено", priority: "low", visibility: "private", countryId: msg.countryId, turn: msg.turnId });
+        addEvent({ category: "system", title: t("shell.connectedTitle"), message: t("shell.connectedMessage"), priority: "low", visibility: "private", countryId: msg.countryId, turn: msg.turnId });
       }
 
       if (msg.type === "SCENARIO_APPLIED") {
-        toast.success("Сценарий применён", { description: "Перезагружаем карту и состояние мира" });
+        toast.success(t("shell.scenarioApplied"), { description: t("shell.scenarioAppliedDescription") });
         window.setTimeout(() => window.location.reload(), 500);
       }
 
@@ -360,7 +435,7 @@ export default function App() {
               : "";
         addEvent({
           category: msg.order.type === "COLONIZE" ? "colonization" : "military",
-          title: msg.order.type === "COLONIZE" ? "Новый приказ колонизации" : "Новый приказ",
+          title: msg.order.type === "COLONIZE" ? t("shell.orderColonizationTitle") : t("shell.orderTitle"),
           message: `${msg.order.countryId} -> ${msg.order.type} (${targetId})`,
           countryId: msg.order.countryId,
           priority: "low",
@@ -387,7 +462,7 @@ export default function App() {
           if (!replayRequestInFlightRef.current) {
             replayRequestInFlightRef.current = true;
             setPendingReplayFromWorldStateVersion(currentWorldStateVersion);
-            toast.warning("Обнаружен рассинхрон версии, запрошен replay дельт");
+            toast.warning(t("shell.replayRequested"));
           }
           return;
         }
@@ -409,21 +484,21 @@ export default function App() {
         resetOverlay(msg.turnId);
         pruneLogEntries(msg.turnId);
         if (msg.rejectedOrders.length > 0) {
-          toast.warning(`Отклонено приказов: ${msg.rejectedOrders.length}`);
+          toast.warning(t("shell.rejectedOrders", { count: msg.rejectedOrders.length }));
           addEvent({
             category: "system",
-            title: `Ход #${msg.turnId} завершен`,
-            message: `Отклонено приказов: ${msg.rejectedOrders.length}`,
+            title: t("shell.turnCompletedTitle", { turn: msg.turnId }),
+            message: t("shell.rejectedOrdersMessage", { count: msg.rejectedOrders.length }),
             priority: "medium",
             visibility: "public",
             turn: msg.turnId,
           });
         } else {
-          toast.success("Ход успешно зарезолвен");
+          toast.success(t("shell.turnResolved"));
           addEvent({
             category: "system",
-            title: `Ход #${msg.turnId} завершен`,
-            message: "Резолв завершен без отклонений приказов",
+            title: t("shell.turnCompletedTitle", { turn: msg.turnId }),
+            message: t("shell.turnResolvedClean"),
             priority: "low",
             visibility: "public",
             turn: msg.turnId,
@@ -470,15 +545,15 @@ export default function App() {
         setTurnResolveOverlay((prev) => (prev.phase === "processing" ? { phase: "idle" } : prev));
         if (msg.code === "REPLAY_UNAVAILABLE") {
           replayRequestInFlightRef.current = false;
-          toast.warning("Replay недоступен, выполняется snapshot-ресинк");
+          toast.warning(t("shell.replayUnavailable"));
           void resyncWorldState();
           return;
         }
         toast.error(msg.message);
-        addEvent({ category: "system", title: "Ошибка", message: msg.message, priority: "high", visibility: "private" });
+        addEvent({ category: "system", title: t("shell.serverErrorTitle"), message: msg.message, priority: "high", visibility: "private" });
       }
     },
-    [addEvent, addOrder, applyWorldDelta, clearResolveStartTimeout, hydrateCurrentTurnOrders, pruneLogEntries, resetOverlay, resyncWorldState, setEventLogRetentionTurns, setPresence, setWorldBase],
+    [addEvent, addOrder, applyWorldDelta, clearResolveStartTimeout, hydrateCurrentTurnOrders, pruneLogEntries, resetOverlay, resyncWorldState, setEventLogRetentionTurns, setPresence, setWorldBase, t],
   );
 
   const { send } = useWs(onWsMessage, auth?.token, wsResumeFromWorldStateVersion);
@@ -659,7 +734,7 @@ export default function App() {
     if (payload.clientSettings?.eventLogRetentionTurns) {
       setEventLogRetentionTurns(payload.clientSettings.eventLogRetentionTurns);
     }
-    addEvent({ category: "system", title: "Вход", message: `Вы вошли в страну ${payload.countryName}`, priority: "medium", visibility: "private", countryId: payload.countryId, turn: payload.turnId });
+    addEvent({ category: "system", title: t("shell.loginTitle"), message: t("shell.loginMessage", { country: payload.countryName }), priority: "medium", visibility: "private", countryId: payload.countryId, turn: payload.turnId });
   };
 
   const currentResources = useMemo(() => {
@@ -869,6 +944,30 @@ export default function App() {
     myColonizationProjection.predictedSupportDucatSpend,
     worldBase,
   ]);
+  const constructionQueuePreview = useMemo(() => {
+    if (!auth || !worldBase) return [];
+    const rows: Array<{ regionId: string; buildingId: string; progressPct: number; remainingConstruction: number; selected: boolean }> = [];
+    for (const [regionId, queue] of Object.entries(worldBase.regionConstructionQueueByRegion ?? {})) {
+      const controllingCountryId = worldBase.regionController?.[regionId] ?? worldBase.regionOwner?.[regionId] ?? "";
+      if (controllingCountryId !== auth.countryId) continue;
+      for (const project of queue ?? []) {
+        if (!project || project.requestedByCountryId !== auth.countryId) continue;
+        const cost = Math.max(1, Number(project.costConstruction ?? 0));
+        const progress = Math.max(0, Number(project.progressConstruction ?? 0));
+        const remainingConstruction = Math.max(0, cost - progress);
+        if (remainingConstruction <= 0) continue;
+        rows.push({
+          regionId,
+          buildingId: project.buildingId,
+          progressPct: Math.max(0, Math.min(100, (progress / cost) * 100)),
+          remainingConstruction,
+          selected: selectedProvinceId === regionId,
+        });
+      }
+    }
+    rows.sort((a, b) => Number(b.selected) - Number(a.selected) || b.remainingConstruction - a.remainingConstruction || a.regionId.localeCompare(b.regionId));
+    return rows.slice(0, 5).map(({ selected: _selected, ...row }) => row);
+  }, [auth, selectedProvinceId, worldBase]);
   const myTechnologyProjection = useMemo(() => {
     if (!auth || !worldBase) {
       return { activeCount: 0, predictedPointsSpend: 0 };
@@ -944,6 +1043,87 @@ export default function App() {
     technologyEntries,
     worldBase,
   ]);
+  const storyPreview = useMemo(() => {
+    if (!auth) return [];
+    return eventLog
+      .filter((entry) => entry.visibility !== "private" || !entry.countryId || entry.countryId === auth.countryId)
+      .slice(-5)
+      .reverse()
+      .map((entry) => ({
+        id: entry.id,
+        turn: entry.turn,
+        title: entry.title,
+        message: entry.message,
+        priority: entry.priority,
+        categoryKey: getStoryCategoryKey(entry.category),
+      }));
+  }, [auth, eventLog]);
+  const populationPreview = useMemo(() => {
+    if (!auth || !worldBase) return [];
+    let pops = 0;
+    const cultureTotals = new Map<string, number>();
+    const professionTotals = new Map<string, number>();
+    for (const [regionId, population] of Object.entries(worldBase.regionPopulationByRegion ?? {})) {
+      const controllingCountryId = worldBase.regionController?.[regionId] ?? worldBase.regionOwner?.[regionId] ?? "";
+      if (controllingCountryId !== auth.countryId) continue;
+      for (const pop of population?.pops ?? []) {
+        pops += 1;
+        const size = Math.max(0, Number(pop.size ?? 0));
+        cultureTotals.set(pop.cultureId, (cultureTotals.get(pop.cultureId) ?? 0) + size);
+        for (const [professionId, state] of Object.entries(pop.professions ?? {})) {
+          professionTotals.set(professionId, (professionTotals.get(professionId) ?? 0) + Math.max(0, Number(state.size ?? 0)));
+        }
+      }
+    }
+    const topCulture = [...cultureTotals.entries()].sort((a, b) => b[1] - a[1])[0];
+    const topProfession = [...professionTotals.entries()].sort((a, b) => b[1] - a[1])[0];
+    return [
+      { labelKey: "shell.preview.populationTotal" as const, value: currentCountryPopulationSummary.total, detail: `${pops}` },
+      topCulture ? { labelKey: "shell.preview.topCulture" as const, value: topCulture[1], detail: topCulture[0] } : null,
+      topProfession ? { labelKey: "shell.preview.topProfession" as const, value: topProfession[1], detail: topProfession[0] } : null,
+    ].filter((row): row is { labelKey: "shell.preview.populationTotal" | "shell.preview.topCulture" | "shell.preview.topProfession"; value: number; detail: string } => Boolean(row));
+  }, [auth, currentCountryPopulationSummary.total, worldBase]);
+  const diplomacyPreview = useMemo(() => {
+    if (!auth || !worldBase) return [];
+    const related = (worldBase.diplomacyProposals ?? []).filter(
+      (proposal) => proposal.fromCountryId === auth.countryId || proposal.toCountryId === auth.countryId,
+    );
+    const pendingResponse = related.filter((proposal) => proposal.pendingResponderCountryId === auth.countryId).length;
+    const outbound = related.filter((proposal) => proposal.fromCountryId === auth.countryId && proposal.status.includes("pending")).length;
+    return [
+      { labelKey: "shell.preview.pendingResponse" as const, value: pendingResponse, detailKey: "shell.preview.pendingResponseDetail" as const },
+      { labelKey: "shell.preview.outboundProposals" as const, value: outbound, detailKey: "shell.preview.outboundProposalsDetail" as const },
+      { labelKey: "shell.preview.relatedTreaties" as const, value: related.length, detailKey: "shell.preview.relatedTreatiesDetail" as const },
+    ];
+  }, [auth, worldBase]);
+  const armyPreview = useMemo(() => {
+    if (!auth || !worldBase) return [];
+    const divisions = Object.values(worldBase.divisionsById ?? {}).filter((division) => division.countryId === auth.countryId);
+    const moving = divisions.filter((division) => division.status === "moving").length;
+    const fighting = divisions.filter((division) => division.status === "fighting").length;
+    const queue = worldBase.militaryFormationQueueByCountry?.[auth.countryId] ?? [];
+    return [
+      { labelKey: "shell.preview.divisions" as const, value: divisions.length, detail: `${moving}/${fighting}` },
+      { labelKey: "shell.preview.formationQueue" as const, value: queue.length, detailKey: "shell.preview.formationQueueDetail" as const },
+      { labelKey: "shell.preview.averageOrganization" as const, value: Math.floor(divisions.reduce((sum, division) => sum + Number(division.organization ?? 0), 0) / Math.max(1, divisions.length)), detailKey: "shell.preview.averageOrganizationDetail" as const },
+    ];
+  }, [auth, worldBase]);
+  const governancePreview = useMemo(() => {
+    if (!auth || !worldBase) return [];
+    const parliament = worldBase.parliamentByCountry?.[auth.countryId] ?? null;
+    const technology = worldBase.technologyByCountry?.[auth.countryId] ?? null;
+    const decisions = worldBase.countryDecisionsByCountryId?.[auth.countryId];
+    const events = worldBase.countryEventsByCountryId?.[auth.countryId];
+    const activeTechCount = technology?.activeTechnologyIds?.length ?? (technology?.activeTechnologyId ? 1 : 0);
+    const billCount = (parliament?.currentBills?.length ?? 0) + (parliament?.currentBill ? 1 : 0);
+    const decisionCount = decisions ? Object.keys(decisions).length : 0;
+    const eventCount = events ? Object.keys(events).length : 0;
+    return [
+      { labelKey: "shell.dashboard.activeResearch" as const, value: activeTechCount, detailKey: "shell.preview.activeResearchDetail" as const },
+      { labelKey: "shell.preview.bills" as const, value: billCount, detailKey: "shell.preview.billsDetail" as const },
+      { labelKey: "shell.preview.records" as const, value: decisionCount + eventCount, detailKey: "shell.preview.recordsDetail" as const },
+    ];
+  }, [auth, worldBase]);
 
   const subsidyBudgetBreakdown = useMemo(() => {
     const empty = { total: 0, items: [] as Array<{ regionId: string; buildingId: string; instanceId: string; amount: number }> };
@@ -1047,31 +1227,50 @@ export default function App() {
     myConstructionProjection.predictedPointsSpend,
     myTechnologyProjection.predictedPointsSpend,
   ]);
+  const marketPreview = useMemo(
+    () => [
+      {
+        labelKey: "shell.dashboard.treasury" as const,
+        value: Math.floor(currentResources.ducats).toString(),
+        delta: (resourceGrowthByTurn.ducats ?? 0) - (currentTurnExpenses.ducats ?? 0),
+      },
+      { labelKey: "shell.dashboard.goldReserve" as const, value: Math.floor(currentResources.gold).toString(), delta: resourceGrowthByTurn.gold ?? 0 },
+      { labelKey: "shell.preview.subsidies" as const, value: Math.floor(ducatExpenseBreakdown.subsidies).toString(), delta: -ducatExpenseBreakdown.subsidies },
+    ],
+    [
+      currentResources.ducats,
+      currentResources.gold,
+      currentTurnExpenses.ducats,
+      ducatExpenseBreakdown.subsidies,
+      resourceGrowthByTurn.ducats,
+      resourceGrowthByTurn.gold,
+    ],
+  );
   useEffect(() => {
     setCustomizationDucatSpend((prev) => (prev.turnId === turnId ? prev : { turnId, amount: 0 }));
     setProvinceRenameDucatSpend((prev) => (prev.turnId === turnId ? prev : { turnId, amount: 0 }));
   }, [turnId]);
 
   const logoutToAuth = () => {
-    addEvent({ category: "system", title: "Выход", message: "Сессия игрока завершена", priority: "low", visibility: "private", countryId: auth?.countryId ?? null });
+    addEvent({ category: "system", title: t("shell.logoutTitle"), message: t("shell.logoutMessage"), priority: "low", visibility: "private", countryId: auth?.countryId ?? null });
     clearResolveStartTimeout();
     setTurnResolveOverlay({ phase: "idle" });
     setAuth(null);
     setCountry(null);
     setEntryLoadingGate("hidden");
-    toast("Вы вышли из страны");
+    toast(t("shell.logoutToast"));
   };
 
   const forceResolveAsAdmin = () => {
     if (!auth?.isAdmin) {
-      toast.error("Только для администраторов");
+      toast.error(t("shell.adminOnly"));
       return;
     }
 
     setTurnResolveOverlay({ phase: "processing", startedAtMs: Date.now() });
     send({ type: "ADMIN_FORCE_RESOLVE" });
-    toast("Админ-команда отправлена", { description: "Принудительный резолв хода" });
-    addEvent({ category: "system", title: "Админ-команда", message: "Отправлен принудительный резолв хода", priority: "high", visibility: "private", countryId: auth.countryId });
+    toast(t("shell.adminCommandSent"), { description: t("shell.resolveForceDescription") });
+    addEvent({ category: "system", title: t("shell.adminCommandTitle"), message: t("shell.resolveForceDescription"), priority: "high", visibility: "private", countryId: auth.countryId });
   };
 
   const handleSessionCountryUpdated = (updated: { name: string; color: string; flagUrl?: string | null; crestUrl?: string | null; isAdmin?: boolean }) => {
@@ -1106,10 +1305,10 @@ export default function App() {
     };
 
     send(delta);
-    toast("Приказ отправлен", { description: `COLONIZE -> ${regionId ?? selectedProvinceId ?? "ARG-1309"}` });
+    toast(t("shell.orderSent"), { description: `COLONIZE -> ${regionId ?? selectedProvinceId ?? "ARG-1309"}` });
     addEvent({
       category: "colonization",
-      title: "Отправлен приказ",
+      title: t("shell.orderSent"),
       message: `COLONIZE -> ${regionId ?? selectedProvinceId ?? "ARG-1309"}`,
       countryId: auth.countryId,
       priority: "medium",
@@ -1145,14 +1344,14 @@ export default function App() {
     };
 
     send(delta);
-    toast("Приказ отправлен", {
+    toast(t("shell.orderSent"), {
       description: payloadBuildingId
         ? `BUILD -> ${targetRegionId} (${payloadBuildingId})`
         : `BUILD -> ${targetRegionId}`,
     });
     addEvent({
       category: "economy",
-      title: "Отправлен приказ",
+      title: t("shell.orderSent"),
       message: payloadBuildingId ? `BUILD -> ${targetRegionId} (${payloadBuildingId})` : `BUILD -> ${targetRegionId}`,
       countryId: auth.countryId,
       priority: "medium",
@@ -1180,11 +1379,11 @@ export default function App() {
     };
 
     send(delta);
-    toast("Приказ отправлен", { description: routePath.length > 1 ? `ARMY_MOVE: ${routePath.length} шагов` : `ARMY_MOVE -> ${provinceId}` });
+    toast(t("shell.orderSent"), { description: routePath.length > 1 ? `ARMY_MOVE: ${routePath.length}` : `ARMY_MOVE -> ${provinceId}` });
     addEvent({
       category: "military",
-      title: "Отправлен приказ",
-      message: `Передислокация дивизии ${divisionId} в ${provinceId}`,
+      title: t("shell.orderSent"),
+      message: t("shell.orderArmyMoveMessage", { division: divisionId, province: provinceId }),
       countryId: auth.countryId,
       priority: "medium",
       visibility: "private",
@@ -1354,11 +1553,11 @@ export default function App() {
             setUiNotificationHistory((prev) => prev.filter(removeStaleEventNotification));
             setFocusedEventPendingId((current) => (current === action.pendingId ? null : current));
             if (autoResolved) {
-              toast.info("Событие решено автоматически", {
-                description: `Из-за отсутствия решения главы государства правительство выбрало: ${autoResolved.optionLabel}.`,
+              toast.info(t("shell.eventAutoResolved"), {
+                description: t("shell.eventAutoResolvedDescription", { option: autoResolved.optionLabel }),
               });
             } else {
-              toast.info("Событие уже обработано");
+              toast.info(t("shell.eventAlreadyResolved"));
             }
             return;
           }
@@ -1392,10 +1591,10 @@ export default function App() {
     try {
       if (actionId === "accept") {
         await acceptDiplomacyProposal(auth.token, item.action.proposalId);
-        toast.success("Договор подписан");
+        toast.success(t("diplomacy.signed"));
       } else if (actionId === "reject") {
         await rejectDiplomacyProposal(auth.token, item.action.proposalId);
-        toast.success("Договор отклонён");
+        toast.success(t("diplomacy.rejected"));
       } else {
         openUiNotification(item);
         return;
@@ -1404,7 +1603,7 @@ export default function App() {
       setUiNotificationHistory((prev) => prev.filter((n) => n.id !== item.id));
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
-      toast.error(message === "NOT_YOUR_TURN" ? "Сейчас не ваша очередь отвечать на договор" : "Не удалось выполнить действие");
+      toast.error(message === "NOT_YOUR_TURN" ? t("diplomacy.storyYourTurnFailed") : t("diplomacy.storyActionFailed"));
       openUiNotification(item);
     }
   };
@@ -1417,11 +1616,11 @@ export default function App() {
       setUiNotifications((prev) => prev.filter((n) => n.id !== registrationApprovalModal.notificationId));
       setUiNotificationHistory((prev) => prev.filter((n) => n.id !== registrationApprovalModal.notificationId));
       setRegistrationApprovalModal({ open: false, country: null, notificationId: null, pending: false });
-      toast.success(approve ? "Регистрация подтверждена" : "Регистрация отклонена");
+      toast.success(approve ? t("shell.registrationApproved") : t("shell.registrationRejected"));
       if (result.country) {
         addEvent({
           category: "politics",
-          title: approve ? "Регистрация подтверждена" : "Регистрация отклонена",
+          title: approve ? t("shell.registrationApproved") : t("shell.registrationRejected"),
           message: `${result.country.name}`,
           visibility: "private",
           countryId: auth.countryId,
@@ -1430,18 +1629,18 @@ export default function App() {
     } catch (error) {
       const code = error instanceof Error ? error.message : "REGISTRATION_REVIEW_FAILED";
       if (code === "REGISTRATION_ALREADY_REVIEWED") {
-        toast.error("Заявка уже обработана");
+        toast.error(t("shell.registrationAlreadyReviewed"));
         setUiNotifications((prev) => prev.filter((n) => n.id !== registrationApprovalModal.notificationId));
         setRegistrationApprovalModal({ open: false, country: null, notificationId: null, pending: false });
       } else {
-        toast.error("Не удалось обработать заявку");
+        toast.error(t("shell.registrationReviewFailed"));
         setRegistrationApprovalModal((prev) => ({ ...prev, pending: false }));
       }
     }
   };
 
   return (
-    <div className="relative h-screen overflow-hidden bg-arc-bg text-white">
+    <div className="relative h-screen overflow-hidden bg-arc-bg text-[var(--arc-color-text)]">
       <MapView
         apiBase={apiBase}
         onQueueBuildOrder={openProvinceBuildingsForProvince}
@@ -1454,6 +1653,7 @@ export default function App() {
         provinceRenameDucatsCost={provinceRenameDucatsCost}
         showMapControls={showMapControls}
         showAntarctica={showAntarctica}
+        strategyMapModeId={strategyMapModeId}
         onOpenAdminProvinceEditor={(provinceId) => {
           setAdminInitialProvinceId(provinceId);
           setAdminOpen(true);
@@ -1519,7 +1719,7 @@ export default function App() {
         <InAppNotificationTray
           items={uiNotifications}
           viewedIds={viewedUiNotificationIds}
-          topOffsetPx={80}
+          topOffsetPx={88}
           onClickItem={openUiNotification}
           onQuickAction={runUiNotificationQuickAction}
           historyCount={uiNotificationHistory.length}
@@ -1535,7 +1735,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-[145] flex items-center justify-center bg-black/60 backdrop-blur-md"
+            className="absolute inset-0 z-[145] flex items-center justify-center bg-[var(--arc-modal-backdrop)] backdrop-blur-md"
           >
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(18,26,38,0.16),rgba(4,8,12,0.82)_72%)]" />
             <motion.div
@@ -1543,7 +1743,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
-              className="glass panel-border relative z-10 w-[min(92vw,34rem)] rounded-2xl bg-[#0b111b] p-6 shadow-2xl"
+              className="glass panel-border relative z-10 w-[min(92vw,34rem)] rounded-xl bg-[var(--arc-color-panel)] p-6 shadow-2xl"
             >
               {entryLoadingGate === "loading" ? (
                 <div className="flex flex-col items-center gap-4 text-center">
@@ -1551,41 +1751,39 @@ export default function App() {
                     <Loader2 className="h-8 w-8 animate-spin text-arc-accent" />
                   </div>
                   <div>
-                    <div className="text-lg font-semibold text-white">Загрузка данных игры</div>
-                    <div className="mt-1 text-sm text-white/60">
-                      Подготавливаем карту, настройки и состояние вашей страны
-                    </div>
+                    <div className="text-lg font-semibold text-[var(--arc-color-text)]">{t("shell.entryLoadingStatus")}</div>
+                    <div className="mt-1 text-sm text-[var(--arc-color-text-soft)]">{t("shell.entryLoadingDescription")}</div>
                   </div>
-                  <div className="grid w-full grid-cols-1 gap-2 text-left text-xs text-white/70 sm:grid-cols-2">
-                    <div className={`rounded-lg border px-3 py-2 ${worldBase ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-white/5"}`}>
-                      Состояние мира {worldBase ? "готово" : "загрузка"}
+                  <div className="grid w-full grid-cols-1 gap-2 text-left text-xs text-[var(--arc-color-text-soft)] sm:grid-cols-2">
+                    <div className={`rounded-lg border px-3 py-2 ${worldBase ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
+                      {t("shell.entryWorldState")} {worldBase ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
                     </div>
-                    <div className={`rounded-lg border px-3 py-2 ${provinceIndexLoaded ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-white/5"}`}>
-                      Провинции {provinceIndexLoaded ? "готово" : "загрузка"}
+                    <div className={`rounded-lg border px-3 py-2 ${provinceIndexLoaded ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
+                      {t("shell.entryProvinceIndex")} {provinceIndexLoaded ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
                     </div>
-                    <div className={`rounded-lg border px-3 py-2 ${publicUiLoaded ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-white/5"}`}>
-                      UI-настройки {publicUiLoaded ? "готово" : "загрузка"}
+                    <div className={`rounded-lg border px-3 py-2 ${publicUiLoaded ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
+                      {t("shell.entryPublicUi")} {publicUiLoaded ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
                     </div>
-                    <div className={`rounded-lg border px-3 py-2 ${country ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-white/5"}`}>
-                      Профиль страны {country ? "готово" : "загрузка"}
+                    <div className={`rounded-lg border px-3 py-2 ${country ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
+                      {t("shell.entryCountryProfile")} {country ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-2xl text-emerald-300">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-2xl text-[var(--arc-color-success-text)]">
                     ✓
                   </div>
                   <div>
-                    <div className="text-lg font-semibold text-white">Данные загружены</div>
-                    <div className="mt-1 text-sm text-white/60">Можно входить в игру</div>
+                    <div className="text-lg font-semibold text-[var(--arc-color-text)]">{t("shell.entryLoadedTitle")}</div>
+                    <div className="mt-1 text-sm text-[var(--arc-color-text-soft)]">{t("shell.entryLoadedDescription")}</div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setEntryLoadingGate("hidden")}
-                    className="panel-border inline-flex h-11 items-center justify-center rounded-xl bg-arc-accent px-5 text-sm font-semibold text-black transition hover:brightness-110"
+                    className="panel-border inline-flex h-11 items-center justify-center rounded-lg bg-arc-accent px-5 text-sm font-semibold text-black transition hover:brightness-110"
                   >
-                    Войти в игру
+                    {t("shell.entryEnterGame")}
                   </button>
                 </div>
               )}
@@ -1596,17 +1794,26 @@ export default function App() {
 
       {auth && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="pointer-events-none absolute inset-0 z-[111]">
-          <TopBar
-            countryName={country?.name ?? "Безымянная держава"}
+          <StrategyShell
+            activeMode={activeStrategyMode}
+            onModeChange={setActiveStrategyMode}
+            countryName={country?.name ?? t("shell.unnamedCountry")}
             flagUrl={country?.flagUrl}
             crestUrl={country?.crestUrl}
             turnId={turnId}
             resources={currentResources}
             populationTotal={currentCountryPopulationSummary.total}
-            populationBirths={currentCountryPopulationSummary.births}
-            populationDeaths={currentCountryPopulationSummary.deaths}
             populationNetGrowth={currentCountryPopulationSummary.netGrowth}
-            populationIconUrl={resourceIcons.population}
+            constructionProjection={myConstructionProjection}
+            technologyProjection={myTechnologyProjection}
+            constructionQueuePreview={constructionQueuePreview}
+            populationPreview={populationPreview}
+            marketPreview={marketPreview}
+            diplomacyPreview={diplomacyPreview}
+            armyPreview={armyPreview}
+            governancePreview={governancePreview}
+            storyPreview={storyPreview}
+            turnReadinessPreview={turnReadinessPreview}
             onOpenTurnStatus={() => setTurnStatusOpen(true)}
             onNextTurn={requestNextTurn}
             onLogout={logoutToAuth}
@@ -1626,55 +1833,27 @@ export default function App() {
             resourceExpenseByTurn={currentTurnExpenses}
             colonizationLimit={{ active: activeColonizationCount, max: maxActiveColonizations }}
             countryDetails={currentCountryDetails}
-            turnTimer={turnTimerUi}
-          />
-          <SideNav
-            onItemClick={(key) => {
-              if (key === "budget") {
-                setStateBudgetOpen(true);
-              }
-              if (key === "buildings") {
-                setProvinceBuildingsInitialProvinceId(null);
-                setProvinceBuildingsOpen(true);
-              }
-              if (key === "population") {
-                setPopulationStatsOpen(true);
-              }
-              if (key === "market") {
-                setMarketOpen(true);
-              }
-              if (key === "globalMarket") {
-                setGlobalMarketOpen(true);
-              }
-              if (key === "politics") {
-                setPoliticsOpen(true);
-              }
-              if (key === "technology") {
-                setTechnologyOpen(true);
-              }
-              if (key === "modifiers") {
-                setModifiersOpen(true);
-              }
-              if (key === "decisions") {
-                setDecisionsOpen(true);
-              }
-              if (key === "events") {
-                setFocusedEventPendingId(null);
-                setEventsOpen(true);
-              }
-              if (key === "diplomacy") {
-                setDiplomacyOpen(true);
-              }
-              if (key === "army") {
-                setArmyOpen(true);
-              }
+            notificationCount={uiNotificationHistory.length}
+            pendingDecisionCount={pendingDecisionNotificationCount}
+            onOpenNotifications={() => setNotificationHistoryOpen(true)}
+            onOpenBudget={() => setStateBudgetOpen(true)}
+            onOpenBuildings={() => {
+              setProvinceBuildingsInitialProvinceId(null);
+              setProvinceBuildingsOpen(true);
             }}
-          />
-          <EventLogPanel
-            entries={eventLog}
-            currentCountryId={auth.countryId}
-            onTrimOld={() => trimOldLogEntries(50)}
-            onClear={clearEventLog}
+            onOpenPopulation={() => setPopulationStatsOpen(true)}
+            onOpenMarket={() => setMarketOpen(true)}
+            onOpenGlobalMarket={() => setGlobalMarketOpen(true)}
+            onOpenDiplomacy={() => setDiplomacyOpen(true)}
+            onOpenArmy={() => setArmyOpen(true)}
+            onOpenPolitics={() => setPoliticsOpen(true)}
+            onOpenTechnology={() => setTechnologyOpen(true)}
+            onOpenModifiers={() => setModifiersOpen(true)}
+            onOpenDecisions={() => setDecisionsOpen(true)}
+            onOpenEvents={() => {
+              setFocusedEventPendingId(null);
+              setEventsOpen(true);
+            }}
           />
         </motion.div>
       )}
@@ -1733,7 +1912,7 @@ export default function App() {
           countryId={auth.countryId}
           countryName={country?.name ?? auth.countryId}
           mode="country"
-          title="Рынок"
+          title={t("shell.action.market")}
         />
       )}
       {auth?.token && (
@@ -1744,7 +1923,7 @@ export default function App() {
           countryId={auth.countryId}
           countryName={country?.name ?? auth.countryId}
           mode="global"
-          title="Глобальный рынок"
+          title={t("shell.globalMarketTitle")}
         />
       )}
       {auth?.token && (
@@ -1946,8 +2125,8 @@ export default function App() {
               }
               addEvent({
                 category: "politics",
-                title: "Изменение страны",
-                message: `Кастомизация применена для ${updated.name} (-дукаты)`,
+                title: t("shell.countryCustomizedTitle"),
+                message: t("shell.countryCustomizedMessage", { country: updated.name }),
                 countryId: auth.countryId,
                 priority: "medium",
                 visibility: "private",
@@ -2011,7 +2190,7 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/55 backdrop-blur-md"
+              className="fixed inset-0 bg-[var(--arc-modal-backdrop)] backdrop-blur-md"
             />
             <div className="fixed inset-0 z-[221] flex items-center justify-center p-4">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(18,26,38,0.18),rgba(4,8,12,0.78)_72%)]" />
@@ -2020,18 +2199,18 @@ export default function App() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.98 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
-                className="glass panel-border relative z-10 w-[min(92vw,34rem)] rounded-2xl bg-[#0b111b] p-6 shadow-2xl"
+                className="glass panel-border relative z-10 w-[min(92vw,34rem)] rounded-xl bg-[var(--arc-color-panel)] p-6 shadow-2xl"
               >
                 {turnResolveOverlay.phase === "processing" ? (
                   <div className="flex flex-col items-center gap-4 text-center">
-                    <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10">
-                      <Loader2 className="h-8 w-8 animate-spin text-emerald-300" />
+                    <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)]">
+                      <Loader2 className="h-8 w-8 animate-spin text-[var(--arc-color-success-text)]" />
                     </div>
                     <div>
-                      <Dialog.Title className="text-lg font-semibold text-white">Идет обработка хода</Dialog.Title>
-                      <div className="mt-1 text-sm text-white/60">Подождите, сервер выполняет резолв приказов</div>
+                      <Dialog.Title className="text-lg font-semibold text-[var(--arc-color-text)]">{t("shell.resolveProcessingTitle")}</Dialog.Title>
+                      <div className="mt-1 text-sm text-[var(--arc-color-text-soft)]">{t("shell.resolveProcessingDescription")}</div>
                     </div>
-                    <div className="text-xs text-white/45">Во время обработки действия временно недоступны</div>
+                    <div className="text-xs text-[var(--arc-color-text-muted)]">{t("shell.resolveUnavailableDescription")}</div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-4 text-center">
@@ -2039,23 +2218,23 @@ export default function App() {
                       ✓
                     </div>
                     <div>
-                      <Dialog.Title className="text-lg font-semibold text-white">Обработка хода завершена</Dialog.Title>
-                      <div className="mt-1 text-sm text-white/65">
-                        Ход #{turnResolveOverlay.resolvedTurnId} успешно обработан
+                      <Dialog.Title className="text-lg font-semibold text-[var(--arc-color-text)]">{t("shell.resolveDoneTitle")}</Dialog.Title>
+                      <div className="mt-1 text-sm text-[var(--arc-color-text-soft)]">
+                        {t("shell.resolveDoneDescription", { turn: turnResolveOverlay.resolvedTurnId })}
                       </div>
                     </div>
-                    <div className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                      <div className="text-xs text-white/55">Общее время обработки</div>
-                      <div className="mt-1 text-xl font-semibold tabular-nums text-white">
+                    <div className="w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-4 py-3">
+                      <div className="text-xs text-[var(--arc-color-text-muted)]">{t("shell.resolveDuration")}</div>
+                      <div className="mt-1 text-xl font-semibold tabular-nums text-[var(--arc-color-text)]">
                         {(turnResolveOverlay.durationMs / 1000).toFixed(2)} c
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setTurnResolveOverlay({ phase: "idle" })}
-                      className="panel-border inline-flex h-11 items-center justify-center rounded-xl bg-arc-accent px-5 text-sm font-semibold text-black transition hover:brightness-110"
+                      className="panel-border inline-flex h-11 items-center justify-center rounded-lg bg-arc-accent px-5 text-sm font-semibold text-black transition hover:brightness-110"
                     >
-                      Вернуться к игре
+                      {t("shell.resolveReturn")}
                     </button>
                   </div>
                 )}

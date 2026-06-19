@@ -7,7 +7,8 @@ import type { Country, DiplomacyProposal, TreatyClause, TreatyTransportMode, Wor
 import { acceptDiplomacyProposal, fetchCountries, fetchDiplomacyProposals, rejectDiplomacyProposal } from "../lib/api";
 import { AppButton } from "./ui/AppButton";
 import { AppEmptyState } from "./ui/AppSurface";
-import { tUi } from "../i18n/uiText";
+import type { UiTextKey } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 
 type Props = {
   open: boolean;
@@ -20,12 +21,12 @@ type Props = {
   onResolved?: (proposalId: string) => void;
 };
 
-const TRANSPORT_LABEL: Record<TreatyTransportMode, string> = {
-  land: "Сухопутный транспорт",
-  sea: "Море",
-  air: "Воздух",
-  pipeline: "Трубы",
-  powerGrid: "Электросети",
+const TRANSPORT_LABEL_KEY: Record<TreatyTransportMode, UiTextKey> = {
+  land: "diplomacy.transportLand",
+  sea: "diplomacy.transportSea",
+  air: "diplomacy.transportAir",
+  pipeline: "diplomacy.transportPipeline",
+  powerGrid: "diplomacy.transportPowerGrid",
 };
 
 function countryLabel(countries: Country[], countryId: string) {
@@ -39,38 +40,58 @@ function countryFlag(country: Country | null | undefined) {
   return <span className="h-3 w-6 rounded-sm border border-black/30" style={{ backgroundColor: country?.color ?? "var(--arc-color-text-muted)" }} />;
 }
 
-function clauseTitle(clause: TreatyClause) {
-  if (clause.kind === "transfer_money") return "Передача денег";
-  if (clause.kind === "transfer_region") return tUi("diplomacy.transferRegion");
-  if (clause.kind === "infrastructure_transit") return "Права транзита";
-  if (clause.kind === "infrastructure_construction_rights") return "Строительство коридоров";
-  return "Текстовый пункт";
+function resourceLabelKey(resource: string): UiTextKey {
+  return resource === "gold" ? "diplomacy.resourceGold" : "diplomacy.resourceDucats";
 }
 
-function clauseSummary(clause: TreatyClause, countries: Country[], worldBase: WorldBase | null) {
+function clauseTitle(clause: TreatyClause, t: (key: UiTextKey, params?: Record<string, string | number>) => string) {
+  if (clause.kind === "transfer_money") return t("diplomacy.clauseTransferMoney");
+  if (clause.kind === "transfer_region") return t("diplomacy.transferRegion");
+  if (clause.kind === "infrastructure_transit") return t("diplomacy.clauseTransit");
+  if (clause.kind === "infrastructure_construction_rights") return t("diplomacy.clauseConstructionRights");
+  return t("diplomacy.clauseTextNote");
+}
+
+function clauseSummary(clause: TreatyClause, countries: Country[], _worldBase: WorldBase | null, t: (key: UiTextKey, params?: Record<string, string | number>) => string) {
   if (clause.kind === "transfer_money") {
-    return `${countryLabel(countries, clause.fromCountryId)} передаёт ${countryLabel(countries, clause.toCountryId)} ${clause.amount} ${clause.resource} ${clause.paymentCadence === "per_turn" ? "каждый ход" : "разово"}`;
+    return t("diplomacy.summaryMoney", {
+      from: countryLabel(countries, clause.fromCountryId),
+      to: countryLabel(countries, clause.toCountryId),
+      amount: clause.amount,
+      resource: t(resourceLabelKey(clause.resource)),
+      cadence: clause.paymentCadence === "per_turn" ? t("diplomacy.paymentPerTurn") : t("diplomacy.paymentOnce"),
+    });
   }
   if (clause.kind === "transfer_region") {
-    return tUi("diplomacy.transferRegionSummary", {
+    return t("diplomacy.transferRegionSummary", {
       from: countryLabel(countries, clause.fromCountryId),
       to: countryLabel(countries, clause.toCountryId),
       region: clause.regionId,
     });
   }
   if (clause.kind === "infrastructure_transit") {
-    const modes = clause.transportModes.map((mode) => TRANSPORT_LABEL[mode] ?? mode).join(", ");
-    return `${countryLabel(countries, clause.fromCountryId)} даёт ${countryLabel(countries, clause.toCountryId)} транзит: ${modes}`;
+    const modes = clause.transportModes.map((mode) => t(TRANSPORT_LABEL_KEY[mode])).join(", ");
+    return t("diplomacy.summaryTransit", {
+      from: countryLabel(countries, clause.fromCountryId),
+      to: countryLabel(countries, clause.toCountryId),
+      modes,
+    });
   }
   if (clause.kind === "infrastructure_construction_rights") {
-    const modes = clause.transportModes.map((mode) => TRANSPORT_LABEL[mode] ?? mode).join(", ");
-    const policy = clause.expirationPolicy === "nationalize_to_territory_owner" ? "национализация" : "отключение без транзита";
-    return `${countryLabel(countries, clause.fromCountryId)} разрешает ${countryLabel(countries, clause.toCountryId)} строить коридоры: ${modes}. После окончания: ${policy}`;
+    const modes = clause.transportModes.map((mode) => t(TRANSPORT_LABEL_KEY[mode])).join(", ");
+    const policy = clause.expirationPolicy === "nationalize_to_territory_owner" ? t("diplomacy.policyNationalize") : t("diplomacy.policyDisableWithoutTransit");
+    return t("diplomacy.summaryConstructionRights", {
+      from: countryLabel(countries, clause.fromCountryId),
+      to: countryLabel(countries, clause.toCountryId),
+      modes,
+      policy,
+    });
   }
   return clause.text;
 }
 
 export function DiplomacyProposalStoryModal({ open, token, countryId, proposalId, worldBase, onClose, onRevise, onResolved }: Props) {
+  const { t } = useUiText();
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [proposal, setProposal] = useState<DiplomacyProposal | null>(null);
@@ -87,7 +108,7 @@ export function DiplomacyProposalStoryModal({ open, token, countryId, proposalId
         setProposal(proposalRows.proposals.find((entry) => entry.id === proposalId) ?? null);
       })
       .catch(() => {
-        if (!cancelled) toast.error("Не удалось загрузить договор");
+        if (!cancelled) toast.error(t("diplomacy.loadFailed"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -107,22 +128,22 @@ export function DiplomacyProposalStoryModal({ open, token, countryId, proposalId
     try {
       if (kind === "accept") {
         await acceptDiplomacyProposal(token, proposal.id);
-        toast.success("Договор подписан");
+        toast.success(t("diplomacy.signed"));
       } else {
         await rejectDiplomacyProposal(token, proposal.id);
-        toast.success("Договор отклонён");
+        toast.success(t("diplomacy.rejected"));
       }
       onResolved?.(proposal.id);
       onClose();
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
-      toast.error(message === "NOT_YOUR_TURN" ? "Сейчас не ваша очередь отвечать" : "Не удалось обработать договор");
+      toast.error(message === "NOT_YOUR_TURN" ? t("diplomacy.storyYourTurnFailed") : t("diplomacy.storyActionFailed"));
     } finally {
       setPendingAction(null);
     }
   };
 
-  const title = proposal ? proposal.name : "Дипломатический договор";
+  const title = proposal ? proposal.name : t("diplomacy.storyDefaultTitle");
 
   return (
     <Dialog open={open} onClose={onClose} className="arc-modal arc-modal--diplomacy-story relative z-[190]">
@@ -144,7 +165,9 @@ export function DiplomacyProposalStoryModal({ open, token, countryId, proposalId
             <div className="min-w-0 text-center">
               <Dialog.Title className="truncate text-2xl font-semibold text-[var(--arc-color-text)]">{title}</Dialog.Title>
               <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">
-                {proposal ? `Версия ${proposal.revision ?? 1} · ход ${proposal.createdTurnId}-${proposal.expiresTurnId}` : "Загрузка договора"}
+                {proposal
+                  ? t("diplomacy.storySubtitle", { revision: proposal.revision ?? 1, from: proposal.createdTurnId, to: proposal.expiresTurnId })
+                  : t("diplomacy.storyLoading")}
               </div>
             </div>
             <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-lg border border-[var(--arc-color-gold)] bg-[var(--arc-overlay-30)] text-[var(--arc-color-gold)] transition hover:bg-[var(--arc-overlay-50)]">
@@ -154,14 +177,14 @@ export function DiplomacyProposalStoryModal({ open, token, countryId, proposalId
 
           {loading || !proposal ? (
             <div className="relative z-10 p-6">
-              <AppEmptyState title="Загрузка договора">Открываем условия из уведомления.</AppEmptyState>
+              <AppEmptyState title={t("diplomacy.storyLoading")}>{t("diplomacy.storyLoadingDescription")}</AppEmptyState>
             </div>
           ) : (
             <div className="relative z-10 grid min-h-0 flex-1 gap-4 p-4 lg:grid-cols-[330px_minmax(0,1fr)]">
               <aside className="min-h-0 overflow-hidden rounded-t-xl border border-[var(--arc-color-gold-soft)] bg-[var(--arc-color-panel-soft)] shadow-2xl">
                 <div className="border-b border-[var(--arc-color-gold)] bg-gradient-to-b from-[var(--arc-color-header-top)] to-[var(--arc-color-header-bottom)] px-4 py-3 text-center">
-                  <div className="font-display text-2xl text-[var(--arc-color-text-soft)]">Статьи <span className="text-[var(--arc-color-gold-warm)]">договора</span></div>
-                  <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">{proposal.clauses.length} пунктов</div>
+                  <div className="font-display text-2xl text-[var(--arc-color-text-soft)]">{t("diplomacy.storyArticles")}</div>
+                  <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">{t("diplomacy.storyArticlesCount", { count: proposal.clauses.length })}</div>
                 </div>
                 <div className="arc-scrollbar max-h-[calc(82vh-13rem)] space-y-2 overflow-auto p-3">
                   {proposal.clauses.map((clause, index) => (
@@ -169,8 +192,8 @@ export function DiplomacyProposalStoryModal({ open, token, countryId, proposalId
                       <div className="flex items-center gap-2">
                         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--arc-color-gold)] bg-[var(--arc-overlay-45)] text-xs text-[var(--arc-color-gold)]">{index + 1}</span>
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold">{clauseTitle(clause)}</div>
-                          <div className="mt-0.5 text-[11px] text-[var(--arc-color-text-soft)]">Статья {index + 1}</div>
+                          <div className="truncate text-sm font-semibold">{clauseTitle(clause, t)}</div>
+                          <div className="mt-0.5 text-[11px] text-[var(--arc-color-text-soft)]">{t("diplomacy.storyArticle", { number: index + 1 })}</div>
                         </div>
                       </div>
                     </div>
@@ -187,7 +210,7 @@ export function DiplomacyProposalStoryModal({ open, token, countryId, proposalId
                           {countryFlag(party)}
                           <span className="truncate text-lg font-semibold">{party?.name ?? (index === 0 ? proposal.fromCountryId : proposal.toCountryId)}</span>
                         </div>
-                        <div className="text-[11px] uppercase tracking-wide text-[var(--arc-color-text-muted)]">{index === 0 ? "Инициатор" : "Вторая сторона"}</div>
+                        <div className="text-[11px] uppercase tracking-wide text-[var(--arc-color-text-muted)]">{index === 0 ? t("diplomacy.initiator") : t("diplomacy.secondParty")}</div>
                       </div>
                     ))}
                     <div className="grid h-12 w-12 place-items-center rounded-full border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-soft)] text-[var(--arc-color-text-muted)]">
@@ -196,16 +219,16 @@ export function DiplomacyProposalStoryModal({ open, token, countryId, proposalId
                   </div>
                   <div className="mt-4 grid gap-2 text-xs md:grid-cols-3">
                     <div className="rounded-lg border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-soft)]/75 px-3 py-2">
-                      <div className="text-[var(--arc-color-text-muted)]">Версия</div>
+                      <div className="text-[var(--arc-color-text-muted)]">{t("diplomacy.storyVersion")}</div>
                       <div className="mt-1 font-semibold">{proposal.revision ?? 1}</div>
                     </div>
                     <div className="rounded-lg border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-soft)]/75 px-3 py-2">
-                      <div className="text-[var(--arc-color-text-muted)]">Срок</div>
-                      <div className="mt-1 font-semibold">до хода {proposal.expiresTurnId}</div>
+                      <div className="text-[var(--arc-color-text-muted)]">{t("diplomacy.durationLabel")}</div>
+                      <div className="mt-1 font-semibold">{t("diplomacy.storyExpires", { turn: proposal.expiresTurnId })}</div>
                     </div>
                     <div className="rounded-lg border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-soft)]/75 px-3 py-2">
-                      <div className="text-[var(--arc-color-text-muted)]">Отвечает</div>
-                      <div className="mt-1 font-semibold">{proposal.pendingResponderCountryId ? countryLabel(countries, proposal.pendingResponderCountryId) : "нет"}</div>
+                      <div className="text-[var(--arc-color-text-muted)]">{t("diplomacy.responder")}</div>
+                      <div className="mt-1 font-semibold">{proposal.pendingResponderCountryId ? countryLabel(countries, proposal.pendingResponderCountryId) : t("diplomacy.noResponder")}</div>
                     </div>
                   </div>
                 </div>
@@ -214,8 +237,10 @@ export function DiplomacyProposalStoryModal({ open, token, countryId, proposalId
                   <div className="grid gap-3 xl:grid-cols-2">
                     {proposal.clauses.map((clause, index) => (
                       <div key={clause.id} className="rounded-xl border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-soft)]/80 p-3 shadow-[var(--arc-shadow-inset-soft)]">
-                        <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">Статья {index + 1} · {clauseTitle(clause)}</div>
-                        <div className="mt-2 text-sm leading-5 text-[var(--arc-color-text-paper)]">{clauseSummary(clause, countries, worldBase)}</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">
+                          {t("diplomacy.storyArticle", { number: index + 1 })} · {clauseTitle(clause, t)}
+                        </div>
+                        <div className="mt-2 text-sm leading-5 text-[var(--arc-color-text-paper)]">{clauseSummary(clause, countries, worldBase, t)}</div>
                       </div>
                     ))}
                   </div>
@@ -224,12 +249,17 @@ export function DiplomacyProposalStoryModal({ open, token, countryId, proposalId
                     <div className="mt-5">
                       <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[var(--arc-color-text-muted)]">
                         <History size={15} />
-                        Цепочка переговоров
+                        {t("diplomacy.storyNegotiationChain")}
                       </div>
                       <div className="grid gap-2">
                         {(proposal.revisionHistory ?? []).slice(-5).map((entry) => (
                           <div key={`${entry.revision}-${entry.createdAt}`} className="rounded-lg border border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-soft)]/70 px-3 py-2 text-xs text-[var(--arc-color-text-muted)]">
-                            Версия {entry.revision}: {countryLabel(countries, entry.editedByCountryId)} → {countryLabel(countries, entry.sentToCountryId)}, ход {entry.turnId}
+                            {t("diplomacy.storyRevision", {
+                              revision: entry.revision,
+                              from: countryLabel(countries, entry.editedByCountryId),
+                              to: countryLabel(countries, entry.sentToCountryId),
+                              turn: entry.turnId,
+                            })}
                           </div>
                         ))}
                       </div>
@@ -239,13 +269,13 @@ export function DiplomacyProposalStoryModal({ open, token, countryId, proposalId
 
                 <div className="grid gap-2 border-t border-[var(--arc-color-brown)] bg-[var(--arc-color-paper-toolbar)] p-3 md:grid-cols-3">
                   <AppButton type="button" variant="primary" disabled={!canRespond || Boolean(pendingAction)} icon={<Check size={14} />} onClick={() => void act("accept")}>
-                    {pendingAction === "accept" ? "Подписываем..." : "Подписать"}
+                    {pendingAction === "accept" ? t("diplomacy.storyPendingAccept") : t("diplomacy.accept")}
                   </AppButton>
                   <AppButton type="button" variant="secondary" disabled={!canRespond || Boolean(pendingAction)} icon={<RefreshCw size={14} />} onClick={() => onRevise(proposal)}>
-                    Изменить условия
+                    {t("diplomacy.submitRevision")}
                   </AppButton>
                   <AppButton type="button" variant="danger" disabled={!canRespond || Boolean(pendingAction)} icon={<X size={14} />} onClick={() => void act("reject")}>
-                    {pendingAction === "reject" ? "Отклоняем..." : "Отклонить"}
+                    {pendingAction === "reject" ? t("diplomacy.storyPendingReject") : t("diplomacy.reject")}
                   </AppButton>
                 </div>
               </main>

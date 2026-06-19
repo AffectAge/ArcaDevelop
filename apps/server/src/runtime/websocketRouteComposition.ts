@@ -12,6 +12,7 @@ type WebSocketRouteCompositionParams = {
   onlinePlayers: WebSocketDeps["onlinePlayers"];
   getWorldBase: WebSocketDeps["getWorldBase"];
   getGameSettings: () => GameSettings;
+  getAiControlledCountryIds: WebSocketDeps["getAiControlledCountryIds"];
   getTurnId: () => number;
   getWorldStateVersion: () => number;
   getOrdersByTurn: WebSocketDeps["getOrdersByTurn"];
@@ -91,6 +92,7 @@ export function registerWebSocketRouteComposition(params: WebSocketRouteComposit
             },
           }),
       }),
+    getAiControlledCountryIds: params.getAiControlledCountryIds,
     ensureCountryInWorldBase: params.countryRuntimeHelpers.ensureCountryInWorldBase,
     getLastLoginAt: (countryId) => params.lastLoginAtByCountryId.get(countryId) ?? null,
     setLastLoginAt: (countryId, timestamp) => params.lastLoginAtByCountryId.set(countryId, timestamp),

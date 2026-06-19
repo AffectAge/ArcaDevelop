@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scenarioId": "balanced-economy",
-  "authoredHash": "766a242c4c0ce0773624173d24c19854e8b6aba67604b93f5174fa22d32bc48e",
-  "generatedAt": "2026-06-15T18:51:56.738Z",
+  "authoredHash": "9257208b516ad859ec22fbbac1908b28aa6e9f2e15486e835e2a966f84479cbb",
+  "generatedAt": "2026-06-17T17:05:25.639Z",
   "files": [
     "common/buildings/02b92dab-5bb9-4e7e-bc43-406a5e0a16fe.json",
     "common/buildings/06145427-80c2-48cb-929f-9e04d9ce83bd.json",
@@ -295,6 +295,7 @@
     "common/technologies/c753b914-d019-4580-ac62-b8e7ea87ae8e.json",
     "common/technologies/d523764b-89fe-49e1-83c7-a27a5a7d2d3e.json",
     "common/technologies/ea2c842b-b00c-4347-8a42-1d19fe3f55b9.json",
+    "history/countries/ai_colonizers.json",
     "history/provinces/1.json",
     "history/provinces/10.json",
     "history/provinces/100.json",
@@ -6422,7 +6423,7 @@
   "counts": {
     "provinces": 6119,
     "regions": 1,
-    "countries": 0,
+    "countries": 1,
     "contentEntries": 290,
     "arcawikiEntries": 0
   }

@@ -1,4 +1,4 @@
-import type { ActiveModifierRow, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, GameEventDefinition, IdeologyAttractionRule, LawParliamentPowerEffect, LoginPayload, MilitaryBranch, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ServerStatus, TreatyClause, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import type { ActiveModifierRow, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, GameEventDefinition, IdeologyAttractionRule, LawParliamentPowerEffect, LoginPayload, MilitaryBranch, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, WorldBase, WsOutMessage } from "@arcanorum/shared";
 
 const API = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
@@ -1827,6 +1827,7 @@ export type TurnStatusItem = {
   ignoreUntilTurn: number | null;
   online: boolean;
   lastLoginAt: string | null;
+  resources: ResourceTotals;
 };
 
 export type UiNotificationItem = Extract<WsOutMessage, { type: "UI_NOTIFY" }>["notification"];
@@ -1921,6 +1922,8 @@ export type GameSettings = {
     pointsPerTurn: number;
     pointsCostPer1000Km2: number;
     ducatsCostPer1000Km2: number;
+    settlementEnabled: boolean;
+    settlementPopulationOnCapture: number;
   };
   customization: {
     renameDucats: number;
@@ -2191,7 +2194,14 @@ export async function updateGameSettings(
         }
       >;
     };
-    colonization?: { maxActiveColonizations?: number; pointsPerTurn?: number; pointsCostPer1000Km2?: number; ducatsCostPer1000Km2?: number };
+    colonization?: {
+      maxActiveColonizations?: number;
+      pointsPerTurn?: number;
+      pointsCostPer1000Km2?: number;
+      ducatsCostPer1000Km2?: number;
+      settlementEnabled?: boolean;
+      settlementPopulationOnCapture?: number;
+    };
     customization?: { renameDucats?: number; recolorDucats?: number; flagDucats?: number; crestDucats?: number; provinceRenameDucats?: number };
     registration?: { requireAdminApproval?: boolean };
     eventLog?: { retentionTurns?: number };

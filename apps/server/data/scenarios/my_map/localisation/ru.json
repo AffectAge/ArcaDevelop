@@ -18358,6 +18358,11 @@
       "name": "Itasy"
     }
   },
+  "country": {
+    "ai_colonizers": {
+      "name": "ИИ-колонизаторы"
+    }
+  },
   "region": {
     "world": {
       "name": "World Region"
