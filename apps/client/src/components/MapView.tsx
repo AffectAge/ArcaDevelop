@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import maplibregl, { type Map as MapLibreMap } from "maplibre-gl";
 import { MapboxOverlay } from "@deck.gl/mapbox";
-import { PathLayer, ScatterplotLayer } from "@deck.gl/layers";
-import { PathStyleExtension } from "@deck.gl/extensions";
-import type { PathStyleExtensionProps } from "@deck.gl/extensions";
-import { bezierSpline, lineString } from "@turf/turf";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, Briefcase, Building2, Check, Coins, Crosshair, Flag, Gauge, Hammer, Info, Landmark, Layers3, Lock, LockOpen, LocateFixed, Minus, Move, Network, Package, Pickaxe, Plane, Plus, Route, Ship, Sparkles, TrainFront, Trash2, Truck, Users, X, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -43,18 +39,20 @@ import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard, AppEmptyState, AppSection, AppSectionHeader, AppToolbar } from "./ui/AppSurface";
 import { AppCell, AppHeadCell, AppTable, AppTableShell } from "./ui/AppTable";
 import { useUiText } from "../i18n/useUiText";
-import type { UiTextKey } from "../i18n/uiText";
+import { buildCorridorDeckData } from "../map-corridors/corridorDeckData";
+import { buildCorridorDeckLayers } from "../map-corridors/corridorDeckLayers";
+import { createCorridorBuildPaintPlan } from "../map-corridors/corridorBuildPaintPlan";
+import type { CorridorBuildPoint } from "../map-corridors/types";
+import { createMapLensCache } from "../map-lenses/cache";
+import { buildMapGeometryIndexes } from "../map-lenses/geometryIndexes";
+import { createColonizationCostPaintPlan, createGroupedLensPaintPlan, createInfrastructureCoveragePaintPlan, createPoliticalLensPaintPlan, createPopulationLensPaintPlan, createResourcesDepositsPaintPlan } from "../map-lenses/fullLensPaintPlans";
+import { buildProvinceMatchExpression } from "../map-lenses/mapLibreExpressions";
+import { applyMapLensPaintPlan } from "../map-lenses/paintPlan";
+import { createMilitaryLensPaintPlan, createProvinceColorsLensPaintPlan, createRegionsLensPaintPlan } from "../map-lenses/simpleLensPaintPlans";
+import { createMapLensPerformanceMetrics } from "../map-lenses/performance";
+import { MAP_MODE_IDS, getLocalizedMapLensDefinition, getMapLensZoomBucket } from "../map-lenses/registry";
+import type { ColonizationLensId, DiplomacyLensId, InfrastructureLensId, InfrastructureLensViewId, MapModeId, MarketLensId, MilitaryLensId, PoliticalLensId, PopulationLensId, ResourceLensId } from "../map-lenses/types";
 
-type PoliticalLensId = "owners" | "country" | "mine" | "colonies";
-type DiplomacyLensId = "treaties" | "transit" | "corridorAccess";
-type MarketLensId = "membership" | "capitals" | "selectedMarketMembers";
-type PopulationLensId = "density" | "cultures" | "religions" | "races" | "professions" | "ideologies" | "standardOfLiving" | "radicals" | "loyalists" | "needs";
-type ResourceLensId = "exploration" | "deposits";
-type InfrastructureLensViewId = "coverage" | "load" | "problems" | "corridors";
-type InfrastructureLensId = `${TransportMode}:${InfrastructureLensViewId}`;
-type ColonizationLensId = "available" | "cost" | "ownRaces" | "foreignRaces" | "blocked";
-type MilitaryLensId = "armies";
-type MapModeId = "political" | "regions" | "provinceColors" | "diplomacy" | "markets" | "population" | "resources" | "infrastructure" | "colonization" | "military";
 type ProvinceMapMeta = {
   name: string;
   regionId: string | null;
@@ -180,139 +178,6 @@ const EMPTY_PROVINCE_POPULATION: Record<string, { pops?: Array<{
 }> }> = {};
 const EMPTY_COUNTRY_PROGRESS: Record<string, number> = {};
 
-function getMapModeConfig(modeId: MapModeId, t?: (key: UiTextKey) => string) {
-  const configs: Record<MapModeId, {
-    label: string;
-    shortLabel: string;
-    icon: typeof Landmark;
-    fillColor: string;
-    fillOpacity: number;
-    legend: Array<{ label: string; color: string; description: string }>;
-  }> = {
-    political: {
-      label: "Политическая",
-      shortLabel: "Страны",
-      icon: Landmark,
-      fillColor: "#ffffff",
-      fillOpacity: 0.68,
-      legend: [
-        { label: "Владелец", color: "#4ade80", description: "Цвет страны-владельца" },
-        { label: "Колонизация", color: "#93c5fd", description: "Нейтральная провинция с активной гонкой" },
-        { label: "Вне фильтра", color: "#9ca3af", description: "При фильтре по стране" },
-      ],
-    },
-    regions: {
-      label: t?.("map.mode.regions.label") ?? "Regions",
-      shortLabel: t?.("map.mode.regions.shortLabel") ?? "Regions",
-      icon: Layers3,
-      fillColor: "#22d3ee",
-      fillOpacity: 0.7,
-      legend: [
-        {
-          label: t?.("map.mode.regions.legendLabel") ?? "State region",
-          color: "#22d3ee",
-          description: t?.("map.mode.regions.legendDescription") ?? "Provinces grouped by their gameplay region",
-        },
-      ],
-    },
-    provinceColors: {
-      label: t?.("map.mode.provinceColors.label") ?? "Province colors",
-      shortLabel: t?.("map.mode.provinceColors.shortLabel") ?? "Provinces",
-      icon: Layers3,
-      fillColor: "#8fb9a8",
-      fillOpacity: 0.7,
-      legend: [
-        {
-          label: t?.("map.mode.provinceColors.legendLabel") ?? "Province",
-          color: "#8fb9a8",
-          description: t?.("map.mode.provinceColors.legendDescription") ?? "Authored scenario colors for lightweight map provinces",
-        },
-      ],
-    },
-    diplomacy: {
-      label: "Дипломатия",
-      shortLabel: "Дипломатия",
-      icon: Briefcase,
-      fillColor: "#facc15",
-      fillOpacity: 0.68,
-      legend: [{ label: "Договоры", color: "#facc15", description: "Страны, связанные активными соглашениями" }],
-    },
-    markets: {
-      label: "Рынки",
-      shortLabel: "Рынки",
-      icon: Package,
-      fillColor: "#38bdf8",
-      fillOpacity: 0.68,
-      legend: [{ label: "Рынок", color: "#38bdf8", description: "Провинции по рыночной принадлежности" }],
-    },
-    population: {
-      label: "Население",
-      shortLabel: "Население",
-      icon: Users,
-      fillColor: "#fb7185",
-      fillOpacity: 0.68,
-      legend: [{ label: "Метрика", color: "#fb7185", description: "Демография и качество жизни провинции" }],
-    },
-    resources: {
-      label: "Ресурсы",
-      shortLabel: "Ресурсы",
-      icon: Pickaxe,
-      fillColor: "#f97316",
-      fillOpacity: 0.68,
-      legend: [{ label: "Залежи", color: "#f97316", description: "Обнаруженные ресурсы и разведка" }],
-    },
-    infrastructure: {
-      label: "Инфраструктура",
-      shortLabel: "Инфра",
-      icon: TrainFront,
-      fillColor: "#22c55e",
-      fillOpacity: 0.68,
-      legend: [{ label: "Покрытие", color: "#22c55e", description: "Доступность и нагрузка логистики" }],
-    },
-    colonization: {
-      label: "Колонизация",
-      shortLabel: "Колонии",
-      icon: Flag,
-      fillColor: "#4ade80",
-      fillOpacity: 0.68,
-      legend: [{ label: "Доступно", color: "#4ade80", description: "Нейтральные территории для колонизации" }],
-    },
-    military: {
-      label: "Армия",
-      shortLabel: "Армия",
-      icon: Crosshair,
-      fillColor: "#ef4444",
-      fillOpacity: 0.68,
-      legend: [{ label: "Армии", color: "#ef4444", description: "Свои и чужие дивизии" }],
-    },
-  };
-  return configs[modeId];
-}
-
-function toProvinceMatchKeys(provinceId: string): Array<string | number> {
-  const raw = String(provinceId ?? "").trim();
-  if (!raw) return [];
-  const keys: Array<string | number> = [raw];
-  const asNumber = Number(raw);
-  if (Number.isFinite(asNumber)) keys.push(asNumber);
-  const trailingNumber = raw.match(/(\d+)\s*$/)?.[1];
-  if (trailingNumber) {
-    const parsed = Number(trailingNumber);
-    if (Number.isFinite(parsed)) keys.push(parsed, trailingNumber);
-  }
-  return [...new Set(keys)];
-}
-
-function buildProvinceMatchExpression(groups: Array<{ ids: string[]; value: unknown }>, fallback: unknown): unknown {
-  const expression: unknown[] = ["match", ["id"]];
-  for (const group of groups) {
-    const ids = [...new Set(group.ids.flatMap(toProvinceMatchKeys))];
-    if (ids.length === 0) continue;
-    expression.push(ids, group.value);
-  }
-  return expression.length > 2 ? [...expression, fallback] : fallback;
-}
-
 const TRANSPORT_CORRIDOR_MODE_OPTIONS: Array<{ id: TransportMode; label: string; icon: typeof Route; color: string }> = [
   { id: "land", label: "Сухопутный транспорт", icon: Truck, color: "#60a5fa" },
   { id: "sea", label: "Море", icon: Ship, color: "#38bdf8" },
@@ -320,38 +185,6 @@ const TRANSPORT_CORRIDOR_MODE_OPTIONS: Array<{ id: TransportMode; label: string;
   { id: "pipeline", label: "Трубы", icon: Network, color: "#f97316" },
   { id: "powerGrid", label: "Электросети", icon: Zap, color: "#facc15" },
 ];
-
-const TRANSPORT_CORRIDOR_VISUAL: Record<TransportMode, { color: [number, number, number]; symbol: string; width: number; dash: [number, number] }> = {
-  land: { color: [96, 165, 250], symbol: "•", width: 3.2, dash: [1, 0] },
-  sea: { color: [56, 189, 248], symbol: "≈", width: 4.6, dash: [1, 0] },
-  air: { color: [167, 139, 250], symbol: "✦", width: 3.4, dash: [3, 7] },
-  pipeline: { color: [249, 115, 22], symbol: "●", width: 4.4, dash: [12, 4] },
-  powerGrid: { color: [250, 204, 21], symbol: "⚡", width: 4, dash: [2, 4] },
-};
-
-type CorridorDeckRow = {
-  id: string;
-  path: Array<[number, number]>;
-  color: [number, number, number];
-  width: number;
-  dash: [number, number];
-  offset: number;
-  status: MarketTransportCorridor["status"];
-  isOwn: boolean;
-};
-
-type CorridorNodeDeckRow = {
-  id: string;
-  position: [number, number];
-  color: [number, number, number];
-  status: MarketTransportCorridor["status"];
-};
-
-type CorridorBuildPoint = {
-  provinceId: string;
-  lng: number;
-  lat: number;
-};
 
 const TRANSPORT_MODE_IDS: TransportMode[] = ["land", "sea", "air", "pipeline", "powerGrid"];
 const TRANSPORT_MODE_LABELS: Record<TransportMode, string> = {
@@ -409,18 +242,7 @@ const MILITARY_LENS_OPTIONS = [
   { id: "armies", label: "Расположение армий" },
 ] as const;
 const INFRASTRUCTURE_LENS_TRANSPORT_MODES: TransportMode[] = ["land", "sea", "air", "pipeline", "powerGrid"];
-const MAP_MODE_IDS = [
-  "political",
-  "regions",
-  "provinceColors",
-  "diplomacy",
-  "markets",
-  "population",
-  "resources",
-  "infrastructure",
-  "colonization",
-  "military",
-] as const satisfies readonly MapModeId[];
+
 
 function getInfrastructureLensTransport(value: InfrastructureLensId): TransportMode {
   const [mode] = value.split(":");
@@ -753,7 +575,7 @@ export function MapView({
   showAntarctica = false,
 }: Props) {
   const { t } = useUiText();
-  const mapModeOptions = useMemo(() => MAP_MODE_IDS.map((id) => ({ id, ...getMapModeConfig(id, t) })), [t]);
+  const mapModeOptions = useMemo(() => MAP_MODE_IDS.map((id) => getLocalizedMapLensDefinition(id, t)), [t]);
   const [activeModeId, setActiveModeId] = useState<MapModeId>(() => {
     try {
       const raw = localStorage.getItem("arc.ui.map.activeModeId");
@@ -762,7 +584,7 @@ export function MapView({
       return "political";
     }
   });
-  const activeModeConfig = useMemo(() => getMapModeConfig(activeModeId, t), [activeModeId, t]);
+  const activeModeConfig = useMemo(() => getLocalizedMapLensDefinition(activeModeId, t), [activeModeId, t]);
   const mapRef = useRef<MapLibreMap | null>(null);
   const deckOverlayRef = useRef<MapboxOverlay | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -782,6 +604,9 @@ export function MapView({
   const mapMovingRef = useRef(false);
   const queuedColonizeCountriesByProvinceRef = useRef<Map<string, string[]>>(new Map());
   const lastHoverTooltipProvinceIdRef = useRef<string | null>(null);
+  const mapLensCacheRef = useRef(createMapLensCache());
+  const mapLensMetricsRef = useRef(createMapLensPerformanceMetrics());
+  const previousLensInvalidationSignatureRef = useRef("");
 
   const [interactionLocked, setInteractionLocked] = useState(() => {
     try {
@@ -800,6 +625,7 @@ export function MapView({
   });
   const [selectedProvinceName, setSelectedProvinceName] = useState<string | null>(null);
   const [view, setView] = useState({ zoom: DEFAULT_ZOOM, lng: DEFAULT_CENTER[0], lat: DEFAULT_CENTER[1] });
+  const mapLensZoomBucket = useMemo(() => getMapLensZoomBucket(view.zoom), [view.zoom]);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; provinceId: string; provinceName: string } | null>(null);
   const [hoverTooltip, setHoverTooltip] = useState<{
     x: number;
@@ -1184,82 +1010,25 @@ export function MapView({
 
   const showCorridorDeckLayer = activeModeId === "infrastructure" || activeModeId === "diplomacy" || corridorBuildMode || transportCorridorsModalOpen;
 
-  const corridorDeckData = useMemo<CorridorDeckRow[]>(() => {
-    if (!showCorridorDeckLayer) return [];
-    const modeFilter =
-      activeModeId === "infrastructure" &&
-      isTransportInfrastructureLens(infrastructureLens)
-        ? infrastructureTransportMode
-        : null;
-    const rows = marketTransportCorridors
-      .filter((corridor) => !modeFilter || corridor.transportMode === modeFilter)
-      .flatMap((corridor) => {
-        const coordinates =
-          corridor.routePoints && corridor.routePoints.length >= 2
-            ? corridor.routePoints.map((point) => [point.lng, point.lat] as [number, number])
-            : corridor.provinceIds.flatMap((provinceId) => {
-                const meta = provinceMetaByIdRef.current.get(provinceId);
-                return meta?.centerX == null || meta.centerY == null ? [] : ([[meta.centerX, meta.centerY] as [number, number]]);
-              });
-        if (coordinates.length < 2) return [];
-        const rawLine = lineString(coordinates);
-        const routeLine = corridor.transportMode === "air" || corridor.transportMode === "sea"
-          ? bezierSpline(rawLine, { sharpness: corridor.transportMode === "air" ? 0.78 : 0.55 })
-          : rawLine;
-        const path = routeLine.geometry.coordinates.map((coord) => [Number(coord[0]), Number(coord[1])] as [number, number]);
-        const visual = TRANSPORT_CORRIDOR_VISUAL[corridor.transportMode];
-        return [{
-          id: corridor.id,
-          path,
-          color: visual.color,
-          width: visual.width,
-          dash: corridor.status === "active" ? visual.dash : corridor.status === "building" ? [5, 5] as [number, number] : [2, 7] as [number, number],
-          offset: 0,
-          status: corridor.status,
-          isOwn: auth?.countryId === corridor.ownerCountryId,
-        }];
-      });
-    if (corridorBuildMode && corridorBuildRoutePoints.length >= 2) {
-      const rawLine = lineString(corridorBuildRoutePoints.map((point) => [point.lng, point.lat] as [number, number]));
-      const routeLine = corridorBuildTransportMode === "air" || corridorBuildTransportMode === "sea"
-        ? bezierSpline(rawLine, { sharpness: corridorBuildTransportMode === "air" ? 0.78 : 0.55 })
-        : rawLine;
-      const visual = TRANSPORT_CORRIDOR_VISUAL[corridorBuildTransportMode];
-      rows.push({
-        id: "corridor-build-preview",
-        path: routeLine.geometry.coordinates.map((coord) => [Number(coord[0]), Number(coord[1])] as [number, number]),
-        color: visual.color,
-        width: visual.width + 1,
-        dash: [5, 4],
-        offset: 0,
-        status: "building",
-        isOwn: true,
-      });
-    }
-    const groups = new Map<string, CorridorDeckRow[]>();
-    for (const row of rows) {
-      const forward = row.path.map((point) => `${point[0].toFixed(3)},${point[1].toFixed(3)}`).join(">");
-      const reverse = row.path.map((point) => `${point[0].toFixed(3)},${point[1].toFixed(3)}`).reverse().join(">");
-      const key = forward < reverse ? forward : reverse;
-      const group = groups.get(key) ?? [];
-      group.push(row);
-      groups.set(key, group);
-    }
-    for (const group of groups.values()) {
-      if (group.length < 2) continue;
-      const center = (group.length - 1) / 2;
-      group.forEach((row, index) => {
-        row.offset = (index - center) * 1.75;
-      });
-    }
-    return rows;
-  }, [
+  const corridorDeckData = useMemo(() => buildCorridorDeckData({
+    showCorridorDeckLayer,
+    activeModeId,
+    infrastructureLensIsTransport: isTransportInfrastructureLens(infrastructureLens),
+    infrastructureTransportMode,
+    authCountryId: auth?.countryId ?? null,
+    corridorBuildMode,
+    corridorBuildRoutePoints,
+    corridorBuildTransportMode,
+    marketTransportCorridors,
+    provinceMetaById: provinceMetaByIdRef.current,
+  }), [
     activeModeId,
     auth?.countryId,
     corridorBuildMode,
     corridorBuildRoutePoints,
     corridorBuildTransportMode,
     infrastructureLens,
+    infrastructureTransportMode,
     marketTransportCorridors,
     provinceIndexVersion,
     showCorridorDeckLayer,
@@ -1268,66 +1037,14 @@ export function MapView({
   useEffect(() => {
     const overlay = deckOverlayRef.current;
     if (!overlay) return;
-    const backgroundLayer = new PathLayer<CorridorDeckRow>({
-      id: "transport-corridors-bg",
-      data: corridorDeckData,
-      pickable: false,
-      getPath: (row) => row.path,
-      getColor: [3, 7, 18, 210],
-      getWidth: (row) => row.width + 3.4,
-      widthUnits: "pixels",
-      rounded: true,
-      jointRounded: true,
+    overlay.setProps({
+      layers: buildCorridorDeckLayers({
+        corridorDeckData,
+        corridorBuildMode,
+        corridorBuildRoutePoints,
+        corridorBuildTransportMode,
+      }),
     });
-    const lineLayer = new PathLayer<CorridorDeckRow, PathStyleExtensionProps<CorridorDeckRow>>({
-      id: "transport-corridors-line",
-      data: corridorDeckData,
-      pickable: false,
-      getPath: (row) => row.path,
-      getColor: (row): [number, number, number, number] => {
-        const alpha = row.status === "closed" ? 92 : row.status === "building" ? 150 : row.isOwn ? 245 : 205;
-        return [...row.color, alpha];
-      },
-      getWidth: (row) => (row.isOwn ? row.width + 0.9 : row.width),
-      widthUnits: "pixels",
-      rounded: true,
-      jointRounded: true,
-      getDashArray: (row: CorridorDeckRow) => row.dash,
-      getOffset: (row: CorridorDeckRow) => row.offset,
-      dashJustified: true,
-      extensions: [new PathStyleExtension({ dash: true, offset: true })],
-    });
-    const buildVisual = TRANSPORT_CORRIDOR_VISUAL[corridorBuildTransportMode];
-    const nodeData: CorridorNodeDeckRow[] = [
-      ...corridorDeckData.flatMap((row) => [row.path[0], row.path[row.path.length - 1]].map((position, index) => ({
-        id: `${row.id}-${index}`,
-        position,
-        color: row.color,
-        status: row.status,
-      }))),
-      ...(corridorBuildMode
-        ? corridorBuildRoutePoints.map((point, index) => ({
-            id: `corridor-build-point-${index}`,
-            position: [point.lng, point.lat] as [number, number],
-            color: buildVisual.color,
-            status: "building" as const,
-          }))
-        : []),
-    ];
-    const nodeLayer = new ScatterplotLayer<CorridorNodeDeckRow>({
-      id: "transport-corridors-nodes",
-      data: nodeData,
-      pickable: false,
-      getPosition: (row) => row.position,
-      getFillColor: (row): [number, number, number, number] => [...row.color, row.status === "closed" ? 90 : 210],
-      getLineColor: [3, 7, 18, 230],
-      stroked: true,
-      getLineWidth: 1.5,
-      lineWidthUnits: "pixels",
-      getRadius: (row) => (row.id.startsWith("corridor-build-point-") ? 5.5 : 4),
-      radiusUnits: "pixels",
-    });
-    overlay.setProps({ layers: [backgroundLayer, lineLayer, nodeLayer] });
   }, [corridorBuildMode, corridorBuildRoutePoints, corridorBuildTransportMode, corridorDeckData]);
 
   const countryByIdRef = useRef(countryById);
@@ -1994,17 +1711,71 @@ export function MapView({
     ? currentMarketId
     : selectedMarketLensMarketId;
 
-  const provinceIdsByRegion = useMemo(() => {
-    const byRegion = new Map<string, string[]>();
-    for (const [provinceId, meta] of provinceMetaByIdRef.current.entries()) {
-      const regionId = meta.regionId;
-      if (!regionId) continue;
-      const ids = byRegion.get(regionId) ?? [];
-      ids.push(provinceId);
-      byRegion.set(regionId, ids);
-    }
-    return byRegion;
-  }, [provinceIndexVersion]);
+  const mapLensFilterHash = useMemo(() => JSON.stringify({
+    politicalCountryFilter,
+    politicalLens,
+    politicalOnlyMine,
+    politicalOnlyNeutral,
+    politicalShowColonies,
+    marketLens,
+    selectedMarketLensMarketId,
+    populationLens,
+    resourceLens,
+    resourceGoodId,
+    infrastructureLens,
+    diplomacyLens,
+    colonizationLens,
+    militaryLens,
+    showProvinceBorders,
+    divisionLocations: Object.values(divisionsById)
+      .map((division) => `${division.id}:${division.countryId}:${division.provinceId}`)
+      .sort()
+      .join(";"),
+    marketAccessByProvince,
+    regionResourceDepositsByRegion,
+    regionResourceExplorationQueueByRegion,
+    regionColonizationByRegion,
+    colonyProgressByRegion,
+    regionOwnerById,
+    transportInfrastructureCoverage,
+  }), [
+    politicalCountryFilter,
+    politicalLens,
+    politicalOnlyMine,
+    politicalOnlyNeutral,
+    politicalShowColonies,
+    marketLens,
+    selectedMarketLensMarketId,
+    populationLens,
+    resourceLens,
+    resourceGoodId,
+    infrastructureLens,
+    diplomacyLens,
+    colonizationLens,
+    militaryLens,
+    showProvinceBorders,
+    divisionsById,
+    marketAccessByProvince,
+    regionResourceDepositsByRegion,
+    regionResourceExplorationQueueByRegion,
+    regionColonizationByRegion,
+    colonyProgressByRegion,
+    regionOwnerById,
+    transportInfrastructureCoverage,
+  ]);
+
+  const mapLensComputationContext = useMemo(() => ({
+    lensId: activeModeId,
+    worldVersion: turnId,
+    geometryVersion: provinceIndexVersion,
+    filterHash: mapLensFilterHash,
+    perspectiveCountryId: auth?.countryId ?? null,
+    zoomBucket: mapLensZoomBucket,
+    selectedOverlayIds: [] as MapModeId[],
+  }), [activeModeId, auth?.countryId, mapLensFilterHash, mapLensZoomBucket, provinceIndexVersion, turnId]);
+
+  const mapGeometryIndexes = useMemo(() => buildMapGeometryIndexes(provinceMetaByIdRef.current), [provinceIndexVersion]);
+  const provinceIdsByRegion = mapGeometryIndexes.regionIdToProvinceIds;
 
   const regionModeGroups = useMemo(() => {
     const byRegion = provinceIdsByRegion;
@@ -2285,6 +2056,183 @@ export function MapView({
       { ids: [...new Set(selected)], value: "#facc15", opacity: 0.9, lineOpacity: 0.95, lineWidth: 1.7 },
     ].filter((group) => group.ids.length > 0);
   }, [auth?.countryId, divisionsById, selectedDivisionId]);
+
+  const simpleLensPaintPlanOptions = useMemo(() => ({
+    colonizeEmptyPattern: COLONIZE_EMPTY_PATTERN,
+    fillFallbackColor: PROVINCE_TEXTURE_FILL_COLOR,
+    borderFallbackColor: "#64748b",
+    oceanProvinceExpression: IS_OCEAN_PROVINCE_EXPRESSION,
+    oceanFillOpacity: OCEAN_TEXTURE_FILL_OPACITY,
+    showProvinceBorders,
+    mapLensFillOpacity: MAP_LENS_FILL_OPACITY,
+    mapLensBorderOpacity: MAP_LENS_BORDER_OPACITY,
+  }), [showProvinceBorders]);
+
+  const activeComputedMapLens = useMemo(() => {
+    const invalidationSignature = [activeModeId, String(turnId), String(provinceIndexVersion), mapLensFilterHash, auth?.countryId ?? "none"].join("|");
+    if (invalidationSignature !== previousLensInvalidationSignatureRef.current) {
+      previousLensInvalidationSignatureRef.current = invalidationSignature;
+      mapLensCacheRef.current.invalidateAffected(new Set([activeModeId, String(turnId), String(provinceIndexVersion), mapLensFilterHash, auth?.countryId ?? "none"]));
+      mapLensMetricsRef.current.recordInvalidation();
+    }
+    const cached = mapLensCacheRef.current.get(mapLensComputationContext);
+    if (cached) {
+      mapLensMetricsRef.current.recordCacheHit();
+      return cached;
+    }
+    mapLensMetricsRef.current.recordCacheMiss();
+    const divisions = Object.values(divisionsById).map((division) => ({ countryId: division.countryId, provinceId: division.provinceId }));
+    const computed = mapLensMetricsRef.current.measure(() => {
+      const paintPlan = (() => {
+        if (activeModeId === "political") {
+          return createPoliticalLensPaintPlan({
+            politicalLens,
+            effectiveFilterCountryId: effectivePoliticalFilterCountryId,
+            onlyMine: politicalOnlyMine,
+            onlyNeutral: politicalOnlyNeutral,
+            showColonies: politicalShowColonies,
+            mutedFillColor: mixHexColor(PROVINCE_TEXTURE_FILL_COLOR, "#e8d5ad", 0.34),
+            colonizeStripePattern: COLONIZE_STRIPES_PATTERN,
+            options: simpleLensPaintPlanOptions,
+          });
+        }
+        if (activeModeId === "regions") return createRegionsLensPaintPlan(regionModeGroups, simpleLensPaintPlanOptions);
+        if (activeModeId === "provinceColors") return createProvinceColorsLensPaintPlan(simpleLensPaintPlanOptions);
+        if (activeModeId === "diplomacy") {
+          const currentCountryId = auth?.countryId ?? null;
+          const treatyCountryIds = new Set<string>();
+          for (const agreement of infrastructureTransitAgreements) {
+            if (!agreement.active) continue;
+            if (diplomacyLens !== "treaties" && currentCountryId && agreement.fromCountryId !== currentCountryId && agreement.toCountryId !== currentCountryId) continue;
+            treatyCountryIds.add(agreement.fromCountryId);
+            treatyCountryIds.add(agreement.toCountryId);
+          }
+          const treatyProvinceIds = Object.entries(displayOwnerByProvince).filter(([, ownerId]) => treatyCountryIds.has(ownerId)).map(([provinceId]) => provinceId);
+          return createGroupedLensPaintPlan([{ ids: treatyProvinceIds, value: diplomacyLens === "treaties" ? "#facc15" : diplomacyLens === "transit" ? "#38bdf8" : "#a78bfa", lineWidth: 1.25 }], simpleLensPaintPlanOptions);
+        }
+        if (activeModeId === "colonization") {
+          if (colonizationLens === "cost") return createColonizationCostPaintPlan(simpleLensPaintPlanOptions, COLONIZE_STRIPES_PATTERN);
+          const group = colonizationModeGroups.find((candidate) =>
+            (colonizationLens === "available" && candidate.value === "#4ade80") ||
+            (colonizationLens === "ownRaces" && candidate.value === "#5C84FF") ||
+            (colonizationLens === "foreignRaces" && candidate.value === "#EF9D6E") ||
+            (colonizationLens === "blocked" && candidate.value === "#b91c1c"),
+          );
+          const stripeOptions = { ...simpleLensPaintPlanOptions, colonizeEmptyPattern: colonizationLens === "ownRaces" || colonizationLens === "foreignRaces" ? COLONIZE_STRIPES_PATTERN : COLONIZE_EMPTY_PATTERN };
+          return createGroupedLensPaintPlan(group ? [{ ids: group.ids, value: group.value, opacity: MAP_LENS_FILL_OPACITY, lineOpacity: MAP_LENS_BORDER_OPACITY, lineWidth: 1.1 }] : [], stripeOptions);
+        }
+        if (activeModeId === "markets") {
+          const capitalIds = marketsCatalog.flatMap((market) => market.capitalProvinceId ? [market.capitalProvinceId] : []);
+          const selectedMemberIds = effectiveSelectedMarketId ? [...marketIdByProvince.entries()].filter(([, marketId]) => marketId === effectiveSelectedMarketId).map(([provinceId]) => provinceId) : [];
+          const fillGroups = marketLens === "capitals"
+            ? [{ ids: capitalIds, value: "#facc15" }]
+            : marketLens === "selectedMarketMembers"
+              ? [{ ids: selectedMemberIds, value: effectiveSelectedMarketId ? (marketColorById.get(effectiveSelectedMarketId) ?? stableMarketColor(effectiveSelectedMarketId)) : "#86efac" }]
+              : marketProvinceColorGroups;
+          return createGroupedLensPaintPlan(fillGroups, simpleLensPaintPlanOptions, PROVINCE_TEXTURE_FILL_OPACITY, 0.28);
+        }
+        if (activeModeId === "infrastructure") {
+          if (isTransportInfrastructureLens(infrastructureLens)) return createInfrastructureCoveragePaintPlan(transportInfrastructureCoverage, simpleLensPaintPlanOptions);
+          const disconnectedIds: string[] = [];
+          const accessConnectedIds: string[] = [];
+          const accessDisconnectedIds: string[] = [];
+          const highAccessIds: string[] = [];
+          const mediumAccessIds: string[] = [];
+          const lowAccessIds: string[] = [];
+          for (const [provinceId, access] of Object.entries(marketAccessByProvince)) {
+            if (access.isWorldAccessPoint && access.isConnectedWorldAccessPoint) accessConnectedIds.push(provinceId);
+            else if (access.isWorldAccessPoint) accessDisconnectedIds.push(provinceId);
+            else if (access.connectedToCapital) {
+              const marketAccessRatio = Math.max(0, Math.min(1, Number(access.marketAccess ?? 1)));
+              if (marketAccessRatio >= 0.85) highAccessIds.push(provinceId);
+              else if (marketAccessRatio >= 0.45) mediumAccessIds.push(provinceId);
+              else lowAccessIds.push(provinceId);
+            } else disconnectedIds.push(provinceId);
+          }
+          return createGroupedLensPaintPlan([
+            { ids: accessConnectedIds, value: "#22c55e", opacity: MAP_LENS_FILL_OPACITY, lineOpacity: MAP_LENS_FILL_OPACITY, lineWidth: 1.4 },
+            { ids: accessDisconnectedIds, value: "#f97316", opacity: MAP_LENS_FILL_OPACITY, lineOpacity: MAP_LENS_FILL_OPACITY, lineWidth: 1.4 },
+            { ids: disconnectedIds, value: "#991b1b", opacity: MAP_LENS_FILL_OPACITY, lineOpacity: MAP_LENS_FILL_OPACITY },
+            { ids: highAccessIds, value: "#2563eb", opacity: 0.5, lineOpacity: 0.5 },
+            { ids: mediumAccessIds, value: "#f59e0b", opacity: 0.68, lineOpacity: 0.68 },
+            { ids: lowAccessIds, value: "#dc2626", opacity: MAP_LENS_FILL_OPACITY, lineOpacity: MAP_LENS_FILL_OPACITY },
+          ], simpleLensPaintPlanOptions, PROVINCE_TEXTURE_FILL_OPACITY, 0);
+        }
+        if (activeModeId === "population") return createPopulationLensPaintPlan(simpleLensPaintPlanOptions);
+        if (activeModeId === "resources") {
+          const explorationIds = new Set<string>();
+          for (const [regionId, queue] of Object.entries(regionResourceExplorationQueueByRegion)) {
+            if (queue.length > 0) for (const provinceId of provinceIdsByRegion.get(regionId) ?? []) explorationIds.add(provinceId);
+          }
+          if (resourceLens === "exploration") return createGroupedLensPaintPlan([{ ids: [...explorationIds], value: "#38bdf8", lineWidth: 0.9 }], simpleLensPaintPlanOptions, PROVINCE_TEXTURE_FILL_OPACITY, 0);
+          const selectedResourceColorPairs: unknown[] = [];
+          const selectedResourceIds: string[] = [];
+          const otherDepositIds: string[] = [];
+          for (const [regionId, deposits] of Object.entries(regionResourceDepositsByRegion)) {
+            const normalizedDeposits = deposits.map((deposit) => ({ ...deposit, amount: Math.max(0, Number(deposit.amount ?? 0)) })).filter((deposit) => deposit.amount > 0);
+            if (normalizedDeposits.length === 0) continue;
+            const topDeposit = [...normalizedDeposits].sort((a, b) => b.amount - a.amount)[0] ?? null;
+            const selectedDeposit = resourceGoodId === "all" ? topDeposit : (normalizedDeposits.find((deposit) => deposit.goodId === resourceGoodId) ?? null);
+            if (selectedDeposit) {
+              for (const provinceId of provinceIdsByRegion.get(regionId) ?? []) {
+                selectedResourceIds.push(provinceId);
+                selectedResourceColorPairs.push(provinceId, resourceColorByGoodId.get(selectedDeposit.goodId) ?? stableResourceColor(selectedDeposit.goodId));
+              }
+            } else otherDepositIds.push(...(provinceIdsByRegion.get(regionId) ?? []));
+          }
+          return createResourcesDepositsPaintPlan({ selectedResourceColorPairs, selectedResourceIds, otherDepositIds, options: simpleLensPaintPlanOptions });
+        }
+        if (activeModeId === "military") return createMilitaryLensPaintPlan(divisions, auth?.countryId ?? null, simpleLensPaintPlanOptions);
+        return null;
+      })();
+      return {
+        context: mapLensComputationContext,
+        entityLevel: activeModeConfig.defaultEntityLevel,
+        paintPlan,
+        entityColors: new Map<string, string>(),
+        tooltipDataByEntity: new Map(),
+        affectedEntityIds: new Set([activeModeId, String(turnId), String(provinceIndexVersion), mapLensFilterHash, auth?.countryId ?? "none"]),
+      };
+    });
+    mapLensCacheRef.current.set(computed);
+    return computed;
+  }, [
+    activeModeConfig.defaultEntityLevel,
+    activeModeId,
+    auth?.countryId,
+    colonizationLens,
+    colonizationModeGroups,
+    diplomacyLens,
+    displayOwnerByProvince,
+    divisionsById,
+    effectivePoliticalFilterCountryId,
+    effectiveSelectedMarketId,
+    infrastructureLens,
+    infrastructureTransitAgreements,
+    mapLensComputationContext,
+    mapLensFilterHash,
+    marketAccessByProvince,
+    marketColorById,
+    marketIdByProvince,
+    marketLens,
+    marketProvinceColorGroups,
+    marketsCatalog,
+    politicalLens,
+    politicalOnlyMine,
+    politicalOnlyNeutral,
+    politicalShowColonies,
+    provinceIdsByRegion,
+    provinceIndexVersion,
+    regionModeGroups,
+    regionResourceDepositsByRegion,
+    regionResourceExplorationQueueByRegion,
+    resourceColorByGoodId,
+    resourceGoodId,
+    resourceLens,
+    simpleLensPaintPlanOptions,
+    transportInfrastructureCoverage,
+    turnId,
+  ]);
   const currentCountryActiveColonizationTargets = useMemo(() => {
     if (!auth?.countryId) {
       return new Set<string>();
@@ -3116,707 +3064,23 @@ export function MapView({
     prevPopulationMapProvinceIdsRef.current = nextPopulationMapIds;
 
     if (corridorBuildMode) {
-      const selectedRouteIds = corridorBuildProvinceIds;
       const modeColor = TRANSPORT_CORRIDOR_MODE_OPTIONS.find((mode) => mode.id === corridorBuildTransportMode)?.color ?? "#a78bfa";
-      map.setPaintProperty("province-fill", "fill-color", buildProvinceMatchExpression([
-        { ids: selectedRouteIds, value: modeColor },
-      ], ["case", ["boolean", ["feature-state", "isOwnedByCurrent"], false], ["feature-state", "ownerColor"], PROVINCE_TEXTURE_FILL_COLOR]));
-      map.setPaintProperty("province-fill", "fill-opacity", buildProvinceMatchExpression([
-        { ids: selectedRouteIds, value: MAP_LENS_FILL_OPACITY },
-      ], ["case", ["boolean", ["feature-state", "isOwnedByCurrent"], false], MAP_LENS_FILL_OPACITY, IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, PROVINCE_TEXTURE_FILL_OPACITY]));
-      map.setPaintProperty("province-colonize-stripes", "fill-pattern", COLONIZE_EMPTY_PATTERN);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-      map.setPaintProperty("province-colonize-ring", "line-width", 0);
-      map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-      map.setPaintProperty("province-line", "line-color", buildProvinceMatchExpression([
-        { ids: selectedRouteIds, value: modeColor },
-      ], ["case", ["boolean", ["feature-state", "isOwnedByCurrent"], false], ["feature-state", "ownerColor"], "#94a3b8"]));
-      map.setPaintProperty("province-line", "line-width", buildProvinceMatchExpression([
-        { ids: selectedRouteIds, value: 1.6 },
-      ], 0.85));
-      map.setPaintProperty("province-line", "line-opacity", MAP_LENS_BORDER_OPACITY);
+      applyMapLensPaintPlan(map, createCorridorBuildPaintPlan({
+        selectedRouteIds: corridorBuildProvinceIds,
+        modeColor,
+        fillFallbackColor: PROVINCE_TEXTURE_FILL_COLOR,
+        borderFallbackColor: "#94a3b8",
+        oceanProvinceExpression: IS_OCEAN_PROVINCE_EXPRESSION,
+        oceanFillOpacity: OCEAN_TEXTURE_FILL_OPACITY,
+        fillOpacity: MAP_LENS_FILL_OPACITY,
+        borderOpacity: MAP_LENS_BORDER_OPACITY,
+        colonizeEmptyPattern: COLONIZE_EMPTY_PATTERN,
+      }));
       return;
     }
 
-    if (activeModeId === "political") {
-      const politicalMutedConditions: unknown[] = [];
-      if (effectivePoliticalFilterCountryId != null) {
-        politicalMutedConditions.push([
-          "any",
-          ["all", ["boolean", ["feature-state", "isOwned"], false], ["!", ["boolean", ["feature-state", "isOwnedByPoliticalFilter"], false]]],
-          ["all", ["boolean", ["feature-state", "isColonizing"], false], ["!", ["boolean", ["feature-state", "isColonizedByPoliticalFilter"], false]]],
-        ]);
-      }
-      if (politicalLens === "mine" || politicalOnlyMine) {
-        politicalMutedConditions.push(["!", ["boolean", ["feature-state", "isOwnedByCurrent"], false]]);
-      }
-      if (politicalOnlyNeutral) {
-        politicalMutedConditions.push(["!", ["boolean", ["feature-state", "isNeutral"], false]]);
-      }
-      if (politicalLens === "colonies") {
-        politicalMutedConditions.push(["!", ["boolean", ["feature-state", "isColonizing"], false]]);
-      }
-      const politicalColoniesExpression: unknown = politicalShowColonies
-        ? ["boolean", ["feature-state", "isColonizing"], false]
-        : false;
-      const politicalMutedExpression =
-        politicalMutedConditions.length === 0
-          ? false
-          : politicalMutedConditions.length === 1
-            ? politicalMutedConditions[0]
-            : ["any", ...politicalMutedConditions];
-
-      if (politicalLens === "owners") {
-        map.setPaintProperty("province-fill", "fill-color", [
-          "case",
-          politicalMutedExpression,
-          mixHexColor(PROVINCE_TEXTURE_FILL_COLOR, "#e8d5ad", 0.34),
-          ["boolean", ["feature-state", "isOwned"], false],
-          ["coalesce", ["feature-state", "ownerMapColor"], "#d8c8aa"],
-          politicalColoniesExpression,
-          ["coalesce", ["feature-state", "colonizeLeadLightColor"], "#cbd5e1"],
-          PROVINCE_TEXTURE_FILL_COLOR,
-        ]);
-        map.setPaintProperty("province-fill", "fill-opacity", [
-          "case",
-          politicalMutedExpression,
-          0.18,
-          ["boolean", ["feature-state", "isOwned"], false],
-          0.68,
-          politicalColoniesExpression,
-          0.62,
-          ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, PROVINCE_TEXTURE_FILL_OPACITY],
-        ]);
-        map.setPaintProperty("province-colonize-stripes", "fill-pattern", [
-          "case",
-          politicalColoniesExpression,
-          COLONIZE_STRIPES_PATTERN,
-          COLONIZE_EMPTY_PATTERN,
-        ]);
-        map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-        map.setPaintProperty("province-colonize-ring", "line-color", ["coalesce", ["feature-state", "colonizeLeadColor"], "#93c5fd"]);
-        map.setPaintProperty("province-colonize-ring", "line-width", 0);
-        map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-        map.setPaintProperty("province-line", "line-color", [
-          "case",
-          politicalMutedExpression,
-          "#a99b83",
-          ["boolean", ["feature-state", "isOwned"], false],
-          ["coalesce", ["feature-state", "ownerMapBorderColor"], "#7c6f5d"],
-          politicalColoniesExpression,
-          ["coalesce", ["feature-state", "colonizeLeadBorderColor"], "#64748b"],
-          "#9ca3af",
-        ]);
-        map.setPaintProperty("province-line", "line-width", [
-          "interpolate",
-          ["linear"],
-          ["zoom"],
-          0,
-          0,
-          2.4,
-          0.12,
-          4.2,
-          0.42,
-          6.5,
-          0.95,
-        ]);
-        map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? [
-          "case",
-          politicalMutedExpression,
-          0.1,
-          ["boolean", ["feature-state", "isOwned"], false],
-          [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            0,
-            0.015,
-            2.2,
-            0.045,
-            4,
-            0.18,
-            6.5,
-            0.54,
-          ],
-          politicalColoniesExpression,
-          0.34,
-          ["case", IS_OCEAN_PROVINCE_EXPRESSION, 0.05, 0.12],
-        ] : 0);
-        return;
-      }
-
-      map.setPaintProperty("province-fill", "fill-color", [
-        "case",
-        politicalMutedExpression,
-        PROVINCE_TEXTURE_FILL_COLOR,
-        ["boolean", ["feature-state", "isOwned"], false],
-        ["coalesce", ["feature-state", "ownerColor"], "#d1d5db"],
-        politicalColoniesExpression,
-        ["coalesce", ["feature-state", "colonizeLeadLightColor"], "#cbd5e1"],
-        PROVINCE_TEXTURE_FILL_COLOR,
-      ]);
-      map.setPaintProperty("province-fill", "fill-opacity", [
-        "case",
-        politicalMutedExpression,
-        0.28,
-        ["boolean", ["feature-state", "isOwned"], false],
-        MAP_LENS_FILL_OPACITY,
-        politicalColoniesExpression,
-        MAP_LENS_FILL_OPACITY,
-        ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, PROVINCE_TEXTURE_FILL_OPACITY],
-      ]);
-      map.setPaintProperty("province-colonize-stripes", "fill-pattern", [
-        "case",
-        politicalColoniesExpression,
-        COLONIZE_STRIPES_PATTERN,
-        COLONIZE_EMPTY_PATTERN,
-      ]);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-      map.setPaintProperty("province-colonize-ring", "line-color", ["coalesce", ["feature-state", "colonizeLeadColor"], "#93c5fd"]);
-      map.setPaintProperty("province-colonize-ring", "line-width", 0);
-      map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-      map.setPaintProperty("province-line", "line-color", [
-        "case",
-        politicalMutedExpression,
-        PROVINCE_TEXTURE_FILL_COLOR,
-        ["boolean", ["feature-state", "isOwned"], false],
-        ["coalesce", ["feature-state", "ownerColor"], "#d1d5db"],
-        politicalColoniesExpression,
-        ["coalesce", ["feature-state", "colonizeLeadLightColor"], "#cbd5e1"],
-        "#9ca3af",
-      ]);
-      map.setPaintProperty("province-line", "line-width", 1.1);
-      map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? [
-        "case",
-        politicalMutedExpression,
-        0.28,
-        ["boolean", ["feature-state", "isOwned"], false],
-        MAP_LENS_FILL_OPACITY,
-        politicalColoniesExpression,
-        MAP_LENS_FILL_OPACITY,
-        ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, PROVINCE_TEXTURE_FILL_OPACITY],
-      ] : 0);
-      return;
-    }
-
-    if (activeModeId === "regions") {
-      map.setPaintProperty("province-fill", "fill-color", ["coalesce", ["feature-state", "regionMapColor"], PROVINCE_TEXTURE_FILL_COLOR]);
-      map.setPaintProperty("province-fill", "fill-opacity", buildProvinceMatchExpression(
-        regionModeGroups.map((group) => ({ ids: group.ids, value: 0.72 })),
-        ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, 0.12],
-      ));
-      map.setPaintProperty("province-colonize-stripes", "fill-pattern", COLONIZE_EMPTY_PATTERN);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-      map.setPaintProperty("province-colonize-ring", "line-width", 0);
-      map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-      map.setPaintProperty("province-line", "line-color", ["coalesce", ["feature-state", "regionMapBorderColor"], "#64748b"]);
-      map.setPaintProperty("province-line", "line-width", [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        0,
-        0.2,
-        3,
-        0.55,
-        6,
-        1.2,
-      ]);
-      map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? 0.72 : 0);
-      return;
-    }
-
-    if (activeModeId === "provinceColors") {
-      map.setPaintProperty("province-fill", "fill-color", ["coalesce", ["feature-state", "provinceMapColor"], PROVINCE_TEXTURE_FILL_COLOR]);
-      map.setPaintProperty("province-fill", "fill-opacity", ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, 0.72]);
-      map.setPaintProperty("province-colonize-stripes", "fill-pattern", COLONIZE_EMPTY_PATTERN);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-      map.setPaintProperty("province-colonize-ring", "line-width", 0);
-      map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-      map.setPaintProperty("province-line", "line-color", ["coalesce", ["feature-state", "provinceMapBorderColor"], "#64748b"]);
-      map.setPaintProperty("province-line", "line-width", 0.9);
-      map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? 0.62 : 0);
-      return;
-    }
-
-    if (activeModeId === "diplomacy") {
-      const currentCountryId = auth?.countryId ?? null;
-      const treatyCountryIds = new Set<string>();
-      for (const agreement of infrastructureTransitAgreements) {
-        if (!agreement.active) continue;
-        if (diplomacyLens !== "treaties" && currentCountryId && agreement.fromCountryId !== currentCountryId && agreement.toCountryId !== currentCountryId) {
-          continue;
-        }
-        treatyCountryIds.add(agreement.fromCountryId);
-        treatyCountryIds.add(agreement.toCountryId);
-      }
-      const treatyProvinceIds = Object.entries(ownerByProvince)
-        .filter(([, ownerId]) => treatyCountryIds.has(ownerId))
-        .map(([provinceId]) => provinceId);
-      map.setPaintProperty("province-fill", "fill-color", buildProvinceMatchExpression([
-        { ids: treatyProvinceIds, value: diplomacyLens === "treaties" ? "#facc15" : diplomacyLens === "transit" ? "#38bdf8" : "#a78bfa" },
-      ], PROVINCE_TEXTURE_FILL_COLOR));
-      map.setPaintProperty("province-fill", "fill-opacity", buildProvinceMatchExpression([
-        { ids: treatyProvinceIds, value: MAP_LENS_FILL_OPACITY },
-      ], ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, 0.16]));
-      map.setPaintProperty("province-colonize-stripes", "fill-pattern", COLONIZE_EMPTY_PATTERN);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-      map.setPaintProperty("province-colonize-ring", "line-width", 0);
-      map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-      map.setPaintProperty("province-line", "line-color", buildProvinceMatchExpression([
-        { ids: treatyProvinceIds, value: diplomacyLens === "treaties" ? "#facc15" : diplomacyLens === "transit" ? "#38bdf8" : "#a78bfa" },
-      ], "#64748b"));
-      map.setPaintProperty("province-line", "line-width", buildProvinceMatchExpression([
-        { ids: treatyProvinceIds, value: 1.25 },
-      ], 0.75));
-      map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? buildProvinceMatchExpression([
-        { ids: treatyProvinceIds, value: MAP_LENS_BORDER_OPACITY },
-      ], 0.12) : 0);
-      return;
-    }
-
-    if (activeModeId === "colonization") {
-      if (colonizationLens !== "cost") {
-        const availableIds: string[] = [];
-        const ownRaceIds: string[] = [];
-        const foreignRaceIds: string[] = [];
-        const blockedIds: string[] = [];
-        for (const regionId of new Set([...Object.keys(regionColonizationByRegion), ...Object.keys(progressByProvince)])) {
-          const provinceIds = provinceIdsByRegion.get(regionId) ?? [];
-          if (provinceIds.length === 0) continue;
-          const ownerId = regionOwnerById[regionId] ?? null;
-          const cfg = regionColonizationByRegion[regionId] ?? { cost: 100, disabled: false };
-          const progress = progressByProvince[regionId] ?? {};
-          if (cfg.disabled) blockedIds.push(...provinceIds);
-          if (!ownerId && !cfg.disabled) availableIds.push(...provinceIds);
-          if (!ownerId && auth?.countryId && progress[auth.countryId] != null) ownRaceIds.push(...provinceIds);
-          if (!ownerId && Object.keys(progress).some((countryId) => countryId !== auth?.countryId)) foreignRaceIds.push(...provinceIds);
-        }
-        const lensIds =
-          colonizationLens === "available" ? availableIds :
-          colonizationLens === "ownRaces" ? ownRaceIds :
-          colonizationLens === "foreignRaces" ? foreignRaceIds :
-          blockedIds;
-        const lensColor =
-          colonizationLens === "available" ? "#4ade80" :
-          colonizationLens === "ownRaces" ? "#5C84FF" :
-          colonizationLens === "foreignRaces" ? "#EF9D6E" :
-          "#b91c1c";
-        map.setPaintProperty("province-fill", "fill-color", buildProvinceMatchExpression([{ ids: lensIds, value: lensColor }], PROVINCE_TEXTURE_FILL_COLOR));
-        map.setPaintProperty("province-fill", "fill-opacity", buildProvinceMatchExpression([{ ids: lensIds, value: MAP_LENS_FILL_OPACITY }], ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, 0.16]));
-        map.setPaintProperty("province-colonize-stripes", "fill-pattern", colonizationLens === "ownRaces" || colonizationLens === "foreignRaces" ? COLONIZE_STRIPES_PATTERN : COLONIZE_EMPTY_PATTERN);
-        map.setPaintProperty("province-colonize-stripes", "fill-opacity", colonizationLens === "ownRaces" || colonizationLens === "foreignRaces" ? buildProvinceMatchExpression([{ ids: lensIds, value: 0.58 }], 0) : 0);
-        map.setPaintProperty("province-colonize-ring", "line-width", 0);
-        map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-        map.setPaintProperty("province-line", "line-color", buildProvinceMatchExpression([{ ids: lensIds, value: lensColor }], "#64748b"));
-        map.setPaintProperty("province-line", "line-width", 1.1);
-        map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? buildProvinceMatchExpression([{ ids: lensIds, value: MAP_LENS_BORDER_OPACITY }], 0.12) : 0);
-        return;
-      }
-      map.setPaintProperty("province-fill", "fill-color", [
-        "case",
-        ["boolean", ["feature-state", "colonizeDisabled"], false],
-        "#b91c1c",
-        ["boolean", ["feature-state", "isOwnedByCurrent"], false],
-        "#4800FF",
-        ["boolean", ["feature-state", "isOwned"], false],
-        "#C14D00",
-        ["boolean", ["feature-state", "hasOwnColony"], false],
-        "#5C84FF",
-        ["boolean", ["feature-state", "hasForeignColony"], false],
-        "#EF9D6E",
-        ["step", ["coalesce", ["feature-state", "colonizeCost"], 100], "#d1fae5", 50, "#86efac", 100, "#4ade80", 200, "#16a34a", 350, "#166534"],
-      ]);
-      map.setPaintProperty("province-fill", "fill-opacity", [
-        "case",
-        ["boolean", ["feature-state", "colonizeDisabled"], false],
-        MAP_LENS_FILL_OPACITY,
-        ["boolean", ["feature-state", "isOwned"], false],
-        0.7,
-        MAP_LENS_FILL_OPACITY,
-      ]);
-      map.setPaintProperty("province-colonize-stripes", "fill-pattern", [
-        "case",
-        ["boolean", ["feature-state", "hasOwnColony"], false],
-        COLONIZE_STRIPES_PATTERN,
-        ["boolean", ["feature-state", "hasForeignColony"], false],
-        COLONIZE_STRIPES_PATTERN,
-        COLONIZE_EMPTY_PATTERN,
-      ]);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", [
-        "case",
-        ["boolean", ["feature-state", "hasOwnColony"], false],
-        0.62,
-        ["boolean", ["feature-state", "hasForeignColony"], false],
-        0.45,
-        0,
-      ]);
-      map.setPaintProperty("province-line", "line-color", [
-        "case",
-        ["boolean", ["feature-state", "hasQueuedOwnColonizeOrder"], false],
-        "#CE9EFF",
-        ["boolean", ["feature-state", "hasOwnColony"], false],
-        "#5C84FF",
-        ["boolean", ["feature-state", "hasForeignColony"], false],
-        "#EF9D6E",
-        ["boolean", ["feature-state", "colonizeDisabled"], false],
-        "#b91c1c",
-        ["boolean", ["feature-state", "isOwnedByCurrent"], false],
-        "#4800FF",
-        ["boolean", ["feature-state", "isOwned"], false],
-        "#C14D00",
-        ["step", ["coalesce", ["feature-state", "colonizeCost"], 100], "#d1fae5", 50, "#86efac", 100, "#4ade80", 200, "#16a34a", 350, "#166534"],
-      ]);
-      map.setPaintProperty("province-line", "line-width", 1.2);
-      map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? [
-        "case",
-        ["boolean", ["feature-state", "colonizeDisabled"], false],
-        MAP_LENS_FILL_OPACITY,
-        ["boolean", ["feature-state", "isOwned"], false],
-        0.7,
-        MAP_LENS_FILL_OPACITY,
-      ] : 0);
-      map.setPaintProperty("province-colonize-ring", "line-width", 0);
-      map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", [
-        "case",
-        ["boolean", ["feature-state", "hasQueuedOwnColonizeOrder"], false],
-        0.72,
-        ["boolean", ["feature-state", "hasOwnColony"], false],
-        0.62,
-        ["boolean", ["feature-state", "hasForeignColony"], false],
-        0.45,
-        0,
-      ]);
-      return;
-    }
-
-    if (activeModeId === "markets") {
-      const capitalIds = marketsCatalog.flatMap((market) => market.capitalProvinceId ? [market.capitalProvinceId] : []);
-      const selectedMemberIds = effectiveSelectedMarketId
-        ? [...marketIdByProvince.entries()].filter(([, marketId]) => marketId === effectiveSelectedMarketId).map(([provinceId]) => provinceId)
-        : [];
-      const fillGroups =
-        marketLens === "capitals"
-          ? [{ ids: capitalIds, value: "#facc15" }]
-          : marketLens === "selectedMarketMembers"
-            ? [{ ids: selectedMemberIds, value: effectiveSelectedMarketId ? (marketColorById.get(effectiveSelectedMarketId) ?? stableMarketColor(effectiveSelectedMarketId)) : "#86efac" }]
-            : marketProvinceColorGroups;
-      map.setPaintProperty("province-fill", "fill-color", buildProvinceMatchExpression(fillGroups, PROVINCE_TEXTURE_FILL_COLOR));
-      map.setPaintProperty("province-fill", "fill-opacity", buildProvinceMatchExpression(
-        fillGroups.map((group) => ({ ids: group.ids, value: MAP_LENS_FILL_OPACITY })),
-        ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, PROVINCE_TEXTURE_FILL_OPACITY],
-      ));
-      map.setPaintProperty("province-colonize-stripes", "fill-pattern", COLONIZE_EMPTY_PATTERN);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-      map.setPaintProperty("province-colonize-ring", "line-width", 0);
-      map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-      map.setPaintProperty("province-line", "line-color", buildProvinceMatchExpression(
-        fillGroups,
-        "#94a3b8",
-      ));
-      map.setPaintProperty("province-line", "line-width", 0.95);
-      map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? buildProvinceMatchExpression(
-        fillGroups.map((group) => ({ ids: group.ids, value: MAP_LENS_FILL_OPACITY })),
-        0.28,
-      ) : 0.28);
-      return;
-    }
-
-    if (activeModeId === "infrastructure") {
-      const disconnectedIds: string[] = [];
-      const accessConnectedIds: string[] = [];
-      const accessDisconnectedIds: string[] = [];
-      const highAccessIds: string[] = [];
-      const mediumAccessIds: string[] = [];
-      const lowAccessIds: string[] = [];
-      for (const [provinceId, access] of Object.entries(marketAccessByProvince)) {
-        if (access.isWorldAccessPoint && access.isConnectedWorldAccessPoint) {
-          accessConnectedIds.push(provinceId);
-        } else if (access.isWorldAccessPoint) {
-          accessDisconnectedIds.push(provinceId);
-        } else if (access.connectedToCapital) {
-          const marketAccessRatio = Math.max(0, Math.min(1, Number(access.marketAccess ?? 1)));
-          if (marketAccessRatio >= 0.85) highAccessIds.push(provinceId);
-          else if (marketAccessRatio >= 0.45) mediumAccessIds.push(provinceId);
-          else lowAccessIds.push(provinceId);
-        } else {
-          disconnectedIds.push(provinceId);
-        }
-      }
-      if (
-        isTransportInfrastructureLens(infrastructureLens)
-      ) {
-        const coverageInput: unknown[] = ["match", ["id"]];
-        const pushCoverage = (ids: string[], value: number) => {
-          if (ids.length > 0) coverageInput.push(ids, value);
-        };
-        pushCoverage(transportInfrastructureCoverage.excellent, 1);
-        pushCoverage(transportInfrastructureCoverage.high, 0.85);
-        pushCoverage(transportInfrastructureCoverage.medium, 0.6);
-        pushCoverage(transportInfrastructureCoverage.low, 0.3);
-        pushCoverage(transportInfrastructureCoverage.critical, 0);
-        pushCoverage(transportInfrastructureCoverage.noDemand, -1);
-        coverageInput.push(-1);
-        const coverageColorExpression: unknown[] = [
-          "case",
-          ["all", ["==", coverageInput, -1], ["boolean", ["feature-state", "isOwnedByCurrent"], false]],
-          "#05070b",
-          ["==", coverageInput, -1],
-          PROVINCE_TEXTURE_FILL_COLOR,
-          [
-            "interpolate",
-            ["linear"],
-            coverageInput,
-            0,
-            "#dc2626",
-            0.5,
-            "#f59e0b",
-            1,
-            "#22c55e",
-          ],
-        ];
-        const coverageOpacityExpression: unknown[] = [
-          "case",
-          ["==", coverageInput, -1],
-          0.18,
-          MAP_LENS_FILL_OPACITY,
-        ];
-        map.setPaintProperty("province-fill", "fill-color", coverageColorExpression);
-        map.setPaintProperty("province-fill", "fill-opacity", ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, coverageOpacityExpression]);
-        map.setPaintProperty("province-colonize-stripes", "fill-pattern", COLONIZE_EMPTY_PATTERN);
-        map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-        map.setPaintProperty("province-colonize-ring", "line-width", 0);
-        map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-        map.setPaintProperty("province-line", "line-color", coverageColorExpression);
-        map.setPaintProperty("province-line", "line-width", 0.9);
-        map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? coverageOpacityExpression : 0);
-        return;
-      }
-
-      map.setPaintProperty("province-fill", "fill-color", buildProvinceMatchExpression([
-          { ids: accessConnectedIds, value: "#22c55e" },
-          { ids: accessDisconnectedIds, value: "#f97316" },
-          { ids: disconnectedIds, value: "#991b1b" },
-          { ids: highAccessIds, value: "#2563eb" },
-          { ids: mediumAccessIds, value: "#f59e0b" },
-          { ids: lowAccessIds, value: "#dc2626" },
-        ], PROVINCE_TEXTURE_FILL_COLOR));
-        map.setPaintProperty("province-fill", "fill-opacity", buildProvinceMatchExpression([
-          { ids: [...accessConnectedIds, ...accessDisconnectedIds], value: MAP_LENS_FILL_OPACITY },
-          { ids: disconnectedIds, value: MAP_LENS_FILL_OPACITY },
-          { ids: highAccessIds, value: 0.5 },
-          { ids: mediumAccessIds, value: 0.68 },
-          { ids: lowAccessIds, value: MAP_LENS_FILL_OPACITY },
-        ], ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, PROVINCE_TEXTURE_FILL_OPACITY]));
-      map.setPaintProperty("province-colonize-stripes", "fill-pattern", COLONIZE_EMPTY_PATTERN);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-      map.setPaintProperty("province-colonize-ring", "line-width", 0);
-      map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-      map.setPaintProperty("province-line", "line-color", buildProvinceMatchExpression([
-        { ids: accessConnectedIds, value: "#22c55e" },
-        { ids: accessDisconnectedIds, value: "#f97316" },
-        { ids: disconnectedIds, value: "#991b1b" },
-        { ids: highAccessIds, value: "#2563eb" },
-        { ids: mediumAccessIds, value: "#f59e0b" },
-        { ids: lowAccessIds, value: "#dc2626" },
-      ], "#94a3b8"));
-      map.setPaintProperty("province-line", "line-width", buildProvinceMatchExpression([
-        { ids: [...accessConnectedIds, ...accessDisconnectedIds], value: 1.4 },
-      ], 0.9));
-      map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? buildProvinceMatchExpression([
-        { ids: [...accessConnectedIds, ...accessDisconnectedIds], value: MAP_LENS_FILL_OPACITY },
-        { ids: disconnectedIds, value: MAP_LENS_FILL_OPACITY },
-        { ids: highAccessIds, value: 0.5 },
-        { ids: mediumAccessIds, value: 0.68 },
-        { ids: lowAccessIds, value: MAP_LENS_FILL_OPACITY },
-      ], 0) : 0);
-      return;
-    }
-
-    if (activeModeId === "population") {
-      map.setPaintProperty("province-fill", "fill-color", [
-        "case",
-        ["boolean", ["feature-state", "hasPopulationMapData"], false],
-        ["coalesce", ["feature-state", "populationMapColor"], PROVINCE_TEXTURE_FILL_COLOR],
-        PROVINCE_TEXTURE_FILL_COLOR,
-      ]);
-      map.setPaintProperty("province-fill", "fill-opacity", [
-        "case",
-        IS_OCEAN_PROVINCE_EXPRESSION,
-        OCEAN_TEXTURE_FILL_OPACITY,
-        ["boolean", ["feature-state", "hasPopulationMapData"], false],
-        ["coalesce", ["feature-state", "populationMapOpacity"], 0.14],
-        0.14,
-      ]);
-      map.setPaintProperty("province-line", "line-color", [
-        "case",
-        ["boolean", ["feature-state", "hasPopulationMapData"], false],
-        ["coalesce", ["feature-state", "populationMapBorderColor"], "#94a3b8"],
-        "#94a3b8",
-      ]);
-      map.setPaintProperty("province-line", "line-width", 0.9);
-      map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? [
-        "case",
-        ["boolean", ["feature-state", "hasPopulationMapData"], false],
-        ["coalesce", ["feature-state", "populationMapBorderOpacity"], 0.08],
-        0.08,
-      ] : 0);
-      map.setPaintProperty("province-colonize-stripes", "fill-pattern", COLONIZE_EMPTY_PATTERN);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-      map.setPaintProperty("province-colonize-ring", "line-width", 0);
-      map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-      return;
-    }
-
-    if (activeModeId === "resources") {
-      const selectedResourceColorPairs: unknown[] = [];
-      const selectedResourceIds: string[] = [];
-      const otherDepositIds: string[] = [];
-      const explorationIds = new Set<string>();
-
-      for (const [regionId, queue] of Object.entries(regionResourceExplorationQueueByRegion)) {
-        if (queue.length > 0) {
-          for (const provinceId of provinceIdsByRegion.get(regionId) ?? []) {
-            explorationIds.add(provinceId);
-          }
-        }
-      }
-
-      if (resourceLens === "exploration") {
-        const explorationProvinceIds = [...explorationIds];
-        const explorationFillColor = explorationProvinceIds.length > 0
-          ? ["match", ["id"], explorationProvinceIds, "#38bdf8", PROVINCE_TEXTURE_FILL_COLOR]
-          : PROVINCE_TEXTURE_FILL_COLOR;
-        const explorationFillOpacity = explorationProvinceIds.length > 0
-          ? ["match", ["id"], explorationProvinceIds, MAP_LENS_FILL_OPACITY, ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, PROVINCE_TEXTURE_FILL_OPACITY]]
-          : ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, PROVINCE_TEXTURE_FILL_OPACITY];
-
-        map.setPaintProperty("province-fill", "fill-color", explorationFillColor);
-        map.setPaintProperty("province-fill", "fill-opacity", explorationFillOpacity);
-        map.setPaintProperty("province-colonize-stripes", "fill-pattern", COLONIZE_EMPTY_PATTERN);
-        map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-        map.setPaintProperty("province-colonize-ring", "line-width", 0);
-        map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-        map.setPaintProperty(
-          "province-line",
-          "line-color",
-          explorationProvinceIds.length > 0 ? ["match", ["id"], explorationProvinceIds, "#38bdf8", "#94a3b8"] : "#94a3b8",
-        );
-        map.setPaintProperty("province-line", "line-width", 0.9);
-        map.setPaintProperty(
-          "province-line",
-          "line-opacity",
-          showProvinceBorders
-            ? (explorationProvinceIds.length > 0 ? ["match", ["id"], explorationProvinceIds, MAP_LENS_FILL_OPACITY, 0] : 0)
-            : 0,
-        );
-        return;
-      }
-
-      for (const [regionId, deposits] of Object.entries(regionResourceDepositsByRegion)) {
-        const normalizedDeposits = deposits
-          .map((deposit) => ({
-            ...deposit,
-            amount: Math.max(0, Number(deposit.amount ?? 0)),
-          }))
-          .filter((deposit) => deposit.amount > 0);
-        if (normalizedDeposits.length === 0) continue;
-
-        const topDeposit = [...normalizedDeposits].sort((a, b) => b.amount - a.amount)[0] ?? null;
-        const selectedDeposit =
-          resourceGoodId === "all"
-            ? topDeposit
-            : (normalizedDeposits.find((deposit) => deposit.goodId === resourceGoodId) ?? null);
-
-        if (selectedDeposit) {
-          for (const provinceId of provinceIdsByRegion.get(regionId) ?? []) {
-            selectedResourceIds.push(provinceId);
-            selectedResourceColorPairs.push(
-              provinceId,
-              resourceColorByGoodId.get(selectedDeposit.goodId) ?? stableResourceColor(selectedDeposit.goodId),
-            );
-          }
-        } else {
-          otherDepositIds.push(...(provinceIdsByRegion.get(regionId) ?? []));
-        }
-      }
-
-      const resourceFillColorExpression: unknown[] = ["match", ["id"], ...selectedResourceColorPairs];
-      if (otherDepositIds.length > 0) {
-        resourceFillColorExpression.push(otherDepositIds, "#334155");
-      }
-      const resourceFillColor =
-        resourceFillColorExpression.length > 2
-          ? [...resourceFillColorExpression, PROVINCE_TEXTURE_FILL_COLOR]
-          : PROVINCE_TEXTURE_FILL_COLOR;
-
-      const resourceFillOpacityExpression: unknown[] = ["match", ["id"]];
-      if (selectedResourceIds.length > 0) {
-        resourceFillOpacityExpression.push(selectedResourceIds, MAP_LENS_FILL_OPACITY);
-      }
-      if (otherDepositIds.length > 0) {
-        resourceFillOpacityExpression.push(otherDepositIds, 0.34);
-      }
-      const resourceFillOpacityFallback = ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, PROVINCE_TEXTURE_FILL_OPACITY];
-      const resourceFillOpacity =
-        resourceFillOpacityExpression.length > 2
-          ? [...resourceFillOpacityExpression, resourceFillOpacityFallback]
-          : resourceFillOpacityFallback;
-
-      map.setPaintProperty("province-fill", "fill-color", resourceFillColor);
-      map.setPaintProperty("province-fill", "fill-opacity", resourceFillOpacity);
-      map.setPaintProperty("province-colonize-stripes", "fill-pattern", COLONIZE_EMPTY_PATTERN);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-      map.setPaintProperty("province-colonize-ring", "line-width", 0);
-      map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-      map.setPaintProperty(
-        "province-line",
-        "line-color",
-        resourceFillColorExpression.length > 2 ? [...resourceFillColorExpression, "#94a3b8"] : "#94a3b8",
-      );
-      map.setPaintProperty("province-line", "line-width", 0.9);
-      const resourceLineOpacityExpression: unknown[] = ["match", ["id"]];
-      if (selectedResourceIds.length > 0) {
-        resourceLineOpacityExpression.push(selectedResourceIds, MAP_LENS_FILL_OPACITY);
-      }
-      if (otherDepositIds.length > 0) {
-        resourceLineOpacityExpression.push(otherDepositIds, 0.34);
-      }
-      map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? (
-        resourceLineOpacityExpression.length > 2 ? [...resourceLineOpacityExpression, 0] : 0
-      ) : 0);
-      return;
-    }
-
-    if (activeModeId === "military") {
-      const ownArmyIds: string[] = [];
-      const foreignArmyIds: string[] = [];
-      for (const division of Object.values(divisionsById)) {
-        if (!division.provinceId) continue;
-        if (auth?.countryId && division.countryId === auth.countryId) ownArmyIds.push(division.provinceId);
-        else foreignArmyIds.push(division.provinceId);
-      }
-      map.setPaintProperty("province-fill", "fill-color", buildProvinceMatchExpression([
-        { ids: [...new Set(foreignArmyIds)], value: "#ef4444" },
-        { ids: [...new Set(ownArmyIds)], value: "#22c55e" },
-      ], PROVINCE_TEXTURE_FILL_COLOR));
-      map.setPaintProperty("province-fill", "fill-opacity", buildProvinceMatchExpression([
-        { ids: [...new Set(foreignArmyIds)], value: MAP_LENS_FILL_OPACITY },
-        { ids: [...new Set(ownArmyIds)], value: MAP_LENS_FILL_OPACITY },
-      ], ["case", IS_OCEAN_PROVINCE_EXPRESSION, OCEAN_TEXTURE_FILL_OPACITY, 0.14]));
-      map.setPaintProperty("province-colonize-stripes", "fill-pattern", COLONIZE_EMPTY_PATTERN);
-      map.setPaintProperty("province-colonize-stripes", "fill-opacity", 0);
-      map.setPaintProperty("province-colonize-ring", "line-width", 0);
-      map.setPaintProperty("province-colonize-ring", "line-opacity", 0);
-      map.setPaintProperty("province-line", "line-color", buildProvinceMatchExpression([
-        { ids: [...new Set(foreignArmyIds)], value: "#ef4444" },
-        { ids: [...new Set(ownArmyIds)], value: "#22c55e" },
-      ], "#64748b"));
-      map.setPaintProperty("province-line", "line-width", 1.15);
-      map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? buildProvinceMatchExpression([
-        { ids: [...new Set(foreignArmyIds)], value: MAP_LENS_BORDER_OPACITY },
-        { ids: [...new Set(ownArmyIds)], value: MAP_LENS_BORDER_OPACITY },
-      ], 0.1) : 0);
+    if (activeComputedMapLens.paintPlan) {
+      applyMapLensPaintPlan(map, activeComputedMapLens.paintPlan);
       return;
     }
 
@@ -3831,6 +3095,7 @@ export function MapView({
     map.setPaintProperty("province-line", "line-width", 0.9);
     map.setPaintProperty("province-line", "line-opacity", showProvinceBorders ? Math.min(MAP_LENS_FILL_OPACITY, Number(style.fillOpacity) || MAP_LENS_FILL_OPACITY) : 0);
   }, [
+    activeComputedMapLens,
     activeModeConfig,
     activeModeId,
     auth?.countryId,

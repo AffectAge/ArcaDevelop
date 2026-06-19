@@ -25,6 +25,42 @@ export type UiTextKey =
   | "map.controls.resetView"
   | "map.controls.lockInteraction"
   | "map.controls.unlockInteraction"
+  | "map.mode.political.label"
+  | "map.mode.political.shortLabel"
+  | "map.mode.political.legendOwner"
+  | "map.mode.political.legendOwnerDescription"
+  | "map.mode.political.legendColonization"
+  | "map.mode.political.legendColonizationDescription"
+  | "map.mode.political.legendOutOfFilter"
+  | "map.mode.political.legendOutOfFilterDescription"
+  | "map.mode.diplomacy.label"
+  | "map.mode.diplomacy.shortLabel"
+  | "map.mode.diplomacy.legendLabel"
+  | "map.mode.diplomacy.legendDescription"
+  | "map.mode.markets.label"
+  | "map.mode.markets.shortLabel"
+  | "map.mode.markets.legendLabel"
+  | "map.mode.markets.legendDescription"
+  | "map.mode.population.label"
+  | "map.mode.population.shortLabel"
+  | "map.mode.population.legendLabel"
+  | "map.mode.population.legendDescription"
+  | "map.mode.resources.label"
+  | "map.mode.resources.shortLabel"
+  | "map.mode.resources.legendLabel"
+  | "map.mode.resources.legendDescription"
+  | "map.mode.infrastructure.label"
+  | "map.mode.infrastructure.shortLabel"
+  | "map.mode.infrastructure.legendLabel"
+  | "map.mode.infrastructure.legendDescription"
+  | "map.mode.colonization.label"
+  | "map.mode.colonization.shortLabel"
+  | "map.mode.colonization.legendLabel"
+  | "map.mode.colonization.legendDescription"
+  | "map.mode.military.label"
+  | "map.mode.military.shortLabel"
+  | "map.mode.military.legendLabel"
+  | "map.mode.military.legendDescription"
   | "map.mode.regions.label"
   | "map.mode.regions.shortLabel"
   | "map.mode.regions.legendLabel"
@@ -154,6 +190,42 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.controls.resetView": "Reset center and zoom",
     "map.controls.lockInteraction": "Lock pan/zoom",
     "map.controls.unlockInteraction": "Unlock pan/zoom",
+    "map.mode.political.label": "Political",
+    "map.mode.political.shortLabel": "Countries",
+    "map.mode.political.legendOwner": "Owner",
+    "map.mode.political.legendOwnerDescription": "Country-owner color",
+    "map.mode.political.legendColonization": "Colonization",
+    "map.mode.political.legendColonizationDescription": "Neutral region with an active race",
+    "map.mode.political.legendOutOfFilter": "Outside filter",
+    "map.mode.political.legendOutOfFilterDescription": "Shown when a country filter is active",
+    "map.mode.diplomacy.label": "Diplomacy",
+    "map.mode.diplomacy.shortLabel": "Diplomacy",
+    "map.mode.diplomacy.legendLabel": "Treaties",
+    "map.mode.diplomacy.legendDescription": "Countries linked by active agreements",
+    "map.mode.markets.label": "Markets",
+    "map.mode.markets.shortLabel": "Markets",
+    "map.mode.markets.legendLabel": "Market",
+    "map.mode.markets.legendDescription": "Regions by market membership",
+    "map.mode.population.label": "Population",
+    "map.mode.population.shortLabel": "Population",
+    "map.mode.population.legendLabel": "Metric",
+    "map.mode.population.legendDescription": "State-region demographics and quality of life",
+    "map.mode.resources.label": "Resources",
+    "map.mode.resources.shortLabel": "Resources",
+    "map.mode.resources.legendLabel": "Deposits",
+    "map.mode.resources.legendDescription": "Discovered resources and exploration",
+    "map.mode.infrastructure.label": "Infrastructure",
+    "map.mode.infrastructure.shortLabel": "Infra",
+    "map.mode.infrastructure.legendLabel": "Coverage",
+    "map.mode.infrastructure.legendDescription": "Logistics availability and load",
+    "map.mode.colonization.label": "Colonization",
+    "map.mode.colonization.shortLabel": "Colonies",
+    "map.mode.colonization.legendLabel": "Available",
+    "map.mode.colonization.legendDescription": "Neutral territories available for colonization",
+    "map.mode.military.label": "Military",
+    "map.mode.military.shortLabel": "Army",
+    "map.mode.military.legendLabel": "Armies",
+    "map.mode.military.legendDescription": "Own and foreign divisions",
     "map.mode.regions.label": "Regions",
     "map.mode.regions.shortLabel": "Regions",
     "map.mode.regions.legendLabel": "State region",
@@ -282,6 +354,42 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.controls.resetView": "Сбросить центр и масштаб",
     "map.controls.lockInteraction": "Заблокировать pan/zoom",
     "map.controls.unlockInteraction": "Разблокировать pan/zoom",
+    "map.mode.political.label": "Политическая",
+    "map.mode.political.shortLabel": "Страны",
+    "map.mode.political.legendOwner": "Владелец",
+    "map.mode.political.legendOwnerDescription": "Цвет страны-владельца",
+    "map.mode.political.legendColonization": "Колонизация",
+    "map.mode.political.legendColonizationDescription": "Нейтральный регион с активной гонкой",
+    "map.mode.political.legendOutOfFilter": "Вне фильтра",
+    "map.mode.political.legendOutOfFilterDescription": "Показывается при активном фильтре по стране",
+    "map.mode.diplomacy.label": "Дипломатия",
+    "map.mode.diplomacy.shortLabel": "Дипломатия",
+    "map.mode.diplomacy.legendLabel": "Договоры",
+    "map.mode.diplomacy.legendDescription": "Страны, связанные активными соглашениями",
+    "map.mode.markets.label": "Рынки",
+    "map.mode.markets.shortLabel": "Рынки",
+    "map.mode.markets.legendLabel": "Рынок",
+    "map.mode.markets.legendDescription": "Регионы по рыночной принадлежности",
+    "map.mode.population.label": "Население",
+    "map.mode.population.shortLabel": "Население",
+    "map.mode.population.legendLabel": "Метрика",
+    "map.mode.population.legendDescription": "Демография и качество жизни государственного региона",
+    "map.mode.resources.label": "Ресурсы",
+    "map.mode.resources.shortLabel": "Ресурсы",
+    "map.mode.resources.legendLabel": "Залежи",
+    "map.mode.resources.legendDescription": "Обнаруженные ресурсы и разведка",
+    "map.mode.infrastructure.label": "Инфраструктура",
+    "map.mode.infrastructure.shortLabel": "Инфра",
+    "map.mode.infrastructure.legendLabel": "Покрытие",
+    "map.mode.infrastructure.legendDescription": "Доступность и нагрузка логистики",
+    "map.mode.colonization.label": "Колонизация",
+    "map.mode.colonization.shortLabel": "Колонии",
+    "map.mode.colonization.legendLabel": "Доступно",
+    "map.mode.colonization.legendDescription": "Нейтральные территории для колонизации",
+    "map.mode.military.label": "Армия",
+    "map.mode.military.shortLabel": "Армия",
+    "map.mode.military.legendLabel": "Армии",
+    "map.mode.military.legendDescription": "Свои и чужие дивизии",
     "map.mode.regions.label": "Регионы",
     "map.mode.regions.shortLabel": "Регионы",
     "map.mode.regions.legendLabel": "Государственный регион",

@@ -6,6 +6,7 @@ import { Briefcase, Crosshair, Flag, Gauge, Globe2, Landmark, Pickaxe, Scale, Us
 type MapLensModeOption<T extends string> = {
   id: T;
   label: string;
+  icon?: LucideIcon;
 };
 
 type Props<T extends string> = {
@@ -79,7 +80,7 @@ export function MapLensHud<T extends string>({ modes, activeModeId, activeLensCo
                 aria-pressed={active}
               >
                 {(() => {
-                  const Icon = modeIcons[mode.id] ?? Briefcase;
+                  const Icon = mode.icon ?? modeIcons[mode.id] ?? Briefcase;
                   return <Icon size={20} />;
                 })()}
               </motion.button>

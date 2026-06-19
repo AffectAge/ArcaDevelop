@@ -94,6 +94,8 @@ apps/client/src/
   i18n/
   theme/
   map/
+  map-lenses/
+  map-corridors/
   testing/
 ```
 
@@ -108,6 +110,8 @@ Folder responsibilities:
 - `lib`: small client adapters, API clients, and utilities with clear ownership.
 - `i18n`: localization keys, helpers, and validation.
 - `theme`: scenario theme loading and token application.
+- `map-lenses`: typed map lens definitions, registry, geometry indexes, bounded metrics, and cache helpers shared by map rendering/HUD code.
+- `map-corridors`: transport corridor deck.gl overlays, build-preview paint plans, and corridor-specific map rendering helpers.
 - `map`: map-specific layers, selectors, and rendering helpers.
 - `testing`: client fixtures and test helpers.
 
