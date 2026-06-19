@@ -9,6 +9,8 @@ import { AppButton } from "./ui/AppButton";
 import { AppInput, AppTextarea } from "./ui/AppForm";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard, AppEmptyState, AppSectionHeader } from "./ui/AppSurface";
+import type { UiTextKey } from "../i18n/uiText";
+import { useUiText } from "../i18n/useUiText";
 import {
   adminCreateContentEntry,
   adminDeleteContentEntry,
@@ -32,18 +34,18 @@ type Props = {
 
 const OTHER_INDUSTRY_GROUP_ID = "__other_industry__";
 const GOOD_DISTRIBUTION_OPTIONS = [
-  { value: "tradeable", label: "Обычный товар" },
-  { value: "localOnly", label: "Только локально" },
-  { value: "pipeline", label: "Трубопровод" },
-  { value: "powerGrid", label: "Электросеть" },
-  { value: "service", label: "Услуга" },
+  { value: "tradeable", labelKey: "contentPanel.option.goodDistribution.tradeable" },
+  { value: "localOnly", labelKey: "contentPanel.option.goodDistribution.localOnly" },
+  { value: "pipeline", labelKey: "contentPanel.option.goodDistribution.pipeline" },
+  { value: "powerGrid", labelKey: "contentPanel.option.goodDistribution.powerGrid" },
+  { value: "service", labelKey: "contentPanel.option.goodDistribution.service" },
 ] as const;
 const GOOD_TRANSPORT_OPTIONS = [
-  { value: "land", label: "Суша" },
-  { value: "sea", label: "Море" },
-  { value: "air", label: "Воздух" },
-  { value: "pipeline", label: "Трубопровод" },
-  { value: "powerGrid", label: "Электросеть" },
+  { value: "land", labelKey: "contentPanel.option.transport.land" },
+  { value: "sea", labelKey: "contentPanel.option.transport.sea" },
+  { value: "air", labelKey: "contentPanel.option.transport.air" },
+  { value: "pipeline", labelKey: "contentPanel.option.transport.pipeline" },
+  { value: "powerGrid", labelKey: "contentPanel.option.transport.powerGrid" },
 ] as const;
 type DraftGoodDistributionType = (typeof GOOD_DISTRIBUTION_OPTIONS)[number]["value"];
 type DraftGoodTransportMode = (typeof GOOD_TRANSPORT_OPTIONS)[number]["value"];
@@ -57,291 +59,291 @@ const CONTENT_UI_SCHEMA = {
   categories: [
     {
       id: "cultures",
-      label: "Культуры",
+      labelKey: "contentPanel.category.cultures",
       icon: Palette,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "needs", label: "Потребности", icon: Package },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "needs", labelKey: "contentPanel.section.needs", icon: Package },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "religions",
-      label: "Религии",
+      labelKey: "contentPanel.category.religions",
       icon: ScrollText,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "politics", label: "Влияние", icon: Landmark },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "politics", labelKey: "contentPanel.section.influence", icon: Landmark },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "races",
-      label: "Расы",
+      labelKey: "contentPanel.category.races",
       icon: UserRound,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "politics", label: "Влияние", icon: Landmark },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "politics", labelKey: "contentPanel.section.influence", icon: Landmark },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "resourceCategories",
-      label: "Категории инфраструктуры",
+      labelKey: "contentPanel.category.resourceCategories",
       icon: Package,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "provinceTypes",
-      label: "Типы провинций",
+      labelKey: "contentPanel.category.provinceTypes",
       icon: Landmark,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "provinceClimates",
-      label: "Климаты",
+      labelKey: "contentPanel.category.provinceClimates",
       icon: Flame,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "provinceLandscapes",
-      label: "Ландшафты",
+      labelKey: "contentPanel.category.provinceLandscapes",
       icon: Network,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "provinceContinents",
-      label: "Континенты",
+      labelKey: "contentPanel.category.provinceContinents",
       icon: Landmark,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "provinceStrategicRegions",
-      label: "Стратегические регионы",
+      labelKey: "contentPanel.category.provinceStrategicRegions",
       icon: Network,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "professions",
-      label: "Профессии",
+      labelKey: "contentPanel.category.professions",
       icon: Briefcase,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "economy", label: "Экономика профессии", icon: Factory },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "economy", labelKey: "contentPanel.section.professionEconomy", icon: Factory },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "battalions",
-      label: "Батальоны",
+      labelKey: "contentPanel.category.battalions",
       icon: Shield,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "economy", label: "Характеристики", icon: Shield },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "economy", labelKey: "contentPanel.section.stats", icon: Shield },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "shipTypes",
-      label: "Корабли",
+      labelKey: "contentPanel.category.shipTypes",
       icon: Ship,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "economy", label: "Характеристики", icon: Ship },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "economy", labelKey: "contentPanel.section.stats", icon: Ship },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "aircraftTypes",
-      label: "Самолёты",
+      labelKey: "contentPanel.category.aircraftTypes",
       icon: Plane,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "economy", label: "Характеристики", icon: Plane },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "economy", labelKey: "contentPanel.section.stats", icon: Plane },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "ideologies",
-      label: "Идеологии",
+      labelKey: "contentPanel.category.ideologies",
       icon: Flame,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "politics", label: "Влияние", icon: Landmark },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "politics", labelKey: "contentPanel.section.influence", icon: Landmark },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "interestGroups",
-      label: "Группы интересов",
+      labelKey: "contentPanel.category.interestGroups",
       icon: Landmark,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "politics", label: "Политика", icon: Landmark },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "politics", labelKey: "contentPanel.section.politics", icon: Landmark },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "parties",
-      label: "Партии",
+      labelKey: "contentPanel.category.parties",
       icon: Vote,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "politics", label: "Политика", icon: Landmark },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "politics", labelKey: "contentPanel.section.politics", icon: Landmark },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "lawGroups",
-      label: "Группы законов",
+      labelKey: "contentPanel.category.lawGroups",
       icon: Landmark,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "politics", label: "Политика", icon: Landmark },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "politics", labelKey: "contentPanel.section.politics", icon: Landmark },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "laws",
-      label: "Законы",
+      labelKey: "contentPanel.category.laws",
       icon: ScrollText,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "politics", label: "Политика", icon: Landmark },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "politics", labelKey: "contentPanel.section.politics", icon: Landmark },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "technologies",
-      label: "Технологии",
+      labelKey: "contentPanel.category.technologies",
       icon: Network,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "technology", label: "Древо технологий", icon: Network },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "technology", labelKey: "contentPanel.section.technologyTree", icon: Network },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "buildings",
-      label: "Здания",
+      labelKey: "contentPanel.category.buildings",
       icon: Building2,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "economy", label: "Экономика и производство", icon: Factory },
-        { id: "criteria", label: "Критерии", icon: ScrollText },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "economy", labelKey: "contentPanel.section.economyProduction", icon: Factory },
+        { id: "criteria", labelKey: "contentPanel.section.criteria", icon: ScrollText },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "goods",
-      label: "Товары",
+      labelKey: "contentPanel.category.goods",
       icon: Package,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "economy", label: "Экономика товара", icon: Factory },
-        { id: "exploration", label: "Георазведка", icon: Telescope },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "economy", labelKey: "contentPanel.section.goodEconomy", icon: Factory },
+        { id: "exploration", labelKey: "contentPanel.section.exploration", icon: Telescope },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "companies",
-      label: "Компании",
+      labelKey: "contentPanel.category.companies",
       icon: Briefcase,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "industries",
-      label: "Отрасли",
+      labelKey: "contentPanel.category.industries",
       icon: Factory,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "sectors",
-      label: "Сектора",
+      labelKey: "contentPanel.category.sectors",
       icon: Factory,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "modifiers",
-      label: "Модификаторы",
+      labelKey: "contentPanel.category.modifiers",
       icon: SlidersHorizontal,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "modifiers", label: "Условия и эффекты", icon: SlidersHorizontal },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "modifiers", labelKey: "contentPanel.section.conditionsEffects", icon: SlidersHorizontal },
       ] as const,
     },
     {
       id: "decisions",
-      label: "Решения",
+      labelKey: "contentPanel.category.decisions",
       icon: Landmark,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "decisions", label: "Условия и эффекты", icon: Landmark },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "decisions", labelKey: "contentPanel.section.conditionsEffects", icon: Landmark },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
     {
       id: "events",
-      label: "Ивенты",
+      labelKey: "contentPanel.category.events",
       icon: Bell,
       enabled: true,
       sections: [
-        { id: "general", label: "Основная информация", icon: FileText },
-        { id: "events", label: "Триггеры и варианты", icon: Bell },
-        { id: "branding", label: "Логотип и стиль", icon: Sticker },
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "events", labelKey: "contentPanel.section.triggersOptions", icon: Bell },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
   ] as const,
@@ -411,461 +413,467 @@ type CultureNeedDraft = {
 };
 type CultureNeedTierDraft = { id: string; minStandardOfLiving: string; needs: CultureNeedDraft[] };
 
-const MODIFIER_STAT_OPTIONS: Array<{ value: ModifierStat; label: string }> = [
-  { value: "culture_gain", label: "Прирост культуры" },
-  { value: "science_gain", label: "Прирост науки" },
-  { value: "religion_gain", label: "Прирост религии" },
-  { value: "colonization_gain", label: "Прирост колонизации" },
-  { value: "construction_gain", label: "Прирост строительства" },
-  { value: "ducats_gain", label: "Прирост дукатов" },
-  { value: "gold_gain", label: "Прирост золота" },
-  { value: "technology_cost", label: "Стоимость технологий" },
-  { value: "building_construction_cost", label: "Стоимость строительства" },
-  { value: "building_output", label: "Выпуск зданий" },
-  { value: "building_input", label: "Расходы зданий" },
-  { value: "building_throughput", label: "Производительность зданий" },
-  { value: "building_wage", label: "Зарплаты зданий" },
+const MODIFIER_STAT_OPTIONS: Array<{ value: ModifierStat; labelKey: UiTextKey }> = [
+  { value: "culture_gain", labelKey: "contentPanel.option.modifierStat.cultureGain" },
+  { value: "science_gain", labelKey: "contentPanel.option.modifierStat.scienceGain" },
+  { value: "religion_gain", labelKey: "contentPanel.option.modifierStat.religionGain" },
+  { value: "colonization_gain", labelKey: "contentPanel.option.modifierStat.colonizationGain" },
+  { value: "construction_gain", labelKey: "contentPanel.option.modifierStat.constructionGain" },
+  { value: "ducats_gain", labelKey: "contentPanel.option.modifierStat.ducatsGain" },
+  { value: "gold_gain", labelKey: "contentPanel.option.modifierStat.goldGain" },
+  { value: "technology_cost", labelKey: "contentPanel.option.modifierStat.technologyCost" },
+  { value: "building_construction_cost", labelKey: "contentPanel.option.modifierStat.buildingConstructionCost" },
+  { value: "building_output", labelKey: "contentPanel.option.modifierStat.buildingOutput" },
+  { value: "building_input", labelKey: "contentPanel.option.modifierStat.buildingInput" },
+  { value: "building_throughput", labelKey: "contentPanel.option.modifierStat.buildingThroughput" },
+  { value: "building_wage", labelKey: "contentPanel.option.modifierStat.buildingWage" },
 ];
 
-const IDEOLOGY_ATTRACTION_RULE_OPTIONS: Array<{ value: IdeologyAttractionConditionType; label: string; target: string; threshold: string }> = [
-  { value: "sol_below", label: "SoL ниже порога", target: "Не требуется", threshold: "Порог SoL" },
-  { value: "sol_above", label: "SoL выше порога", target: "Не требуется", threshold: "Порог SoL" },
-  { value: "radicals_above", label: "Радикалы выше %", target: "Не требуется", threshold: "% радикалов" },
-  { value: "loyalists_above", label: "Лоялисты выше %", target: "Не требуется", threshold: "% лоялистов" },
-  { value: "profession_is", label: "Профессия", target: "Профессия", threshold: "Не нужно" },
-  { value: "religion_is", label: "Религия", target: "Религия", threshold: "Не нужно" },
-  { value: "culture_is", label: "Культура", target: "Культура", threshold: "Не нужно" },
-  { value: "law_active", label: "Действующий закон", target: "Закон", threshold: "Не нужно" },
-  { value: "has_building", label: "Здание в провинции", target: "Здание", threshold: "Не нужно" },
-  { value: "country_modifier_active", label: "Модификатор страны", target: "ID модификатора", threshold: "Не нужно" },
-  { value: "province_modifier_active", label: "Модификатор провинции", target: "ID модификатора", threshold: "Не нужно" },
+const IDEOLOGY_ATTRACTION_RULE_OPTIONS: Array<{ value: IdeologyAttractionConditionType; labelKey: UiTextKey; targetKey: UiTextKey; thresholdKey: UiTextKey }> = [
+  { value: "sol_below", labelKey: "contentPanel.option.ideologyRule.solBelow", targetKey: "contentPanel.notRequired", thresholdKey: "contentPanel.placeholder.solThreshold" },
+  { value: "sol_above", labelKey: "contentPanel.option.ideologyRule.solAbove", targetKey: "contentPanel.notRequired", thresholdKey: "contentPanel.placeholder.solThreshold" },
+  { value: "radicals_above", labelKey: "contentPanel.option.ideologyRule.radicalsAbove", targetKey: "contentPanel.notRequired", thresholdKey: "contentPanel.placeholder.radicalsPct" },
+  { value: "loyalists_above", labelKey: "contentPanel.option.ideologyRule.loyalistsAbove", targetKey: "contentPanel.notRequired", thresholdKey: "contentPanel.placeholder.loyalistsPct" },
+  { value: "profession_is", labelKey: "contentPanel.option.ideologyRule.professionIs", targetKey: "contentPanel.select.profession", thresholdKey: "contentPanel.notRequired" },
+  { value: "religion_is", labelKey: "contentPanel.option.ideologyRule.religionIs", targetKey: "contentPanel.select.religion", thresholdKey: "contentPanel.notRequired" },
+  { value: "culture_is", labelKey: "contentPanel.option.ideologyRule.cultureIs", targetKey: "contentPanel.select.culture", thresholdKey: "contentPanel.notRequired" },
+  { value: "law_active", labelKey: "contentPanel.option.ideologyRule.lawActive", targetKey: "contentPanel.select.law", thresholdKey: "contentPanel.notRequired" },
+  { value: "has_building", labelKey: "contentPanel.option.ideologyRule.hasBuilding", targetKey: "contentPanel.select.building", thresholdKey: "contentPanel.notRequired" },
+  { value: "country_modifier_active", labelKey: "contentPanel.option.ideologyRule.countryModifierActive", targetKey: "contentPanel.placeholder.modifierId", thresholdKey: "contentPanel.notRequired" },
+  { value: "province_modifier_active", labelKey: "contentPanel.option.ideologyRule.provinceModifierActive", targetKey: "contentPanel.placeholder.modifierId", thresholdKey: "contentPanel.notRequired" },
 ];
 
-const MODIFIER_MODE_OPTIONS: Array<{ value: ModifierMode; label: string }> = [
-  { value: "add_pct", label: "% к значению" },
-  { value: "add", label: "+ число" },
-  { value: "mult", label: "x множитель" },
+const MODIFIER_MODE_OPTIONS: Array<{ value: ModifierMode; labelKey: UiTextKey }> = [
+  { value: "add_pct", labelKey: "contentPanel.option.modifierMode.addPct" },
+  { value: "add", labelKey: "contentPanel.option.modifierMode.add" },
+  { value: "mult", labelKey: "contentPanel.option.modifierMode.mult" },
 ];
 
-const MODIFIER_SCOPE_OPTIONS: Array<{ value: ModifierScope; label: string }> = [
-  { value: "country", label: "Страна" },
-  { value: "province", label: "Провинция" },
-  { value: "building", label: "Здание" },
-  { value: "pop", label: "Население" },
-  { value: "market", label: "Рынок" },
+const MODIFIER_SCOPE_OPTIONS: Array<{ value: ModifierScope; labelKey: UiTextKey }> = [
+  { value: "country", labelKey: "contentPanel.option.modifierScope.country" },
+  { value: "province", labelKey: "contentPanel.option.modifierScope.province" },
+  { value: "building", labelKey: "contentPanel.option.modifierScope.building" },
+  { value: "pop", labelKey: "contentPanel.option.modifierScope.pop" },
+  { value: "market", labelKey: "contentPanel.option.modifierScope.market" },
 ];
 
-const MODIFIER_CONDITION_OPTIONS: Array<{ value: ModifierConditionType; label: string }> = [
-  { value: "always", label: "Всегда" },
-  { value: "law_active", label: "Принят закон" },
-  { value: "technology_researched", label: "Изучена технология" },
-  { value: "country_is", label: "Конкретная страна" },
-  { value: "has_building", label: "Есть здание" },
+const MODIFIER_CONDITION_OPTIONS: Array<{ value: ModifierConditionType; labelKey: UiTextKey }> = [
+  { value: "always", labelKey: "contentPanel.option.modifierCondition.always" },
+  { value: "law_active", labelKey: "contentPanel.option.modifierCondition.lawActive" },
+  { value: "technology_researched", labelKey: "contentPanel.option.modifierCondition.technologyResearched" },
+  { value: "country_is", labelKey: "contentPanel.option.modifierCondition.countryIs" },
+  { value: "has_building", labelKey: "contentPanel.option.modifierCondition.hasBuilding" },
 ];
 
-const DECISION_CATEGORY_OPTIONS: Array<{ value: DecisionCategory; label: string }> = [
-  { value: "politics", label: "Политика" },
-  { value: "economy", label: "Экономика" },
-  { value: "military", label: "Армия" },
-  { value: "diplomacy", label: "Дипломатия" },
-  { value: "colonization", label: "Колонизация" },
-  { value: "culture", label: "Культура" },
-  { value: "religion", label: "Религия" },
-  { value: "technology", label: "Технологии" },
+const DECISION_CATEGORY_OPTIONS: Array<{ value: DecisionCategory; labelKey: UiTextKey }> = [
+  { value: "politics", labelKey: "contentPanel.option.decisionCategory.politics" },
+  { value: "economy", labelKey: "contentPanel.option.decisionCategory.economy" },
+  { value: "military", labelKey: "contentPanel.option.decisionCategory.military" },
+  { value: "diplomacy", labelKey: "contentPanel.option.decisionCategory.diplomacy" },
+  { value: "colonization", labelKey: "contentPanel.option.decisionCategory.colonization" },
+  { value: "culture", labelKey: "contentPanel.option.decisionCategory.culture" },
+  { value: "religion", labelKey: "contentPanel.option.decisionCategory.religion" },
+  { value: "technology", labelKey: "contentPanel.option.decisionCategory.technology" },
 ];
 
-const RESOURCE_OPTIONS: Array<{ value: keyof ResourceTotals; label: string }> = [
-  { value: "culture", label: "Культура" },
-  { value: "science", label: "Наука" },
-  { value: "religion", label: "Религия" },
-  { value: "colonization", label: "Колонизация" },
-  { value: "construction", label: "Строительство" },
-  { value: "ducats", label: "Дукаты" },
-  { value: "gold", label: "Золото" },
+const RESOURCE_OPTIONS: Array<{ value: keyof ResourceTotals; labelKey: UiTextKey }> = [
+  { value: "culture", labelKey: "contentPanel.option.resource.culture" },
+  { value: "science", labelKey: "contentPanel.option.resource.science" },
+  { value: "religion", labelKey: "contentPanel.option.resource.religion" },
+  { value: "colonization", labelKey: "contentPanel.option.resource.colonization" },
+  { value: "construction", labelKey: "contentPanel.option.resource.construction" },
+  { value: "ducats", labelKey: "contentPanel.option.resource.ducats" },
+  { value: "gold", labelKey: "contentPanel.option.resource.gold" },
 ];
 
-const EVENT_CATEGORY_OPTIONS: Array<{ value: EventCategory; label: string }> = [
-  { value: "system", label: "Система" },
-  { value: "politics", label: "Политика" },
-  { value: "economy", label: "Экономика" },
-  { value: "military", label: "Армия" },
-  { value: "diplomacy", label: "Дипломатия" },
-  { value: "colonization", label: "Колонизация" },
+const EVENT_CATEGORY_OPTIONS: Array<{ value: EventCategory; labelKey: UiTextKey }> = [
+  { value: "system", labelKey: "contentPanel.option.eventCategory.system" },
+  { value: "politics", labelKey: "contentPanel.option.eventCategory.politics" },
+  { value: "economy", labelKey: "contentPanel.option.eventCategory.economy" },
+  { value: "military", labelKey: "contentPanel.option.eventCategory.military" },
+  { value: "diplomacy", labelKey: "contentPanel.option.eventCategory.diplomacy" },
+  { value: "colonization", labelKey: "contentPanel.option.eventCategory.colonization" },
 ];
 
-const EVENT_PRIORITY_OPTIONS: Array<{ value: EventPriority; label: string }> = [
-  { value: "low", label: "Низкая" },
-  { value: "medium", label: "Средняя" },
-  { value: "high", label: "Высокая" },
+const EVENT_PRIORITY_OPTIONS: Array<{ value: EventPriority; labelKey: UiTextKey }> = [
+  { value: "low", labelKey: "contentPanel.option.eventPriority.low" },
+  { value: "medium", labelKey: "contentPanel.option.eventPriority.medium" },
+  { value: "high", labelKey: "contentPanel.option.eventPriority.high" },
 ];
 
-const EVENT_VISIBILITY_OPTIONS: Array<{ value: EventVisibility; label: string }> = [
-  { value: "private", label: "Только страна" },
-  { value: "public", label: "Публично" },
+const EVENT_VISIBILITY_OPTIONS: Array<{ value: EventVisibility; labelKey: UiTextKey }> = [
+  { value: "private", labelKey: "contentPanel.option.eventVisibility.private" },
+  { value: "public", labelKey: "contentPanel.option.eventVisibility.public" },
 ];
 
 type ModifierTargetKey = "buildingId" | "goodId" | "professionId" | "resourceCategoryId";
 
-const MODIFIER_TARGET_LABELS: Record<ModifierTargetKey, string> = {
-  buildingId: "Здание",
-  goodId: "Товар",
-  professionId: "Профессия",
-  resourceCategoryId: "Категория",
+const MODIFIER_TARGET_LABELS: Record<ModifierTargetKey, UiTextKey> = {
+  buildingId: "contentPanel.modifierTarget.building",
+  goodId: "contentPanel.modifierTarget.good",
+  professionId: "contentPanel.modifierTarget.profession",
+  resourceCategoryId: "contentPanel.modifierTarget.resourceCategory",
 };
 
 const MODIFIER_STAT_CONFIG: Record<
   ModifierStat,
-  { description: string; targets: ModifierTargetKey[]; defaultMode: ModifierMode; valueHint: string }
+  { descriptionKey: UiTextKey; targets: ModifierTargetKey[]; defaultMode: ModifierMode; valueHintKey: UiTextKey }
 > = {
   culture_gain: {
-    description: "Изменяет прирост культуры страны за ход.",
+    descriptionKey: "contentPanel.modifierStatConfig.cultureGain.description",
     targets: [],
     defaultMode: "add_pct",
-    valueHint: "0.1 = +10%, 1 = +1",
+    valueHintKey: "contentPanel.modifierStatConfig.default.valueHint",
   },
   science_gain: {
-    description: "Изменяет прирост науки страны за ход.",
+    descriptionKey: "contentPanel.modifierStatConfig.scienceGain.description",
     targets: [],
     defaultMode: "add_pct",
-    valueHint: "0.1 = +10%, 1 = +1",
+    valueHintKey: "contentPanel.modifierStatConfig.default.valueHint",
   },
   religion_gain: {
-    description: "Изменяет прирост религии страны за ход.",
+    descriptionKey: "contentPanel.modifierStatConfig.religionGain.description",
     targets: [],
     defaultMode: "add_pct",
-    valueHint: "0.1 = +10%, 1 = +1",
+    valueHintKey: "contentPanel.modifierStatConfig.default.valueHint",
   },
   colonization_gain: {
-    description: "Изменяет прирост колонизации страны за ход.",
+    descriptionKey: "contentPanel.modifierStatConfig.colonizationGain.description",
     targets: [],
     defaultMode: "add_pct",
-    valueHint: "0.1 = +10%, 1 = +1",
+    valueHintKey: "contentPanel.modifierStatConfig.default.valueHint",
   },
   construction_gain: {
-    description: "Изменяет прирост строительства страны за ход.",
+    descriptionKey: "contentPanel.modifierStatConfig.constructionGain.description",
     targets: [],
     defaultMode: "add_pct",
-    valueHint: "0.1 = +10%, 1 = +1",
+    valueHintKey: "contentPanel.modifierStatConfig.default.valueHint",
   },
   ducats_gain: {
-    description: "Изменяет прирост дукатов страны за ход.",
+    descriptionKey: "contentPanel.modifierStatConfig.ducatsGain.description",
     targets: [],
     defaultMode: "add_pct",
-    valueHint: "0.1 = +10%, 1 = +1",
+    valueHintKey: "contentPanel.modifierStatConfig.default.valueHint",
   },
   gold_gain: {
-    description: "Изменяет прирост золота страны за ход.",
+    descriptionKey: "contentPanel.modifierStatConfig.goldGain.description",
     targets: [],
     defaultMode: "add_pct",
-    valueHint: "0.1 = +10%, 1 = +1",
+    valueHintKey: "contentPanel.modifierStatConfig.default.valueHint",
   },
   technology_cost: {
-    description: "Изменяет стоимость исследования технологий.",
+    descriptionKey: "contentPanel.modifierStatConfig.technologyCost.description",
     targets: [],
     defaultMode: "add_pct",
-    valueHint: "-0.1 = дешевле на 10%, 0.1 = дороже на 10%",
+    valueHintKey: "contentPanel.modifierStatConfig.cost.valueHint",
   },
   building_construction_cost: {
-    description: "Изменяет стоимость строительства выбранных зданий.",
+    descriptionKey: "contentPanel.modifierStatConfig.buildingConstructionCost.description",
     targets: ["buildingId"],
     defaultMode: "add_pct",
-    valueHint: "-0.1 = дешевле на 10%, 0.1 = дороже на 10%",
+    valueHintKey: "contentPanel.modifierStatConfig.cost.valueHint",
   },
   building_output: {
-    description: "Изменяет выпуск товаров зданиями.",
+    descriptionKey: "contentPanel.modifierStatConfig.buildingOutput.description",
     targets: ["buildingId", "goodId", "resourceCategoryId"],
     defaultMode: "add_pct",
-    valueHint: "0.1 = +10% выпуска, 1 = +1 единица",
+    valueHintKey: "contentPanel.modifierStatConfig.output.valueHint",
   },
   building_input: {
-    description: "Изменяет расход товаров зданиями.",
+    descriptionKey: "contentPanel.modifierStatConfig.buildingInput.description",
     targets: ["buildingId", "goodId", "resourceCategoryId"],
     defaultMode: "add_pct",
-    valueHint: "-0.1 = расход меньше на 10%, 0.1 = расход больше на 10%",
+    valueHintKey: "contentPanel.modifierStatConfig.input.valueHint",
   },
   building_throughput: {
-    description: "Изменяет общую производительность выбранных зданий.",
+    descriptionKey: "contentPanel.modifierStatConfig.buildingThroughput.description",
     targets: ["buildingId"],
     defaultMode: "add_pct",
-    valueHint: "0.1 = +10% производительности",
+    valueHintKey: "contentPanel.modifierStatConfig.throughput.valueHint",
   },
   building_wage: {
-    description: "Изменяет базовые зарплаты в выбранных зданиях или профессиях.",
+    descriptionKey: "contentPanel.modifierStatConfig.buildingWage.description",
     targets: ["buildingId", "professionId"],
     defaultMode: "add_pct",
-    valueHint: "0.1 = зарплаты выше на 10%, -0.1 = ниже на 10%",
+    valueHintKey: "contentPanel.modifierStatConfig.wage.valueHint",
   },
 };
 
 const NEED_CATEGORY_OPTIONS: Array<{
   value: CultureNeedDraft["category"];
-  label: string;
+  labelKey: UiTextKey;
 }> = [
-  { value: "survival", label: "Выживание" },
-  { value: "basic", label: "Базовые" },
-  { value: "comfort", label: "Комфорт" },
-  { value: "luxury", label: "Роскошь" },
+  { value: "survival", labelKey: "contentPanel.option.needCategory.survival" },
+  { value: "basic", labelKey: "contentPanel.option.needCategory.basic" },
+  { value: "comfort", labelKey: "contentPanel.option.needCategory.comfort" },
+  { value: "luxury", labelKey: "contentPanel.option.needCategory.luxury" },
 ];
 
-const PARLIAMENT_POWER_DOMAIN_OPTIONS: Array<{ value: LawParliamentPowerEffect["domain"] | ""; label: string }> = [
-  { value: "", label: "Не меняет полномочия" },
-  { value: "laws", label: "Законы" },
-  { value: "budget", label: "Бюджет" },
-  { value: "diplomacy", label: "Дипломатия" },
-  { value: "war", label: "Война" },
-  { value: "government", label: "Правительство" },
+const PARLIAMENT_POWER_DOMAIN_OPTIONS: Array<{ value: LawParliamentPowerEffect["domain"] | ""; labelKey: UiTextKey }> = [
+  { value: "", labelKey: "contentPanel.option.parliamentDomain.none" },
+  { value: "laws", labelKey: "contentPanel.option.parliamentDomain.laws" },
+  { value: "budget", labelKey: "contentPanel.option.parliamentDomain.budget" },
+  { value: "diplomacy", labelKey: "contentPanel.option.parliamentDomain.diplomacy" },
+  { value: "war", labelKey: "contentPanel.option.parliamentDomain.war" },
+  { value: "government", labelKey: "contentPanel.option.parliamentDomain.government" },
 ];
 
-const PARLIAMENT_POWER_VALUE_OPTIONS: Record<LawParliamentPowerEffect["domain"], Array<{ value: string; label: string }>> = {
+const PARLIAMENT_POWER_VALUE_OPTIONS: Record<LawParliamentPowerEffect["domain"], Array<{ value: string; labelKey: UiTextKey }>> = {
   laws: [
-    { value: "none", label: "Парламент не участвует" },
-    { value: "advisory", label: "Формальное голосование" },
-    { value: "approve", label: "Обязательное утверждение" },
-    { value: "initiate", label: "Инициатива парламента" },
+    { value: "none", labelKey: "contentPanel.option.parliamentPower.laws.none" },
+    { value: "advisory", labelKey: "contentPanel.option.parliamentPower.laws.advisory" },
+    { value: "approve", labelKey: "contentPanel.option.parliamentPower.laws.approve" },
+    { value: "initiate", labelKey: "contentPanel.option.parliamentPower.laws.initiate" },
   ],
   budget: [
-    { value: "none", label: "Бюджет вне парламента" },
-    { value: "approve_taxes", label: "Утверждает налоги" },
-    { value: "approve_budget", label: "Утверждает бюджет" },
-    { value: "control_budget", label: "Контролирует бюджет" },
+    { value: "none", labelKey: "contentPanel.option.parliamentPower.budget.none" },
+    { value: "approve_taxes", labelKey: "contentPanel.option.parliamentPower.budget.approveTaxes" },
+    { value: "approve_budget", labelKey: "contentPanel.option.parliamentPower.budget.approveBudget" },
+    { value: "control_budget", labelKey: "contentPanel.option.parliamentPower.budget.controlBudget" },
   ],
   diplomacy: [
-    { value: "none", label: "Договоры вне парламента" },
-    { value: "ratify_territory", label: "Ратифицирует территории" },
-    { value: "ratify_major_treaties", label: "Ратифицирует крупные договоры" },
-    { value: "ratify_all", label: "Ратифицирует все договоры" },
+    { value: "none", labelKey: "contentPanel.option.parliamentPower.diplomacy.none" },
+    { value: "ratify_territory", labelKey: "contentPanel.option.parliamentPower.diplomacy.ratifyTerritory" },
+    { value: "ratify_major_treaties", labelKey: "contentPanel.option.parliamentPower.diplomacy.ratifyMajorTreaties" },
+    { value: "ratify_all", labelKey: "contentPanel.option.parliamentPower.diplomacy.ratifyAll" },
   ],
   war: [
-    { value: "none", label: "Война вне парламента" },
-    { value: "approve", label: "Утверждает войну" },
-    { value: "declare", label: "Может объявлять войну" },
+    { value: "none", labelKey: "contentPanel.option.parliamentPower.war.none" },
+    { value: "approve", labelKey: "contentPanel.option.parliamentPower.war.approve" },
+    { value: "declare", labelKey: "contentPanel.option.parliamentPower.war.declare" },
   ],
   government: [
-    { value: "none", label: "Не влияет" },
-    { value: "confidence_vote", label: "Вотум доверия" },
-    { value: "appoint_government", label: "Назначает правительство" },
+    { value: "none", labelKey: "contentPanel.option.parliamentPower.government.none" },
+    { value: "confidence_vote", labelKey: "contentPanel.option.parliamentPower.government.confidenceVote" },
+    { value: "appoint_government", labelKey: "contentPanel.option.parliamentPower.government.appointGovernment" },
   ],
 };
 
-const CATEGORY_META: Record<
-  PanelCategory,
-  { singular: string; createBaseName: string; createLabel: string; namePlaceholder: string; descriptionPlaceholder: string; sectionTitle: string }
-> = {
+type CategoryMeta = {
+  singularKey: UiTextKey;
+  createBaseNameKey: UiTextKey;
+  createLabelKey: UiTextKey;
+  namePlaceholderKey: UiTextKey;
+  descriptionPlaceholderKey: UiTextKey;
+  sectionTitleKey: UiTextKey;
+};
+
+const CATEGORY_META: Record<PanelCategory, CategoryMeta> = {
   cultures: {
-    singular: "культура",
-    createBaseName: "Новая культура",
-    createLabel: "Создать культуру",
-    namePlaceholder: "Название культуры",
-    descriptionPlaceholder: "Краткое описание культуры",
-    sectionTitle: "Раздел создания и редактирования культур",
+    singularKey: "contentPanel.meta.cultures.singular",
+    createBaseNameKey: "contentPanel.meta.cultures.createBaseName",
+    createLabelKey: "contentPanel.meta.cultures.createLabel",
+    namePlaceholderKey: "contentPanel.meta.cultures.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.cultures.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.cultures.sectionTitle",
   },
   races: {
-    singular: "раса",
-    createBaseName: "Новая раса",
-    createLabel: "Создать расу",
-    namePlaceholder: "Название расы",
-    descriptionPlaceholder: "Краткое описание расы",
-    sectionTitle: "Раздел создания и редактирования рас",
+    singularKey: "contentPanel.meta.races.singular",
+    createBaseNameKey: "contentPanel.meta.races.createBaseName",
+    createLabelKey: "contentPanel.meta.races.createLabel",
+    namePlaceholderKey: "contentPanel.meta.races.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.races.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.races.sectionTitle",
   },
   resourceCategories: {
-    singular: "категория инфраструктуры",
-    createBaseName: "Новая категория инфраструктуры",
-    createLabel: "Создать категорию",
-    namePlaceholder: "Название категории инфраструктуры",
-    descriptionPlaceholder: "Краткое описание категории инфраструктуры",
-    sectionTitle: "Раздел создания и редактирования категорий инфраструктуры",
+    singularKey: "contentPanel.meta.resourceCategories.singular",
+    createBaseNameKey: "contentPanel.meta.resourceCategories.createBaseName",
+    createLabelKey: "contentPanel.meta.resourceCategories.createLabel",
+    namePlaceholderKey: "contentPanel.meta.resourceCategories.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.resourceCategories.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.resourceCategories.sectionTitle",
   },
   provinceTypes: {
-    singular: "тип провинции",
-    createBaseName: "Новый тип провинции",
-    createLabel: "Создать тип",
-    namePlaceholder: "Название типа провинции",
-    descriptionPlaceholder: "Краткое описание типа провинции",
-    sectionTitle: "Раздел создания и редактирования типов провинций",
+    singularKey: "contentPanel.meta.provinceTypes.singular",
+    createBaseNameKey: "contentPanel.meta.provinceTypes.createBaseName",
+    createLabelKey: "contentPanel.meta.provinceTypes.createLabel",
+    namePlaceholderKey: "contentPanel.meta.provinceTypes.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.provinceTypes.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.provinceTypes.sectionTitle",
   },
   provinceClimates: {
-    singular: "климат",
-    createBaseName: "Новый климат",
-    createLabel: "Создать климат",
-    namePlaceholder: "Название климата",
-    descriptionPlaceholder: "Краткое описание климата",
-    sectionTitle: "Раздел создания и редактирования климатов",
+    singularKey: "contentPanel.meta.provinceClimates.singular",
+    createBaseNameKey: "contentPanel.meta.provinceClimates.createBaseName",
+    createLabelKey: "contentPanel.meta.provinceClimates.createLabel",
+    namePlaceholderKey: "contentPanel.meta.provinceClimates.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.provinceClimates.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.provinceClimates.sectionTitle",
   },
   provinceLandscapes: {
-    singular: "ландшафт",
-    createBaseName: "Новый ландшафт",
-    createLabel: "Создать ландшафт",
-    namePlaceholder: "Название ландшафта",
-    descriptionPlaceholder: "Краткое описание ландшафта",
-    sectionTitle: "Раздел создания и редактирования ландшафтов",
+    singularKey: "contentPanel.meta.provinceLandscapes.singular",
+    createBaseNameKey: "contentPanel.meta.provinceLandscapes.createBaseName",
+    createLabelKey: "contentPanel.meta.provinceLandscapes.createLabel",
+    namePlaceholderKey: "contentPanel.meta.provinceLandscapes.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.provinceLandscapes.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.provinceLandscapes.sectionTitle",
   },
   provinceContinents: {
-    singular: "континент",
-    createBaseName: "Новый континент",
-    createLabel: "Создать континент",
-    namePlaceholder: "Название континента",
-    descriptionPlaceholder: "Краткое описание континента",
-    sectionTitle: "Раздел создания и редактирования континентов",
+    singularKey: "contentPanel.meta.provinceContinents.singular",
+    createBaseNameKey: "contentPanel.meta.provinceContinents.createBaseName",
+    createLabelKey: "contentPanel.meta.provinceContinents.createLabel",
+    namePlaceholderKey: "contentPanel.meta.provinceContinents.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.provinceContinents.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.provinceContinents.sectionTitle",
   },
   provinceStrategicRegions: {
-    singular: "стратегический регион",
-    createBaseName: "Новый стратегический регион",
-    createLabel: "Создать регион",
-    namePlaceholder: "Название стратегического региона",
-    descriptionPlaceholder: "Краткое описание стратегического региона",
-    sectionTitle: "Раздел создания и редактирования стратегических регионов",
+    singularKey: "contentPanel.meta.provinceStrategicRegions.singular",
+    createBaseNameKey: "contentPanel.meta.provinceStrategicRegions.createBaseName",
+    createLabelKey: "contentPanel.meta.provinceStrategicRegions.createLabel",
+    namePlaceholderKey: "contentPanel.meta.provinceStrategicRegions.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.provinceStrategicRegions.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.provinceStrategicRegions.sectionTitle",
   },
   religions: {
-    singular: "религия",
-    createBaseName: "Новая религия",
-    createLabel: "Создать религию",
-    namePlaceholder: "Название религии",
-    descriptionPlaceholder: "Краткое описание религии",
-    sectionTitle: "Раздел создания и редактирования религий",
+    singularKey: "contentPanel.meta.religions.singular",
+    createBaseNameKey: "contentPanel.meta.religions.createBaseName",
+    createLabelKey: "contentPanel.meta.religions.createLabel",
+    namePlaceholderKey: "contentPanel.meta.religions.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.religions.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.religions.sectionTitle",
   },
   professions: {
-    singular: "профессия",
-    createBaseName: "Новая профессия",
-    createLabel: "Создать профессию",
-    namePlaceholder: "Название профессии",
-    descriptionPlaceholder: "Краткое описание профессии",
-    sectionTitle: "Раздел создания и редактирования профессий",
+    singularKey: "contentPanel.meta.professions.singular",
+    createBaseNameKey: "contentPanel.meta.professions.createBaseName",
+    createLabelKey: "contentPanel.meta.professions.createLabel",
+    namePlaceholderKey: "contentPanel.meta.professions.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.professions.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.professions.sectionTitle",
   },
   battalions: {
-    singular: "батальон",
-    createBaseName: "Новый батальон",
-    createLabel: "Создать батальон",
-    namePlaceholder: "Название батальона",
-    descriptionPlaceholder: "Описание роли батальона в дивизии",
-    sectionTitle: "Раздел создания и редактирования батальонов",
+    singularKey: "contentPanel.meta.battalions.singular",
+    createBaseNameKey: "contentPanel.meta.battalions.createBaseName",
+    createLabelKey: "contentPanel.meta.battalions.createLabel",
+    namePlaceholderKey: "contentPanel.meta.battalions.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.battalions.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.battalions.sectionTitle",
   },
   shipTypes: {
-    singular: "тип корабля",
-    createBaseName: "Новый корабль",
-    createLabel: "Создать корабль",
-    namePlaceholder: "Название типа корабля",
-    descriptionPlaceholder: "Описание роли корабля во флоте",
-    sectionTitle: "Раздел создания и редактирования кораблей",
+    singularKey: "contentPanel.meta.shipTypes.singular",
+    createBaseNameKey: "contentPanel.meta.shipTypes.createBaseName",
+    createLabelKey: "contentPanel.meta.shipTypes.createLabel",
+    namePlaceholderKey: "contentPanel.meta.shipTypes.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.shipTypes.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.shipTypes.sectionTitle",
   },
   aircraftTypes: {
-    singular: "тип самолёта",
-    createBaseName: "Новый самолёт",
-    createLabel: "Создать самолёт",
-    namePlaceholder: "Название типа самолёта",
-    descriptionPlaceholder: "Описание роли самолёта в авиакрыле",
-    sectionTitle: "Раздел создания и редактирования самолётов",
+    singularKey: "contentPanel.meta.aircraftTypes.singular",
+    createBaseNameKey: "contentPanel.meta.aircraftTypes.createBaseName",
+    createLabelKey: "contentPanel.meta.aircraftTypes.createLabel",
+    namePlaceholderKey: "contentPanel.meta.aircraftTypes.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.aircraftTypes.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.aircraftTypes.sectionTitle",
   },
   ideologies: {
-    singular: "идеология",
-    createBaseName: "Новая идеология",
-    createLabel: "Создать идеологию",
-    namePlaceholder: "Название идеологии",
-    descriptionPlaceholder: "Краткое описание идеологии",
-    sectionTitle: "Раздел создания и редактирования идеологий",
+    singularKey: "contentPanel.meta.ideologies.singular",
+    createBaseNameKey: "contentPanel.meta.ideologies.createBaseName",
+    createLabelKey: "contentPanel.meta.ideologies.createLabel",
+    namePlaceholderKey: "contentPanel.meta.ideologies.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.ideologies.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.ideologies.sectionTitle",
   },
   interestGroups: {
-    singular: "группа интересов",
-    createBaseName: "Новая группа интересов",
-    createLabel: "Создать группу",
-    namePlaceholder: "Название группы интересов",
-    descriptionPlaceholder: "Краткое описание группы интересов",
-    sectionTitle: "Раздел создания и редактирования групп интересов",
+    singularKey: "contentPanel.meta.interestGroups.singular",
+    createBaseNameKey: "contentPanel.meta.interestGroups.createBaseName",
+    createLabelKey: "contentPanel.meta.interestGroups.createLabel",
+    namePlaceholderKey: "contentPanel.meta.interestGroups.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.interestGroups.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.interestGroups.sectionTitle",
   },
   parties: {
-    singular: "партия",
-    createBaseName: "Новая партия",
-    createLabel: "Создать партию",
-    namePlaceholder: "Название партии",
-    descriptionPlaceholder: "Краткое описание партии",
-    sectionTitle: "Раздел создания и редактирования партий",
+    singularKey: "contentPanel.meta.parties.singular",
+    createBaseNameKey: "contentPanel.meta.parties.createBaseName",
+    createLabelKey: "contentPanel.meta.parties.createLabel",
+    namePlaceholderKey: "contentPanel.meta.parties.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.parties.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.parties.sectionTitle",
   },
   lawGroups: {
-    singular: "группа законов",
-    createBaseName: "Новая группа законов",
-    createLabel: "Создать группу",
-    namePlaceholder: "Название группы законов",
-    descriptionPlaceholder: "Краткое описание группы законов",
-    sectionTitle: "Раздел создания и редактирования групп законов",
+    singularKey: "contentPanel.meta.lawGroups.singular",
+    createBaseNameKey: "contentPanel.meta.lawGroups.createBaseName",
+    createLabelKey: "contentPanel.meta.lawGroups.createLabel",
+    namePlaceholderKey: "contentPanel.meta.lawGroups.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.lawGroups.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.lawGroups.sectionTitle",
   },
   laws: {
-    singular: "закон",
-    createBaseName: "Новый закон",
-    createLabel: "Создать закон",
-    namePlaceholder: "Название закона",
-    descriptionPlaceholder: "Краткое описание закона",
-    sectionTitle: "Раздел создания и редактирования законов",
+    singularKey: "contentPanel.meta.laws.singular",
+    createBaseNameKey: "contentPanel.meta.laws.createBaseName",
+    createLabelKey: "contentPanel.meta.laws.createLabel",
+    namePlaceholderKey: "contentPanel.meta.laws.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.laws.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.laws.sectionTitle",
   },
   technologies: {
-    singular: "технология",
-    createBaseName: "Новая технология",
-    createLabel: "Создать технологию",
-    namePlaceholder: "Название технологии",
-    descriptionPlaceholder: "Краткое описание технологии",
-    sectionTitle: "Раздел создания и редактирования технологий",
+    singularKey: "contentPanel.meta.technologies.singular",
+    createBaseNameKey: "contentPanel.meta.technologies.createBaseName",
+    createLabelKey: "contentPanel.meta.technologies.createLabel",
+    namePlaceholderKey: "contentPanel.meta.technologies.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.technologies.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.technologies.sectionTitle",
   },
   buildings: {
-    singular: "здание",
-    createBaseName: "Новое здание",
-    createLabel: "Создать здание",
-    namePlaceholder: "Название здания",
-    descriptionPlaceholder: "Краткое описание здания",
-    sectionTitle: "Раздел создания и редактирования зданий",
+    singularKey: "contentPanel.meta.buildings.singular",
+    createBaseNameKey: "contentPanel.meta.buildings.createBaseName",
+    createLabelKey: "contentPanel.meta.buildings.createLabel",
+    namePlaceholderKey: "contentPanel.meta.buildings.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.buildings.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.buildings.sectionTitle",
   },
   goods: {
-    singular: "товар",
-    createBaseName: "Новый товар",
-    createLabel: "Создать товар",
-    namePlaceholder: "Название товара",
-    descriptionPlaceholder: "Краткое описание товара",
-    sectionTitle: "Раздел создания и редактирования товаров",
+    singularKey: "contentPanel.meta.goods.singular",
+    createBaseNameKey: "contentPanel.meta.goods.createBaseName",
+    createLabelKey: "contentPanel.meta.goods.createLabel",
+    namePlaceholderKey: "contentPanel.meta.goods.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.goods.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.goods.sectionTitle",
   },
   companies: {
-    singular: "компания",
-    createBaseName: "Новая компания",
-    createLabel: "Создать компанию",
-    namePlaceholder: "Название компании",
-    descriptionPlaceholder: "Краткое описание компании",
-    sectionTitle: "Раздел создания и редактирования компаний",
+    singularKey: "contentPanel.meta.companies.singular",
+    createBaseNameKey: "contentPanel.meta.companies.createBaseName",
+    createLabelKey: "contentPanel.meta.companies.createLabel",
+    namePlaceholderKey: "contentPanel.meta.companies.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.companies.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.companies.sectionTitle",
   },
   industries: {
-    singular: "отрасль",
-    createBaseName: "Новая отрасль",
-    createLabel: "Создать отрасль",
-    namePlaceholder: "Название отрасли",
-    descriptionPlaceholder: "Краткое описание отрасли",
-    sectionTitle: "Раздел создания и редактирования отраслей",
+    singularKey: "contentPanel.meta.industries.singular",
+    createBaseNameKey: "contentPanel.meta.industries.createBaseName",
+    createLabelKey: "contentPanel.meta.industries.createLabel",
+    namePlaceholderKey: "contentPanel.meta.industries.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.industries.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.industries.sectionTitle",
   },
   sectors: {
-    singular: "сектор",
-    createBaseName: "Новый сектор",
-    createLabel: "Создать сектор",
-    namePlaceholder: "Название сектора",
-    descriptionPlaceholder: "Краткое описание сектора",
-    sectionTitle: "Раздел создания и редактирования секторов",
+    singularKey: "contentPanel.meta.sectors.singular",
+    createBaseNameKey: "contentPanel.meta.sectors.createBaseName",
+    createLabelKey: "contentPanel.meta.sectors.createLabel",
+    namePlaceholderKey: "contentPanel.meta.sectors.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.sectors.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.sectors.sectionTitle",
   },
   modifiers: {
-    singular: "модификатор",
-    createBaseName: "Новый модификатор",
-    createLabel: "Создать модификатор",
-    namePlaceholder: "Название модификатора",
-    descriptionPlaceholder: "Когда и что должен менять этот модификатор",
-    sectionTitle: "Универсальные условия и эффекты модификаторов",
+    singularKey: "contentPanel.meta.modifiers.singular",
+    createBaseNameKey: "contentPanel.meta.modifiers.createBaseName",
+    createLabelKey: "contentPanel.meta.modifiers.createLabel",
+    namePlaceholderKey: "contentPanel.meta.modifiers.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.modifiers.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.modifiers.sectionTitle",
   },
   decisions: {
-    singular: "решение",
-    createBaseName: "Новое решение",
-    createLabel: "Создать решение",
-    namePlaceholder: "Название решения",
-    descriptionPlaceholder: "Что делает это решение и почему страна его принимает",
-    sectionTitle: "Раздел создания и редактирования решений страны",
+    singularKey: "contentPanel.meta.decisions.singular",
+    createBaseNameKey: "contentPanel.meta.decisions.createBaseName",
+    createLabelKey: "contentPanel.meta.decisions.createLabel",
+    namePlaceholderKey: "contentPanel.meta.decisions.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.decisions.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.decisions.sectionTitle",
   },
   events: {
-    singular: "ивент",
-    createBaseName: "Новый ивент",
-    createLabel: "Создать ивент",
-    namePlaceholder: "Название ивента",
-    descriptionPlaceholder: "Текст события, который увидит игрок",
-    sectionTitle: "Раздел создания и редактирования событий страны",
+    singularKey: "contentPanel.meta.events.singular",
+    createBaseNameKey: "contentPanel.meta.events.createBaseName",
+    createLabelKey: "contentPanel.meta.events.createLabel",
+    namePlaceholderKey: "contentPanel.meta.events.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.events.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.events.sectionTitle",
   },
 };
 
@@ -979,7 +987,7 @@ function normalizeNeedsProfileDraft(rows: CultureNeedTierDraft[]): ContentEntry[
       needs: tier.needs
         .map((need, needIndex) => ({
           id: need.id.trim() || `need-${needIndex + 1}`,
-          label: need.label.trim() || need.id.trim() || `Потребность ${needIndex + 1}`,
+          label: need.label.trim() || need.id.trim() || `Need ${needIndex + 1}`,
           category: need.category ?? "basic",
           amountPerPerson: Math.max(0, Number(need.amountPerPerson || "0")),
           weight: Math.max(0.001, Number(need.weight || "1")),
@@ -1047,7 +1055,7 @@ function normalizeModifiersDraft(rows: ModifierDraft[]): ModifierDefinition[] {
   return rows
     .map((row, index): ModifierDefinition | null => {
       const label = row.label.trim();
-      const id = row.id.trim() || label.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, "-").replace(/^-+|-+$/g, "") || `modifier-${index + 1}`;
+      const id = row.id.trim() || label.toLowerCase().replace(/[^\p{Letter}\p{Number}]+/gu, "-").replace(/^-+|-+$/g, "") || `modifier-${index + 1}`;
       const effects = row.effects
         .map((effect): ModifierEffect | null => {
           const value = Number(effect.value);
@@ -1219,6 +1227,20 @@ function normalizeParliamentPowerDraft(
 }
 
 export function ContentPanel({ open, token, onClose }: Props) {
+  const { t } = useUiText();
+  const localizeOptions = <T extends string>(options: readonly { value: T; labelKey: UiTextKey }[]) =>
+    options.map((option) => ({ value: option.value, label: t(option.labelKey) }));
+  const modifierStatOptions = localizeOptions(MODIFIER_STAT_OPTIONS);
+  const modifierModeOptions = localizeOptions(MODIFIER_MODE_OPTIONS);
+  const modifierScopeOptions = localizeOptions(MODIFIER_SCOPE_OPTIONS);
+  const modifierConditionOptions = localizeOptions(MODIFIER_CONDITION_OPTIONS);
+  const decisionCategoryOptions = localizeOptions(DECISION_CATEGORY_OPTIONS);
+  const resourceSelectOptions = localizeOptions(RESOURCE_OPTIONS);
+  const eventCategoryOptions = localizeOptions(EVENT_CATEGORY_OPTIONS);
+  const eventPriorityOptions = localizeOptions(EVENT_PRIORITY_OPTIONS);
+  const eventVisibilityOptions = localizeOptions(EVENT_VISIBILITY_OPTIONS);
+  const needCategoryOptions = localizeOptions(NEED_CATEGORY_OPTIONS);
+  const parliamentPowerDomainOptions = localizeOptions(PARLIAMENT_POWER_DOMAIN_OPTIONS);
   const [activeCategory, setActiveCategory] = useState<PanelCategory>("cultures");
   const [contentSection, setContentSection] = useState<PanelSection>("general");
   const [entries, setEntries] = useState<ContentEntry[]>([]);
@@ -1805,7 +1827,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
     for (const entry of filteredEntries) {
       const rawIndustryId = getEntryIndustryId(entry);
       const key = industryNameById.has(rawIndustryId) ? rawIndustryId : OTHER_INDUSTRY_GROUP_ID;
-      const label = key === OTHER_INDUSTRY_GROUP_ID ? "Другое" : (industryNameById.get(key) ?? "Другое");
+      const label = key === OTHER_INDUSTRY_GROUP_ID ? t("contentPanel.other") : (industryNameById.get(key) ?? t("contentPanel.other"));
       const group = groups.get(key) ?? { id: key, label, entries: [] };
       group.entries.push(entry);
       groups.set(key, group);
@@ -1875,7 +1897,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
       .sort((a, b) => a.localeCompare(b, "ru"));
     return (
       <div>
-        <div className="mb-1 text-xs text-white/60">{label}</div>
+        <div className="mb-1 text-xs text-[rgb(var(--theme-text-secondary))]">{label}</div>
         <CustomSelect
           value=""
           onChange={(value) => {
@@ -1883,7 +1905,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
             setSelected((prev) => normalizeCountryIdsDraft([...prev, value]));
           }}
           options={[
-            { value: "", label: available.length > 0 ? "Добавить значение" : "Нет доступных значений" },
+            { value: "", label: available.length > 0 ? t("contentPanel.addValue") : t("contentPanel.noAvailableValues") },
             ...available.map((name) => ({ value: name, label: name })),
           ]}
           buttonClassName="h-[42px]"
@@ -1899,7 +1921,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
               {value} ×
             </button>
           ))}
-          {normalized.length === 0 && <div className="text-xs text-white/35">Любое значение</div>}
+          {normalized.length === 0 && <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.anyValue")}</div>}
         </div>
       </div>
     );
@@ -1930,6 +1952,14 @@ export function ContentPanel({ open, token, onClose }: Props) {
   );
 
   const categoryMeta = CATEGORY_META[activeCategory];
+  const localizedCategoryMeta = {
+    singular: t(categoryMeta.singularKey),
+    createBaseName: t(categoryMeta.createBaseNameKey),
+    createLabel: t(categoryMeta.createLabelKey),
+    namePlaceholder: t(categoryMeta.namePlaceholderKey),
+    descriptionPlaceholder: t(categoryMeta.descriptionPlaceholderKey),
+    sectionTitle: t(categoryMeta.sectionTitleKey),
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -1942,7 +1972,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
         setSelectedEntryId(items[0]?.id ?? "");
       })
       .catch(() => {
-        if (!cancelled) toast.error("Не удалось загрузить контент");
+        if (!cancelled) toast.error(t("contentPanel.loadFailed"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -2699,7 +2729,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
   const createEntry = async () => {
     setSaving(true);
     try {
-      const nextNameBase = categoryMeta.createBaseName;
+      const nextNameBase = localizedCategoryMeta.createBaseName;
       let name = nextNameBase;
       let i = 2;
       const used = new Set(entries.map((c) => c.name.trim().toLowerCase()));
@@ -2826,7 +2856,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                 priority: "medium",
                 visibility: "private",
                 triggerConditions: [{ type: "always", targetId: null, invert: false }],
-                options: [{ id: "ok", label: "Понятно", description: null, autoChancePct: 100, buttonColor: "#15505b", effects: [] }],
+                options: [{ id: "ok", label: t("contentPanel.defaultEventOption"), description: null, autoChancePct: 100, buttonColor: "#15505b", effects: [] }],
                 cooldownTurns: 0,
                 repeatable: false,
                 checkIntervalTurns: 1,
@@ -2864,11 +2894,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
       if (activeCategory === "technologies") {
         setTechnologyOptions(result.items);
       }
-      toast.success(`${categoryMeta.singular[0].toUpperCase()}${categoryMeta.singular.slice(1)} создана`);
+      toast.success(t("contentPanel.createdToast", { item: localizedCategoryMeta.singular }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "ADMIN_CREATE_CONTENT_ENTRY_FAILED";
-      if (msg === "CONTENT_NAME_EXISTS") toast.error("Название уже используется");
-      else toast.error("Не удалось создать запись");
+      if (msg === "CONTENT_NAME_EXISTS") toast.error(t("contentPanel.nameExists"));
+      else toast.error(t("contentPanel.createFailed"));
     } finally {
       setSaving(false);
     }
@@ -2878,11 +2908,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
     if (!selectedEntry) return;
     const name = draftName.trim();
     if (!name) {
-      toast.error("Введите название");
+      toast.error(t("contentPanel.nameRequired"));
       return;
     }
     if (entries.some((c) => c.id !== selectedEntry.id && c.name.trim().toLowerCase() === name.toLowerCase())) {
-      toast.error("Название должно быть уникальным");
+      toast.error(t("contentPanel.nameUnique"));
       return;
     }
     const color = /^#[0-9A-Fa-f]{6}$/.test(draftColor) ? draftColor : "#4ade80";
@@ -3056,11 +3086,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
         !Number.isFinite(payload.explorationLargeVeinMin ?? Number.NaN) ||
         !Number.isFinite(payload.explorationLargeVeinMax ?? Number.NaN))
     ) {
-      toast.error("Параметры экономики товара должны быть числами");
+      toast.error(t("contentPanel.validation.goodEconomyNumbers"));
       return;
     }
     if (activeCategory === "goods" && (payload.maxPrice ?? 0) < (payload.minPrice ?? 0)) {
-      toast.error("Максимальная цена не может быть меньше минимальной");
+      toast.error(t("contentPanel.validation.maxPriceBelowMin"));
       return;
     }
     if (
@@ -3069,11 +3099,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
         (payload.explorationMediumVeinMax ?? 0) < (payload.explorationMediumVeinMin ?? 0) ||
         (payload.explorationLargeVeinMax ?? 0) < (payload.explorationLargeVeinMin ?? 0))
     ) {
-      toast.error("Макс. количество жилы не может быть меньше мин. значения");
+      toast.error(t("contentPanel.validation.veinMaxBelowMin"));
       return;
     }
     if (activeCategory === "professions" && !Number.isFinite(payload.baseWage ?? Number.NaN)) {
-      toast.error("Базовая зарплата должна быть числом");
+      toast.error(t("contentPanel.validation.baseWageNumber"));
       return;
     }
     if (activeCategory === "ideologies") {
@@ -3085,18 +3115,18 @@ export function ContentPanel({ open, token, onClose }: Props) {
         return !Number.isFinite(weight) || weight <= 0 || (needsThreshold && !Number.isFinite(threshold)) || (needsTarget && !row.targetId.trim());
       });
       if (badRule) {
-        toast.error("Проверьте правила влияния идеологии");
+        toast.error(t("contentPanel.validation.ideologyRules"));
         return;
       }
     }
     if (activeCategory === "parties") {
       const badWeight = [...draftIdeologyWeights, ...draftInterestGroupWeights, ...draftLawPreferences].some((row) => row.targetId.trim() && !Number.isFinite(Number(row.value)));
       if (badWeight) {
-        toast.error("Политические веса должны быть числами");
+        toast.error(t("contentPanel.validation.politicalWeights"));
         return;
       }
       if (!Number.isFinite(payload.discipline ?? Number.NaN)) {
-        toast.error("Дисциплина партии должна быть числом от 0 до 1");
+        toast.error(t("contentPanel.validation.partyDiscipline"));
         return;
       }
     }
@@ -3109,31 +3139,31 @@ export function ContentPanel({ open, token, onClose }: Props) {
         !Number.isFinite(payload.radicalMultiplier ?? Number.NaN) ||
         !Number.isFinite(payload.loyalistMultiplier ?? Number.NaN)
       ) {
-        toast.error("Параметры группы интересов должны быть числами");
+        toast.error(t("contentPanel.validation.interestGroupNumbers"));
         return;
       }
     }
     if (activeCategory === "lawGroups" && !Number.isFinite(payload.order ?? Number.NaN)) {
-      toast.error("Порядок группы законов должен быть числом");
+      toast.error(t("contentPanel.validation.lawGroupOrder"));
       return;
     }
     if (activeCategory === "laws") {
       const badPreference = draftLawPreferences.some((row) => row.targetId.trim() && !Number.isFinite(Number(row.value)));
       if (badPreference) {
-        toast.error("Предпочтения партий должны быть числами");
+        toast.error(t("contentPanel.validation.partyPreferences"));
         return;
       }
       if (!payload.lawGroupId) {
-        toast.error("Укажите группу закона");
+        toast.error(t("contentPanel.validation.lawGroupRequired"));
         return;
       }
       if (!Number.isFinite(payload.enactmentDifficulty ?? Number.NaN) || !Number.isFinite(payload.votingDurationTurns ?? Number.NaN)) {
-        toast.error("Сложность и длительность голосования должны быть числами");
+        toast.error(t("contentPanel.validation.votingNumbers"));
         return;
       }
     }
     if (activeCategory === "technologies" && !Number.isFinite(payload.costScience ?? Number.NaN)) {
-      toast.error("Стоимость исследования должна быть числом");
+      toast.error(t("contentPanel.validation.researchCostNumber"));
       return;
     }
     if (
@@ -3147,7 +3177,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
         !Number.isFinite(payload.upgradeCostConstruction ?? Number.NaN) ||
         !Number.isFinite(payload.extractionAmountPerTurn ?? Number.NaN))
     ) {
-      toast.error("Параметры строительства должны быть числами");
+      toast.error(t("contentPanel.validation.buildingNumbers"));
       return;
     }
     setSaving(true);
@@ -3182,11 +3212,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
       if (activeCategory === "technologies") {
         setTechnologyOptions(result.items);
       }
-      toast.success("Изменения сохранены");
+      toast.success(t("contentPanel.saved"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "ADMIN_UPDATE_CONTENT_ENTRY_FAILED";
-      if (msg === "CONTENT_NAME_EXISTS") toast.error("Название уже используется");
-      else toast.error("Не удалось сохранить запись");
+      if (msg === "CONTENT_NAME_EXISTS") toast.error(t("contentPanel.nameExists"));
+      else toast.error(t("contentPanel.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -3227,9 +3257,9 @@ export function ContentPanel({ open, token, onClose }: Props) {
         setTechnologyOptions(result.items);
       }
       setDeleteConfirmOpen(false);
-      toast.success("Запись удалена");
+      toast.success(t("contentPanel.deleted"));
     } catch {
-      toast.error("Не удалось удалить запись");
+      toast.error(t("contentPanel.deleteFailed"));
     } finally {
       setSaving(false);
     }
@@ -3247,12 +3277,12 @@ export function ContentPanel({ open, token, onClose }: Props) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "LOGO_INVALID";
       if (msg === "LOGO_TOO_LARGE") {
-        toast.error(activeCategory === "events" || activeCategory === "decisions" ? "Изображение должно быть максимум 1080x970" : "Логотип должен быть максимум 64x64");
+        toast.error(activeCategory === "events" || activeCategory === "decisions" ? t("contentPanel.imageTooLarge") : t("contentPanel.logoTooLarge"));
       }
       else if (msg === "IMAGE_DIMENSIONS_TOO_LARGE") {
-        toast.error(activeCategory === "events" || activeCategory === "decisions" ? "Изображение должно быть максимум 1080x970" : "Логотип должен быть максимум 64x64");
+        toast.error(activeCategory === "events" || activeCategory === "decisions" ? t("contentPanel.imageTooLarge") : t("contentPanel.logoTooLarge"));
       }
-      else toast.error("Не удалось загрузить логотип");
+      else toast.error(t("contentPanel.logoUploadFailed"));
     } finally {
       setSaving(false);
     }
@@ -3268,13 +3298,13 @@ export function ContentPanel({ open, token, onClose }: Props) {
       setSavedSnapshot(buildSnapshot(result.item));
       setDraftMalePortraitUrl(result.item.malePortraitUrl ?? null);
       setDraftFemalePortraitUrl(result.item.femalePortraitUrl ?? null);
-      toast.success(`Портрет (${slot === "male" ? "мужской" : "женский"}) загружен`);
+      toast.success(t("contentPanel.portraitUploaded", { slot: t(slot === "male" ? "contentPanel.portraitSlot.male" : "contentPanel.portraitSlot.female") }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "RACE_PORTRAIT_INVALID";
       if (msg === "RACE_PORTRAIT_TOO_LARGE" || msg === "IMAGE_DIMENSIONS_TOO_LARGE") {
-        toast.error("Портрет должен быть максимум 89x100");
+        toast.error(t("contentPanel.portraitTooLarge"));
       } else {
-        toast.error("Не удалось загрузить портрет");
+        toast.error(t("contentPanel.portraitUploadFailed"));
       }
     } finally {
       setSaving(false);
@@ -3290,9 +3320,9 @@ export function ContentPanel({ open, token, onClose }: Props) {
     targetLabel: string,
     defaultValue = "1",
   ) => (
-    <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+    <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{title}</span>
         <button
           type="button"
           onClick={() =>
@@ -3301,15 +3331,15 @@ export function ContentPanel({ open, token, onClose }: Props) {
               { targetId: options.find((option) => !prev.some((row) => row.targetId === option.id))?.id ?? "", value: defaultValue },
             ])
           }
-          className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10"
+          className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]"
         >
           <Plus size={12} />
-          Добавить
+          {t("contentPanel.add")}
         </button>
       </div>
       <div className="space-y-2">
         {rows.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">{emptyText}</div>
+          <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{emptyText}</div>
         ) : (
           rows.map((row, index) => (
             <div key={`${row.targetId}-${index}`} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_120px_34px]">
@@ -3327,7 +3357,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setRows((prev) => prev.filter((_, i) => i !== index))}
-                className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"
+                className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"
               >
                 <Trash2 size={14} />
               </button>
@@ -3343,14 +3373,14 @@ export function ContentPanel({ open, token, onClose }: Props) {
 
   const getModifierValueLabel = (mode: ModifierMode, rawValue: string) => {
     const value = Number(rawValue);
-    if (!Number.isFinite(value)) return "некорректное значение";
+    if (!Number.isFinite(value)) return t("contentPanel.invalidValue");
     if (mode === "add_pct") return `${value >= 0 ? "+" : ""}${Number((value * 100).toFixed(2))}%`;
     if (mode === "mult") return `x${Number(value.toFixed(3))}`;
     return `${value >= 0 ? "+" : ""}${Number(value.toFixed(3))}`;
   };
 
   const getModifierEffectSummary = (effect: ModifierEffectDraft) => {
-    const statLabel = MODIFIER_STAT_OPTIONS.find((option) => option.value === effect.stat)?.label ?? effect.stat;
+    const statLabel = modifierStatOptions.find((option) => option.value === effect.stat)?.label ?? effect.stat;
     const modeLabel = getModifierValueLabel(effect.mode, effect.value);
     const targets = [
       effect.buildingId ? getOptionLabel(buildingOptions, effect.buildingId, effect.buildingId) : null,
@@ -3362,20 +3392,20 @@ export function ContentPanel({ open, token, onClose }: Props) {
   };
 
   const getModifierConditionTargetOptions = (type: ModifierConditionType) => {
-    if (type === "law_active") return [{ value: "", label: "Выберите закон" }, ...lawOptions.map((option) => ({ value: option.id, label: option.name }))];
-    if (type === "technology_researched") return [{ value: "", label: "Выберите технологию" }, ...technologyOptions.map((option) => ({ value: option.id, label: option.name }))];
-    if (type === "country_is") return [{ value: "", label: "Выберите страну" }, ...countryOptions.map((option) => ({ value: option.id, label: option.name }))];
-    if (type === "has_building") return [{ value: "", label: "Выберите здание" }, ...buildingOptions.map((option) => ({ value: option.id, label: option.name }))];
-    return [{ value: "", label: "Не требуется" }];
+    if (type === "law_active") return [{ value: "", label: t("contentPanel.select.law") }, ...lawOptions.map((option) => ({ value: option.id, label: option.name }))];
+    if (type === "technology_researched") return [{ value: "", label: t("contentPanel.select.technology") }, ...technologyOptions.map((option) => ({ value: option.id, label: option.name }))];
+    if (type === "country_is") return [{ value: "", label: t("contentPanel.select.country") }, ...countryOptions.map((option) => ({ value: option.id, label: option.name }))];
+    if (type === "has_building") return [{ value: "", label: t("contentPanel.select.building") }, ...buildingOptions.map((option) => ({ value: option.id, label: option.name }))];
+    return [{ value: "", label: t("contentPanel.notRequired") }];
   };
 
   const getIdeologyAttractionTargetOptions = (type: IdeologyAttractionConditionType) => {
-    if (type === "profession_is") return [{ value: "", label: "Выберите профессию" }, ...professionOptions.map((option) => ({ value: option.id, label: option.name }))];
-    if (type === "religion_is") return [{ value: "", label: "Выберите религию" }, ...religionOptions.map((option) => ({ value: option.id, label: option.name }))];
-    if (type === "culture_is") return [{ value: "", label: "Выберите культуру" }, ...cultureOptions.map((option) => ({ value: option.id, label: option.name }))];
-    if (type === "law_active") return [{ value: "", label: "Выберите закон" }, ...lawOptions.map((option) => ({ value: option.id, label: option.name }))];
-    if (type === "has_building") return [{ value: "", label: "Выберите здание" }, ...buildingOptions.map((option) => ({ value: option.id, label: option.name }))];
-    return [{ value: "", label: "Не требуется" }];
+    if (type === "profession_is") return [{ value: "", label: t("contentPanel.select.profession") }, ...professionOptions.map((option) => ({ value: option.id, label: option.name }))];
+    if (type === "religion_is") return [{ value: "", label: t("contentPanel.select.religion") }, ...religionOptions.map((option) => ({ value: option.id, label: option.name }))];
+    if (type === "culture_is") return [{ value: "", label: t("contentPanel.select.culture") }, ...cultureOptions.map((option) => ({ value: option.id, label: option.name }))];
+    if (type === "law_active") return [{ value: "", label: t("contentPanel.select.law") }, ...lawOptions.map((option) => ({ value: option.id, label: option.name }))];
+    if (type === "has_building") return [{ value: "", label: t("contentPanel.select.building") }, ...buildingOptions.map((option) => ({ value: option.id, label: option.name }))];
+    return [{ value: "", label: t("contentPanel.notRequired") }];
   };
 
   const ideologyRuleNeedsThreshold = (type: IdeologyAttractionConditionType) =>
@@ -3386,11 +3416,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
     type === "country_modifier_active" || type === "province_modifier_active";
 
   const renderIdeologyAttractionRulesEditor = () => (
-    <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+    <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Правила влияния</div>
-          <div className="mt-1 text-xs text-white/45">Правила создают притяжение к этой идеологии. Население меняет доли плавно каждый ход.</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.ideologyRules")}</div>
+          <div className="mt-1 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.ideologyRulesHint")}</div>
         </div>
         <button
           type="button"
@@ -3400,22 +3430,22 @@ export function ContentPanel({ open, token, onClose }: Props) {
               { id: `rule-${prev.length + 1}`, type: "sol_below", targetId: "", threshold: "8", weight: "20", label: "", invert: false },
             ])
           }
-          className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10"
+          className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]"
         >
           <Plus size={12} />
-          Добавить
+          {t("contentPanel.add")}
         </button>
       </div>
       {draftIdeologyAttractionRules.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">
-          Правила не заданы, идеология не будет расти автоматически.
+        <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">
+          {t("contentPanel.ideologyRulesEmpty")}
         </div>
       ) : (
         <div className="space-y-3">
           {draftIdeologyAttractionRules.map((rule, index) => {
             const option = IDEOLOGY_ATTRACTION_RULE_OPTIONS.find((item) => item.value === rule.type);
             return (
-              <div key={`${rule.id}-${index}`} className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+              <div key={`${rule.id}-${index}`} className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                 <div className="grid gap-2 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_110px_110px_34px]">
                   <CustomSelect
                     value={rule.type}
@@ -3433,7 +3463,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                         ),
                       )
                     }
-                    options={IDEOLOGY_ATTRACTION_RULE_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
+                    options={IDEOLOGY_ATTRACTION_RULE_OPTIONS.map((item) => ({ value: item.value, label: t(item.labelKey) }))}
                     buttonClassName="h-[38px]"
                   />
                   {ideologyRuleNeedsTargetSelect(rule.type) ? (
@@ -3447,33 +3477,33 @@ export function ContentPanel({ open, token, onClose }: Props) {
                     <AppInput
                       value={rule.targetId}
                       onChange={(e) => setDraftIdeologyAttractionRules((prev) => prev.map((item, i) => (i === index ? { ...item, targetId: e.target.value } : item)))}
-                      placeholder="ID модификатора"
+                    placeholder={t("contentPanel.placeholder.modifierId")}
                       className="h-[38px]"
                     />
                   ) : (
-                    <div className="flex h-[38px] items-center rounded-lg border border-white/10 bg-black/20 px-3 text-xs text-white/35">
-                      {option?.target ?? "Не требуется"}
+                    <div className="flex h-[38px] items-center rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 text-xs text-[rgb(var(--theme-text-muted))]">
+                      {option ? t(option.targetKey) : t("contentPanel.notRequired")}
                     </div>
                   )}
                   <AppInput
                     value={rule.threshold}
                     disabled={!ideologyRuleNeedsThreshold(rule.type)}
                     onChange={(e) => setDraftIdeologyAttractionRules((prev) => prev.map((item, i) => (i === index ? { ...item, threshold: e.target.value } : item)))}
-                    placeholder={option?.threshold ?? "Порог"}
+                    placeholder={option ? t(option.thresholdKey) : t("contentPanel.placeholder.threshold")}
                     inputMode="decimal"
                     className="h-[38px]"
                   />
                   <AppInput
                     value={rule.weight}
                     onChange={(e) => setDraftIdeologyAttractionRules((prev) => prev.map((item, i) => (i === index ? { ...item, weight: e.target.value } : item)))}
-                    placeholder="Сила"
+                    placeholder={t("contentPanel.placeholder.weight")}
                     inputMode="decimal"
                     className="h-[38px]"
                   />
                   <button
                     type="button"
                     onClick={() => setDraftIdeologyAttractionRules((prev) => prev.filter((_, i) => i !== index))}
-                    className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"
+                    className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -3482,16 +3512,16 @@ export function ContentPanel({ open, token, onClose }: Props) {
                   <AppInput
                     value={rule.label}
                     onChange={(e) => setDraftIdeologyAttractionRules((prev) => prev.map((item, i) => (i === index ? { ...item, label: e.target.value } : item)))}
-                    placeholder="Короткое описание правила"
-                    className="h-[36px] bg-black/25 text-xs"
+                    placeholder={t("contentPanel.placeholder.ruleDescription")}
+                    className="h-[36px] bg-[rgb(var(--theme-surface-2))] text-xs"
                   />
-                  <label className="flex h-[36px] items-center gap-2 rounded-lg border border-white/10 bg-black/25 px-3 text-xs text-white/70">
+                  <label className="flex h-[36px] items-center gap-2 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 text-xs text-[rgb(var(--theme-text-secondary))]">
                     <input
                       type="checkbox"
                       checked={rule.invert}
                       onChange={(e) => setDraftIdeologyAttractionRules((prev) => prev.map((item, i) => (i === index ? { ...item, invert: e.target.checked } : item)))}
                     />
-                    Инвертировать
+                    {t("contentPanel.invert")}
                   </label>
                 </div>
               </div>
@@ -3503,10 +3533,10 @@ export function ContentPanel({ open, token, onClose }: Props) {
   );
 
   const getModifierConditionSummary = (condition: ModifierConditionDraft) => {
-    const typeLabel = MODIFIER_CONDITION_OPTIONS.find((option) => option.value === condition.type)?.label ?? condition.type;
-    if (condition.type === "always") return condition.invert ? "Никогда" : "Всегда";
+    const typeLabel = modifierConditionOptions.find((option) => option.value === condition.type)?.label ?? condition.type;
+    if (condition.type === "always") return condition.invert ? t("contentPanel.condition.never") : t("contentPanel.condition.always");
     const targetLabel = getModifierConditionTargetOptions(condition.type).find((option) => option.value === condition.targetId)?.label ?? condition.targetId;
-    return `${condition.invert ? "НЕ " : ""}${typeLabel}: ${targetLabel || "не выбрано"}`;
+    return `${condition.invert ? `${t("contentPanel.notPrefix")} ` : ""}${typeLabel}: ${targetLabel || t("contentPanel.notSelected")}`;
   };
 
   const renderDecisionConditionRows = (
@@ -3514,31 +3544,31 @@ export function ContentPanel({ open, token, onClose }: Props) {
     rows: ModifierConditionDraft[],
     setRows: Dispatch<SetStateAction<ModifierConditionDraft[]>>,
   ) => (
-    <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+    <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</div>
-          <div className="mt-1 text-xs text-white/45">Все строки должны выполниться одновременно.</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{title}</div>
+          <div className="mt-1 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.conditionsAllRequired")}</div>
         </div>
         <button
           type="button"
           onClick={() => setRows((prev) => [...prev, { type: "law_active", targetId: "", invert: false }])}
-          className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10"
+          className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]"
         >
           <Plus size={12} />
-          Условие
+          {t("contentPanel.condition")}
         </button>
       </div>
       <div className="space-y-2">
         {rows.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">Без условий.</div>
+          <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.conditionsEmpty")}</div>
         ) : (
           rows.map((condition, index) => (
             <div key={`${condition.type}-${index}`} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_90px_34px]">
               <CustomSelect
                 value={condition.type}
                 onChange={(value) => setRows((prev) => prev.map((row, i) => (i === index ? { ...row, type: value as ModifierConditionType, targetId: "" } : row)))}
-                options={MODIFIER_CONDITION_OPTIONS}
+                options={modifierConditionOptions}
                 buttonClassName="h-[38px]"
               />
               <CustomSelect
@@ -3547,18 +3577,18 @@ export function ContentPanel({ open, token, onClose }: Props) {
                 options={getModifierConditionTargetOptions(condition.type)}
                 buttonClassName="h-[38px]"
               />
-              <label className="inline-flex h-[38px] items-center justify-center gap-2 rounded-lg border border-white/10 bg-black/25 px-2 text-xs text-white/65">
+              <label className="inline-flex h-[38px] items-center justify-center gap-2 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 text-xs text-[rgb(var(--theme-text-secondary))]">
                 <input
                   type="checkbox"
                   checked={condition.invert}
                   onChange={(e) => setRows((prev) => prev.map((row, i) => (i === index ? { ...row, invert: e.target.checked } : row)))}
                 />
-                НЕ
+                {t("contentPanel.notShort")}
               </label>
               <button
                 type="button"
                 onClick={() => setRows((prev) => prev.filter((_, i) => i !== index))}
-                className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"
+                className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"
               >
                 <Trash2 size={14} />
               </button>
@@ -3570,64 +3600,64 @@ export function ContentPanel({ open, token, onClose }: Props) {
   );
 
   const renderDecisionsEditor = () => (
-    <div className="space-y-3 rounded-xl border border-white/10 bg-[#131a22] p-3">
+    <div className="space-y-3 rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
       <div className="grid gap-3 md:grid-cols-3">
         <label className="block">
-          <span className="mb-1 block text-xs text-white/60">Категория</span>
+          <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.category")}</span>
           <CustomSelect
             value={draftDecisionCategory}
             onChange={(value) => setDraftDecisionCategory(value as DecisionCategory)}
-            options={DECISION_CATEGORY_OPTIONS}
+            options={decisionCategoryOptions}
             buttonClassName="h-[38px]"
           />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs text-white/60">Кулдаун, ходов</span>
+          <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.cooldownTurns")}</span>
           <AppInput value={draftDecisionCooldownTurns} onChange={(e) => setDraftDecisionCooldownTurns(e.target.value)} inputMode="numeric" />
         </label>
-        <label className="mt-5 flex h-[38px] items-center gap-2 rounded-lg border border-white/10 bg-black/25 px-3 text-xs text-white/70">
+        <label className="mt-5 flex h-[38px] items-center gap-2 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 text-xs text-[rgb(var(--theme-text-secondary))]">
           <input type="checkbox" checked={draftDecisionRepeatable} onChange={(e) => setDraftDecisionRepeatable(e.target.checked)} />
-          Можно повторять
+          {t("contentPanel.field.repeatable")}
         </label>
       </div>
 
-      {renderDecisionConditionRows("Видимость", draftDecisionVisibilityConditions, setDraftDecisionVisibilityConditions)}
-      {renderDecisionConditionRows("Доступность", draftDecisionAvailabilityConditions, setDraftDecisionAvailabilityConditions)}
+      {renderDecisionConditionRows(t("contentPanel.conditions.visibility"), draftDecisionVisibilityConditions, setDraftDecisionVisibilityConditions)}
+      {renderDecisionConditionRows(t("contentPanel.conditions.availability"), draftDecisionAvailabilityConditions, setDraftDecisionAvailabilityConditions)}
 
       <div className="grid gap-3 xl:grid-cols-2">
-        <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+        <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Стоимость</span>
-            <button type="button" onClick={() => setDraftDecisionCosts((prev) => [...prev, { targetId: "gold", value: "100" }])} className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.costs")}</span>
+            <button type="button" onClick={() => setDraftDecisionCosts((prev) => [...prev, { targetId: "gold", value: "100" }])} className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]">
               <Plus size={12} />
-              Ресурс
+              {t("contentPanel.resource")}
             </button>
           </div>
           <div className="space-y-2">
-            {draftDecisionCosts.length === 0 ? <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">Бесплатно.</div> : draftDecisionCosts.map((row, index) => (
+            {draftDecisionCosts.length === 0 ? <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.free")}</div> : draftDecisionCosts.map((row, index) => (
               <div key={`${row.targetId}-${index}`} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_120px_34px]">
-                <CustomSelect value={row.targetId} onChange={(value) => setDraftDecisionCosts((prev) => prev.map((item, i) => (i === index ? { ...item, targetId: value } : item)))} options={RESOURCE_OPTIONS} buttonClassName="h-[38px]" />
+                <CustomSelect value={row.targetId} onChange={(value) => setDraftDecisionCosts((prev) => prev.map((item, i) => (i === index ? { ...item, targetId: value } : item)))} options={resourceSelectOptions} buttonClassName="h-[38px]" />
                 <AppInput value={row.value} onChange={(e) => setDraftDecisionCosts((prev) => prev.map((item, i) => (i === index ? { ...item, value: e.target.value } : item)))} inputMode="decimal" />
-                <button type="button" onClick={() => setDraftDecisionCosts((prev) => prev.filter((_, i) => i !== index))} className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"><Trash2 size={14} /></button>
+                <button type="button" onClick={() => setDraftDecisionCosts((prev) => prev.filter((_, i) => i !== index))} className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"><Trash2 size={14} /></button>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+        <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Эффекты</span>
-            <button type="button" onClick={() => setDraftDecisionEffects((prev) => [...prev, { type: "resource_delta", resource: "culture", amount: "10" }])} className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.effects")}</span>
+            <button type="button" onClick={() => setDraftDecisionEffects((prev) => [...prev, { type: "resource_delta", resource: "culture", amount: "10" }])} className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]">
               <Plus size={12} />
-              Эффект
+              {t("contentPanel.effect")}
             </button>
           </div>
           <div className="space-y-2">
-            {draftDecisionEffects.length === 0 ? <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">Нет эффектов.</div> : draftDecisionEffects.map((row, index) => (
+            {draftDecisionEffects.length === 0 ? <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.effectsEmpty")}</div> : draftDecisionEffects.map((row, index) => (
               <div key={`${row.resource}-${index}`} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_120px_34px]">
-                <CustomSelect value={row.resource} onChange={(value) => setDraftDecisionEffects((prev) => prev.map((item, i) => (i === index ? { ...item, resource: value as keyof ResourceTotals } : item)))} options={RESOURCE_OPTIONS} buttonClassName="h-[38px]" />
+                <CustomSelect value={row.resource} onChange={(value) => setDraftDecisionEffects((prev) => prev.map((item, i) => (i === index ? { ...item, resource: value as keyof ResourceTotals } : item)))} options={resourceSelectOptions} buttonClassName="h-[38px]" />
                 <AppInput value={row.amount} onChange={(e) => setDraftDecisionEffects((prev) => prev.map((item, i) => (i === index ? { ...item, amount: e.target.value } : item)))} inputMode="decimal" />
-                <button type="button" onClick={() => setDraftDecisionEffects((prev) => prev.filter((_, i) => i !== index))} className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"><Trash2 size={14} /></button>
+                <button type="button" onClick={() => setDraftDecisionEffects((prev) => prev.filter((_, i) => i !== index))} className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"><Trash2 size={14} /></button>
               </div>
             ))}
           </div>
@@ -3639,7 +3669,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
   const renderEventEffects = (optionIndex: number, effects: DecisionEffectDraft[]) => (
     <div className="space-y-2">
       {effects.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">Нет эффектов.</div>
+        <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.effectsEmpty")}</div>
       ) : (
         effects.map((row, effectIndex) => (
           <div key={`${row.resource}-${effectIndex}`} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_120px_34px]">
@@ -3659,7 +3689,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                   ),
                 )
               }
-              options={RESOURCE_OPTIONS}
+              options={resourceSelectOptions}
               buttonClassName="h-[38px]"
             />
             <AppInput
@@ -3689,7 +3719,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                   ),
                 )
               }
-              className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"
+              className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"
             >
               <Trash2 size={14} />
             </button>
@@ -3700,83 +3730,83 @@ export function ContentPanel({ open, token, onClose }: Props) {
   );
 
   const renderEventsEditor = () => (
-    <div className="space-y-3 rounded-xl border border-white/10 bg-[#131a22] p-3">
+    <div className="space-y-3 rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
       <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         <label className="block">
-          <span className="mb-1 block text-xs text-white/60">Категория</span>
-          <CustomSelect value={draftEventCategory} onChange={(value) => setDraftEventCategory(value as EventCategory)} options={EVENT_CATEGORY_OPTIONS} buttonClassName="h-[38px]" />
+          <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.category")}</span>
+          <CustomSelect value={draftEventCategory} onChange={(value) => setDraftEventCategory(value as EventCategory)} options={eventCategoryOptions} buttonClassName="h-[38px]" />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs text-white/60">Важность</span>
-          <CustomSelect value={draftEventPriority} onChange={(value) => setDraftEventPriority(value as EventPriority)} options={EVENT_PRIORITY_OPTIONS} buttonClassName="h-[38px]" />
+          <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.priority")}</span>
+          <CustomSelect value={draftEventPriority} onChange={(value) => setDraftEventPriority(value as EventPriority)} options={eventPriorityOptions} buttonClassName="h-[38px]" />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs text-white/60">Видимость</span>
-          <CustomSelect value={draftEventVisibility} onChange={(value) => setDraftEventVisibility(value as EventVisibility)} options={EVENT_VISIBILITY_OPTIONS} buttonClassName="h-[38px]" />
+          <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.visibility")}</span>
+          <CustomSelect value={draftEventVisibility} onChange={(value) => setDraftEventVisibility(value as EventVisibility)} options={eventVisibilityOptions} buttonClassName="h-[38px]" />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs text-white/60">Кулдаун</span>
+          <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.cooldown")}</span>
           <AppInput value={draftEventCooldownTurns} onChange={(e) => setDraftEventCooldownTurns(e.target.value)} inputMode="numeric" />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs text-white/60">Проверять раз в N ходов</span>
+          <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.checkInterval")}</span>
           <AppInput value={draftEventCheckIntervalTurns} onChange={(e) => setDraftEventCheckIntervalTurns(e.target.value)} inputMode="numeric" />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs text-white/60">Шанс, %</span>
+          <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.chancePct")}</span>
           <AppInput value={draftEventChancePct} onChange={(e) => setDraftEventChancePct(e.target.value)} inputMode="decimal" />
         </label>
       </div>
       <div className="grid gap-2 md:grid-cols-2">
-        <label className="flex h-[38px] items-center gap-2 rounded-lg border border-white/10 bg-black/25 px-3 text-xs text-white/70">
+        <label className="flex h-[38px] items-center gap-2 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 text-xs text-[rgb(var(--theme-text-secondary))]">
           <input type="checkbox" checked={draftEventRepeatable} onChange={(e) => setDraftEventRepeatable(e.target.checked)} />
-          Может повторяться
+          {t("contentPanel.field.repeatable")}
         </label>
-        <label className="flex h-[38px] items-center gap-2 rounded-lg border border-white/10 bg-black/25 px-3 text-xs text-white/70">
+        <label className="flex h-[38px] items-center gap-2 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 text-xs text-[rgb(var(--theme-text-secondary))]">
           <input type="checkbox" checked={draftEventBlocking} onChange={(e) => setDraftEventBlocking(e.target.checked)} />
-          Важное событие
+          {t("contentPanel.field.blockingEvent")}
         </label>
       </div>
-      {renderDecisionConditionRows("Условия появления", draftEventTriggerConditions, setDraftEventTriggerConditions)}
-      <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+      {renderDecisionConditionRows(t("contentPanel.conditions.triggers"), draftEventTriggerConditions, setDraftEventTriggerConditions)}
+      <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Варианты выбора</div>
-            <div className="mt-1 text-xs text-white/45">Каждая строка станет кнопкой в окне события.</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.eventOptions")}</div>
+            <div className="mt-1 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.eventOptionsHint")}</div>
           </div>
-          <button type="button" onClick={() => setDraftEventOptions((prev) => [...prev, { id: `option-${prev.length + 1}`, label: "Новый вариант", description: "", autoChancePct: "100", buttonColor: "#15505b", effects: [] }])} className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10">
+          <button type="button" onClick={() => setDraftEventOptions((prev) => [...prev, { id: `option-${prev.length + 1}`, label: t("contentPanel.newEventOption"), description: "", autoChancePct: "100", buttonColor: "#15505b", effects: [] }])} className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]">
             <Plus size={12} />
-            Вариант
+            {t("contentPanel.option")}
           </button>
         </div>
         <div className="space-y-3">
           {draftEventOptions.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">Добавь хотя бы один вариант.</div>
+            <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.eventOptionsEmpty")}</div>
           ) : (
             draftEventOptions.map((option, index) => (
-              <div key={`${option.id}-${index}`} className="rounded-xl border border-white/10 bg-[#111821] p-3">
+              <div key={`${option.id}-${index}`} className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-3">
                 <div className="grid gap-2 md:grid-cols-[150px_minmax(0,1fr)_120px_160px_34px]">
                   <AppInput value={option.id} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, id: e.target.value } : item)))} placeholder="id" />
-                  <AppInput value={option.label} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, label: e.target.value } : item)))} placeholder="Текст кнопки" />
-                  <AppInput value={option.autoChancePct} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, autoChancePct: e.target.value } : item)))} inputMode="decimal" placeholder="Авто %" />
+                  <AppInput value={option.label} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, label: e.target.value } : item)))} placeholder={t("contentPanel.placeholder.buttonText")} />
+                  <AppInput value={option.autoChancePct} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, autoChancePct: e.target.value } : item)))} inputMode="decimal" placeholder={t("contentPanel.placeholder.autoPct")} />
                   <div className="grid grid-cols-[38px_minmax(0,1fr)] gap-2">
                     <input
                       type="color"
                       value={/^#[0-9A-Fa-f]{6}$/.test(option.buttonColor) ? option.buttonColor : "#15505b"}
                       onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, buttonColor: e.target.value } : item)))}
-                      className="h-[38px] w-full rounded-lg border border-white/10 bg-black/35 p-1"
-                      aria-label="Цвет кнопки"
+                      className="h-[38px] w-full rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-1"
+                      aria-label={t("contentPanel.buttonColor")}
                     />
                     <AppInput value={option.buttonColor} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, buttonColor: e.target.value } : item)))} placeholder="#15505b" />
                   </div>
-                  <button type="button" onClick={() => setDraftEventOptions((prev) => prev.filter((_, i) => i !== index))} className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"><Trash2 size={14} /></button>
+                  <button type="button" onClick={() => setDraftEventOptions((prev) => prev.filter((_, i) => i !== index))} className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"><Trash2 size={14} /></button>
                 </div>
-                <AppTextarea className="mt-2 min-h-[70px]" value={option.description} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, description: e.target.value } : item)))} placeholder="Описание последствий варианта" />
+                <AppTextarea className="mt-2 min-h-[70px]" value={option.description} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, description: e.target.value } : item)))} placeholder={t("contentPanel.placeholder.optionDescription")} />
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Эффекты варианта</span>
-                  <button type="button" onClick={() => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, effects: [...item.effects, { type: "resource_delta", resource: "culture", amount: "10" }] } : item)))} className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.optionEffects")}</span>
+                  <button type="button" onClick={() => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, effects: [...item.effects, { type: "resource_delta", resource: "culture", amount: "10" }] } : item)))} className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]">
                     <Plus size={12} />
-                    Эффект
+                    {t("contentPanel.effect")}
                   </button>
                 </div>
                 <div className="mt-2">{renderEventEffects(index, option.effects)}</div>
@@ -3789,10 +3819,10 @@ export function ContentPanel({ open, token, onClose }: Props) {
   );
 
   const renderModifiersEditor = () => (
-    <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+    <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <Tooltip content="Модификаторы применяются сервером в расчётах. Технологии действуют после изучения, законы - когда активны.">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Модификаторы</span>
+        <Tooltip content={t("contentPanel.modifiersTooltip")}>
+          <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.category.modifiers")}</span>
         </Tooltip>
         <button
           type="button"
@@ -3801,7 +3831,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
               ...prev,
               {
                 id: `modifier-${prev.length + 1}`,
-                label: "Новый модификатор",
+                label: t("contentPanel.newModifier"),
                 scope: "country",
                 conditions: [{ type: "always", targetId: "", invert: false }],
                 effects: [
@@ -3818,26 +3848,26 @@ export function ContentPanel({ open, token, onClose }: Props) {
               },
             ])
           }
-          className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10"
+          className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]"
         >
           <Plus size={12} />
-          Добавить
+          {t("contentPanel.add")}
         </button>
       </div>
-      <div className="mb-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs leading-relaxed text-white/55">
-        Выберите, что меняет эффект. После этого будут показаны только те цели, которые реально участвуют в расчёте.
+      <div className="mb-3 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs leading-relaxed text-[rgb(var(--theme-text-secondary))]">
+        {t("contentPanel.modifiersHint")}
       </div>
       <div className="space-y-3">
         {draftModifiers.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">
-            Нет действующих эффектов для этой записи.
+          <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">
+            {t("contentPanel.modifiersEmpty")}
           </div>
         ) : (
           draftModifiers.map((modifier, modifierIndex) => (
-            <div key={`${modifier.id}-${modifierIndex}`} className="rounded-xl border border-white/10 bg-black/20 p-3">
+            <div key={`${modifier.id}-${modifierIndex}`} className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
               <div className="grid gap-2 md:grid-cols-[160px_minmax(0,1fr)_150px_34px]">
                 <label className="block">
-                  <span className="mb-1 block text-[11px] text-white/50">ID</span>
+                  <span className="mb-1 block text-[11px] text-[rgb(var(--theme-text-muted))]">ID</span>
                   <AppInput
                     value={modifier.id}
                     onChange={(e) =>
@@ -3849,7 +3879,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-[11px] text-white/50">Название</span>
+                  <span className="mb-1 block text-[11px] text-[rgb(var(--theme-text-muted))]">{t("contentPanel.field.name")}</span>
                   <AppInput
                     value={modifier.label}
                     onChange={(e) =>
@@ -3857,11 +3887,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
                         prev.map((item, i) => (i === modifierIndex ? { ...item, label: e.target.value } : item)),
                       )
                     }
-                    placeholder="Название модификатора"
+                    placeholder={t("contentPanel.placeholder.modifierName")}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-[11px] text-white/50">Область</span>
+                  <span className="mb-1 block text-[11px] text-[rgb(var(--theme-text-muted))]">{t("contentPanel.field.scope")}</span>
                   <CustomSelect
                     value={modifier.scope}
                     onChange={(value) =>
@@ -3869,25 +3899,25 @@ export function ContentPanel({ open, token, onClose }: Props) {
                         prev.map((item, i) => (i === modifierIndex ? { ...item, scope: value as ModifierScope } : item)),
                       )
                     }
-                    options={MODIFIER_SCOPE_OPTIONS}
+                    options={modifierScopeOptions}
                     buttonClassName="h-[38px]"
                   />
                 </label>
                 <button
                   type="button"
                   onClick={() => setDraftModifiers((prev) => prev.filter((_, i) => i !== modifierIndex))}
-                  className="mt-[18px] inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"
+                  className="mt-[18px] inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
 
-              <div className="mt-3 rounded-lg border border-white/10 bg-black/15 p-3">
+              <div className="mt-3 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-3">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <div>
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Условия активации</span>
-                    <div className="mt-1 text-xs text-white/45">
-                      Все условия должны выполниться для страны, чтобы модификатор включился.
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.activationConditions")}</span>
+                    <div className="mt-1 text-xs text-[rgb(var(--theme-text-muted))]">
+                      {t("contentPanel.modifierConditionsHint")}
                     </div>
                   </div>
                   <button
@@ -3901,21 +3931,21 @@ export function ContentPanel({ open, token, onClose }: Props) {
                         ),
                       )
                     }
-                    className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10"
+                    className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]"
                   >
                     <Plus size={12} />
-                    Условие
+                    {t("contentPanel.condition")}
                   </button>
                 </div>
                 <div className="space-y-2">
                   {modifier.conditions.length === 0 ? (
-                    <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">
-                      Без условий: модификатор действует всегда.
+                    <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">
+                      {t("contentPanel.modifierConditionsEmpty")}
                     </div>
                   ) : (
                     modifier.conditions.map((condition, conditionIndex) => (
-                      <div key={`${condition.type}-${conditionIndex}`} className="rounded-lg border border-white/10 bg-black/20 p-2">
-                        <div className="mb-2 text-xs text-white/60">{getModifierConditionSummary(condition)}</div>
+                      <div key={`${condition.type}-${conditionIndex}`} className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-2">
+                        <div className="mb-2 text-xs text-[rgb(var(--theme-text-secondary))]">{getModifierConditionSummary(condition)}</div>
                         <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_110px_34px]">
                           <CustomSelect
                             value={condition.type}
@@ -3935,7 +3965,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 ),
                               )
                             }
-                            options={MODIFIER_CONDITION_OPTIONS}
+                            options={modifierConditionOptions}
                             buttonClassName="h-[38px]"
                           />
                           <CustomSelect
@@ -3957,7 +3987,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             options={getModifierConditionTargetOptions(condition.type)}
                             buttonClassName="h-[38px]"
                           />
-                          <label className="inline-flex h-[38px] items-center justify-center gap-2 rounded-lg border border-white/10 bg-black/25 px-2 text-xs text-white/65">
+                          <label className="inline-flex h-[38px] items-center justify-center gap-2 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 text-xs text-[rgb(var(--theme-text-secondary))]">
                             <input
                               type="checkbox"
                               checked={condition.invert}
@@ -3976,7 +4006,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 )
                               }
                             />
-                            НЕ
+                            {t("contentPanel.notShort")}
                           </label>
                           <button
                             type="button"
@@ -3989,7 +4019,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 ),
                               )
                             }
-                            className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"
+                            className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -4002,7 +4032,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
 
               <div className="mt-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Эффекты</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.effects")}</span>
                   <button
                     type="button"
                     onClick={() =>
@@ -4028,21 +4058,21 @@ export function ContentPanel({ open, token, onClose }: Props) {
                         ),
                       )
                     }
-                    className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10"
+                    className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]"
                   >
                     <Plus size={12} />
-                    Эффект
+                    {t("contentPanel.effect")}
                   </button>
                 </div>
                 {modifier.effects.map((effect, effectIndex) => {
                   const statConfig = MODIFIER_STAT_CONFIG[effect.stat];
                   const targets = statConfig.targets;
                   return (
-                  <div key={`${effect.stat}-${effectIndex}`} className="rounded-lg border border-white/10 bg-black/20 p-3">
+                  <div key={`${effect.stat}-${effectIndex}`} className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Эффект {effectIndex + 1}</span>
-                        <div className="mt-1 truncate text-xs text-white/65">{getModifierEffectSummary(effect)}</div>
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.effectNumber", { index: String(effectIndex + 1) })}</span>
+                        <div className="mt-1 truncate text-xs text-[rgb(var(--theme-text-secondary))]">{getModifierEffectSummary(effect)}</div>
                       </div>
                       <button
                         type="button"
@@ -4055,17 +4085,17 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             ),
                           )
                         }
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"
                       >
                         <Trash2 size={14} />
                       </button>
                     </div>
-                    <div className="mb-3 rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-xs leading-relaxed text-white/55">
-                      {statConfig.description} <span className="text-white/40">{statConfig.valueHint}</span>
+                    <div className="mb-3 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2 text-xs leading-relaxed text-[rgb(var(--theme-text-secondary))]">
+                      {t(statConfig.descriptionKey)} <span className="text-[rgb(var(--theme-text-muted))]">{t(statConfig.valueHintKey)}</span>
                     </div>
                     <div className="grid gap-2 md:grid-cols-[minmax(220px,1fr)_minmax(180px,240px)_140px]">
                       <label className="block">
-                        <span className="mb-1 block text-[11px] text-white/50">Что меняем</span>
+                        <span className="mb-1 block text-[11px] text-[rgb(var(--theme-text-muted))]">{t("contentPanel.field.stat")}</span>
                         <CustomSelect
                           value={effect.stat}
                           onChange={(value) =>
@@ -4087,12 +4117,12 @@ export function ContentPanel({ open, token, onClose }: Props) {
                               ),
                             )
                           }
-                          options={MODIFIER_STAT_OPTIONS}
+                          options={modifierStatOptions}
                           buttonClassName="h-[38px]"
                         />
                       </label>
                       <label className="block">
-                        <span className="mb-1 block text-[11px] text-white/50">Как применяем</span>
+                        <span className="mb-1 block text-[11px] text-[rgb(var(--theme-text-muted))]">{t("contentPanel.field.applyMode")}</span>
                         <CustomSelect
                           value={effect.mode}
                           onChange={(value) =>
@@ -4109,12 +4139,12 @@ export function ContentPanel({ open, token, onClose }: Props) {
                               ),
                             )
                           }
-                          options={MODIFIER_MODE_OPTIONS}
+                          options={modifierModeOptions}
                           buttonClassName="h-[38px]"
                         />
                       </label>
                       <label className="block">
-                        <span className="mb-1 block text-[11px] text-white/50">Значение</span>
+                        <span className="mb-1 block text-[11px] text-[rgb(var(--theme-text-muted))]">{t("contentPanel.field.value")}</span>
                         <AppInput
                           value={effect.value}
                           onChange={(e) =>
@@ -4137,14 +4167,14 @@ export function ContentPanel({ open, token, onClose }: Props) {
                       </label>
                     </div>
                     {targets.length === 0 ? (
-                      <div className="mt-2 rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">
-                        Этот показатель применяется ко всей стране, дополнительные цели не нужны.
+                      <div className="mt-2 rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">
+                        {t("contentPanel.modifierNoTargets")}
                       </div>
                     ) : (
                     <div className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                       {targets.includes("buildingId") && (
                       <label className="block">
-                        <span className="mb-1 block text-[11px] text-white/50">{MODIFIER_TARGET_LABELS.buildingId}</span>
+                        <span className="mb-1 block text-[11px] text-[rgb(var(--theme-text-muted))]">{t(MODIFIER_TARGET_LABELS.buildingId)}</span>
                         <CustomSelect
                         value={effect.buildingId}
                         onChange={(value) =>
@@ -4161,14 +4191,14 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             ),
                           )
                         }
-                        options={[{ value: "", label: "Любое здание" }, ...buildingOptions.map((option) => ({ value: option.id, label: option.name }))]}
+                        options={[{ value: "", label: t("contentPanel.anyBuilding") }, ...buildingOptions.map((option) => ({ value: option.id, label: option.name }))]}
                         buttonClassName="h-[38px]"
                       />
                       </label>
                       )}
                       {targets.includes("goodId") && (
                       <label className="block">
-                        <span className="mb-1 block text-[11px] text-white/50">{MODIFIER_TARGET_LABELS.goodId}</span>
+                        <span className="mb-1 block text-[11px] text-[rgb(var(--theme-text-muted))]">{t(MODIFIER_TARGET_LABELS.goodId)}</span>
                         <CustomSelect
                         value={effect.goodId}
                         onChange={(value) =>
@@ -4185,14 +4215,14 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             ),
                           )
                         }
-                        options={[{ value: "", label: "Любой товар" }, ...goodsOptions.map((option) => ({ value: option.id, label: option.name }))]}
+                        options={[{ value: "", label: t("contentPanel.anyGood") }, ...goodsOptions.map((option) => ({ value: option.id, label: option.name }))]}
                         buttonClassName="h-[38px]"
                       />
                       </label>
                       )}
                       {targets.includes("professionId") && (
                       <label className="block">
-                        <span className="mb-1 block text-[11px] text-white/50">{MODIFIER_TARGET_LABELS.professionId}</span>
+                        <span className="mb-1 block text-[11px] text-[rgb(var(--theme-text-muted))]">{t(MODIFIER_TARGET_LABELS.professionId)}</span>
                         <CustomSelect
                         value={effect.professionId}
                         onChange={(value) =>
@@ -4209,14 +4239,14 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             ),
                           )
                         }
-                        options={[{ value: "", label: "Любая профессия" }, ...professionOptions.map((option) => ({ value: option.id, label: option.name }))]}
+                        options={[{ value: "", label: t("contentPanel.anyProfession") }, ...professionOptions.map((option) => ({ value: option.id, label: option.name }))]}
                         buttonClassName="h-[38px]"
                       />
                       </label>
                       )}
                       {targets.includes("resourceCategoryId") && (
                       <label className="block">
-                        <span className="mb-1 block text-[11px] text-white/50">{MODIFIER_TARGET_LABELS.resourceCategoryId}</span>
+                        <span className="mb-1 block text-[11px] text-[rgb(var(--theme-text-muted))]">{t(MODIFIER_TARGET_LABELS.resourceCategoryId)}</span>
                         <CustomSelect
                         value={effect.resourceCategoryId}
                         onChange={(value) =>
@@ -4233,7 +4263,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             ),
                           )
                         }
-                        options={[{ value: "", label: "Любая категория" }, ...resourceCategoryOptions.map((option) => ({ value: option.id, label: option.name }))]}
+                        options={[{ value: "", label: t("contentPanel.anyCategory") }, ...resourceCategoryOptions.map((option) => ({ value: option.id, label: option.name }))]}
                         buttonClassName="h-[38px]"
                       />
                       </label>
@@ -4255,15 +4285,15 @@ export function ContentPanel({ open, token, onClose }: Props) {
     <>
       <AppModal open={open} onClose={requestClose} modalKey="content" zIndexClassName="z-[205]">
             <AppModalHeader
-              title="Панель контента"
-              description="Создание и редактирование игрового контента"
+              title={t("contentPanel.title")}
+              description={t("contentPanel.description")}
               onClose={requestClose}
             />
 
             <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-              <aside className="flex min-h-0 flex-col rounded-xl border border-white/10 bg-black/20 p-3">
-                <Tooltip content="Выберите тип контента для создания и редактирования записей.">
-                  <span className="mb-2 block shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-400">Категории</span>
+              <aside className="flex min-h-0 flex-col rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
+                <Tooltip content={t("contentPanel.categoriesTooltip")}>
+                  <span className="mb-2 block shrink-0 text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.categories")}</span>
                 </Tooltip>
                 <div className="arc-scrollbar mt-2 min-h-0 flex-1 space-y-2 overflow-auto pr-1">
                   {CONTENT_UI_SCHEMA.categories.map((category) => {
@@ -4282,14 +4312,14 @@ export function ContentPanel({ open, token, onClose }: Props) {
                         disabled={!category.enabled}
                         className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm ${
                           !category.enabled
-                            ? "border-white/10 bg-black/20 text-white/35"
+                            ? "border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] text-[rgb(var(--theme-text-muted))]"
                             : isActive
                               ? "border-arc-accent/30 bg-arc-accent/10 text-arc-accent"
-                              : "border-white/10 bg-black/20 text-white/70"
+                              : "border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] text-[rgb(var(--theme-text-secondary))]"
                         }`}
                       >
                         <Icon size={15} />
-                        <span>{category.label}</span>
+                        <span>{t(category.labelKey)}</span>
                       </button>
                     );
                   })}
@@ -4298,16 +4328,16 @@ export function ContentPanel({ open, token, onClose }: Props) {
               </aside>
 
               <div className="grid min-h-0 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-                <section className="min-h-0 rounded-xl border border-white/10 bg-black/20 p-3">
-                  <Tooltip content="Выберите запись из списка, чтобы редактировать её данные и оформление.">
-                    <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Список: {CONTENT_UI_SCHEMA.categories.find((c) => c.id === activeCategory)?.label ?? "Контент"}
+                <section className="min-h-0 rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
+                  <Tooltip content={t("contentPanel.listTooltip")}>
+                    <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">
+                      {t("contentPanel.listLabel", { category: t(CONTENT_UI_SCHEMA.categories.find((c) => c.id === activeCategory)?.labelKey ?? "contentPanel.contentFallback") })}
                     </span>
                   </Tooltip>
                   <AppInput
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder={`Поиск: ${categoryMeta.singular}`}
+                    placeholder={t("contentPanel.searchPlaceholder", { item: localizedCategoryMeta.singular })}
                     className="mb-2"
                   />
                   <button
@@ -4317,19 +4347,19 @@ export function ContentPanel({ open, token, onClose }: Props) {
                     className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-arc-accent px-3 py-2 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-60"
                   >
                     <Plus size={15} />
-                    {categoryMeta.createLabel}
+                    {localizedCategoryMeta.createLabel}
                   </button>
 
                   <div className="arc-scrollbar max-h-[calc(100%-6.75rem)] space-y-2 overflow-auto pr-1">
                     {loading ? (
-                      <AppEmptyState className="py-4 text-xs">Загрузка...</AppEmptyState>
+                      <AppEmptyState className="py-4 text-xs">{t("contentPanel.loading")}</AppEmptyState>
                     ) : filteredEntries.length === 0 ? (
-                      <AppEmptyState className="py-4 text-xs">Записей не найдено.</AppEmptyState>
+                      <AppEmptyState className="py-4 text-xs">{t("contentPanel.empty")}</AppEmptyState>
                     ) : activeCategory === "buildings" ? (
                       buildingEntryGroups.map((group) => {
                         const isOpen = openBuildingIndustryGroups[group.id] ?? false;
                         return (
-                          <div key={group.id} className="rounded-lg border border-white/10 bg-black/15">
+                          <div key={group.id} className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))]">
                             <button
                               type="button"
                               onClick={() =>
@@ -4338,14 +4368,14 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   [group.id]: !(current[group.id] ?? false),
                                 }))
                               }
-                              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide text-white/60 transition hover:bg-white/[0.04] hover:text-white/80"
+                              className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-secondary))] transition hover:bg-white/[0.04] hover:text-[rgb(var(--theme-text-primary))]"
                             >
                               <ChevronDown
                                 size={14}
                                 className={`shrink-0 transition-transform ${isOpen ? "" : "-rotate-90"}`}
                               />
                               <span className="min-w-0 flex-1 truncate">{group.label}</span>
-                              <span className="rounded-md border border-white/10 bg-black/30 px-1.5 py-0.5 text-[10px] text-white/45">
+                              <span className="rounded-md border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-1.5 py-0.5 text-[10px] text-[rgb(var(--theme-text-muted))]">
                                 {group.entries.length}
                               </span>
                             </button>
@@ -4358,7 +4388,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   transition={{ duration: 0.16, ease: "easeOut" }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="space-y-2 border-t border-white/10 p-2">
+                                  <div className="space-y-2 border-t border-[rgb(var(--theme-border-subtle))] p-2">
                                     {group.entries.map((entry) => (
                                       <button
                                         key={entry.id}
@@ -4367,11 +4397,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                         className={`flex w-full items-center gap-2 rounded-lg border px-2 py-2 text-left transition ${
                                           selectedEntryId === entry.id
                                             ? "border-arc-accent/30 bg-arc-accent/10"
-                                            : "border-white/10 bg-black/20 hover:border-white/15"
+                                            : "border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] hover:border-[rgb(var(--theme-border-subtle))]"
                                         }`}
                                       >
                                         <div
-                                          className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-[#131a22]"
+                                          className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))]"
                                           style={{ boxShadow: `0 0 0 1px ${entry.color}33 inset` }}
                                         >
                                           {entry.logoUrl ? (
@@ -4383,10 +4413,10 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                           )}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                          <div className="truncate text-sm text-white">{entry.name}</div>
+                                          <div className="truncate text-sm text-[rgb(var(--theme-text-primary))]">{entry.name}</div>
                                           <div className="mt-1 flex items-center gap-2">
-                                            <span className="inline-block h-2.5 w-2.5 rounded-full border border-white/20" style={{ backgroundColor: entry.color }} />
-                                            <span className="text-[10px] text-white/50">{entry.color}</span>
+                                            <span className="inline-block h-2.5 w-2.5 rounded-full border border-[rgb(var(--theme-border-subtle))]" style={{ backgroundColor: entry.color }} />
+                                            <span className="text-[10px] text-[rgb(var(--theme-text-muted))]">{entry.color}</span>
                                           </div>
                                         </div>
                                       </button>
@@ -4406,11 +4436,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
                         className={`flex w-full items-center gap-2 rounded-lg border px-2 py-2 text-left transition ${
                           selectedEntryId === entry.id
                             ? "border-arc-accent/30 bg-arc-accent/10"
-                            : "border-white/10 bg-black/20 hover:border-white/15"
+                            : "border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] hover:border-[rgb(var(--theme-border-subtle))]"
                         }`}
                       >
                         <div
-                          className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-[#131a22]"
+                          className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))]"
                           style={{ boxShadow: `0 0 0 1px ${entry.color}33 inset` }}
                         >
                           {entry.logoUrl ? (
@@ -4422,10 +4452,10 @@ export function ContentPanel({ open, token, onClose }: Props) {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm text-white">{entry.name}</div>
+                          <div className="truncate text-sm text-[rgb(var(--theme-text-primary))]">{entry.name}</div>
                           <div className="mt-1 flex items-center gap-2">
-                            <span className="inline-block h-2.5 w-2.5 rounded-full border border-white/20" style={{ backgroundColor: entry.color }} />
-                            <span className="text-[10px] text-white/50">{entry.color}</span>
+                            <span className="inline-block h-2.5 w-2.5 rounded-full border border-[rgb(var(--theme-border-subtle))]" style={{ backgroundColor: entry.color }} />
+                            <span className="text-[10px] text-[rgb(var(--theme-text-muted))]">{entry.color}</span>
                           </div>
                         </div>
                       </button>
@@ -4434,7 +4464,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                 </section>
 
                 <div className="grid min-h-0 gap-4 lg:grid-rows-[auto_auto_minmax(0,1fr)]">
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-white/10 px-1">
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-[rgb(var(--theme-border-subtle))] px-1">
                   {CONTENT_UI_SCHEMA.categories
                     .find((c) => c.id === activeCategory)
                     ?.sections.map((section) => {
@@ -4447,49 +4477,49 @@ export function ContentPanel({ open, token, onClose }: Props) {
                         className={`inline-flex items-center gap-1.5 pb-2 text-sm transition ${
                           contentSection === section.id
                             ? "border-b-2 border-arc-accent text-arc-accent"
-                            : "border-b-2 border-transparent text-white/60 hover:text-white"
+                            : "border-b-2 border-transparent text-[rgb(var(--theme-text-secondary))] hover:text-[rgb(var(--theme-text-primary))]"
                         }`}
                       >
                         <SectionIcon size={14} />
-                        {section.label}
+                        {t(section.labelKey)}
                       </button>
                       );
                     })}
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                   <div>
                     <AppSectionHeader
-                      title={selectedEntry ? selectedEntry.name : categoryMeta.createBaseName}
-                      description={categoryMeta.sectionTitle}
+                      title={selectedEntry ? selectedEntry.name : localizedCategoryMeta.createBaseName}
+                      description={localizedCategoryMeta.sectionTitle}
                       className="mb-0"
                     />
                   </div>
                   <div className="flex items-center gap-2">
                     {hasUnsavedChanges && (
-                      <span className="rounded-md border border-amber-400/20 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-300">
-                        Есть несохранённые изменения
+                      <span className="rounded-md border border-[rgb(var(--theme-warning))] bg-[rgb(var(--theme-warning-soft))] px-2 py-1 text-[11px] text-[rgb(var(--theme-warning))]">
+                        {t("contentPanel.unsavedChanges")}
                       </span>
                     )}
-                    <Tooltip content="Сохраняет все изменения в выбранной культуре">
+                    <Tooltip content={t("contentPanel.saveTooltip")}>
                       <button
                         type="button"
                         onClick={() => void saveEntry()}
                         disabled={!selectedEntry || saving}
                         className="inline-flex h-10 items-center justify-center rounded-lg bg-arc-accent px-4 text-sm font-semibold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        Сохранить
+                        {t("common.save")}
                       </button>
                     </Tooltip>
-                    <Tooltip content="Полностью удаляет выбранную культуру">
+                    <Tooltip content={t("contentPanel.deleteTooltip")}>
                       <button
                         type="button"
                         onClick={() => setDeleteConfirmOpen(true)}
                         disabled={!selectedEntry || saving}
-                        className="panel-border inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-rose-500/10 px-3 text-sm text-rose-300 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="panel-border inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[rgb(var(--theme-danger-soft))] px-3 text-sm text-[rgb(var(--theme-danger))] transition hover:bg-[rgb(var(--theme-danger-soft))] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Trash2 size={14} />
-                        Удалить
+                        {t("contentPanel.delete")}
                       </button>
                     </Tooltip>
                   </div>
@@ -4498,32 +4528,32 @@ export function ContentPanel({ open, token, onClose }: Props) {
                 <div className="grid min-h-0 gap-4">
                   <div className="arc-scrollbar min-h-0 space-y-4 overflow-auto pr-1">
                     {contentSection === "general" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
-                        <Tooltip content="Название, цвет и описание используются в интерфейсе и игровых списках.">
-                          <span className="mb-3 block text-xs font-semibold uppercase tracking-wide text-slate-400">Основные данные</span>
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
+                        <Tooltip content={t("contentPanel.generalTooltip")}>
+                          <span className="mb-3 block text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.generalData")}</span>
                         </Tooltip>
                         <div className={`grid gap-4 ${activeCategory === "technologies" ? "" : "md:grid-cols-[minmax(0,1fr)_200px]"}`}>
                           <label className="block">
-                            <Tooltip content="Уникальное имя записи. Используется в карточках, фильтрах и справочниках.">
-                              <span className="mb-1 block text-xs text-white/60">Название</span>
+                            <Tooltip content={t("contentPanel.nameTooltip")}>
+                              <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.name")}</span>
                             </Tooltip>
                             <AppInput
                               value={draftName}
                               onChange={(e) => setDraftName(e.target.value)}
-                              placeholder={categoryMeta.namePlaceholder}
+                              placeholder={localizedCategoryMeta.namePlaceholder}
                             />
                           </label>
                           {activeCategory !== "technologies" && (
                             <div>
-                              <Tooltip content="Основной акцентный цвет записи для чипов, маркеров и предпросмотра.">
-                                <span className="mb-1 block text-xs text-white/60">Цвет</span>
+                              <Tooltip content={t("contentPanel.colorTooltip")}>
+                                <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.color")}</span>
                               </Tooltip>
                               <div className="flex items-center gap-2">
                                 <input
                                   type="color"
                                   value={/^#[0-9A-Fa-f]{6}$/.test(draftColor) ? draftColor : "#4ade80"}
                                   onChange={(e) => setDraftColor(e.target.value)}
-                                  className="h-10 w-12 rounded border border-white/10 bg-black/35 p-1"
+                                  className="h-10 w-12 rounded border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-1"
                                 />
                                 <AppInput
                                   value={draftColor}
@@ -4536,34 +4566,34 @@ export function ContentPanel({ open, token, onClose }: Props) {
                           )}
                         </div>
                         <label className="mt-4 block">
-                          <Tooltip content="Короткий текст для админ-панели и связанных UI-блоков.">
-                            <span className="mb-1 block text-xs text-white/60">Описание</span>
+                          <Tooltip content={t("contentPanel.descriptionTooltip")}>
+                            <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.description")}</span>
                           </Tooltip>
                           <AppTextarea
                             value={draftDescription}
                             onChange={(e) => setDraftDescription(e.target.value)}
-                            placeholder={categoryMeta.descriptionPlaceholder}
+                            placeholder={localizedCategoryMeta.descriptionPlaceholder}
                             maxLength={5000}
                             rows={5}
                           />
-                          <div className="mt-1 text-right text-[11px] text-white/45">{draftDescription.length}/5000</div>
+                          <div className="mt-1 text-right text-[11px] text-[rgb(var(--theme-text-muted))]">{draftDescription.length}/5000</div>
                         </label>
 
                       </section>
                     )}
 
                     {contentSection === "politics" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
-                        <Tooltip content="Эти параметры используются парламентом, выборами и голосованием законов.">
-                          <span className="mb-3 block text-xs font-semibold uppercase tracking-wide text-slate-400">Политические параметры</span>
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
+                        <Tooltip content={t("contentPanel.politicsTooltip")}>
+                          <span className="mb-3 block text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.politicalSettings")}</span>
                         </Tooltip>
                         {activeCategory === "ideologies" && renderIdeologyAttractionRulesEditor()}
                         {activeCategory === "parties" && (
                           <div className="space-y-4">
                             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px]">
-                              <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                              <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                                 <div className="mb-2 flex items-center justify-between gap-2">
-                                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Веса идеологий для выборов</span>
+                                  <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.ideologyElectionWeights")}</span>
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -4572,22 +4602,22 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                         { targetId: ideologyOptions.find((option) => !prev.some((row) => row.targetId === option.id))?.id ?? "", value: "1" },
                                       ])
                                     }
-                                    className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10"
+                                    className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]"
                                   >
                                     <Plus size={12} />
-                                    Добавить
+                                    {t("contentPanel.add")}
                                   </button>
                                 </div>
                                 <div className="space-y-2">
                                   {draftIdeologyWeights.length === 0 ? (
-                                    <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">Партия получает равную базовую поддержку.</div>
+                                    <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.equalPartySupport")}</div>
                                   ) : (
                                     draftIdeologyWeights.map((row, index) => (
                                       <div key={`${row.targetId}-${index}`} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_120px_34px]">
                                         <CustomSelect
                                           value={row.targetId}
                                           onChange={(value) => setDraftIdeologyWeights((prev) => prev.map((item, i) => (i === index ? { ...item, targetId: value } : item)))}
-                                          options={[{ value: "", label: "Идеология" }, ...ideologyOptions.map((option) => ({ value: option.id, label: option.name }))]}
+                                          options={[{ value: "", label: t("contentPanel.select.ideology") }, ...ideologyOptions.map((option) => ({ value: option.id, label: option.name }))]}
                                           buttonClassName="h-[38px]"
                                         />
                                         <AppInput
@@ -4598,7 +4628,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                         <button
                                           type="button"
                                           onClick={() => setDraftIdeologyWeights((prev) => prev.filter((_, i) => i !== index))}
-                                          className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"
+                                          className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"
                                         >
                                           <Trash2 size={14} />
                                         </button>
@@ -4608,20 +4638,20 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 </div>
                               </div>
                               <label className="block">
-                                <span className="mb-1 block text-xs text-white/60">Дисциплина</span>
+                                <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.discipline")}</span>
                                 <AppInput
                                   value={draftDiscipline}
                                   onChange={(e) => setDraftDiscipline(e.target.value)}
                                   inputMode="decimal"
                                 />
-                                <div className="mt-2 text-[11px] leading-relaxed text-white/45">
-                                  0 означает рыхлую партию, 1 означает почти монолитное голосование.
+                                <div className="mt-2 text-[11px] leading-relaxed text-[rgb(var(--theme-text-muted))]">
+                                  {t("contentPanel.disciplineHint")}
                                 </div>
                               </label>
                             </div>
-                            <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                            <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                               <div className="mb-2 flex items-center justify-between gap-2">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Предпочтения законов</span>
+                                <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.lawPreferences")}</span>
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -4630,22 +4660,22 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                       { targetId: lawOptions.find((option) => !prev.some((row) => row.targetId === option.id))?.id ?? "", value: "0" },
                                     ])
                                   }
-                                  className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10"
+                                  className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]"
                                 >
                                   <Plus size={12} />
-                                  Добавить
+                                  {t("contentPanel.add")}
                                 </button>
                               </div>
                               <div className="space-y-2">
                                 {draftLawPreferences.length === 0 ? (
-                                  <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">Нет явных предпочтений.</div>
+                                  <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.noExplicitPreferences")}</div>
                                 ) : (
                                   draftLawPreferences.map((row, index) => (
                                     <div key={`${row.targetId}-${index}`} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_120px_34px]">
                                       <CustomSelect
                                         value={row.targetId}
                                         onChange={(value) => setDraftLawPreferences((prev) => prev.map((item, i) => (i === index ? { ...item, targetId: value } : item)))}
-                                        options={[{ value: "", label: "Закон" }, ...lawOptions.map((option) => ({ value: option.id, label: option.name }))]}
+                                        options={[{ value: "", label: t("contentPanel.select.law") }, ...lawOptions.map((option) => ({ value: option.id, label: option.name }))]}
                                         buttonClassName="h-[38px]"
                                       />
                                       <AppInput
@@ -4656,7 +4686,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                       <button
                                         type="button"
                                         onClick={() => setDraftLawPreferences((prev) => prev.filter((_, i) => i !== index))}
-                                        className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"
+                                        className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"
                                       >
                                         <Trash2 size={14} />
                                       </button>
@@ -4671,56 +4701,56 @@ export function ContentPanel({ open, token, onClose }: Props) {
                           <div className="space-y-4">
                             <div className="grid gap-4 md:grid-cols-5">
                               <label className="block">
-                                <span className="mb-1 block text-xs text-white/60">Базовая сила</span>
+                                <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.baseStrength")}</span>
                                 <AppInput value={draftBasePoliticalStrength} onChange={(e) => setDraftBasePoliticalStrength(e.target.value)} inputMode="decimal" />
                               </label>
                               <label className="block">
-                                <span className="mb-1 block text-xs text-white/60">Множитель SoL</span>
+                                <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.solMultiplier")}</span>
                                 <AppInput value={draftSolMultiplier} onChange={(e) => setDraftSolMultiplier(e.target.value)} inputMode="decimal" />
                               </label>
                               <label className="block">
-                                <span className="mb-1 block text-xs text-white/60">Множитель радикалов</span>
+                                <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.radicalMultiplier")}</span>
                                 <AppInput value={draftRadicalMultiplier} onChange={(e) => setDraftRadicalMultiplier(e.target.value)} inputMode="decimal" />
                               </label>
                               <label className="block">
-                                <span className="mb-1 block text-xs text-white/60">Множитель лоялистов</span>
+                                <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.loyalistMultiplier")}</span>
                                 <AppInput value={draftLoyalistMultiplier} onChange={(e) => setDraftLoyalistMultiplier(e.target.value)} inputMode="decimal" />
                               </label>
                               <label className="block">
-                                <span className="mb-1 block text-xs text-white/60">Партия по умолчанию</span>
+                                <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.defaultParty")}</span>
                                 <CustomSelect
                                   value={draftDefaultPartyId}
                                   onChange={setDraftDefaultPartyId}
-                                  options={[{ value: "", label: "Не выбрана" }, ...partyOptions.map((option) => ({ value: option.id, label: option.name }))]}
+                                  options={[{ value: "", label: t("contentPanel.notSelectedFeminine") }, ...partyOptions.map((option) => ({ value: option.id, label: option.name }))]}
                                   buttonClassName="h-[42px]"
                                 />
                               </label>
                             </div>
                             <div className="grid gap-4 xl:grid-cols-2">
-                              {renderNumberRecordEditor("Вес профессий", draftProfessionWeights, setDraftProfessionWeights, professionOptions, "Профессии пока не выбраны.", "Профессия", "50")}
-                              {renderNumberRecordEditor("Близкие идеологии", draftIdeologyWeights, setDraftIdeologyWeights, ideologyOptions, "Идеологии пока не выбраны.", "Идеология", "50")}
-                              {renderNumberRecordEditor("Религиозные веса", draftReligionWeights, setDraftReligionWeights, religionOptions, "Религии пока не выбраны.", "Религия", "25")}
-                              {renderNumberRecordEditor("Веса зданий", draftBuildingWeights, setDraftBuildingWeights, buildingOptions, "Здания пока не выбраны.", "Здание", "25")}
-                              {renderNumberRecordEditor("Предпочтения законов", draftLawPreferences, setDraftLawPreferences, lawOptions, "Нет явных предпочтений.", "Закон", "0")}
+                              {renderNumberRecordEditor(t("contentPanel.professionWeights"), draftProfessionWeights, setDraftProfessionWeights, professionOptions, t("contentPanel.professionsEmpty"), t("contentPanel.select.profession"), "50")}
+                              {renderNumberRecordEditor(t("contentPanel.closeIdeologies"), draftIdeologyWeights, setDraftIdeologyWeights, ideologyOptions, t("contentPanel.ideologiesEmpty"), t("contentPanel.select.ideology"), "50")}
+                              {renderNumberRecordEditor(t("contentPanel.religionWeights"), draftReligionWeights, setDraftReligionWeights, religionOptions, t("contentPanel.religionsEmpty"), t("contentPanel.select.religion"), "25")}
+                              {renderNumberRecordEditor(t("contentPanel.buildingWeights"), draftBuildingWeights, setDraftBuildingWeights, buildingOptions, t("contentPanel.buildingsEmpty"), t("contentPanel.select.building"), "25")}
+                              {renderNumberRecordEditor(t("contentPanel.lawPreferences"), draftLawPreferences, setDraftLawPreferences, lawOptions, t("contentPanel.noExplicitPreferences"), t("contentPanel.select.law"), "0")}
                             </div>
                           </div>
                         )}
                         {activeCategory === "lawGroups" && (
                           <div className="grid gap-4 md:grid-cols-2">
                             <label className="block">
-                              <span className="mb-1 block text-xs text-white/60">Закон по умолчанию</span>
+                              <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.defaultLaw")}</span>
                               <CustomSelect
                                 value={draftDefaultLawId}
                                 onChange={setDraftDefaultLawId}
                                 options={[
-                                  { value: "", label: "Не выбран" },
+                                  { value: "", label: t("contentPanel.notSelectedMasculine") },
                                   ...lawOptions.map((option) => ({ value: option.id, label: option.name })),
                                 ]}
                                 buttonClassName="h-[42px]"
                               />
                             </label>
                             <label className="block">
-                              <span className="mb-1 block text-xs text-white/60">Порядок</span>
+                              <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.order")}</span>
                               <AppInput
                                 value={draftOrder}
                                 onChange={(e) => setDraftOrder(e.target.value)}
@@ -4733,19 +4763,19 @@ export function ContentPanel({ open, token, onClose }: Props) {
                           <div className="space-y-4">
                             <div className="grid gap-4 md:grid-cols-3">
                               <label className="block">
-                                <span className="mb-1 block text-xs text-white/60">Группа закона</span>
+                                <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.lawGroup")}</span>
                                 <CustomSelect
                                   value={draftLawGroupId}
                                   onChange={setDraftLawGroupId}
                                   options={[
-                                    { value: "", label: "Не выбрана" },
+                                    { value: "", label: t("contentPanel.notSelectedFeminine") },
                                     ...lawGroupOptions.map((option) => ({ value: option.id, label: option.name })),
                                   ]}
                                   buttonClassName="h-[42px]"
                                 />
                               </label>
                               <label className="block">
-                                <span className="mb-1 block text-xs text-white/60">Сложность принятия</span>
+                                <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.enactmentDifficulty")}</span>
                                 <AppInput
                                   value={draftEnactmentDifficulty}
                                   onChange={(e) => setDraftEnactmentDifficulty(e.target.value)}
@@ -4753,7 +4783,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 />
                               </label>
                               <label className="block">
-                                <span className="mb-1 block text-xs text-white/60">Длительность, ходов</span>
+                                <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.durationTurns")}</span>
                                 <AppInput
                                   value={draftVotingDurationTurns}
                                   onChange={(e) => setDraftVotingDurationTurns(e.target.value)}
@@ -4761,11 +4791,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 />
                               </label>
                             </div>
-                            <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
-                              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Полномочие парламента</div>
+                            <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
+                              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.parliamentPower")}</div>
                               <div className="grid gap-3 md:grid-cols-3">
                                 <label className="block">
-                                  <span className="mb-1 block text-xs text-white/60">Сфера</span>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.domain")}</span>
                                   <CustomSelect
                                     value={draftParliamentPowerDomain}
                                     onChange={(value) => {
@@ -4773,26 +4803,26 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                       setDraftParliamentPowerDomain(nextDomain);
                                       setDraftParliamentPowerValue(nextDomain ? PARLIAMENT_POWER_VALUE_OPTIONS[nextDomain][0]?.value ?? "" : "");
                                     }}
-                                    options={PARLIAMENT_POWER_DOMAIN_OPTIONS}
+                                    options={parliamentPowerDomainOptions}
                                     buttonClassName="h-[42px]"
                                   />
                                 </label>
                                 <label className="block">
-                                  <span className="mb-1 block text-xs text-white/60">Уровень</span>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.level")}</span>
                                   <CustomSelect
                                     value={draftParliamentPowerValue}
                                     onChange={setDraftParliamentPowerValue}
                                     options={
                                       draftParliamentPowerDomain
-                                        ? PARLIAMENT_POWER_VALUE_OPTIONS[draftParliamentPowerDomain]
-                                        : [{ value: "", label: "Сначала выберите сферу" }]
+                                        ? PARLIAMENT_POWER_VALUE_OPTIONS[draftParliamentPowerDomain].map((option) => ({ value: option.value, label: t(option.labelKey) }))
+                                        : [{ value: "", label: t("contentPanel.selectDomainFirst") }]
                                     }
                                     buttonClassName="h-[42px]"
                                   />
                                 </label>
                                 {draftParliamentPowerDomain === "diplomacy" ? (
                                   <label className="block">
-                                    <span className="mb-1 block text-xs text-white/60">Порог крупных выплат</span>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.majorPaymentThreshold")}</span>
                                     <AppInput
                                       value={draftParliamentPowerThreshold}
                                       onChange={(e) => setDraftParliamentPowerThreshold(e.target.value)}
@@ -4801,15 +4831,15 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                     />
                                   </label>
                                 ) : (
-                                  <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs leading-relaxed text-white/45 md:mt-5">
-                                    Активный закон с этой настройкой задаёт одно полномочие парламента.
+                                  <div className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs leading-relaxed text-[rgb(var(--theme-text-muted))] md:mt-5">
+                                    {t("contentPanel.parliamentPowerHint")}
                                   </div>
                                 )}
                               </div>
                             </div>
-                            <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                            <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                               <div className="mb-2 flex items-center justify-between gap-2">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Предпочтения партий по этому закону</span>
+                                <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.partyPreferencesForLaw")}</span>
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -4818,22 +4848,22 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                       { targetId: partyOptions.find((option) => !prev.some((row) => row.targetId === option.id))?.id ?? "", value: "0" },
                                     ])
                                   }
-                                  className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10"
+                                  className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]"
                                 >
                                   <Plus size={12} />
-                                  Добавить
+                                  {t("contentPanel.add")}
                                 </button>
                               </div>
                               <div className="space-y-2">
                                 {draftLawPreferences.length === 0 ? (
-                                  <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">Нет явных предпочтений партий.</div>
+                                  <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.noExplicitPartyPreferences")}</div>
                                 ) : (
                                   draftLawPreferences.map((row, index) => (
                                     <div key={`${row.targetId}-${index}`} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_120px_34px]">
                                       <CustomSelect
                                         value={row.targetId}
                                         onChange={(value) => setDraftLawPreferences((prev) => prev.map((item, i) => (i === index ? { ...item, targetId: value } : item)))}
-                                        options={[{ value: "", label: "Партия" }, ...partyOptions.map((option) => ({ value: option.id, label: option.name }))]}
+                                        options={[{ value: "", label: t("contentPanel.select.party") }, ...partyOptions.map((option) => ({ value: option.id, label: option.name }))]}
                                         buttonClassName="h-[38px]"
                                       />
                                       <AppInput
@@ -4844,7 +4874,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                       <button
                                         type="button"
                                         onClick={() => setDraftLawPreferences((prev) => prev.filter((_, i) => i !== index))}
-                                        className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"
+                                        className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"
                                       >
                                         <Trash2 size={14} />
                                       </button>
@@ -4859,11 +4889,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
                     )}
 
                     {contentSection === "technology" && activeCategory === "technologies" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
                         <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
                           <label className="block">
-                            <Tooltip content="Сколько научных очков потребуется для исследования технологии, когда появится система прогресса.">
-                              <span className="mb-1 block text-xs text-white/60">Стоимость исследования</span>
+                            <Tooltip content={t("contentPanel.researchCostTooltip")}>
+                              <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.researchCost")}</span>
                             </Tooltip>
                             <AppInput
                               value={draftCostScience}
@@ -4871,10 +4901,10 @@ export function ContentPanel({ open, token, onClose }: Props) {
                               inputMode="decimal"
                             />
                           </label>
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <div className="mb-2 flex items-center justify-between gap-2">
-                              <Tooltip content="Эти связи строят стрелки в дереве технологий. Технология появится после выбранных prerequisites.">
-                                <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Зависимости в дереве</span>
+                              <Tooltip content={t("contentPanel.prerequisitesTooltip")}>
+                                <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.prerequisites")}</span>
                               </Tooltip>
                               <button
                                 type="button"
@@ -4883,16 +4913,16 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   if (!nextPrerequisiteTechnologyId) return;
                                   setDraftPrerequisiteTechnologyIds((prev) => normalizeCountryIdsDraft([...prev, nextPrerequisiteTechnologyId]));
                                 }}
-                                className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))] disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 <Plus size={12} />
-                                Добавить
+                                {t("contentPanel.add")}
                               </button>
                             </div>
                             <div className="space-y-2">
                               {draftPrerequisiteTechnologyIds.length === 0 ? (
-                                <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">
-                                  Технология будет корневым узлом дерева.
+                                <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">
+                                  {t("contentPanel.rootTechnology")}
                                 </div>
                               ) : (
                                 draftPrerequisiteTechnologyIds.map((technologyId, index) => (
@@ -4907,7 +4937,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                         )
                                       }
                                       options={[
-                                        { value: "", label: "Технология" },
+                                        { value: "", label: t("contentPanel.select.technology") },
                                         ...selectableTechnologyOptions.map((option) => ({ value: option.id, label: option.name })),
                                       ]}
                                       buttonClassName="h-[38px]"
@@ -4915,7 +4945,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                     <button
                                       type="button"
                                       onClick={() => setDraftPrerequisiteTechnologyIds((prev) => prev.filter((_, i) => i !== index))}
-                                      className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300"
+                                      className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"
                                     >
                                       <Trash2 size={14} />
                                     </button>
@@ -4926,32 +4956,32 @@ export function ContentPanel({ open, token, onClose }: Props) {
                           </div>
                         </div>
                         <div className="mt-4 grid gap-4 xl:grid-cols-2">
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <div className="mb-2 flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Открывает здания</span>
+                              <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.unlocksBuildings")}</span>
                               <button
                                 type="button"
                                 disabled={!nextUnlockBuildingId}
                                 onClick={() => setDraftUnlockBuildingIds((prev) => normalizeCountryIdsDraft([...prev, nextUnlockBuildingId]))}
-                                className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))] disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 <Plus size={12} />
-                                Добавить
+                                {t("contentPanel.add")}
                               </button>
                             </div>
                             <div className="space-y-2">
                               {draftUnlockBuildingIds.length === 0 ? (
-                                <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">Не открывает здания.</div>
+                                <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.unlocksNoBuildings")}</div>
                               ) : (
                                 draftUnlockBuildingIds.map((buildingId, index) => (
                                   <div key={`${buildingId}-${index}`} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_34px]">
                                     <CustomSelect
                                       value={buildingId}
                                       onChange={(value) => setDraftUnlockBuildingIds((prev) => normalizeCountryIdsDraft(prev.map((item, i) => (i === index ? value : item))))}
-                                      options={[{ value: "", label: "Здание" }, ...buildingOptions.map((option) => ({ value: option.id, label: option.name }))]}
+                                      options={[{ value: "", label: t("contentPanel.select.building") }, ...buildingOptions.map((option) => ({ value: option.id, label: option.name }))]}
                                       buttonClassName="h-[38px]"
                                     />
-                                    <button type="button" onClick={() => setDraftUnlockBuildingIds((prev) => prev.filter((_, i) => i !== index))} className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300">
+                                    <button type="button" onClick={() => setDraftUnlockBuildingIds((prev) => prev.filter((_, i) => i !== index))} className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]">
                                       <Trash2 size={14} />
                                     </button>
                                   </div>
@@ -4959,32 +4989,32 @@ export function ContentPanel({ open, token, onClose }: Props) {
                               )}
                             </div>
                           </div>
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <div className="mb-2 flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Открывает законы</span>
+                              <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.unlocksLaws")}</span>
                               <button
                                 type="button"
                                 disabled={!nextUnlockLawId}
                                 onClick={() => setDraftUnlockLawIds((prev) => normalizeCountryIdsDraft([...prev, nextUnlockLawId]))}
-                                className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))] disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 <Plus size={12} />
-                                Добавить
+                                {t("contentPanel.add")}
                               </button>
                             </div>
                             <div className="space-y-2">
                               {draftUnlockLawIds.length === 0 ? (
-                                <div className="rounded-lg border border-dashed border-white/10 bg-black/20 px-3 py-2 text-xs text-white/45">Не открывает законы.</div>
+                                <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.unlocksNoLaws")}</div>
                               ) : (
                                 draftUnlockLawIds.map((lawId, index) => (
                                   <div key={`${lawId}-${index}`} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_34px]">
                                     <CustomSelect
                                       value={lawId}
                                       onChange={(value) => setDraftUnlockLawIds((prev) => normalizeCountryIdsDraft(prev.map((item, i) => (i === index ? value : item))))}
-                                      options={[{ value: "", label: "Закон" }, ...lawOptions.map((option) => ({ value: option.id, label: option.name }))]}
+                                      options={[{ value: "", label: t("contentPanel.select.law") }, ...lawOptions.map((option) => ({ value: option.id, label: option.name }))]}
                                       buttonClassName="h-[38px]"
                                     />
-                                    <button type="button" onClick={() => setDraftUnlockLawIds((prev) => prev.filter((_, i) => i !== index))} className="inline-flex h-[38px] items-center justify-center rounded-lg border border-white/10 text-white/55 transition hover:bg-rose-500/10 hover:text-rose-300">
+                                    <button type="button" onClick={() => setDraftUnlockLawIds((prev) => prev.filter((_, i) => i !== index))} className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]">
                                       <Trash2 size={14} />
                                     </button>
                                   </div>
@@ -4997,40 +5027,40 @@ export function ContentPanel({ open, token, onClose }: Props) {
                     )}
 
                     {contentSection === "modifiers" && activeCategory === "modifiers" && (
-                        <section className="rounded-xl border border-white/10 bg-black/20 p-4">
+                        <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
                           {renderModifiersEditor()}
                         </section>
                     )}
 
                     {contentSection === "decisions" && activeCategory === "decisions" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
                         {renderDecisionsEditor()}
                       </section>
                     )}
 
                     {contentSection === "events" && activeCategory === "events" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
                         {renderEventsEditor()}
                       </section>
                     )}
 
                     {contentSection === "economy" && isMilitaryContentCategory(activeCategory) && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
                         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
                           {[
-                            ["Люди", draftBattalionManpower, setDraftBattalionManpower, "numeric"],
-                            ["Атака", draftBattalionAttack, setDraftBattalionAttack, "decimal"],
-                            ["Защита", draftBattalionDefense, setDraftBattalionDefense, "decimal"],
-                            ["Прорыв", draftBattalionBreakthrough, setDraftBattalionBreakthrough, "decimal"],
-                            ["Организация", draftBattalionOrganization, setDraftBattalionOrganization, "decimal"],
-                            ["HP", draftBattalionHp, setDraftBattalionHp, "decimal"],
-                            ["Скорость", draftBattalionSpeed, setDraftBattalionSpeed, "decimal"],
-                            ["Снабжение", draftBattalionSupplyUse, setDraftBattalionSupplyUse, "decimal"],
-                            ["Стоимость, дукаты", draftBattalionTrainingCostDucats, setDraftBattalionTrainingCostDucats, "decimal"],
-                            ["Стоимость, люди", draftBattalionTrainingCostManpower, setDraftBattalionTrainingCostManpower, "decimal"],
+                            ["contentPanel.field.manpower", draftBattalionManpower, setDraftBattalionManpower, "numeric"],
+                            ["contentPanel.field.attack", draftBattalionAttack, setDraftBattalionAttack, "decimal"],
+                            ["contentPanel.field.defense", draftBattalionDefense, setDraftBattalionDefense, "decimal"],
+                            ["contentPanel.field.breakthrough", draftBattalionBreakthrough, setDraftBattalionBreakthrough, "decimal"],
+                            ["contentPanel.field.organization", draftBattalionOrganization, setDraftBattalionOrganization, "decimal"],
+                            ["contentPanel.field.hp", draftBattalionHp, setDraftBattalionHp, "decimal"],
+                            ["contentPanel.field.speed", draftBattalionSpeed, setDraftBattalionSpeed, "decimal"],
+                            ["contentPanel.field.supply", draftBattalionSupplyUse, setDraftBattalionSupplyUse, "decimal"],
+                            ["contentPanel.field.trainingCostDucats", draftBattalionTrainingCostDucats, setDraftBattalionTrainingCostDucats, "decimal"],
+                            ["contentPanel.field.trainingCostManpower", draftBattalionTrainingCostManpower, setDraftBattalionTrainingCostManpower, "decimal"],
                           ].map(([label, value, setter, inputMode]) => (
                             <label key={label as string} className="block">
-                              <span className="mb-1 block text-xs text-white/60">{label as string}</span>
+                              <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t(label as UiTextKey)}</span>
                               <AppInput
                                 value={value as string}
                                 onChange={(e) => (setter as Dispatch<SetStateAction<string>>)(e.target.value)}
@@ -5039,15 +5069,15 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             </label>
                           ))}
                         </div>
-                        <div className="mt-4 rounded-xl border border-white/10 bg-[#131a22] p-3">
+                        <div className="mt-4 rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                           <div className="mb-2 flex items-center justify-between gap-2">
-                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Требования по товарам</div>
+                            <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.equipmentNeeds")}</div>
                             <button
                               type="button"
                               onClick={() => setDraftBattalionEquipmentNeeds((prev) => [...prev, { goodId: goodsOptions[0]?.id ?? "", amount: "1" }])}
-                              className="rounded-md border border-emerald-400/35 bg-emerald-500/20 px-2 py-1 text-[11px] font-semibold text-emerald-200 transition hover:bg-emerald-500/30"
+                              className="rounded-md border border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] px-2 py-1 text-[11px] font-semibold text-[rgb(var(--theme-success))] transition hover:bg-[rgb(var(--theme-success-soft))]"
                             >
-                              Добавить
+                              {t("contentPanel.add")}
                             </button>
                           </div>
                           <div className="space-y-2">
@@ -5059,7 +5089,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                     setDraftBattalionEquipmentNeeds((prev) => prev.map((r, i) => (i === index ? { ...r, goodId: value } : r)))
                                   }
                                   options={[
-                                    { value: "", label: "Выберите товар" },
+                                    { value: "", label: t("contentPanel.select.good") },
                                     ...goodsOptions.map((option) => ({ value: option.id, label: option.name })),
                                   ]}
                                   buttonClassName="h-[42px]"
@@ -5075,34 +5105,34 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 <button
                                   type="button"
                                   onClick={() => setDraftBattalionEquipmentNeeds((prev) => prev.filter((_, i) => i !== index))}
-                                  className="rounded-lg border border-rose-400/30 bg-rose-500/10 text-xs text-rose-200"
+                                  className="rounded-lg border border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] text-xs text-[rgb(var(--theme-danger))]"
                                 >
                                   ×
                                 </button>
                               </div>
                             ))}
-                            {draftBattalionEquipmentNeeds.length === 0 && <div className="text-xs text-white/45">Нет требований по товарам</div>}
+                            {draftBattalionEquipmentNeeds.length === 0 && <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.equipmentNeedsEmpty")}</div>}
                           </div>
                         </div>
                       </section>
                     )}
 
                     {contentSection === "economy" && activeCategory === "buildings" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
                         <div className="space-y-4">
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <button
                               type="button"
                               onClick={() => setBuildingCostOpen((v) => !v)}
-                              className="mb-2 flex w-full items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
+                              className="mb-2 flex w-full items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                             >
-                              <Tooltip content="Базовые затраты на добавление одного уровня здания в очередь строительства.">
-                                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Стоимость строительства</div>
+                              <Tooltip content={t("contentPanel.buildingCostTooltip")}>
+                                <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.buildingCost")}</div>
                               </Tooltip>
                               {buildingCostOpen ? (
-                                <ChevronDown size={14} className="text-white/60" />
+                                <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                               ) : (
-                                <ChevronRight size={14} className="text-white/60" />
+                                <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                               )}
                             </button>
                             <AnimatePresence initial={false}>
@@ -5116,36 +5146,36 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             >
                             <div className="grid grid-cols-1 gap-2 pt-1 md:grid-cols-6">
                               <label className="block">
-                                <Tooltip content="Отрасль, к которой относится здание (используется в фильтрах и группировках UI).">
-                                  <span className="mb-1 block text-xs text-white/60">Отрасль</span>
+                                <Tooltip content={t("contentPanel.industryTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.industry")}</span>
                                 </Tooltip>
                                 <CustomSelect
                                   value={draftIndustryId}
                                   onChange={setDraftIndustryId}
                                   options={[
-                                    { value: "", label: "Не указана" },
+                                    { value: "", label: t("contentPanel.notSpecifiedFeminine") },
                                     ...industryOptions.map((option) => ({ value: option.id, label: option.name })),
                                   ]}
                                   buttonClassName="h-[42px]"
                                 />
                               </label>
                               <label className="block">
-                                <Tooltip content="Сектор, к которому относится здание (используется в фильтрах и группировках UI).">
-                                  <span className="mb-1 block text-xs text-white/60">Сектор</span>
+                                <Tooltip content={t("contentPanel.sectorTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.sector")}</span>
                                 </Tooltip>
                                 <CustomSelect
                                   value={draftSectorId}
                                   onChange={setDraftSectorId}
                                   options={[
-                                    { value: "", label: "Не указана" },
+                                    { value: "", label: t("contentPanel.notSpecifiedFeminine") },
                                     ...sectorOptions.map((option) => ({ value: option.id, label: option.name })),
                                   ]}
                                   buttonClassName="h-[42px]"
                                 />
                               </label>
                               <label className="block">
-                                <Tooltip content="Сколько очков строительства требуется на завершение проекта.">
-                                  <span className="mb-1 block text-xs text-white/60">Очки строительства</span>
+                                <Tooltip content={t("contentPanel.constructionCostTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.constructionPoints")}</span>
                                 </Tooltip>
                                 <AppInput
                                   value={draftCostConstruction}
@@ -5155,8 +5185,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 />
                               </label>
                               <label className="block">
-                                <Tooltip content="Сколько дукатов суммарно спишется при полном завершении проекта.">
-                                  <span className="mb-1 block text-xs text-white/60">Дукаты</span>
+                                <Tooltip content={t("contentPanel.ducatCostTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.ducats")}</span>
                                 </Tooltip>
                                 <AppInput
                                   value={draftCostDucats}
@@ -5166,8 +5196,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 />
                               </label>
                               <label className="block">
-                                <Tooltip content="Стартовый капитал здания, начисляемый сразу после завершения строительства.">
-                                  <span className="mb-1 block text-xs text-white/60">Стартовые дукаты</span>
+                                <Tooltip content={t("contentPanel.startingDucatsTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.startingDucats")}</span>
                                 </Tooltip>
                                 <AppInput
                                   value={draftStartingDucats}
@@ -5182,20 +5212,20 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             </AnimatePresence>
                           </div>
 
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <div className="mb-2 flex items-center justify-between gap-2">
                               <button
                                 type="button"
                                 onClick={() => setBuildingUpgradeOpen((v) => !v)}
-                                className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
+                                className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                               >
-                                <Tooltip content="Параметры повышения уровня инстанса здания: потолок уровня и требования для автопостановки в очередь апгрейда.">
-                                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Повышение уровня</div>
+                                <Tooltip content={t("contentPanel.buildingUpgradeTooltip")}>
+                                  <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.buildingUpgrade")}</div>
                                 </Tooltip>
                                 {buildingUpgradeOpen ? (
-                                  <ChevronDown size={14} className="text-white/60" />
+                                  <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                                 ) : (
-                                  <ChevronRight size={14} className="text-white/60" />
+                                  <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                                 )}
                               </button>
                             </div>
@@ -5210,8 +5240,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             >
                             <div className="grid grid-cols-1 gap-2 pt-1 md:grid-cols-4">
                               <label className="block">
-                                <Tooltip content="Максимальный уровень одного инстанса здания. При достижении этого значения автоповышение не ставится в очередь.">
-                                  <span className="mb-1 block text-xs text-white/60">Макс. уровень</span>
+                                <Tooltip content={t("contentPanel.maxLevelTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.maxLevel")}</span>
                                 </Tooltip>
                                 <AppInput
                                   value={draftMaxLevel}
@@ -5221,8 +5251,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 />
                               </label>
                               <label className="block">
-                                <Tooltip content="Максимальная прочность инстанса здания. Прочность ограничивает потолок продуктивности.">
-                                  <span className="mb-1 block text-xs text-white/60">Макс. прочность</span>
+                                <Tooltip content={t("contentPanel.maxDurabilityTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.maxDurability")}</span>
                                 </Tooltip>
                                 <AppInput
                                   value={draftMaxDurability}
@@ -5232,8 +5262,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 />
                               </label>
                               <label className="block">
-                                <Tooltip content="Сколько дукатов должно быть на счёте здания для автопостановки апгрейда. Эти дукаты списываются со счёта здания сразу при постановке в очередь.">
-                                  <span className="mb-1 block text-xs text-white/60">Дукаты на апгрейд</span>
+                                <Tooltip content={t("contentPanel.upgradeDucatsTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.upgradeDucats")}</span>
                                 </Tooltip>
                                 <AppInput
                                   value={draftUpgradeCostDucats}
@@ -5243,8 +5273,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 />
                               </label>
                               <label className="block">
-                                <Tooltip content="Сколько очков строительства требуется для повышения уровня. После автопостановки проект расходует очки строительства страны через обычную очередь.">
-                                  <span className="mb-1 block text-xs text-white/60">Очки строительства</span>
+                                <Tooltip content={t("contentPanel.upgradeConstructionTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.constructionPoints")}</span>
                                 </Tooltip>
                                 <AppInput
                                   value={draftUpgradeCostConstruction}
@@ -5259,20 +5289,20 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             </AnimatePresence>
                           </div>
 
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <div className="mb-2 flex items-center justify-between gap-2">
                               <button
                                 type="button"
                                 onClick={() => setBuildingExtractionOpen((v) => !v)}
-                                className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
+                                className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                               >
-                                <Tooltip content="Параметры добычи ресурсов провинции. Если задан ресурс, здание будет пытаться добывать его каждый ход.">
-                                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Добыча из залежей</div>
+                                <Tooltip content={t("contentPanel.extractionTooltip")}>
+                                  <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.extraction")}</div>
                                 </Tooltip>
                                 {buildingExtractionOpen ? (
-                                  <ChevronDown size={14} className="text-white/60" />
+                                  <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                                 ) : (
-                                  <ChevronRight size={14} className="text-white/60" />
+                                  <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                                 )}
                               </button>
                             </div>
@@ -5287,22 +5317,22 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             >
                             <div className="grid grid-cols-1 gap-2 pt-1 md:grid-cols-3">
                               <label className="block">
-                                <Tooltip content="Какой товар добывает здание напрямую из провинциальных залежей.">
-                                  <span className="mb-1 block text-xs text-white/60">Добываемый товар</span>
+                                <Tooltip content={t("contentPanel.extractionGoodTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.extractionGood")}</span>
                                 </Tooltip>
                                 <CustomSelect
                                   value={draftExtractionGoodId}
                                   onChange={setDraftExtractionGoodId}
                                   options={[
-                                    { value: "", label: "Не добывает" },
+                                    { value: "", label: t("contentPanel.noExtraction") },
                                     ...goodsOptions.map((option) => ({ value: option.id, label: option.name })),
                                   ]}
                                   buttonClassName="h-[42px]"
                                 />
                               </label>
                               <label className="block">
-                                <Tooltip content="Сколько единиц добывается за ход при 100% продуктивности.">
-                                  <span className="mb-1 block text-xs text-white/60">Объем/ход</span>
+                                <Tooltip content={t("contentPanel.extractionAmountTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.amountPerTurn")}</span>
                                 </Tooltip>
                                 <AppInput
                                   value={draftExtractionAmountPerTurn}
@@ -5312,19 +5342,19 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 />
                               </label>
                               <label className="block">
-                                <Tooltip content="Если включено, добыча ограничена только существующими залежами в провинции.">
-                                  <span className="mb-1 block text-xs text-white/60">Требует залежь</span>
+                                <Tooltip content={t("contentPanel.requiresDepositTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.requiresDeposit")}</span>
                                 </Tooltip>
                                 <button
                                   type="button"
                                   onClick={() => setDraftExtractionRequiresDeposit((v) => !v)}
                                   className={`h-[42px] w-full rounded-lg border px-3 text-sm font-semibold transition ${
                                     draftExtractionRequiresDeposit
-                                      ? "border-emerald-400/35 bg-emerald-500/15 text-emerald-200"
-                                      : "border-white/15 bg-black/35 text-white/70"
+                                      ? "border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] text-[rgb(var(--theme-success))]"
+                                      : "border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] text-[rgb(var(--theme-text-secondary))]"
                                   }`}
                                 >
-                                  {draftExtractionRequiresDeposit ? "Да" : "Нет"}
+                                  {draftExtractionRequiresDeposit ? t("common.yes") : t("common.no")}
                                 </button>
                               </label>
                             </div>
@@ -5333,30 +5363,30 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             </AnimatePresence>
                           </div>
 
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <div className="mb-2 flex items-center justify-between gap-2">
                               <button
                                 type="button"
                                 onClick={() => setBuildingInputsOpen((v) => !v)}
-                                className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
+                                className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                               >
-                                <Tooltip content="Товары, которые здание потребляет каждый ход при производстве.">
-                                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Входные товары</div>
+                                <Tooltip content={t("contentPanel.inputGoodsTooltip")}>
+                                  <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.inputGoods")}</div>
                                 </Tooltip>
                                 {buildingInputsOpen ? (
-                                  <ChevronDown size={14} className="text-white/60" />
+                                  <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                                 ) : (
-                                  <ChevronRight size={14} className="text-white/60" />
+                                  <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                                 )}
                               </button>
                               {buildingInputsOpen && (
-                                <Tooltip content="Добавить новую строку входного товара.">
+                                <Tooltip content={t("contentPanel.addInputGoodTooltip")}>
                                   <button
                                     type="button"
                                     onClick={() => setDraftInputs((prev) => [...prev, { goodId: goodsOptions[0]?.id ?? "", amount: "1" }])}
-                                    className="rounded-md border border-emerald-400/35 bg-emerald-500/20 px-2 py-1 text-[11px] font-semibold text-emerald-200 transition hover:bg-emerald-500/30"
+                                    className="rounded-md border border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] px-2 py-1 text-[11px] font-semibold text-[rgb(var(--theme-success))] transition hover:bg-[rgb(var(--theme-success-soft))]"
                                   >
-                                    Добавить
+                                    {t("contentPanel.add")}
                                   </button>
                                 </Tooltip>
                               )}
@@ -5379,7 +5409,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                       setDraftInputs((prev) => prev.map((r, i) => (i === index ? { ...r, goodId: value } : r)))
                                     }
                                     options={[
-                                      { value: "", label: "Выберите товар" },
+                                      { value: "", label: t("contentPanel.select.good") },
                                       ...goodsOptions.map((option) => ({ value: option.id, label: option.name })),
                                     ]}
                                     buttonClassName="h-[42px]"
@@ -5395,43 +5425,43 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   <button
                                     type="button"
                                     onClick={() => setDraftInputs((prev) => prev.filter((_, i) => i !== index))}
-                                    className="rounded-lg border border-rose-400/30 bg-rose-500/10 text-xs text-rose-200"
+                                    className="rounded-lg border border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] text-xs text-[rgb(var(--theme-danger))]"
                                   >
                                     ×
                                   </button>
                                 </div>
                               ))}
-                              {draftInputs.length === 0 && <div className="text-xs text-white/45">Нет входных товаров</div>}
+                              {draftInputs.length === 0 && <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.inputGoodsEmpty")}</div>}
                             </div>
                             </motion.div>
                             ) : null}
                             </AnimatePresence>
                           </div>
 
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <div className="mb-2 flex items-center justify-between gap-2">
                               <button
                                 type="button"
                                 onClick={() => setBuildingOutputsOpen((v) => !v)}
-                                className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
+                                className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                               >
-                                <Tooltip content="Товары, которые здание производит каждый ход.">
-                                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Выходные товары</div>
+                                <Tooltip content={t("contentPanel.outputGoodsTooltip")}>
+                                  <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.outputGoods")}</div>
                                 </Tooltip>
                                 {buildingOutputsOpen ? (
-                                  <ChevronDown size={14} className="text-white/60" />
+                                  <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                                 ) : (
-                                  <ChevronRight size={14} className="text-white/60" />
+                                  <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                                 )}
                               </button>
                               {buildingOutputsOpen && (
-                                <Tooltip content="Добавить новую строку выходного товара.">
+                                <Tooltip content={t("contentPanel.addOutputGoodTooltip")}>
                                   <button
                                     type="button"
                                     onClick={() => setDraftOutputs((prev) => [...prev, { goodId: goodsOptions[0]?.id ?? "", amount: "1", affectedByFertility: false }])}
-                                    className="rounded-md border border-emerald-400/35 bg-emerald-500/20 px-2 py-1 text-[11px] font-semibold text-emerald-200 transition hover:bg-emerald-500/30"
+                                    className="rounded-md border border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] px-2 py-1 text-[11px] font-semibold text-[rgb(var(--theme-success))] transition hover:bg-[rgb(var(--theme-success-soft))]"
                                   >
-                                    Добавить
+                                    {t("contentPanel.add")}
                                   </button>
                                 </Tooltip>
                               )}
@@ -5454,7 +5484,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                       setDraftOutputs((prev) => prev.map((r, i) => (i === index ? { ...r, goodId: value } : r)))
                                     }
                                     options={[
-                                      { value: "", label: "Выберите товар" },
+                                      { value: "", label: t("contentPanel.select.good") },
                                       ...goodsOptions.map((option) => ({ value: option.id, label: option.name })),
                                     ]}
                                     buttonClassName="h-[42px]"
@@ -5478,42 +5508,42 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                     }
                                     className="h-[42px] justify-center text-[11px]"
                                   >
-                                    Плодородность
+                                    {t("contentPanel.fertility")}
                                   </AppButton>
                                   <button
                                     type="button"
                                     onClick={() => setDraftOutputs((prev) => prev.filter((_, i) => i !== index))}
-                                    className="rounded-lg border border-rose-400/30 bg-rose-500/10 text-xs text-rose-200"
+                                    className="rounded-lg border border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] text-xs text-[rgb(var(--theme-danger))]"
                                   >
                                     ×
                                   </button>
                                 </div>
                               ))}
-                              {draftOutputs.length === 0 && <div className="text-xs text-white/45">Нет выходных товаров</div>}
+                              {draftOutputs.length === 0 && <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.outputGoodsEmpty")}</div>}
                             </div>
                             </motion.div>
                             ) : null}
                             </AnimatePresence>
                           </div>
 
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <div className="mb-2 flex items-center justify-between gap-2">
                               <button
                                 type="button"
                                 onClick={() => setBuildingWorkforceOpen((v) => !v)}
-                                className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
+                                className="flex min-w-0 flex-1 items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                               >
-                                <Tooltip content="Требуемые профессии и количество рабочих мест по каждой профессии.">
-                                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Профессии и рабочие места</div>
+                                <Tooltip content={t("contentPanel.workforceTooltip")}>
+                                  <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.workforce")}</div>
                                 </Tooltip>
                                 {buildingWorkforceOpen ? (
-                                  <ChevronDown size={14} className="text-white/60" />
+                                  <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                                 ) : (
-                                  <ChevronRight size={14} className="text-white/60" />
+                                  <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                                 )}
                               </button>
                               {buildingWorkforceOpen && (
-                                <Tooltip content="Добавить новую строку требования по профессии.">
+                                <Tooltip content={t("contentPanel.addWorkforceTooltip")}>
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -5522,9 +5552,9 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                         { professionId: professionOptions[0]?.id ?? "", workers: "100" },
                                       ])
                                     }
-                                    className="rounded-md border border-emerald-400/35 bg-emerald-500/20 px-2 py-1 text-[11px] font-semibold text-emerald-200 transition hover:bg-emerald-500/30"
+                                    className="rounded-md border border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] px-2 py-1 text-[11px] font-semibold text-[rgb(var(--theme-success))] transition hover:bg-[rgb(var(--theme-success-soft))]"
                                   >
-                                    Добавить
+                                    {t("contentPanel.add")}
                                   </button>
                                 </Tooltip>
                               )}
@@ -5549,7 +5579,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                       )
                                     }
                                     options={[
-                                      { value: "", label: "Выберите профессию" },
+                                      { value: "", label: t("contentPanel.select.profession") },
                                       ...professionOptions.map((option) => ({ value: option.id, label: option.name })),
                                     ]}
                                     buttonClassName="h-[42px]"
@@ -5567,13 +5597,13 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   <button
                                     type="button"
                                     onClick={() => setDraftWorkforceRequirements((prev) => prev.filter((_, i) => i !== index))}
-                                    className="rounded-lg border border-rose-400/30 bg-rose-500/10 text-xs text-rose-200"
+                                    className="rounded-lg border border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] text-xs text-[rgb(var(--theme-danger))]"
                                   >
                                     ×
                                   </button>
                                 </div>
                               ))}
-                              {draftWorkforceRequirements.length === 0 && <div className="text-xs text-white/45">Нет требований по профессиям</div>}
+                              {draftWorkforceRequirements.length === 0 && <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.workforceEmpty")}</div>}
                             </div>
                             </motion.div>
                             ) : null}
@@ -5585,21 +5615,21 @@ export function ContentPanel({ open, token, onClose }: Props) {
                     )}
 
                     {contentSection === "criteria" && activeCategory === "buildings" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
                         <div className="space-y-4">
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <button
                               type="button"
                               onClick={() => setCriteriaCountriesOpen((v) => !v)}
-                              className="mb-2 flex w-full items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
+                              className="mb-2 flex w-full items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                             >
-                              <Tooltip content="Настройка стран, которые могут или не могут строить это здание.">
-                                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Условия стран</div>
+                              <Tooltip content={t("contentPanel.countryCriteriaTooltip")}>
+                                <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.countryCriteria")}</div>
                               </Tooltip>
                               {criteriaCountriesOpen ? (
-                                <ChevronDown size={14} className="text-white/60" />
+                                <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                               ) : (
-                                <ChevronRight size={14} className="text-white/60" />
+                                <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                               )}
                             </button>
                             <AnimatePresence initial={false}>
@@ -5613,15 +5643,15 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             >
                             <div className="grid gap-3 md:grid-cols-2 pt-1">
                               <div>
-                                <Tooltip content="Мультивыбор: если список не пуст, строить смогут только страны из него (кроме явно запрещенных).">
-                                  <div className="mb-1 text-[11px] text-emerald-300/90">
-                                    Разрешенные страны ({allowedCountryIdsNormalized.length})
+                                <Tooltip content={t("contentPanel.allowedCountriesTooltip")}>
+                                  <div className="mb-1 text-[11px] text-[rgb(var(--theme-success))]/90">
+                                    {t("contentPanel.allowedCountries", { count: String(allowedCountryIdsNormalized.length) })}
                                   </div>
                                 </Tooltip>
                                 <AppInput
                                   value={allowCountrySearch}
                                   onChange={(e) => setAllowCountrySearch(e.target.value)}
-                                  placeholder="Поиск страны..."
+                                  placeholder={t("contentPanel.countrySearchPlaceholder")}
                                   className="mb-2 text-xs"
                                 />
                                 <div className="arc-scrollbar max-h-40 space-y-1 overflow-auto pr-1">
@@ -5640,32 +5670,32 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                         }
                                         className={`flex w-full items-center justify-between rounded-lg border px-2 py-1.5 text-left text-xs ${
                                           selected
-                                            ? "border-emerald-400/45 bg-emerald-500/15 text-emerald-200"
-                                            : "border-white/10 bg-black/25 text-white/70"
+                                            ? "border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] text-[rgb(var(--theme-success))]"
+                                            : "border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] text-[rgb(var(--theme-text-secondary))]"
                                         }`}
                                       >
                                         <span className="truncate">{country.name}</span>
-                                        <span className={selected ? "text-emerald-200" : "text-white/35"}>{selected ? "✓" : "○"}</span>
+                                        <span className={selected ? "text-[rgb(var(--theme-success))]" : "text-[rgb(var(--theme-text-muted))]"}>{selected ? "✓" : "○"}</span>
                                       </button>
                                     );
                                   })}
                                   {filteredAllowCountryOptions.length === 0 && (
-                                    <div className="rounded-lg border border-white/10 bg-black/25 px-2 py-2 text-xs text-white/45">
-                                      Страны не найдены
+                                    <div className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-2 text-xs text-[rgb(var(--theme-text-muted))]">
+                                      {t("contentPanel.countriesNotFound")}
                                     </div>
                                   )}
                                 </div>
                               </div>
                               <div>
-                                <Tooltip content="Страны из этого списка не смогут строить здание, даже если они есть в разрешенных.">
-                                  <div className="mb-1 text-[11px] text-red-300/90">
-                                    Запрещенные страны ({deniedCountryIdsNormalized.length})
+                                <Tooltip content={t("contentPanel.deniedCountriesTooltip")}>
+                                  <div className="mb-1 text-[11px] text-[rgb(var(--theme-danger))]">
+                                    {t("contentPanel.deniedCountries", { count: String(deniedCountryIdsNormalized.length) })}
                                   </div>
                                 </Tooltip>
                                 <AppInput
                                   value={denyCountrySearch}
                                   onChange={(e) => setDenyCountrySearch(e.target.value)}
-                                  placeholder="Поиск страны..."
+                                  placeholder={t("contentPanel.countrySearchPlaceholder")}
                                   className="mb-2 text-xs"
                                 />
                                 <div className="arc-scrollbar max-h-40 space-y-1 overflow-auto pr-1">
@@ -5684,49 +5714,49 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                         }
                                         className={`flex w-full items-center justify-between rounded-lg border px-2 py-1.5 text-left text-xs ${
                                           selected
-                                            ? "border-red-400/45 bg-red-500/15 text-red-200"
-                                            : "border-white/10 bg-black/25 text-white/70"
+                                            ? "border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] text-[rgb(var(--theme-danger))]"
+                                            : "border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] text-[rgb(var(--theme-text-secondary))]"
                                         }`}
                                       >
                                         <span className="truncate">{country.name}</span>
-                                        <span className={selected ? "text-red-200" : "text-white/35"}>{selected ? "✓" : "○"}</span>
+                                        <span className={selected ? "text-[rgb(var(--theme-danger))]" : "text-[rgb(var(--theme-text-muted))]"}>{selected ? "✓" : "○"}</span>
                                       </button>
                                     );
                                   })}
                                   {filteredDenyCountryOptions.length === 0 && (
-                                    <div className="rounded-lg border border-white/10 bg-black/25 px-2 py-2 text-xs text-white/45">
-                                      Страны не найдены
+                                    <div className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-2 text-xs text-[rgb(var(--theme-text-muted))]">
+                                      {t("contentPanel.countriesNotFound")}
                                     </div>
                                   )}
                                 </div>
                               </div>
                             </div>
                             {conflictingCountryNames.length > 0 && (
-                              <div className="mt-2 rounded-lg border border-amber-400/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-200">
-                                Конфликт критериев: страна одновременно в allow и deny: {conflictingCountryNames.join(", ")}
+                              <div className="mt-2 rounded-lg border border-[rgb(var(--theme-warning))] bg-[rgb(var(--theme-warning-soft))] px-2 py-1.5 text-xs text-[rgb(var(--theme-warning))]">
+                                {t("contentPanel.countryCriteriaConflict", { countries: conflictingCountryNames.join(", ") })}
                               </div>
                             )}
-                            <div className="mt-2 text-[11px] text-white/45">
-                              Если список разрешенных пуст, строить могут все страны, кроме запрещенных.
+                            <div className="mt-2 text-[11px] text-[rgb(var(--theme-text-muted))]">
+                              {t("contentPanel.countryCriteriaHint")}
                             </div>
                             </motion.div>
                             ) : null}
                             </AnimatePresence>
                           </div>
 
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <button
                               type="button"
                               onClick={() => setCriteriaProvinceOpen((v) => !v)}
-                              className="mb-2 flex w-full items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
+                              className="mb-2 flex w-full items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                             >
-                              <Tooltip content="Ограничения по данным провинции из GeoJSON: тип, климат, ландшафт, континент, стратегический регион и радиация.">
-                                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Условия провинции</div>
+                              <Tooltip content={t("contentPanel.provinceCriteriaTooltip")}>
+                                <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.provinceCriteria")}</div>
                               </Tooltip>
                               {criteriaProvinceOpen ? (
-                                <ChevronDown size={14} className="text-white/60" />
+                                <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                               ) : (
-                                <ChevronRight size={14} className="text-white/60" />
+                                <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                               )}
                             </button>
                             <AnimatePresence initial={false}>
@@ -5739,59 +5769,59 @@ export function ContentPanel({ open, token, onClose }: Props) {
                               className="overflow-visible"
                             >
                               <div className="grid gap-3 md:grid-cols-2">
-                                {renderProvinceContentPicker("Разрешенные типы провинции", provinceTypeOptions, draftAllowedProvinceTypes, setDraftAllowedProvinceTypes)}
-                                {renderProvinceContentPicker("Запрещенные типы провинции", provinceTypeOptions, draftDeniedProvinceTypes, setDraftDeniedProvinceTypes)}
-                                {renderProvinceContentPicker("Разрешенный климат", provinceClimateOptions, draftAllowedClimates, setDraftAllowedClimates)}
-                                {renderProvinceContentPicker("Запрещенный климат", provinceClimateOptions, draftDeniedClimates, setDraftDeniedClimates)}
-                                {renderProvinceContentPicker("Разрешенный ландшафт", provinceLandscapeOptions, draftAllowedLandscapes, setDraftAllowedLandscapes)}
-                                {renderProvinceContentPicker("Запрещенный ландшафт", provinceLandscapeOptions, draftDeniedLandscapes, setDraftDeniedLandscapes)}
-                                {renderProvinceContentPicker("Разрешенные континенты", provinceContinentOptions, draftAllowedContinents, setDraftAllowedContinents)}
-                                {renderProvinceContentPicker("Запрещенные континенты", provinceContinentOptions, draftDeniedContinents, setDraftDeniedContinents)}
-                                {renderProvinceContentPicker("Разрешенные стратегические регионы", provinceStrategicRegionOptions, draftAllowedStrategicRegions, setDraftAllowedStrategicRegions)}
-                                {renderProvinceContentPicker("Запрещенные стратегические регионы", provinceStrategicRegionOptions, draftDeniedStrategicRegions, setDraftDeniedStrategicRegions)}
+                                {renderProvinceContentPicker(t("contentPanel.allowedProvinceTypes"), provinceTypeOptions, draftAllowedProvinceTypes, setDraftAllowedProvinceTypes)}
+                                {renderProvinceContentPicker(t("contentPanel.deniedProvinceTypes"), provinceTypeOptions, draftDeniedProvinceTypes, setDraftDeniedProvinceTypes)}
+                                {renderProvinceContentPicker(t("contentPanel.allowedClimate"), provinceClimateOptions, draftAllowedClimates, setDraftAllowedClimates)}
+                                {renderProvinceContentPicker(t("contentPanel.deniedClimate"), provinceClimateOptions, draftDeniedClimates, setDraftDeniedClimates)}
+                                {renderProvinceContentPicker(t("contentPanel.allowedLandscape"), provinceLandscapeOptions, draftAllowedLandscapes, setDraftAllowedLandscapes)}
+                                {renderProvinceContentPicker(t("contentPanel.deniedLandscape"), provinceLandscapeOptions, draftDeniedLandscapes, setDraftDeniedLandscapes)}
+                                {renderProvinceContentPicker(t("contentPanel.allowedContinents"), provinceContinentOptions, draftAllowedContinents, setDraftAllowedContinents)}
+                                {renderProvinceContentPicker(t("contentPanel.deniedContinents"), provinceContinentOptions, draftDeniedContinents, setDraftDeniedContinents)}
+                                {renderProvinceContentPicker(t("contentPanel.allowedStrategicRegions"), provinceStrategicRegionOptions, draftAllowedStrategicRegions, setDraftAllowedStrategicRegions)}
+                                {renderProvinceContentPicker(t("contentPanel.deniedStrategicRegions"), provinceStrategicRegionOptions, draftDeniedStrategicRegions, setDraftDeniedStrategicRegions)}
                                 <label className="block">
-                                  <span className="mb-1 block text-xs text-white/60">Минимальная радиация</span>
-                                  <AppInput value={draftMinRadiation} onChange={(e) => setDraftMinRadiation(e.target.value)} inputMode="decimal" placeholder="Пусто = нет минимума" />
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.minRadiation")}</span>
+                                  <AppInput value={draftMinRadiation} onChange={(e) => setDraftMinRadiation(e.target.value)} inputMode="decimal" placeholder={t("contentPanel.noMinimumPlaceholder")} />
                                 </label>
                                 <label className="block">
-                                  <span className="mb-1 block text-xs text-white/60">Максимальная радиация</span>
-                                  <AppInput value={draftMaxRadiation} onChange={(e) => setDraftMaxRadiation(e.target.value)} inputMode="decimal" placeholder="Пусто = нет максимума" />
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.maxRadiation")}</span>
+                                  <AppInput value={draftMaxRadiation} onChange={(e) => setDraftMaxRadiation(e.target.value)} inputMode="decimal" placeholder={t("contentPanel.noMaximumPlaceholder")} />
                                 </label>
                                 <label className="block md:col-span-2">
-                                  <span className="mb-1 block text-xs text-white/60">Влияние загрязнения на производительность</span>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.pollutionProductivity")}</span>
                                   <CustomSelect
                                     value={draftPollutionProductivityMode}
                                     onChange={(value) => setDraftPollutionProductivityMode(value as PollutionProductivityModeDraft)}
                                     options={[
-                                      { value: "penalty", label: "Штраф" },
-                                      { value: "bonus", label: "Бонус" },
-                                      { value: "ignore", label: "Не влияет" },
+                                      { value: "penalty", label: t("contentPanel.option.pollutionProductivity.penalty") },
+                                      { value: "bonus", label: t("contentPanel.option.pollutionProductivity.bonus") },
+                                      { value: "ignore", label: t("contentPanel.option.pollutionProductivity.ignore") },
                                     ]}
                                     buttonClassName="h-[42px]"
                                   />
                                 </label>
                               </div>
-                              <div className="mt-2 text-[11px] text-white/45">
-                                Значения выбираются из категорий контента. Пустой список разрешений означает любое значение, запрет сильнее разрешения.
+                              <div className="mt-2 text-[11px] text-[rgb(var(--theme-text-muted))]">
+                                {t("contentPanel.provinceCriteriaHint")}
                               </div>
                             </motion.div>
                             ) : null}
                             </AnimatePresence>
                           </div>
 
-                          <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                          <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <button
                               type="button"
                               onClick={() => setCriteriaLimitsOpen((v) => !v)}
-                              className="mb-2 flex w-full items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
+                              className="mb-2 flex w-full items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                             >
-                              <Tooltip content="Лимиты работают как cap на текущее количество построенных и строящихся зданий.">
-                                <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Лимиты количества</div>
+                              <Tooltip content={t("contentPanel.quantityLimitsTooltip")}>
+                                <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.quantityLimits")}</div>
                               </Tooltip>
                               {criteriaLimitsOpen ? (
-                                <ChevronDown size={14} className="text-white/60" />
+                                <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                               ) : (
-                                <ChevronRight size={14} className="text-white/60" />
+                                <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                               )}
                             </button>
                             <AnimatePresence initial={false}>
@@ -5805,10 +5835,10 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             >
                             <div className="mb-3">
                               <label className="block">
-                                <Tooltip content="Пусто = без ограничений. Справа показан текущий счётчик: использовано/лимит.">
-                                  <span className="mb-1 block text-xs text-white/60">
-                                    Глобальный лимит (для всего мира):{" "}
-                                    <span className="text-amber-300/90">
+                                <Tooltip content={t("contentPanel.globalLimitTooltip")}>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">
+                                    {t("contentPanel.globalLimit")}{" "}
+                                    <span className="text-[rgb(var(--theme-warning))]/90">
                                       {selectedBuildingGlobalUsage}/
                                       {draftGlobalBuildLimit.trim().length > 0 &&
                                       Number.isFinite(Number(draftGlobalBuildLimit)) &&
@@ -5822,20 +5852,20 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   value={draftGlobalBuildLimit}
                                   onChange={(e) => setDraftGlobalBuildLimit(e.target.value)}
                                   inputMode="numeric"
-                                  placeholder="Пусто = без лимита"
+                                  placeholder={t("contentPanel.noLimitPlaceholder")}
                                 />
                               </label>
                             </div>
                             <div className="mb-2 flex items-center justify-between">
-                              <Tooltip content="Лимит на конкретную страну. Формат счётчика: текущее значение/лимит.">
-                                <div className="text-xs text-white/60">Лимиты для конкретных государств</div>
+                              <Tooltip content={t("contentPanel.countryLimitsTooltip")}>
+                                <div className="text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.countryLimits")}</div>
                               </Tooltip>
                               <button
                                 type="button"
                                 onClick={() => setDraftCountryBuildLimits((prev) => [...prev, { countryId: "", limit: "" }])}
-                                className="rounded-md border border-emerald-400/35 bg-emerald-500/20 px-2 py-1 text-[11px] font-semibold text-emerald-200 transition hover:bg-emerald-500/30"
+                                className="rounded-md border border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] px-2 py-1 text-[11px] font-semibold text-[rgb(var(--theme-success))] transition hover:bg-[rgb(var(--theme-success-soft))]"
                               >
-                                Добавить лимит
+                                {t("contentPanel.addLimit")}
                               </button>
                             </div>
                             <div className="space-y-2">
@@ -5849,7 +5879,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                       )
                                     }
                                     options={[
-                                      { value: "", label: "Выберите страну" },
+                                      { value: "", label: t("contentPanel.select.country") },
                                       ...countryOptions.map((country) => ({ value: country.id, label: country.name })),
                                     ]}
                                     buttonClassName="h-[42px]"
@@ -5862,12 +5892,12 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                       )
                                     }
                                     inputMode="numeric"
-                                    placeholder="Пусто или 0 = без лимита"
+                                    placeholder={t("contentPanel.zeroNoLimitPlaceholder")}
                                   />
                                   <button
                                     type="button"
                                     onClick={() => setDraftCountryBuildLimits((prev) => prev.filter((_, i) => i !== index))}
-                                    className="rounded-lg border border-rose-400/30 bg-rose-500/10 text-xs text-rose-200"
+                                    className="rounded-lg border border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] text-xs text-[rgb(var(--theme-danger))]"
                                   >
                                     ×
                                   </button>
@@ -5881,15 +5911,15 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                     ? Math.max(1, Math.floor(parsedLimit))
                                     : null;
                                 return (
-                                  <div key={`country-limit-usage-${index}`} className="text-[11px] text-white/50">
-                                    {(countryOptions.find((country) => country.id === row.countryId)?.name ?? row.countryId ?? "Страна")}:
+                                  <div key={`country-limit-usage-${index}`} className="text-[11px] text-[rgb(var(--theme-text-muted))]">
+                                    {(countryOptions.find((country) => country.id === row.countryId)?.name ?? row.countryId ?? t("contentPanel.countryFallback"))}:
                                     {" "}
-                                    <span className="text-amber-300/90">{used}/{limit ?? "∞"}</span>
+                                    <span className="text-[rgb(var(--theme-warning))]/90">{used}/{limit ?? "∞"}</span>
                                   </div>
                                 );
                               })}
                               {draftCountryBuildLimits.length === 0 && (
-                                <div className="text-xs text-white/45">Нет лимитов по странам</div>
+                                <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.countryLimitsEmpty")}</div>
                               )}
                             </div>
                             </motion.div>
@@ -5901,20 +5931,20 @@ export function ContentPanel({ open, token, onClose }: Props) {
                     )}
 
                     {contentSection === "economy" && activeCategory === "goods" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
-                        <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
+                        <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                           <button
                             type="button"
                             onClick={() => setGoodsEconomyOpen((v) => !v)}
-                            className="mb-2 flex w-full items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
+                            className="mb-2 flex w-full items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                           >
-                            <Tooltip content="Параметры товара для экономической модели до подключения полноценного рынка.">
-                              <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Экономика товара</div>
+                            <Tooltip content={t("contentPanel.goodEconomyTooltip")}>
+                              <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.goodEconomy")}</div>
                             </Tooltip>
                             {goodsEconomyOpen ? (
-                              <ChevronDown size={14} className="text-white/60" />
+                              <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                             ) : (
-                              <ChevronRight size={14} className="text-white/60" />
+                              <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                             )}
                           </button>
                           <AnimatePresence initial={false}>
@@ -5928,8 +5958,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             >
                               <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
                                 <label className="block">
-                                  <Tooltip content="Базовая цена единицы товара. Сейчас используется как заглушка для расчетов.">
-                                    <span className="mb-1 block text-xs text-white/60">Базовая цена</span>
+                                  <Tooltip content={t("contentPanel.basePriceTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.basePrice")}</span>
                                   </Tooltip>
                                   <AppInput
                                     value={draftBasePrice}
@@ -5939,8 +5969,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   />
                                 </label>
                                 <label className="block">
-                                  <Tooltip content="Минимальная граница цены товара на рынке.">
-                                    <span className="mb-1 block text-xs text-white/60">Мин. цена</span>
+                                  <Tooltip content={t("contentPanel.minPriceTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.minPrice")}</span>
                                   </Tooltip>
                                   <AppInput
                                     value={draftMinPrice}
@@ -5950,8 +5980,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   />
                                 </label>
                                 <label className="block">
-                                  <Tooltip content="Максимальная граница цены товара на рынке.">
-                                    <span className="mb-1 block text-xs text-white/60">Макс. цена</span>
+                                  <Tooltip content={t("contentPanel.maxPriceTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.maxPrice")}</span>
                                   </Tooltip>
                                   <AppInput
                                     value={draftMaxPrice}
@@ -5961,8 +5991,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   />
                                 </label>
                                 <label className="block">
-                                  <Tooltip content="Сколько инфраструктуры расходуется на перевозку 1 единицы товара (покупка или продажа).">
-                                    <span className="mb-1 block text-xs text-white/60">Инфра за 1 ед.</span>
+                                  <Tooltip content={t("contentPanel.infraPerUnitTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.infraPerUnit")}</span>
                                   </Tooltip>
                                   <AppInput
                                     value={draftInfraPerUnit}
@@ -5972,27 +6002,27 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   />
                                 </label>
                                 <label className="block">
-                                  <Tooltip content="Категория инфраструктуры для логистических лимитов. Если пусто, инфраструктура не ограничивает торговлю этим товаром.">
-                                    <span className="mb-1 block text-xs text-white/60">Категория инфраструктуры</span>
+                                  <Tooltip content={t("contentPanel.infrastructureCategoryTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.infrastructureCategory")}</span>
                                   </Tooltip>
                                   <CustomSelect
                                     value={draftResourceCategoryId}
                                     onChange={setDraftResourceCategoryId}
                                     options={[
-                                      { value: "", label: "Без категории" },
+                                      { value: "", label: t("contentPanel.noCategory") },
                                       ...resourceCategoryOptions.map((option) => ({ value: option.id, label: option.name })),
                                     ]}
                                     buttonClassName="h-[42px]"
                                   />
                                 </label>
                               </div>
-                              <Tooltip content="После внедрения рынка это значение будет стартовой/референсной ценой.">
-                                <div className="mt-1 text-[11px] text-white/45">Используется как заглушка цены до внедрения рынка.</div>
+                              <Tooltip content={t("contentPanel.referencePriceTooltip")}>
+                                <div className="mt-1 text-[11px] text-[rgb(var(--theme-text-muted))]">{t("contentPanel.referencePriceHint")}</div>
                               </Tooltip>
                               <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
                                 <label className="block">
-                                  <Tooltip content="Определяет, может ли товар перевозиться рынком или должен использоваться локально/через специальную сеть.">
-                                    <span className="mb-1 block text-xs text-white/60">Тип распределения</span>
+                                  <Tooltip content={t("contentPanel.distributionTypeTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.distributionType")}</span>
                                   </Tooltip>
                                   <CustomSelect
                                     value={draftDistributionType}
@@ -6006,13 +6036,13 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                       if (nextValue === "powerGrid") setDraftTransportModes(["powerGrid"]);
                                       if (nextValue === "tradeable" && draftTransportModes.length === 0) setDraftTransportModes(["land", "sea", "air"]);
                                     }}
-                                    options={GOOD_DISTRIBUTION_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+                                    options={localizeOptions(GOOD_DISTRIBUTION_OPTIONS)}
                                     buttonClassName="h-[42px]"
                                   />
                                 </label>
                                 <div>
-                                  <Tooltip content="Какие транспортные сети разрешены для этого товара. Для услуг и локальных товаров перевозка отключена.">
-                                    <span className="mb-1 block text-xs text-white/60">Разрешённый транспорт</span>
+                                  <Tooltip content={t("contentPanel.allowedTransportTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.allowedTransport")}</span>
                                   </Tooltip>
                                   <div className="flex flex-wrap gap-2">
                                     {GOOD_TRANSPORT_OPTIONS.map((option) => {
@@ -6037,10 +6067,10 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                           className={`rounded-lg border px-2.5 py-1.5 text-xs transition disabled:opacity-40 ${
                                             checked
                                               ? "border-arc-accent/40 bg-arc-accent/15 text-arc-accent"
-                                              : "border-white/10 bg-black/25 text-white/55 hover:border-white/20 hover:text-white/75"
+                                              : "border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] text-[rgb(var(--theme-text-secondary))] hover:border-[rgb(var(--theme-border-subtle))] hover:text-[rgb(var(--theme-text-secondary))]"
                                           }`}
                                         >
-                                          {option.label}
+                                          {t(option.labelKey)}
                                         </button>
                                       );
                                     })}
@@ -6055,20 +6085,20 @@ export function ContentPanel({ open, token, onClose }: Props) {
                     )}
 
                     {contentSection === "exploration" && activeCategory === "goods" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
-                        <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
+                        <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                           <button
                             type="button"
                             onClick={() => setGoodsExplorationOpen((v) => !v)}
-                            className="mb-2 flex w-full items-center justify-between rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-left"
+                            className="mb-2 flex w-full items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                           >
-                            <Tooltip content="Параметры генерации залежей этого товара при георазведке.">
-                              <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Георазведка товара</div>
+                            <Tooltip content={t("contentPanel.goodExplorationTooltip")}>
+                              <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.goodExploration")}</div>
                             </Tooltip>
                             {goodsExplorationOpen ? (
-                              <ChevronDown size={14} className="text-white/60" />
+                              <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                             ) : (
-                              <ChevronRight size={14} className="text-white/60" />
+                              <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                             )}
                           </button>
                           <AnimatePresence initial={false}>
@@ -6080,19 +6110,19 @@ export function ContentPanel({ open, token, onClose }: Props) {
                               transition={{ duration: 0.2, ease: "easeOut" }}
                               className="overflow-visible"
                             >
-                              <label className="mb-3 flex items-center gap-2 rounded-lg border border-white/10 bg-black/25 px-3 py-2">
+                              <label className="mb-3 flex items-center gap-2 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2">
                                 <input
                                   type="checkbox"
                                   checked={draftIsResourceDiscoverable}
                                   onChange={(e) => setDraftIsResourceDiscoverable(e.target.checked)}
-                                  className="h-4 w-4 rounded border-white/20 bg-black/60 accent-emerald-400"
+                                  className="h-4 w-4 rounded border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] accent-[rgb(var(--theme-success))]"
                                 />
-                                <span className="text-xs text-white/80">Можно найти в провинции как ресурс</span>
+                                <span className="text-xs text-[rgb(var(--theme-text-primary))]">{t("contentPanel.resourceDiscoverable")}</span>
                               </label>
                               <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
                                 <label className="block">
-                                  <Tooltip content="Базовый вес товара при розыгрыше найденного ресурса. Чем выше, тем чаще выпадает.">
-                                    <span className="mb-1 block text-xs text-white/60">Базовый вес</span>
+                                  <Tooltip content={t("contentPanel.explorationBaseWeightTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.baseWeight")}</span>
                                   </Tooltip>
                                   <AppInput
                                     value={draftExplorationBaseWeight}
@@ -6102,8 +6132,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   />
                                 </label>
                                 <label className="block">
-                                  <Tooltip content="Шанс маленькой жилы (в %). Нормализуется вместе с другими шансами.">
-                                    <span className="mb-1 block text-xs text-white/60">Малая жила, %</span>
+                                  <Tooltip content={t("contentPanel.smallVeinChanceTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.smallVeinChance")}</span>
                                   </Tooltip>
                                   <AppInput
                                     value={draftExplorationSmallChance}
@@ -6113,8 +6143,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   />
                                 </label>
                                 <label className="block">
-                                  <Tooltip content="Шанс средней жилы (в %). Нормализуется вместе с другими шансами.">
-                                    <span className="mb-1 block text-xs text-white/60">Средняя жила, %</span>
+                                  <Tooltip content={t("contentPanel.mediumVeinChanceTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.mediumVeinChance")}</span>
                                   </Tooltip>
                                   <AppInput
                                     value={draftExplorationMediumChance}
@@ -6124,8 +6154,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   />
                                 </label>
                                 <label className="block">
-                                  <Tooltip content="Шанс крупной жилы (в %). Нормализуется вместе с другими шансами.">
-                                    <span className="mb-1 block text-xs text-white/60">Крупная жила, %</span>
+                                  <Tooltip content={t("contentPanel.largeVeinChanceTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.largeVeinChance")}</span>
                                   </Tooltip>
                                   <AppInput
                                     value={draftExplorationLargeChance}
@@ -6137,8 +6167,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                               </div>
                               <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
                                 <label className="block">
-                                  <Tooltip content="Диапазон количества для маленькой жилы.">
-                                    <span className="mb-1 block text-xs text-white/60">Малая: мин / макс</span>
+                                  <Tooltip content={t("contentPanel.smallVeinRangeTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.smallVeinRange")}</span>
                                   </Tooltip>
                                   <div className="grid grid-cols-2 gap-2">
                                     <AppInput
@@ -6156,8 +6186,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   </div>
                                 </label>
                                 <label className="block">
-                                  <Tooltip content="Диапазон количества для средней жилы.">
-                                    <span className="mb-1 block text-xs text-white/60">Средняя: мин / макс</span>
+                                  <Tooltip content={t("contentPanel.mediumVeinRangeTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.mediumVeinRange")}</span>
                                   </Tooltip>
                                   <div className="grid grid-cols-2 gap-2">
                                     <AppInput
@@ -6175,8 +6205,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   </div>
                                 </label>
                                 <label className="block">
-                                  <Tooltip content="Диапазон количества для крупной жилы.">
-                                    <span className="mb-1 block text-xs text-white/60">Крупная: мин / макс</span>
+                                  <Tooltip content={t("contentPanel.largeVeinRangeTooltip")}>
+                                    <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.largeVeinRange")}</span>
                                   </Tooltip>
                                   <div className="grid grid-cols-2 gap-2">
                                     <AppInput
@@ -6202,16 +6232,16 @@ export function ContentPanel({ open, token, onClose }: Props) {
                     )}
 
                     {contentSection === "economy" && activeCategory === "professions" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
-                        <div className="rounded-xl border border-white/10 bg-[#131a22] p-3">
-                          <Tooltip content="Базовая зарплата за одного работника профессии за ход. Используется при расчете затрат зданий.">
-                            <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-                              Экономика профессии
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
+                        <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
+                          <Tooltip content={t("contentPanel.professionEconomyTooltip")}>
+                            <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">
+                              {t("contentPanel.professionEconomy")}
                             </span>
                           </Tooltip>
                           <label className="block">
-                            <Tooltip content="Базовая ставка оплаты труда для этой профессии.">
-                              <span className="mb-1 block text-xs text-white/60">Базовая зарплата</span>
+                            <Tooltip content={t("contentPanel.baseWageTooltip")}>
+                              <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.baseWage")}</span>
                             </Tooltip>
                             <AppInput
                               value={draftBaseWage}
@@ -6225,11 +6255,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
                     )}
 
                     {contentSection === "needs" && activeCategory === "cultures" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <div>
-                            <div className="text-sm font-semibold text-white">Потребности культуры</div>
-                            <div className="text-xs text-white/50">Тиры включаются по уровню жизни, внутри потребностей товары работают как заменители.</div>
+                            <div className="text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("contentPanel.cultureNeeds")}</div>
+                            <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.cultureNeedsHint")}</div>
                           </div>
                           <button
                             type="button"
@@ -6242,7 +6272,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   needs: [
                                     {
                                       id: "basic-food",
-                                      label: "Базовая еда",
+                                      label: t("contentPanel.defaultNeed.basicFood"),
                                       category: "survival",
                                       amountPerPerson: "0.01",
                                       weight: "1",
@@ -6255,22 +6285,22 @@ export function ContentPanel({ open, token, onClose }: Props) {
                             className="inline-flex h-9 items-center gap-2 rounded-lg bg-arc-accent px-3 text-xs font-semibold text-black"
                           >
                             <Plus size={14} />
-                            Добавить тир
+                            {t("contentPanel.addTier")}
                           </button>
                         </div>
                         <div className="space-y-3">
                           {draftNeedsProfile.map((tier, tierIndex) => (
-                            <div key={`${tier.id}-${tierIndex}`} className="rounded-xl border border-white/10 bg-[#131a22] p-3">
+                            <div key={`${tier.id}-${tierIndex}`} className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                               <div className="mb-3 grid gap-2 md:grid-cols-[1fr_160px_auto]">
                                 <label>
-                                  <span className="mb-1 block text-xs text-white/60">ID тира</span>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.tierId")}</span>
                                   <AppInput
                                     value={tier.id}
                                     onChange={(e) => setDraftNeedsProfile((prev) => prev.map((row, i) => (i === tierIndex ? { ...row, id: e.target.value } : row)))}
                                   />
                                 </label>
                                 <label>
-                                  <span className="mb-1 block text-xs text-white/60">Мин. уровень жизни</span>
+                                  <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.minStandardOfLiving")}</span>
                                   <AppInput
                                     value={tier.minStandardOfLiving}
                                     onChange={(e) => setDraftNeedsProfile((prev) => prev.map((row, i) => (i === tierIndex ? { ...row, minStandardOfLiving: e.target.value } : row)))}
@@ -6280,31 +6310,31 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                 <button
                                   type="button"
                                   onClick={() => setDraftNeedsProfile((prev) => prev.filter((_, i) => i !== tierIndex))}
-                                  className="self-end rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-200"
+                                  className="self-end rounded-lg border border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] px-3 py-2 text-xs font-semibold text-[rgb(var(--theme-danger))]"
                                 >
-                                  Удалить
+                                  {t("contentPanel.delete")}
                                 </button>
                               </div>
                               <div className="space-y-2">
                                 {tier.needs.map((need, needIndex) => (
-                                  <div key={`${need.id}-${needIndex}`} className="rounded-lg border border-white/10 bg-black/20 p-3">
+                                  <div key={`${need.id}-${needIndex}`} className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                                     <div className="grid gap-2 md:grid-cols-5">
                                       <label>
-                                        <span className="mb-1 block text-xs text-white/60">ID</span>
+                                        <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">ID</span>
                                         <AppInput
                                           value={need.id}
                                           onChange={(e) => setDraftNeedsProfile((prev) => prev.map((row, i) => i === tierIndex ? { ...row, needs: row.needs.map((n, j) => j === needIndex ? { ...n, id: e.target.value } : n) } : row))}
                                         />
                                       </label>
                                       <label>
-                                        <span className="mb-1 block text-xs text-white/60">Название</span>
+                                        <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.name")}</span>
                                         <AppInput
                                           value={need.label}
                                           onChange={(e) => setDraftNeedsProfile((prev) => prev.map((row, i) => i === tierIndex ? { ...row, needs: row.needs.map((n, j) => j === needIndex ? { ...n, label: e.target.value } : n) } : row))}
                                         />
                                       </label>
                                       <label>
-                                        <span className="mb-1 block text-xs text-white/60">Категория</span>
+                                        <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.category")}</span>
                                         <CustomSelect
                                           value={need.category}
                                           onChange={(value) =>
@@ -6323,15 +6353,12 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                               ),
                                             )
                                           }
-                                          options={NEED_CATEGORY_OPTIONS.map((item) => ({
-                                            value: item.value,
-                                            label: item.label,
-                                          }))}
-                                          placeholder="Категория"
+                                          options={needCategoryOptions}
+                                          placeholder={t("contentPanel.field.category")}
                                         />
                                       </label>
                                       <label>
-                                        <span className="mb-1 block text-xs text-white/60">На человека</span>
+                                        <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.amountPerPerson")}</span>
                                         <AppInput
                                           value={need.amountPerPerson}
                                           onChange={(e) => setDraftNeedsProfile((prev) => prev.map((row, i) => i === tierIndex ? { ...row, needs: row.needs.map((n, j) => j === needIndex ? { ...n, amountPerPerson: e.target.value } : n) } : row))}
@@ -6339,7 +6366,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                         />
                                       </label>
                                       <label>
-                                        <span className="mb-1 block text-xs text-white/60">Вес</span>
+                                        <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.placeholder.weight")}</span>
                                         <AppInput
                                           value={need.weight}
                                           onChange={(e) => setDraftNeedsProfile((prev) => prev.map((row, i) => i === tierIndex ? { ...row, needs: row.needs.map((n, j) => j === needIndex ? { ...n, weight: e.target.value } : n) } : row))}
@@ -6354,7 +6381,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                             value={good.goodId}
                                             onChange={(value) => setDraftNeedsProfile((prev) => prev.map((row, i) => i === tierIndex ? { ...row, needs: row.needs.map((n, j) => j === needIndex ? { ...n, goods: n.goods.map((g, k) => k === goodIndex ? { ...g, goodId: value } : g) } : n) } : row))}
                                             options={goodsOptions.map((item) => ({ value: item.id, label: item.name }))}
-                                            placeholder="Товар"
+                                            placeholder={t("contentPanel.select.good")}
                                           />
                                           <AppInput
                                             value={good.weight}
@@ -6364,35 +6391,35 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                           <button
                                             type="button"
                                             onClick={() => setDraftNeedsProfile((prev) => prev.map((row, i) => i === tierIndex ? { ...row, needs: row.needs.map((n, j) => j === needIndex ? { ...n, goods: n.goods.filter((_, k) => k !== goodIndex) } : n) } : row))}
-                                            className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-200"
+                                            className="rounded-lg border border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] px-3 py-2 text-xs font-semibold text-[rgb(var(--theme-danger))]"
                                           >
-                                            Удалить
+                                            {t("contentPanel.delete")}
                                           </button>
                                         </div>
                                       ))}
                                       <button
                                         type="button"
                                         onClick={() => setDraftNeedsProfile((prev) => prev.map((row, i) => i === tierIndex ? { ...row, needs: row.needs.map((n, j) => j === needIndex ? { ...n, goods: [...n.goods, { goodId: goodsOptions[0]?.id ?? "", weight: "1" }] } : n) } : row))}
-                                        className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/80"
+                                        className="rounded-lg border border-[rgb(var(--theme-border-subtle))] px-3 py-2 text-xs font-semibold text-[rgb(var(--theme-text-primary))]"
                                       >
-                                        Добавить товар-заменитель
+                                        {t("contentPanel.addSubstituteGood")}
                                       </button>
                                     </div>
                                     <button
                                       type="button"
                                       onClick={() => setDraftNeedsProfile((prev) => prev.map((row, i) => i === tierIndex ? { ...row, needs: row.needs.filter((_, j) => j !== needIndex) } : row))}
-                                      className="mt-2 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-200"
+                                      className="mt-2 rounded-lg border border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] px-3 py-2 text-xs font-semibold text-[rgb(var(--theme-danger))]"
                                     >
-                                      Удалить потребность
+                                      {t("contentPanel.deleteNeed")}
                                     </button>
                                   </div>
                                 ))}
                                 <button
                                   type="button"
-                                  onClick={() => setDraftNeedsProfile((prev) => prev.map((row, i) => i === tierIndex ? { ...row, needs: [...row.needs, { id: `need-${row.needs.length + 1}`, label: "Новая потребность", category: "basic", amountPerPerson: "0.01", weight: "1", goods: [{ goodId: goodsOptions[0]?.id ?? "", weight: "1" }] }] } : row))}
-                                  className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/80"
+                                  onClick={() => setDraftNeedsProfile((prev) => prev.map((row, i) => i === tierIndex ? { ...row, needs: [...row.needs, { id: `need-${row.needs.length + 1}`, label: t("contentPanel.defaultNeed.newNeed"), category: "basic", amountPerPerson: "0.01", weight: "1", goods: [{ goodId: goodsOptions[0]?.id ?? "", weight: "1" }] }] } : row))}
+                                  className="rounded-lg border border-[rgb(var(--theme-border-subtle))] px-3 py-2 text-xs font-semibold text-[rgb(var(--theme-text-primary))]"
                                 >
-                                  Добавить потребность
+                                  {t("contentPanel.addNeed")}
                                 </button>
                               </div>
                             </div>
@@ -6402,27 +6429,27 @@ export function ContentPanel({ open, token, onClose }: Props) {
                     )}
 
                     {contentSection === "branding" && (
-                      <section className="rounded-xl border border-white/10 bg-black/20 p-4">
-                        <Tooltip content={activeCategory === "events" || activeCategory === "decisions" ? "Изображение показывается в сюжетном окне. Максимальный размер: 1080x970." : "Логотип показывается в списках и карточках. Максимальный размер файла: 64x64."}>
-                          <span className="mb-3 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-                            {activeCategory === "events" || activeCategory === "decisions" ? "Изображение" : "Логотип"}
+                      <section className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4">
+                        <Tooltip content={activeCategory === "events" || activeCategory === "decisions" ? t("contentPanel.imageTooltip") : t("contentPanel.logoTooltip")}>
+                          <span className="mb-3 block text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">
+                            {activeCategory === "events" || activeCategory === "decisions" ? t("contentPanel.image") : t("contentPanel.logo")}
                           </span>
                         </Tooltip>
                         <div className="flex flex-wrap items-start gap-4">
-                          <div className="flex h-[88px] w-[88px] items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[#131a22]">
+                          <div className="flex h-[88px] w-[88px] items-center justify-center overflow-hidden rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))]">
                             {draftLogoUrl ? (
-                              <img src={draftLogoUrl} alt="Логотип записи" className="h-full w-full object-contain p-1" />
+                              <img src={draftLogoUrl} alt={t("contentPanel.entryLogoAlt")} className="h-full w-full object-contain p-1" />
                             ) : (
                               <span className="text-xs font-semibold" style={{ color: draftColor }}>
-                                {draftName.trim().slice(0, 1).toUpperCase() || "К"}
+                                {draftName.trim().slice(0, 1).toUpperCase() || t("contentPanel.fallbackInitial")}
                               </span>
                             )}
                           </div>
                           <div className="flex min-w-[220px] flex-1 flex-col gap-2">
-                            <Tooltip content={activeCategory === "events" || activeCategory === "decisions" ? "Поддерживаются PNG, SVG, WEBP и JPEG. Размер изображения не больше 1080x970." : "Поддерживаются PNG, SVG, WEBP и JPEG. Размер изображения не больше 64x64."}>
+                            <Tooltip content={activeCategory === "events" || activeCategory === "decisions" ? t("contentPanel.imageUploadTooltip") : t("contentPanel.logoUploadTooltip")}>
                               <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-arc-accent px-3 text-sm font-semibold text-black transition hover:brightness-110">
                                 <Upload size={14} />
-                                {activeCategory === "events" || activeCategory === "decisions" ? "Загрузить изображение" : "Загрузить логотип"}
+                                {activeCategory === "events" || activeCategory === "decisions" ? t("contentPanel.uploadImage") : t("contentPanel.uploadLogo")}
                                 <input
                                   type="file"
                                   accept="image/png,image/svg+xml,image/webp,image/jpeg"
@@ -6442,42 +6469,42 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                   setDraftLogoUrl(result.item.logoUrl);
                                   setSavedSnapshot(buildSnapshot(result.item));
                                 } catch {
-                                  toast.error("Не удалось удалить логотип");
+                                  toast.error(t("contentPanel.logoDeleteFailed"));
                                 } finally {
                                   setSaving(false);
                                 }
                               }}
                               disabled={!selectedEntry || saving}
-                              className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 text-sm font-semibold text-rose-200 transition hover:border-rose-300/50 hover:bg-rose-400/15 disabled:opacity-50"
+                              className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] px-3 text-sm font-semibold text-[rgb(var(--theme-danger))] transition hover:border-[rgb(var(--theme-danger))] hover:bg-[rgb(var(--theme-danger-soft))] disabled:opacity-50"
                             >
-                              {activeCategory === "events" || activeCategory === "decisions" ? "Удалить изображение" : "Удалить логотип"}
+                              {activeCategory === "events" || activeCategory === "decisions" ? t("contentPanel.deleteImage") : t("contentPanel.deleteLogo")}
                             </button>
-                            <div className="text-xs text-white/50">
-                              {activeCategory === "events" || activeCategory === "decisions" ? "Максимум 1080x970. Рекомендуется WEBP или JPEG." : "Максимум 64x64. Рекомендуется PNG или SVG."}
+                            <div className="text-xs text-[rgb(var(--theme-text-muted))]">
+                              {activeCategory === "events" || activeCategory === "decisions" ? t("contentPanel.imageSizeHint") : t("contentPanel.logoSizeHint")}
                             </div>
                           </div>
                         </div>
                         {activeCategory === "races" && (
-                          <div className="mt-4 border-t border-white/10 pt-4">
-                            <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">Портреты расы</div>
+                          <div className="mt-4 border-t border-[rgb(var(--theme-border-subtle))] pt-4">
+                            <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.racePortraits")}</div>
                             <div className="grid gap-4 md:grid-cols-2">
                               {([
-                                { slot: "male", label: "Мужской портрет", url: draftMalePortraitUrl },
-                                { slot: "female", label: "Женский портрет", url: draftFemalePortraitUrl },
+                                { slot: "male", label: t("contentPanel.malePortrait"), url: draftMalePortraitUrl },
+                                { slot: "female", label: t("contentPanel.femalePortrait"), url: draftFemalePortraitUrl },
                               ] as const).map((portrait) => (
-                                <div key={portrait.slot} className="rounded-xl border border-white/10 bg-[#131a22] p-3">
-                                  <div className="mb-2 text-[11px] text-white/60">{portrait.label}</div>
-                                  <div className="mb-3 flex h-[100px] w-[89px] items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-black/30">
+                                <div key={portrait.slot} className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
+                                  <div className="mb-2 text-[11px] text-[rgb(var(--theme-text-secondary))]">{portrait.label}</div>
+                                  <div className="mb-3 flex h-[100px] w-[89px] items-center justify-center overflow-hidden rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))]">
                                     {portrait.url ? (
                                       <img src={portrait.url} alt={portrait.label} className="h-full w-full object-cover" />
                                     ) : (
-                                      <span className="text-[10px] text-white/45">89x100</span>
+                                      <span className="text-[10px] text-[rgb(var(--theme-text-muted))]">89x100</span>
                                     )}
                                   </div>
                                   <div className="flex flex-col gap-2">
                                     <label className="inline-flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-arc-accent px-3 text-xs font-semibold text-black transition hover:brightness-110">
                                       <Upload size={13} />
-                                      Загрузить
+                                      {t("civilopedia.admin.upload")}
                                       <input
                                         type="file"
                                         accept="image/png,image/webp,image/jpeg"
@@ -6497,21 +6524,21 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                           setDraftMalePortraitUrl(result.item.malePortraitUrl ?? null);
                                           setDraftFemalePortraitUrl(result.item.femalePortraitUrl ?? null);
                                         } catch {
-                                          toast.error("Не удалось удалить портрет");
+                                          toast.error(t("contentPanel.portraitDeleteFailed"));
                                         } finally {
                                           setSaving(false);
                                         }
                                       }}
                                       disabled={!selectedEntry || saving}
-                                      className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 text-xs font-semibold text-rose-200 transition hover:border-rose-300/50 hover:bg-rose-400/15 disabled:opacity-50"
+                                      className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] px-3 text-xs font-semibold text-[rgb(var(--theme-danger))] transition hover:border-[rgb(var(--theme-danger))] hover:bg-[rgb(var(--theme-danger-soft))] disabled:opacity-50"
                                     >
-                                      Удалить
+                                      {t("contentPanel.delete")}
                                     </button>
                                   </div>
                                 </div>
                               ))}
                             </div>
-                            <div className="mt-2 text-xs text-white/50">Размер портретов: максимум 89x100.</div>
+                            <div className="mt-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.portraitSizeHint")}</div>
                           </div>
                         )}
                       </section>
@@ -6532,18 +6559,18 @@ export function ContentPanel({ open, token, onClose }: Props) {
         panelClassName="h-auto w-full max-w-md"
         paddingClassName="p-4 flex items-center justify-center"
       >
-              <AppModalHeader title="Удалить запись?" onClose={() => setDeleteConfirmOpen(false)} />
-              <div className="mt-2 text-sm text-white/70">
-                Запись <span className="font-semibold text-white">«{selectedEntry?.name ?? "Без названия"}»</span> будет удалена.
+              <AppModalHeader title={t("contentPanel.deleteConfirmTitle")} onClose={() => setDeleteConfirmOpen(false)} />
+              <div className="mt-2 text-sm text-[rgb(var(--theme-text-secondary))]">
+                {t("contentPanel.deleteConfirmPrefix")} <span className="font-semibold text-[rgb(var(--theme-text-primary))]">"{selectedEntry?.name ?? t("contentPanel.untitled")}"</span> {t("contentPanel.deleteConfirmSuffix")}
               </div>
-              <div className="mt-1 text-xs text-white/45">Это действие удалит и логотип, если он загружен.</div>
+              <div className="mt-1 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.deleteLogoConsequence")}</div>
               <div className="mt-4 flex justify-end gap-2">
                 <AppButton
                   type="button"
                   onClick={() => setDeleteConfirmOpen(false)}
                   variant="ghost"
                 >
-                  Отмена
+                  {t("common.cancel")}
                 </AppButton>
                 <AppButton
                   type="button"
@@ -6551,7 +6578,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                   disabled={saving}
                   variant="danger"
                 >
-                  Удалить
+                  {t("contentPanel.delete")}
                 </AppButton>
               </div>
       </AppModal>
@@ -6564,15 +6591,15 @@ export function ContentPanel({ open, token, onClose }: Props) {
         panelClassName="h-auto w-full max-w-md"
         paddingClassName="p-4 flex items-center justify-center"
       >
-              <AppModalHeader title="Закрыть панель контента?" onClose={() => setCloseConfirmOpen(false)} />
-              <AppCard className="mt-2 bg-black/25 text-sm text-white/70">Есть несохранённые изменения в выбранной записи.</AppCard>
+              <AppModalHeader title={t("contentPanel.closeConfirmTitle")} onClose={() => setCloseConfirmOpen(false)} />
+              <AppCard className="mt-2 bg-[rgb(var(--theme-surface-2))] text-sm text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.closeConfirmBody")}</AppCard>
               <div className="mt-4 flex justify-end gap-2">
                 <AppButton
                   type="button"
                   onClick={() => setCloseConfirmOpen(false)}
                   variant="ghost"
                 >
-                  Остаться
+                  {t("contentPanel.stay")}
                 </AppButton>
                 <AppButton
                   type="button"
@@ -6582,7 +6609,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                   }}
                   variant="danger"
                 >
-                  Закрыть без сохранения
+                  {t("contentPanel.closeWithoutSaving")}
                 </AppButton>
               </div>
       </AppModal>

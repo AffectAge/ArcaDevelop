@@ -2,12 +2,38 @@ export type UiLocale = "en" | "ru";
 
 export type UiTextKey =
   | "adminPanel.broadcastFailed"
+  | "adminPanel.broadcastDescription"
+  | "adminPanel.broadcastFieldTitle"
   | "adminPanel.broadcastMissingFields"
+  | "adminPanel.broadcastMessage"
+  | "adminPanel.broadcastMessagePlaceholder"
+  | "adminPanel.broadcastSend"
   | "adminPanel.broadcastSent"
+  | "adminPanel.broadcastTitle"
+  | "adminPanel.broadcastTitlePlaceholder"
+  | "adminPanel.applyExclusion"
+  | "adminPanel.block"
+  | "adminPanel.blockByTime"
+  | "adminPanel.blockByTimeAction"
+  | "adminPanel.blockByTurns"
+  | "adminPanel.blockUntilDateTime"
   | "adminPanel.category.countries"
   | "adminPanel.category.notifications"
   | "adminPanel.category.population"
   | "adminPanel.category.provinces"
+  | "adminPanel.clearPopulation"
+  | "adminPanel.clearRegion"
+  | "adminPanel.autoCost"
+  | "adminPanel.autoCostHint"
+  | "adminPanel.colonizationCost"
+  | "adminPanel.colonyRaceParticipants"
+  | "adminPanel.currentStatus"
+  | "adminPanel.countryGeneral"
+  | "adminPanel.countryIsAdmin"
+  | "adminPanel.countryMarket"
+  | "adminPanel.countryMarketHint"
+  | "adminPanel.countryPunishments"
+  | "adminPanel.countrySection"
   | "adminPanel.countryDeleted"
   | "adminPanel.countryDeleteFailed"
   | "adminPanel.countryDeleteSelfFailed"
@@ -15,28 +41,71 @@ export type UiTextKey =
   | "adminPanel.countryUpdated"
   | "adminPanel.countryUpdateFailed"
   | "adminPanel.deleteCountryConfirm"
+  | "adminPanel.deleteCountry"
+  | "adminPanel.disableColonization"
   | "adminPanel.ignoreUpdated"
   | "adminPanel.ignoreUpdateFailed"
+  | "adminPanel.loadingCountries"
+  | "adminPanel.idLabel"
+  | "adminPanel.manualCost"
+  | "adminPanel.neutralProvince"
   | "adminPanel.populationCleared"
   | "adminPanel.populationClearFailed"
+  | "adminPanel.populationGenerateTitle"
   | "adminPanel.populationGenerated"
   | "adminPanel.populationGenerateFailed"
   | "adminPanel.populationJsonInvalid"
+  | "adminPanel.populationScope"
+  | "adminPanel.populationStrategy"
+  | "adminPanel.populationTotalByPops"
+  | "adminPanel.populationTotalOptional"
+  | "adminPanel.populationTotalPlaceholder"
+  | "adminPanel.popGroupsJson"
   | "adminPanel.punishmentStatus.ignoredUntilTurn"
   | "adminPanel.punishmentStatus.none"
   | "adminPanel.punishmentStatus.permanent"
   | "adminPanel.punishmentStatus.untilTime"
   | "adminPanel.punishmentStatus.untilTurn"
+  | "adminPanel.punishmentReasonHint"
+  | "adminPanel.punishmentReasonLabel"
+  | "adminPanel.punishmentReasonPlaceholder"
+  | "adminPanel.punishmentReasonSection"
   | "adminPanel.punishmentUpdated"
   | "adminPanel.punishmentUpdateFailed"
+  | "adminPanel.permanentBlock"
+  | "adminPanel.quickActions"
   | "adminPanel.regionCostReset"
   | "adminPanel.regionCostResetFailed"
+  | "adminPanel.regionPopulationCleared"
+  | "adminPanel.regionPopulationClearFailed"
+  | "adminPanel.regionPopulationEditTitle"
   | "adminPanel.regionPopulationUpdated"
   | "adminPanel.regionPopulationUpdateFailed"
   | "adminPanel.regionUpdated"
   | "adminPanel.regionUpdateFailed"
+  | "adminPanel.reset"
+  | "adminPanel.resetCostToAuto"
   | "adminPanel.selectCountry"
+  | "adminPanel.selectProvince"
   | "adminPanel.selectRegion"
+  | "adminPanel.saveChanges"
+  | "adminPanel.saveRegionPopulation"
+  | "adminPanel.saveProvince"
+  | "adminPanel.provinceSearchPlaceholder"
+  | "adminPanel.generatePopulation"
+  | "adminPanel.scope.country"
+  | "adminPanel.scope.region"
+  | "adminPanel.scope.world"
+  | "adminPanel.strategy.custom"
+  | "adminPanel.strategy.random"
+  | "adminPanel.stateLabel"
+  | "adminPanel.turnCount"
+  | "adminPanel.turnSkipExclusion"
+  | "adminPanel.turnSkipExclusionDescription"
+  | "adminPanel.untilTurnInclusive"
+  | "adminPanel.unlock"
+  | "adminPanel.uploadCrest"
+  | "adminPanel.uploadFlag"
   | "common.cancel"
   | "common.close"
   | "common.confirm"
@@ -44,6 +113,8 @@ export type UiTextKey =
   | "common.refresh"
   | "common.save"
   | "common.saving"
+  | "common.no"
+  | "common.yes"
   | "commandPalette.action.budget"
   | "commandPalette.action.province"
   | "commandPalette.action.resolve"
@@ -54,6 +125,693 @@ export type UiTextKey =
   | "commandPalette.placeholder"
   | "customSelect.noOptions"
   | "customSelect.placeholder"
+  | "contentPanel.categories"
+  | "contentPanel.categoriesTooltip"
+  | "contentPanel.description"
+  | "contentPanel.empty"
+  | "contentPanel.listTooltip"
+  | "contentPanel.loading"
+  | "contentPanel.title"
+  | "contentPanel.category.aircraftTypes"
+  | "contentPanel.category.battalions"
+  | "contentPanel.category.buildings"
+  | "contentPanel.category.companies"
+  | "contentPanel.category.cultures"
+  | "contentPanel.category.decisions"
+  | "contentPanel.category.events"
+  | "contentPanel.category.goods"
+  | "contentPanel.category.ideologies"
+  | "contentPanel.category.industries"
+  | "contentPanel.category.interestGroups"
+  | "contentPanel.category.lawGroups"
+  | "contentPanel.category.laws"
+  | "contentPanel.category.modifiers"
+  | "contentPanel.category.parties"
+  | "contentPanel.category.professions"
+  | "contentPanel.category.provinceClimates"
+  | "contentPanel.category.provinceContinents"
+  | "contentPanel.category.provinceLandscapes"
+  | "contentPanel.category.provinceStrategicRegions"
+  | "contentPanel.category.provinceTypes"
+  | "contentPanel.category.races"
+  | "contentPanel.category.religions"
+  | "contentPanel.category.resourceCategories"
+  | "contentPanel.category.sectors"
+  | "contentPanel.category.shipTypes"
+  | "contentPanel.category.technologies"
+  | "contentPanel.contentFallback"
+  | "contentPanel.listLabel"
+  | "contentPanel.add"
+  | "contentPanel.condition"
+  | "contentPanel.condition.always"
+  | "contentPanel.condition.never"
+  | "contentPanel.conditionsAllRequired"
+  | "contentPanel.conditionsEmpty"
+  | "contentPanel.ideologyRules"
+  | "contentPanel.ideologyRulesEmpty"
+  | "contentPanel.ideologyRulesHint"
+  | "contentPanel.invalidValue"
+  | "contentPanel.invert"
+  | "contentPanel.notPrefix"
+  | "contentPanel.notRequired"
+  | "contentPanel.notSelected"
+  | "contentPanel.notShort"
+  | "contentPanel.activationConditions"
+  | "contentPanel.anyBuilding"
+  | "contentPanel.anyCategory"
+  | "contentPanel.anyGood"
+  | "contentPanel.anyProfession"
+  | "contentPanel.effectNumber"
+  | "contentPanel.modifierConditionsEmpty"
+  | "contentPanel.modifierConditionsHint"
+  | "contentPanel.modifierNoTargets"
+  | "contentPanel.modifiersEmpty"
+  | "contentPanel.modifiersHint"
+  | "contentPanel.modifiersTooltip"
+  | "contentPanel.newModifier"
+  | "contentPanel.field.applyMode"
+  | "contentPanel.field.amountPerTurn"
+  | "contentPanel.field.attack"
+  | "contentPanel.field.breakthrough"
+  | "contentPanel.field.name"
+  | "contentPanel.field.scope"
+  | "contentPanel.field.stat"
+  | "contentPanel.field.value"
+  | "contentPanel.buildingWeights"
+  | "contentPanel.buildingsEmpty"
+  | "contentPanel.closeIdeologies"
+  | "contentPanel.colorTooltip"
+  | "contentPanel.delete"
+  | "contentPanel.deleteTooltip"
+  | "contentPanel.descriptionTooltip"
+  | "contentPanel.disciplineHint"
+  | "contentPanel.equalPartySupport"
+  | "contentPanel.generalData"
+  | "contentPanel.generalTooltip"
+  | "contentPanel.ideologiesEmpty"
+  | "contentPanel.ideologyElectionWeights"
+  | "contentPanel.lawPreferences"
+  | "contentPanel.nameTooltip"
+  | "contentPanel.noExplicitPreferences"
+  | "contentPanel.notSelectedFeminine"
+  | "contentPanel.notSelectedMasculine"
+  | "contentPanel.politicalSettings"
+  | "contentPanel.politicsTooltip"
+  | "contentPanel.professionWeights"
+  | "contentPanel.professionsEmpty"
+  | "contentPanel.religionWeights"
+  | "contentPanel.religionsEmpty"
+  | "contentPanel.saveTooltip"
+  | "contentPanel.unsavedChanges"
+  | "contentPanel.closeConfirmBody"
+  | "contentPanel.closeConfirmTitle"
+  | "contentPanel.closeWithoutSaving"
+  | "contentPanel.deleteConfirmPrefix"
+  | "contentPanel.deleteConfirmSuffix"
+  | "contentPanel.deleteConfirmTitle"
+  | "contentPanel.deleteImage"
+  | "contentPanel.deleteLogo"
+  | "contentPanel.deleteLogoConsequence"
+  | "contentPanel.entryLogoAlt"
+  | "contentPanel.fallbackInitial"
+  | "contentPanel.femalePortrait"
+  | "contentPanel.image"
+  | "contentPanel.imageSizeHint"
+  | "contentPanel.imageTooltip"
+  | "contentPanel.imageUploadTooltip"
+  | "contentPanel.logo"
+  | "contentPanel.logoDeleteFailed"
+  | "contentPanel.logoSizeHint"
+  | "contentPanel.logoTooltip"
+  | "contentPanel.logoUploadTooltip"
+  | "contentPanel.malePortrait"
+  | "contentPanel.portraitDeleteFailed"
+  | "contentPanel.portraitSizeHint"
+  | "contentPanel.racePortraits"
+  | "contentPanel.stay"
+  | "contentPanel.untitled"
+  | "contentPanel.uploadImage"
+  | "contentPanel.uploadLogo"
+  | "contentPanel.field.amountPerPerson"
+  | "contentPanel.field.allowedTransport"
+  | "contentPanel.field.basePrice"
+  | "contentPanel.field.baseWage"
+  | "contentPanel.field.baseWeight"
+  | "contentPanel.field.baseStrength"
+  | "contentPanel.field.color"
+  | "contentPanel.field.constructionPoints"
+  | "contentPanel.field.defense"
+  | "contentPanel.field.defaultLaw"
+  | "contentPanel.field.defaultParty"
+  | "contentPanel.field.description"
+  | "contentPanel.field.discipline"
+  | "contentPanel.field.distributionType"
+  | "contentPanel.field.durationTurns"
+  | "contentPanel.field.ducats"
+  | "contentPanel.field.enactmentDifficulty"
+  | "contentPanel.field.domain"
+  | "contentPanel.field.extractionGood"
+  | "contentPanel.field.hp"
+  | "contentPanel.field.industry"
+  | "contentPanel.field.infraPerUnit"
+  | "contentPanel.field.infrastructureCategory"
+  | "contentPanel.field.largeVeinChance"
+  | "contentPanel.field.largeVeinRange"
+  | "contentPanel.field.lawGroup"
+  | "contentPanel.field.level"
+  | "contentPanel.field.loyalistMultiplier"
+  | "contentPanel.field.majorPaymentThreshold"
+  | "contentPanel.field.manpower"
+  | "contentPanel.field.maxDurability"
+  | "contentPanel.field.maxLevel"
+  | "contentPanel.field.maxPrice"
+  | "contentPanel.field.maxRadiation"
+  | "contentPanel.field.mediumVeinChance"
+  | "contentPanel.field.mediumVeinRange"
+  | "contentPanel.field.minPrice"
+  | "contentPanel.field.minRadiation"
+  | "contentPanel.field.minStandardOfLiving"
+  | "contentPanel.field.organization"
+  | "contentPanel.field.order"
+  | "contentPanel.field.pollutionProductivity"
+  | "contentPanel.field.radicalMultiplier"
+  | "contentPanel.field.researchCost"
+  | "contentPanel.field.requiresDeposit"
+  | "contentPanel.field.sector"
+  | "contentPanel.field.smallVeinChance"
+  | "contentPanel.field.smallVeinRange"
+  | "contentPanel.field.speed"
+  | "contentPanel.field.solMultiplier"
+  | "contentPanel.field.startingDucats"
+  | "contentPanel.field.supply"
+  | "contentPanel.field.trainingCostDucats"
+  | "contentPanel.field.trainingCostManpower"
+  | "contentPanel.field.tierId"
+  | "contentPanel.field.upgradeDucats"
+  | "contentPanel.allowedTransportTooltip"
+  | "contentPanel.basePriceTooltip"
+  | "contentPanel.baseWageTooltip"
+  | "contentPanel.buildingCost"
+  | "contentPanel.buildingCostTooltip"
+  | "contentPanel.buildingUpgrade"
+  | "contentPanel.buildingUpgradeTooltip"
+  | "contentPanel.constructionCostTooltip"
+  | "contentPanel.ducatCostTooltip"
+  | "contentPanel.equipmentNeeds"
+  | "contentPanel.equipmentNeedsEmpty"
+  | "contentPanel.distributionTypeTooltip"
+  | "contentPanel.extraction"
+  | "contentPanel.extractionAmountTooltip"
+  | "contentPanel.extractionGoodTooltip"
+  | "contentPanel.extractionTooltip"
+  | "contentPanel.explorationBaseWeightTooltip"
+  | "contentPanel.goodEconomy"
+  | "contentPanel.goodEconomyTooltip"
+  | "contentPanel.goodExploration"
+  | "contentPanel.goodExplorationTooltip"
+  | "contentPanel.industryTooltip"
+  | "contentPanel.infraPerUnitTooltip"
+  | "contentPanel.infrastructureCategoryTooltip"
+  | "contentPanel.largeVeinChanceTooltip"
+  | "contentPanel.largeVeinRangeTooltip"
+  | "contentPanel.maxPriceTooltip"
+  | "contentPanel.mediumVeinChanceTooltip"
+  | "contentPanel.mediumVeinRangeTooltip"
+  | "contentPanel.minPriceTooltip"
+  | "contentPanel.noCategory"
+  | "contentPanel.other"
+  | "contentPanel.maxDurabilityTooltip"
+  | "contentPanel.maxLevelTooltip"
+  | "contentPanel.noExtraction"
+  | "contentPanel.notSpecifiedFeminine"
+  | "contentPanel.requiresDepositTooltip"
+  | "contentPanel.sectorTooltip"
+  | "contentPanel.startingDucatsTooltip"
+  | "contentPanel.upgradeConstructionTooltip"
+  | "contentPanel.upgradeDucatsTooltip"
+  | "contentPanel.addInputGoodTooltip"
+  | "contentPanel.addOutputGoodTooltip"
+  | "contentPanel.addWorkforceTooltip"
+  | "contentPanel.fertility"
+  | "contentPanel.inputGoods"
+  | "contentPanel.inputGoodsEmpty"
+  | "contentPanel.inputGoodsTooltip"
+  | "contentPanel.outputGoods"
+  | "contentPanel.outputGoodsEmpty"
+  | "contentPanel.outputGoodsTooltip"
+  | "contentPanel.professionEconomy"
+  | "contentPanel.professionEconomyTooltip"
+  | "contentPanel.addNeed"
+  | "contentPanel.addSubstituteGood"
+  | "contentPanel.addTier"
+  | "contentPanel.addLimit"
+  | "contentPanel.addValue"
+  | "contentPanel.allowedClimate"
+  | "contentPanel.allowedContinents"
+  | "contentPanel.allowedCountries"
+  | "contentPanel.allowedCountriesTooltip"
+  | "contentPanel.allowedLandscape"
+  | "contentPanel.allowedProvinceTypes"
+  | "contentPanel.allowedStrategicRegions"
+  | "contentPanel.anyValue"
+  | "contentPanel.countriesNotFound"
+  | "contentPanel.countryCriteria"
+  | "contentPanel.countryCriteriaConflict"
+  | "contentPanel.countryCriteriaHint"
+  | "contentPanel.countryCriteriaTooltip"
+  | "contentPanel.countryFallback"
+  | "contentPanel.countryLimits"
+  | "contentPanel.countryLimitsEmpty"
+  | "contentPanel.countryLimitsTooltip"
+  | "contentPanel.countrySearchPlaceholder"
+  | "contentPanel.cultureNeeds"
+  | "contentPanel.cultureNeedsHint"
+  | "contentPanel.defaultNeed.basicFood"
+  | "contentPanel.defaultNeed.newNeed"
+  | "contentPanel.deleteNeed"
+  | "contentPanel.deniedClimate"
+  | "contentPanel.deniedContinents"
+  | "contentPanel.deniedCountries"
+  | "contentPanel.deniedCountriesTooltip"
+  | "contentPanel.deniedLandscape"
+  | "contentPanel.deniedProvinceTypes"
+  | "contentPanel.deniedStrategicRegions"
+  | "contentPanel.globalLimit"
+  | "contentPanel.globalLimitTooltip"
+  | "contentPanel.noAvailableValues"
+  | "contentPanel.noLimitPlaceholder"
+  | "contentPanel.noMaximumPlaceholder"
+  | "contentPanel.noMinimumPlaceholder"
+  | "contentPanel.option.pollutionProductivity.bonus"
+  | "contentPanel.option.pollutionProductivity.ignore"
+  | "contentPanel.option.pollutionProductivity.penalty"
+  | "contentPanel.option.ideologyRule.solBelow"
+  | "contentPanel.option.ideologyRule.solAbove"
+  | "contentPanel.option.ideologyRule.radicalsAbove"
+  | "contentPanel.option.ideologyRule.loyalistsAbove"
+  | "contentPanel.option.ideologyRule.professionIs"
+  | "contentPanel.option.ideologyRule.religionIs"
+  | "contentPanel.option.ideologyRule.cultureIs"
+  | "contentPanel.option.ideologyRule.lawActive"
+  | "contentPanel.option.ideologyRule.hasBuilding"
+  | "contentPanel.option.ideologyRule.countryModifierActive"
+  | "contentPanel.option.ideologyRule.provinceModifierActive"
+  | "contentPanel.placeholder.solThreshold"
+  | "contentPanel.placeholder.radicalsPct"
+  | "contentPanel.placeholder.loyalistsPct"
+  | "contentPanel.option.parliamentPower.laws.none"
+  | "contentPanel.option.parliamentPower.laws.advisory"
+  | "contentPanel.option.parliamentPower.laws.approve"
+  | "contentPanel.option.parliamentPower.laws.initiate"
+  | "contentPanel.option.parliamentPower.budget.none"
+  | "contentPanel.option.parliamentPower.budget.approveTaxes"
+  | "contentPanel.option.parliamentPower.budget.approveBudget"
+  | "contentPanel.option.parliamentPower.budget.controlBudget"
+  | "contentPanel.option.parliamentPower.diplomacy.none"
+  | "contentPanel.option.parliamentPower.diplomacy.ratifyTerritory"
+  | "contentPanel.option.parliamentPower.diplomacy.ratifyMajorTreaties"
+  | "contentPanel.option.parliamentPower.diplomacy.ratifyAll"
+  | "contentPanel.option.parliamentPower.war.none"
+  | "contentPanel.option.parliamentPower.war.approve"
+  | "contentPanel.option.parliamentPower.war.declare"
+  | "contentPanel.option.parliamentPower.government.none"
+  | "contentPanel.option.parliamentPower.government.confidenceVote"
+  | "contentPanel.option.parliamentPower.government.appointGovernment"
+  | "contentPanel.provinceCriteria"
+  | "contentPanel.provinceCriteriaHint"
+  | "contentPanel.provinceCriteriaTooltip"
+  | "contentPanel.quantityLimits"
+  | "contentPanel.quantityLimitsTooltip"
+  | "contentPanel.zeroNoLimitPlaceholder"
+  | "contentPanel.referencePriceHint"
+  | "contentPanel.referencePriceTooltip"
+  | "contentPanel.resourceDiscoverable"
+  | "contentPanel.smallVeinChanceTooltip"
+  | "contentPanel.smallVeinRangeTooltip"
+  | "contentPanel.workforce"
+  | "contentPanel.workforceEmpty"
+  | "contentPanel.workforceTooltip"
+  | "contentPanel.noExplicitPartyPreferences"
+  | "contentPanel.parliamentPower"
+  | "contentPanel.parliamentPowerHint"
+  | "contentPanel.partyPreferencesForLaw"
+  | "contentPanel.prerequisites"
+  | "contentPanel.prerequisitesTooltip"
+  | "contentPanel.researchCostTooltip"
+  | "contentPanel.rootTechnology"
+  | "contentPanel.select.party"
+  | "contentPanel.selectDomainFirst"
+  | "contentPanel.unlocksBuildings"
+  | "contentPanel.unlocksLaws"
+  | "contentPanel.unlocksNoBuildings"
+  | "contentPanel.unlocksNoLaws"
+  | "contentPanel.placeholder.modifierName"
+  | "contentPanel.placeholder.modifierId"
+  | "contentPanel.placeholder.ruleDescription"
+  | "contentPanel.placeholder.threshold"
+  | "contentPanel.placeholder.weight"
+  | "contentPanel.select.building"
+  | "contentPanel.select.country"
+  | "contentPanel.select.culture"
+  | "contentPanel.select.good"
+  | "contentPanel.select.ideology"
+  | "contentPanel.select.law"
+  | "contentPanel.select.profession"
+  | "contentPanel.select.religion"
+  | "contentPanel.select.technology"
+  | "contentPanel.buttonColor"
+  | "contentPanel.conditions.availability"
+  | "contentPanel.conditions.triggers"
+  | "contentPanel.conditions.visibility"
+  | "contentPanel.costs"
+  | "contentPanel.defaultEventOption"
+  | "contentPanel.effect"
+  | "contentPanel.effects"
+  | "contentPanel.effectsEmpty"
+  | "contentPanel.eventOptions"
+  | "contentPanel.eventOptionsEmpty"
+  | "contentPanel.eventOptionsHint"
+  | "contentPanel.field.blockingEvent"
+  | "contentPanel.field.category"
+  | "contentPanel.field.chancePct"
+  | "contentPanel.field.checkInterval"
+  | "contentPanel.field.cooldown"
+  | "contentPanel.field.cooldownTurns"
+  | "contentPanel.field.priority"
+  | "contentPanel.field.repeatable"
+  | "contentPanel.field.visibility"
+  | "contentPanel.free"
+  | "contentPanel.newEventOption"
+  | "contentPanel.option"
+  | "contentPanel.optionEffects"
+  | "contentPanel.placeholder.autoPct"
+  | "contentPanel.placeholder.buttonText"
+  | "contentPanel.placeholder.optionDescription"
+  | "contentPanel.resource"
+  | "contentPanel.createFailed"
+  | "contentPanel.deleted"
+  | "contentPanel.deleteFailed"
+  | "contentPanel.imageTooLarge"
+  | "contentPanel.loadFailed"
+  | "contentPanel.logoTooLarge"
+  | "contentPanel.logoUploadFailed"
+  | "contentPanel.nameExists"
+  | "contentPanel.nameRequired"
+  | "contentPanel.nameUnique"
+  | "contentPanel.portraitSlot.female"
+  | "contentPanel.portraitSlot.male"
+  | "contentPanel.portraitTooLarge"
+  | "contentPanel.portraitUploaded"
+  | "contentPanel.portraitUploadFailed"
+  | "contentPanel.saveFailed"
+  | "contentPanel.saved"
+  | "contentPanel.validation.baseWageNumber"
+  | "contentPanel.validation.buildingNumbers"
+  | "contentPanel.validation.goodEconomyNumbers"
+  | "contentPanel.validation.ideologyRules"
+  | "contentPanel.validation.interestGroupNumbers"
+  | "contentPanel.validation.lawGroupOrder"
+  | "contentPanel.validation.lawGroupRequired"
+  | "contentPanel.validation.maxPriceBelowMin"
+  | "contentPanel.validation.partyDiscipline"
+  | "contentPanel.validation.partyPreferences"
+  | "contentPanel.validation.politicalWeights"
+  | "contentPanel.validation.researchCostNumber"
+  | "contentPanel.validation.veinMaxBelowMin"
+  | "contentPanel.validation.votingNumbers"
+  | "contentPanel.createdToast"
+  | "contentPanel.meta.cultures.singular"
+  | "contentPanel.meta.cultures.createBaseName"
+  | "contentPanel.meta.cultures.createLabel"
+  | "contentPanel.meta.cultures.namePlaceholder"
+  | "contentPanel.meta.cultures.descriptionPlaceholder"
+  | "contentPanel.meta.cultures.sectionTitle"
+  | "contentPanel.meta.races.singular"
+  | "contentPanel.meta.races.createBaseName"
+  | "contentPanel.meta.races.createLabel"
+  | "contentPanel.meta.races.namePlaceholder"
+  | "contentPanel.meta.races.descriptionPlaceholder"
+  | "contentPanel.meta.races.sectionTitle"
+  | "contentPanel.meta.resourceCategories.singular"
+  | "contentPanel.meta.resourceCategories.createBaseName"
+  | "contentPanel.meta.resourceCategories.createLabel"
+  | "contentPanel.meta.resourceCategories.namePlaceholder"
+  | "contentPanel.meta.resourceCategories.descriptionPlaceholder"
+  | "contentPanel.meta.resourceCategories.sectionTitle"
+  | "contentPanel.meta.provinceTypes.singular"
+  | "contentPanel.meta.provinceTypes.createBaseName"
+  | "contentPanel.meta.provinceTypes.createLabel"
+  | "contentPanel.meta.provinceTypes.namePlaceholder"
+  | "contentPanel.meta.provinceTypes.descriptionPlaceholder"
+  | "contentPanel.meta.provinceTypes.sectionTitle"
+  | "contentPanel.meta.provinceClimates.singular"
+  | "contentPanel.meta.provinceClimates.createBaseName"
+  | "contentPanel.meta.provinceClimates.createLabel"
+  | "contentPanel.meta.provinceClimates.namePlaceholder"
+  | "contentPanel.meta.provinceClimates.descriptionPlaceholder"
+  | "contentPanel.meta.provinceClimates.sectionTitle"
+  | "contentPanel.meta.provinceLandscapes.singular"
+  | "contentPanel.meta.provinceLandscapes.createBaseName"
+  | "contentPanel.meta.provinceLandscapes.createLabel"
+  | "contentPanel.meta.provinceLandscapes.namePlaceholder"
+  | "contentPanel.meta.provinceLandscapes.descriptionPlaceholder"
+  | "contentPanel.meta.provinceLandscapes.sectionTitle"
+  | "contentPanel.meta.provinceContinents.singular"
+  | "contentPanel.meta.provinceContinents.createBaseName"
+  | "contentPanel.meta.provinceContinents.createLabel"
+  | "contentPanel.meta.provinceContinents.namePlaceholder"
+  | "contentPanel.meta.provinceContinents.descriptionPlaceholder"
+  | "contentPanel.meta.provinceContinents.sectionTitle"
+  | "contentPanel.meta.provinceStrategicRegions.singular"
+  | "contentPanel.meta.provinceStrategicRegions.createBaseName"
+  | "contentPanel.meta.provinceStrategicRegions.createLabel"
+  | "contentPanel.meta.provinceStrategicRegions.namePlaceholder"
+  | "contentPanel.meta.provinceStrategicRegions.descriptionPlaceholder"
+  | "contentPanel.meta.provinceStrategicRegions.sectionTitle"
+  | "contentPanel.meta.religions.singular"
+  | "contentPanel.meta.religions.createBaseName"
+  | "contentPanel.meta.religions.createLabel"
+  | "contentPanel.meta.religions.namePlaceholder"
+  | "contentPanel.meta.religions.descriptionPlaceholder"
+  | "contentPanel.meta.religions.sectionTitle"
+  | "contentPanel.meta.professions.singular"
+  | "contentPanel.meta.professions.createBaseName"
+  | "contentPanel.meta.professions.createLabel"
+  | "contentPanel.meta.professions.namePlaceholder"
+  | "contentPanel.meta.professions.descriptionPlaceholder"
+  | "contentPanel.meta.professions.sectionTitle"
+  | "contentPanel.meta.battalions.singular"
+  | "contentPanel.meta.battalions.createBaseName"
+  | "contentPanel.meta.battalions.createLabel"
+  | "contentPanel.meta.battalions.namePlaceholder"
+  | "contentPanel.meta.battalions.descriptionPlaceholder"
+  | "contentPanel.meta.battalions.sectionTitle"
+  | "contentPanel.meta.shipTypes.singular"
+  | "contentPanel.meta.shipTypes.createBaseName"
+  | "contentPanel.meta.shipTypes.createLabel"
+  | "contentPanel.meta.shipTypes.namePlaceholder"
+  | "contentPanel.meta.shipTypes.descriptionPlaceholder"
+  | "contentPanel.meta.shipTypes.sectionTitle"
+  | "contentPanel.meta.aircraftTypes.singular"
+  | "contentPanel.meta.aircraftTypes.createBaseName"
+  | "contentPanel.meta.aircraftTypes.createLabel"
+  | "contentPanel.meta.aircraftTypes.namePlaceholder"
+  | "contentPanel.meta.aircraftTypes.descriptionPlaceholder"
+  | "contentPanel.meta.aircraftTypes.sectionTitle"
+  | "contentPanel.meta.ideologies.singular"
+  | "contentPanel.meta.ideologies.createBaseName"
+  | "contentPanel.meta.ideologies.createLabel"
+  | "contentPanel.meta.ideologies.namePlaceholder"
+  | "contentPanel.meta.ideologies.descriptionPlaceholder"
+  | "contentPanel.meta.ideologies.sectionTitle"
+  | "contentPanel.meta.interestGroups.singular"
+  | "contentPanel.meta.interestGroups.createBaseName"
+  | "contentPanel.meta.interestGroups.createLabel"
+  | "contentPanel.meta.interestGroups.namePlaceholder"
+  | "contentPanel.meta.interestGroups.descriptionPlaceholder"
+  | "contentPanel.meta.interestGroups.sectionTitle"
+  | "contentPanel.meta.parties.singular"
+  | "contentPanel.meta.parties.createBaseName"
+  | "contentPanel.meta.parties.createLabel"
+  | "contentPanel.meta.parties.namePlaceholder"
+  | "contentPanel.meta.parties.descriptionPlaceholder"
+  | "contentPanel.meta.parties.sectionTitle"
+  | "contentPanel.meta.lawGroups.singular"
+  | "contentPanel.meta.lawGroups.createBaseName"
+  | "contentPanel.meta.lawGroups.createLabel"
+  | "contentPanel.meta.lawGroups.namePlaceholder"
+  | "contentPanel.meta.lawGroups.descriptionPlaceholder"
+  | "contentPanel.meta.lawGroups.sectionTitle"
+  | "contentPanel.meta.laws.singular"
+  | "contentPanel.meta.laws.createBaseName"
+  | "contentPanel.meta.laws.createLabel"
+  | "contentPanel.meta.laws.namePlaceholder"
+  | "contentPanel.meta.laws.descriptionPlaceholder"
+  | "contentPanel.meta.laws.sectionTitle"
+  | "contentPanel.meta.technologies.singular"
+  | "contentPanel.meta.technologies.createBaseName"
+  | "contentPanel.meta.technologies.createLabel"
+  | "contentPanel.meta.technologies.namePlaceholder"
+  | "contentPanel.meta.technologies.descriptionPlaceholder"
+  | "contentPanel.meta.technologies.sectionTitle"
+  | "contentPanel.meta.buildings.singular"
+  | "contentPanel.meta.buildings.createBaseName"
+  | "contentPanel.meta.buildings.createLabel"
+  | "contentPanel.meta.buildings.namePlaceholder"
+  | "contentPanel.meta.buildings.descriptionPlaceholder"
+  | "contentPanel.meta.buildings.sectionTitle"
+  | "contentPanel.meta.goods.singular"
+  | "contentPanel.meta.goods.createBaseName"
+  | "contentPanel.meta.goods.createLabel"
+  | "contentPanel.meta.goods.namePlaceholder"
+  | "contentPanel.meta.goods.descriptionPlaceholder"
+  | "contentPanel.meta.goods.sectionTitle"
+  | "contentPanel.meta.companies.singular"
+  | "contentPanel.meta.companies.createBaseName"
+  | "contentPanel.meta.companies.createLabel"
+  | "contentPanel.meta.companies.namePlaceholder"
+  | "contentPanel.meta.companies.descriptionPlaceholder"
+  | "contentPanel.meta.companies.sectionTitle"
+  | "contentPanel.meta.industries.singular"
+  | "contentPanel.meta.industries.createBaseName"
+  | "contentPanel.meta.industries.createLabel"
+  | "contentPanel.meta.industries.namePlaceholder"
+  | "contentPanel.meta.industries.descriptionPlaceholder"
+  | "contentPanel.meta.industries.sectionTitle"
+  | "contentPanel.meta.sectors.singular"
+  | "contentPanel.meta.sectors.createBaseName"
+  | "contentPanel.meta.sectors.createLabel"
+  | "contentPanel.meta.sectors.namePlaceholder"
+  | "contentPanel.meta.sectors.descriptionPlaceholder"
+  | "contentPanel.meta.sectors.sectionTitle"
+  | "contentPanel.meta.modifiers.singular"
+  | "contentPanel.meta.modifiers.createBaseName"
+  | "contentPanel.meta.modifiers.createLabel"
+  | "contentPanel.meta.modifiers.namePlaceholder"
+  | "contentPanel.meta.modifiers.descriptionPlaceholder"
+  | "contentPanel.meta.modifiers.sectionTitle"
+  | "contentPanel.meta.decisions.singular"
+  | "contentPanel.meta.decisions.createBaseName"
+  | "contentPanel.meta.decisions.createLabel"
+  | "contentPanel.meta.decisions.namePlaceholder"
+  | "contentPanel.meta.decisions.descriptionPlaceholder"
+  | "contentPanel.meta.decisions.sectionTitle"
+  | "contentPanel.meta.events.singular"
+  | "contentPanel.meta.events.createBaseName"
+  | "contentPanel.meta.events.createLabel"
+  | "contentPanel.meta.events.namePlaceholder"
+  | "contentPanel.meta.events.descriptionPlaceholder"
+  | "contentPanel.meta.events.sectionTitle"
+  | "contentPanel.searchPlaceholder"
+  | "contentPanel.option.decisionCategory.colonization"
+  | "contentPanel.option.decisionCategory.culture"
+  | "contentPanel.option.decisionCategory.diplomacy"
+  | "contentPanel.option.decisionCategory.economy"
+  | "contentPanel.option.decisionCategory.military"
+  | "contentPanel.option.decisionCategory.politics"
+  | "contentPanel.option.decisionCategory.religion"
+  | "contentPanel.option.decisionCategory.technology"
+  | "contentPanel.option.eventCategory.colonization"
+  | "contentPanel.option.eventCategory.diplomacy"
+  | "contentPanel.option.eventCategory.economy"
+  | "contentPanel.option.eventCategory.military"
+  | "contentPanel.option.eventCategory.politics"
+  | "contentPanel.option.eventCategory.system"
+  | "contentPanel.option.eventPriority.high"
+  | "contentPanel.option.eventPriority.low"
+  | "contentPanel.option.eventPriority.medium"
+  | "contentPanel.option.eventVisibility.private"
+  | "contentPanel.option.eventVisibility.public"
+  | "contentPanel.option.modifierCondition.always"
+  | "contentPanel.option.modifierCondition.countryIs"
+  | "contentPanel.option.modifierCondition.hasBuilding"
+  | "contentPanel.option.modifierCondition.lawActive"
+  | "contentPanel.option.modifierCondition.technologyResearched"
+  | "contentPanel.modifierStatConfig.buildingConstructionCost.description"
+  | "contentPanel.modifierStatConfig.buildingInput.description"
+  | "contentPanel.modifierStatConfig.buildingOutput.description"
+  | "contentPanel.modifierStatConfig.buildingThroughput.description"
+  | "contentPanel.modifierStatConfig.buildingWage.description"
+  | "contentPanel.modifierStatConfig.colonizationGain.description"
+  | "contentPanel.modifierStatConfig.constructionGain.description"
+  | "contentPanel.modifierStatConfig.cost.valueHint"
+  | "contentPanel.modifierStatConfig.cultureGain.description"
+  | "contentPanel.modifierStatConfig.default.valueHint"
+  | "contentPanel.modifierStatConfig.ducatsGain.description"
+  | "contentPanel.modifierStatConfig.goldGain.description"
+  | "contentPanel.modifierStatConfig.input.valueHint"
+  | "contentPanel.modifierStatConfig.output.valueHint"
+  | "contentPanel.modifierStatConfig.religionGain.description"
+  | "contentPanel.modifierStatConfig.scienceGain.description"
+  | "contentPanel.modifierStatConfig.technologyCost.description"
+  | "contentPanel.modifierStatConfig.throughput.valueHint"
+  | "contentPanel.modifierStatConfig.wage.valueHint"
+  | "contentPanel.modifierTarget.building"
+  | "contentPanel.modifierTarget.good"
+  | "contentPanel.modifierTarget.profession"
+  | "contentPanel.modifierTarget.resourceCategory"
+  | "contentPanel.option.modifierStat.buildingConstructionCost"
+  | "contentPanel.option.modifierStat.buildingInput"
+  | "contentPanel.option.modifierStat.buildingOutput"
+  | "contentPanel.option.modifierStat.buildingThroughput"
+  | "contentPanel.option.modifierStat.buildingWage"
+  | "contentPanel.option.modifierStat.colonizationGain"
+  | "contentPanel.option.modifierStat.constructionGain"
+  | "contentPanel.option.modifierStat.cultureGain"
+  | "contentPanel.option.modifierStat.ducatsGain"
+  | "contentPanel.option.modifierStat.goldGain"
+  | "contentPanel.option.modifierStat.religionGain"
+  | "contentPanel.option.modifierStat.scienceGain"
+  | "contentPanel.option.modifierStat.technologyCost"
+  | "contentPanel.option.modifierMode.add"
+  | "contentPanel.option.modifierMode.addPct"
+  | "contentPanel.option.modifierMode.mult"
+  | "contentPanel.option.modifierScope.building"
+  | "contentPanel.option.modifierScope.country"
+  | "contentPanel.option.modifierScope.market"
+  | "contentPanel.option.modifierScope.pop"
+  | "contentPanel.option.modifierScope.province"
+  | "contentPanel.option.needCategory.basic"
+  | "contentPanel.option.needCategory.comfort"
+  | "contentPanel.option.needCategory.luxury"
+  | "contentPanel.option.needCategory.survival"
+  | "contentPanel.option.parliamentDomain.budget"
+  | "contentPanel.option.parliamentDomain.diplomacy"
+  | "contentPanel.option.parliamentDomain.government"
+  | "contentPanel.option.parliamentDomain.laws"
+  | "contentPanel.option.parliamentDomain.none"
+  | "contentPanel.option.parliamentDomain.war"
+  | "contentPanel.option.resource.colonization"
+  | "contentPanel.option.resource.construction"
+  | "contentPanel.option.resource.culture"
+  | "contentPanel.option.resource.ducats"
+  | "contentPanel.option.resource.gold"
+  | "contentPanel.option.resource.religion"
+  | "contentPanel.option.resource.science"
+  | "contentPanel.option.goodDistribution.localOnly"
+  | "contentPanel.option.goodDistribution.pipeline"
+  | "contentPanel.option.goodDistribution.powerGrid"
+  | "contentPanel.option.goodDistribution.service"
+  | "contentPanel.option.goodDistribution.tradeable"
+  | "contentPanel.option.transport.air"
+  | "contentPanel.option.transport.land"
+  | "contentPanel.option.transport.pipeline"
+  | "contentPanel.option.transport.powerGrid"
+  | "contentPanel.option.transport.sea"
+  | "contentPanel.section.branding"
+  | "contentPanel.section.conditionsEffects"
+  | "contentPanel.section.criteria"
+  | "contentPanel.section.economyProduction"
+  | "contentPanel.section.exploration"
+  | "contentPanel.section.general"
+  | "contentPanel.section.goodEconomy"
+  | "contentPanel.section.influence"
+  | "contentPanel.section.needs"
+  | "contentPanel.section.politics"
+  | "contentPanel.section.professionEconomy"
+  | "contentPanel.section.stats"
+  | "contentPanel.section.technologyTree"
+  | "contentPanel.section.triggersOptions"
   | "countryEvents.choiceRequired"
   | "countryEvents.defaultEvent"
   | "countryEvents.effectFallback"
@@ -501,6 +1259,14 @@ export type UiTextKey =
   | "map.controls.resetView"
   | "map.controls.lockInteraction"
   | "map.controls.unlockInteraction"
+  | "map.mode.political.label"
+  | "map.mode.political.shortLabel"
+  | "map.mode.political.ownerLegend"
+  | "map.mode.political.ownerDescription"
+  | "map.mode.political.colonizationLegend"
+  | "map.mode.political.colonizationDescription"
+  | "map.mode.political.outOfFilterLegend"
+  | "map.mode.political.outOfFilterDescription"
   | "map.mode.regions.label"
   | "map.mode.regions.shortLabel"
   | "map.mode.regions.legendLabel"
@@ -509,6 +1275,157 @@ export type UiTextKey =
   | "map.mode.provinceColors.shortLabel"
   | "map.mode.provinceColors.legendLabel"
   | "map.mode.provinceColors.legendDescription"
+  | "map.mode.diplomacy.label"
+  | "map.mode.diplomacy.shortLabel"
+  | "map.mode.diplomacy.legendLabel"
+  | "map.mode.diplomacy.legendDescription"
+  | "map.mode.markets.label"
+  | "map.mode.markets.shortLabel"
+  | "map.mode.markets.legendLabel"
+  | "map.mode.markets.legendDescription"
+  | "map.mode.population.label"
+  | "map.mode.population.shortLabel"
+  | "map.mode.population.legendLabel"
+  | "map.mode.population.legendDescription"
+  | "map.mode.resources.label"
+  | "map.mode.resources.shortLabel"
+  | "map.mode.resources.legendLabel"
+  | "map.mode.resources.legendDescription"
+  | "map.mode.infrastructure.label"
+  | "map.mode.infrastructure.shortLabel"
+  | "map.mode.infrastructure.legendLabel"
+  | "map.mode.infrastructure.legendDescription"
+  | "map.mode.colonization.label"
+  | "map.mode.colonization.shortLabel"
+  | "map.mode.colonization.legendLabel"
+  | "map.mode.colonization.legendDescription"
+  | "map.mode.military.label"
+  | "map.mode.military.shortLabel"
+  | "map.mode.military.legendLabel"
+  | "map.mode.military.legendDescription"
+  | "map.transport.land"
+  | "map.transport.sea"
+  | "map.transport.air"
+  | "map.transport.pipeline"
+  | "map.transport.powerGrid"
+  | "map.common.noData"
+  | "map.common.none"
+  | "map.common.neutral"
+  | "map.common.yes"
+  | "map.filter.currentMarket"
+  | "map.filter.allResources"
+  | "map.lens.fallback"
+  | "map.lens.political.owners"
+  | "map.lens.political.mine"
+  | "map.lens.political.colonies"
+  | "map.lens.political.myLands"
+  | "map.lens.political.neutral"
+  | "map.lens.markets.membership"
+  | "map.lens.markets.selected"
+  | "map.lens.markets.capitals"
+  | "map.lens.population.density"
+  | "map.lens.population.cultures"
+  | "map.lens.population.religions"
+  | "map.lens.population.races"
+  | "map.lens.population.professions"
+  | "map.lens.population.ideologies"
+  | "map.lens.population.standardOfLiving"
+  | "map.lens.population.radicals"
+  | "map.lens.population.loyalists"
+  | "map.lens.population.needs"
+  | "map.lens.resources.deposits"
+  | "map.lens.resources.exploration"
+  | "map.lens.infrastructure.load"
+  | "map.lens.infrastructure.coverage"
+  | "map.lens.infrastructure.problems"
+  | "map.lens.infrastructure.corridors"
+  | "map.lens.colonization.available"
+  | "map.lens.colonization.cost"
+  | "map.lens.colonization.ownRaces"
+  | "map.lens.colonization.foreignRaces"
+  | "map.lens.colonization.blocked"
+  | "map.lens.diplomacy.treaties"
+  | "map.lens.diplomacy.transit"
+  | "map.lens.diplomacy.corridorAccess"
+  | "map.lens.military.armies"
+  | "map.corridor.levelShort"
+  | "map.corridor.marketCapitalTitle"
+  | "map.corridor.requiresConstructionRight"
+  | "map.corridor.buildAccessibleOnly"
+  | "map.corridor.nextPointAdjacent"
+  | "map.corridor.buildStarted"
+  | "map.corridor.buildFailed"
+  | "map.corridor.ownOnly"
+  | "map.corridor.updated"
+  | "map.corridor.upgradeQueued"
+  | "map.corridor.demolished"
+  | "map.corridor.updateFailed"
+  | "map.owner.neutral"
+  | "map.owner.neutralTerritory"
+  | "map.owner.controlled"
+  | "map.selected.summary"
+  | "map.selected.populationSuffix"
+  | "map.selected.buildingsSuffix"
+  | "map.issue.inactiveBuildings"
+  | "map.issue.noPopulation"
+  | "map.issue.radicals"
+  | "map.issue.exploration"
+  | "map.issue.blockedColony"
+  | "map.issue.stable"
+  | "map.hover.status"
+  | "map.hover.countryTerritory"
+  | "map.hover.colonyRace"
+  | "map.hover.raceLeader"
+  | "map.hover.relation"
+  | "map.hover.ownTerritory"
+  | "map.hover.otherCountry"
+  | "map.hover.country"
+  | "map.hover.market"
+  | "map.hover.noMarket"
+  | "map.hover.marketCapital"
+  | "map.hover.thisProvince"
+  | "map.hover.corridor"
+  | "map.hover.corridorPasses"
+  | "map.hover.noCorridor"
+  | "map.hover.corridorConnection"
+  | "map.hover.population"
+  | "map.hover.density"
+  | "map.hover.radicalsLoyalists"
+  | "map.hover.culture"
+  | "map.hover.religion"
+  | "map.hover.ideology"
+  | "map.hover.deposits"
+  | "map.hover.notDiscovered"
+  | "map.hover.largest"
+  | "map.hover.exploration"
+  | "map.hover.activeCount"
+  | "map.hover.completedCount"
+  | "map.hover.armies"
+  | "map.hover.firstArmy"
+  | "map.hover.access"
+  | "map.hover.occupied"
+  | "map.hover.unavailable"
+  | "map.hover.available"
+  | "map.hover.cost"
+  | "map.hover.leader"
+  | "map.hover.myOrder"
+  | "map.hover.queued"
+  | "map.units.perKm2"
+  | "map.toast.explorationStarted"
+  | "map.toast.explorationStartedDescription"
+  | "map.toast.explorationAlreadyQueued"
+  | "map.toast.explorationRegionNotControlled"
+  | "map.toast.explorationStartFailed"
+  | "map.toast.renameEmpty"
+  | "map.toast.renameTooLong"
+  | "map.toast.renameSuccess"
+  | "map.event.renameTitle"
+  | "map.event.renameMessage"
+  | "map.toast.renameOwnOnly"
+  | "map.toast.renameInsufficientDucats"
+  | "map.toast.renameProvinceNotFound"
+  | "map.toast.renameInvalid"
+  | "map.toast.renameFailed"
   | "modifiers.activeCount"
   | "modifiers.column.effect"
   | "modifiers.column.modifier"
@@ -1658,41 +2575,110 @@ export type UiTextKey =
 const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
   en: {
     "adminPanel.broadcastFailed": "Failed to send notification",
+    "adminPanel.broadcastDescription": "The registration category is reserved for registration requests and is still sent only to administrators:",
+    "adminPanel.broadcastFieldTitle": "Title",
+    "adminPanel.broadcastMessage": "Text",
+    "adminPanel.broadcastMessagePlaceholder": "Notification text for all players",
     "adminPanel.broadcastMissingFields": "Fill in notification title and text",
+    "adminPanel.broadcastSend": "Send notification to all",
     "adminPanel.broadcastSent": "Notification sent to all players",
+    "adminPanel.broadcastTitle": "Broadcast UI notification to all players",
+    "adminPanel.broadcastTitlePlaceholder": "For example: Important announcement",
+    "adminPanel.applyExclusion": "Apply exclusion",
+    "adminPanel.block": "Block",
+    "adminPanel.blockByTime": "Time block",
+    "adminPanel.blockByTimeAction": "Block by time",
+    "adminPanel.blockByTurns": "Turn block",
+    "adminPanel.blockUntilDateTime": "Until date and time",
     "adminPanel.category.countries": "Country management",
     "adminPanel.category.notifications": "Notification broadcast",
     "adminPanel.category.population": "Population management",
     "adminPanel.category.provinces": "Provinces / Colonization",
+    "adminPanel.clearPopulation": "Clear population",
+    "adminPanel.clearRegion": "Clear region",
+    "adminPanel.autoCost": "Auto (by area)",
+    "adminPanel.autoCostHint": "Automatic prices are calculated from area and global colonization rates.",
+    "adminPanel.colonizationCost": "Colonization cost",
+    "adminPanel.colonyRaceParticipants": "Race participants: {count}",
+    "adminPanel.currentStatus": "Current status",
+    "adminPanel.countryGeneral": "General information",
+    "adminPanel.countryIsAdmin": "Country has administrator rights",
+    "adminPanel.countryMarket": "Country market (marketId)",
+    "adminPanel.countryMarketHint": "To return the country to its own market, select this same country.",
+    "adminPanel.countryPunishments": "Punishments",
+    "adminPanel.countrySection": "Country management section",
     "adminPanel.countryDeleted": "Country deleted",
     "adminPanel.countryDeleteFailed": "Failed to delete country",
     "adminPanel.countryDeleteSelfFailed": "Cannot delete the country you are signed in as",
     "adminPanel.countryHasNoRegions": "The selected country has no regions",
     "adminPanel.countryUpdated": "Country updated",
     "adminPanel.countryUpdateFailed": "Failed to update country",
+    "adminPanel.deleteCountry": "Delete country",
     "adminPanel.deleteCountryConfirm": "Delete country {country}?",
+    "adminPanel.disableColonization": "Disable colonization (progress will be reset)",
     "adminPanel.ignoreUpdated": "Turn-skip exclusion updated",
     "adminPanel.ignoreUpdateFailed": "Failed to update exclusion",
+    "adminPanel.idLabel": "ID:",
+    "adminPanel.loadingCountries": "Loading countries...",
+    "adminPanel.manualCost": "Manual price",
+    "adminPanel.neutralProvince": "Neutral province",
     "adminPanel.populationCleared": "Population cleared: {count} regions",
     "adminPanel.populationClearFailed": "Failed to clear population",
+    "adminPanel.populationGenerateTitle": "Population generation",
     "adminPanel.populationGenerated": "Population generated: {count} regions",
     "adminPanel.populationGenerateFailed": "Failed to generate population",
     "adminPanel.populationJsonInvalid": "Check pop-group JSON",
+    "adminPanel.populationScope": "Scope",
+    "adminPanel.populationStrategy": "Strategy",
+    "adminPanel.populationTotalByPops": "Total by pop groups",
+    "adminPanel.populationTotalOptional": "populationTotal (optional)",
+    "adminPanel.populationTotalPlaceholder": "If empty, the current value is preserved",
+    "adminPanel.popGroupsJson": "Pop groups JSON",
     "adminPanel.punishmentStatus.ignoredUntilTurn": "Ignored for turn skipping until #{turn}",
     "adminPanel.punishmentStatus.none": "No restrictions",
     "adminPanel.punishmentStatus.permanent": "Permanent login block",
     "adminPanel.punishmentStatus.untilTime": "Blocked until {time}",
     "adminPanel.punishmentStatus.untilTurn": "Blocked until turn #{turn}",
+    "adminPanel.punishmentReasonHint": "Shown to the player when they try to sign in",
+    "adminPanel.punishmentReasonLabel": "Block reason (optional)",
+    "adminPanel.punishmentReasonPlaceholder": "For example: server rule violation",
+    "adminPanel.punishmentReasonSection": "Reason for player",
     "adminPanel.punishmentUpdated": "Punishment updated",
     "adminPanel.punishmentUpdateFailed": "Failed to apply punishment",
+    "adminPanel.permanentBlock": "Permanent block",
+    "adminPanel.quickActions": "Quick actions",
     "adminPanel.regionCostReset": "Region price reset to auto",
     "adminPanel.regionCostResetFailed": "Failed to reset price to auto",
+    "adminPanel.regionPopulationCleared": "Region population cleared",
+    "adminPanel.regionPopulationClearFailed": "Failed to clear region population",
+    "adminPanel.regionPopulationEditTitle": "Region population editing",
     "adminPanel.regionPopulationUpdated": "Region population updated",
     "adminPanel.regionPopulationUpdateFailed": "Failed to update region population",
     "adminPanel.regionUpdated": "Region updated",
     "adminPanel.regionUpdateFailed": "Failed to update region",
+    "adminPanel.reset": "Reset",
+    "adminPanel.resetCostToAuto": "Reset price to auto (by area)",
+    "adminPanel.saveChanges": "Save changes",
+    "adminPanel.saveRegionPopulation": "Save region population",
+    "adminPanel.saveProvince": "Save province",
+    "adminPanel.generatePopulation": "Generate population",
     "adminPanel.selectCountry": "Select a country",
+    "adminPanel.selectProvince": "Select a province",
     "adminPanel.selectRegion": "Select a region",
+    "adminPanel.provinceSearchPlaceholder": "Search by name or ID...",
+    "adminPanel.scope.country": "Country",
+    "adminPanel.scope.region": "Region",
+    "adminPanel.scope.world": "Whole world",
+    "adminPanel.strategy.custom": "Custom pop groups",
+    "adminPanel.strategy.random": "Random pop groups",
+    "adminPanel.stateLabel": "State:",
+    "adminPanel.turnCount": "Turn count",
+    "adminPanel.turnSkipExclusion": "Turn-wait exclusion",
+    "adminPanel.turnSkipExclusionDescription": "The country will not count against resolve readiness until the selected turn, inclusive.",
+    "adminPanel.untilTurnInclusive": "Until turn (inclusive)",
+    "adminPanel.unlock": "Remove block",
+    "adminPanel.uploadCrest": "Upload crest",
+    "adminPanel.uploadFlag": "Upload flag",
     "common.cancel": "Cancel",
     "common.close": "Close",
     "common.confirm": "Confirm",
@@ -1700,6 +2686,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "common.refresh": "Refresh",
     "common.save": "Save",
     "common.saving": "Saving...",
+    "common.no": "No",
+    "common.yes": "Yes",
     "commandPalette.action.budget": "Open budget",
     "commandPalette.action.province": "Go to province selection",
     "commandPalette.action.resolve": "Request resolve",
@@ -1710,6 +2698,693 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "commandPalette.placeholder": "Commands and navigation...",
     "customSelect.noOptions": "No options",
     "customSelect.placeholder": "Select a value",
+    "contentPanel.categories": "Categories",
+    "contentPanel.categoriesTooltip": "Choose a content type to create and edit entries.",
+    "contentPanel.description": "Create and edit game content",
+    "contentPanel.empty": "No entries found.",
+    "contentPanel.listTooltip": "Choose an entry from the list to edit its data and presentation.",
+    "contentPanel.loading": "Loading...",
+    "contentPanel.title": "Content panel",
+    "contentPanel.category.aircraftTypes": "Aircraft",
+    "contentPanel.category.battalions": "Battalions",
+    "contentPanel.category.buildings": "Buildings",
+    "contentPanel.category.companies": "Companies",
+    "contentPanel.category.cultures": "Cultures",
+    "contentPanel.category.decisions": "Decisions",
+    "contentPanel.category.events": "Events",
+    "contentPanel.category.goods": "Goods",
+    "contentPanel.category.ideologies": "Ideologies",
+    "contentPanel.category.industries": "Industries",
+    "contentPanel.category.interestGroups": "Interest groups",
+    "contentPanel.category.lawGroups": "Law groups",
+    "contentPanel.category.laws": "Laws",
+    "contentPanel.category.modifiers": "Modifiers",
+    "contentPanel.category.parties": "Parties",
+    "contentPanel.category.professions": "Professions",
+    "contentPanel.category.provinceClimates": "Climates",
+    "contentPanel.category.provinceContinents": "Continents",
+    "contentPanel.category.provinceLandscapes": "Landscapes",
+    "contentPanel.category.provinceStrategicRegions": "Strategic regions",
+    "contentPanel.category.provinceTypes": "Province types",
+    "contentPanel.category.races": "Races",
+    "contentPanel.category.religions": "Religions",
+    "contentPanel.category.resourceCategories": "Infrastructure categories",
+    "contentPanel.category.sectors": "Sectors",
+    "contentPanel.category.shipTypes": "Ships",
+    "contentPanel.category.technologies": "Technologies",
+    "contentPanel.contentFallback": "Content",
+    "contentPanel.listLabel": "List: {category}",
+    "contentPanel.add": "Add",
+    "contentPanel.condition": "Condition",
+    "contentPanel.condition.always": "Always",
+    "contentPanel.condition.never": "Never",
+    "contentPanel.conditionsAllRequired": "All rows must be true at the same time.",
+    "contentPanel.conditionsEmpty": "No conditions.",
+    "contentPanel.ideologyRules": "Attraction rules",
+    "contentPanel.ideologyRulesEmpty": "No rules are set; the ideology will not grow automatically.",
+    "contentPanel.ideologyRulesHint": "Rules create attraction toward this ideology. Population shares change gradually each turn.",
+    "contentPanel.invalidValue": "invalid value",
+    "contentPanel.invert": "Invert",
+    "contentPanel.notPrefix": "NOT",
+    "contentPanel.notRequired": "Not required",
+    "contentPanel.notSelected": "not selected",
+    "contentPanel.notShort": "NOT",
+    "contentPanel.activationConditions": "Activation conditions",
+    "contentPanel.anyBuilding": "Any building",
+    "contentPanel.anyCategory": "Any category",
+    "contentPanel.anyGood": "Any good",
+    "contentPanel.anyProfession": "Any profession",
+    "contentPanel.effectNumber": "Effect {index}",
+    "contentPanel.modifierConditionsEmpty": "No conditions: this modifier is always active.",
+    "contentPanel.modifierConditionsHint": "All conditions must be true at the same time.",
+    "contentPanel.modifierNoTargets": "This stat applies to the whole country, so no extra targets are needed.",
+    "contentPanel.modifiersEmpty": "No active effects. Add at least one effect.",
+    "contentPanel.modifiersHint": "Choose what the effect changes and how the value is applied.",
+    "contentPanel.modifiersTooltip": "Modifiers are applied by the server during turn resolution and affect economy, population, and systems.",
+    "contentPanel.newModifier": "New modifier",
+    "contentPanel.field.applyMode": "Application",
+    "contentPanel.field.amountPerTurn": "Amount/turn",
+    "contentPanel.field.attack": "Attack",
+    "contentPanel.field.breakthrough": "Breakthrough",
+    "contentPanel.field.name": "Name",
+    "contentPanel.field.scope": "Scope",
+    "contentPanel.field.stat": "Stat",
+    "contentPanel.field.value": "Value",
+    "contentPanel.buildingWeights": "Building weights",
+    "contentPanel.buildingsEmpty": "No buildings selected.",
+    "contentPanel.closeIdeologies": "Related ideologies",
+    "contentPanel.colorTooltip": "Primary accent color for chips, markers, and previews.",
+    "contentPanel.delete": "Delete",
+    "contentPanel.deleteTooltip": "Permanently delete the selected entry.",
+    "contentPanel.descriptionTooltip": "Short text for the admin panel and related UI blocks.",
+    "contentPanel.disciplineHint": "0 means a loose party, 1 means nearly unified voting.",
+    "contentPanel.equalPartySupport": "The party receives equal base support.",
+    "contentPanel.generalData": "Basic data",
+    "contentPanel.generalTooltip": "Name, color, and description are used in the interface and game lists.",
+    "contentPanel.ideologiesEmpty": "No ideologies selected.",
+    "contentPanel.ideologyElectionWeights": "Ideology weights for elections",
+    "contentPanel.lawPreferences": "Law preferences",
+    "contentPanel.nameTooltip": "Unique entry name used in cards, filters, and references.",
+    "contentPanel.noExplicitPreferences": "No explicit preferences.",
+    "contentPanel.notSelectedFeminine": "Not selected",
+    "contentPanel.notSelectedMasculine": "Not selected",
+    "contentPanel.politicalSettings": "Political settings",
+    "contentPanel.politicsTooltip": "These settings are used by parliament, elections, and law voting.",
+    "contentPanel.professionWeights": "Profession weights",
+    "contentPanel.professionsEmpty": "No professions selected.",
+    "contentPanel.religionWeights": "Religion weights",
+    "contentPanel.religionsEmpty": "No religions selected.",
+    "contentPanel.saveTooltip": "Save all changes in the selected entry.",
+    "contentPanel.unsavedChanges": "Unsaved changes",
+    "contentPanel.closeConfirmBody": "There are unsaved changes in the selected entry.",
+    "contentPanel.closeConfirmTitle": "Close content panel?",
+    "contentPanel.closeWithoutSaving": "Close without saving",
+    "contentPanel.deleteConfirmPrefix": "Entry",
+    "contentPanel.deleteConfirmSuffix": "will be deleted.",
+    "contentPanel.deleteConfirmTitle": "Delete entry?",
+    "contentPanel.deleteImage": "Delete image",
+    "contentPanel.deleteLogo": "Delete logo",
+    "contentPanel.deleteLogoConsequence": "This action also deletes the logo if one is uploaded.",
+    "contentPanel.entryLogoAlt": "Entry logo",
+    "contentPanel.fallbackInitial": "C",
+    "contentPanel.femalePortrait": "Female portrait",
+    "contentPanel.image": "Image",
+    "contentPanel.imageSizeHint": "Maximum 1080x970. WEBP or JPEG is recommended.",
+    "contentPanel.imageTooltip": "The image is shown in the story window. Maximum size: 1080x970.",
+    "contentPanel.imageUploadTooltip": "PNG, SVG, WEBP, and JPEG are supported. Image size must be at most 1080x970.",
+    "contentPanel.logo": "Logo",
+    "contentPanel.logoDeleteFailed": "Failed to delete logo",
+    "contentPanel.logoSizeHint": "Maximum 64x64. PNG or SVG is recommended.",
+    "contentPanel.logoTooltip": "The logo is shown in lists and cards. Maximum file size: 64x64.",
+    "contentPanel.logoUploadTooltip": "PNG, SVG, WEBP, and JPEG are supported. Logo size must be at most 64x64.",
+    "contentPanel.malePortrait": "Male portrait",
+    "contentPanel.portraitDeleteFailed": "Failed to delete portrait",
+    "contentPanel.portraitSizeHint": "Portrait size: maximum 89x100.",
+    "contentPanel.racePortraits": "Race portraits",
+    "contentPanel.stay": "Stay",
+    "contentPanel.untitled": "Untitled",
+    "contentPanel.uploadImage": "Upload image",
+    "contentPanel.uploadLogo": "Upload logo",
+    "contentPanel.field.amountPerPerson": "Per person",
+    "contentPanel.field.allowedTransport": "Allowed transport",
+    "contentPanel.field.basePrice": "Base price",
+    "contentPanel.field.baseWage": "Base wage",
+    "contentPanel.field.baseWeight": "Base weight",
+    "contentPanel.field.baseStrength": "Base strength",
+    "contentPanel.field.color": "Color",
+    "contentPanel.field.constructionPoints": "Construction points",
+    "contentPanel.field.defense": "Defense",
+    "contentPanel.field.defaultLaw": "Default law",
+    "contentPanel.field.defaultParty": "Default party",
+    "contentPanel.field.description": "Description",
+    "contentPanel.field.discipline": "Discipline",
+    "contentPanel.field.distributionType": "Distribution type",
+    "contentPanel.field.durationTurns": "Duration, turns",
+    "contentPanel.field.ducats": "Ducats",
+    "contentPanel.field.enactmentDifficulty": "Enactment difficulty",
+    "contentPanel.field.domain": "Domain",
+    "contentPanel.field.extractionGood": "Extracted good",
+    "contentPanel.field.hp": "HP",
+    "contentPanel.field.industry": "Industry",
+    "contentPanel.field.infraPerUnit": "Infra per unit",
+    "contentPanel.field.infrastructureCategory": "Infrastructure category",
+    "contentPanel.field.largeVeinChance": "Large vein, %",
+    "contentPanel.field.largeVeinRange": "Large: min / max",
+    "contentPanel.field.lawGroup": "Law group",
+    "contentPanel.field.level": "Level",
+    "contentPanel.field.loyalistMultiplier": "Loyalist multiplier",
+    "contentPanel.field.majorPaymentThreshold": "Major payment threshold",
+    "contentPanel.field.manpower": "Manpower",
+    "contentPanel.field.maxDurability": "Max durability",
+    "contentPanel.field.maxLevel": "Max level",
+    "contentPanel.field.maxPrice": "Max price",
+    "contentPanel.field.maxRadiation": "Maximum radiation",
+    "contentPanel.field.mediumVeinChance": "Medium vein, %",
+    "contentPanel.field.mediumVeinRange": "Medium: min / max",
+    "contentPanel.field.minPrice": "Min price",
+    "contentPanel.field.minRadiation": "Minimum radiation",
+    "contentPanel.field.minStandardOfLiving": "Min. standard of living",
+    "contentPanel.field.organization": "Organization",
+    "contentPanel.field.order": "Order",
+    "contentPanel.field.pollutionProductivity": "Pollution effect on productivity",
+    "contentPanel.field.radicalMultiplier": "Radical multiplier",
+    "contentPanel.field.researchCost": "Research cost",
+    "contentPanel.field.requiresDeposit": "Requires deposit",
+    "contentPanel.field.sector": "Sector",
+    "contentPanel.field.smallVeinChance": "Small vein, %",
+    "contentPanel.field.smallVeinRange": "Small: min / max",
+    "contentPanel.field.speed": "Speed",
+    "contentPanel.field.solMultiplier": "SoL multiplier",
+    "contentPanel.field.startingDucats": "Starting ducats",
+    "contentPanel.field.supply": "Supply",
+    "contentPanel.field.trainingCostDucats": "Cost, ducats",
+    "contentPanel.field.trainingCostManpower": "Cost, manpower",
+    "contentPanel.field.tierId": "Tier ID",
+    "contentPanel.field.upgradeDucats": "Upgrade ducats",
+    "contentPanel.buildingCost": "Construction cost",
+    "contentPanel.buildingCostTooltip": "Base costs for adding one building level to the construction queue.",
+    "contentPanel.buildingUpgrade": "Level upgrade",
+    "contentPanel.buildingUpgradeTooltip": "Building instance upgrade settings: level cap and auto-queue requirements.",
+    "contentPanel.constructionCostTooltip": "How many construction points are required to finish the project.",
+    "contentPanel.ducatCostTooltip": "How many ducats are spent in total when the project is fully completed.",
+    "contentPanel.equipmentNeeds": "Equipment needs",
+    "contentPanel.equipmentNeedsEmpty": "No equipment needs",
+    "contentPanel.extraction": "Deposit extraction",
+    "contentPanel.extractionAmountTooltip": "How many units are extracted per turn at 100% productivity.",
+    "contentPanel.extractionGoodTooltip": "Which good the building extracts directly from province deposits.",
+    "contentPanel.extractionTooltip": "Province resource extraction settings. If a resource is set, the building will try to extract it each turn.",
+    "contentPanel.industryTooltip": "The industry this building belongs to, used in UI filters and grouping.",
+    "contentPanel.maxDurabilityTooltip": "Maximum durability of a building instance. Durability caps productivity.",
+    "contentPanel.maxLevelTooltip": "Maximum level of one building instance. Auto-upgrades are not queued after this value.",
+    "contentPanel.noExtraction": "No extraction",
+    "contentPanel.notSpecifiedFeminine": "Not specified",
+    "contentPanel.requiresDepositTooltip": "When enabled, extraction is limited to existing province deposits.",
+    "contentPanel.sectorTooltip": "The sector this building belongs to, used in UI filters and grouping.",
+    "contentPanel.startingDucatsTooltip": "Starting building capital granted immediately after construction finishes.",
+    "contentPanel.upgradeConstructionTooltip": "How many construction points are required for a level upgrade. The auto-queued project uses the country's regular construction queue.",
+    "contentPanel.upgradeDucatsTooltip": "How many ducats must be on the building account for an auto-upgrade. These ducats are removed immediately when queued.",
+    "contentPanel.allowedTransportTooltip": "Which transport networks are allowed for this good. Services and local goods cannot be transported.",
+    "contentPanel.basePriceTooltip": "Base price of one good unit. Currently used as a calculation placeholder.",
+    "contentPanel.baseWageTooltip": "Base wage rate for this profession.",
+    "contentPanel.distributionTypeTooltip": "Defines whether this good can be transported by the market or must stay local/use a special network.",
+    "contentPanel.explorationBaseWeightTooltip": "Base good weight when discovered resources are rolled. Higher values appear more often.",
+    "contentPanel.goodEconomy": "Good economy",
+    "contentPanel.goodEconomyTooltip": "Good settings for the economic model before the full market is connected.",
+    "contentPanel.goodExploration": "Good prospecting",
+    "contentPanel.goodExplorationTooltip": "Deposit generation settings for this good during prospecting.",
+    "contentPanel.infraPerUnitTooltip": "How much infrastructure is spent to transport 1 unit of the good when buying or selling.",
+    "contentPanel.infrastructureCategoryTooltip": "Infrastructure category for logistics limits. If empty, infrastructure does not limit trade for this good.",
+    "contentPanel.largeVeinChanceTooltip": "Chance for a large vein, in percent. Normalized with the other chances.",
+    "contentPanel.largeVeinRangeTooltip": "Quantity range for a large vein.",
+    "contentPanel.maxPriceTooltip": "Maximum market price boundary for the good.",
+    "contentPanel.mediumVeinChanceTooltip": "Chance for a medium vein, in percent. Normalized with the other chances.",
+    "contentPanel.mediumVeinRangeTooltip": "Quantity range for a medium vein.",
+    "contentPanel.minPriceTooltip": "Minimum market price boundary for the good.",
+    "contentPanel.noCategory": "No category",
+    "contentPanel.other": "Other",
+    "contentPanel.professionEconomy": "Profession economy",
+    "contentPanel.professionEconomyTooltip": "Base wage per worker in this profession each turn. Used when calculating building costs.",
+    "contentPanel.addNeed": "Add need",
+    "contentPanel.addSubstituteGood": "Add substitute good",
+    "contentPanel.addTier": "Add tier",
+    "contentPanel.addLimit": "Add limit",
+    "contentPanel.addValue": "Add value",
+    "contentPanel.allowedClimate": "Allowed climate",
+    "contentPanel.allowedContinents": "Allowed continents",
+    "contentPanel.allowedCountries": "Allowed countries ({count})",
+    "contentPanel.allowedCountriesTooltip": "Multi-select: when the list is not empty, only these countries can build it, except explicitly denied ones.",
+    "contentPanel.allowedLandscape": "Allowed landscape",
+    "contentPanel.allowedProvinceTypes": "Allowed province types",
+    "contentPanel.allowedStrategicRegions": "Allowed strategic regions",
+    "contentPanel.anyValue": "Any value",
+    "contentPanel.countriesNotFound": "No countries found",
+    "contentPanel.countryCriteria": "Country conditions",
+    "contentPanel.countryCriteriaConflict": "Criteria conflict: country is both allowed and denied: {countries}",
+    "contentPanel.countryCriteriaHint": "If the allowed list is empty, every country can build this except denied countries.",
+    "contentPanel.countryCriteriaTooltip": "Configure countries that can or cannot build this building.",
+    "contentPanel.countryFallback": "Country",
+    "contentPanel.countryLimits": "Country-specific limits",
+    "contentPanel.countryLimitsEmpty": "No country limits",
+    "contentPanel.countryLimitsTooltip": "Limit for a specific country. Counter format: current value/limit.",
+    "contentPanel.countrySearchPlaceholder": "Search country...",
+    "contentPanel.cultureNeeds": "Culture needs",
+    "contentPanel.cultureNeedsHint": "Tiers unlock by standard of living; goods inside each need work as substitutes.",
+    "contentPanel.defaultNeed.basicFood": "Basic food",
+    "contentPanel.defaultNeed.newNeed": "New need",
+    "contentPanel.deleteNeed": "Delete need",
+    "contentPanel.deniedClimate": "Denied climate",
+    "contentPanel.deniedContinents": "Denied continents",
+    "contentPanel.deniedCountries": "Denied countries ({count})",
+    "contentPanel.deniedCountriesTooltip": "Countries in this list cannot build this building, even if they are allowed.",
+    "contentPanel.deniedLandscape": "Denied landscape",
+    "contentPanel.deniedProvinceTypes": "Denied province types",
+    "contentPanel.deniedStrategicRegions": "Denied strategic regions",
+    "contentPanel.globalLimit": "Global limit (whole world):",
+    "contentPanel.globalLimitTooltip": "Empty means no restrictions. The right side shows the current used/limit counter.",
+    "contentPanel.noAvailableValues": "No available values",
+    "contentPanel.noLimitPlaceholder": "Empty = no limit",
+    "contentPanel.noMaximumPlaceholder": "Empty = no maximum",
+    "contentPanel.noMinimumPlaceholder": "Empty = no minimum",
+    "contentPanel.option.pollutionProductivity.bonus": "Bonus",
+    "contentPanel.option.pollutionProductivity.ignore": "Ignored",
+    "contentPanel.option.pollutionProductivity.penalty": "Penalty",
+    "contentPanel.option.ideologyRule.solBelow": "SoL below threshold",
+    "contentPanel.option.ideologyRule.solAbove": "SoL above threshold",
+    "contentPanel.option.ideologyRule.radicalsAbove": "Radicals above %",
+    "contentPanel.option.ideologyRule.loyalistsAbove": "Loyalists above %",
+    "contentPanel.option.ideologyRule.professionIs": "Profession",
+    "contentPanel.option.ideologyRule.religionIs": "Religion",
+    "contentPanel.option.ideologyRule.cultureIs": "Culture",
+    "contentPanel.option.ideologyRule.lawActive": "Active law",
+    "contentPanel.option.ideologyRule.hasBuilding": "Province building",
+    "contentPanel.option.ideologyRule.countryModifierActive": "Country modifier",
+    "contentPanel.option.ideologyRule.provinceModifierActive": "Province modifier",
+    "contentPanel.placeholder.solThreshold": "SoL threshold",
+    "contentPanel.placeholder.radicalsPct": "% radicals",
+    "contentPanel.placeholder.loyalistsPct": "% loyalists",
+    "contentPanel.option.parliamentPower.laws.none": "Parliament is not involved",
+    "contentPanel.option.parliamentPower.laws.advisory": "Formal vote",
+    "contentPanel.option.parliamentPower.laws.approve": "Mandatory approval",
+    "contentPanel.option.parliamentPower.laws.initiate": "Parliament initiative",
+    "contentPanel.option.parliamentPower.budget.none": "Budget outside parliament",
+    "contentPanel.option.parliamentPower.budget.approveTaxes": "Approves taxes",
+    "contentPanel.option.parliamentPower.budget.approveBudget": "Approves budget",
+    "contentPanel.option.parliamentPower.budget.controlBudget": "Controls budget",
+    "contentPanel.option.parliamentPower.diplomacy.none": "Treaties outside parliament",
+    "contentPanel.option.parliamentPower.diplomacy.ratifyTerritory": "Ratifies territories",
+    "contentPanel.option.parliamentPower.diplomacy.ratifyMajorTreaties": "Ratifies major treaties",
+    "contentPanel.option.parliamentPower.diplomacy.ratifyAll": "Ratifies all treaties",
+    "contentPanel.option.parliamentPower.war.none": "War outside parliament",
+    "contentPanel.option.parliamentPower.war.approve": "Approves war",
+    "contentPanel.option.parliamentPower.war.declare": "Can declare war",
+    "contentPanel.option.parliamentPower.government.none": "No effect",
+    "contentPanel.option.parliamentPower.government.confidenceVote": "Confidence vote",
+    "contentPanel.option.parliamentPower.government.appointGovernment": "Appoints government",
+    "contentPanel.provinceCriteria": "Province conditions",
+    "contentPanel.provinceCriteriaHint": "Values are selected from content categories. An empty allowed list means any value, and denial has priority over allowance.",
+    "contentPanel.provinceCriteriaTooltip": "Restrictions from GeoJSON province data: type, climate, landscape, continent, strategic region, and radiation.",
+    "contentPanel.quantityLimits": "Quantity limits",
+    "contentPanel.quantityLimitsTooltip": "Limits cap the current number of built and queued buildings.",
+    "contentPanel.zeroNoLimitPlaceholder": "Empty or 0 = no limit",
+    "contentPanel.referencePriceHint": "Used as a price placeholder until the market is implemented.",
+    "contentPanel.referencePriceTooltip": "After the market is implemented, this value becomes the starting/reference price.",
+    "contentPanel.resourceDiscoverable": "Can be found in a province as a resource",
+    "contentPanel.smallVeinChanceTooltip": "Chance for a small vein, in percent. Normalized with the other chances.",
+    "contentPanel.smallVeinRangeTooltip": "Quantity range for a small vein.",
+    "contentPanel.addInputGoodTooltip": "Add a new input good row.",
+    "contentPanel.addOutputGoodTooltip": "Add a new output good row.",
+    "contentPanel.addWorkforceTooltip": "Add a new profession requirement row.",
+    "contentPanel.fertility": "Fertility",
+    "contentPanel.inputGoods": "Input goods",
+    "contentPanel.inputGoodsEmpty": "No input goods",
+    "contentPanel.inputGoodsTooltip": "Goods consumed by the building each turn during production.",
+    "contentPanel.outputGoods": "Output goods",
+    "contentPanel.outputGoodsEmpty": "No output goods",
+    "contentPanel.outputGoodsTooltip": "Goods produced by the building each turn.",
+    "contentPanel.workforce": "Professions and jobs",
+    "contentPanel.workforceEmpty": "No profession requirements",
+    "contentPanel.workforceTooltip": "Required professions and job counts for each profession.",
+    "contentPanel.noExplicitPartyPreferences": "No explicit party preferences.",
+    "contentPanel.parliamentPower": "Parliament power",
+    "contentPanel.parliamentPowerHint": "An active law with this setting defines one parliament power.",
+    "contentPanel.partyPreferencesForLaw": "Party preferences for this law",
+    "contentPanel.prerequisites": "Tree prerequisites",
+    "contentPanel.prerequisitesTooltip": "These links draw arrows in the technology tree. The technology appears after the selected prerequisites.",
+    "contentPanel.researchCostTooltip": "How many science points will be required to research the technology when progress is enabled.",
+    "contentPanel.rootTechnology": "This technology will be a root node in the tree.",
+    "contentPanel.select.party": "Select a party",
+    "contentPanel.selectDomainFirst": "Select a domain first",
+    "contentPanel.unlocksBuildings": "Unlocks buildings",
+    "contentPanel.unlocksLaws": "Unlocks laws",
+    "contentPanel.unlocksNoBuildings": "Unlocks no buildings.",
+    "contentPanel.unlocksNoLaws": "Unlocks no laws.",
+    "contentPanel.placeholder.modifierName": "Modifier name",
+    "contentPanel.placeholder.modifierId": "Modifier ID",
+    "contentPanel.placeholder.ruleDescription": "Short rule description",
+    "contentPanel.placeholder.threshold": "Threshold",
+    "contentPanel.placeholder.weight": "Weight",
+    "contentPanel.select.building": "Select a building",
+    "contentPanel.select.country": "Select a country",
+    "contentPanel.select.culture": "Select a culture",
+    "contentPanel.select.good": "Select a good",
+    "contentPanel.select.ideology": "Select an ideology",
+    "contentPanel.select.law": "Select a law",
+    "contentPanel.select.profession": "Select a profession",
+    "contentPanel.select.religion": "Select a religion",
+    "contentPanel.select.technology": "Select a technology",
+    "contentPanel.buttonColor": "Button color",
+    "contentPanel.conditions.availability": "Availability",
+    "contentPanel.conditions.triggers": "Trigger conditions",
+    "contentPanel.conditions.visibility": "Visibility",
+    "contentPanel.costs": "Costs",
+    "contentPanel.defaultEventOption": "Understood",
+    "contentPanel.effect": "Effect",
+    "contentPanel.effects": "Effects",
+    "contentPanel.effectsEmpty": "No effects.",
+    "contentPanel.eventOptions": "Choice options",
+    "contentPanel.eventOptionsEmpty": "Add at least one option.",
+    "contentPanel.eventOptionsHint": "Each row becomes a button in the event window.",
+    "contentPanel.field.blockingEvent": "Important event",
+    "contentPanel.field.category": "Category",
+    "contentPanel.field.chancePct": "Chance, %",
+    "contentPanel.field.checkInterval": "Check every N turns",
+    "contentPanel.field.cooldown": "Cooldown",
+    "contentPanel.field.cooldownTurns": "Cooldown, turns",
+    "contentPanel.field.priority": "Priority",
+    "contentPanel.field.repeatable": "Repeatable",
+    "contentPanel.field.visibility": "Visibility",
+    "contentPanel.free": "Free.",
+    "contentPanel.newEventOption": "New option",
+    "contentPanel.option": "Option",
+    "contentPanel.optionEffects": "Option effects",
+    "contentPanel.placeholder.autoPct": "Auto %",
+    "contentPanel.placeholder.buttonText": "Button text",
+    "contentPanel.placeholder.optionDescription": "Describe this option's consequences",
+    "contentPanel.resource": "Resource",
+    "contentPanel.createFailed": "Failed to create entry",
+    "contentPanel.deleted": "Entry deleted",
+    "contentPanel.deleteFailed": "Failed to delete entry",
+    "contentPanel.imageTooLarge": "Image must be at most 1080x970",
+    "contentPanel.loadFailed": "Failed to load content",
+    "contentPanel.logoTooLarge": "Logo must be at most 64x64",
+    "contentPanel.logoUploadFailed": "Failed to upload logo",
+    "contentPanel.nameExists": "Name is already in use",
+    "contentPanel.nameRequired": "Enter a name",
+    "contentPanel.nameUnique": "Name must be unique",
+    "contentPanel.portraitSlot.female": "female",
+    "contentPanel.portraitSlot.male": "male",
+    "contentPanel.portraitTooLarge": "Portrait must be at most 89x100",
+    "contentPanel.portraitUploaded": "Portrait ({slot}) uploaded",
+    "contentPanel.portraitUploadFailed": "Failed to upload portrait",
+    "contentPanel.saveFailed": "Failed to save entry",
+    "contentPanel.saved": "Changes saved",
+    "contentPanel.validation.baseWageNumber": "Base wage must be a number",
+    "contentPanel.validation.buildingNumbers": "Building parameters must be numbers",
+    "contentPanel.validation.goodEconomyNumbers": "Good economy parameters must be numbers",
+    "contentPanel.validation.ideologyRules": "Check ideology attraction rules",
+    "contentPanel.validation.interestGroupNumbers": "Interest group parameters must be numbers",
+    "contentPanel.validation.lawGroupOrder": "Law group order must be a number",
+    "contentPanel.validation.lawGroupRequired": "Select a law group",
+    "contentPanel.validation.maxPriceBelowMin": "Maximum price cannot be below minimum price",
+    "contentPanel.validation.partyDiscipline": "Party discipline must be a number from 0 to 1",
+    "contentPanel.validation.partyPreferences": "Party preferences must be numbers",
+    "contentPanel.validation.politicalWeights": "Political weights must be numbers",
+    "contentPanel.validation.researchCostNumber": "Research cost must be a number",
+    "contentPanel.validation.veinMaxBelowMin": "Maximum vein amount cannot be below minimum amount",
+    "contentPanel.validation.votingNumbers": "Difficulty and voting duration must be numbers",
+    "contentPanel.createdToast": "Created: {item}",
+    "contentPanel.meta.cultures.singular": "culture",
+    "contentPanel.meta.cultures.createBaseName": "New culture",
+    "contentPanel.meta.cultures.createLabel": "Create culture",
+    "contentPanel.meta.cultures.namePlaceholder": "Culture name",
+    "contentPanel.meta.cultures.descriptionPlaceholder": "Brief culture description",
+    "contentPanel.meta.cultures.sectionTitle": "Culture creation and editing section",
+    "contentPanel.meta.races.singular": "race",
+    "contentPanel.meta.races.createBaseName": "New race",
+    "contentPanel.meta.races.createLabel": "Create race",
+    "contentPanel.meta.races.namePlaceholder": "Race name",
+    "contentPanel.meta.races.descriptionPlaceholder": "Brief race description",
+    "contentPanel.meta.races.sectionTitle": "Race creation and editing section",
+    "contentPanel.meta.resourceCategories.singular": "infrastructure category",
+    "contentPanel.meta.resourceCategories.createBaseName": "New infrastructure category",
+    "contentPanel.meta.resourceCategories.createLabel": "Create category",
+    "contentPanel.meta.resourceCategories.namePlaceholder": "Infrastructure category name",
+    "contentPanel.meta.resourceCategories.descriptionPlaceholder": "Brief infrastructure category description",
+    "contentPanel.meta.resourceCategories.sectionTitle": "Infrastructure category creation and editing section",
+    "contentPanel.meta.provinceTypes.singular": "province type",
+    "contentPanel.meta.provinceTypes.createBaseName": "New province type",
+    "contentPanel.meta.provinceTypes.createLabel": "Create type",
+    "contentPanel.meta.provinceTypes.namePlaceholder": "Province type name",
+    "contentPanel.meta.provinceTypes.descriptionPlaceholder": "Brief province type description",
+    "contentPanel.meta.provinceTypes.sectionTitle": "Province type creation and editing section",
+    "contentPanel.meta.provinceClimates.singular": "climate",
+    "contentPanel.meta.provinceClimates.createBaseName": "New climate",
+    "contentPanel.meta.provinceClimates.createLabel": "Create climate",
+    "contentPanel.meta.provinceClimates.namePlaceholder": "Climate name",
+    "contentPanel.meta.provinceClimates.descriptionPlaceholder": "Brief climate description",
+    "contentPanel.meta.provinceClimates.sectionTitle": "Climate creation and editing section",
+    "contentPanel.meta.provinceLandscapes.singular": "landscape",
+    "contentPanel.meta.provinceLandscapes.createBaseName": "New landscape",
+    "contentPanel.meta.provinceLandscapes.createLabel": "Create landscape",
+    "contentPanel.meta.provinceLandscapes.namePlaceholder": "Landscape name",
+    "contentPanel.meta.provinceLandscapes.descriptionPlaceholder": "Brief landscape description",
+    "contentPanel.meta.provinceLandscapes.sectionTitle": "Landscape creation and editing section",
+    "contentPanel.meta.provinceContinents.singular": "continent",
+    "contentPanel.meta.provinceContinents.createBaseName": "New continent",
+    "contentPanel.meta.provinceContinents.createLabel": "Create continent",
+    "contentPanel.meta.provinceContinents.namePlaceholder": "Continent name",
+    "contentPanel.meta.provinceContinents.descriptionPlaceholder": "Brief continent description",
+    "contentPanel.meta.provinceContinents.sectionTitle": "Continent creation and editing section",
+    "contentPanel.meta.provinceStrategicRegions.singular": "strategic region",
+    "contentPanel.meta.provinceStrategicRegions.createBaseName": "New strategic region",
+    "contentPanel.meta.provinceStrategicRegions.createLabel": "Create region",
+    "contentPanel.meta.provinceStrategicRegions.namePlaceholder": "Strategic region name",
+    "contentPanel.meta.provinceStrategicRegions.descriptionPlaceholder": "Brief strategic region description",
+    "contentPanel.meta.provinceStrategicRegions.sectionTitle": "Strategic region creation and editing section",
+    "contentPanel.meta.religions.singular": "religion",
+    "contentPanel.meta.religions.createBaseName": "New religion",
+    "contentPanel.meta.religions.createLabel": "Create religion",
+    "contentPanel.meta.religions.namePlaceholder": "Religion name",
+    "contentPanel.meta.religions.descriptionPlaceholder": "Brief religion description",
+    "contentPanel.meta.religions.sectionTitle": "Religion creation and editing section",
+    "contentPanel.meta.professions.singular": "profession",
+    "contentPanel.meta.professions.createBaseName": "New profession",
+    "contentPanel.meta.professions.createLabel": "Create profession",
+    "contentPanel.meta.professions.namePlaceholder": "Profession name",
+    "contentPanel.meta.professions.descriptionPlaceholder": "Brief profession description",
+    "contentPanel.meta.professions.sectionTitle": "Profession creation and editing section",
+    "contentPanel.meta.battalions.singular": "battalion",
+    "contentPanel.meta.battalions.createBaseName": "New battalion",
+    "contentPanel.meta.battalions.createLabel": "Create battalion",
+    "contentPanel.meta.battalions.namePlaceholder": "Battalion name",
+    "contentPanel.meta.battalions.descriptionPlaceholder": "Battalion role in the division",
+    "contentPanel.meta.battalions.sectionTitle": "Battalion creation and editing section",
+    "contentPanel.meta.shipTypes.singular": "ship type",
+    "contentPanel.meta.shipTypes.createBaseName": "New ship",
+    "contentPanel.meta.shipTypes.createLabel": "Create ship",
+    "contentPanel.meta.shipTypes.namePlaceholder": "Ship type name",
+    "contentPanel.meta.shipTypes.descriptionPlaceholder": "Ship role in the fleet",
+    "contentPanel.meta.shipTypes.sectionTitle": "Ship creation and editing section",
+    "contentPanel.meta.aircraftTypes.singular": "aircraft type",
+    "contentPanel.meta.aircraftTypes.createBaseName": "New aircraft",
+    "contentPanel.meta.aircraftTypes.createLabel": "Create aircraft",
+    "contentPanel.meta.aircraftTypes.namePlaceholder": "Aircraft type name",
+    "contentPanel.meta.aircraftTypes.descriptionPlaceholder": "Aircraft role in the air wing",
+    "contentPanel.meta.aircraftTypes.sectionTitle": "Aircraft creation and editing section",
+    "contentPanel.meta.ideologies.singular": "ideology",
+    "contentPanel.meta.ideologies.createBaseName": "New ideology",
+    "contentPanel.meta.ideologies.createLabel": "Create ideology",
+    "contentPanel.meta.ideologies.namePlaceholder": "Ideology name",
+    "contentPanel.meta.ideologies.descriptionPlaceholder": "Brief ideology description",
+    "contentPanel.meta.ideologies.sectionTitle": "Ideology creation and editing section",
+    "contentPanel.meta.interestGroups.singular": "interest group",
+    "contentPanel.meta.interestGroups.createBaseName": "New interest group",
+    "contentPanel.meta.interestGroups.createLabel": "Create group",
+    "contentPanel.meta.interestGroups.namePlaceholder": "Interest group name",
+    "contentPanel.meta.interestGroups.descriptionPlaceholder": "Brief interest group description",
+    "contentPanel.meta.interestGroups.sectionTitle": "Interest group creation and editing section",
+    "contentPanel.meta.parties.singular": "party",
+    "contentPanel.meta.parties.createBaseName": "New party",
+    "contentPanel.meta.parties.createLabel": "Create party",
+    "contentPanel.meta.parties.namePlaceholder": "Party name",
+    "contentPanel.meta.parties.descriptionPlaceholder": "Brief party description",
+    "contentPanel.meta.parties.sectionTitle": "Party creation and editing section",
+    "contentPanel.meta.lawGroups.singular": "law group",
+    "contentPanel.meta.lawGroups.createBaseName": "New law group",
+    "contentPanel.meta.lawGroups.createLabel": "Create group",
+    "contentPanel.meta.lawGroups.namePlaceholder": "Law group name",
+    "contentPanel.meta.lawGroups.descriptionPlaceholder": "Brief law group description",
+    "contentPanel.meta.lawGroups.sectionTitle": "Law group creation and editing section",
+    "contentPanel.meta.laws.singular": "law",
+    "contentPanel.meta.laws.createBaseName": "New law",
+    "contentPanel.meta.laws.createLabel": "Create law",
+    "contentPanel.meta.laws.namePlaceholder": "Law name",
+    "contentPanel.meta.laws.descriptionPlaceholder": "Brief law description",
+    "contentPanel.meta.laws.sectionTitle": "Law creation and editing section",
+    "contentPanel.meta.technologies.singular": "technology",
+    "contentPanel.meta.technologies.createBaseName": "New technology",
+    "contentPanel.meta.technologies.createLabel": "Create technology",
+    "contentPanel.meta.technologies.namePlaceholder": "Technology name",
+    "contentPanel.meta.technologies.descriptionPlaceholder": "Brief technology description",
+    "contentPanel.meta.technologies.sectionTitle": "Technology creation and editing section",
+    "contentPanel.meta.buildings.singular": "building",
+    "contentPanel.meta.buildings.createBaseName": "New building",
+    "contentPanel.meta.buildings.createLabel": "Create building",
+    "contentPanel.meta.buildings.namePlaceholder": "Building name",
+    "contentPanel.meta.buildings.descriptionPlaceholder": "Brief building description",
+    "contentPanel.meta.buildings.sectionTitle": "Building creation and editing section",
+    "contentPanel.meta.goods.singular": "good",
+    "contentPanel.meta.goods.createBaseName": "New good",
+    "contentPanel.meta.goods.createLabel": "Create good",
+    "contentPanel.meta.goods.namePlaceholder": "Good name",
+    "contentPanel.meta.goods.descriptionPlaceholder": "Brief good description",
+    "contentPanel.meta.goods.sectionTitle": "Good creation and editing section",
+    "contentPanel.meta.companies.singular": "company",
+    "contentPanel.meta.companies.createBaseName": "New company",
+    "contentPanel.meta.companies.createLabel": "Create company",
+    "contentPanel.meta.companies.namePlaceholder": "Company name",
+    "contentPanel.meta.companies.descriptionPlaceholder": "Brief company description",
+    "contentPanel.meta.companies.sectionTitle": "Company creation and editing section",
+    "contentPanel.meta.industries.singular": "industry",
+    "contentPanel.meta.industries.createBaseName": "New industry",
+    "contentPanel.meta.industries.createLabel": "Create industry",
+    "contentPanel.meta.industries.namePlaceholder": "Industry name",
+    "contentPanel.meta.industries.descriptionPlaceholder": "Brief industry description",
+    "contentPanel.meta.industries.sectionTitle": "Industry creation and editing section",
+    "contentPanel.meta.sectors.singular": "sector",
+    "contentPanel.meta.sectors.createBaseName": "New sector",
+    "contentPanel.meta.sectors.createLabel": "Create sector",
+    "contentPanel.meta.sectors.namePlaceholder": "Sector name",
+    "contentPanel.meta.sectors.descriptionPlaceholder": "Brief sector description",
+    "contentPanel.meta.sectors.sectionTitle": "Sector creation and editing section",
+    "contentPanel.meta.modifiers.singular": "modifier",
+    "contentPanel.meta.modifiers.createBaseName": "New modifier",
+    "contentPanel.meta.modifiers.createLabel": "Create modifier",
+    "contentPanel.meta.modifiers.namePlaceholder": "Modifier name",
+    "contentPanel.meta.modifiers.descriptionPlaceholder": "When and what this modifier should change",
+    "contentPanel.meta.modifiers.sectionTitle": "Universal modifier conditions and effects",
+    "contentPanel.meta.decisions.singular": "decision",
+    "contentPanel.meta.decisions.createBaseName": "New decision",
+    "contentPanel.meta.decisions.createLabel": "Create decision",
+    "contentPanel.meta.decisions.namePlaceholder": "Decision name",
+    "contentPanel.meta.decisions.descriptionPlaceholder": "What this decision does and why the country takes it",
+    "contentPanel.meta.decisions.sectionTitle": "Country decision creation and editing section",
+    "contentPanel.meta.events.singular": "event",
+    "contentPanel.meta.events.createBaseName": "New event",
+    "contentPanel.meta.events.createLabel": "Create event",
+    "contentPanel.meta.events.namePlaceholder": "Event name",
+    "contentPanel.meta.events.descriptionPlaceholder": "Event text shown to the player",
+    "contentPanel.meta.events.sectionTitle": "Country event creation and editing section",
+    "contentPanel.searchPlaceholder": "Search: {item}",
+    "contentPanel.option.decisionCategory.colonization": "Colonization",
+    "contentPanel.option.decisionCategory.culture": "Culture",
+    "contentPanel.option.decisionCategory.diplomacy": "Diplomacy",
+    "contentPanel.option.decisionCategory.economy": "Economy",
+    "contentPanel.option.decisionCategory.military": "Military",
+    "contentPanel.option.decisionCategory.politics": "Politics",
+    "contentPanel.option.decisionCategory.religion": "Religion",
+    "contentPanel.option.decisionCategory.technology": "Technology",
+    "contentPanel.option.eventCategory.colonization": "Colonization",
+    "contentPanel.option.eventCategory.diplomacy": "Diplomacy",
+    "contentPanel.option.eventCategory.economy": "Economy",
+    "contentPanel.option.eventCategory.military": "Military",
+    "contentPanel.option.eventCategory.politics": "Politics",
+    "contentPanel.option.eventCategory.system": "System",
+    "contentPanel.option.eventPriority.high": "High",
+    "contentPanel.option.eventPriority.low": "Low",
+    "contentPanel.option.eventPriority.medium": "Medium",
+    "contentPanel.option.eventVisibility.private": "Country only",
+    "contentPanel.option.eventVisibility.public": "Public",
+    "contentPanel.option.modifierCondition.always": "Always",
+    "contentPanel.option.modifierCondition.countryIs": "Specific country",
+    "contentPanel.option.modifierCondition.hasBuilding": "Has building",
+    "contentPanel.option.modifierCondition.lawActive": "Law active",
+    "contentPanel.option.modifierCondition.technologyResearched": "Technology researched",
+    "contentPanel.modifierStatConfig.buildingConstructionCost.description": "Changes the construction cost of selected buildings.",
+    "contentPanel.modifierStatConfig.buildingInput.description": "Changes goods consumed by buildings.",
+    "contentPanel.modifierStatConfig.buildingOutput.description": "Changes goods produced by buildings.",
+    "contentPanel.modifierStatConfig.buildingThroughput.description": "Changes overall throughput of selected buildings.",
+    "contentPanel.modifierStatConfig.buildingWage.description": "Changes base wages in selected buildings or professions.",
+    "contentPanel.modifierStatConfig.colonizationGain.description": "Changes country colonization gain per turn.",
+    "contentPanel.modifierStatConfig.constructionGain.description": "Changes country construction gain per turn.",
+    "contentPanel.modifierStatConfig.cost.valueHint": "-0.1 = 10% cheaper, 0.1 = 10% more expensive",
+    "contentPanel.modifierStatConfig.cultureGain.description": "Changes country culture gain per turn.",
+    "contentPanel.modifierStatConfig.default.valueHint": "0.1 = +10%, 1 = +1",
+    "contentPanel.modifierStatConfig.ducatsGain.description": "Changes country ducat gain per turn.",
+    "contentPanel.modifierStatConfig.goldGain.description": "Changes country gold gain per turn.",
+    "contentPanel.modifierStatConfig.input.valueHint": "-0.1 = 10% less input, 0.1 = 10% more input",
+    "contentPanel.modifierStatConfig.output.valueHint": "0.1 = +10% output, 1 = +1 unit",
+    "contentPanel.modifierStatConfig.religionGain.description": "Changes country religion gain per turn.",
+    "contentPanel.modifierStatConfig.scienceGain.description": "Changes country science gain per turn.",
+    "contentPanel.modifierStatConfig.technologyCost.description": "Changes technology research cost.",
+    "contentPanel.modifierStatConfig.throughput.valueHint": "0.1 = +10% throughput",
+    "contentPanel.modifierStatConfig.wage.valueHint": "0.1 = wages 10% higher, -0.1 = lower",
+    "contentPanel.modifierTarget.building": "Building",
+    "contentPanel.modifierTarget.good": "Good",
+    "contentPanel.modifierTarget.profession": "Profession",
+    "contentPanel.modifierTarget.resourceCategory": "Category",
+    "contentPanel.option.modifierStat.buildingConstructionCost": "Construction cost",
+    "contentPanel.option.modifierStat.buildingInput": "Building input",
+    "contentPanel.option.modifierStat.buildingOutput": "Building output",
+    "contentPanel.option.modifierStat.buildingThroughput": "Building throughput",
+    "contentPanel.option.modifierStat.buildingWage": "Building wages",
+    "contentPanel.option.modifierStat.colonizationGain": "Colonization gain",
+    "contentPanel.option.modifierStat.constructionGain": "Construction gain",
+    "contentPanel.option.modifierStat.cultureGain": "Culture gain",
+    "contentPanel.option.modifierStat.ducatsGain": "Ducat gain",
+    "contentPanel.option.modifierStat.goldGain": "Gold gain",
+    "contentPanel.option.modifierStat.religionGain": "Religion gain",
+    "contentPanel.option.modifierStat.scienceGain": "Science gain",
+    "contentPanel.option.modifierStat.technologyCost": "Technology cost",
+    "contentPanel.option.modifierMode.add": "+ number",
+    "contentPanel.option.modifierMode.addPct": "% of value",
+    "contentPanel.option.modifierMode.mult": "x multiplier",
+    "contentPanel.option.modifierScope.building": "Building",
+    "contentPanel.option.modifierScope.country": "Country",
+    "contentPanel.option.modifierScope.market": "Market",
+    "contentPanel.option.modifierScope.pop": "Population",
+    "contentPanel.option.modifierScope.province": "Province",
+    "contentPanel.option.needCategory.basic": "Basic",
+    "contentPanel.option.needCategory.comfort": "Comfort",
+    "contentPanel.option.needCategory.luxury": "Luxury",
+    "contentPanel.option.needCategory.survival": "Survival",
+    "contentPanel.option.parliamentDomain.budget": "Budget",
+    "contentPanel.option.parliamentDomain.diplomacy": "Diplomacy",
+    "contentPanel.option.parliamentDomain.government": "Government",
+    "contentPanel.option.parliamentDomain.laws": "Laws",
+    "contentPanel.option.parliamentDomain.none": "Does not change powers",
+    "contentPanel.option.parliamentDomain.war": "War",
+    "contentPanel.option.resource.colonization": "Colonization",
+    "contentPanel.option.resource.construction": "Construction",
+    "contentPanel.option.resource.culture": "Culture",
+    "contentPanel.option.resource.ducats": "Ducats",
+    "contentPanel.option.resource.gold": "Gold",
+    "contentPanel.option.resource.religion": "Religion",
+    "contentPanel.option.resource.science": "Science",
+    "contentPanel.option.goodDistribution.localOnly": "Local only",
+    "contentPanel.option.goodDistribution.pipeline": "Pipeline",
+    "contentPanel.option.goodDistribution.powerGrid": "Power grid",
+    "contentPanel.option.goodDistribution.service": "Service",
+    "contentPanel.option.goodDistribution.tradeable": "Regular good",
+    "contentPanel.option.transport.air": "Air",
+    "contentPanel.option.transport.land": "Land",
+    "contentPanel.option.transport.pipeline": "Pipeline",
+    "contentPanel.option.transport.powerGrid": "Power grid",
+    "contentPanel.option.transport.sea": "Sea",
+    "contentPanel.section.branding": "Logo and style",
+    "contentPanel.section.conditionsEffects": "Conditions and effects",
+    "contentPanel.section.criteria": "Criteria",
+    "contentPanel.section.economyProduction": "Economy and production",
+    "contentPanel.section.exploration": "Prospecting",
+    "contentPanel.section.general": "General information",
+    "contentPanel.section.goodEconomy": "Good economy",
+    "contentPanel.section.influence": "Influence",
+    "contentPanel.section.needs": "Needs",
+    "contentPanel.section.politics": "Politics",
+    "contentPanel.section.professionEconomy": "Profession economy",
+    "contentPanel.section.stats": "Stats",
+    "contentPanel.section.technologyTree": "Technology tree",
+    "contentPanel.section.triggersOptions": "Triggers and options",
     "countryEvents.choiceRequired": "Event requires a choice",
     "countryEvents.defaultEvent": "Event",
     "countryEvents.effectFallback": "Effect",
@@ -2157,6 +3832,14 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.controls.resetView": "Reset center and zoom",
     "map.controls.lockInteraction": "Lock pan/zoom",
     "map.controls.unlockInteraction": "Unlock pan/zoom",
+    "map.mode.political.label": "Political",
+    "map.mode.political.shortLabel": "Countries",
+    "map.mode.political.ownerLegend": "Owner",
+    "map.mode.political.ownerDescription": "Owner country color",
+    "map.mode.political.colonizationLegend": "Colonization",
+    "map.mode.political.colonizationDescription": "Neutral province with an active race",
+    "map.mode.political.outOfFilterLegend": "Outside filter",
+    "map.mode.political.outOfFilterDescription": "When filtering by country",
     "map.mode.regions.label": "Regions",
     "map.mode.regions.shortLabel": "Regions",
     "map.mode.regions.legendLabel": "State region",
@@ -2165,6 +3848,157 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.mode.provinceColors.shortLabel": "Provinces",
     "map.mode.provinceColors.legendLabel": "Province",
     "map.mode.provinceColors.legendDescription": "Authored scenario colors for lightweight map provinces",
+    "map.mode.diplomacy.label": "Diplomacy",
+    "map.mode.diplomacy.shortLabel": "Diplomacy",
+    "map.mode.diplomacy.legendLabel": "Treaties",
+    "map.mode.diplomacy.legendDescription": "Countries connected by active agreements",
+    "map.mode.markets.label": "Markets",
+    "map.mode.markets.shortLabel": "Markets",
+    "map.mode.markets.legendLabel": "Market",
+    "map.mode.markets.legendDescription": "Provinces by market membership",
+    "map.mode.population.label": "Population",
+    "map.mode.population.shortLabel": "Population",
+    "map.mode.population.legendLabel": "Metric",
+    "map.mode.population.legendDescription": "Province demographics and quality of life",
+    "map.mode.resources.label": "Resources",
+    "map.mode.resources.shortLabel": "Resources",
+    "map.mode.resources.legendLabel": "Deposits",
+    "map.mode.resources.legendDescription": "Discovered resources and prospecting",
+    "map.mode.infrastructure.label": "Infrastructure",
+    "map.mode.infrastructure.shortLabel": "Infra",
+    "map.mode.infrastructure.legendLabel": "Coverage",
+    "map.mode.infrastructure.legendDescription": "Logistics availability and load",
+    "map.mode.colonization.label": "Colonization",
+    "map.mode.colonization.shortLabel": "Colonies",
+    "map.mode.colonization.legendLabel": "Available",
+    "map.mode.colonization.legendDescription": "Neutral territories available for colonization",
+    "map.mode.military.label": "Military",
+    "map.mode.military.shortLabel": "Army",
+    "map.mode.military.legendLabel": "Armies",
+    "map.mode.military.legendDescription": "Own and foreign divisions",
+    "map.transport.land": "Land transport",
+    "map.transport.sea": "Sea",
+    "map.transport.air": "Air",
+    "map.transport.pipeline": "Pipelines",
+    "map.transport.powerGrid": "Power grids",
+    "map.common.noData": "no data",
+    "map.common.none": "none",
+    "map.common.neutral": "Neutral",
+    "map.common.yes": "yes",
+    "map.filter.currentMarket": "Current market",
+    "map.filter.allResources": "All resources",
+    "map.lens.fallback": "Layer",
+    "map.lens.political.owners": "Owners",
+    "map.lens.political.mine": "Mine",
+    "map.lens.political.colonies": "Colonies",
+    "map.lens.political.myLands": "My lands",
+    "map.lens.political.neutral": "Neutral",
+    "map.lens.markets.membership": "Markets",
+    "map.lens.markets.selected": "Selected",
+    "map.lens.markets.capitals": "Capitals",
+    "map.lens.population.density": "Density",
+    "map.lens.population.cultures": "Culture",
+    "map.lens.population.religions": "Religion",
+    "map.lens.population.races": "Races",
+    "map.lens.population.professions": "Professions",
+    "map.lens.population.ideologies": "Ideologies",
+    "map.lens.population.standardOfLiving": "Standard of living",
+    "map.lens.population.radicals": "Radicals",
+    "map.lens.population.loyalists": "Loyalists",
+    "map.lens.population.needs": "Needs",
+    "map.lens.resources.deposits": "Deposits",
+    "map.lens.resources.exploration": "Prospecting",
+    "map.lens.infrastructure.load": "Load",
+    "map.lens.infrastructure.coverage": "Coverage",
+    "map.lens.infrastructure.problems": "Problems",
+    "map.lens.infrastructure.corridors": "Corridors",
+    "map.lens.colonization.available": "Available",
+    "map.lens.colonization.cost": "Cost",
+    "map.lens.colonization.ownRaces": "Own races",
+    "map.lens.colonization.foreignRaces": "Foreign races",
+    "map.lens.colonization.blocked": "Blocked",
+    "map.lens.diplomacy.treaties": "Treaties",
+    "map.lens.diplomacy.transit": "Transit",
+    "map.lens.diplomacy.corridorAccess": "Corridor access",
+    "map.lens.military.armies": "Army positions",
+    "map.corridor.levelShort": "lvl. {level}",
+    "map.corridor.marketCapitalTitle": "{market} - market capital",
+    "map.corridor.requiresConstructionRight": "Corridor construction treaty required: the province owner must allow {mode}",
+    "map.corridor.buildAccessibleOnly": "Corridors can only be built through accessible provinces",
+    "map.corridor.nextPointAdjacent": "The next corridor point must be in a neighboring province",
+    "map.corridor.buildStarted": "Corridor added to construction",
+    "map.corridor.buildFailed": "Failed to start corridor construction",
+    "map.corridor.ownOnly": "You can manage only your own corridors",
+    "map.corridor.updated": "Corridor updated",
+    "map.corridor.upgradeQueued": "Upgrade added to construction",
+    "map.corridor.demolished": "Corridor demolished",
+    "map.corridor.updateFailed": "Failed to update corridor",
+    "map.owner.neutral": "Neutral",
+    "map.owner.neutralTerritory": "Neutral territory",
+    "map.owner.controlled": "Controlled",
+    "map.selected.summary": "{owner} · {population} residents · {buildings} buildings",
+    "map.selected.populationSuffix": "residents",
+    "map.selected.buildingsSuffix": "buildings",
+    "map.issue.inactiveBuildings": "Inactive buildings: {count}",
+    "map.issue.noPopulation": "No population",
+    "map.issue.radicals": "Radicals exceed loyalists",
+    "map.issue.exploration": "Resource prospecting in progress",
+    "map.issue.blockedColony": "Colonization is disabled",
+    "map.issue.stable": "No critical issues",
+    "map.hover.status": "Status",
+    "map.hover.countryTerritory": "Country territory",
+    "map.hover.colonyRace": "Colony race",
+    "map.hover.raceLeader": "Race leader",
+    "map.hover.relation": "Relation",
+    "map.hover.ownTerritory": "Own territory",
+    "map.hover.otherCountry": "Other country",
+    "map.hover.country": "Country",
+    "map.hover.market": "Market",
+    "map.hover.noMarket": "no market",
+    "map.hover.marketCapital": "Market capital",
+    "map.hover.thisProvince": "this province",
+    "map.hover.corridor": "Corridor",
+    "map.hover.corridorPasses": "passes through province",
+    "map.hover.noCorridor": "no corridor",
+    "map.hover.corridorConnection": "Corridor connection",
+    "map.hover.population": "Population",
+    "map.hover.density": "Density",
+    "map.hover.radicalsLoyalists": "Rad./loyal.",
+    "map.hover.culture": "Culture",
+    "map.hover.religion": "Religion",
+    "map.hover.ideology": "Ideology",
+    "map.hover.deposits": "Deposits",
+    "map.hover.notDiscovered": "not discovered",
+    "map.hover.largest": "Largest",
+    "map.hover.exploration": "Prospecting",
+    "map.hover.activeCount": "{count} active",
+    "map.hover.completedCount": "{count} completed",
+    "map.hover.armies": "Armies",
+    "map.hover.firstArmy": "First army",
+    "map.hover.access": "Access",
+    "map.hover.occupied": "occupied",
+    "map.hover.unavailable": "unavailable",
+    "map.hover.available": "available",
+    "map.hover.cost": "Cost",
+    "map.hover.leader": "Leader",
+    "map.hover.myOrder": "My order",
+    "map.hover.queued": "queued",
+    "map.units.perKm2": "/km2",
+    "map.toast.explorationStarted": "Prospecting started",
+    "map.toast.explorationStartedDescription": "Province {province}",
+    "map.toast.explorationAlreadyQueued": "Prospecting is already queued",
+    "map.toast.explorationRegionNotControlled": "Prospecting is available only in controlled regions",
+    "map.toast.explorationStartFailed": "Failed to start prospecting",
+    "map.toast.renameEmpty": "Name cannot be empty",
+    "map.toast.renameTooLong": "Maximum 64 characters",
+    "map.toast.renameSuccess": "Province renamed (-{ducats} ducats)",
+    "map.event.renameTitle": "Province renamed",
+    "map.event.renameMessage": "You renamed the province to \"{province}\"",
+    "map.toast.renameOwnOnly": "Only your own provinces can be renamed",
+    "map.toast.renameInsufficientDucats": "Not enough ducats",
+    "map.toast.renameProvinceNotFound": "Province not found",
+    "map.toast.renameInvalid": "Invalid province name",
+    "map.toast.renameFailed": "Failed to rename province",
     "modifiers.activeCount": "Active effects: {count}",
     "modifiers.column.effect": "Effect",
     "modifiers.column.modifier": "Modifier",
@@ -3313,41 +5147,110 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
   },
   ru: {
     "adminPanel.broadcastFailed": "Не удалось отправить уведомление",
+    "adminPanel.broadcastDescription": "Уведомления категории registration зарезервированы для заявок на регистрацию и по-прежнему отправляются только администраторам:",
+    "adminPanel.broadcastFieldTitle": "Заголовок",
+    "adminPanel.broadcastMessage": "Текст",
+    "adminPanel.broadcastMessagePlaceholder": "Текст уведомления для всех игроков",
     "adminPanel.broadcastMissingFields": "Заполните заголовок и текст уведомления",
+    "adminPanel.broadcastSend": "Отправить уведомление всем",
     "adminPanel.broadcastSent": "Уведомление отправлено всем игрокам",
+    "adminPanel.broadcastTitle": "Рассылка UI-уведомления всем игрокам",
+    "adminPanel.broadcastTitlePlaceholder": "Например: Важное объявление",
+    "adminPanel.applyExclusion": "Применить исключение",
+    "adminPanel.block": "Заблокировать",
+    "adminPanel.blockByTime": "Блокировка по времени",
+    "adminPanel.blockByTimeAction": "Заблокировать по времени",
+    "adminPanel.blockByTurns": "Блокировка по ходам",
+    "adminPanel.blockUntilDateTime": "До даты и времени",
     "adminPanel.category.countries": "Управление странами",
     "adminPanel.category.notifications": "Рассылка уведомлений",
     "adminPanel.category.population": "Управление населением",
     "adminPanel.category.provinces": "Провинции / Колонизация",
+    "adminPanel.clearPopulation": "Очистить население",
+    "adminPanel.clearRegion": "Очистить регион",
+    "adminPanel.autoCost": "Авто (по площади)",
+    "adminPanel.autoCostHint": "Автоматические цены рассчитываются по площади и глобальным ставкам колонизации.",
+    "adminPanel.colonizationCost": "Стоимость колонизации",
+    "adminPanel.colonyRaceParticipants": "Участников гонки: {count}",
+    "adminPanel.currentStatus": "Текущий статус",
+    "adminPanel.countryGeneral": "Основная информация",
+    "adminPanel.countryIsAdmin": "Страна имеет права администратора",
+    "adminPanel.countryMarket": "Рынок страны (marketId)",
+    "adminPanel.countryMarketHint": "Чтобы вернуть собственный рынок, выберите эту же страну.",
+    "adminPanel.countryPunishments": "Наказания",
+    "adminPanel.countrySection": "Раздел управления страной",
     "adminPanel.countryDeleted": "Страна удалена",
     "adminPanel.countryDeleteFailed": "Не удалось удалить страну",
     "adminPanel.countryDeleteSelfFailed": "Нельзя удалить страну, под которой вы вошли",
     "adminPanel.countryHasNoRegions": "У выбранной страны нет регионов",
     "adminPanel.countryUpdated": "Страна обновлена",
     "adminPanel.countryUpdateFailed": "Не удалось обновить страну",
+    "adminPanel.deleteCountry": "Удалить страну",
     "adminPanel.deleteCountryConfirm": "Удалить страну {country}?",
+    "adminPanel.disableColonization": "Запретить колонизацию (прогресс будет сброшен)",
     "adminPanel.ignoreUpdated": "Исключение из пропуска хода обновлено",
     "adminPanel.ignoreUpdateFailed": "Не удалось обновить исключение",
+    "adminPanel.idLabel": "ID:",
+    "adminPanel.loadingCountries": "Загрузка стран...",
+    "adminPanel.manualCost": "Ручная цена",
+    "adminPanel.neutralProvince": "Нейтральная провинция",
     "adminPanel.populationCleared": "Население очищено: {count} регионов",
     "adminPanel.populationClearFailed": "Не удалось очистить население",
+    "adminPanel.populationGenerateTitle": "Генерация населения",
     "adminPanel.populationGenerated": "Население сгенерировано: {count} регионов",
     "adminPanel.populationGenerateFailed": "Не удалось сгенерировать население",
     "adminPanel.populationJsonInvalid": "Проверьте JSON pop-групп",
+    "adminPanel.populationScope": "Scope",
+    "adminPanel.populationStrategy": "Стратегия",
+    "adminPanel.populationTotalByPops": "Суммарно по pop-группам",
+    "adminPanel.populationTotalOptional": "populationTotal (опционально)",
+    "adminPanel.populationTotalPlaceholder": "Если пусто, сохраняется текущее",
+    "adminPanel.popGroupsJson": "Pop-группы JSON",
     "adminPanel.punishmentStatus.ignoredUntilTurn": "Не учитывать при пропуске хода до #{turn}",
     "adminPanel.punishmentStatus.none": "Ограничений нет",
     "adminPanel.punishmentStatus.permanent": "Перманентная блокировка входа",
     "adminPanel.punishmentStatus.untilTime": "Блокировка до {time}",
     "adminPanel.punishmentStatus.untilTurn": "Блокировка до хода #{turn}",
+    "adminPanel.punishmentReasonHint": "Будет показана игроку при попытке входа",
+    "adminPanel.punishmentReasonLabel": "Причина блокировки (необязательно)",
+    "adminPanel.punishmentReasonPlaceholder": "Например: нарушение правил сервера",
+    "adminPanel.punishmentReasonSection": "Причина для игрока",
     "adminPanel.punishmentUpdated": "Наказание обновлено",
     "adminPanel.punishmentUpdateFailed": "Не удалось применить наказание",
+    "adminPanel.permanentBlock": "Перманентная блокировка",
+    "adminPanel.quickActions": "Быстрые действия",
     "adminPanel.regionCostReset": "Цена региона сброшена к авто",
     "adminPanel.regionCostResetFailed": "Не удалось сбросить цену к авто",
+    "adminPanel.regionPopulationCleared": "Население региона очищено",
+    "adminPanel.regionPopulationClearFailed": "Не удалось очистить население региона",
+    "adminPanel.regionPopulationEditTitle": "Редактирование населения региона",
     "adminPanel.regionPopulationUpdated": "Население региона обновлено",
     "adminPanel.regionPopulationUpdateFailed": "Не удалось обновить население региона",
     "adminPanel.regionUpdated": "Регион обновлен",
     "adminPanel.regionUpdateFailed": "Не удалось обновить регион",
+    "adminPanel.reset": "Сбросить",
+    "adminPanel.resetCostToAuto": "Сбросить цену к авто (по площади)",
+    "adminPanel.saveChanges": "Сохранить изменения",
+    "adminPanel.saveRegionPopulation": "Сохранить население региона",
+    "adminPanel.saveProvince": "Сохранить провинцию",
+    "adminPanel.generatePopulation": "Сгенерировать население",
     "adminPanel.selectCountry": "Выберите страну",
+    "adminPanel.selectProvince": "Выберите провинцию",
     "adminPanel.selectRegion": "Выберите регион",
+    "adminPanel.provinceSearchPlaceholder": "Поиск по названию или ID...",
+    "adminPanel.scope.country": "Страна",
+    "adminPanel.scope.region": "Регион",
+    "adminPanel.scope.world": "Весь мир",
+    "adminPanel.strategy.custom": "Заданные pop-группы",
+    "adminPanel.strategy.random": "Случайные pop-группы",
+    "adminPanel.stateLabel": "Состояние:",
+    "adminPanel.turnCount": "Количество ходов",
+    "adminPanel.turnSkipExclusion": "Исключение из ожидания хода",
+    "adminPanel.turnSkipExclusionDescription": "Страна не будет учитываться при проверке готовности к резолву до указанного хода включительно.",
+    "adminPanel.untilTurnInclusive": "До хода (включительно)",
+    "adminPanel.unlock": "Снять блокировку",
+    "adminPanel.uploadCrest": "Загрузить герб",
+    "adminPanel.uploadFlag": "Загрузить флаг",
     "common.cancel": "Отмена",
     "common.close": "Закрыть",
     "common.confirm": "Подтвердить",
@@ -3355,6 +5258,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "common.refresh": "Обновить",
     "common.save": "Сохранить",
     "common.saving": "Сохранение...",
+    "common.no": "Нет",
+    "common.yes": "Да",
     "commandPalette.action.budget": "Открыть бюджет",
     "commandPalette.action.province": "К выбору провинции",
     "commandPalette.action.resolve": "Запросить резолв",
@@ -3365,6 +5270,693 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "commandPalette.placeholder": "Команды и переходы...",
     "customSelect.noOptions": "Нет вариантов",
     "customSelect.placeholder": "Выберите значение",
+    "contentPanel.categories": "Категории",
+    "contentPanel.categoriesTooltip": "Выберите тип контента для создания и редактирования записей.",
+    "contentPanel.description": "Создание и редактирование игрового контента",
+    "contentPanel.empty": "Записей не найдено.",
+    "contentPanel.listTooltip": "Выберите запись из списка, чтобы редактировать её данные и оформление.",
+    "contentPanel.loading": "Загрузка...",
+    "contentPanel.title": "Панель контента",
+    "contentPanel.category.aircraftTypes": "Самолёты",
+    "contentPanel.category.battalions": "Батальоны",
+    "contentPanel.category.buildings": "Здания",
+    "contentPanel.category.companies": "Компании",
+    "contentPanel.category.cultures": "Культуры",
+    "contentPanel.category.decisions": "Решения",
+    "contentPanel.category.events": "Ивенты",
+    "contentPanel.category.goods": "Товары",
+    "contentPanel.category.ideologies": "Идеологии",
+    "contentPanel.category.industries": "Отрасли",
+    "contentPanel.category.interestGroups": "Группы интересов",
+    "contentPanel.category.lawGroups": "Группы законов",
+    "contentPanel.category.laws": "Законы",
+    "contentPanel.category.modifiers": "Модификаторы",
+    "contentPanel.category.parties": "Партии",
+    "contentPanel.category.professions": "Профессии",
+    "contentPanel.category.provinceClimates": "Климаты",
+    "contentPanel.category.provinceContinents": "Континенты",
+    "contentPanel.category.provinceLandscapes": "Ландшафты",
+    "contentPanel.category.provinceStrategicRegions": "Стратегические регионы",
+    "contentPanel.category.provinceTypes": "Типы провинций",
+    "contentPanel.category.races": "Расы",
+    "contentPanel.category.religions": "Религии",
+    "contentPanel.category.resourceCategories": "Категории инфраструктуры",
+    "contentPanel.category.sectors": "Сектора",
+    "contentPanel.category.shipTypes": "Корабли",
+    "contentPanel.category.technologies": "Технологии",
+    "contentPanel.contentFallback": "Контент",
+    "contentPanel.listLabel": "Список: {category}",
+    "contentPanel.add": "Добавить",
+    "contentPanel.condition": "Условие",
+    "contentPanel.condition.always": "Всегда",
+    "contentPanel.condition.never": "Никогда",
+    "contentPanel.conditionsAllRequired": "Все строки должны выполниться одновременно.",
+    "contentPanel.conditionsEmpty": "Без условий.",
+    "contentPanel.ideologyRules": "Правила влияния",
+    "contentPanel.ideologyRulesEmpty": "Правила не заданы, идеология не будет расти автоматически.",
+    "contentPanel.ideologyRulesHint": "Правила создают притяжение к этой идеологии. Население меняет доли плавно каждый ход.",
+    "contentPanel.invalidValue": "некорректное значение",
+    "contentPanel.invert": "Инвертировать",
+    "contentPanel.notPrefix": "НЕ",
+    "contentPanel.notRequired": "Не требуется",
+    "contentPanel.notSelected": "не выбрано",
+    "contentPanel.notShort": "НЕ",
+    "contentPanel.activationConditions": "Условия активации",
+    "contentPanel.anyBuilding": "Любое здание",
+    "contentPanel.anyCategory": "Любая категория",
+    "contentPanel.anyGood": "Любой товар",
+    "contentPanel.anyProfession": "Любая профессия",
+    "contentPanel.effectNumber": "Эффект {index}",
+    "contentPanel.modifierConditionsEmpty": "Без условий: модификатор действует всегда.",
+    "contentPanel.modifierConditionsHint": "Все условия должны выполниться одновременно.",
+    "contentPanel.modifierNoTargets": "Этот показатель применяется ко всей стране, дополнительные цели не нужны.",
+    "contentPanel.modifiersEmpty": "Нет действующих эффектов. Добавьте хотя бы один эффект.",
+    "contentPanel.modifiersHint": "Выберите, что меняет эффект и как применяется значение.",
+    "contentPanel.modifiersTooltip": "Модификаторы применяются сервером при расчёте хода и влияют на экономику, население и системы.",
+    "contentPanel.newModifier": "Новый модификатор",
+    "contentPanel.field.applyMode": "Как применяем",
+    "contentPanel.field.amountPerTurn": "Объем/ход",
+    "contentPanel.field.attack": "Атака",
+    "contentPanel.field.breakthrough": "Прорыв",
+    "contentPanel.field.name": "Название",
+    "contentPanel.field.scope": "Область",
+    "contentPanel.field.stat": "Что меняем",
+    "contentPanel.field.value": "Значение",
+    "contentPanel.buildingWeights": "Веса зданий",
+    "contentPanel.buildingsEmpty": "Здания пока не выбраны.",
+    "contentPanel.closeIdeologies": "Близкие идеологии",
+    "contentPanel.colorTooltip": "Основной акцентный цвет записи для чипов, маркеров и предпросмотра.",
+    "contentPanel.delete": "Удалить",
+    "contentPanel.deleteTooltip": "Полностью удаляет выбранную запись.",
+    "contentPanel.descriptionTooltip": "Короткий текст для админ-панели и связанных UI-блоков.",
+    "contentPanel.disciplineHint": "0 означает рыхлую партию, 1 означает почти монолитное голосование.",
+    "contentPanel.equalPartySupport": "Партия получает равную базовую поддержку.",
+    "contentPanel.generalData": "Основные данные",
+    "contentPanel.generalTooltip": "Название, цвет и описание используются в интерфейсе и игровых списках.",
+    "contentPanel.ideologiesEmpty": "Идеологии пока не выбраны.",
+    "contentPanel.ideologyElectionWeights": "Веса идеологий для выборов",
+    "contentPanel.lawPreferences": "Предпочтения законов",
+    "contentPanel.nameTooltip": "Уникальное имя записи. Используется в карточках, фильтрах и справочниках.",
+    "contentPanel.noExplicitPreferences": "Нет явных предпочтений.",
+    "contentPanel.notSelectedFeminine": "Не выбрана",
+    "contentPanel.notSelectedMasculine": "Не выбран",
+    "contentPanel.politicalSettings": "Политические параметры",
+    "contentPanel.politicsTooltip": "Эти параметры используются парламентом, выборами и голосованием законов.",
+    "contentPanel.professionWeights": "Вес профессий",
+    "contentPanel.professionsEmpty": "Профессии пока не выбраны.",
+    "contentPanel.religionWeights": "Религиозные веса",
+    "contentPanel.religionsEmpty": "Религии пока не выбраны.",
+    "contentPanel.saveTooltip": "Сохраняет все изменения в выбранной записи.",
+    "contentPanel.unsavedChanges": "Есть несохранённые изменения",
+    "contentPanel.closeConfirmBody": "Есть несохранённые изменения в выбранной записи.",
+    "contentPanel.closeConfirmTitle": "Закрыть панель контента?",
+    "contentPanel.closeWithoutSaving": "Закрыть без сохранения",
+    "contentPanel.deleteConfirmPrefix": "Запись",
+    "contentPanel.deleteConfirmSuffix": "будет удалена.",
+    "contentPanel.deleteConfirmTitle": "Удалить запись?",
+    "contentPanel.deleteImage": "Удалить изображение",
+    "contentPanel.deleteLogo": "Удалить логотип",
+    "contentPanel.deleteLogoConsequence": "Это действие удалит и логотип, если он загружен.",
+    "contentPanel.entryLogoAlt": "Логотип записи",
+    "contentPanel.fallbackInitial": "К",
+    "contentPanel.femalePortrait": "Женский портрет",
+    "contentPanel.image": "Изображение",
+    "contentPanel.imageSizeHint": "Максимум 1080x970. Рекомендуется WEBP или JPEG.",
+    "contentPanel.imageTooltip": "Изображение показывается в сюжетном окне. Максимальный размер: 1080x970.",
+    "contentPanel.imageUploadTooltip": "Поддерживаются PNG, SVG, WEBP и JPEG. Размер изображения не больше 1080x970.",
+    "contentPanel.logo": "Логотип",
+    "contentPanel.logoDeleteFailed": "Не удалось удалить логотип",
+    "contentPanel.logoSizeHint": "Максимум 64x64. Рекомендуется PNG или SVG.",
+    "contentPanel.logoTooltip": "Логотип показывается в списках и карточках. Максимальный размер файла: 64x64.",
+    "contentPanel.logoUploadTooltip": "Поддерживаются PNG, SVG, WEBP и JPEG. Размер изображения не больше 64x64.",
+    "contentPanel.malePortrait": "Мужской портрет",
+    "contentPanel.portraitDeleteFailed": "Не удалось удалить портрет",
+    "contentPanel.portraitSizeHint": "Размер портретов: максимум 89x100.",
+    "contentPanel.racePortraits": "Портреты расы",
+    "contentPanel.stay": "Остаться",
+    "contentPanel.untitled": "Без названия",
+    "contentPanel.uploadImage": "Загрузить изображение",
+    "contentPanel.uploadLogo": "Загрузить логотип",
+    "contentPanel.field.amountPerPerson": "На человека",
+    "contentPanel.field.allowedTransport": "Разрешённый транспорт",
+    "contentPanel.field.basePrice": "Базовая цена",
+    "contentPanel.field.baseWage": "Базовая зарплата",
+    "contentPanel.field.baseWeight": "Базовый вес",
+    "contentPanel.field.baseStrength": "Базовая сила",
+    "contentPanel.field.color": "Цвет",
+    "contentPanel.field.constructionPoints": "Очки строительства",
+    "contentPanel.field.defense": "Защита",
+    "contentPanel.field.defaultLaw": "Закон по умолчанию",
+    "contentPanel.field.defaultParty": "Партия по умолчанию",
+    "contentPanel.field.description": "Описание",
+    "contentPanel.field.discipline": "Дисциплина",
+    "contentPanel.field.distributionType": "Тип распределения",
+    "contentPanel.field.durationTurns": "Длительность, ходов",
+    "contentPanel.field.ducats": "Дукаты",
+    "contentPanel.field.enactmentDifficulty": "Сложность принятия",
+    "contentPanel.field.domain": "Сфера",
+    "contentPanel.field.extractionGood": "Добываемый товар",
+    "contentPanel.field.hp": "HP",
+    "contentPanel.field.industry": "Отрасль",
+    "contentPanel.field.infraPerUnit": "Инфра за 1 ед.",
+    "contentPanel.field.infrastructureCategory": "Категория инфраструктуры",
+    "contentPanel.field.largeVeinChance": "Крупная жила, %",
+    "contentPanel.field.largeVeinRange": "Крупная: мин / макс",
+    "contentPanel.field.lawGroup": "Группа закона",
+    "contentPanel.field.level": "Уровень",
+    "contentPanel.field.loyalistMultiplier": "Множитель лоялистов",
+    "contentPanel.field.majorPaymentThreshold": "Порог крупных выплат",
+    "contentPanel.field.manpower": "Люди",
+    "contentPanel.field.maxDurability": "Макс. прочность",
+    "contentPanel.field.maxLevel": "Макс. уровень",
+    "contentPanel.field.maxPrice": "Макс. цена",
+    "contentPanel.field.maxRadiation": "Максимальная радиация",
+    "contentPanel.field.mediumVeinChance": "Средняя жила, %",
+    "contentPanel.field.mediumVeinRange": "Средняя: мин / макс",
+    "contentPanel.field.minPrice": "Мин. цена",
+    "contentPanel.field.minRadiation": "Минимальная радиация",
+    "contentPanel.field.minStandardOfLiving": "Мин. уровень жизни",
+    "contentPanel.field.organization": "Организация",
+    "contentPanel.field.order": "Порядок",
+    "contentPanel.field.pollutionProductivity": "Влияние загрязнения на производительность",
+    "contentPanel.field.radicalMultiplier": "Множитель радикалов",
+    "contentPanel.field.researchCost": "Стоимость исследования",
+    "contentPanel.field.requiresDeposit": "Требует залежь",
+    "contentPanel.field.sector": "Сектор",
+    "contentPanel.field.smallVeinChance": "Малая жила, %",
+    "contentPanel.field.smallVeinRange": "Малая: мин / макс",
+    "contentPanel.field.speed": "Скорость",
+    "contentPanel.field.solMultiplier": "Множитель SoL",
+    "contentPanel.field.startingDucats": "Стартовые дукаты",
+    "contentPanel.field.supply": "Снабжение",
+    "contentPanel.field.trainingCostDucats": "Стоимость, дукаты",
+    "contentPanel.field.trainingCostManpower": "Стоимость, люди",
+    "contentPanel.field.tierId": "ID тира",
+    "contentPanel.field.upgradeDucats": "Дукаты на апгрейд",
+    "contentPanel.buildingCost": "Стоимость строительства",
+    "contentPanel.buildingCostTooltip": "Базовые затраты на добавление одного уровня здания в очередь строительства.",
+    "contentPanel.buildingUpgrade": "Повышение уровня",
+    "contentPanel.buildingUpgradeTooltip": "Параметры повышения уровня инстанса здания: потолок уровня и требования для автопостановки в очередь апгрейда.",
+    "contentPanel.constructionCostTooltip": "Сколько очков строительства требуется на завершение проекта.",
+    "contentPanel.ducatCostTooltip": "Сколько дукатов суммарно спишется при полном завершении проекта.",
+    "contentPanel.equipmentNeeds": "Требования по товарам",
+    "contentPanel.equipmentNeedsEmpty": "Нет требований по товарам",
+    "contentPanel.extraction": "Добыча из залежей",
+    "contentPanel.extractionAmountTooltip": "Сколько единиц добывается за ход при 100% продуктивности.",
+    "contentPanel.extractionGoodTooltip": "Какой товар добывает здание напрямую из провинциальных залежей.",
+    "contentPanel.extractionTooltip": "Параметры добычи ресурсов провинции. Если задан ресурс, здание будет пытаться добывать его каждый ход.",
+    "contentPanel.industryTooltip": "Отрасль, к которой относится здание, используется в фильтрах и группировках UI.",
+    "contentPanel.maxDurabilityTooltip": "Максимальная прочность инстанса здания. Прочность ограничивает потолок продуктивности.",
+    "contentPanel.maxLevelTooltip": "Максимальный уровень одного инстанса здания. При достижении этого значения автоповышение не ставится в очередь.",
+    "contentPanel.noExtraction": "Не добывает",
+    "contentPanel.notSpecifiedFeminine": "Не указана",
+    "contentPanel.requiresDepositTooltip": "Если включено, добыча ограничена только существующими залежами в провинции.",
+    "contentPanel.sectorTooltip": "Сектор, к которому относится здание, используется в фильтрах и группировках UI.",
+    "contentPanel.startingDucatsTooltip": "Стартовый капитал здания, начисляемый сразу после завершения строительства.",
+    "contentPanel.upgradeConstructionTooltip": "Сколько очков строительства требуется для повышения уровня. После автопостановки проект расходует очки строительства страны через обычную очередь.",
+    "contentPanel.upgradeDucatsTooltip": "Сколько дукатов должно быть на счёте здания для автопостановки апгрейда. Эти дукаты списываются со счёта здания сразу при постановке в очередь.",
+    "contentPanel.allowedTransportTooltip": "Какие транспортные сети разрешены для этого товара. Для услуг и локальных товаров перевозка отключена.",
+    "contentPanel.basePriceTooltip": "Базовая цена единицы товара. Сейчас используется как заглушка для расчетов.",
+    "contentPanel.baseWageTooltip": "Базовая ставка оплаты труда для этой профессии.",
+    "contentPanel.distributionTypeTooltip": "Определяет, может ли товар перевозиться рынком или должен использоваться локально/через специальную сеть.",
+    "contentPanel.explorationBaseWeightTooltip": "Базовый вес товара при розыгрыше найденного ресурса. Чем выше, тем чаще выпадает.",
+    "contentPanel.goodEconomy": "Экономика товара",
+    "contentPanel.goodEconomyTooltip": "Параметры товара для экономической модели до подключения полноценного рынка.",
+    "contentPanel.goodExploration": "Георазведка товара",
+    "contentPanel.goodExplorationTooltip": "Параметры генерации залежей этого товара при георазведке.",
+    "contentPanel.infraPerUnitTooltip": "Сколько инфраструктуры расходуется на перевозку 1 единицы товара при покупке или продаже.",
+    "contentPanel.infrastructureCategoryTooltip": "Категория инфраструктуры для логистических лимитов. Если пусто, инфраструктура не ограничивает торговлю этим товаром.",
+    "contentPanel.largeVeinChanceTooltip": "Шанс крупной жилы в процентах. Нормализуется вместе с другими шансами.",
+    "contentPanel.largeVeinRangeTooltip": "Диапазон количества для крупной жилы.",
+    "contentPanel.maxPriceTooltip": "Максимальная граница цены товара на рынке.",
+    "contentPanel.mediumVeinChanceTooltip": "Шанс средней жилы в процентах. Нормализуется вместе с другими шансами.",
+    "contentPanel.mediumVeinRangeTooltip": "Диапазон количества для средней жилы.",
+    "contentPanel.minPriceTooltip": "Минимальная граница цены товара на рынке.",
+    "contentPanel.noCategory": "Без категории",
+    "contentPanel.other": "Другое",
+    "contentPanel.professionEconomy": "Экономика профессии",
+    "contentPanel.professionEconomyTooltip": "Базовая зарплата за одного работника профессии за ход. Используется при расчете затрат зданий.",
+    "contentPanel.addNeed": "Добавить потребность",
+    "contentPanel.addSubstituteGood": "Добавить товар-заменитель",
+    "contentPanel.addTier": "Добавить тир",
+    "contentPanel.addLimit": "Добавить лимит",
+    "contentPanel.addValue": "Добавить значение",
+    "contentPanel.allowedClimate": "Разрешенный климат",
+    "contentPanel.allowedContinents": "Разрешенные континенты",
+    "contentPanel.allowedCountries": "Разрешенные страны ({count})",
+    "contentPanel.allowedCountriesTooltip": "Мультивыбор: если список не пуст, строить смогут только страны из него, кроме явно запрещенных.",
+    "contentPanel.allowedLandscape": "Разрешенный ландшафт",
+    "contentPanel.allowedProvinceTypes": "Разрешенные типы провинции",
+    "contentPanel.allowedStrategicRegions": "Разрешенные стратегические регионы",
+    "contentPanel.anyValue": "Любое значение",
+    "contentPanel.countriesNotFound": "Страны не найдены",
+    "contentPanel.countryCriteria": "Условия стран",
+    "contentPanel.countryCriteriaConflict": "Конфликт критериев: страна одновременно в allow и deny: {countries}",
+    "contentPanel.countryCriteriaHint": "Если список разрешенных пуст, строить могут все страны, кроме запрещенных.",
+    "contentPanel.countryCriteriaTooltip": "Настройка стран, которые могут или не могут строить это здание.",
+    "contentPanel.countryFallback": "Страна",
+    "contentPanel.countryLimits": "Лимиты для конкретных государств",
+    "contentPanel.countryLimitsEmpty": "Нет лимитов по странам",
+    "contentPanel.countryLimitsTooltip": "Лимит на конкретную страну. Формат счётчика: текущее значение/лимит.",
+    "contentPanel.countrySearchPlaceholder": "Поиск страны...",
+    "contentPanel.cultureNeeds": "Потребности культуры",
+    "contentPanel.cultureNeedsHint": "Тиры включаются по уровню жизни, внутри потребностей товары работают как заменители.",
+    "contentPanel.defaultNeed.basicFood": "Базовая еда",
+    "contentPanel.defaultNeed.newNeed": "Новая потребность",
+    "contentPanel.deleteNeed": "Удалить потребность",
+    "contentPanel.deniedClimate": "Запрещенный климат",
+    "contentPanel.deniedContinents": "Запрещенные континенты",
+    "contentPanel.deniedCountries": "Запрещенные страны ({count})",
+    "contentPanel.deniedCountriesTooltip": "Страны из этого списка не смогут строить здание, даже если они есть в разрешенных.",
+    "contentPanel.deniedLandscape": "Запрещенный ландшафт",
+    "contentPanel.deniedProvinceTypes": "Запрещенные типы провинции",
+    "contentPanel.deniedStrategicRegions": "Запрещенные стратегические регионы",
+    "contentPanel.globalLimit": "Глобальный лимит (для всего мира):",
+    "contentPanel.globalLimitTooltip": "Пусто = без ограничений. Справа показан текущий счётчик: использовано/лимит.",
+    "contentPanel.noAvailableValues": "Нет доступных значений",
+    "contentPanel.noLimitPlaceholder": "Пусто = без лимита",
+    "contentPanel.noMaximumPlaceholder": "Пусто = нет максимума",
+    "contentPanel.noMinimumPlaceholder": "Пусто = нет минимума",
+    "contentPanel.option.pollutionProductivity.bonus": "Бонус",
+    "contentPanel.option.pollutionProductivity.ignore": "Не влияет",
+    "contentPanel.option.pollutionProductivity.penalty": "Штраф",
+    "contentPanel.option.ideologyRule.solBelow": "SoL ниже порога",
+    "contentPanel.option.ideologyRule.solAbove": "SoL выше порога",
+    "contentPanel.option.ideologyRule.radicalsAbove": "Радикалы выше %",
+    "contentPanel.option.ideologyRule.loyalistsAbove": "Лоялисты выше %",
+    "contentPanel.option.ideologyRule.professionIs": "Профессия",
+    "contentPanel.option.ideologyRule.religionIs": "Религия",
+    "contentPanel.option.ideologyRule.cultureIs": "Культура",
+    "contentPanel.option.ideologyRule.lawActive": "Действующий закон",
+    "contentPanel.option.ideologyRule.hasBuilding": "Здание в провинции",
+    "contentPanel.option.ideologyRule.countryModifierActive": "Модификатор страны",
+    "contentPanel.option.ideologyRule.provinceModifierActive": "Модификатор провинции",
+    "contentPanel.placeholder.solThreshold": "Порог SoL",
+    "contentPanel.placeholder.radicalsPct": "% радикалов",
+    "contentPanel.placeholder.loyalistsPct": "% лоялистов",
+    "contentPanel.option.parliamentPower.laws.none": "Парламент не участвует",
+    "contentPanel.option.parliamentPower.laws.advisory": "Формальное голосование",
+    "contentPanel.option.parliamentPower.laws.approve": "Обязательное утверждение",
+    "contentPanel.option.parliamentPower.laws.initiate": "Инициатива парламента",
+    "contentPanel.option.parliamentPower.budget.none": "Бюджет вне парламента",
+    "contentPanel.option.parliamentPower.budget.approveTaxes": "Утверждает налоги",
+    "contentPanel.option.parliamentPower.budget.approveBudget": "Утверждает бюджет",
+    "contentPanel.option.parliamentPower.budget.controlBudget": "Контролирует бюджет",
+    "contentPanel.option.parliamentPower.diplomacy.none": "Договоры вне парламента",
+    "contentPanel.option.parliamentPower.diplomacy.ratifyTerritory": "Ратифицирует территории",
+    "contentPanel.option.parliamentPower.diplomacy.ratifyMajorTreaties": "Ратифицирует крупные договоры",
+    "contentPanel.option.parliamentPower.diplomacy.ratifyAll": "Ратифицирует все договоры",
+    "contentPanel.option.parliamentPower.war.none": "Война вне парламента",
+    "contentPanel.option.parliamentPower.war.approve": "Утверждает войну",
+    "contentPanel.option.parliamentPower.war.declare": "Может объявлять войну",
+    "contentPanel.option.parliamentPower.government.none": "Не влияет",
+    "contentPanel.option.parliamentPower.government.confidenceVote": "Вотум доверия",
+    "contentPanel.option.parliamentPower.government.appointGovernment": "Назначает правительство",
+    "contentPanel.provinceCriteria": "Условия провинции",
+    "contentPanel.provinceCriteriaHint": "Значения выбираются из категорий контента. Пустой список разрешений означает любое значение, запрет сильнее разрешения.",
+    "contentPanel.provinceCriteriaTooltip": "Ограничения по данным провинции из GeoJSON: тип, климат, ландшафт, континент, стратегический регион и радиация.",
+    "contentPanel.quantityLimits": "Лимиты количества",
+    "contentPanel.quantityLimitsTooltip": "Лимиты работают как cap на текущее количество построенных и строящихся зданий.",
+    "contentPanel.zeroNoLimitPlaceholder": "Пусто или 0 = без лимита",
+    "contentPanel.referencePriceHint": "Используется как заглушка цены до внедрения рынка.",
+    "contentPanel.referencePriceTooltip": "После внедрения рынка это значение будет стартовой/референсной ценой.",
+    "contentPanel.resourceDiscoverable": "Можно найти в провинции как ресурс",
+    "contentPanel.smallVeinChanceTooltip": "Шанс маленькой жилы в процентах. Нормализуется вместе с другими шансами.",
+    "contentPanel.smallVeinRangeTooltip": "Диапазон количества для маленькой жилы.",
+    "contentPanel.addInputGoodTooltip": "Добавить новую строку входного товара.",
+    "contentPanel.addOutputGoodTooltip": "Добавить новую строку выходного товара.",
+    "contentPanel.addWorkforceTooltip": "Добавить новую строку требования по профессии.",
+    "contentPanel.fertility": "Плодородность",
+    "contentPanel.inputGoods": "Входные товары",
+    "contentPanel.inputGoodsEmpty": "Нет входных товаров",
+    "contentPanel.inputGoodsTooltip": "Товары, которые здание потребляет каждый ход при производстве.",
+    "contentPanel.outputGoods": "Выходные товары",
+    "contentPanel.outputGoodsEmpty": "Нет выходных товаров",
+    "contentPanel.outputGoodsTooltip": "Товары, которые здание производит каждый ход.",
+    "contentPanel.workforce": "Профессии и рабочие места",
+    "contentPanel.workforceEmpty": "Нет требований по профессиям",
+    "contentPanel.workforceTooltip": "Требуемые профессии и количество рабочих мест по каждой профессии.",
+    "contentPanel.noExplicitPartyPreferences": "Нет явных предпочтений партий.",
+    "contentPanel.parliamentPower": "Полномочие парламента",
+    "contentPanel.parliamentPowerHint": "Активный закон с этой настройкой задаёт одно полномочие парламента.",
+    "contentPanel.partyPreferencesForLaw": "Предпочтения партий по этому закону",
+    "contentPanel.prerequisites": "Зависимости в дереве",
+    "contentPanel.prerequisitesTooltip": "Эти связи строят стрелки в дереве технологий. Технология появится после выбранных prerequisites.",
+    "contentPanel.researchCostTooltip": "Сколько научных очков потребуется для исследования технологии, когда появится система прогресса.",
+    "contentPanel.rootTechnology": "Технология будет корневым узлом дерева.",
+    "contentPanel.select.party": "Выберите партию",
+    "contentPanel.selectDomainFirst": "Сначала выберите сферу",
+    "contentPanel.unlocksBuildings": "Открывает здания",
+    "contentPanel.unlocksLaws": "Открывает законы",
+    "contentPanel.unlocksNoBuildings": "Не открывает здания.",
+    "contentPanel.unlocksNoLaws": "Не открывает законы.",
+    "contentPanel.placeholder.modifierName": "Название модификатора",
+    "contentPanel.placeholder.modifierId": "ID модификатора",
+    "contentPanel.placeholder.ruleDescription": "Короткое описание правила",
+    "contentPanel.placeholder.threshold": "Порог",
+    "contentPanel.placeholder.weight": "Сила",
+    "contentPanel.select.building": "Выберите здание",
+    "contentPanel.select.country": "Выберите страну",
+    "contentPanel.select.culture": "Выберите культуру",
+    "contentPanel.select.good": "Выберите товар",
+    "contentPanel.select.ideology": "Выберите идеологию",
+    "contentPanel.select.law": "Выберите закон",
+    "contentPanel.select.profession": "Выберите профессию",
+    "contentPanel.select.religion": "Выберите религию",
+    "contentPanel.select.technology": "Выберите технологию",
+    "contentPanel.buttonColor": "Цвет кнопки",
+    "contentPanel.conditions.availability": "Доступность",
+    "contentPanel.conditions.triggers": "Условия появления",
+    "contentPanel.conditions.visibility": "Видимость",
+    "contentPanel.costs": "Стоимость",
+    "contentPanel.defaultEventOption": "Понятно",
+    "contentPanel.effect": "Эффект",
+    "contentPanel.effects": "Эффекты",
+    "contentPanel.effectsEmpty": "Нет эффектов.",
+    "contentPanel.eventOptions": "Варианты выбора",
+    "contentPanel.eventOptionsEmpty": "Добавь хотя бы один вариант.",
+    "contentPanel.eventOptionsHint": "Каждая строка станет кнопкой в окне события.",
+    "contentPanel.field.blockingEvent": "Важное событие",
+    "contentPanel.field.category": "Категория",
+    "contentPanel.field.chancePct": "Шанс, %",
+    "contentPanel.field.checkInterval": "Проверять раз в N ходов",
+    "contentPanel.field.cooldown": "Кулдаун",
+    "contentPanel.field.cooldownTurns": "Кулдаун, ходов",
+    "contentPanel.field.priority": "Важность",
+    "contentPanel.field.repeatable": "Можно повторять",
+    "contentPanel.field.visibility": "Видимость",
+    "contentPanel.free": "Бесплатно.",
+    "contentPanel.newEventOption": "Новый вариант",
+    "contentPanel.option": "Вариант",
+    "contentPanel.optionEffects": "Эффекты варианта",
+    "contentPanel.placeholder.autoPct": "Авто %",
+    "contentPanel.placeholder.buttonText": "Текст кнопки",
+    "contentPanel.placeholder.optionDescription": "Описание последствий варианта",
+    "contentPanel.resource": "Ресурс",
+    "contentPanel.createFailed": "Не удалось создать запись",
+    "contentPanel.deleted": "Запись удалена",
+    "contentPanel.deleteFailed": "Не удалось удалить запись",
+    "contentPanel.imageTooLarge": "Изображение должно быть максимум 1080x970",
+    "contentPanel.loadFailed": "Не удалось загрузить контент",
+    "contentPanel.logoTooLarge": "Логотип должен быть максимум 64x64",
+    "contentPanel.logoUploadFailed": "Не удалось загрузить логотип",
+    "contentPanel.nameExists": "Название уже используется",
+    "contentPanel.nameRequired": "Введите название",
+    "contentPanel.nameUnique": "Название должно быть уникальным",
+    "contentPanel.portraitSlot.female": "женский",
+    "contentPanel.portraitSlot.male": "мужской",
+    "contentPanel.portraitTooLarge": "Портрет должен быть максимум 89x100",
+    "contentPanel.portraitUploaded": "Портрет ({slot}) загружен",
+    "contentPanel.portraitUploadFailed": "Не удалось загрузить портрет",
+    "contentPanel.saveFailed": "Не удалось сохранить запись",
+    "contentPanel.saved": "Изменения сохранены",
+    "contentPanel.validation.baseWageNumber": "Базовая зарплата должна быть числом",
+    "contentPanel.validation.buildingNumbers": "Параметры строительства должны быть числами",
+    "contentPanel.validation.goodEconomyNumbers": "Параметры экономики товара должны быть числами",
+    "contentPanel.validation.ideologyRules": "Проверьте правила влияния идеологии",
+    "contentPanel.validation.interestGroupNumbers": "Параметры группы интересов должны быть числами",
+    "contentPanel.validation.lawGroupOrder": "Порядок группы законов должен быть числом",
+    "contentPanel.validation.lawGroupRequired": "Укажите группу закона",
+    "contentPanel.validation.maxPriceBelowMin": "Максимальная цена не может быть меньше минимальной",
+    "contentPanel.validation.partyDiscipline": "Дисциплина партии должна быть числом от 0 до 1",
+    "contentPanel.validation.partyPreferences": "Предпочтения партий должны быть числами",
+    "contentPanel.validation.politicalWeights": "Политические веса должны быть числами",
+    "contentPanel.validation.researchCostNumber": "Стоимость исследования должна быть числом",
+    "contentPanel.validation.veinMaxBelowMin": "Макс. количество жилы не может быть меньше мин. значения",
+    "contentPanel.validation.votingNumbers": "Сложность и длительность голосования должны быть числами",
+    "contentPanel.createdToast": "Создано: {item}",
+    "contentPanel.meta.cultures.singular": "культура",
+    "contentPanel.meta.cultures.createBaseName": "Новая культура",
+    "contentPanel.meta.cultures.createLabel": "Создать культуру",
+    "contentPanel.meta.cultures.namePlaceholder": "Название культуры",
+    "contentPanel.meta.cultures.descriptionPlaceholder": "Краткое описание культуры",
+    "contentPanel.meta.cultures.sectionTitle": "Раздел создания и редактирования культур",
+    "contentPanel.meta.races.singular": "раса",
+    "contentPanel.meta.races.createBaseName": "Новая раса",
+    "contentPanel.meta.races.createLabel": "Создать расу",
+    "contentPanel.meta.races.namePlaceholder": "Название расы",
+    "contentPanel.meta.races.descriptionPlaceholder": "Краткое описание расы",
+    "contentPanel.meta.races.sectionTitle": "Раздел создания и редактирования рас",
+    "contentPanel.meta.resourceCategories.singular": "категория инфраструктуры",
+    "contentPanel.meta.resourceCategories.createBaseName": "Новая категория инфраструктуры",
+    "contentPanel.meta.resourceCategories.createLabel": "Создать категорию",
+    "contentPanel.meta.resourceCategories.namePlaceholder": "Название категории инфраструктуры",
+    "contentPanel.meta.resourceCategories.descriptionPlaceholder": "Краткое описание категории инфраструктуры",
+    "contentPanel.meta.resourceCategories.sectionTitle": "Раздел создания и редактирования категорий инфраструктуры",
+    "contentPanel.meta.provinceTypes.singular": "тип провинции",
+    "contentPanel.meta.provinceTypes.createBaseName": "Новый тип провинции",
+    "contentPanel.meta.provinceTypes.createLabel": "Создать тип",
+    "contentPanel.meta.provinceTypes.namePlaceholder": "Название типа провинции",
+    "contentPanel.meta.provinceTypes.descriptionPlaceholder": "Краткое описание типа провинции",
+    "contentPanel.meta.provinceTypes.sectionTitle": "Раздел создания и редактирования типов провинций",
+    "contentPanel.meta.provinceClimates.singular": "климат",
+    "contentPanel.meta.provinceClimates.createBaseName": "Новый климат",
+    "contentPanel.meta.provinceClimates.createLabel": "Создать климат",
+    "contentPanel.meta.provinceClimates.namePlaceholder": "Название климата",
+    "contentPanel.meta.provinceClimates.descriptionPlaceholder": "Краткое описание климата",
+    "contentPanel.meta.provinceClimates.sectionTitle": "Раздел создания и редактирования климатов",
+    "contentPanel.meta.provinceLandscapes.singular": "ландшафт",
+    "contentPanel.meta.provinceLandscapes.createBaseName": "Новый ландшафт",
+    "contentPanel.meta.provinceLandscapes.createLabel": "Создать ландшафт",
+    "contentPanel.meta.provinceLandscapes.namePlaceholder": "Название ландшафта",
+    "contentPanel.meta.provinceLandscapes.descriptionPlaceholder": "Краткое описание ландшафта",
+    "contentPanel.meta.provinceLandscapes.sectionTitle": "Раздел создания и редактирования ландшафтов",
+    "contentPanel.meta.provinceContinents.singular": "континент",
+    "contentPanel.meta.provinceContinents.createBaseName": "Новый континент",
+    "contentPanel.meta.provinceContinents.createLabel": "Создать континент",
+    "contentPanel.meta.provinceContinents.namePlaceholder": "Название континента",
+    "contentPanel.meta.provinceContinents.descriptionPlaceholder": "Краткое описание континента",
+    "contentPanel.meta.provinceContinents.sectionTitle": "Раздел создания и редактирования континентов",
+    "contentPanel.meta.provinceStrategicRegions.singular": "стратегический регион",
+    "contentPanel.meta.provinceStrategicRegions.createBaseName": "Новый стратегический регион",
+    "contentPanel.meta.provinceStrategicRegions.createLabel": "Создать регион",
+    "contentPanel.meta.provinceStrategicRegions.namePlaceholder": "Название стратегического региона",
+    "contentPanel.meta.provinceStrategicRegions.descriptionPlaceholder": "Краткое описание стратегического региона",
+    "contentPanel.meta.provinceStrategicRegions.sectionTitle": "Раздел создания и редактирования стратегических регионов",
+    "contentPanel.meta.religions.singular": "религия",
+    "contentPanel.meta.religions.createBaseName": "Новая религия",
+    "contentPanel.meta.religions.createLabel": "Создать религию",
+    "contentPanel.meta.religions.namePlaceholder": "Название религии",
+    "contentPanel.meta.religions.descriptionPlaceholder": "Краткое описание религии",
+    "contentPanel.meta.religions.sectionTitle": "Раздел создания и редактирования религий",
+    "contentPanel.meta.professions.singular": "профессия",
+    "contentPanel.meta.professions.createBaseName": "Новая профессия",
+    "contentPanel.meta.professions.createLabel": "Создать профессию",
+    "contentPanel.meta.professions.namePlaceholder": "Название профессии",
+    "contentPanel.meta.professions.descriptionPlaceholder": "Краткое описание профессии",
+    "contentPanel.meta.professions.sectionTitle": "Раздел создания и редактирования профессий",
+    "contentPanel.meta.battalions.singular": "батальон",
+    "contentPanel.meta.battalions.createBaseName": "Новый батальон",
+    "contentPanel.meta.battalions.createLabel": "Создать батальон",
+    "contentPanel.meta.battalions.namePlaceholder": "Название батальона",
+    "contentPanel.meta.battalions.descriptionPlaceholder": "Описание роли батальона в дивизии",
+    "contentPanel.meta.battalions.sectionTitle": "Раздел создания и редактирования батальонов",
+    "contentPanel.meta.shipTypes.singular": "тип корабля",
+    "contentPanel.meta.shipTypes.createBaseName": "Новый корабль",
+    "contentPanel.meta.shipTypes.createLabel": "Создать корабль",
+    "contentPanel.meta.shipTypes.namePlaceholder": "Название типа корабля",
+    "contentPanel.meta.shipTypes.descriptionPlaceholder": "Описание роли корабля во флоте",
+    "contentPanel.meta.shipTypes.sectionTitle": "Раздел создания и редактирования кораблей",
+    "contentPanel.meta.aircraftTypes.singular": "тип самолёта",
+    "contentPanel.meta.aircraftTypes.createBaseName": "Новый самолёт",
+    "contentPanel.meta.aircraftTypes.createLabel": "Создать самолёт",
+    "contentPanel.meta.aircraftTypes.namePlaceholder": "Название типа самолёта",
+    "contentPanel.meta.aircraftTypes.descriptionPlaceholder": "Описание роли самолёта в авиакрыле",
+    "contentPanel.meta.aircraftTypes.sectionTitle": "Раздел создания и редактирования самолётов",
+    "contentPanel.meta.ideologies.singular": "идеология",
+    "contentPanel.meta.ideologies.createBaseName": "Новая идеология",
+    "contentPanel.meta.ideologies.createLabel": "Создать идеологию",
+    "contentPanel.meta.ideologies.namePlaceholder": "Название идеологии",
+    "contentPanel.meta.ideologies.descriptionPlaceholder": "Краткое описание идеологии",
+    "contentPanel.meta.ideologies.sectionTitle": "Раздел создания и редактирования идеологий",
+    "contentPanel.meta.interestGroups.singular": "группа интересов",
+    "contentPanel.meta.interestGroups.createBaseName": "Новая группа интересов",
+    "contentPanel.meta.interestGroups.createLabel": "Создать группу",
+    "contentPanel.meta.interestGroups.namePlaceholder": "Название группы интересов",
+    "contentPanel.meta.interestGroups.descriptionPlaceholder": "Краткое описание группы интересов",
+    "contentPanel.meta.interestGroups.sectionTitle": "Раздел создания и редактирования групп интересов",
+    "contentPanel.meta.parties.singular": "партия",
+    "contentPanel.meta.parties.createBaseName": "Новая партия",
+    "contentPanel.meta.parties.createLabel": "Создать партию",
+    "contentPanel.meta.parties.namePlaceholder": "Название партии",
+    "contentPanel.meta.parties.descriptionPlaceholder": "Краткое описание партии",
+    "contentPanel.meta.parties.sectionTitle": "Раздел создания и редактирования партий",
+    "contentPanel.meta.lawGroups.singular": "группа законов",
+    "contentPanel.meta.lawGroups.createBaseName": "Новая группа законов",
+    "contentPanel.meta.lawGroups.createLabel": "Создать группу",
+    "contentPanel.meta.lawGroups.namePlaceholder": "Название группы законов",
+    "contentPanel.meta.lawGroups.descriptionPlaceholder": "Краткое описание группы законов",
+    "contentPanel.meta.lawGroups.sectionTitle": "Раздел создания и редактирования групп законов",
+    "contentPanel.meta.laws.singular": "закон",
+    "contentPanel.meta.laws.createBaseName": "Новый закон",
+    "contentPanel.meta.laws.createLabel": "Создать закон",
+    "contentPanel.meta.laws.namePlaceholder": "Название закона",
+    "contentPanel.meta.laws.descriptionPlaceholder": "Краткое описание закона",
+    "contentPanel.meta.laws.sectionTitle": "Раздел создания и редактирования законов",
+    "contentPanel.meta.technologies.singular": "технология",
+    "contentPanel.meta.technologies.createBaseName": "Новая технология",
+    "contentPanel.meta.technologies.createLabel": "Создать технологию",
+    "contentPanel.meta.technologies.namePlaceholder": "Название технологии",
+    "contentPanel.meta.technologies.descriptionPlaceholder": "Краткое описание технологии",
+    "contentPanel.meta.technologies.sectionTitle": "Раздел создания и редактирования технологий",
+    "contentPanel.meta.buildings.singular": "здание",
+    "contentPanel.meta.buildings.createBaseName": "Новое здание",
+    "contentPanel.meta.buildings.createLabel": "Создать здание",
+    "contentPanel.meta.buildings.namePlaceholder": "Название здания",
+    "contentPanel.meta.buildings.descriptionPlaceholder": "Краткое описание здания",
+    "contentPanel.meta.buildings.sectionTitle": "Раздел создания и редактирования зданий",
+    "contentPanel.meta.goods.singular": "товар",
+    "contentPanel.meta.goods.createBaseName": "Новый товар",
+    "contentPanel.meta.goods.createLabel": "Создать товар",
+    "contentPanel.meta.goods.namePlaceholder": "Название товара",
+    "contentPanel.meta.goods.descriptionPlaceholder": "Краткое описание товара",
+    "contentPanel.meta.goods.sectionTitle": "Раздел создания и редактирования товаров",
+    "contentPanel.meta.companies.singular": "компания",
+    "contentPanel.meta.companies.createBaseName": "Новая компания",
+    "contentPanel.meta.companies.createLabel": "Создать компанию",
+    "contentPanel.meta.companies.namePlaceholder": "Название компании",
+    "contentPanel.meta.companies.descriptionPlaceholder": "Краткое описание компании",
+    "contentPanel.meta.companies.sectionTitle": "Раздел создания и редактирования компаний",
+    "contentPanel.meta.industries.singular": "отрасль",
+    "contentPanel.meta.industries.createBaseName": "Новая отрасль",
+    "contentPanel.meta.industries.createLabel": "Создать отрасль",
+    "contentPanel.meta.industries.namePlaceholder": "Название отрасли",
+    "contentPanel.meta.industries.descriptionPlaceholder": "Краткое описание отрасли",
+    "contentPanel.meta.industries.sectionTitle": "Раздел создания и редактирования отраслей",
+    "contentPanel.meta.sectors.singular": "сектор",
+    "contentPanel.meta.sectors.createBaseName": "Новый сектор",
+    "contentPanel.meta.sectors.createLabel": "Создать сектор",
+    "contentPanel.meta.sectors.namePlaceholder": "Название сектора",
+    "contentPanel.meta.sectors.descriptionPlaceholder": "Краткое описание сектора",
+    "contentPanel.meta.sectors.sectionTitle": "Раздел создания и редактирования секторов",
+    "contentPanel.meta.modifiers.singular": "модификатор",
+    "contentPanel.meta.modifiers.createBaseName": "Новый модификатор",
+    "contentPanel.meta.modifiers.createLabel": "Создать модификатор",
+    "contentPanel.meta.modifiers.namePlaceholder": "Название модификатора",
+    "contentPanel.meta.modifiers.descriptionPlaceholder": "Когда и что должен менять этот модификатор",
+    "contentPanel.meta.modifiers.sectionTitle": "Универсальные условия и эффекты модификаторов",
+    "contentPanel.meta.decisions.singular": "решение",
+    "contentPanel.meta.decisions.createBaseName": "Новое решение",
+    "contentPanel.meta.decisions.createLabel": "Создать решение",
+    "contentPanel.meta.decisions.namePlaceholder": "Название решения",
+    "contentPanel.meta.decisions.descriptionPlaceholder": "Что делает это решение и почему страна его принимает",
+    "contentPanel.meta.decisions.sectionTitle": "Раздел создания и редактирования решений страны",
+    "contentPanel.meta.events.singular": "ивент",
+    "contentPanel.meta.events.createBaseName": "Новый ивент",
+    "contentPanel.meta.events.createLabel": "Создать ивент",
+    "contentPanel.meta.events.namePlaceholder": "Название ивента",
+    "contentPanel.meta.events.descriptionPlaceholder": "Текст события, который увидит игрок",
+    "contentPanel.meta.events.sectionTitle": "Раздел создания и редактирования событий страны",
+    "contentPanel.searchPlaceholder": "Поиск: {item}",
+    "contentPanel.option.decisionCategory.colonization": "Колонизация",
+    "contentPanel.option.decisionCategory.culture": "Культура",
+    "contentPanel.option.decisionCategory.diplomacy": "Дипломатия",
+    "contentPanel.option.decisionCategory.economy": "Экономика",
+    "contentPanel.option.decisionCategory.military": "Армия",
+    "contentPanel.option.decisionCategory.politics": "Политика",
+    "contentPanel.option.decisionCategory.religion": "Религия",
+    "contentPanel.option.decisionCategory.technology": "Технологии",
+    "contentPanel.option.eventCategory.colonization": "Колонизация",
+    "contentPanel.option.eventCategory.diplomacy": "Дипломатия",
+    "contentPanel.option.eventCategory.economy": "Экономика",
+    "contentPanel.option.eventCategory.military": "Армия",
+    "contentPanel.option.eventCategory.politics": "Политика",
+    "contentPanel.option.eventCategory.system": "Система",
+    "contentPanel.option.eventPriority.high": "Высокая",
+    "contentPanel.option.eventPriority.low": "Низкая",
+    "contentPanel.option.eventPriority.medium": "Средняя",
+    "contentPanel.option.eventVisibility.private": "Только страна",
+    "contentPanel.option.eventVisibility.public": "Публично",
+    "contentPanel.option.modifierCondition.always": "Всегда",
+    "contentPanel.option.modifierCondition.countryIs": "Конкретная страна",
+    "contentPanel.option.modifierCondition.hasBuilding": "Есть здание",
+    "contentPanel.option.modifierCondition.lawActive": "Принят закон",
+    "contentPanel.option.modifierCondition.technologyResearched": "Изучена технология",
+    "contentPanel.modifierStatConfig.buildingConstructionCost.description": "Изменяет стоимость строительства выбранных зданий.",
+    "contentPanel.modifierStatConfig.buildingInput.description": "Изменяет расход товаров зданиями.",
+    "contentPanel.modifierStatConfig.buildingOutput.description": "Изменяет выпуск товаров зданиями.",
+    "contentPanel.modifierStatConfig.buildingThroughput.description": "Изменяет общую производительность выбранных зданий.",
+    "contentPanel.modifierStatConfig.buildingWage.description": "Изменяет базовые зарплаты в выбранных зданиях или профессиях.",
+    "contentPanel.modifierStatConfig.colonizationGain.description": "Изменяет прирост колонизации страны за ход.",
+    "contentPanel.modifierStatConfig.constructionGain.description": "Изменяет прирост строительства страны за ход.",
+    "contentPanel.modifierStatConfig.cost.valueHint": "-0.1 = дешевле на 10%, 0.1 = дороже на 10%",
+    "contentPanel.modifierStatConfig.cultureGain.description": "Изменяет прирост культуры страны за ход.",
+    "contentPanel.modifierStatConfig.default.valueHint": "0.1 = +10%, 1 = +1",
+    "contentPanel.modifierStatConfig.ducatsGain.description": "Изменяет прирост дукатов страны за ход.",
+    "contentPanel.modifierStatConfig.goldGain.description": "Изменяет прирост золота страны за ход.",
+    "contentPanel.modifierStatConfig.input.valueHint": "-0.1 = расход меньше на 10%, 0.1 = расход больше на 10%",
+    "contentPanel.modifierStatConfig.output.valueHint": "0.1 = +10% выпуска, 1 = +1 единица",
+    "contentPanel.modifierStatConfig.religionGain.description": "Изменяет прирост религии страны за ход.",
+    "contentPanel.modifierStatConfig.scienceGain.description": "Изменяет прирост науки страны за ход.",
+    "contentPanel.modifierStatConfig.technologyCost.description": "Изменяет стоимость исследования технологий.",
+    "contentPanel.modifierStatConfig.throughput.valueHint": "0.1 = +10% производительности",
+    "contentPanel.modifierStatConfig.wage.valueHint": "0.1 = зарплаты выше на 10%, -0.1 = ниже на 10%",
+    "contentPanel.modifierTarget.building": "Здание",
+    "contentPanel.modifierTarget.good": "Товар",
+    "contentPanel.modifierTarget.profession": "Профессия",
+    "contentPanel.modifierTarget.resourceCategory": "Категория",
+    "contentPanel.option.modifierStat.buildingConstructionCost": "Стоимость строительства",
+    "contentPanel.option.modifierStat.buildingInput": "Расходы зданий",
+    "contentPanel.option.modifierStat.buildingOutput": "Выпуск зданий",
+    "contentPanel.option.modifierStat.buildingThroughput": "Производительность зданий",
+    "contentPanel.option.modifierStat.buildingWage": "Зарплаты зданий",
+    "contentPanel.option.modifierStat.colonizationGain": "Прирост колонизации",
+    "contentPanel.option.modifierStat.constructionGain": "Прирост строительства",
+    "contentPanel.option.modifierStat.cultureGain": "Прирост культуры",
+    "contentPanel.option.modifierStat.ducatsGain": "Прирост дукатов",
+    "contentPanel.option.modifierStat.goldGain": "Прирост золота",
+    "contentPanel.option.modifierStat.religionGain": "Прирост религии",
+    "contentPanel.option.modifierStat.scienceGain": "Прирост науки",
+    "contentPanel.option.modifierStat.technologyCost": "Стоимость технологий",
+    "contentPanel.option.modifierMode.add": "+ число",
+    "contentPanel.option.modifierMode.addPct": "% к значению",
+    "contentPanel.option.modifierMode.mult": "x множитель",
+    "contentPanel.option.modifierScope.building": "Здание",
+    "contentPanel.option.modifierScope.country": "Страна",
+    "contentPanel.option.modifierScope.market": "Рынок",
+    "contentPanel.option.modifierScope.pop": "Население",
+    "contentPanel.option.modifierScope.province": "Провинция",
+    "contentPanel.option.needCategory.basic": "Базовые",
+    "contentPanel.option.needCategory.comfort": "Комфорт",
+    "contentPanel.option.needCategory.luxury": "Роскошь",
+    "contentPanel.option.needCategory.survival": "Выживание",
+    "contentPanel.option.parliamentDomain.budget": "Бюджет",
+    "contentPanel.option.parliamentDomain.diplomacy": "Дипломатия",
+    "contentPanel.option.parliamentDomain.government": "Правительство",
+    "contentPanel.option.parliamentDomain.laws": "Законы",
+    "contentPanel.option.parliamentDomain.none": "Не меняет полномочия",
+    "contentPanel.option.parliamentDomain.war": "Война",
+    "contentPanel.option.resource.colonization": "Колонизация",
+    "contentPanel.option.resource.construction": "Строительство",
+    "contentPanel.option.resource.culture": "Культура",
+    "contentPanel.option.resource.ducats": "Дукаты",
+    "contentPanel.option.resource.gold": "Золото",
+    "contentPanel.option.resource.religion": "Религия",
+    "contentPanel.option.resource.science": "Наука",
+    "contentPanel.option.goodDistribution.localOnly": "Только локально",
+    "contentPanel.option.goodDistribution.pipeline": "Трубопровод",
+    "contentPanel.option.goodDistribution.powerGrid": "Электросеть",
+    "contentPanel.option.goodDistribution.service": "Услуга",
+    "contentPanel.option.goodDistribution.tradeable": "Обычный товар",
+    "contentPanel.option.transport.air": "Воздух",
+    "contentPanel.option.transport.land": "Суша",
+    "contentPanel.option.transport.pipeline": "Трубопровод",
+    "contentPanel.option.transport.powerGrid": "Электросеть",
+    "contentPanel.option.transport.sea": "Море",
+    "contentPanel.section.branding": "Логотип и стиль",
+    "contentPanel.section.conditionsEffects": "Условия и эффекты",
+    "contentPanel.section.criteria": "Критерии",
+    "contentPanel.section.economyProduction": "Экономика и производство",
+    "contentPanel.section.exploration": "Георазведка",
+    "contentPanel.section.general": "Основная информация",
+    "contentPanel.section.goodEconomy": "Экономика товара",
+    "contentPanel.section.influence": "Влияние",
+    "contentPanel.section.needs": "Потребности",
+    "contentPanel.section.politics": "Политика",
+    "contentPanel.section.professionEconomy": "Экономика профессии",
+    "contentPanel.section.stats": "Характеристики",
+    "contentPanel.section.technologyTree": "Древо технологий",
+    "contentPanel.section.triggersOptions": "Триггеры и варианты",
     "countryEvents.choiceRequired": "Событие требует выбора",
     "countryEvents.defaultEvent": "Событие",
     "countryEvents.effectFallback": "Эффект",
@@ -3812,6 +6404,14 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.controls.resetView": "Сбросить центр и масштаб",
     "map.controls.lockInteraction": "Заблокировать pan/zoom",
     "map.controls.unlockInteraction": "Разблокировать pan/zoom",
+    "map.mode.political.label": "Политическая",
+    "map.mode.political.shortLabel": "Страны",
+    "map.mode.political.ownerLegend": "Владелец",
+    "map.mode.political.ownerDescription": "Цвет страны-владельца",
+    "map.mode.political.colonizationLegend": "Колонизация",
+    "map.mode.political.colonizationDescription": "Нейтральная провинция с активной гонкой",
+    "map.mode.political.outOfFilterLegend": "Вне фильтра",
+    "map.mode.political.outOfFilterDescription": "При фильтре по стране",
     "map.mode.regions.label": "Регионы",
     "map.mode.regions.shortLabel": "Регионы",
     "map.mode.regions.legendLabel": "Государственный регион",
@@ -3820,6 +6420,74 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.mode.provinceColors.shortLabel": "Провинции",
     "map.mode.provinceColors.legendLabel": "Провинция",
     "map.mode.provinceColors.legendDescription": "Сценарные цвета lightweight map-провинций",
+    "map.mode.diplomacy.label": "Дипломатия",
+    "map.mode.diplomacy.shortLabel": "Дипломатия",
+    "map.mode.diplomacy.legendLabel": "Договоры",
+    "map.mode.diplomacy.legendDescription": "Страны, связанные активными соглашениями",
+    "map.mode.markets.label": "Рынки",
+    "map.mode.markets.shortLabel": "Рынки",
+    "map.mode.markets.legendLabel": "Рынок",
+    "map.mode.markets.legendDescription": "Провинции по рыночной принадлежности",
+    "map.mode.population.label": "Население",
+    "map.mode.population.shortLabel": "Население",
+    "map.mode.population.legendLabel": "Метрика",
+    "map.mode.population.legendDescription": "Демография и качество жизни провинции",
+    "map.mode.resources.label": "Ресурсы",
+    "map.mode.resources.shortLabel": "Ресурсы",
+    "map.mode.resources.legendLabel": "Залежи",
+    "map.mode.resources.legendDescription": "Обнаруженные ресурсы и разведка",
+    "map.mode.infrastructure.label": "Инфраструктура",
+    "map.mode.infrastructure.shortLabel": "Инфра",
+    "map.mode.infrastructure.legendLabel": "Покрытие",
+    "map.mode.infrastructure.legendDescription": "Доступность и нагрузка логистики",
+    "map.mode.colonization.label": "Колонизация",
+    "map.mode.colonization.shortLabel": "Колонии",
+    "map.mode.colonization.legendLabel": "Доступно",
+    "map.mode.colonization.legendDescription": "Нейтральные территории для колонизации",
+    "map.mode.military.label": "Армия",
+    "map.mode.military.shortLabel": "Армия",
+    "map.mode.military.legendLabel": "Армии",
+    "map.mode.military.legendDescription": "Свои и чужие дивизии",
+    "map.transport.land": "Сухопутный транспорт",
+    "map.transport.sea": "Море",
+    "map.transport.air": "Воздух",
+    "map.transport.pipeline": "Трубы",
+    "map.transport.powerGrid": "Электросети",
+    "map.lens.fallback": "Слой",
+    "map.lens.political.owners": "Владельцы",
+    "map.lens.political.mine": "Мои",
+    "map.lens.political.colonies": "Колонии",
+    "map.lens.political.myLands": "Мои земли",
+    "map.lens.political.neutral": "Нейтральные",
+    "map.lens.markets.membership": "Рынки",
+    "map.lens.markets.selected": "Выбранный",
+    "map.lens.markets.capitals": "Столицы",
+    "map.lens.population.density": "Плотность",
+    "map.lens.population.cultures": "Культура",
+    "map.lens.population.religions": "Религия",
+    "map.lens.population.races": "Расы",
+    "map.lens.population.professions": "Профессии",
+    "map.lens.population.ideologies": "Идеологии",
+    "map.lens.population.standardOfLiving": "Уровень жизни",
+    "map.lens.population.radicals": "Радикалы",
+    "map.lens.population.loyalists": "Лоялисты",
+    "map.lens.population.needs": "Потребности",
+    "map.lens.resources.deposits": "Залежи",
+    "map.lens.resources.exploration": "Разведка",
+    "map.lens.infrastructure.load": "Нагрузка",
+    "map.lens.infrastructure.coverage": "Покрытие",
+    "map.lens.infrastructure.problems": "Проблемы",
+    "map.lens.infrastructure.corridors": "Коридоры",
+    "map.lens.colonization.available": "Доступно",
+    "map.lens.colonization.cost": "Стоимость",
+    "map.lens.colonization.ownRaces": "Свои гонки",
+    "map.lens.colonization.foreignRaces": "Чужие гонки",
+    "map.lens.colonization.blocked": "Закрыто",
+    "map.lens.diplomacy.treaties": "Договоры",
+    "map.lens.diplomacy.transit": "Транзит",
+    "map.lens.diplomacy.corridorAccess": "Доступ к коридорам",
+    "map.lens.military.armies": "Расположение армий",
+    "map.corridor.levelShort": "ур. {level}",
     "modifiers.activeCount": "Действующие эффекты: {count}",
     "modifiers.column.effect": "Параметр",
     "modifiers.column.modifier": "Модификатор",

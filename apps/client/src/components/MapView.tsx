@@ -191,15 +191,15 @@ function getMapModeConfig(modeId: MapModeId, t?: (key: UiTextKey) => string) {
     legend: Array<{ label: string; color: string; description: string }>;
   }> = {
     political: {
-      label: "Политическая",
-      shortLabel: "Страны",
+      label: t?.("map.mode.political.label") ?? "Political",
+      shortLabel: t?.("map.mode.political.shortLabel") ?? "Countries",
       icon: Landmark,
       fillColor: "#ffffff",
       fillOpacity: 0.68,
       legend: [
-        { label: "Владелец", color: "#4ade80", description: "Цвет страны-владельца" },
-        { label: "Колонизация", color: "#93c5fd", description: "Нейтральная провинция с активной гонкой" },
-        { label: "Вне фильтра", color: "#9ca3af", description: "При фильтре по стране" },
+        { label: t?.("map.mode.political.ownerLegend") ?? "Owner", color: "#4ade80", description: t?.("map.mode.political.ownerDescription") ?? "Owner country color" },
+        { label: t?.("map.mode.political.colonizationLegend") ?? "Colonization", color: "#93c5fd", description: t?.("map.mode.political.colonizationDescription") ?? "Neutral province with an active race" },
+        { label: t?.("map.mode.political.outOfFilterLegend") ?? "Outside filter", color: "#9ca3af", description: t?.("map.mode.political.outOfFilterDescription") ?? "When filtering by country" },
       ],
     },
     regions: {
@@ -231,60 +231,60 @@ function getMapModeConfig(modeId: MapModeId, t?: (key: UiTextKey) => string) {
       ],
     },
     diplomacy: {
-      label: "Дипломатия",
-      shortLabel: "Дипломатия",
+      label: t?.("map.mode.diplomacy.label") ?? "Diplomacy",
+      shortLabel: t?.("map.mode.diplomacy.shortLabel") ?? "Diplomacy",
       icon: Briefcase,
       fillColor: "#facc15",
       fillOpacity: 0.68,
-      legend: [{ label: "Договоры", color: "#facc15", description: "Страны, связанные активными соглашениями" }],
+      legend: [{ label: t?.("map.mode.diplomacy.legendLabel") ?? "Treaties", color: "#facc15", description: t?.("map.mode.diplomacy.legendDescription") ?? "Countries connected by active agreements" }],
     },
     markets: {
-      label: "Рынки",
-      shortLabel: "Рынки",
+      label: t?.("map.mode.markets.label") ?? "Markets",
+      shortLabel: t?.("map.mode.markets.shortLabel") ?? "Markets",
       icon: Package,
       fillColor: "#38bdf8",
       fillOpacity: 0.68,
-      legend: [{ label: "Рынок", color: "#38bdf8", description: "Провинции по рыночной принадлежности" }],
+      legend: [{ label: t?.("map.mode.markets.legendLabel") ?? "Market", color: "#38bdf8", description: t?.("map.mode.markets.legendDescription") ?? "Provinces by market membership" }],
     },
     population: {
-      label: "Население",
-      shortLabel: "Население",
+      label: t?.("map.mode.population.label") ?? "Population",
+      shortLabel: t?.("map.mode.population.shortLabel") ?? "Population",
       icon: Users,
       fillColor: "#fb7185",
       fillOpacity: 0.68,
-      legend: [{ label: "Метрика", color: "#fb7185", description: "Демография и качество жизни провинции" }],
+      legend: [{ label: t?.("map.mode.population.legendLabel") ?? "Metric", color: "#fb7185", description: t?.("map.mode.population.legendDescription") ?? "Province demographics and quality of life" }],
     },
     resources: {
-      label: "Ресурсы",
-      shortLabel: "Ресурсы",
+      label: t?.("map.mode.resources.label") ?? "Resources",
+      shortLabel: t?.("map.mode.resources.shortLabel") ?? "Resources",
       icon: Pickaxe,
       fillColor: "#f97316",
       fillOpacity: 0.68,
-      legend: [{ label: "Залежи", color: "#f97316", description: "Обнаруженные ресурсы и разведка" }],
+      legend: [{ label: t?.("map.mode.resources.legendLabel") ?? "Deposits", color: "#f97316", description: t?.("map.mode.resources.legendDescription") ?? "Discovered resources and prospecting" }],
     },
     infrastructure: {
-      label: "Инфраструктура",
-      shortLabel: "Инфра",
+      label: t?.("map.mode.infrastructure.label") ?? "Infrastructure",
+      shortLabel: t?.("map.mode.infrastructure.shortLabel") ?? "Infra",
       icon: TrainFront,
       fillColor: "#22c55e",
       fillOpacity: 0.68,
-      legend: [{ label: "Покрытие", color: "#22c55e", description: "Доступность и нагрузка логистики" }],
+      legend: [{ label: t?.("map.mode.infrastructure.legendLabel") ?? "Coverage", color: "#22c55e", description: t?.("map.mode.infrastructure.legendDescription") ?? "Logistics availability and load" }],
     },
     colonization: {
-      label: "Колонизация",
-      shortLabel: "Колонии",
+      label: t?.("map.mode.colonization.label") ?? "Colonization",
+      shortLabel: t?.("map.mode.colonization.shortLabel") ?? "Colonies",
       icon: Flag,
       fillColor: "#4ade80",
       fillOpacity: 0.68,
-      legend: [{ label: "Доступно", color: "#4ade80", description: "Нейтральные территории для колонизации" }],
+      legend: [{ label: t?.("map.mode.colonization.legendLabel") ?? "Available", color: "#4ade80", description: t?.("map.mode.colonization.legendDescription") ?? "Neutral territories available for colonization" }],
     },
     military: {
-      label: "Армия",
-      shortLabel: "Армия",
+      label: t?.("map.mode.military.label") ?? "Military",
+      shortLabel: t?.("map.mode.military.shortLabel") ?? "Army",
       icon: Crosshair,
       fillColor: "#ef4444",
       fillOpacity: 0.68,
-      legend: [{ label: "Армии", color: "#ef4444", description: "Свои и чужие дивизии" }],
+      legend: [{ label: t?.("map.mode.military.legendLabel") ?? "Armies", color: "#ef4444", description: t?.("map.mode.military.legendDescription") ?? "Own and foreign divisions" }],
     },
   };
   return configs[modeId];
@@ -314,12 +314,12 @@ function buildProvinceMatchExpression(groups: Array<{ ids: string[]; value: unkn
   return expression.length > 2 ? [...expression, fallback] : fallback;
 }
 
-const TRANSPORT_CORRIDOR_MODE_OPTIONS: Array<{ id: TransportMode; label: string; icon: typeof Route; color: string }> = [
-  { id: "land", label: "Сухопутный транспорт", icon: Truck, color: "#60a5fa" },
-  { id: "sea", label: "Море", icon: Ship, color: "#38bdf8" },
-  { id: "air", label: "Воздух", icon: Plane, color: "#a78bfa" },
-  { id: "pipeline", label: "Трубы", icon: Network, color: "#f97316" },
-  { id: "powerGrid", label: "Электросети", icon: Zap, color: "#facc15" },
+const TRANSPORT_CORRIDOR_MODE_OPTIONS: Array<{ id: TransportMode; labelKey: UiTextKey; icon: typeof Route; color: string }> = [
+  { id: "land", labelKey: "map.transport.land", icon: Truck, color: "#60a5fa" },
+  { id: "sea", labelKey: "map.transport.sea", icon: Ship, color: "#38bdf8" },
+  { id: "air", labelKey: "map.transport.air", icon: Plane, color: "#a78bfa" },
+  { id: "pipeline", labelKey: "map.transport.pipeline", icon: Network, color: "#f97316" },
+  { id: "powerGrid", labelKey: "map.transport.powerGrid", icon: Zap, color: "#facc15" },
 ];
 
 const TRANSPORT_CORRIDOR_VISUAL: Record<TransportMode, { color: [number, number, number]; symbol: string; width: number; dash: [number, number] }> = {
@@ -355,59 +355,59 @@ type CorridorBuildPoint = {
 };
 
 const TRANSPORT_MODE_IDS: TransportMode[] = ["land", "sea", "air", "pipeline", "powerGrid"];
-const TRANSPORT_MODE_LABELS: Record<TransportMode, string> = {
-  land: "Сухопутный транспорт",
-  sea: "Море",
-  air: "Воздух",
-  pipeline: "Трубы",
-  powerGrid: "Электросети",
+const TRANSPORT_MODE_LABEL_KEYS: Record<TransportMode, UiTextKey> = {
+  land: "map.transport.land",
+  sea: "map.transport.sea",
+  air: "map.transport.air",
+  pipeline: "map.transport.pipeline",
+  powerGrid: "map.transport.powerGrid",
 };
-const POLITICAL_LENS_OPTIONS: Array<{ id: PoliticalLensId; label: string }> = [
-  { id: "owners", label: "Владельцы" },
-  { id: "mine", label: "Мои" },
-  { id: "colonies", label: "Колонии" },
+const POLITICAL_LENS_OPTIONS: Array<{ id: PoliticalLensId; labelKey: UiTextKey }> = [
+  { id: "owners", labelKey: "map.lens.political.owners" },
+  { id: "mine", labelKey: "map.lens.political.mine" },
+  { id: "colonies", labelKey: "map.lens.political.colonies" },
 ];
 const MARKET_LENS_OPTIONS = [
-  { id: "membership", label: "Рынки" },
-  { id: "selectedMarketMembers", label: "Выбранный" },
-  { id: "capitals", label: "Столицы" },
+  { id: "membership", labelKey: "map.lens.markets.membership" },
+  { id: "selectedMarketMembers", labelKey: "map.lens.markets.selected" },
+  { id: "capitals", labelKey: "map.lens.markets.capitals" },
 ] as const;
 const POPULATION_LENS_OPTIONS = [
-  { id: "density", label: "Плотность" },
-  { id: "cultures", label: "Культура" },
-  { id: "religions", label: "Религия" },
-  { id: "races", label: "Расы" },
-  { id: "professions", label: "Профессии" },
-  { id: "ideologies", label: "Идеологии" },
-  { id: "standardOfLiving", label: "Уровень жизни" },
-  { id: "radicals", label: "Радикалы" },
-  { id: "loyalists", label: "Лоялисты" },
-  { id: "needs", label: "Потребности" },
+  { id: "density", labelKey: "map.lens.population.density" },
+  { id: "cultures", labelKey: "map.lens.population.cultures" },
+  { id: "religions", labelKey: "map.lens.population.religions" },
+  { id: "races", labelKey: "map.lens.population.races" },
+  { id: "professions", labelKey: "map.lens.population.professions" },
+  { id: "ideologies", labelKey: "map.lens.population.ideologies" },
+  { id: "standardOfLiving", labelKey: "map.lens.population.standardOfLiving" },
+  { id: "radicals", labelKey: "map.lens.population.radicals" },
+  { id: "loyalists", labelKey: "map.lens.population.loyalists" },
+  { id: "needs", labelKey: "map.lens.population.needs" },
 ] as const;
 const RESOURCE_LENS_OPTIONS = [
-  { id: "deposits", label: "Залежи" },
-  { id: "exploration", label: "Разведка" },
+  { id: "deposits", labelKey: "map.lens.resources.deposits" },
+  { id: "exploration", labelKey: "map.lens.resources.exploration" },
 ] as const;
 const INFRASTRUCTURE_LENS_VIEW_OPTIONS = [
-  { id: "load", label: "Нагрузка" },
-  { id: "coverage", label: "Покрытие" },
-  { id: "problems", label: "Проблемы" },
-  { id: "corridors", label: "Коридоры" },
+  { id: "load", labelKey: "map.lens.infrastructure.load" },
+  { id: "coverage", labelKey: "map.lens.infrastructure.coverage" },
+  { id: "problems", labelKey: "map.lens.infrastructure.problems" },
+  { id: "corridors", labelKey: "map.lens.infrastructure.corridors" },
 ] as const;
 const COLONIZATION_LENS_OPTIONS = [
-  { id: "available", label: "Доступно" },
-  { id: "cost", label: "Стоимость" },
-  { id: "ownRaces", label: "Свои гонки" },
-  { id: "foreignRaces", label: "Чужие гонки" },
-  { id: "blocked", label: "Закрыто" },
+  { id: "available", labelKey: "map.lens.colonization.available" },
+  { id: "cost", labelKey: "map.lens.colonization.cost" },
+  { id: "ownRaces", labelKey: "map.lens.colonization.ownRaces" },
+  { id: "foreignRaces", labelKey: "map.lens.colonization.foreignRaces" },
+  { id: "blocked", labelKey: "map.lens.colonization.blocked" },
 ] as const;
 const DIPLOMACY_LENS_OPTIONS = [
-  { id: "treaties", label: "Договоры" },
-  { id: "transit", label: "Транзит" },
-  { id: "corridorAccess", label: "Доступ к коридорам" },
+  { id: "treaties", labelKey: "map.lens.diplomacy.treaties" },
+  { id: "transit", labelKey: "map.lens.diplomacy.transit" },
+  { id: "corridorAccess", labelKey: "map.lens.diplomacy.corridorAccess" },
 ] as const;
 const MILITARY_LENS_OPTIONS = [
-  { id: "armies", label: "Расположение армий" },
+  { id: "armies", labelKey: "map.lens.military.armies" },
 ] as const;
 const INFRASTRUCTURE_LENS_TRANSPORT_MODES: TransportMode[] = ["land", "sea", "air", "pipeline", "powerGrid"];
 const MAP_MODE_IDS = [
@@ -755,6 +755,7 @@ export function MapView({
   strategyMapModeId,
 }: Props) {
   const { t } = useUiText();
+  const transportModeLabel = (mode: TransportMode) => t(TRANSPORT_MODE_LABEL_KEYS[mode]);
   const mapModeOptions = useMemo(() => MAP_MODE_IDS.map((id) => ({ id, ...getMapModeConfig(id, t) })), [t]);
   const [activeModeId, setActiveModeId] = useState<MapModeId>(() => {
     try {
@@ -2683,7 +2684,8 @@ export function MapView({
               ? populationStats.total / Math.max(1, provinceMetaByIdRef.current.get(id)?.areaKm2 ?? 1)
               : 0;
             const activePopulationRow = hoverData.populationMapRowByProvince.get(id);
-            const activePopulationLensLabel = POPULATION_LENS_OPTIONS.find((option) => option.id === hoverData.populationLens)?.label ?? "Слой";
+            const activePopulationLensOption = POPULATION_LENS_OPTIONS.find((option) => option.id === hoverData.populationLens);
+            const activePopulationLensLabel = activePopulationLensOption ? t(activePopulationLensOption.labelKey) : t("map.lens.fallback");
             return [
               ...(activePopulationRow ? [{ label: activePopulationLensLabel, value: activePopulationRow.label }] : []),
               { label: "Население", value: formatCompact(populationStats.total) },
@@ -2832,7 +2834,7 @@ export function MapView({
             }),
         );
         if (!currentCountryId || (provinceOwnerId && provinceOwnerId !== currentCountryId && !hasForeignBuildRight)) {
-          const modeLabel = TRANSPORT_MODE_LABELS[transportMode] ?? transportMode;
+          const modeLabel = transportModeLabel(transportMode);
           toast.error(
             provinceOwnerId
               ? `Нужен договор строительства коридоров: владелец провинции должен разрешить ${modeLabel}`
@@ -4142,10 +4144,10 @@ export function MapView({
       return (
         <>
           {POLITICAL_LENS_OPTIONS.map((option) =>
-            renderLensOptionButton(option.id, option.label, politicalLens === option.id, () => setPoliticalLens(option.id), <Landmark size={22} />),
+            renderLensOptionButton(option.id, t(option.labelKey), politicalLens === option.id, () => setPoliticalLens(option.id), <Landmark size={22} />),
           )}
-          {renderLensOptionButton("political-current", "Мои земли", politicalOnlyMine, () => setPoliticalOnlyMine((value) => !value), <LocateFixed size={22} />)}
-          {renderLensOptionButton("political-neutral", "Нейтральные", politicalOnlyNeutral, () => setPoliticalOnlyNeutral((value) => !value), <Flag size={22} />)}
+          {renderLensOptionButton("political-current", t("map.lens.political.myLands"), politicalOnlyMine, () => setPoliticalOnlyMine((value) => !value), <LocateFixed size={22} />)}
+          {renderLensOptionButton("political-neutral", t("map.lens.political.neutral"), politicalOnlyNeutral, () => setPoliticalOnlyNeutral((value) => !value), <Flag size={22} />)}
         </>
       );
     }
@@ -4154,28 +4156,28 @@ export function MapView({
     }
     if (activeModeId === "diplomacy") {
       return DIPLOMACY_LENS_OPTIONS.map((option) =>
-        renderLensOptionButton(option.id, option.label, diplomacyLens === option.id, () => setDiplomacyLens(option.id), <Briefcase size={22} />),
+        renderLensOptionButton(option.id, t(option.labelKey), diplomacyLens === option.id, () => setDiplomacyLens(option.id), <Briefcase size={22} />),
       );
     }
     if (activeModeId === "markets") {
       return (
         <>
           {MARKET_LENS_OPTIONS.map((option) =>
-            renderLensOptionButton(option.id, option.label, marketLens === option.id, () => setMarketLens(option.id), option.id === "capitals" ? <Landmark size={22} /> : <Package size={22} />),
+            renderLensOptionButton(option.id, t(option.labelKey), marketLens === option.id, () => setMarketLens(option.id), option.id === "capitals" ? <Landmark size={22} /> : <Package size={22} />),
           )}
         </>
       );
     }
     if (activeModeId === "population") {
       return POPULATION_LENS_OPTIONS.map((option) =>
-        renderLensOptionButton(option.id, option.label, populationLens === option.id, () => setPopulationLens(option.id), <Users size={22} />),
+        renderLensOptionButton(option.id, t(option.labelKey), populationLens === option.id, () => setPopulationLens(option.id), <Users size={22} />),
       );
     }
     if (activeModeId === "resources") {
       return (
         <>
           {RESOURCE_LENS_OPTIONS.map((option) =>
-            renderLensOptionButton(option.id, option.label, resourceLens === option.id, () => setResourceLens(option.id), <Pickaxe size={22} />),
+            renderLensOptionButton(option.id, t(option.labelKey), resourceLens === option.id, () => setResourceLens(option.id), <Pickaxe size={22} />),
           )}
         </>
       );
@@ -4187,7 +4189,7 @@ export function MapView({
             const Icon = mode.icon;
             return renderLensOptionButton(
               mode.id,
-              mode.label,
+              t(mode.labelKey),
               infrastructureTransportMode === mode.id,
               () => setInfrastructureLens(`${mode.id}:${infrastructureLensView}` as InfrastructureLensId),
               <Icon size={22} style={{ color: mode.color }} />,
@@ -4197,7 +4199,7 @@ export function MapView({
           {INFRASTRUCTURE_LENS_VIEW_OPTIONS.map((option) =>
             renderLensOptionButton(
               option.id,
-              option.label,
+              t(option.labelKey),
               infrastructureLensView === option.id,
               () => setInfrastructureLens(`${infrastructureTransportMode}:${option.id}` as InfrastructureLensId),
               option.id === "corridors" ? <Route size={22} /> : <Gauge size={22} />,
@@ -4208,11 +4210,11 @@ export function MapView({
     }
     if (activeModeId === "colonization") {
       return COLONIZATION_LENS_OPTIONS.map((option) =>
-        renderLensOptionButton(option.id, option.label, colonizationLens === option.id, () => setColonizationLens(option.id), <Flag size={22} />),
+        renderLensOptionButton(option.id, t(option.labelKey), colonizationLens === option.id, () => setColonizationLens(option.id), <Flag size={22} />),
       );
     }
     return MILITARY_LENS_OPTIONS.map((option) =>
-      renderLensOptionButton(option.id, option.label, militaryLens === option.id, () => setMilitaryLens(option.id), <Crosshair size={22} />),
+      renderLensOptionButton(option.id, t(option.labelKey), militaryLens === option.id, () => setMilitaryLens(option.id), <Crosshair size={22} />),
     );
   })();
 
@@ -4312,7 +4314,7 @@ export function MapView({
     }> = [];
     for (const summary of corridorSummaryRows) {
       const { corridor, load, capacity, utilization, ownerName } = summary;
-      const transport = TRANSPORT_MODE_LABELS[corridor.transportMode] ?? corridor.transportMode;
+      const transport = transportModeLabel(corridor.transportMode);
       const source = `${ownerName} · ${corridor.id.slice(0, 8)}`;
       const provinceIds = corridor.provinceIds.length > 0 ? corridor.provinceIds : ["unknown"];
       const addProblem = (problem: string, tone: "bad" | "warn" | "muted", undelivered = 0, loadPct: number | null = utilization * 100) => {
@@ -4469,7 +4471,7 @@ export function MapView({
                           icon={<Icon size={13} style={{ color: mode.color }} />}
                           onClick={() => setCorridorBuildTransportMode(mode.id)}
                         >
-                          {mode.label}
+                          {t(mode.labelKey)}
                         </AppButton>
                       );
                     })}
@@ -4494,8 +4496,8 @@ export function MapView({
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--arc-color-text-paper)]">
                               <Icon size={15} style={{ color: mode?.color }} />
-                              <span className="truncate">{mode?.label ?? corridor.transportMode}</span>
-                              <span className="shrink-0 text-xs text-[var(--arc-color-text-muted)]">ур. {corridor.level}</span>
+                              <span className="truncate">{mode ? t(mode.labelKey) : corridor.transportMode}</span>
+                              <span className="shrink-0 text-xs text-[var(--arc-color-text-muted)]">{t("map.corridor.levelShort", { level: String(corridor.level) })}</span>
                             </div>
                             <div className="mt-1 text-xs text-[var(--arc-color-text-muted)]">
                               {ownerName} · {corridor.status === "building" ? "строится" : corridor.status === "closed" ? "закрыт" : "активен"}
@@ -4540,7 +4542,7 @@ export function MapView({
                   return (
                     <div className="space-y-3">
                       <AppSectionHeader
-                        title={mode?.label ?? selectedTransportCorridor.transportMode}
+                        title={mode ? t(mode.labelKey) : selectedTransportCorridor.transportMode}
                         icon={<Icon size={17} style={{ color: mode?.color }} />}
                         description={`Владелец: ${summary?.ownerName ?? selectedTransportCorridor.ownerCountryId}`}
                         actions={
@@ -5032,7 +5034,7 @@ export function MapView({
                             return (
                               <div key={corridor.id} className="rounded-md border border-white/10 bg-black/20 p-2">
                                 <div className="mb-1 flex justify-between gap-2 text-xs text-white/65">
-                                  <span className="truncate">{mode?.label ?? TRANSPORT_MODE_LABELS[corridor.transportMode]}</span>
+                                  <span className="truncate">{mode ? t(mode.labelKey) : transportModeLabel(corridor.transportMode)}</span>
                                   <span className={corridor.status === "active" ? "text-emerald-200" : corridor.status === "building" ? "text-amber-200" : "text-rose-200"}>
                                     {corridor.status === "active" ? "активен" : corridor.status === "building" ? "строится" : "закрыт"}
                                   </span>
