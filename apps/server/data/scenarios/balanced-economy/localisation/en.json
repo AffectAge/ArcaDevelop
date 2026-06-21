@@ -374,14 +374,55 @@
   "decisions": {
     "38d624ab_e2a6_4479_9e60_0507988043d7": {
       "name": "Черная смерть"
+    },
+    "example_launch_industrial_program": {
+      "name": "Launch an Industrial Program"
     }
   },
   "events": {
     "489296a7_2807_4a34_9866_4c287612e8fd": {
-      "name": "Глобальный климатический пакт"
+      "name": "Global Climate Pact",
+      "description": "An emergency international summit on climate, energy, and industrial transformation has concluded in the capital of a neutral state.\n\nAfter a series of destructive droughts, floods, and energy crises, the world's leading powers are demanding a new global agreement. Some states insist on strict emissions limits and major investment in green energy. Others argue that these measures will undermine industry, exports, and economic growth.\n\nDiplomats warn that the summit's outcome will shape international politics for decades.",
+      "option": {
+        "acknowledge": "Acknowledge"
+      }
     },
     "70df3c83_3973_4f50_b9b3_afa78b599ff3": {
-      "name": "Новый ивент"
+      "name": "New Event",
+      "description": "A scenario-authored event is waiting for a country response.",
+      "option": {
+        "ok": "Understood"
+      }
+    },
+    "example_industrial_program_success": {
+      "name": "Industrial Program Delivered",
+      "description": "The program's first workshops and depots are operating on schedule. Engineers report that the new construction routines are stable enough to teach across the administration.",
+      "option": {
+        "acknowledge": "Record the methods"
+      }
+    },
+    "example_industrial_program_failure": {
+      "name": "Industrial Program Stalls",
+      "description": "Treasury pressure has forced the cabinet to freeze several contracts. The administration preserves what it learned, but the promised industrial push will not arrive on time.",
+      "option": {
+        "acknowledge": "Close the file"
+      }
+    }
+  },
+  "journal": {
+    "example_treasury_reserve": {
+      "name": "Build a Treasury Reserve",
+      "title": "Build a Treasury Reserve",
+      "short": "Raise the treasury above 1200 ducats before the deadline.",
+      "description": "The administration wants a visible financial reserve before expanding reforms. Keep the country solvent and grow the treasury above 1200 ducats within 24 turns. Falling below zero ducats will mark this objective as failed.",
+      "progress": "Treasury reserve target"
+    },
+    "example_industrial_program": {
+      "name": "Deliver an Industrial Program",
+      "title": "Deliver an Industrial Program",
+      "short": "Turn the launch decision into enough construction capacity before the deadline.",
+      "description": "This example journal entry tracks a long-term country task started by a decision. Build enough construction capacity before the deadline to complete the program. If the treasury falls below the safety floor, the objective fails and a different outcome event is shown.",
+      "progress": "Industrial program outcome"
     }
   },
   "goods": {

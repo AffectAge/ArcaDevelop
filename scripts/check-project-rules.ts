@@ -204,6 +204,7 @@ function buildExpectedAuthoredPaths(): Record<string, string> {
     sector: "sectors",
     decision: "decisions",
     event: "events",
+    journalEntry: "journalEntries",
     battalion: "battalions",
     shipType: "shipTypes",
     aircraftType: "aircraftTypes",

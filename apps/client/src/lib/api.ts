@@ -1,4 +1,4 @@
-import type { ActiveModifierRow, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, GameEventDefinition, IdeologyAttractionRule, LawParliamentPowerEffect, LoginPayload, MilitaryBranch, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import type { ActiveModifierRow, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionAvailabilityReason, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, EventResolvedScope, EventTriggerExplanation, GameEventDefinition, IdeologyAttractionRule, JournalEntryDefinition, LawParliamentPowerEffect, LoginPayload, MilitaryBranch, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, WorldBase, WsOutMessage } from "@arcanorum/shared";
 
 const API = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
@@ -6,6 +6,7 @@ export const apiBase = API;
 
 export type ContentCulture = {
   id: string;
+  nameKey?: string | null;
   name: string;
   description: string;
   color: string;
@@ -57,6 +58,7 @@ export type ContentCulture = {
   modifiers?: ModifierDefinition[] | null;
   decision?: DecisionDefinition | null;
   event?: GameEventDefinition | null;
+  journalEntry?: JournalEntryDefinition | null;
   ideologyAttractionRules?: IdeologyAttractionRule[] | null;
   needsProfile?: {
     tiers: Array<{
@@ -143,6 +145,7 @@ export type ContentEntryKind =
   | "modifiers"
   | "decisions"
   | "events"
+  | "journalEntries"
   | "battalions"
   | "shipTypes"
   | "aircraftTypes";
@@ -567,12 +570,18 @@ export type CountryDecisionView = {
   visible: boolean;
   available: boolean;
   reason: string | null;
+  reasons: DecisionAvailabilityReason[];
+  scopes: Record<string, EventResolvedScope>;
+  triggerExplanation: EventTriggerExplanation[];
 };
 
 function normalizeCountryDecisionView(decision: CountryDecisionView): CountryDecisionView {
   return {
     ...decision,
     logoUrl: withAssetBase(decision.logoUrl) ?? null,
+    reasons: Array.isArray(decision.reasons) ? decision.reasons : [],
+    scopes: decision.scopes ?? {},
+    triggerExplanation: Array.isArray(decision.triggerExplanation) ? decision.triggerExplanation : [],
   };
 }
 
@@ -617,6 +626,9 @@ export type CountryEventView = {
   logoUrl: string | null;
   event: GameEventDefinition;
   createdTurnId: number;
+  expiresTurnId?: number | null;
+  scopes?: Record<string, EventResolvedScope>;
+  triggerExplanation?: EventTriggerExplanation[];
 };
 
 function normalizeCountryEventView(event: CountryEventView): CountryEventView {
@@ -1828,6 +1840,7 @@ export type TurnStatusItem = {
   online: boolean;
   lastLoginAt: string | null;
   resources: ResourceTotals;
+  resourceNetByTurn?: Partial<Record<keyof ResourceTotals, number>>;
 };
 
 export type UiNotificationItem = Extract<WsOutMessage, { type: "UI_NOTIFY" }>["notification"];
@@ -1948,20 +1961,9 @@ export type GameSettings = {
     showAntarctica: boolean;
     backgroundImageUrl: string | null;
   };
-  resourceIcons: {
-    population: string | null;
-    culture: string | null;
-    science: string | null;
-    religion: string | null;
-    colonization: string | null;
-    construction: string | null;
-    ducats: string | null;
-    gold: string | null;
-  };
 };
 
 export type CustomizationPrices = GameSettings["customization"];
-export type ResourceIconsMap = GameSettings["resourceIcons"];
 export type CivilopediaEntry = {
   id: string;
   category: string;
@@ -1972,19 +1974,6 @@ export type CivilopediaEntry = {
   relatedEntryIds: string[];
   sections: Array<{ title: string; paragraphs: string[] }>;
 };
-
-function normalizeResourceIcons(icons?: Partial<ResourceIconsMap> | null): ResourceIconsMap {
-  return {
-    population: withAssetBase(icons?.population) ?? null,
-    culture: withAssetBase(icons?.culture) ?? null,
-    science: withAssetBase(icons?.science) ?? null,
-    religion: withAssetBase(icons?.religion) ?? null,
-    colonization: withAssetBase(icons?.colonization) ?? null,
-    construction: withAssetBase(icons?.construction) ?? null,
-    ducats: withAssetBase(icons?.ducats) ?? null,
-    gold: withAssetBase(icons?.gold) ?? null,
-  };
-}
 
 function normalizeMapSettings(map?: Partial<GameSettings["map"]> | null): GameSettings["map"] {
   return {
@@ -2035,16 +2024,15 @@ export async function fetchProvinceIndex(): Promise<ProvinceIndexItem[]> {
   return data.provinces;
 }
 
-export async function fetchPublicGameUiSettings(): Promise<Pick<GameSettings, "economy" | "colonization" | "customization" | "eventLog" | "turnTimer" | "map" | "resourceIcons">> {
+export async function fetchPublicGameUiSettings(): Promise<Pick<GameSettings, "economy" | "colonization" | "customization" | "eventLog" | "turnTimer" | "map">> {
   const response = await fetch(`${API}/game-settings/public`);
   if (!response.ok) {
     throw new Error("PUBLIC_GAME_SETTINGS_FAILED");
   }
-  const data = (await response.json()) as Pick<GameSettings, "economy" | "colonization" | "customization" | "eventLog" | "turnTimer" | "map" | "resourceIcons">;
+  const data = (await response.json()) as Pick<GameSettings, "economy" | "colonization" | "customization" | "eventLog" | "turnTimer" | "map">;
   return {
     ...data,
     map: normalizeMapSettings(data.map),
-    resourceIcons: normalizeResourceIcons(data.resourceIcons),
   };
 }
 
@@ -2151,7 +2139,6 @@ export async function fetchGameSettings(token: string): Promise<GameSettings> {
   return {
     ...data,
     map: normalizeMapSettings(data.map),
-    resourceIcons: normalizeResourceIcons(data.resourceIcons),
   };
 }
 
@@ -2227,7 +2214,6 @@ export async function updateGameSettings(
   return {
     ...data,
     map: normalizeMapSettings(data.map),
-    resourceIcons: normalizeResourceIcons(data.resourceIcons),
   };
 }
 
@@ -2531,34 +2517,6 @@ export async function adminBroadcastUiNotification(
     const err = await response.json();
     throw new Error(err.error ?? "ADMIN_UI_NOTIFICATION_FAILED");
   }
-}
-
-export async function adminUploadResourceIcons(
-  token: string,
-  files: Partial<Record<keyof ResourceIconsMap, File | null>>,
-): Promise<{ resourceIcons: ResourceIconsMap }> {
-  const formData = new FormData();
-  (Object.entries(files) as Array<[keyof ResourceIconsMap, File | null | undefined]>).forEach(([key, file]) => {
-    if (file) {
-      formData.set(key, file);
-    }
-  });
-
-  const response = await fetch(`${API}/admin/resource-icons`, {
-    method: "PATCH",
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "RESOURCE_ICONS_UPDATE_FAILED");
-  }
-
-  const data = (await response.json()) as { resourceIcons: ResourceIconsMap };
-  return {
-    resourceIcons: normalizeResourceIcons(data.resourceIcons),
-  };
 }
 
 export async function adminUploadUiBackground(token: string, file: File): Promise<{ map: GameSettings["map"] }> {

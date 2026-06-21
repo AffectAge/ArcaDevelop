@@ -96,13 +96,14 @@ describe("AI strategy scoring", () => {
   it("merges archetype, personality, strategy, and country overrides deterministically", () => {
     const profile = resolveAiStrategyProfile([
       { id: "archetype:base", weights: { economyBuild: 1, economyUpgrade: 2 }, buildingWeights: { "building:farm": 3 } },
-      { id: "personality:trader", weights: { marketImport: 6, diplomacyContact: 4 }, goodWeights: { "good:grain": 4 } },
+      { id: "personality:trader", weights: { marketImport: 6, diplomacyContact: 4 }, goodWeights: { "good:grain": 4 }, maxBuildCompletionTurns: 12 },
       { id: "strategy:growth", regionWeights: { "region:alpha": 5 } },
-      { id: "country:alpha", weights: { economyUpgrade: 7, militaryMove: 9, colonization: 10 }, buildingWeights: { "building:farm": 8 } },
+      { id: "country:alpha", weights: { economyUpgrade: 7, militaryMove: 9, colonization: 10 }, buildingWeights: { "building:farm": 8 }, maxBuildCompletionTurns: 6 },
     ]);
 
     expect(profile).toEqual({
       weights: { economyBuild: 1, economyUpgrade: 7, marketImport: 6, diplomacyContact: 4, militaryMove: 9, colonization: 10 },
+      maxBuildCompletionTurns: 6,
       buildingWeights: { "building:farm": 8 },
       goodWeights: { "good:grain": 4 },
       regionWeights: { "region:alpha": 5 },

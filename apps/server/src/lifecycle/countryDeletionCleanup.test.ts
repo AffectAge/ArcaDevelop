@@ -60,6 +60,10 @@ describe("country deletion cleanup", () => {
     expect(worldBase.colonyProgressByRegion).toEqual({ "4": { "country:b": 5 } });
     expect(worldBase.regionConstructionQueueByRegion["6"]).toHaveLength(1);
     expect(worldBase.diplomacyProposals).toEqual([]);
+    expect(worldBase.countryScheduledEventsByCountryId["country:a"]).toBeUndefined();
+    expect(worldBase.countryEventFlagsByCountryId["country:a"]).toBeUndefined();
+    expect(worldBase.journalEntriesByCountryId["country:a"]).toBeUndefined();
+    expect(worldBase.countryModifiersByCountryId["country:a"]).toBeUndefined();
     expect(worldBase.divisionsById).toEqual({});
     expect(worldBase.divisionTemplatesByCountry["country:a"]).toBeUndefined();
     expect(worldBase.militaryFormationQueueByCountry["country:a"]).toBeUndefined();
@@ -77,6 +81,7 @@ function createWorldBase(): WorldBase {
       "country:b": { culture: 1, science: 1, religion: 1, colonization: 1, construction: 1, ducats: 1, gold: 1 },
     },
     resourceLedgerByTurn: {},
+    explanationRecordsByTurn: {},
     regionOwner: { "6": "country:a" },
     regionController: { "6": "country:a" },
     provinceOwner: { "1": "country:a", "2": "country:b" },
@@ -116,8 +121,24 @@ function createWorldBase(): WorldBase {
     regionResourceExplorationCountByRegion: {},
     parliamentByCountry: { "country:a": { seatsTotal: 0, lastElectionTurn: 1, nextElectionTurn: 1, partySeats: [], governmentPartyIds: [], activeLawByGroupId: {} } },
     technologyByCountry: { "country:a": { researchedTechnologyIds: [], activeTechnologyId: null, activeTechnologyIds: [], progressByTechnologyId: {}, lastScienceSpent: 0, lastCompletedTechnologyIds: [] } },
-    countryDecisionsByCountryId: { "country:a": { completedDecisionIds: [], cooldownUntilTurnByDecisionId: {}, history: [] } },
+    countryDecisionsByCountryId: { "country:a": { completedDecisionIds: [], cooldownUntilTurnByDecisionId: {}, usesByDecisionId: {}, usesByDecisionTargetKey: {}, chargesByDecisionId: {}, lastChargeTurnByDecisionId: {}, history: [] } },
     countryEventsByCountryId: { "country:a": { pending: [], completedEventIds: [], cooldownUntilTurnByEventId: {}, history: [] } },
+    countryScheduledEventsByCountryId: { "country:a": [] },
+    countryEventFlagsByCountryId: { "country:a": { "event:test": true } },
+    journalEntriesByCountryId: { "country:a": { active: [], completedJournalEntryIds: [], failedJournalEntryIds: [], cooldownUntilTurnByJournalEntryId: {}, history: [] } },
+    countryModifiersByCountryId: {
+      "country:a": [
+        {
+          id: "applied-modifier:a",
+          modifierId: "modifier:test",
+          countryId: "country:a",
+          sourceSystem: "event",
+          sourceId: "event:test",
+          createdTurnId: 1,
+          expiresTurnId: null,
+        },
+      ],
+    },
     divisionTemplatesByCountry: { "country:a": [] },
     divisionsById: {
       "division:a": {

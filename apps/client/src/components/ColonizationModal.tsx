@@ -123,7 +123,7 @@ export function ColonizationModal({
               <div className="text-xs text-[var(--arc-color-text-muted)]">{t("colonization.cost")}</div>
               <div className="mt-1 flex items-center gap-2 text-lg font-semibold text-[var(--arc-color-success-text)]">
                 {colonizationIconUrl ? (
-                  <img src={colonizationIconUrl} alt="" className="h-5 w-5 rounded object-contain" />
+                  <img src={colonizationIconUrl} alt="" className="h-[30px] w-[30px] object-contain" />
                 ) : (
                   <Flag size={18} className="text-[var(--arc-color-success-text)]" />
                 )}
@@ -133,7 +133,7 @@ export function ColonizationModal({
                 <span>{t("colonization.ducatsByArea")}</span>
                 <span className="inline-flex items-center gap-1 text-[var(--arc-color-gold)]">
                   {ducatsIconUrl ? (
-                    <img src={ducatsIconUrl} alt="" className="h-3.5 w-3.5 rounded-sm object-contain" />
+                    <img src={ducatsIconUrl} alt="" className="h-[21px] w-[21px] object-contain" />
                   ) : (
                     <Coins size={13} className="text-[var(--arc-color-gold)]" />
                   )}

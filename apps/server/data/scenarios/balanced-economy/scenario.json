@@ -1,15 +1,7 @@
 {
-  "id": "balanced-economy",
-  "name": "Сбалансированная экономика",
-  "description": "Сценарий с логичными цепочками зданий, товаров и профессий.",
+  "id": "economy",
+  "name": "economy",
+  "description": "Generated from my_map.geojson.",
   "startTurn": 1,
-  "calendar": {
-    "startYear": 1836,
-    "turnsPerYear": 12
-  },
-  "tags": [
-    "economy",
-    "scenario-content",
-    "balance"
-  ]
+  "mapRoot": "map"
 }

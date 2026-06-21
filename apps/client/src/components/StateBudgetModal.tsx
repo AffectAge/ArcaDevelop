@@ -387,7 +387,7 @@ export function StateBudgetModal({
                   <AppCard className="arc-budget-metric-card">
                     <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">{t("budget.metric.currentTreasury")}</div>
                     <div className="mt-1 flex items-center gap-2 text-lg font-semibold text-[var(--arc-color-atlas-ink)]">
-                      {ducatIconUrl ? <img src={ducatIconUrl} alt="" className="h-4 w-4 object-contain" /> : null}
+                      {ducatIconUrl ? <img src={ducatIconUrl} alt="" className="h-6 w-6 object-contain" /> : null}
                       {formatInt(currentDucats, locale)}
                     </div>
                   </AppCard>

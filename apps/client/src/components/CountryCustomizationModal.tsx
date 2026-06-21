@@ -61,7 +61,7 @@ function DucatValue({ value, iconUrl, className = "" }: { value: number; iconUrl
   return (
     <span className={`inline-flex items-center gap-1 ${className}`.trim()}>
       {iconUrl ? (
-        <img src={iconUrl} alt="" className="h-[13px] w-[13px] rounded-sm object-contain" />
+        <img src={iconUrl} alt="" className="h-[20px] w-[20px] object-contain" />
       ) : (
         <Coins size={13} className="text-[var(--arc-color-gold)]" />
       )}

@@ -8,6 +8,7 @@ export type ScenarioDefines = {
     maxCountriesPerTick?: unknown;
     maxDecisionCandidatesPerCountry?: unknown;
     contextCacheTtlTurns?: unknown;
+    maxBuildCompletionTurns?: unknown;
   };
   economy?: {
     baseCulturePerTurn?: unknown;
@@ -84,6 +85,7 @@ export const SCENARIO_DEFINES_SUPPORTED_SECTIONS = {
     maxCountriesPerTick: { type: "integer", min: 1, max: 1_000 },
     maxDecisionCandidatesPerCountry: { type: "integer", min: 1, max: 1_000 },
     contextCacheTtlTurns: { type: "integer", min: 1, max: 100 },
+    maxBuildCompletionTurns: { type: "integer", min: 1, max: 3_650 },
   },
   economy: {
     baseCulturePerTurn: { type: "integer", min: 0, max: 1_000_000_000_000 },
@@ -164,6 +166,7 @@ export type AiSettings = {
   maxCountriesPerTick: number;
   maxDecisionCandidatesPerCountry: number;
   contextCacheTtlTurns: number;
+  maxBuildCompletionTurns: number;
 };
 
 export type EconomySettings = {
@@ -232,6 +235,7 @@ const scenarioDefinesShapeSchema = z
         maxCountriesPerTick: z.unknown().optional(),
         maxDecisionCandidatesPerCountry: z.unknown().optional(),
         contextCacheTtlTurns: z.unknown().optional(),
+        maxBuildCompletionTurns: z.unknown().optional(),
       })
       .strict()
       .optional(),
@@ -416,6 +420,13 @@ export function normalizeScenarioAiDefines(
       1,
       100,
       "INVALID_SCENARIO_AI_CONTEXT_CACHE_TTL_TURNS",
+    ),
+    maxBuildCompletionTurns: normalizeIntegerInRange(
+      aiDefines.maxBuildCompletionTurns,
+      defaults.maxBuildCompletionTurns,
+      1,
+      3_650,
+      "INVALID_SCENARIO_AI_MAX_BUILD_COMPLETION_TURNS",
     ),
   };
 }

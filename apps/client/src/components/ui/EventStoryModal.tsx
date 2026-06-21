@@ -10,6 +10,7 @@ type EventStoryOption = {
   description?: string | null;
   effects?: string[];
   buttonColor?: string | null;
+  buttonTone?: "default" | "primary" | "danger" | "warning" | null;
   disabled?: boolean;
   pending?: boolean;
   onClick: () => void;
@@ -124,17 +125,22 @@ export function EventStoryModal({
                   <div className="mt-6 grid gap-3">
                     {options.map((option) => {
                       const buttonColor = option.buttonColor && /^#[0-9A-Fa-f]{6}$/.test(option.buttonColor) ? option.buttonColor : "var(--arc-color-primary-top)";
+                      const toneClassName = getEventButtonToneClassName(option.buttonTone ?? "default");
                       return (
                         <button
                           key={option.id}
                           type="button"
                           disabled={option.disabled}
                           onClick={option.onClick}
-                          style={{
-                            backgroundColor: `${buttonColor}cc`,
-                            borderColor: `${buttonColor}aa`,
-                          }}
-                          className="group rounded-lg border px-4 py-3 text-center shadow-[var(--arc-shadow-inset-button)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                          style={
+                            option.buttonTone
+                              ? undefined
+                              : {
+                                  backgroundColor: `${buttonColor}cc`,
+                                  borderColor: `${buttonColor}aa`,
+                                }
+                          }
+                          className={`group rounded-lg border px-4 py-3 text-center shadow-[var(--arc-shadow-inset-button)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 ${toneClassName}`}
                         >
                           <div className="flex items-center justify-center gap-2 text-sm font-semibold text-[var(--arc-color-text)]">
                             <CheckCircle2 size={15} className="text-[var(--arc-color-gold)]" />
@@ -156,4 +162,17 @@ export function EventStoryModal({
       </div>
     </Dialog>
   );
+}
+
+function getEventButtonToneClassName(tone: NonNullable<EventStoryOption["buttonTone"]>): string {
+  if (tone === "primary") {
+    return "border-[var(--arc-color-gold)] bg-[var(--arc-color-primary-top)]";
+  }
+  if (tone === "danger") {
+    return "border-[var(--arc-color-danger-border)] bg-[var(--arc-color-danger-top)]";
+  }
+  if (tone === "warning") {
+    return "border-[var(--arc-color-warning-border)] bg-[var(--arc-color-warning-top)]";
+  }
+  return "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-45)]";
 }

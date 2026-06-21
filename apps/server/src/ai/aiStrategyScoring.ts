@@ -21,6 +21,7 @@ export type AiStrategyWeights = {
 export type AiStrategyProfile = {
   id: string;
   weights?: Partial<AiStrategyWeights>;
+  maxBuildCompletionTurns?: number;
   buildingWeights?: Record<string, number>;
   goodWeights?: Record<string, number>;
   regionWeights?: Record<string, number>;
@@ -28,6 +29,7 @@ export type AiStrategyProfile = {
 
 export type ResolvedAiStrategyProfile = {
   weights: AiStrategyWeights;
+  maxBuildCompletionTurns: number | null;
   buildingWeights: Record<string, number>;
   goodWeights: Record<string, number>;
   regionWeights: Record<string, number>;
@@ -64,12 +66,17 @@ export function resolveAiStrategyProfile(profiles: AiStrategyProfile[]): Resolve
         militaryMove: normalizeWeight(profile.weights?.militaryMove, resolved.weights.militaryMove),
         colonization: normalizeWeight(profile.weights?.colonization, resolved.weights.colonization),
       },
+      maxBuildCompletionTurns: normalizeOptionalPositiveInteger(
+        profile.maxBuildCompletionTurns,
+        resolved.maxBuildCompletionTurns,
+      ),
       buildingWeights: mergeWeightMap(resolved.buildingWeights, profile.buildingWeights),
       goodWeights: mergeWeightMap(resolved.goodWeights, profile.goodWeights),
       regionWeights: mergeWeightMap(resolved.regionWeights, profile.regionWeights),
     }),
     {
       weights: defaultWeights,
+      maxBuildCompletionTurns: null,
       buildingWeights: {},
       goodWeights: {},
       regionWeights: {},
@@ -146,6 +153,12 @@ function mergeWeightMap(base: Record<string, number>, override: Record<string, n
 
 function normalizeWeight(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? round3(Math.max(0, Math.min(100, value))) : fallback;
+}
+
+function normalizeOptionalPositiveInteger(value: unknown, fallback: number | null): number | null {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(1, Math.min(3_650, Math.floor(value)))
+    : fallback;
 }
 
 function compareScoredAiCandidates<TCandidate extends AiCandidate>(

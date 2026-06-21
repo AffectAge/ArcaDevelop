@@ -15,6 +15,8 @@ describe("turnResolver", () => {
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.regionBuildingsByRegion).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.regionConstructionQueueByRegion).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.regionResourceDepositsByRegion).toBeTruthy();
+    expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.countryDecisionsByCountryId).toBeTruthy();
+    expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.journalEntriesByCountryId).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.divisionsById).toBeTruthy();
   });
 
@@ -26,6 +28,7 @@ describe("turnResolver", () => {
       maxCountriesPerTick: 3,
       maxDecisionCandidatesPerCountry: 5,
       contextCacheTtlTurns: 2,
+      maxBuildCompletionTurns: 8,
     };
 
     expect(
@@ -132,11 +135,16 @@ describe("turnResolver", () => {
       },
       applyCountryResourceIncomeTurn: () => calls.push("income"),
       applyPerTurnTreatyMoneyTransfers: () => calls.push("treaties"),
+      rechargeDecisionCharges: () => calls.push("decision-charges"),
       resolveTechnologyTurn: (news) => {
         news.push(makeNews("tech"));
         calls.push("tech");
       },
       autoResolveExpiredCountryEvents: () => calls.push("events-auto"),
+      resolveJournalEntriesTurn: (news) => {
+        news.push(makeNews("journal"));
+        calls.push("journal");
+      },
       maybeGenerateCountryEvents: (_news, uiNotifications) => {
         uiNotifications.push({ countryId: "country:a", notification: "event" });
         calls.push("events-generate");
@@ -158,7 +166,7 @@ describe("turnResolver", () => {
 
     expect(result.previousWorldBase).toEqual({ id: "snapshot" });
     expect(result.rejectedOrders.map((order) => order.reason)).toEqual(["MOVE_REJECTED", "BUILD_REJECTED"]);
-    expect(result.news.map((event) => event.title)).toEqual(["army", "stored", "queue", "capture", "tech"]);
+    expect(result.news.map((event) => event.title)).toEqual(["army", "stored", "queue", "capture", "tech", "journal"]);
     expect(result.uiNotifications.map((item) => item.notification)).toEqual(["event", "election"]);
     expect(colonizeTouchedAtSupport).toEqual(["region:active", "region:c"]);
     expect(turnId).toBe(4);
@@ -186,9 +194,12 @@ describe("turnResolver", () => {
       "ledger-flush",
       "treaties",
       "ledger-flush",
+      "decision-charges",
       "tech",
       "ledger-flush",
       "events-auto",
+      "ledger-flush",
+      "journal",
       "ledger-flush",
       "events-generate",
       "population",

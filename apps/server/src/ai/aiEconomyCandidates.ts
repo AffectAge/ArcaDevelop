@@ -64,6 +64,7 @@ export type AiEconomyCandidateParams<
   >;
   indexes: AiWorldIndexes;
   buildings: TBuilding[];
+  maxBuildCompletionTurns?: number;
   isBuildingUnlockedForCountry?: (buildingId: string, countryId: string) => boolean;
   getRegionBuildRestriction?: (building: TBuilding, regionId: string) => string | null;
 };
@@ -165,6 +166,8 @@ function canAiBuildInRegion<TBuilding extends BuildingMechanicsContentEntry>(
   if (!isCountryAllowedForBuildingSync(building, params.context.countryId)) return false;
   if (!isBuildingUnlocked(params, building.id)) return false;
   if (params.getRegionBuildRestriction?.(building, regionId)) return false;
+  if (hasQueuedBuildProject(params.world.regionConstructionQueueByRegion[regionId] ?? [], building.id)) return false;
+  if (!canAiAffordBuildProject(params.context.resources, building, params.maxBuildCompletionTurns)) return false;
 
   const counts = countBuildingOccurrences({
     buildingId: building.id,
@@ -180,6 +183,29 @@ function canAiBuildInRegion<TBuilding extends BuildingMechanicsContentEntry>(
   if (typeof countryLimit === "number" && counts.byCountry >= countryLimit) return false;
   if (!hasCountryLimitOverride && globalLimit != null && counts.global >= globalLimit) return false;
   return true;
+}
+
+function canAiAffordBuildProject(
+  resources: ResourceTotals,
+  building: BuildingMechanicsContentEntry,
+  maxBuildCompletionTurns = 8,
+): boolean {
+  const availableConstruction = Math.max(0, Number(resources.construction ?? 0));
+  const availableDucats = Math.max(0, Number(resources.ducats ?? 0));
+  const maxCompletionTurns = Math.max(1, Math.floor(Number(maxBuildCompletionTurns) || 8));
+  const costConstruction = Math.max(1, Math.floor(Number(building.costConstruction ?? 100)));
+  const costDucats = Math.max(0, Number(building.costDucats ?? 10));
+
+  if (availableConstruction <= 0) return false;
+  if (costDucats > availableDucats + 1e-9) return false;
+  return costConstruction / availableConstruction <= maxCompletionTurns;
+}
+
+function hasQueuedBuildProject(
+  queue: Array<{ projectType?: "build" | "upgrade"; buildingId?: string }>,
+  buildingId: string,
+): boolean {
+  return queue.some((project) => (project.projectType ?? "build") === "build" && project.buildingId === buildingId);
 }
 
 function isBuildingUnlocked<TBuilding extends BuildingMechanicsContentEntry>(

@@ -4,7 +4,6 @@ import multer from "multer";
 import {
   resolveContentUploadDir,
   resolveUploadDir,
-  resourceIconFields,
 } from "./uploadPaths";
 
 export const ONLY_IMAGES_UPLOAD_ERROR = "ONLY_IMAGES";
@@ -12,7 +11,6 @@ export const UPLOAD_FILE_SIZE_LIMIT_BYTES = 4 * 1024 * 1024;
 
 export function resolveUploadDestination(fieldname: string, kindParam?: string): string {
   if (fieldname === "civilopediaImage") return resolveUploadDir("civilopedia");
-  if (resourceIconFields.has(fieldname)) return resolveUploadDir("resource-icons");
   if (fieldname === "uiBackground") return resolveUploadDir("ui-backgrounds");
   if (fieldname === "marketLogo") return resolveUploadDir("markets");
   if (fieldname === "cultureLogo") return resolveContentUploadDir(kindParam);

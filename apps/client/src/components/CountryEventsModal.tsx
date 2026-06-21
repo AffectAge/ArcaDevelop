@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bell, CheckCircle2, History, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import type { CountryEventRecord, DecisionEffect, ResourceTotals } from "@arcanorum/shared";
+import type { CountryEventRecord, EventEffectSummary, GameEffect, ResourceTotals } from "@arcanorum/shared";
 import { chooseCountryEventOption, fetchCountryEvents, type CountryEventView } from "../lib/api";
+import { formatGameEffectPreview } from "../lib/gameEffectPreview";
 import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard, AppEmptyState } from "./ui/AppSurface";
@@ -38,14 +39,54 @@ const CATEGORY_LABEL_KEY: Record<string, UiTextKey> = {
   colonization: "shell.story.category.colonization",
 };
 
-function formatEffects(effects: DecisionEffect[] | undefined, t: (key: UiTextKey, params?: Record<string, string | number>) => string) {
-  return (effects ?? []).map((effect) => {
-    if (effect.type === "resource_delta") {
-      const amount = effect.amount >= 0 ? `+${effect.amount}` : String(effect.amount);
-      return `${amount} ${t(RESOURCE_LABEL_KEY[effect.resource])}`;
-    }
-    return t("countryEvents.effectFallback");
+function scenarioTextKey(key: string): UiTextKey {
+  return key as UiTextKey;
+}
+
+function formatEffects(effects: GameEffect[] | undefined, t: (key: UiTextKey, params?: Record<string, string | number>) => string) {
+  return (effects ?? []).map((effect) => formatGameEffectPreview(effect, t, RESOURCE_LABEL_KEY));
+}
+
+function formatHistoryEffect(effect: EventEffectSummary, t: (key: UiTextKey, params?: Record<string, string | number>) => string): string {
+  const resource = effect.resource ? t(RESOURCE_LABEL_KEY[effect.resource]) : "-";
+  const amount = effect.amount == null ? "-" : String(effect.amount);
+  const target = effect.eventId ?? effect.journalEntryId ?? effect.flagId ?? "-";
+  return t("countryEvents.historyEffectLine", {
+    type: effect.type,
+    resource,
+    amount,
+    target,
   });
+}
+
+function formatHistoryScopes(
+  scopes: CountryEventRecord["history"][number]["scopes"] | undefined,
+  t: (key: UiTextKey, params?: Record<string, string | number>) => string,
+): string {
+  const rows = Object.entries(scopes ?? {});
+  if (rows.length === 0) return t("countryEvents.historyScopesNone");
+  return rows
+    .slice(0, 3)
+    .map(([scopeId, scope]) => `${scopeId}: ${scope.labelKey ? t(scenarioTextKey(scope.labelKey)) : scope.id}`)
+    .join(", ");
+}
+
+function formatExplanationValue(value: string | number | boolean | null | undefined): string {
+  if (value == null) return "-";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  return String(value);
+}
+
+function formatTriggerExplanation(item: CountryEventView, t: (key: UiTextKey, params?: Record<string, string | number>) => string) {
+  const explanations = item.triggerExplanation ?? [];
+  if (explanations.length === 0) return [];
+  return explanations.slice(0, 4).map((explanation) =>
+    t("countryEvents.triggerExplanationLine", {
+      label: t(scenarioTextKey(explanation.labelKey)),
+      value: formatExplanationValue(explanation.value),
+      threshold: formatExplanationValue(explanation.threshold),
+    }),
+  );
 }
 
 export function CountryEventsModal({ open, token, countryId, focusPendingId, onResolvedPendingId, onClose }: Props) {
@@ -83,6 +124,9 @@ export function CountryEventsModal({ open, token, countryId, focusPendingId, onR
     [events, focusPendingId],
   );
   const visibleEvents = focusedEvent ? [focusedEvent] : events;
+  const eventTitle = (item: CountryEventView) => (item.event.titleKey ? t(scenarioTextKey(item.event.titleKey)) : item.name);
+  const eventDescription = (item: CountryEventView) =>
+    item.event.descriptionKey ? t(scenarioTextKey(item.event.descriptionKey)) : item.description || null;
 
   useEffect(() => {
     if (!open || !focusPendingId || loading) return;
@@ -115,11 +159,11 @@ export function CountryEventsModal({ open, token, countryId, focusPendingId, onR
       <EventStoryModal
         open={open}
         onClose={onClose}
-        title={item?.name ?? t("countryEvents.defaultEvent")}
+        title={item ? eventTitle(item) : t("countryEvents.defaultEvent")}
         subtitle={item ? t("countryEvents.storySubtitle", { turn: item.createdTurnId }) : t("countryEvents.loadingDescription")}
-        body={item?.description ?? null}
+        body={item ? eventDescription(item) : null}
         imageUrl={item?.logoUrl ?? null}
-        imageCaption={item ? item.name : null}
+        imageCaption={item ? eventTitle(item) : null}
         categoryLabel={item ? t(CATEGORY_LABEL_KEY[item.event.category] ?? "countryEvents.defaultEvent") : null}
         importantLabel={item?.event.blocking ? t("countryEvents.important") : null}
         accentColor={item?.color ?? "#4ade80"}
@@ -133,10 +177,10 @@ export function CountryEventsModal({ open, token, countryId, focusPendingId, onR
           const busy = choosingId === `${item?.pendingId}:${option.id}`;
           return {
             id: option.id,
-            label: option.label,
-            description: option.description,
+            label: t(scenarioTextKey(option.labelKey)),
+            description: option.descriptionKey ? t(scenarioTextKey(option.descriptionKey)) : null,
             effects,
-            buttonColor: option.buttonColor ?? null,
+            buttonTone: option.buttonTone ?? "default",
             pending: busy,
             disabled: Boolean(choosingId),
             onClick: () => item && chooseOption(item.pendingId, option.id),
@@ -149,7 +193,7 @@ export function CountryEventsModal({ open, token, countryId, focusPendingId, onR
   return (
     <AppModal open={open} onClose={onClose} modalKey="events" zIndexClassName="z-[170]">
       <AppModalHeader
-        title={focusedEvent ? focusedEvent.name : t("countryEvents.title")}
+        title={focusedEvent ? eventTitle(focusedEvent) : t("countryEvents.title")}
         description={focusedEvent ? t("countryEvents.choiceRequired") : importantCount > 0 ? t("countryEvents.importantPending", { count: importantCount }) : t("shell.action.eventsDescription")}
         onClose={onClose}
       />
@@ -172,10 +216,31 @@ export function CountryEventsModal({ open, token, countryId, focusPendingId, onR
           ) : (
             (record?.history ?? []).map((item) => (
               <AppCard key={`${item.eventId}-${item.resolvedTurnId}-${item.optionId}`} className="p-3">
-                <div className="text-sm font-semibold text-[var(--arc-color-text)]">{item.label}</div>
-                <div className="mt-1 text-xs text-[var(--arc-color-text-muted)]">
-                  {t("countryEvents.historyMeta", { option: item.optionLabel, turn: item.resolvedTurnId })}
+                <div className="text-sm font-semibold text-[var(--arc-color-text)]">
+                  {item.titleKey ? t(scenarioTextKey(item.titleKey)) : item.label ?? item.eventId}
                 </div>
+                <div className="mt-1 text-xs text-[var(--arc-color-text-muted)]">
+                  {t("countryEvents.historyMeta", {
+                    option: item.optionLabelKey ? t(scenarioTextKey(item.optionLabelKey)) : item.optionLabel ?? item.optionId,
+                    turn: item.resolvedTurnId,
+                  })}
+                </div>
+                <div className="mt-2 text-xs text-[var(--arc-color-text-muted)]">
+                  {t("countryEvents.historyScopes", { scopes: formatHistoryScopes(item.scopes, t) })}
+                </div>
+                {item.appliedEffects.length > 0 ? (
+                  <div className="mt-2 space-y-1 text-xs text-[var(--arc-color-text-muted)]">
+                    <div className="font-semibold text-[var(--arc-color-text-soft)]">{t("countryEvents.historyEffects")}</div>
+                    {item.appliedEffects.slice(0, 4).map((effect, index) => (
+                      <div key={`${item.eventId}:${item.resolvedTurnId}:${item.optionId}:effect:${index}`}>{formatHistoryEffect(effect, t)}</div>
+                    ))}
+                  </div>
+                ) : null}
+                {item.explanationIds.length > 0 ? (
+                  <div className="mt-2 text-xs text-[var(--arc-color-text-muted)]">
+                    {t("countryEvents.historyExplanations", { count: item.explanationIds.length })}
+                  </div>
+                ) : null}
               </AppCard>
             ))
           )}
@@ -208,8 +273,28 @@ export function CountryEventsModal({ open, token, countryId, focusPendingId, onR
                   </div>
                 </div>
                 <div className="min-w-0 p-5">
-                  <div className="text-2xl font-semibold text-[var(--arc-color-text)]">{item.name}</div>
-                  {item.description ? <div className="mt-3 text-sm leading-6 text-[var(--arc-color-text-soft)]">{item.description}</div> : null}
+                  <div className="text-2xl font-semibold text-[var(--arc-color-text)]">{eventTitle(item)}</div>
+                  {eventDescription(item) ? <div className="mt-3 text-sm leading-6 text-[var(--arc-color-text-soft)]">{eventDescription(item)}</div> : null}
+                  {(item.scopes?.region || (item.triggerExplanation?.length ?? 0) > 0) ? (
+                    <div className="mt-4 rounded-md border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-20)] p-3 text-xs text-[var(--arc-color-text-muted)]">
+                      {item.scopes?.region ? (
+                        <div>
+                          <span className="font-semibold text-[var(--arc-color-text-soft)]">{t("countryEvents.scopeRegion")}: </span>
+                          {item.scopes.region.labelKey ? t(scenarioTextKey(item.scopes.region.labelKey)) : item.scopes.region.id}
+                        </div>
+                      ) : null}
+                      {item.expiresTurnId != null ? (
+                        <div className="mt-1">
+                          {t("countryEvents.expiresTurn", { turn: item.expiresTurnId })}
+                        </div>
+                      ) : null}
+                      {formatTriggerExplanation(item, t).map((line, index) => (
+                        <div key={`${item.pendingId}:trigger:${index}`} className="mt-1">
+                          {line}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                   <div className="mt-5 grid gap-3">
                     {(item.event.options ?? []).map((option) => {
                       const effects = formatEffects(option.effects, t);
@@ -224,9 +309,9 @@ export function CountryEventsModal({ open, token, countryId, focusPendingId, onR
                         >
                           <div className="flex items-center gap-2 text-sm font-semibold text-[var(--arc-color-text)]">
                             <CheckCircle2 size={15} className="text-[var(--arc-color-gold)]" />
-                            {busy ? t("common.pending") : option.label}
+                            {busy ? t("common.pending") : t(scenarioTextKey(option.labelKey))}
                           </div>
-                          {option.description ? <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">{option.description}</div> : null}
+                          {option.descriptionKey ? <div className="mt-1 text-xs text-[var(--arc-color-text-soft)]">{t(scenarioTextKey(option.descriptionKey))}</div> : null}
                           {effects.length > 0 ? <div className="mt-2 text-xs text-[var(--arc-color-text-muted)]">{effects.join(", ")}</div> : null}
                         </button>
                       );

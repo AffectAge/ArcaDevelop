@@ -1,7 +1,7 @@
 import type { ResourceTotals } from "./core";
 import type { ResourceFlow } from "./resource-ledger";
 import type { DiplomacyProposal } from "./diplomacy";
-import type { CountryDecisionRecord, CountryEventRecord } from "./content";
+import type { CountryAppliedModifier, CountryDecisionRecord, CountryEventRecord, CountryJournalState, ExplanationRecord, ScheduledCountryEvent } from "./content";
 import type { Division, DivisionTemplate, MilitaryFormationQueueItem } from "./military";
 import type { BuildingInstance, RegionConstructionProject, RegionPopulation, RegionResourceDeposit, RegionResourceExplorationProject } from "./region-state";
 import type { CountryParliament, CountryTechnologyState } from "./politics";
@@ -9,6 +9,7 @@ export type WorldBase = {
   turnId: number;
   resourcesByCountry: Record<string, ResourceTotals>;
   resourceLedgerByTurn: Record<number, ResourceFlow[]>;
+  explanationRecordsByTurn: Record<number, ExplanationRecord[]>;
   regionOwner: Record<string, string>;
   regionController: Record<string, string>;
   provinceOwner: Record<string, string>;
@@ -27,6 +28,10 @@ export type WorldBase = {
   technologyByCountry: Record<string, CountryTechnologyState>;
   countryDecisionsByCountryId: Record<string, CountryDecisionRecord>;
   countryEventsByCountryId: Record<string, CountryEventRecord>;
+  countryScheduledEventsByCountryId: Record<string, ScheduledCountryEvent[]>;
+  countryEventFlagsByCountryId: Record<string, Record<string, string | number | boolean>>;
+  journalEntriesByCountryId: Record<string, CountryJournalState>;
+  countryModifiersByCountryId: Record<string, CountryAppliedModifier[]>;
   divisionTemplatesByCountry: Record<string, DivisionTemplate[]>;
   divisionsById: Record<string, Division>;
   militaryFormationQueueByCountry: Record<string, MilitaryFormationQueueItem[]>;
@@ -58,6 +63,11 @@ export const WORLD_DELTA_MASK = {
   regionOwner: 1 << 22,
   regionController: 1 << 23,
   resourceLedgerByTurn: 1 << 24,
+  countryScheduledEventsByCountryId: 1 << 25,
+  countryEventFlagsByCountryId: 1 << 26,
+  journalEntriesByCountryId: 1 << 27,
+  explanationRecordsByTurn: 1 << 28,
+  countryModifiersByCountryId: 1 << 29,
 } as const;
 
 export type WorldDelta = {
@@ -67,6 +77,7 @@ export type WorldDelta = {
   mask: number;
   c?: Record<string, ResourceTotals | null>;
   l?: Record<number, ResourceFlow[] | null>;
+  xr?: Record<number, ExplanationRecord[] | null>;
   a?: Record<string, string | null>;
   f?: Record<string, string | null>;
   o?: Record<string, string | null>;
@@ -85,6 +96,10 @@ export type WorldDelta = {
   h?: Record<string, CountryTechnologyState | null>;
   d?: Record<string, CountryDecisionRecord | null>;
   v?: Record<string, CountryEventRecord | null>;
+  s?: Record<string, ScheduledCountryEvent[] | null>;
+  xg?: Record<string, Record<string, string | number | boolean> | null>;
+  jo?: Record<string, CountryJournalState | null>;
+  cm?: Record<string, CountryAppliedModifier[] | null>;
   g?: Record<string, DivisionTemplate[] | null>;
   x?: Record<string, Division | null>;
   w?: Record<string, MilitaryFormationQueueItem[] | null>;

@@ -4,7 +4,7 @@ import { getUiLocale, setUiLocale, subscribeUiLocale, tUi, type UiLocale, type U
 type UiTranslator = {
   locale: UiLocale;
   setLocale: (locale: UiLocale) => void;
-  t: (key: UiTextKey, params?: Record<string, string | number>) => string;
+  t: (key: UiTextKey | string, params?: Record<string, string | number>) => string;
 };
 
 export function useUiText(): UiTranslator {
@@ -14,7 +14,7 @@ export function useUiText(): UiTranslator {
     () => ({
       locale,
       setLocale: setUiLocale,
-      t: (key: UiTextKey, params: Record<string, string | number> = {}) => tUi(key, params, locale),
+      t: (key: UiTextKey | string, params: Record<string, string | number> = {}) => tUi(key, params, locale),
     }),
     [locale],
   );

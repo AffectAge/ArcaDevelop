@@ -76,12 +76,17 @@ export function createAiFixtureWorld(overrides: AiFixtureWorldOverrides = {}): W
     technologyByCountry: {},
     countryDecisionsByCountryId: {},
     countryEventsByCountryId: {},
+    countryScheduledEventsByCountryId: {},
+    countryEventFlagsByCountryId: {},
+    journalEntriesByCountryId: {},
     divisionTemplatesByCountry: {},
     divisionsById: {},
     militaryFormationQueueByCountry: {},
     diplomacyProposals: [],
     ...overrides,
+    countryModifiersByCountryId: overrides.countryModifiersByCountryId ?? {},
     resourceLedgerByTurn: overrides.resourceLedgerByTurn ?? {},
+    explanationRecordsByTurn: overrides.explanationRecordsByTurn ?? {},
   };
 }
 

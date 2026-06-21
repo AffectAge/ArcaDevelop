@@ -3,6 +3,7 @@ import type {
   CountryEventRecord,
   DiplomacyProposal,
   DiplomacyProposalStatus,
+  ExplanationRecord,
   ResourceFlow,
   ResourceTotals,
   TreatyClause,
@@ -95,6 +96,63 @@ export function createWorldStateNormalizers(params: WorldStateNormalizerContext)
     return normalized;
   }
 
+  function normalizeExplanationRecordsByTurn(input: unknown): WorldBase["explanationRecordsByTurn"] {
+    const source = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
+    const normalized: WorldBase["explanationRecordsByTurn"] = {};
+    for (const [turnIdText, rawRecords] of Object.entries(source)) {
+      const recordTurnId = Number(turnIdText);
+      if (!Number.isInteger(recordTurnId) || recordTurnId < 1 || !Array.isArray(rawRecords)) continue;
+      const records: ExplanationRecord[] = [];
+      for (const raw of rawRecords) {
+        if (!raw || typeof raw !== "object") continue;
+        const row = raw as Record<string, unknown>;
+        const id = typeof row.id === "string" && row.id.trim() ? row.id.trim().slice(0, 160) : randomUUID();
+        const sourceId = typeof row.sourceId === "string" && row.sourceId.trim() ? row.sourceId.trim().slice(0, 160) : "";
+        const valueKey = typeof row.valueKey === "string" && row.valueKey.trim() ? row.valueKey.trim().slice(0, 160) : "";
+        const affectedObject = (normalizeCountryEventScopes({ affected: row.affectedObject }) ?? {}).affected;
+        if (!sourceId || !valueKey || !affectedObject) continue;
+        const causes = Array.isArray(row.causes)
+          ? row.causes
+              .map((rawCause): ExplanationRecord["causes"][number] | null => {
+                if (!rawCause || typeof rawCause !== "object") return null;
+                const cause = rawCause as Record<string, unknown>;
+                const labelKey =
+                  typeof cause.labelKey === "string" && cause.labelKey.trim()
+                    ? cause.labelKey.trim().slice(0, 160)
+                    : "";
+                if (!labelKey) return null;
+                const amount = Number(cause.amount);
+                return {
+                  labelKey,
+                  sourceId:
+                    typeof cause.sourceId === "string" && cause.sourceId.trim()
+                      ? cause.sourceId.trim().slice(0, 160)
+                      : null,
+                  value: normalizeCountryEventExplanationValue(cause.value),
+                  amount: Number.isFinite(amount) ? Number(amount.toFixed(3)) : null,
+                };
+              })
+              .filter((cause): cause is ExplanationRecord["causes"][number] => Boolean(cause))
+              .slice(0, 20)
+          : [];
+        records.push({
+          id,
+          turnId: Number.isFinite(Number(row.turnId)) ? Math.max(1, Math.floor(Number(row.turnId))) : recordTurnId,
+          sourceSystem: normalizeExplanationSourceSystem(row.sourceSystem),
+          sourceId,
+          affectedObject,
+          valueKey,
+          previousValue: normalizeCountryEventExplanationValue(row.previousValue),
+          newValue: normalizeCountryEventExplanationValue(row.newValue),
+          causes,
+          modifierIds: normalizeCountryIdList(row.modifierIds).slice(0, 40),
+        });
+      }
+      normalized[recordTurnId] = records.slice(0, 2_000);
+    }
+    return normalized;
+  }
+
   function normalizeTechnologyByCountryMap(input: unknown): WorldBase["technologyByCountry"] {
     const source = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
     const normalized: WorldBase["technologyByCountry"] = {};
@@ -136,6 +194,10 @@ export function createWorldStateNormalizers(params: WorldStateNormalizerContext)
         cooldownUntilTurnByDecisionId[decisionId] = Math.max(1, Math.floor(value));
       }
     }
+    const usesByDecisionId = normalizePositiveNumberMap(source.usesByDecisionId, 120);
+    const usesByDecisionTargetKey = normalizePositiveNumberMap(source.usesByDecisionTargetKey, 300);
+    const chargesByDecisionId = normalizePositiveNumberMap(source.chargesByDecisionId, 120);
+    const lastChargeTurnByDecisionId = normalizePositiveNumberMap(source.lastChargeTurnByDecisionId, 120);
     const history = Array.isArray(source.history)
       ? source.history
           .map((raw): CountryDecisionRecord["history"][number] | null => {
@@ -147,11 +209,34 @@ export function createWorldStateNormalizers(params: WorldStateNormalizerContext)
               decisionId,
               takenTurnId: Number.isFinite(Number(row.takenTurnId)) ? Math.max(1, Math.floor(Number(row.takenTurnId))) : turnId,
               label: typeof row.label === "string" && row.label.trim() ? row.label.trim().slice(0, 160) : decisionId,
+              scopes: normalizeCountryEventScopes(row.scopes) ?? {},
+              appliedEffects: normalizeEventEffectSummaries(row.appliedEffects),
+              explanationIds: normalizeCountryIdList(row.explanationIds).slice(0, 40),
             };
           })
           .filter((row): row is CountryDecisionRecord["history"][number] => Boolean(row))
       : [];
-    return { completedDecisionIds, cooldownUntilTurnByDecisionId, history };
+    return {
+      completedDecisionIds,
+      cooldownUntilTurnByDecisionId,
+      usesByDecisionId,
+      usesByDecisionTargetKey,
+      chargesByDecisionId,
+      lastChargeTurnByDecisionId,
+      history,
+    };
+  }
+
+  function normalizePositiveNumberMap(input: unknown, maxEntries: number): Record<string, number> {
+    const normalized: Record<string, number> = {};
+    if (!input || typeof input !== "object") return normalized;
+    for (const [key, raw] of Object.entries(input as Record<string, unknown>)) {
+      if (!key || Object.keys(normalized).length >= maxEntries) continue;
+      const value = Number(raw);
+      if (!Number.isFinite(value) || value <= 0) continue;
+      normalized[key.slice(0, 240)] = Math.floor(value);
+    }
+    return normalized;
   }
 
   function normalizeCountryDecisionsMap(input: unknown): WorldBase["countryDecisionsByCountryId"] {
@@ -176,11 +261,19 @@ export function createWorldStateNormalizers(params: WorldStateNormalizerContext)
             const eventId = typeof row.eventId === "string" && row.eventId.trim() ? row.eventId.trim().slice(0, 120) : "";
             const countryId = typeof row.countryId === "string" && row.countryId.trim() ? row.countryId.trim().slice(0, 120) : "";
             if (!eventId || !countryId) return null;
+            const scopes = normalizeCountryEventScopes(row.scopes);
+            const triggerExplanation = normalizeCountryEventTriggerExplanation(row.triggerExplanation);
             return {
               id,
               eventId,
               countryId,
               createdTurnId: Number.isFinite(Number(row.createdTurnId)) ? Math.max(1, Math.floor(Number(row.createdTurnId))) : turnId,
+              expiresTurnId:
+                Number.isFinite(Number(row.expiresTurnId)) && Number(row.expiresTurnId) > 0
+                  ? Math.max(1, Math.floor(Number(row.expiresTurnId)))
+                  : null,
+              scopes,
+              triggerExplanation,
             };
           })
           .filter((row): row is CountryEventRecord["pending"][number] => Boolean(row))
@@ -205,8 +298,16 @@ export function createWorldStateNormalizers(params: WorldStateNormalizerContext)
               eventId,
               optionId,
               resolvedTurnId: Number.isFinite(Number(row.resolvedTurnId)) ? Math.max(1, Math.floor(Number(row.resolvedTurnId))) : turnId,
-              label: typeof row.label === "string" && row.label.trim() ? row.label.trim().slice(0, 160) : eventId,
-              optionLabel: typeof row.optionLabel === "string" && row.optionLabel.trim() ? row.optionLabel.trim().slice(0, 160) : optionId,
+              titleKey: typeof row.titleKey === "string" && row.titleKey.trim() ? row.titleKey.trim().slice(0, 160) : null,
+              optionLabelKey:
+                typeof row.optionLabelKey === "string" && row.optionLabelKey.trim()
+                  ? row.optionLabelKey.trim().slice(0, 160)
+                  : null,
+              label: typeof row.label === "string" && row.label.trim() ? row.label.trim().slice(0, 160) : undefined,
+              optionLabel: typeof row.optionLabel === "string" && row.optionLabel.trim() ? row.optionLabel.trim().slice(0, 160) : undefined,
+              scopes: normalizeCountryEventScopes(row.scopes) ?? {},
+              appliedEffects: normalizeEventEffectSummaries(row.appliedEffects),
+              explanationIds: normalizeCountryIdList(row.explanationIds).slice(0, 40),
             };
           })
           .filter((row): row is CountryEventRecord["history"][number] => Boolean(row))
@@ -219,6 +320,82 @@ export function createWorldStateNormalizers(params: WorldStateNormalizerContext)
     };
   }
 
+  function normalizeCountryEventScopes(input: unknown): CountryEventRecord["pending"][number]["scopes"] {
+    const source = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
+    const normalized: NonNullable<CountryEventRecord["pending"][number]["scopes"]> = {};
+    for (const [scopeId, raw] of Object.entries(source)) {
+      if (!scopeId || !raw || typeof raw !== "object") continue;
+      const row = raw as Record<string, unknown>;
+      const kind = typeof row.kind === "string" ? row.kind.trim() : "";
+      const id = typeof row.id === "string" ? row.id.trim().slice(0, 120) : "";
+      if (!kind || !id) continue;
+      normalized[scopeId.slice(0, 80)] = {
+        kind: kind as NonNullable<CountryEventRecord["pending"][number]["scopes"]>[string]["kind"],
+        id,
+        labelKey: typeof row.labelKey === "string" && row.labelKey.trim() ? row.labelKey.trim().slice(0, 160) : null,
+      };
+    }
+    return normalized;
+  }
+
+  function normalizeCountryEventTriggerExplanation(
+    input: unknown,
+  ): NonNullable<CountryEventRecord["pending"][number]["triggerExplanation"]> {
+    if (!Array.isArray(input)) return [];
+    return input
+      .map((raw): NonNullable<CountryEventRecord["pending"][number]["triggerExplanation"]>[number] | null => {
+        if (!raw || typeof raw !== "object") return null;
+        const row = raw as Record<string, unknown>;
+        const triggerId = typeof row.triggerId === "string" && row.triggerId.trim() ? row.triggerId.trim().slice(0, 120) : "";
+        const labelKey = typeof row.labelKey === "string" && row.labelKey.trim() ? row.labelKey.trim().slice(0, 160) : "";
+        if (!triggerId || !labelKey) return null;
+        return {
+          triggerId,
+          passed: row.passed === true,
+          value: normalizeCountryEventExplanationValue(row.value),
+          threshold: normalizeCountryEventExplanationValue(row.threshold),
+          affectedObject: (normalizeCountryEventScopes({ affected: row.affectedObject }) ?? {}).affected ?? null,
+          labelKey,
+        };
+      })
+      .filter((row): row is NonNullable<CountryEventRecord["pending"][number]["triggerExplanation"]>[number] => Boolean(row))
+      .slice(0, 40);
+  }
+
+  function normalizeEventEffectSummaries(input: unknown): CountryEventRecord["history"][number]["appliedEffects"] {
+    if (!Array.isArray(input)) return [];
+    return input
+      .map((raw): CountryEventRecord["history"][number]["appliedEffects"][number] | null => {
+        if (!raw || typeof raw !== "object") return null;
+        const row = raw as Record<string, unknown>;
+        const type = typeof row.type === "string" && row.type.trim() ? row.type.trim().slice(0, 80) : "";
+        if (!type) return null;
+        const resource = typeof row.resource === "string" && RESOURCE_TOTAL_KEYS.includes(row.resource as keyof ResourceTotals)
+          ? (row.resource as keyof ResourceTotals)
+          : null;
+        const amount = Number(row.amount);
+        const direction = row.direction === "income" || row.direction === "expense" ? row.direction : null;
+        return {
+          type: type as CountryEventRecord["history"][number]["appliedEffects"][number]["type"],
+          resource,
+          amount: Number.isFinite(amount) ? Number(amount.toFixed(3)) : null,
+          direction,
+          eventId: typeof row.eventId === "string" && row.eventId.trim() ? row.eventId.trim().slice(0, 120) : null,
+          journalEntryId: typeof row.journalEntryId === "string" && row.journalEntryId.trim() ? row.journalEntryId.trim().slice(0, 120) : null,
+          flagId: typeof row.flagId === "string" && row.flagId.trim() ? row.flagId.trim().slice(0, 160) : null,
+        };
+      })
+      .filter((item): item is CountryEventRecord["history"][number]["appliedEffects"][number] => Boolean(item))
+      .slice(0, 30);
+  }
+
+  function normalizeCountryEventExplanationValue(input: unknown): number | string | boolean | null {
+    if (typeof input === "number" && Number.isFinite(input)) return input;
+    if (typeof input === "string") return input.trim().slice(0, 160);
+    if (typeof input === "boolean") return input;
+    return null;
+  }
+
   function normalizeCountryEventsMap(input: unknown): WorldBase["countryEventsByCountryId"] {
     const normalized: WorldBase["countryEventsByCountryId"] = {};
     if (input && typeof input === "object") {
@@ -228,6 +405,196 @@ export function createWorldStateNormalizers(params: WorldStateNormalizerContext)
       }
     }
     return normalized;
+  }
+
+  function normalizeScheduledCountryEventsMap(input: unknown): WorldBase["countryScheduledEventsByCountryId"] {
+    const normalized: WorldBase["countryScheduledEventsByCountryId"] = {};
+    if (!input || typeof input !== "object") return normalized;
+    for (const [countryId, rawItems] of Object.entries(input as Record<string, unknown>)) {
+      if (!countryId || !Array.isArray(rawItems)) continue;
+      const items = rawItems
+        .map((raw): WorldBase["countryScheduledEventsByCountryId"][string][number] | null => {
+          if (!raw || typeof raw !== "object") return null;
+          const row = raw as Record<string, unknown>;
+          const eventId = typeof row.eventId === "string" && row.eventId.trim() ? row.eventId.trim().slice(0, 120) : "";
+          const eventCountryId = typeof row.countryId === "string" && row.countryId.trim() ? row.countryId.trim().slice(0, 120) : countryId;
+          const scheduledTurnId = Number(row.scheduledTurnId);
+          if (!eventId || !eventCountryId || !Number.isFinite(scheduledTurnId)) return null;
+          return {
+            id: typeof row.id === "string" && row.id.trim() ? row.id.trim().slice(0, 120) : randomUUID(),
+            eventId,
+            countryId: eventCountryId,
+            scheduledTurnId: Math.max(1, Math.floor(scheduledTurnId)),
+            scopes: normalizeCountryEventScopes(row.scopes) ?? {},
+            chainId: typeof row.chainId === "string" && row.chainId.trim() ? row.chainId.trim().slice(0, 120) : null,
+            createdTurnId:
+              Number.isFinite(Number(row.createdTurnId)) && Number(row.createdTurnId) > 0
+                ? Math.max(1, Math.floor(Number(row.createdTurnId)))
+                : null,
+            triggerExplanation: normalizeCountryEventTriggerExplanation(row.triggerExplanation),
+          };
+        })
+        .filter((item): item is WorldBase["countryScheduledEventsByCountryId"][string][number] => Boolean(item))
+        .sort((a, b) => a.scheduledTurnId - b.scheduledTurnId || a.eventId.localeCompare(b.eventId))
+        .slice(0, 200);
+      if (items.length > 0) normalized[countryId] = items;
+    }
+    return normalized;
+  }
+
+  function normalizeCountryEventFlagsMap(input: unknown): WorldBase["countryEventFlagsByCountryId"] {
+    const normalized: WorldBase["countryEventFlagsByCountryId"] = {};
+    if (!input || typeof input !== "object") return normalized;
+    for (const [countryId, rawFlags] of Object.entries(input as Record<string, unknown>)) {
+      if (!countryId || !rawFlags || typeof rawFlags !== "object") continue;
+      const flags: Record<string, string | number | boolean> = {};
+      for (const [flagId, rawValue] of Object.entries(rawFlags as Record<string, unknown>)) {
+        if (!flagId) continue;
+        if (typeof rawValue === "string") flags[flagId.slice(0, 160)] = rawValue.slice(0, 160);
+        if (typeof rawValue === "number" && Number.isFinite(rawValue)) flags[flagId.slice(0, 160)] = Number(rawValue.toFixed(3));
+        if (typeof rawValue === "boolean") flags[flagId.slice(0, 160)] = rawValue;
+      }
+      if (Object.keys(flags).length > 0) normalized[countryId] = flags;
+    }
+    return normalized;
+  }
+
+  function normalizeJournalEntriesMap(input: unknown): WorldBase["journalEntriesByCountryId"] {
+    const normalized: WorldBase["journalEntriesByCountryId"] = {};
+    if (!input || typeof input !== "object") return normalized;
+    for (const [countryId, raw] of Object.entries(input as Record<string, unknown>)) {
+      if (!countryId || !raw || typeof raw !== "object") continue;
+      normalized[countryId] = normalizeCountryJournalState(raw);
+    }
+    return normalized;
+  }
+
+  function normalizeCountryModifiersMap(input: unknown): WorldBase["countryModifiersByCountryId"] {
+    const normalized: WorldBase["countryModifiersByCountryId"] = {};
+    if (!input || typeof input !== "object") return normalized;
+    for (const [countryId, rawItems] of Object.entries(input as Record<string, unknown>)) {
+      if (!countryId || !Array.isArray(rawItems)) continue;
+      const items = rawItems
+        .map((raw): WorldBase["countryModifiersByCountryId"][string][number] | null => {
+          if (!raw || typeof raw !== "object") return null;
+          const row = raw as Record<string, unknown>;
+          const modifierId = typeof row.modifierId === "string" && row.modifierId.trim() ? row.modifierId.trim().slice(0, 120) : "";
+          const sourceId = typeof row.sourceId === "string" && row.sourceId.trim() ? row.sourceId.trim().slice(0, 160) : "";
+          if (!modifierId || !sourceId) return null;
+          const createdTurnId = Number(row.createdTurnId);
+          const expiresTurnId = Number(row.expiresTurnId);
+          return {
+            id: typeof row.id === "string" && row.id.trim() ? row.id.trim().slice(0, 160) : randomUUID(),
+            modifierId,
+            countryId,
+            sourceSystem:
+              row.sourceSystem === "decision" || row.sourceSystem === "journal" || row.sourceSystem === "event"
+                ? row.sourceSystem
+                : "event",
+            sourceId,
+            createdTurnId: Number.isInteger(createdTurnId) && createdTurnId > 0 ? createdTurnId : turnId,
+            expiresTurnId: Number.isInteger(expiresTurnId) && expiresTurnId > 0 ? expiresTurnId : null,
+          };
+        })
+        .filter((item): item is WorldBase["countryModifiersByCountryId"][string][number] => Boolean(item))
+        .sort((a, b) => a.createdTurnId - b.createdTurnId || a.id.localeCompare(b.id))
+        .slice(-200);
+      if (items.length > 0) normalized[countryId] = items;
+    }
+    return normalized;
+  }
+
+  function normalizeCountryJournalState(input: unknown): WorldBase["journalEntriesByCountryId"][string] {
+    const source = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
+    const active = Array.isArray(source.active)
+      ? source.active
+          .map((raw): WorldBase["journalEntriesByCountryId"][string]["active"][number] | null => {
+            if (!raw || typeof raw !== "object") return null;
+            const row = raw as Record<string, unknown>;
+            const id = typeof row.id === "string" && row.id.trim() ? row.id.trim().slice(0, 120) : randomUUID();
+            const journalEntryId =
+              typeof row.journalEntryId === "string" && row.journalEntryId.trim() ? row.journalEntryId.trim().slice(0, 120) : "";
+            const countryId = typeof row.countryId === "string" && row.countryId.trim() ? row.countryId.trim().slice(0, 120) : "";
+            if (!journalEntryId || !countryId) return null;
+            const progress = row.progress && typeof row.progress === "object" ? (row.progress as Record<string, unknown>) : {};
+            const current = Number(progress.current);
+            const target = Number(progress.target);
+            const safeTarget = Number.isFinite(target) && target > 0 ? target : 1;
+            const safeCurrent = Number.isFinite(current) ? Math.max(0, current) : 0;
+            return {
+              id,
+              journalEntryId,
+              countryId,
+              startedTurnId: Number.isFinite(Number(row.startedTurnId)) ? Math.max(1, Math.floor(Number(row.startedTurnId))) : turnId,
+              expiresTurnId:
+                Number.isFinite(Number(row.expiresTurnId)) && Number(row.expiresTurnId) > 0
+                  ? Math.max(1, Math.floor(Number(row.expiresTurnId)))
+                  : null,
+              state: "active",
+              progress: {
+                current: Number(safeCurrent.toFixed(3)),
+                target: Number(safeTarget.toFixed(3)),
+                percent: Number(Math.min(100, Math.max(0, (safeCurrent / safeTarget) * 100)).toFixed(3)),
+                labelKey:
+                  typeof progress.labelKey === "string" && progress.labelKey.trim()
+                    ? progress.labelKey.trim().slice(0, 160)
+                    : "journal.progress.manual",
+                lastDelta:
+                  Number.isFinite(Number(progress.lastDelta)) ? Number(Number(progress.lastDelta).toFixed(3)) : null,
+              },
+              scopes: normalizeCountryEventScopes(row.scopes) ?? {},
+              variables: normalizeCountryEventFlagsMap({ row: row.variables }).row ?? {},
+              lastUpdatedTurnId: Number.isFinite(Number(row.lastUpdatedTurnId))
+                ? Math.max(1, Math.floor(Number(row.lastUpdatedTurnId)))
+                : turnId,
+              explanationIds: normalizeCountryIdList(row.explanationIds).slice(0, 40),
+            };
+          })
+          .filter((item): item is WorldBase["journalEntriesByCountryId"][string]["active"][number] => Boolean(item))
+          .slice(0, 100)
+      : [];
+    const cooldownUntilTurnByJournalEntryId: Record<string, number> = {};
+    if (source.cooldownUntilTurnByJournalEntryId && typeof source.cooldownUntilTurnByJournalEntryId === "object") {
+      for (const [journalEntryId, rawTurn] of Object.entries(source.cooldownUntilTurnByJournalEntryId as Record<string, unknown>)) {
+        const value = Number(rawTurn);
+        if (!journalEntryId || !Number.isFinite(value)) continue;
+        cooldownUntilTurnByJournalEntryId[journalEntryId] = Math.max(1, Math.floor(value));
+      }
+    }
+    const history = Array.isArray(source.history)
+      ? source.history
+          .map((raw): WorldBase["journalEntriesByCountryId"][string]["history"][number] | null => {
+            if (!raw || typeof raw !== "object") return null;
+            const row = raw as Record<string, unknown>;
+            const journalEntryId =
+              typeof row.journalEntryId === "string" && row.journalEntryId.trim() ? row.journalEntryId.trim().slice(0, 120) : "";
+            const instanceId = typeof row.instanceId === "string" && row.instanceId.trim() ? row.instanceId.trim().slice(0, 120) : "";
+            if (!journalEntryId || !instanceId) return null;
+            const state = row.state === "failed" || row.state === "cancelled" ? row.state : "completed";
+            return {
+              journalEntryId,
+              instanceId,
+              state,
+              startedTurnId: Number.isFinite(Number(row.startedTurnId)) ? Math.max(1, Math.floor(Number(row.startedTurnId))) : turnId,
+              resolvedTurnId: Number.isFinite(Number(row.resolvedTurnId)) ? Math.max(1, Math.floor(Number(row.resolvedTurnId))) : turnId,
+              scopes: normalizeCountryEventScopes(row.scopes) ?? {},
+              outcomeLabelKey:
+                typeof row.outcomeLabelKey === "string" && row.outcomeLabelKey.trim()
+                  ? row.outcomeLabelKey.trim().slice(0, 160)
+                  : "journal.outcome.completed",
+              explanationIds: normalizeCountryIdList(row.explanationIds).slice(0, 40),
+            };
+          })
+          .filter((item): item is WorldBase["journalEntriesByCountryId"][string]["history"][number] => Boolean(item))
+          .slice(0, 200)
+      : [];
+    return {
+      active,
+      completedJournalEntryIds: normalizeCountryIdList(source.completedJournalEntryIds),
+      failedJournalEntryIds: normalizeCountryIdList(source.failedJournalEntryIds),
+      cooldownUntilTurnByJournalEntryId,
+      history,
+    };
   }
 
   const DIPLOMACY_PROPOSAL_STATUSES = new Set<DiplomacyProposalStatus>([
@@ -395,11 +762,17 @@ export function createWorldStateNormalizers(params: WorldStateNormalizerContext)
     normalizeResourceTotals,
     normalizeResourcesByCountryMap,
     normalizeResourceLedgerByTurn,
+    normalizeExplanationRecordsByTurn,
     normalizeTechnologyByCountryMap,
     normalizeCountryDecisionRecord,
     normalizeCountryDecisionsMap,
     normalizeCountryEventRecord,
     normalizeCountryEventsMap,
+    normalizeScheduledCountryEventsMap,
+    normalizeCountryEventFlagsMap,
+    normalizeJournalEntriesMap,
+    normalizeCountryModifiersMap,
+    normalizeCountryJournalState,
     makeDefaultDiplomacyProposalName,
     normalizeDiplomacyProposalName,
     normalizeTreatyClauses,
@@ -433,6 +806,19 @@ function normalizeResourceFlowSourceType(input: unknown): ResourceFlow["sourceTy
     input === "system"
     ? input
     : "system";
+}
+
+function normalizeExplanationSourceSystem(input: unknown): ExplanationRecord["sourceSystem"] {
+  return input === "event" ||
+    input === "decision" ||
+    input === "journal" ||
+    input === "economy" ||
+    input === "technology" ||
+    input === "construction" ||
+    input === "diplomacy" ||
+    input === "military"
+    ? input
+    : "event";
 }
 
 function normalizeFlatMetadata(input: unknown): Record<string, string | number | boolean | null> | undefined {

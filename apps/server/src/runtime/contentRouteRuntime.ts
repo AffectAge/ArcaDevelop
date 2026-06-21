@@ -4,7 +4,6 @@ import { imageSize } from "image-size";
 import type express from "express";
 import type { EventLogEntry, WsOutMessage } from "@arcanorum/shared";
 import { registerAdminAssetRoutes } from "../routes/adminAssetRoutes";
-import type { ResourceIconKey } from "../routes/adminAssetRoutes";
 import { registerContentEntryRoutes } from "../routes/contentEntryRoutes";
 import type {
   ContentEntryPayload,
@@ -63,30 +62,12 @@ export function registerContentRouteRuntime(params: ContentRouteRuntimeParams): 
     removeUploadedFiles: params.removeUploadedFiles,
     removeUploadedByUrl: params.removeUploadedByUrl,
     makeVersionedUploadUrl: params.makeVersionedUploadUrl,
-    getResourceIcons: () => params.getGameSettings().resourceIcons,
-    setResourceIcon: (key: ResourceIconKey, url) => {
-      params.getGameSettings().resourceIcons[key] = url;
-    },
     getUiBackgroundUrl: () => params.getGameSettings().map.backgroundImageUrl,
     setUiBackgroundUrl: (url) => {
       params.getGameSettings().map.backgroundImageUrl = url;
     },
     getMapSettings: () => params.getGameSettings().map,
     savePersistentState: params.savePersistentState,
-    afterResourceIconsUpdated: (actorCountryId) => {
-      params.broadcast({
-        type: "NEWS_EVENT",
-        event: params.makeOfficialNews({
-          turn: params.getTurnId(),
-          category: "system",
-          title: "Иконки ресурсов обновлены",
-          message: "Администратор обновил иконки очков/ресурсов в интерфейсе",
-          countryId: actorCountryId,
-          priority: "low",
-          visibility: "public",
-        }),
-      });
-    },
     afterUiBackgroundUpdated: (actorCountryId) => {
       params.broadcast({
         type: "NEWS_EVENT",

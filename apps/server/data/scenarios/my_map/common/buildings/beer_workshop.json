@@ -1,0 +1,79 @@
+{
+  "id": "building:beer_workshop",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 175,
+  "costDucats": 138,
+  "startingDucats": 48,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 103,
+  "upgradeCostConstruction": 131,
+  "sectorId": "sector:consumer",
+  "industryId": "industry:food",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:grain",
+      "amount": 22
+    },
+    {
+      "goodId": "good:sugar",
+      "amount": 3
+    },
+    {
+      "goodId": "good:electricity",
+      "amount": 3
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:beer",
+      "amount": 26.37
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:laborer",
+      "workers": 600
+    },
+    {
+      "professionId": "profession:machinist",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 70
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.beer_workshop.name"
+}

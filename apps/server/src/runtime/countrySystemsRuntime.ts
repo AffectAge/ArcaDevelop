@@ -14,6 +14,7 @@ type CountrySystemsRuntimeParams = {
   normalizeCountryEventRecord: Parameters<typeof createCountryProgressionRuntime>[0]["normalizeCountryEventRecord"];
   normalizeResourceTotals: Parameters<typeof createCountryWorldRuntime>[0]["normalizeResourceTotals"];
   modifierConditionsMatchCountry: Parameters<typeof createCountryProgressionRuntime>[0]["modifierConditionsMatchCountry"];
+  countryHasModifier?: Parameters<typeof createCountryProgressionRuntime>[0]["countryHasModifier"];
   resolveModifiedValue: Parameters<typeof createCountryProgressionRuntime>[0]["resolveModifiedValue"];
   addResourceLedgerIncome?: (input: ResourceLedgerEntryInput) => void;
   addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
@@ -34,6 +35,7 @@ export function createCountrySystemsRuntime(params: CountrySystemsRuntimeParams)
     normalizeCountryDecisionRecord: params.normalizeCountryDecisionRecord,
     normalizeCountryEventRecord: params.normalizeCountryEventRecord,
     modifierConditionsMatchCountry: params.modifierConditionsMatchCountry,
+    countryHasModifier: params.countryHasModifier,
     resolveModifiedValue: params.resolveModifiedValue,
     addResourceLedgerIncome: params.addResourceLedgerIncome,
     addResourceLedgerExpense: params.addResourceLedgerExpense,

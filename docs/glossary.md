@@ -13,6 +13,17 @@
 - **Order:** Player or AI request validated by the authoritative server.
 - **World Delta:** Compact server-to-client state update with versioning and ACK/replay.
 - **Fallback:** Alternate behavior used when normal data/path is missing. Gameplay fallback requires approval; technical safety fallback must be documented.
+- **Event Option:** Scenario-authored choice on a country event. New authored options use localization keys and theme-driven `buttonTone`, not raw labels or colors.
+- **Event Scope:** Resolved object context for an event, such as the root country and selected region. Pending events persist scopes so UI and debugging can explain what the event was about.
+- **Event Chain:** Scenario-authored sequence of country events. Followups are scheduled as future events, then promoted to pending events when their scheduled turn arrives.
+- **Event Timeout:** Explicit pending-event expiration turn calculated from `timeoutTurns`. Timeout resolution uses `defaultOptionId` when present.
+- **Event Flag:** Country-scoped scripting value written by event effects. Event flags live in `WorldBase.countryEventFlagsByCountryId` and are cleaned up with country deletion.
+- **Event-Control Effect:** `GameEffect` variant that triggers, schedules, cancels, sets, or clears event state instead of changing resources.
+- **Event Trigger Explanation:** Structured explanation row captured when an event trigger is evaluated. It records the predicate, result, value, threshold, and affected object where applicable.
+- **Explanation Record:** Bounded world-state record in `WorldBase.explanationRecordsByTurn` that explains an applied visible state change with turn, source system, source id, affected object, previous value, new value, causes, and related modifiers.
+- **Game Effect:** Shared scripting effect payload used by events and future scripting systems. The current implemented event slice supports resource effects.
+- **Journal Entry:** Scenario-authored country objective or situation tracked in `WorldBase.journalEntriesByCountryId`. Journal entries use localized text, event-style scopes/triggers, lifecycle outcomes, history, cooldowns, and shared effects.
+- **Journal Lifecycle:** Runtime state transition for a journal entry: started, completed, failed, or cancelled. Lifecycle changes may apply resource effects, trigger events, and create history rows.
 ## Resource Ledger
 
 The bounded country resource journal. Mechanics emit `ResourceFlow` income or expense entries; resource ledger runtime applies the net result to `resourcesByCountry` and stores recent history in `resourceLedgerByTurn` for UI explanations.

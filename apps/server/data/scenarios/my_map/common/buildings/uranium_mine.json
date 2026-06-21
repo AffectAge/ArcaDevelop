@@ -1,0 +1,74 @@
+{
+  "id": "building:uranium_mine",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 336,
+  "costDucats": 264,
+  "startingDucats": 91,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 197,
+  "upgradeCostConstruction": 252,
+  "sectorId": "sector:mining",
+  "industryId": "industry:mining",
+  "extractionGoodId": "good:uranium",
+  "extractionAmountPerTurn": 15.12,
+  "extractionRequiresDeposit": true,
+  "inputs": [
+    {
+      "goodId": "good:electricity",
+      "amount": 8
+    },
+    {
+      "goodId": "good:mining_equipment",
+      "amount": 2.5
+    },
+    {
+      "goodId": "good:chemicals",
+      "amount": 3
+    }
+  ],
+  "outputs": [],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:miner",
+      "workers": 900
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 55
+    }
+  ],
+  "infrastructureUse": 7,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.uranium_mine.name"
+}

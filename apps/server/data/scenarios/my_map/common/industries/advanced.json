@@ -1,0 +1,8 @@
+{
+  "id": "industry:advanced",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "sectorId": "sector:advanced",
+  "nameKey": "industries.advanced.name"
+}

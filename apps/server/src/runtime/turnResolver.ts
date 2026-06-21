@@ -48,8 +48,10 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
   makeColonizationCaptureNews: (capture: ColonizationCaptureResult) => EventLogEntry;
   applyCountryResourceIncomeTurn: () => void;
   applyPerTurnTreatyMoneyTransfers: () => void;
+  rechargeDecisionCharges: () => void;
   resolveTechnologyTurn: (news: EventLogEntry[]) => void;
   autoResolveExpiredCountryEvents: (news: EventLogEntry[]) => void;
+  resolveJournalEntriesTurn: (news: EventLogEntry[]) => void;
   maybeGenerateCountryEvents: (news: EventLogEntry[], uiNotifications: TUiNotification[]) => void;
   resolvePopulationTurn: () => void;
   resolveParliamentTurn: (uiNotifications: TUiNotification[]) => void;
@@ -118,9 +120,12 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
   deps.flushResourceLedger();
   deps.applyPerTurnTreatyMoneyTransfers();
   deps.flushResourceLedger();
+  deps.rechargeDecisionCharges();
   deps.resolveTechnologyTurn(news);
   deps.flushResourceLedger();
   deps.autoResolveExpiredCountryEvents(news);
+  deps.flushResourceLedger();
+  deps.resolveJournalEntriesTurn(news);
   deps.flushResourceLedger();
   deps.maybeGenerateCountryEvents(news, uiNotifications);
   deps.resolvePopulationTurn();

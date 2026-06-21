@@ -1,0 +1,70 @@
+{
+  "id": "building:inorganic_chemicals_mine_02",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 210,
+  "costDucats": 165,
+  "startingDucats": 57,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 123,
+  "upgradeCostConstruction": 158,
+  "sectorId": "sector:mining",
+  "industryId": "industry:mining",
+  "extractionGoodId": "good:inorganic_chemicals",
+  "extractionAmountPerTurn": 31.43,
+  "extractionRequiresDeposit": true,
+  "inputs": [
+    {
+      "goodId": "good:electricity",
+      "amount": 4
+    },
+    {
+      "goodId": "good:mining_equipment",
+      "amount": 1.2
+    }
+  ],
+  "outputs": [],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:miner",
+      "workers": 900
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 55
+    }
+  ],
+  "infrastructureUse": 5,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.inorganic_chemicals_mine_02.name"
+}

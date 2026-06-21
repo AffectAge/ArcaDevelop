@@ -18364,13 +18364,975 @@
     }
   },
   "region": {
-    "world": {
-      "name": "World Region"
+    "north_america": {
+      "name": "North America"
+    },
+    "south_america": {
+      "name": "South America"
+    },
+    "europe": {
+      "name": "Europe"
+    },
+    "africa": {
+      "name": "Africa"
+    },
+    "asia": {
+      "name": "Asia"
+    },
+    "oceania": {
+      "name": "Oceania"
     }
   },
   "scenario": {
     "my_map": {
       "name": "my_map"
+    }
+  },
+  "buildings": {
+    "commercial_office_01": {
+      "name": "Commercial Office 01"
+    },
+    "machinery_factory_01": {
+      "name": "Machinery Factory 01"
+    },
+    "chemicals_factory": {
+      "name": "Chemicals Factory"
+    },
+    "commercial_office_02": {
+      "name": "Commercial Office 02"
+    },
+    "financial_centre": {
+      "name": "Financial Centre"
+    },
+    "organic_chemicals_factory_01": {
+      "name": "Organic Chemicals Factory 01"
+    },
+    "tools_factory": {
+      "name": "Tools Factory"
+    },
+    "textiles_workshop": {
+      "name": "Textiles Workshop"
+    },
+    "energy_equipment_factory": {
+      "name": "Energy Equipment Factory"
+    },
+    "railcars_factory": {
+      "name": "Railcars Factory"
+    },
+    "fertilizer_factory": {
+      "name": "Fertilizer Factory"
+    },
+    "spacecraft_factory_01": {
+      "name": "Spacecraft Factory 01"
+    },
+    "steel_factory": {
+      "name": "Steel Factory"
+    },
+    "confectionery_workshop": {
+      "name": "Confectionery Workshop"
+    },
+    "nonferrous_metals_factory": {
+      "name": "Nonferrous Metals Factory"
+    },
+    "copper_ore_mine": {
+      "name": "Copper Ore Mine"
+    },
+    "machinery_factory_02": {
+      "name": "Machinery Factory 02"
+    },
+    "flour_workshop": {
+      "name": "Flour Workshop"
+    },
+    "timber_farm": {
+      "name": "Timber Farm"
+    },
+    "tractors_factory_01": {
+      "name": "Tractors Factory 01"
+    },
+    "silicates_factory": {
+      "name": "Silicates Factory"
+    },
+    "wine_workshop": {
+      "name": "Wine Workshop"
+    },
+    "communications_hub": {
+      "name": "Communications Hub"
+    },
+    "logistics_hub_01": {
+      "name": "Logistics Hub 01"
+    },
+    "inorganic_chemicals_mine_01": {
+      "name": "Inorganic Chemicals Mine 01"
+    },
+    "vegetables_farm_01": {
+      "name": "Vegetables Farm 01"
+    },
+    "leather_workshop": {
+      "name": "Leather Workshop"
+    },
+    "port_01": {
+      "name": "Port 01"
+    },
+    "construction_machinery_factory_01": {
+      "name": "Construction Machinery Factory 01"
+    },
+    "port_02": {
+      "name": "Port 02"
+    },
+    "clothes_workshop_01": {
+      "name": "Clothes Workshop 01"
+    },
+    "construction_machinery_factory_02": {
+      "name": "Construction Machinery Factory 02"
+    },
+    "vegetable_oil_workshop": {
+      "name": "Vegetable Oil Workshop"
+    },
+    "tractors_factory_02": {
+      "name": "Tractors Factory 02"
+    },
+    "machinery_factory_03": {
+      "name": "Machinery Factory 03"
+    },
+    "fish_farm_01": {
+      "name": "Fish Farm 01"
+    },
+    "engines_factory": {
+      "name": "Engines Factory"
+    },
+    "organic_chemicals_factory_02": {
+      "name": "Organic Chemicals Factory 02"
+    },
+    "machinery_factory_04": {
+      "name": "Machinery Factory 04"
+    },
+    "canned_fish_workshop": {
+      "name": "Canned Fish Workshop"
+    },
+    "precious_ore_mine": {
+      "name": "Precious Ore Mine"
+    },
+    "spirits_workshop": {
+      "name": "Spirits Workshop"
+    },
+    "tourism_office": {
+      "name": "Tourism Office"
+    },
+    "prepared_food_workshop_01": {
+      "name": "Prepared Food Workshop 01"
+    },
+    "meat_farm_01": {
+      "name": "Meat Farm 01"
+    },
+    "cotton_farm_01": {
+      "name": "Cotton Farm 01"
+    },
+    "gems_mine": {
+      "name": "Gems Mine"
+    },
+    "cotton_farm_02": {
+      "name": "Cotton Farm 02"
+    },
+    "mushrooms_farm": {
+      "name": "Mushrooms Farm"
+    },
+    "processed_meat_workshop": {
+      "name": "Processed Meat Workshop"
+    },
+    "port_03": {
+      "name": "Port 03"
+    },
+    "robots_factory": {
+      "name": "Robots Factory"
+    },
+    "clinic": {
+      "name": "Clinic"
+    },
+    "clothes_workshop_02": {
+      "name": "Clothes Workshop 02"
+    },
+    "bread_workshop": {
+      "name": "Bread Workshop"
+    },
+    "fish_farm_02": {
+      "name": "Fish Farm 02"
+    },
+    "grain_farm": {
+      "name": "Grain Farm"
+    },
+    "spacecraft_factory_02": {
+      "name": "Spacecraft Factory 02"
+    },
+    "meat_farm_02": {
+      "name": "Meat Farm 02"
+    },
+    "port_04": {
+      "name": "Port 04"
+    },
+    "porcelain_workshop": {
+      "name": "Porcelain Workshop"
+    },
+    "ships_arsenal": {
+      "name": "Ships Arsenal"
+    },
+    "vegetables_farm_02": {
+      "name": "Vegetables Farm 02"
+    },
+    "machinery_factory_05": {
+      "name": "Machinery Factory 05"
+    },
+    "soft_drinks_workshop": {
+      "name": "Soft Drinks Workshop"
+    },
+    "rockets_arsenal": {
+      "name": "Rockets Arsenal"
+    },
+    "mining_equipment_factory": {
+      "name": "Mining Equipment Factory"
+    },
+    "sugar_workshop": {
+      "name": "Sugar Workshop"
+    },
+    "household_chemicals_workshop": {
+      "name": "Household Chemicals Workshop"
+    },
+    "shoes_workshop": {
+      "name": "Shoes Workshop"
+    },
+    "logistics_hub_02": {
+      "name": "Logistics Hub 02"
+    },
+    "oilseed_farm": {
+      "name": "Oilseed Farm"
+    },
+    "artillery_arsenal": {
+      "name": "Artillery Arsenal"
+    },
+    "ships_factory": {
+      "name": "Ships Factory"
+    },
+    "beer_workshop": {
+      "name": "Beer Workshop"
+    },
+    "appliances_workshop": {
+      "name": "Appliances Workshop"
+    },
+    "explosives_factory": {
+      "name": "Explosives Factory"
+    },
+    "stone_mine": {
+      "name": "Stone Mine"
+    },
+    "inorganic_chemicals_mine_02": {
+      "name": "Inorganic Chemicals Mine 02"
+    },
+    "fodder_farm": {
+      "name": "Fodder Farm"
+    },
+    "paper_workshop": {
+      "name": "Paper Workshop"
+    },
+    "jewelry_workshop": {
+      "name": "Jewelry Workshop"
+    },
+    "beans_farm": {
+      "name": "Beans Farm"
+    },
+    "school": {
+      "name": "School"
+    },
+    "rubber_factory": {
+      "name": "Rubber Factory"
+    },
+    "machinery_factory_06": {
+      "name": "Machinery Factory 06"
+    },
+    "machinery_factory_07": {
+      "name": "Machinery Factory 07"
+    },
+    "cosmetics_workshop": {
+      "name": "Cosmetics Workshop"
+    },
+    "knitwear_workshop": {
+      "name": "Knitwear Workshop"
+    },
+    "prepared_food_workshop_02": {
+      "name": "Prepared Food Workshop 02"
+    },
+    "processed_vegetables_workshop": {
+      "name": "Processed Vegetables Workshop"
+    },
+    "aircraft_arsenal": {
+      "name": "Aircraft Arsenal"
+    },
+    "vegetables_farm_03": {
+      "name": "Vegetables Farm 03"
+    },
+    "machinery_factory_08": {
+      "name": "Machinery Factory 08"
+    },
+    "pharmaceuticals_workshop": {
+      "name": "Pharmaceuticals Workshop"
+    },
+    "vehicles_factory": {
+      "name": "Vehicles Factory"
+    },
+    "drones_arsenal": {
+      "name": "Drones Arsenal"
+    },
+    "aircraft_factory": {
+      "name": "Aircraft Factory"
+    },
+    "iron_ore_mine": {
+      "name": "Iron Ore Mine"
+    },
+    "pasta_workshop": {
+      "name": "Pasta Workshop"
+    },
+    "tanks_arsenal": {
+      "name": "Tanks Arsenal"
+    },
+    "plastics_factory": {
+      "name": "Plastics Factory"
+    },
+    "uranium_mine": {
+      "name": "Uranium Mine"
+    },
+    "lignite_mine": {
+      "name": "Lignite Mine"
+    },
+    "power_plant_01": {
+      "name": "Power Plant 01"
+    },
+    "power_plant_02": {
+      "name": "Power Plant 02"
+    },
+    "power_plant_03": {
+      "name": "Power Plant 03"
+    },
+    "lignite_power_plant": {
+      "name": "Lignite Power Plant"
+    },
+    "coal_power_plant": {
+      "name": "Coal Power Plant"
+    },
+    "nuclear_fuel_power_plant": {
+      "name": "Nuclear Fuel Power Plant"
+    },
+    "power_plant_04": {
+      "name": "Power Plant 04"
+    },
+    "uranium_power_plant": {
+      "name": "Uranium Power Plant"
+    },
+    "natural_gas_power_plant": {
+      "name": "Natural Gas Power Plant"
+    },
+    "crude_oil_power_plant": {
+      "name": "Crude Oil Power Plant"
+    },
+    "refined_fuel_power_plant": {
+      "name": "Refined Fuel Power Plant"
+    },
+    "coal_mine": {
+      "name": "Coal Mine"
+    },
+    "crude_oil_mine_01": {
+      "name": "Crude Oil Mine 01"
+    },
+    "crude_oil_mine_02": {
+      "name": "Crude Oil Mine 02"
+    },
+    "natural_gas_mine_01": {
+      "name": "Natural Gas Mine 01"
+    },
+    "natural_gas_mine_02": {
+      "name": "Natural Gas Mine 02"
+    }
+  },
+  "companies": {
+    "national_development_company": {
+      "name": "National Development Company"
+    }
+  },
+  "decisions": {
+    "black_death_response": {
+      "name": "Black Death response"
+    },
+    "example_launch_industrial_program": {
+      "name": "Launch industrial program"
+    }
+  },
+  "events": {
+    "global_climate_pact": {
+      "name": "Global Climate Pact",
+      "description": "A global summit debates climate limits, energy transition and the future of industrial growth.",
+      "option": {
+        "acknowledge": "Acknowledge"
+      }
+    },
+    "country_briefing": {
+      "name": "Country briefing",
+      "description": "A scenario event awaits a country response.",
+      "option": {
+        "ok": "OK"
+      }
+    },
+    "example_industrial_program_failure": {
+      "name": "Industrial program fails",
+      "description": "Industrial program fails scenario entry.",
+      "option": {
+        "acknowledge": "Acknowledge"
+      }
+    },
+    "example_industrial_program_success": {
+      "name": "Industrial program succeeds",
+      "description": "Industrial program succeeds scenario entry.",
+      "option": {
+        "acknowledge": "Acknowledge"
+      }
+    }
+  },
+  "goods": {
+    "nuclear_fuel": {
+      "name": "Nuclear fuel"
+    },
+    "uranium": {
+      "name": "Uranium"
+    },
+    "lignite": {
+      "name": "Lignite"
+    },
+    "refined_fuel": {
+      "name": "Refined fuel"
+    },
+    "electricity": {
+      "name": "Electricity"
+    },
+    "coal": {
+      "name": "Coal"
+    },
+    "crude_oil": {
+      "name": "Crude oil"
+    },
+    "natural_gas": {
+      "name": "Natural gas"
+    },
+    "aircraft": {
+      "name": "Aircraft"
+    },
+    "appliances": {
+      "name": "Appliances"
+    },
+    "artillery": {
+      "name": "Artillery"
+    },
+    "beans": {
+      "name": "Beans"
+    },
+    "beer": {
+      "name": "Beer"
+    },
+    "bread": {
+      "name": "Bread"
+    },
+    "canned_fish": {
+      "name": "Canned Fish"
+    },
+    "chemicals": {
+      "name": "Chemicals"
+    },
+    "clothes": {
+      "name": "Clothes"
+    },
+    "commerce": {
+      "name": "Commerce"
+    },
+    "communications": {
+      "name": "Communications"
+    },
+    "confectionery": {
+      "name": "Confectionery"
+    },
+    "construction_machinery": {
+      "name": "Construction Machinery"
+    },
+    "copper_ore": {
+      "name": "Copper Ore"
+    },
+    "cosmetics": {
+      "name": "Cosmetics"
+    },
+    "cotton": {
+      "name": "Cotton"
+    },
+    "dairy": {
+      "name": "Dairy"
+    },
+    "drones": {
+      "name": "Drones"
+    },
+    "education": {
+      "name": "Education"
+    },
+    "electronics": {
+      "name": "Electronics"
+    },
+    "energy_equipment": {
+      "name": "Energy Equipment"
+    },
+    "engines": {
+      "name": "Engines"
+    },
+    "explosives": {
+      "name": "Explosives"
+    },
+    "fertilizer": {
+      "name": "Fertilizer"
+    },
+    "finance": {
+      "name": "Finance"
+    },
+    "fish": {
+      "name": "Fish"
+    },
+    "flour": {
+      "name": "Flour"
+    },
+    "fodder": {
+      "name": "Fodder"
+    },
+    "fur": {
+      "name": "Fur"
+    },
+    "gems": {
+      "name": "Gems"
+    },
+    "grain": {
+      "name": "Grain"
+    },
+    "healthcare": {
+      "name": "Healthcare"
+    },
+    "household_chemicals": {
+      "name": "Household Chemicals"
+    },
+    "inorganic_chemicals": {
+      "name": "Inorganic Chemicals"
+    },
+    "iron_ore": {
+      "name": "Iron Ore"
+    },
+    "jewelry": {
+      "name": "Jewelry"
+    },
+    "knitwear": {
+      "name": "Knitwear"
+    },
+    "leather": {
+      "name": "Leather"
+    },
+    "logistics": {
+      "name": "Logistics"
+    },
+    "machinery": {
+      "name": "Machinery"
+    },
+    "meat": {
+      "name": "Meat"
+    },
+    "mining_equipment": {
+      "name": "Mining Equipment"
+    },
+    "mushrooms": {
+      "name": "Mushrooms"
+    },
+    "nonferrous_metals": {
+      "name": "Nonferrous Metals"
+    },
+    "oilseed": {
+      "name": "Oilseed"
+    },
+    "organic_chemicals": {
+      "name": "Organic Chemicals"
+    },
+    "paper": {
+      "name": "Paper"
+    },
+    "pasta": {
+      "name": "Pasta"
+    },
+    "pharmaceuticals": {
+      "name": "Pharmaceuticals"
+    },
+    "plastics": {
+      "name": "Plastics"
+    },
+    "porcelain": {
+      "name": "Porcelain"
+    },
+    "precious_ore": {
+      "name": "Precious Ore"
+    },
+    "prepared_food": {
+      "name": "Prepared Food"
+    },
+    "processed_meat": {
+      "name": "Processed Meat"
+    },
+    "processed_vegetables": {
+      "name": "Processed Vegetables"
+    },
+    "railcars": {
+      "name": "Railcars"
+    },
+    "research": {
+      "name": "Research"
+    },
+    "robots": {
+      "name": "Robots"
+    },
+    "rockets": {
+      "name": "Rockets"
+    },
+    "rubber": {
+      "name": "Rubber"
+    },
+    "security": {
+      "name": "Security"
+    },
+    "ships": {
+      "name": "Ships"
+    },
+    "shoes": {
+      "name": "Shoes"
+    },
+    "silicates": {
+      "name": "Silicates"
+    },
+    "soft_drinks": {
+      "name": "Soft Drinks"
+    },
+    "spacecraft": {
+      "name": "Spacecraft"
+    },
+    "spirits": {
+      "name": "Spirits"
+    },
+    "steel": {
+      "name": "Steel"
+    },
+    "stone": {
+      "name": "Stone"
+    },
+    "sugar": {
+      "name": "Sugar"
+    },
+    "tanks": {
+      "name": "Tanks"
+    },
+    "textiles": {
+      "name": "Textiles"
+    },
+    "timber": {
+      "name": "Timber"
+    },
+    "tools": {
+      "name": "Tools"
+    },
+    "tourism": {
+      "name": "Tourism"
+    },
+    "tractors": {
+      "name": "Tractors"
+    },
+    "vegetables": {
+      "name": "Vegetables"
+    },
+    "vegetable_oil": {
+      "name": "Vegetable Oil"
+    },
+    "vehicles": {
+      "name": "Vehicles"
+    },
+    "weapons": {
+      "name": "Weapons"
+    },
+    "wine": {
+      "name": "Wine"
+    }
+  },
+  "ideologies": {
+    "traditionalist": {
+      "name": "Traditionalist"
+    },
+    "populist": {
+      "name": "Populist"
+    },
+    "conservative": {
+      "name": "Conservative"
+    },
+    "moderate": {
+      "name": "Moderate"
+    },
+    "technocrat": {
+      "name": "Technocrat"
+    },
+    "socialist": {
+      "name": "Socialist"
+    },
+    "liberal": {
+      "name": "Liberal"
+    },
+    "default": {
+      "name": "Default ideology"
+    }
+  },
+  "lawGroups": {
+    "economic_policy": {
+      "name": "Economic policy"
+    }
+  },
+  "laws": {
+    "subsistence_economy": {
+      "name": "Subsistence economy"
+    },
+    "industrial_investment": {
+      "name": "Industrial investment"
+    },
+    "traditional_taxes": {
+      "name": "Traditional taxes"
+    }
+  },
+  "modifiers": {
+    "development_drive": {
+      "name": "Development drive"
+    }
+  },
+  "parties": {
+    "populist_bloc": {
+      "name": "Populist Bloc"
+    },
+    "workers_front": {
+      "name": "Workers Front"
+    },
+    "liberal_union": {
+      "name": "Liberal Union"
+    },
+    "civic_centre": {
+      "name": "Civic Centre"
+    }
+  },
+  "professions": {
+    "farmer": {
+      "name": "Farmer"
+    },
+    "miner": {
+      "name": "Miner"
+    },
+    "electrician": {
+      "name": "Electrician"
+    },
+    "artisan": {
+      "name": "Artisan"
+    },
+    "chemist": {
+      "name": "Chemist"
+    },
+    "clerk": {
+      "name": "Clerk"
+    },
+    "default": {
+      "name": "Worker"
+    },
+    "doctor": {
+      "name": "Doctor"
+    },
+    "driver": {
+      "name": "Driver"
+    },
+    "engineer": {
+      "name": "Engineer"
+    },
+    "financier": {
+      "name": "Financier"
+    },
+    "laborer": {
+      "name": "Laborer"
+    },
+    "machinist": {
+      "name": "Machinist"
+    },
+    "manager": {
+      "name": "Manager"
+    },
+    "officer": {
+      "name": "Officer"
+    },
+    "sailor": {
+      "name": "Sailor"
+    },
+    "scientist": {
+      "name": "Scientist"
+    },
+    "service": {
+      "name": "Service"
+    },
+    "soldier": {
+      "name": "Soldier"
+    },
+    "teacher": {
+      "name": "Teacher"
+    },
+    "technician": {
+      "name": "Technician"
+    }
+  },
+  "resourceCategories": {
+    "raw_materials": {
+      "name": "Raw materials"
+    }
+  },
+  "technologies": {
+    "applied_electricity": {
+      "name": "Applied electricity"
+    },
+    "early_metallurgy": {
+      "name": "Early metallurgy"
+    },
+    "organized_agriculture": {
+      "name": "Organized agriculture"
+    },
+    "combustion_engines": {
+      "name": "Combustion engines"
+    },
+    "mass_production": {
+      "name": "Mass production"
+    },
+    "steam_power": {
+      "name": "Steam power"
+    },
+    "administrative_records": {
+      "name": "Administrative records"
+    },
+    "electrical_theory": {
+      "name": "Electrical theory"
+    },
+    "industrial_extraction": {
+      "name": "Industrial extraction"
+    },
+    "industrial_chemistry": {
+      "name": "Industrial chemistry"
+    },
+    "mechanical_engineering": {
+      "name": "Mechanical engineering"
+    },
+    "wheel_transport": {
+      "name": "Wheel transport"
+    },
+    "electronics": {
+      "name": "Electronics"
+    },
+    "state_accounting": {
+      "name": "State accounting"
+    }
+  },
+  "cultures": {
+    "default": {
+      "name": "Default culture"
+    }
+  },
+  "industries": {
+    "advanced": {
+      "name": "Advanced"
+    },
+    "chemicals": {
+      "name": "Chemicals"
+    },
+    "energy": {
+      "name": "Energy"
+    },
+    "farms": {
+      "name": "Farms"
+    },
+    "food": {
+      "name": "Food"
+    },
+    "infrastructure": {
+      "name": "Infrastructure"
+    },
+    "light": {
+      "name": "Light"
+    },
+    "machinery": {
+      "name": "Machinery"
+    },
+    "metallurgy": {
+      "name": "Metallurgy"
+    },
+    "military": {
+      "name": "Military"
+    },
+    "mining": {
+      "name": "Mining"
+    },
+    "services": {
+      "name": "Services"
+    }
+  },
+  "journal": {
+    "example_industrial_program": {
+      "name": "Industrial program",
+      "title": "Industrial program",
+      "description": "Industrial program scenario entry.",
+      "short": "Industrial program",
+      "progress": "Progress"
+    },
+    "example_treasury_reserve": {
+      "name": "Treasury reserve",
+      "title": "Treasury reserve",
+      "description": "Treasury reserve scenario entry.",
+      "short": "Treasury reserve",
+      "progress": "Progress"
+    }
+  },
+  "races": {
+    "default": {
+      "name": "Default race"
+    }
+  },
+  "religions": {
+    "default": {
+      "name": "Default religion"
+    }
+  },
+  "sectors": {
+    "advanced": {
+      "name": "Advanced"
+    },
+    "agriculture": {
+      "name": "Agriculture"
+    },
+    "consumer": {
+      "name": "Consumer"
+    },
+    "energy": {
+      "name": "Energy"
+    },
+    "industry": {
+      "name": "Industry"
+    },
+    "infrastructure": {
+      "name": "Infrastructure"
+    },
+    "military": {
+      "name": "Military"
+    },
+    "mining": {
+      "name": "Mining"
+    },
+    "services": {
+      "name": "Services"
     }
   }
 }

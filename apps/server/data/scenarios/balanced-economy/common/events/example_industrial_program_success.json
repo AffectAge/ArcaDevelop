@@ -1,0 +1,73 @@
+{
+  "id": "event:example_industrial_program_success",
+  "nameKey": "events.example_industrial_program_success.name",
+  "description": "",
+  "color": "#2f855a",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": {
+    "namespace": "balanced_economy",
+    "category": "economy",
+    "priority": "high",
+    "visibility": "private",
+    "titleKey": "events.example_industrial_program_success.name",
+    "descriptionKey": "events.example_industrial_program_success.description",
+    "imageUrl": null,
+    "iconId": null,
+    "trigger": {
+      "type": "always"
+    },
+    "options": [
+      {
+        "id": "acknowledge",
+        "labelKey": "events.example_industrial_program_success.option.acknowledge",
+        "descriptionKey": null,
+        "tooltipKey": null,
+        "effects": [
+          {
+            "type": "add_resource",
+            "resource": "science",
+            "amount": 15,
+            "labelKey": "resourceLedger.source.generic"
+          },
+          {
+            "type": "extend_modifier",
+            "modifierId": "1b3a996e-65ad-47eb-abf7-02c01e09182d",
+            "durationTurns": 12
+          }
+        ],
+        "aiWeight": [
+          {
+            "base": 10
+          }
+        ],
+        "playerDefault": true,
+        "buttonTone": "primary"
+      }
+    ],
+    "cooldownTurns": 0,
+    "repeatable": true,
+    "checkIntervalTurns": 1,
+    "chancePct": 100,
+    "blocking": false
+  },
+  "journalEntry": null,
+  "ideologyAttractionRules": []
+}

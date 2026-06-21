@@ -18,6 +18,7 @@ export type AiRuntimeSettings = {
   maxCountriesPerTick: number;
   maxDecisionCandidatesPerCountry: number;
   contextCacheTtlTurns: number;
+  maxBuildCompletionTurns: number;
 };
 
 export type AiRuntimeCandidateProvider = {
@@ -27,6 +28,8 @@ export type AiRuntimeCandidateProvider = {
     context: AiCountryContext;
     world: WorldBase;
     indexes: AiWorldIndexes;
+    aiSettings: AiRuntimeSettings;
+    profile: ReturnType<typeof resolveAiStrategyProfile>;
   }) => AiCandidate[];
 };
 
@@ -46,6 +49,7 @@ export type AiRuntimePlan = {
     maxCountriesPerTick: number;
     maxDecisionCandidatesPerCountry: number;
     contextCacheTtlTurns: number;
+    maxBuildCompletionTurns: number;
   };
 };
 
@@ -82,6 +86,13 @@ export function planAiRuntimeTick(params: PlanAiRuntimeTickParams): AiRuntimePla
       indexes,
       providers,
       maxDecisionCandidates: budget.maxDecisionCandidatesPerCountry,
+      aiSettings: {
+        ...params.aiSettings,
+        maxCountriesPerTick: budget.maxCountriesPerTick,
+        maxDecisionCandidatesPerCountry: budget.maxDecisionCandidatesPerCountry,
+        contextCacheTtlTurns: budget.contextCacheTtlTurns,
+        maxBuildCompletionTurns: budget.maxBuildCompletionTurns,
+      },
       profiles: params.strategyProfilesByCountryId?.[countryId] ?? [],
     }),
   );
@@ -102,6 +113,7 @@ function planCountryAction(params: {
   indexes: AiWorldIndexes;
   providers: AiRuntimeCandidateProvider[];
   maxDecisionCandidates: number;
+  aiSettings: AiRuntimeSettings;
   profiles: AiStrategyProfile[];
 }): PlannedAiCountryAction {
   const context = buildAiCountryContext({
@@ -109,6 +121,7 @@ function planCountryAction(params: {
     world: params.world,
     indexes: params.indexes,
   });
+  const profile = resolveAiStrategyProfile(params.profiles);
   const candidates = params.providers
     .flatMap((provider) =>
       provider.selectCandidates({
@@ -116,11 +129,16 @@ function planCountryAction(params: {
         context,
         world: params.world,
         indexes: params.indexes,
+        aiSettings: {
+          ...params.aiSettings,
+          maxBuildCompletionTurns: profile.maxBuildCompletionTurns ?? params.aiSettings.maxBuildCompletionTurns,
+        },
+        profile,
       }),
     )
     .sort(compareAiCandidatesByIdentity)
     .slice(0, params.maxDecisionCandidates);
-  const selected = scoreAiCandidates(candidates, resolveAiStrategyProfile(params.profiles))[0] ?? null;
+  const selected = scoreAiCandidates(candidates, profile)[0] ?? null;
 
   return {
     countryId: params.countryId,
@@ -134,6 +152,7 @@ function normalizeAiRuntimeBudget(settings: AiRuntimeSettings): AiRuntimePlan["b
     maxCountriesPerTick: normalizePositiveInteger(settings.maxCountriesPerTick, 1),
     maxDecisionCandidatesPerCountry: normalizePositiveInteger(settings.maxDecisionCandidatesPerCountry, 1),
     contextCacheTtlTurns: normalizePositiveInteger(settings.contextCacheTtlTurns, 1),
+    maxBuildCompletionTurns: normalizePositiveInteger(settings.maxBuildCompletionTurns, 8),
   };
 }
 

@@ -1,0 +1,32 @@
+{
+  "id": "party:workers_front",
+  "description": "",
+  "color": "#b30000",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {
+    "ideology:socialist": 100
+  },
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {
+    "law:subsistence_economy": 0
+  },
+  "discipline": 0.85,
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "nameKey": "parties.workers_front.name"
+}

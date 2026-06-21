@@ -107,12 +107,13 @@ Scenario authors may tune AI execution budget in `common/defines.json`:
     "enabled": true,
     "maxCountriesPerTick": 50,
     "maxDecisionCandidatesPerCountry": 20,
-    "contextCacheTtlTurns": 1
+    "contextCacheTtlTurns": 1,
+    "maxBuildCompletionTurns": 8
   }
 }
 ```
 
-These keys control runtime budget and cache behavior only. They do not grant AI bonuses, hidden information, or permission to mutate world state directly. Invalid values must fail scenario validation/application instead of falling back silently.
+These keys control runtime budget, cache behavior, and conservative candidate filtering only. `maxBuildCompletionTurns` limits new build candidates to projects that the country can finish with its current construction points within that many turns; AI profile fragments may override it per country style. These keys do not grant AI bonuses, hidden information, or permission to mutate world state directly. Invalid values must fail scenario validation/application instead of falling back silently.
 
 
 ## Context Builder And Indexes
@@ -128,7 +129,7 @@ The Phase 3 economy MVP derives deterministic build and upgrade candidates from 
 
 Build candidates carry a `BUILD` order draft with a state owner payload; the runtime integration layer must add the authoritative turn/player envelope before submission. Upgrade candidates carry the existing `/country/build/upgrade-state` request body because upgrade-state is currently an HTTP route flow rather than a shared turn order. Later integration work must submit or adapt these candidates through the same server validation used by players before changing world state.
 
-The MVP filters candidates by region control, building country rules, unlock callbacks, region build restrictions, country/global build limits, max upgrade level, duplicate queued upgrades, and available ducats for upgrade requests. Candidate ordering is stable and deterministic; it is not a personality or strategy scorer.
+The MVP filters candidates by region control, building country rules, unlock callbacks, region build restrictions, country/global build limits, duplicate queued build projects in the same region, available ducats, current construction capacity, profile/scenario `maxBuildCompletionTurns`, max upgrade level, duplicate queued upgrades, and available ducats for upgrade requests. Candidate ordering is stable and deterministic; it is not a personality or strategy scorer.
 
 
 ## Market Import Candidate MVP

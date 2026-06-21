@@ -10,6 +10,7 @@ import type {
   EventLogEntry,
   EventPriority,
   EventVisibility,
+  GameEffect,
   GameEventDefinition,
   ModifierCondition,
   ModifierStat,
@@ -41,10 +42,14 @@ import {
   getPendingCountryEvents,
   getVisibleCountryDecisions,
   maybeGenerateCountryEvents,
+  promoteScheduledCountryEvents,
+  applyEventOptionEventEffects,
   applyDecisionCosts,
+  rechargeCountryDecisionCharges,
   type CountryDecisionView,
   type CountryEventView,
 } from "../mechanics/decisionEventMechanics";
+import { applyJournalGameEffects, resolveJournalEntriesTurn, type JournalLifecycleChange } from "../mechanics/journalMechanics";
 import type { GameContentEntry, GameSettings } from "./gameSettingsTypes";
 import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
@@ -61,6 +66,7 @@ type CountryProgressionRuntimeParams = {
   normalizeCountryDecisionRecord: (input: unknown) => CountryDecisionRecord;
   normalizeCountryEventRecord: (input: unknown) => CountryEventRecord;
   modifierConditionsMatchCountry: (conditions: ModifierCondition[] | undefined, countryId: string) => boolean;
+  countryHasModifier?: (countryId: string, modifierId: string) => boolean;
   resolveModifiedValue: (stat: ModifierStat, base: number, context: { countryId: string }) => number;
   addResourceLedgerIncome?: (input: ResourceLedgerEntryInput) => void;
   addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
@@ -185,7 +191,15 @@ export function createCountryProgressionRuntime(params: CountryProgressionRuntim
       worldBase.countryDecisionsByCountryId[countryId] = normalized;
       return normalized;
     }
-    const next: CountryDecisionRecord = { completedDecisionIds: [], cooldownUntilTurnByDecisionId: {}, history: [] };
+    const next: CountryDecisionRecord = {
+      completedDecisionIds: [],
+      cooldownUntilTurnByDecisionId: {},
+      usesByDecisionId: {},
+      usesByDecisionTargetKey: {},
+      chargesByDecisionId: {},
+      lastChargeTurnByDecisionId: {},
+      history: [],
+    };
     worldBase.countryDecisionsByCountryId[countryId] = next;
     return next;
   };
@@ -232,7 +246,9 @@ export function createCountryProgressionRuntime(params: CountryProgressionRuntim
       record: ensureCountryDecisionRecord(countryId),
       turnId: params.getTurnId(),
       resources: params.getWorldBase().resourcesByCountry[countryId],
+      worldBase: params.getWorldBase(),
       conditionsMatchCountry: params.modifierConditionsMatchCountry,
+      countryHasModifier: params.countryHasModifier,
     });
 
   const getVisibleCountryDecisionsForRuntime = (countryId: string): CountryDecisionView[] =>
@@ -242,10 +258,24 @@ export function createCountryProgressionRuntime(params: CountryProgressionRuntim
       record: ensureCountryDecisionRecord(countryId),
       turnId: params.getTurnId(),
       resources: params.getWorldBase().resourcesByCountry[countryId],
+      worldBase: params.getWorldBase(),
       conditionsMatchCountry: params.modifierConditionsMatchCountry,
+      countryHasModifier: params.countryHasModifier,
     });
 
-  const applyDecisionEffectsForRuntime = (countryId: string, effects: DecisionEffect[] | undefined): void => {
+  const rechargeDecisionChargesForRuntime = (): void => {
+    const worldBase = params.getWorldBase();
+    const decisions = params.getGameSettings().content.decisions;
+    for (const countryId of Object.keys(worldBase.resourcesByCountry)) {
+      rechargeCountryDecisionCharges({
+        record: ensureCountryDecisionRecord(countryId),
+        decisions,
+        turnId: params.getTurnId(),
+      });
+    }
+  };
+
+  const applyDecisionEffectsForRuntime = (countryId: string, effects: Array<DecisionEffect | GameEffect> | undefined): void => {
     applyDecisionEffects(params.getWorldBase().resourcesByCountry[countryId], effects, {
       countryId,
       sourceType: "event",
@@ -299,15 +329,14 @@ export function createCountryProgressionRuntime(params: CountryProgressionRuntim
     news: EventLogEntry[],
     uiNotifications: CountryEventUiNotification[],
   ): void => {
-    const generated = maybeGenerateCountryEvents({
-      countryIds: Object.keys(params.getWorldBase().resourcesByCountry),
-      entries: params.getGameSettings().content.events,
-      turnId: params.getTurnId(),
-      ensureCountryEventRecord,
-      conditionsMatchCountry: params.modifierConditionsMatchCountry,
-      createId: randomUUID,
-    });
-    for (const item of generated) {
+    const pushGeneratedEvent = (item: {
+      countryId: string;
+      pendingId: string;
+      eventId: string;
+      name: string;
+      description: string;
+      event: GameEventDefinition;
+    }): void => {
       uiNotifications.push({
         countryId: item.countryId,
         notification: makeCountryEventUiNotification({
@@ -330,16 +359,43 @@ export function createCountryProgressionRuntime(params: CountryProgressionRuntim
           visibility: item.event.visibility ?? "private",
         }),
       );
-    }
+    };
+    const promoted = promoteScheduledCountryEvents({
+      scheduledByCountryId: params.getWorldBase().countryScheduledEventsByCountryId,
+      entries: params.getGameSettings().content.events,
+      turnId: params.getTurnId(),
+      ensureCountryEventRecord,
+      createId: randomUUID,
+    });
+    for (const item of promoted) pushGeneratedEvent(item);
+    const generated = maybeGenerateCountryEvents({
+      countryIds: Object.keys(params.getWorldBase().resourcesByCountry),
+      entries: params.getGameSettings().content.events,
+      turnId: params.getTurnId(),
+      ensureCountryEventRecord,
+      conditionsMatchCountry: params.modifierConditionsMatchCountry,
+      countryHasModifier: params.countryHasModifier,
+      worldBase: params.getWorldBase(),
+      createId: randomUUID,
+    });
+    for (const item of generated) pushGeneratedEvent(item);
   };
 
   const autoResolveExpiredCountryEventsForRuntime = (news: EventLogEntry[]): void => {
     const result = autoResolveExpiredCountryEvents({
       recordsByCountryId: params.getWorldBase().countryEventsByCountryId,
+      countryScheduledEventsByCountryId: params.getWorldBase().countryScheduledEventsByCountryId,
+      countryEventFlagsByCountryId: params.getWorldBase().countryEventFlagsByCountryId,
+      countryModifiersByCountryId: params.getWorldBase().countryModifiersByCountryId,
+      colonyProgressByRegion: params.getWorldBase().colonyProgressByRegion,
       entries: params.getGameSettings().content.events,
       resourcesByCountry: params.getWorldBase().resourcesByCountry,
+      worldBase: params.getWorldBase(),
       turnId: params.getTurnId(),
       normalizeCountryEventRecord: params.normalizeCountryEventRecord,
+      conditionsMatchCountry: params.modifierConditionsMatchCountry,
+      countryHasModifier: params.countryHasModifier,
+      createId: randomUUID,
       addIncome: params.addResourceLedgerIncome,
       addExpense: params.addResourceLedgerExpense,
     });
@@ -347,15 +403,114 @@ export function createCountryProgressionRuntime(params: CountryProgressionRuntim
       params.removeQueuedUiNotification(notificationId);
     }
     for (const item of result.resolved) {
+      applyJournalGameEffectsForRuntime({
+        countryId: item.countryId,
+        effects: item.optionEffects,
+        news,
+      });
       news.push(
         params.makeOfficialNews({
           turn: params.getTurnId(),
           category: item.event.category ?? "politics",
           title: "Событие обработано автоматически",
-          message: `${item.countryId}: ${item.name} - ${item.optionLabel}`,
+          message: `${item.countryId}: ${item.name} - ${item.optionLabelKey}`,
           countryId: item.countryId,
           priority: item.event.priority ?? "medium",
           visibility: item.event.visibility ?? "private",
+        }),
+      );
+    }
+  };
+
+  const resolveJournalEntriesTurnForRuntime = (news: EventLogEntry[]): void => {
+    const worldBase = params.getWorldBase();
+    const changes = resolveJournalEntriesTurn({
+      countryIds: Object.keys(worldBase.resourcesByCountry),
+      entries: params.getGameSettings().content.journalEntries,
+      worldBase,
+      turnId: params.getTurnId(),
+      createId: randomUUID,
+      conditionsMatchCountry: params.modifierConditionsMatchCountry,
+      countryHasModifier: params.countryHasModifier,
+    });
+    processJournalLifecycleChanges(changes, news);
+  };
+
+  const applyJournalGameEffectsForRuntime = (input: {
+    countryId: string;
+    effects: GameEffect[] | undefined;
+    scopes?: Parameters<typeof applyJournalGameEffects>[0]["scopes"];
+    explanations?: Parameters<typeof applyJournalGameEffects>[0]["explanations"];
+    news?: EventLogEntry[];
+  }): JournalLifecycleChange[] => {
+    const changes = applyJournalGameEffects({
+      effects: input.effects,
+      countryId: input.countryId,
+      entries: params.getGameSettings().content.journalEntries,
+      worldBase: params.getWorldBase(),
+      turnId: params.getTurnId(),
+      createId: randomUUID,
+      scopes: input.scopes,
+      explanations: input.explanations,
+      conditionsMatchCountry: params.modifierConditionsMatchCountry,
+    });
+    if (input.news) processJournalLifecycleChanges(changes, input.news);
+    return changes;
+  };
+
+  const processJournalLifecycleChanges = (initialChanges: JournalLifecycleChange[], news: EventLogEntry[]): void => {
+    const worldBase = params.getWorldBase();
+    const eventById = new Map(params.getGameSettings().content.events.map((entry) => [entry.id, entry] as const));
+    const queue = [...initialChanges];
+    for (let index = 0; index < queue.length && index < 50; index += 1) {
+      const change = queue[index];
+      applyDecisionEffects(worldBase.resourcesByCountry[change.countryId], change.effects, {
+        countryId: change.countryId,
+        sourceType: "event",
+        sourceId: change.journalEntryId,
+        addIncome: params.addResourceLedgerIncome,
+        addExpense: params.addResourceLedgerExpense,
+      });
+      applyEventOptionEventEffects({
+        effects: [
+          ...change.effects,
+          ...change.eventIds.map((eventId): GameEffect => ({ type: "trigger_event", eventId })),
+        ],
+        countryId: change.countryId,
+        pending: { scopes: change.scopes, triggerExplanation: change.explanations },
+        eventById,
+        recordsByCountryId: worldBase.countryEventsByCountryId,
+        countryScheduledEventsByCountryId: worldBase.countryScheduledEventsByCountryId,
+        countryEventFlagsByCountryId: worldBase.countryEventFlagsByCountryId,
+        countryModifiersByCountryId: worldBase.countryModifiersByCountryId,
+        colonyProgressByRegion: worldBase.colonyProgressByRegion,
+        turnId: params.getTurnId(),
+        createId: randomUUID,
+        sourceSystem: "journal",
+        sourceId: change.journalEntryId,
+      });
+      const followupJournalChanges = applyJournalGameEffects({
+        effects: change.effects,
+        countryId: change.countryId,
+        entries: params.getGameSettings().content.journalEntries,
+        worldBase,
+        turnId: params.getTurnId(),
+        createId: randomUUID,
+        scopes: change.scopes,
+        explanations: change.explanations,
+        conditionsMatchCountry: params.modifierConditionsMatchCountry,
+        countryHasModifier: params.countryHasModifier,
+      });
+      queue.push(...followupJournalChanges);
+      news.push(
+        params.makeOfficialNews({
+          turn: params.getTurnId(),
+          category: "politics",
+          title: change.titleKey,
+          message: change.outcomeLabelKey,
+          countryId: change.countryId,
+          priority: change.state === "started" ? "low" : "medium",
+          visibility: "private",
         }),
       );
     }
@@ -402,12 +557,15 @@ export function createCountryProgressionRuntime(params: CountryProgressionRuntim
     isLawUnlockedForCountry: isLawUnlockedForCountryForRuntime,
     getCountryDecisionView: getCountryDecisionViewForRuntime,
     getVisibleCountryDecisions: getVisibleCountryDecisionsForRuntime,
+    rechargeDecisionCharges: rechargeDecisionChargesForRuntime,
     applyDecisionEffects: applyDecisionEffectsForRuntime,
     applyDecisionCosts: applyDecisionCostsForRuntime,
     getGameEventDefinition: getGameEventDefinitionForRuntime,
     getPendingCountryEvents: getPendingCountryEventsForRuntime,
     maybeGenerateCountryEvents: maybeGenerateCountryEventsForRuntime,
     autoResolveExpiredCountryEvents: autoResolveExpiredCountryEventsForRuntime,
+    resolveJournalEntriesTurn: resolveJournalEntriesTurnForRuntime,
+    applyJournalGameEffects: applyJournalGameEffectsForRuntime,
     resolveTechnologyTurn: resolveTechnologyTurnForRuntime,
   };
 }

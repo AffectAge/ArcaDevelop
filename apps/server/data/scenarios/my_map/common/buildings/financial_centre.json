@@ -1,0 +1,79 @@
+{
+  "id": "building:financial_centre",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 238,
+  "costDucats": 187,
+  "startingDucats": 65,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 139,
+  "upgradeCostConstruction": 179,
+  "sectorId": "sector:services",
+  "industryId": "industry:services",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:electricity",
+      "amount": 4
+    },
+    {
+      "goodId": "good:communications",
+      "amount": 5
+    },
+    {
+      "goodId": "good:security",
+      "amount": 1
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:finance",
+      "amount": 21.03
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:financier",
+      "workers": 330
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 320
+    },
+    {
+      "professionId": "profession:manager",
+      "workers": 95
+    }
+  ],
+  "infrastructureUse": 1,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.financial_centre.name"
+}

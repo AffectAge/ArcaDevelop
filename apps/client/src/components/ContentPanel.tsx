@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, Briefcase, Building2, ChevronDown, ChevronRight, Factory, FileText, Flame, Landmark, Network, Package, Palette, Plane, Plus, ScrollText, Shield, Ship, SlidersHorizontal, Sticker, Telescope, Trash2, Upload, UserRound, Vote, X } from "lucide-react";
+import { Bell, BookOpen, Briefcase, Building2, ChevronDown, ChevronRight, Factory, FileText, Flame, Landmark, Network, Package, Palette, Plane, Plus, ScrollText, Shield, Ship, SlidersHorizontal, Sticker, Telescope, Trash2, Upload, UserRound, Vote, X } from "lucide-react";
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { toast } from "sonner";
-import type { DecisionCategory, DecisionEffect, EventCategory, EventPriority, EventVisibility, GameEventOption, IdeologyAttractionConditionType, IdeologyAttractionRule, LawParliamentPowerEffect, ModifierCondition, ModifierConditionType, ModifierDefinition, ModifierEffect, ModifierMode, ModifierScope, ModifierStat, ResourceTotals } from "@arcanorum/shared";
+import type { DecisionCategory, DecisionEffect, EventCategory, EventPriority, EventVisibility, GameEffect, GameEventOption, IdeologyAttractionConditionType, IdeologyAttractionRule, LawParliamentPowerEffect, ModifierCondition, ModifierConditionType, ModifierDefinition, ModifierEffect, ModifierMode, ModifierScope, ModifierStat, ResourceTotals } from "@arcanorum/shared";
 import { Tooltip } from "./Tooltip";
 import { CustomSelect } from "./CustomSelect";
 import { AppButton } from "./ui/AppButton";
@@ -346,6 +346,17 @@ const CONTENT_UI_SCHEMA = {
         { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
       ] as const,
     },
+    {
+      id: "journalEntries",
+      labelKey: "contentPanel.category.journalEntries",
+      icon: BookOpen,
+      enabled: true,
+      sections: [
+        { id: "general", labelKey: "contentPanel.section.general", icon: FileText },
+        { id: "events", labelKey: "contentPanel.section.triggersOptions", icon: ScrollText },
+        { id: "branding", labelKey: "contentPanel.section.branding", icon: Sticker },
+      ] as const,
+    },
   ] as const,
 } as const;
 type PanelCategory = ContentEntryKind;
@@ -387,11 +398,22 @@ type DecisionEffectDraft = {
 };
 type EventOptionDraft = {
   id: string;
-  label: string;
-  description: string;
-  autoChancePct: string;
-  buttonColor: string;
-  effects: DecisionEffectDraft[];
+  labelKey: string;
+  descriptionKey: string;
+  tooltipKey: string;
+  playerDefault: boolean;
+  buttonTone: NonNullable<GameEventOption["buttonTone"]>;
+  effects: GameEffectDraft[];
+  preservedEffects: GameEffect[];
+  aiWeight: GameEventOption["aiWeight"];
+};
+type GameEffectDraft = {
+  type: GameEffect["type"];
+  resource: keyof ResourceTotals;
+  amount: string;
+  direction: "income" | "expense";
+  categoryId: string;
+  labelKey: string;
 };
 type IdeologyAttractionRuleDraft = {
   id: string;
@@ -875,6 +897,14 @@ const CATEGORY_META: Record<PanelCategory, CategoryMeta> = {
     descriptionPlaceholderKey: "contentPanel.meta.events.descriptionPlaceholder",
     sectionTitleKey: "contentPanel.meta.events.sectionTitle",
   },
+  journalEntries: {
+    singularKey: "contentPanel.meta.journalEntries.singular",
+    createBaseNameKey: "contentPanel.meta.journalEntries.createBaseName",
+    createLabelKey: "contentPanel.meta.journalEntries.createLabel",
+    namePlaceholderKey: "contentPanel.meta.journalEntries.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.journalEntries.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.journalEntries.sectionTitle",
+  },
 };
 
 async function validateContentImage(file: File, kind: PanelCategory): Promise<void> {
@@ -1115,19 +1145,46 @@ function normalizeDecisionEffectsDraft(rows: DecisionEffectDraft[]): DecisionEff
 function normalizeEventOptionsDraft(rows: EventOptionDraft[]): GameEventOption[] {
   return rows
     .map((row, index): GameEventOption | null => {
-      const label = row.label.trim();
-      if (!label) return null;
-      const buttonColor = row.buttonColor.trim();
+      const labelKey = row.labelKey.trim();
+      if (!labelKey) return null;
       return {
         id: row.id.trim() || `option:${index + 1}`,
-        label,
-        description: row.description.trim() || null,
-        effects: normalizeDecisionEffectsDraft(row.effects),
-        autoChancePct: Math.min(100, Math.max(0, Number(row.autoChancePct || "0"))),
-        buttonColor: /^#[0-9A-Fa-f]{6}$/.test(buttonColor) ? buttonColor : null,
+        labelKey,
+        descriptionKey: row.descriptionKey.trim() || null,
+        tooltipKey: row.tooltipKey.trim() || null,
+        effects: [...normalizeGameEffectsDraft(row.effects), ...row.preservedEffects],
+        aiWeight: row.aiWeight ?? null,
+        playerDefault: row.playerDefault ? true : null,
+        buttonTone: row.buttonTone,
       };
     })
     .filter((row): row is GameEventOption => Boolean(row));
+}
+
+function normalizeGameEffectsDraft(rows: GameEffectDraft[]): GameEffect[] {
+  return rows
+    .map((row): GameEffect | null => {
+      const amount = Number(row.amount);
+      if (!Number.isFinite(amount) || amount <= 0) return null;
+      const normalizedAmount = Number(amount.toFixed(3));
+      if (row.type === "add_resource") {
+        return { type: "add_resource", resource: row.resource, amount: normalizedAmount, labelKey: row.labelKey.trim() || null };
+      }
+      if (row.type === "spend_resource") {
+        return { type: "spend_resource", resource: row.resource, amount: normalizedAmount, labelKey: row.labelKey.trim() || null };
+      }
+      const labelKey = row.labelKey.trim();
+      if (!labelKey) return null;
+      return {
+        type: "add_resource_flow",
+        resource: row.resource,
+        amount: normalizedAmount,
+        direction: row.direction,
+        categoryId: row.categoryId.trim() || null,
+        labelKey,
+      };
+    })
+    .filter((row): row is GameEffect => Boolean(row));
 }
 
 function modifiersToDraft(value?: ModifierDefinition[] | null): ModifierDraft[] {
@@ -1717,9 +1774,14 @@ export function ContentPanel({ open, token, onClose }: Props) {
       event:
         activeCategory === "events"
           ? {
+              namespace: "scenario",
               category: draftEventCategory,
               priority: draftEventPriority,
               visibility: draftEventVisibility,
+              titleKey: selectedEntry?.nameKey ?? `events.${(selectedEntry?.id ?? "event").replace(/[^a-zA-Z0-9]/g, "_")}.name`,
+              descriptionKey: `events.${(selectedEntry?.id ?? "event").replace(/[^a-zA-Z0-9]/g, "_")}.description`,
+              imageUrl: null,
+              iconId: null,
               triggerConditions: normalizeDecisionConditionsDraft(draftEventTriggerConditions),
               options: normalizeEventOptionsDraft(draftEventOptions),
               cooldownTurns: Math.max(0, Math.floor(Number(draftEventCooldownTurns || "0"))),
@@ -2573,15 +2635,23 @@ export function ContentPanel({ open, token, onClose }: Props) {
     })));
     setDraftEventOptions((selectedEntry.event?.options ?? []).map((option) => ({
       id: option.id,
-      label: option.label,
-      description: option.description ?? "",
-      autoChancePct: String(option.autoChancePct ?? 0),
-      buttonColor: option.buttonColor ?? "#15505b",
-      effects: (option.effects ?? []).filter((effect) => effect.type === "resource_delta").map((effect) => ({
-        type: "resource_delta",
-        resource: effect.resource,
-        amount: String(effect.amount),
-      })),
+      labelKey: option.labelKey,
+      descriptionKey: option.descriptionKey ?? "",
+      tooltipKey: option.tooltipKey ?? "",
+      playerDefault: option.playerDefault === true,
+      buttonTone: option.buttonTone ?? "default",
+      preservedEffects: (option.effects ?? []).filter((effect) => effect.type !== "add_resource" && effect.type !== "spend_resource" && effect.type !== "add_resource_flow"),
+      aiWeight: option.aiWeight ?? null,
+      effects: (option.effects ?? [])
+        .filter((effect) => effect.type === "add_resource" || effect.type === "spend_resource" || effect.type === "add_resource_flow")
+        .map((effect) => ({
+          type: effect.type,
+          resource: effect.resource,
+          amount: String(effect.amount),
+          direction: effect.type === "add_resource_flow" ? effect.direction : "income",
+          categoryId: effect.type === "add_resource_flow" ? effect.categoryId ?? "" : "",
+          labelKey: effect.labelKey ?? "",
+        })),
     })));
     setCriteriaCountriesOpen(false);
     setCriteriaProvinceOpen(false);
@@ -2852,11 +2922,27 @@ export function ContentPanel({ open, token, onClose }: Props) {
         event:
           activeCategory === "events"
             ? {
+                namespace: "scenario",
                 category: "politics",
                 priority: "medium",
                 visibility: "private",
+                titleKey: `events.${name.replace(/[^a-zA-Z0-9]/g, "_")}.name`,
+                descriptionKey: `events.${name.replace(/[^a-zA-Z0-9]/g, "_")}.description`,
+                imageUrl: null,
+                iconId: null,
                 triggerConditions: [{ type: "always", targetId: null, invert: false }],
-                options: [{ id: "ok", label: t("contentPanel.defaultEventOption"), description: null, autoChancePct: 100, buttonColor: "#15505b", effects: [] }],
+                options: [
+                  {
+                    id: "ok",
+                    labelKey: `events.${name.replace(/[^a-zA-Z0-9]/g, "_")}.option.ok`,
+                    descriptionKey: null,
+                    tooltipKey: null,
+                    effects: [],
+                    aiWeight: null,
+                    playerDefault: true,
+                    buttonTone: "primary",
+                  },
+                ],
                 cooldownTurns: 0,
                 repeatable: false,
                 checkIntervalTurns: 1,
@@ -2935,9 +3021,14 @@ export function ContentPanel({ open, token, onClose }: Props) {
     const parsedEvent =
       activeCategory === "events"
         ? {
+            namespace: "scenario",
             category: draftEventCategory,
             priority: draftEventPriority,
             visibility: draftEventVisibility,
+            titleKey: selectedEntry?.nameKey ?? `events.${(selectedEntry?.id ?? "event").replace(/[^a-zA-Z0-9]/g, "_")}.name`,
+            descriptionKey: `events.${(selectedEntry?.id ?? "event").replace(/[^a-zA-Z0-9]/g, "_")}.description`,
+            imageUrl: null,
+            iconId: null,
             triggerConditions: normalizeDecisionConditionsDraft(draftEventTriggerConditions),
             options: normalizeEventOptionsDraft(draftEventOptions),
             cooldownTurns: Math.max(0, Math.floor(Number(draftEventCooldownTurns || "0"))),
@@ -3666,13 +3757,36 @@ export function ContentPanel({ open, token, onClose }: Props) {
     </div>
   );
 
-  const renderEventEffects = (optionIndex: number, effects: DecisionEffectDraft[]) => (
+  const renderEventEffects = (optionIndex: number, effects: GameEffectDraft[]) => (
     <div className="space-y-2">
       {effects.length === 0 ? (
         <div className="rounded-lg border border-dashed border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.effectsEmpty")}</div>
       ) : (
         effects.map((row, effectIndex) => (
-          <div key={`${row.resource}-${effectIndex}`} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_120px_34px]">
+          <div key={`${row.resource}-${effectIndex}`} className="grid gap-2 md:grid-cols-[150px_minmax(0,1fr)_120px_minmax(0,1fr)_34px]">
+            <CustomSelect
+              value={row.type}
+              onChange={(value) =>
+                setDraftEventOptions((prev) =>
+                  prev.map((option, i) =>
+                    i === optionIndex
+                      ? {
+                          ...option,
+                          effects: option.effects.map((effect, j) =>
+                            j === effectIndex ? { ...effect, type: value as GameEffectDraft["type"] } : effect,
+                          ),
+                        }
+                      : option,
+                  ),
+                )
+              }
+              options={[
+                { value: "add_resource", label: "add_resource" },
+                { value: "spend_resource", label: "spend_resource" },
+                { value: "add_resource_flow", label: "add_resource_flow" },
+              ]}
+              buttonClassName="h-[38px]"
+            />
             <CustomSelect
               value={row.resource}
               onChange={(value) =>
@@ -3709,6 +3823,24 @@ export function ContentPanel({ open, token, onClose }: Props) {
                 )
               }
               inputMode="decimal"
+            />
+            <AppInput
+              value={row.labelKey}
+              onChange={(e) =>
+                setDraftEventOptions((prev) =>
+                  prev.map((option, i) =>
+                    i === optionIndex
+                      ? {
+                          ...option,
+                          effects: option.effects.map((effect, j) =>
+                            j === effectIndex ? { ...effect, labelKey: e.target.value } : effect,
+                          ),
+                        }
+                      : option,
+                  ),
+                )
+              }
+              placeholder="resourceLedger.source.generic"
             />
             <button
               type="button"
@@ -3774,7 +3906,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
             <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.eventOptions")}</div>
             <div className="mt-1 text-xs text-[rgb(var(--theme-text-muted))]">{t("contentPanel.eventOptionsHint")}</div>
           </div>
-          <button type="button" onClick={() => setDraftEventOptions((prev) => [...prev, { id: `option-${prev.length + 1}`, label: t("contentPanel.newEventOption"), description: "", autoChancePct: "100", buttonColor: "#15505b", effects: [] }])} className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]">
+          <button type="button" onClick={() => setDraftEventOptions((prev) => [...prev, { id: `option-${prev.length + 1}`, labelKey: "events.example.option", descriptionKey: "", tooltipKey: "", playerDefault: prev.length === 0, buttonTone: "primary", effects: [], preservedEffects: [], aiWeight: null }])} className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]">
             <Plus size={12} />
             {t("contentPanel.option")}
           </button>
@@ -3785,26 +3917,28 @@ export function ContentPanel({ open, token, onClose }: Props) {
           ) : (
             draftEventOptions.map((option, index) => (
               <div key={`${option.id}-${index}`} className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-3">
-                <div className="grid gap-2 md:grid-cols-[150px_minmax(0,1fr)_120px_160px_34px]">
+                <div className="grid gap-2 md:grid-cols-[150px_minmax(0,1fr)_minmax(0,1fr)_140px_34px]">
                   <AppInput value={option.id} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, id: e.target.value } : item)))} placeholder="id" />
-                  <AppInput value={option.label} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, label: e.target.value } : item)))} placeholder={t("contentPanel.placeholder.buttonText")} />
-                  <AppInput value={option.autoChancePct} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, autoChancePct: e.target.value } : item)))} inputMode="decimal" placeholder={t("contentPanel.placeholder.autoPct")} />
-                  <div className="grid grid-cols-[38px_minmax(0,1fr)] gap-2">
-                    <input
-                      type="color"
-                      value={/^#[0-9A-Fa-f]{6}$/.test(option.buttonColor) ? option.buttonColor : "#15505b"}
-                      onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, buttonColor: e.target.value } : item)))}
-                      className="h-[38px] w-full rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-1"
-                      aria-label={t("contentPanel.buttonColor")}
-                    />
-                    <AppInput value={option.buttonColor} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, buttonColor: e.target.value } : item)))} placeholder="#15505b" />
-                  </div>
+                  <AppInput value={option.labelKey} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, labelKey: e.target.value } : item)))} placeholder="events.example.option.ok" />
+                  <AppInput value={option.descriptionKey} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, descriptionKey: e.target.value } : item)))} placeholder="events.example.option.ok.description" />
+                  <CustomSelect value={option.buttonTone} onChange={(value) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, buttonTone: value as NonNullable<GameEventOption["buttonTone"]> } : item)))} options={[
+                    { value: "default", label: "default" },
+                    { value: "primary", label: "primary" },
+                    { value: "danger", label: "danger" },
+                    { value: "warning", label: "warning" },
+                  ]} buttonClassName="h-[38px]" />
                   <button type="button" onClick={() => setDraftEventOptions((prev) => prev.filter((_, i) => i !== index))} className="inline-flex h-[38px] items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-danger-soft))] hover:text-[rgb(var(--theme-danger))]"><Trash2 size={14} /></button>
                 </div>
-                <AppTextarea className="mt-2 min-h-[70px]" value={option.description} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, description: e.target.value } : item)))} placeholder={t("contentPanel.placeholder.optionDescription")} />
+                <div className="mt-2 grid gap-2 md:grid-cols-[minmax(0,1fr)_180px]">
+                  <AppInput value={option.tooltipKey} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, tooltipKey: e.target.value } : item)))} placeholder="events.example.option.ok.tooltip" />
+                  <label className="flex h-[38px] items-center gap-2 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] px-3 text-xs text-[rgb(var(--theme-text-secondary))]">
+                    <input type="checkbox" checked={option.playerDefault} onChange={(e) => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, playerDefault: e.target.checked } : item)))} />
+                    playerDefault
+                  </label>
+                </div>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.optionEffects")}</span>
-                  <button type="button" onClick={() => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, effects: [...item.effects, { type: "resource_delta", resource: "culture", amount: "10" }] } : item)))} className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]">
+                  <button type="button" onClick={() => setDraftEventOptions((prev) => prev.map((item, i) => (i === index ? { ...item, effects: [...item.effects, { type: "add_resource", resource: "culture", amount: "10", direction: "income", categoryId: "", labelKey: "resourceLedger.source.generic" }] } : item)))} className="inline-flex items-center gap-1 rounded-md border border-[rgb(var(--theme-border-subtle))] px-2 py-1 text-xs text-[rgb(var(--theme-text-secondary))] transition hover:bg-[rgb(var(--theme-surface-3))]">
                     <Plus size={12} />
                     {t("contentPanel.effect")}
                   </button>

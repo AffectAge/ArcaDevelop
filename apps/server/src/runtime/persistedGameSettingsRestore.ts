@@ -81,6 +81,7 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
       modifiers: normalizeContentCultures((next as Partial<{ content?: { modifiers?: unknown } }>).content?.modifiers),
       decisions: normalizeContentCultures((next as Partial<{ content?: { decisions?: unknown } }>).content?.decisions),
       events: normalizeContentCultures((next as Partial<{ content?: { events?: unknown } }>).content?.events),
+      journalEntries: normalizeContentCultures((next as Partial<{ content?: { journalEntries?: unknown } }>).content?.journalEntries),
       battalions: normalizeContentBattalions((next as Partial<{ content?: { battalions?: unknown } }>).content?.battalions),
       shipTypes: normalizeContentShipTypes((next as Partial<{ content?: { shipTypes?: unknown } }>).content?.shipTypes),
       aircraftTypes: normalizeContentAircraftTypes((next as Partial<{ content?: { aircraftTypes?: unknown } }>).content?.aircraftTypes),
@@ -169,7 +170,6 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
           ? (next.map?.backgroundImageUrl ?? null)
           : defaults.map.backgroundImageUrl,
     },
-    resourceIcons: restoreResourceIcons(next, defaults),
   };
 }
 
@@ -188,6 +188,10 @@ function restoreAi(next: Partial<GameSettings>, defaults: GameSettings): GameSet
       typeof next.ai?.contextCacheTtlTurns === "number" && Number.isFinite(next.ai.contextCacheTtlTurns)
         ? Math.max(1, Math.min(100, Math.floor(next.ai.contextCacheTtlTurns)))
         : defaults.ai.contextCacheTtlTurns,
+    maxBuildCompletionTurns:
+      typeof next.ai?.maxBuildCompletionTurns === "number" && Number.isFinite(next.ai.maxBuildCompletionTurns)
+        ? Math.max(1, Math.min(3_650, Math.floor(next.ai.maxBuildCompletionTurns)))
+        : defaults.ai.maxBuildCompletionTurns,
   };
 }
 
@@ -444,17 +448,10 @@ function restoreTurnTimer(next: Partial<GameSettings>, defaults: GameSettings): 
   };
 }
 
-function restoreResourceIcons(next: Partial<GameSettings>, defaults: GameSettings): GameSettings["resourceIcons"] {
-  return {
-    population: stringOrNullOrDefault(next.resourceIcons?.population, defaults.resourceIcons.population),
-    culture: stringOrNullOrDefault(next.resourceIcons?.culture, defaults.resourceIcons.culture),
-    science: stringOrNullOrDefault(next.resourceIcons?.science, defaults.resourceIcons.science),
-    religion: stringOrNullOrDefault(next.resourceIcons?.religion, defaults.resourceIcons.religion),
-    colonization: stringOrNullOrDefault(next.resourceIcons?.colonization, defaults.resourceIcons.colonization),
-    construction: stringOrNullOrDefault(next.resourceIcons?.construction, defaults.resourceIcons.construction),
-    ducats: stringOrNullOrDefault(next.resourceIcons?.ducats, defaults.resourceIcons.ducats),
-    gold: stringOrNullOrDefault(next.resourceIcons?.gold, defaults.resourceIcons.gold),
-  };
+
+function stringOrNullOrDefault(value: unknown, fallback: string | null): string | null {
+  if (value === null) return null;
+  return typeof value === "string" && value.trim() ? value.trim().slice(0, 500) : fallback;
 }
 
 function numberOrDefault(value: unknown, fallback: number): number {
@@ -467,8 +464,4 @@ function positiveIntOrDefault(value: unknown, fallback: number): number {
 
 function finiteNumberOrDefault(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Number(value)) : fallback;
-}
-
-function stringOrNullOrDefault(value: unknown, fallback: string | null): string | null {
-  return typeof value === "string" || value === null ? (value ?? null) : fallback;
 }

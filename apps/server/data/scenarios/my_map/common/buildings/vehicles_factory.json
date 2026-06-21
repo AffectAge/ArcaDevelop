@@ -1,0 +1,83 @@
+{
+  "id": "building:vehicles_factory",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 308,
+  "costDucats": 242,
+  "startingDucats": 84,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 180,
+  "upgradeCostConstruction": 231,
+  "sectorId": "sector:industry",
+  "industryId": "industry:machinery",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:engines",
+      "amount": 4
+    },
+    {
+      "goodId": "good:steel",
+      "amount": 14
+    },
+    {
+      "goodId": "good:rubber",
+      "amount": 5
+    },
+    {
+      "goodId": "good:electronics",
+      "amount": 4
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:vehicles",
+      "amount": 27.33
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:machinist",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 480
+    }
+  ],
+  "infrastructureUse": 5,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.vehicles_factory.name"
+}

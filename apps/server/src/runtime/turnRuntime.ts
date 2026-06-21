@@ -51,7 +51,13 @@ export const TURN_RESOLVE_WORLD_DELTA_MASK =
   WORLD_DELTA_MASK.regionResourceExplorationCountByRegion |
   WORLD_DELTA_MASK.parliamentByCountry |
   WORLD_DELTA_MASK.technologyByCountry |
+  WORLD_DELTA_MASK.countryDecisionsByCountryId |
   WORLD_DELTA_MASK.countryEventsByCountryId |
+  WORLD_DELTA_MASK.countryScheduledEventsByCountryId |
+  WORLD_DELTA_MASK.countryEventFlagsByCountryId |
+  WORLD_DELTA_MASK.journalEntriesByCountryId |
+  WORLD_DELTA_MASK.countryModifiersByCountryId |
+  WORLD_DELTA_MASK.explanationRecordsByTurn |
   WORLD_DELTA_MASK.divisionsById |
   WORLD_DELTA_MASK.militaryFormationQueueByCountry;
 
@@ -115,8 +121,10 @@ type TurnRuntimeParams = {
   resolveResourceExplorationTurn: () => void;
   resolveTransportCorridorConstructionTurn: () => void;
   applyPerTurnTreatyMoneyTransfers: () => void;
+  rechargeDecisionCharges: () => void;
   resolveTechnologyTurn: (news: EventLogEntry[]) => void;
   autoResolveExpiredCountryEvents: (news: EventLogEntry[]) => void;
+  resolveJournalEntriesTurn: (news: EventLogEntry[]) => void;
   maybeGenerateCountryEvents: (news: EventLogEntry[], uiNotifications: CountryEventUiNotification[]) => void;
   resolvePopulationTurn: () => void;
   resolveParliamentTurn: () => Array<{ countryId: string; parliament: CountryParliament }>;
@@ -308,8 +316,10 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
         });
       },
       applyPerTurnTreatyMoneyTransfers: params.applyPerTurnTreatyMoneyTransfers,
+      rechargeDecisionCharges: params.rechargeDecisionCharges,
       resolveTechnologyTurn: params.resolveTechnologyTurn,
       autoResolveExpiredCountryEvents: params.autoResolveExpiredCountryEvents,
+      resolveJournalEntriesTurn: params.resolveJournalEntriesTurn,
       maybeGenerateCountryEvents: params.maybeGenerateCountryEvents,
       resolvePopulationTurn: params.resolvePopulationTurn,
       resolveParliamentTurn: (uiNotifications) => {

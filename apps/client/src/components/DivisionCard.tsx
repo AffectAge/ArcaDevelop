@@ -169,14 +169,16 @@ export function DivisionCard({
                   {isMoving ? t("army.moveCancel") : t("army.march")}
                 </AppButton>
                 {onDelete && (
-                  <AppButton
-                    variant="danger"
-                    size="sm"
-                    onClick={onDelete}
-                    title={t("army.disbandDivision")}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </AppButton>
+                  <Tooltip content={t("army.disbandDivision")} placement="top">
+                    <AppButton
+                      variant="danger"
+                      size="sm"
+                      onClick={onDelete}
+                      aria-label={t("army.disbandDivision")}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </AppButton>
+                  </Tooltip>
                 )}
               </>
             ) : (

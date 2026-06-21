@@ -3,6 +3,7 @@ import { CheckCircle2, Clock, Landmark, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import type { CountryDecisionRecord, ResourceTotals } from "@arcanorum/shared";
 import { fetchCountryDecisions, takeCountryDecision, type CountryDecisionView } from "../lib/api";
+import { formatGameEffectPreview } from "../lib/gameEffectPreview";
 import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard, AppEmptyState } from "./ui/AppSurface";
@@ -38,6 +39,19 @@ const CATEGORY_LABEL_KEY: Record<string, UiTextKey> = {
   technology: "decisions.category.technology",
 };
 
+const SCOPE_KIND_LABEL_KEY: Record<string, UiTextKey> = {
+  country: "decisions.scope.country",
+  region: "decisions.scope.region",
+  building: "decisions.scope.building",
+  pop: "decisions.scope.pop",
+  interest_group: "decisions.scope.interestGroup",
+  law: "decisions.scope.law",
+  market: "decisions.scope.market",
+  diplomatic_relation: "decisions.scope.diplomaticRelation",
+  war: "decisions.scope.war",
+  journal_entry: "decisions.scope.journalEntry",
+};
+
 function categoryLabel(category: string, t: (key: UiTextKey, params?: Record<string, string | number>) => string): string {
   const key = CATEGORY_LABEL_KEY[category];
   return key ? t(key) : category;
@@ -53,12 +67,49 @@ function formatResourceMap(values: Partial<ResourceTotals> | undefined, t: (key:
 }
 
 function formatEffects(decision: CountryDecisionView["decision"], t: (key: UiTextKey, params?: Record<string, string | number>) => string) {
-  return (decision.effects ?? []).map((effect) => {
-    if (effect.type === "resource_delta") {
-      const amount = effect.amount >= 0 ? `+${effect.amount}` : String(effect.amount);
-      return `${amount} ${t(RESOURCE_LABEL_KEY[effect.resource])}`;
-    }
-    return t("decisions.effectFallback");
+  return (decision.effects ?? []).map((effect) => formatGameEffectPreview(effect, t, RESOURCE_LABEL_KEY));
+}
+
+function formatDecisionReason(item: CountryDecisionView, t: (key: UiTextKey, params?: Record<string, string | number>) => string): string | null {
+  const reason = item.reasons[0];
+  if (!reason) return item.reason;
+  const params: Record<string, string | number> = {};
+  if (reason.currentValue != null) params.current = String(reason.currentValue);
+  if (reason.requiredValue != null) params.required = String(reason.requiredValue);
+  return t(reason.labelKey as UiTextKey, params);
+}
+
+function formatDecisionScopes(item: CountryDecisionView, t: (key: UiTextKey, params?: Record<string, string | number>) => string): string[] {
+  return Object.entries(item.scopes ?? {}).map(([slot, scope]) => {
+    const kindKey = SCOPE_KIND_LABEL_KEY[scope.kind] ?? "decisions.scope.object";
+    return t("decisions.scopeLine", { slot, kind: t(kindKey), id: scope.id });
+  });
+}
+
+function formatHistoryScopes(
+  scopes: CountryDecisionRecord["history"][number]["scopes"] | undefined,
+  t: (key: UiTextKey, params?: Record<string, string | number>) => string,
+): string {
+  const rows = Object.entries(scopes ?? {});
+  if (rows.length === 0) return t("decisions.historyScopesNone");
+  return rows
+    .slice(0, 3)
+    .map(([scopeId, scope]) => `${scopeId}: ${scope.labelKey ? t(scope.labelKey as UiTextKey) : scope.id}`)
+    .join(", ");
+}
+
+function formatHistoryEffect(
+  effect: CountryDecisionRecord["history"][number]["appliedEffects"][number],
+  t: (key: UiTextKey, params?: Record<string, string | number>) => string,
+): string {
+  const resource = effect.resource ? t(RESOURCE_LABEL_KEY[effect.resource]) : "-";
+  const amount = effect.amount == null ? "-" : String(effect.amount);
+  const target = effect.eventId ?? effect.journalEntryId ?? effect.flagId ?? "-";
+  return t("decisions.historyEffectLine", {
+    type: effect.type,
+    resource,
+    amount,
+    target,
   });
 }
 
@@ -141,6 +192,22 @@ export function CountryDecisionsModal({ open, token, countryId, onClose }: Props
               <AppCard key={`${item.decisionId}-${item.takenTurnId}`} className="p-3">
                 <div className="text-sm font-semibold text-[var(--arc-color-text)]">{item.label}</div>
                 <div className="mt-1 text-xs text-[var(--arc-color-text-muted)]">{t("decisions.turn", { turn: item.takenTurnId })}</div>
+                <div className="mt-2 text-xs text-[var(--arc-color-text-soft)]">
+                  {t("decisions.historyScopes", { scopes: formatHistoryScopes(item.scopes, t) })}
+                </div>
+                {item.appliedEffects.length > 0 ? (
+                  <div className="mt-2 space-y-1 text-xs text-[var(--arc-color-text-soft)]">
+                    <div className="font-semibold text-[var(--arc-color-text-soft)]">{t("decisions.historyEffects")}</div>
+                    {item.appliedEffects.slice(0, 4).map((effect, index) => (
+                      <div key={`${effect.type}-${index}`}>{formatHistoryEffect(effect, t)}</div>
+                    ))}
+                  </div>
+                ) : null}
+                {item.explanationIds.length > 0 ? (
+                  <div className="mt-2 text-xs text-[var(--arc-color-text-muted)]">
+                    {t("decisions.historyExplanations", { count: item.explanationIds.length })}
+                  </div>
+                ) : null}
               </AppCard>
             ))
           )}
@@ -152,6 +219,8 @@ export function CountryDecisionsModal({ open, token, countryId, onClose }: Props
           {rows.map((item) => {
             const costs = formatResourceMap(item.decision.costs, t);
             const effects = formatEffects(item.decision, t);
+            const reason = formatDecisionReason(item, t);
+            const scopes = formatDecisionScopes(item, t);
             return (
               <AppCard key={item.id} className="p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -181,7 +250,13 @@ export function CountryDecisionsModal({ open, token, countryId, onClose }: Props
                     {effects.length > 0 ? effects.join(", ") : t("decisions.none")}
                   </div>
                 </div>
-                {!item.available && item.reason ? <div className="mt-3 text-xs text-[var(--arc-color-warning-top)]">{item.reason}</div> : null}
+                {scopes.length > 0 ? (
+                  <div className="mt-3 rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] p-2 text-xs text-[var(--arc-color-text-soft)]">
+                    <div className="mb-1 text-[var(--arc-color-text-muted)]">{t("decisions.scope")}</div>
+                    {scopes.join(", ")}
+                  </div>
+                ) : null}
+                {!item.available && reason ? <div className="mt-3 text-xs text-[var(--arc-color-warning-top)]">{reason}</div> : null}
               </AppCard>
             );
           })}
@@ -197,7 +272,7 @@ export function CountryDecisionsModal({ open, token, countryId, onClose }: Props
       imageUrl={selectedDecision?.logoUrl ?? null}
       imageCaption={selectedDecision?.name ?? null}
       categoryLabel={selectedDecision ? categoryLabel(selectedDecision.decision.category, t) : null}
-      importantLabel={selectedDecision?.available ? null : selectedDecision?.reason ?? t("decisions.notAvailable")}
+      importantLabel={selectedDecision?.available ? null : selectedDecision ? formatDecisionReason(selectedDecision, t) ?? t("decisions.notAvailable") : null}
       accentColor={selectedDecision?.color ?? "#4ade80"}
       options={
         selectedDecision
@@ -205,10 +280,11 @@ export function CountryDecisionsModal({ open, token, countryId, onClose }: Props
               {
                 id: "take",
                 label: selectedDecision.available ? t("decisions.take") : t("decisions.notAvailable"),
-                description: selectedDecision.reason ?? undefined,
+                description: formatDecisionReason(selectedDecision, t) ?? undefined,
                 effects: [
                   ...formatResourceMap(selectedDecision.decision.costs, t).map((row) => `${t("decisions.cost")}: ${row}`),
                   ...formatEffects(selectedDecision.decision, t),
+                  ...formatDecisionScopes(selectedDecision, t).map((row) => `${t("decisions.scope")}: ${row}`),
                 ],
                 buttonColor: selectedDecision.color,
                 disabled: !selectedDecision.available || Boolean(takingId),

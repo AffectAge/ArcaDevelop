@@ -1,0 +1,75 @@
+{
+  "id": "building:fodder_farm",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 133,
+  "costDucats": 105,
+  "startingDucats": 36,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 78,
+  "upgradeCostConstruction": 100,
+  "sectorId": "sector:agriculture",
+  "industryId": "industry:farms",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:tools",
+      "amount": 2
+    },
+    {
+      "goodId": "good:fertilizer",
+      "amount": 2
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:fodder",
+      "amount": 95.47
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:farmer",
+      "workers": 850
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 250
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 35
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.fodder_farm.name"
+}

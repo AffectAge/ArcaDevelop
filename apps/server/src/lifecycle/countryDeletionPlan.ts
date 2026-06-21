@@ -22,6 +22,10 @@ export type CountryDeletionPlan = {
   parliamentEntry: boolean;
   decisionEntry: boolean;
   eventEntry: boolean;
+  scheduledEventEntry: boolean;
+  eventFlagsEntry: boolean;
+  journalEntry: boolean;
+  countryModifiersEntry: boolean;
   orderTurns: number[];
   resolveReadyTurns: number[];
   assetRefs: CountryDeletionAssetRef[];
@@ -84,6 +88,10 @@ export function planCountryDeletion(params: {
     parliamentEntry: countryId in worldBase.parliamentByCountry,
     decisionEntry: countryId in worldBase.countryDecisionsByCountryId,
     eventEntry: countryId in worldBase.countryEventsByCountryId,
+    scheduledEventEntry: countryId in worldBase.countryScheduledEventsByCountryId,
+    eventFlagsEntry: countryId in worldBase.countryEventFlagsByCountryId,
+    journalEntry: countryId in worldBase.journalEntriesByCountryId,
+    countryModifiersEntry: countryId in worldBase.countryModifiersByCountryId,
     orderTurns: collectOrderTurns(countryId, params.ordersByTurn),
     resolveReadyTurns: collectResolveReadyTurns(countryId, params.resolveReadyByTurn),
     assetRefs: collectAssetRefs(params.flagUrl, params.crestUrl),

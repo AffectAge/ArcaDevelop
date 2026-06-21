@@ -1,0 +1,74 @@
+{
+  "id": "building:precious_ore_mine",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 252,
+  "costDucats": 198,
+  "startingDucats": 68,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 148,
+  "upgradeCostConstruction": 189,
+  "sectorId": "sector:mining",
+  "industryId": "industry:mining",
+  "extractionGoodId": "good:precious_ore",
+  "extractionAmountPerTurn": 35.44,
+  "extractionRequiresDeposit": true,
+  "inputs": [
+    {
+      "goodId": "good:electricity",
+      "amount": 5
+    },
+    {
+      "goodId": "good:mining_equipment",
+      "amount": 1.3
+    },
+    {
+      "goodId": "good:chemicals",
+      "amount": 1.5
+    }
+  ],
+  "outputs": [],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:miner",
+      "workers": 900
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 55
+    }
+  ],
+  "infrastructureUse": 5,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.precious_ore_mine.name"
+}

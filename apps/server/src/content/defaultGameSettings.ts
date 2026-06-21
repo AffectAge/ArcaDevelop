@@ -51,6 +51,7 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
       modifiers: [],
       decisions: [],
       events: [],
+      journalEntries: [],
       battalions: ensureDefaultBattalions([]),
       shipTypes: ensureDefaultMilitaryContent([], DEFAULT_SHIP_TYPES),
       aircraftTypes: ensureDefaultMilitaryContent([], DEFAULT_AIRCRAFT_TYPES),
@@ -60,6 +61,7 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
       maxCountriesPerTick: 50,
       maxDecisionCandidatesPerCountry: 20,
       contextCacheTtlTurns: 1,
+      maxBuildCompletionTurns: 8,
     },
     civilopedia: {
       categories: defaultCivilopediaCategories(),
@@ -131,16 +133,6 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
     map: {
       showAntarctica: false,
       backgroundImageUrl: null,
-    },
-    resourceIcons: {
-      population: null,
-      culture: null,
-      science: null,
-      religion: null,
-      colonization: null,
-      construction: null,
-      ducats: null,
-      gold: null,
     },
   };
 

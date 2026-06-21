@@ -16,6 +16,7 @@ const aiSettings: GameSettings["ai"] = {
   maxCountriesPerTick: 2,
   maxDecisionCandidatesPerCountry: 4,
   contextCacheTtlTurns: 1,
+  maxBuildCompletionTurns: 8,
 };
 
 function createBuildCandidate(countryId: string): AiEconomyOrderCandidate {

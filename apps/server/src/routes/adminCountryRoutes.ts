@@ -80,6 +80,10 @@ export type AdminCountryRoutesDependencies = {
     technologyByCountry: number;
     countryDecisionsByCountryId: number;
     countryEventsByCountryId: number;
+    countryScheduledEventsByCountryId: number;
+    countryEventFlagsByCountryId: number;
+    journalEntriesByCountryId: number;
+    countryModifiersByCountryId: number;
     divisionTemplatesByCountry: number;
     divisionsById: number;
     militaryFormationQueueByCountry: number;
@@ -261,6 +265,10 @@ export function registerAdminCountryRoutes(app: express.Express, deps: AdminCoun
         deps.masks.technologyByCountry |
         deps.masks.countryDecisionsByCountryId |
         deps.masks.countryEventsByCountryId |
+        deps.masks.countryScheduledEventsByCountryId |
+        deps.masks.countryEventFlagsByCountryId |
+        deps.masks.journalEntriesByCountryId |
+        deps.masks.countryModifiersByCountryId |
         deps.masks.divisionTemplatesByCountry |
         deps.masks.divisionsById |
         deps.masks.militaryFormationQueueByCountry |

@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
-import type { ServerStatus, WsOutMessage } from "@arcanorum/shared";
+import type { ResourceId, ServerStatus, WsOutMessage } from "@arcanorum/shared";
 import { WORLD_DELTA_MASK } from "@arcanorum/shared";
 import type { z } from "zod";
 import type { RouteAuth } from "../security/routeAuth";
@@ -68,6 +68,7 @@ type ServerCoreRouteRegistrationRuntimeParams = {
   getGameSettings: () => GameSettings;
   getAiControlledCountryIds: () => Set<string>;
   getCountryResources: (countryId: string) => ResourceTotals | null;
+  getCountryResourceNetByTurn: (countryId: string) => Partial<Record<ResourceId, number>>;
   savePersistentState: () => void;
   validateImageDimensions: typeof validateImageDimensions;
   removeUploadedFile: typeof removeUploadedFile;
@@ -124,6 +125,7 @@ export function registerServerCoreRouteRuntime(params: ServerCoreRouteRegistrati
     getOnlineCountryIds: () => getOnlineCountryIdsFromSockets(params.wsServerProvider()),
     getAiControlledCountryIds: params.getAiControlledCountryIds,
     getCountryResources: params.getCountryResources,
+    getCountryResourceNetByTurn: params.getCountryResourceNetByTurn,
     getLastLoginAt: (countryId) => params.sessionStateRuntime.lastLoginAtByCountryId.get(countryId) ?? null,
     getCurrentTurnStartedAtMs: params.turnSessionRuntime.getCurrentTurnStartedAtMs,
     getGameSettings: params.getGameSettings,

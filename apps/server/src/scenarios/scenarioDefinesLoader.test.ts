@@ -32,6 +32,7 @@ const baseAi: AiSettings = {
   maxCountriesPerTick: 50,
   maxDecisionCandidatesPerCountry: 20,
   contextCacheTtlTurns: 1,
+  maxBuildCompletionTurns: 8,
 };
 const baseEconomy: EconomySettings = {
   baseCulturePerTurn: 1,
@@ -162,10 +163,16 @@ describe("scenarioDefinesLoader", () => {
   it("normalizes AI defines", () => {
     expect(
       normalizeScenarioAiDefines(
-        { enabled: false, maxCountriesPerTick: 25, maxDecisionCandidatesPerCountry: 12, contextCacheTtlTurns: 3 },
+        { enabled: false, maxCountriesPerTick: 25, maxDecisionCandidatesPerCountry: 12, contextCacheTtlTurns: 3, maxBuildCompletionTurns: 9 },
         baseAi,
       ),
-    ).toEqual({ enabled: false, maxCountriesPerTick: 25, maxDecisionCandidatesPerCountry: 12, contextCacheTtlTurns: 3 });
+    ).toEqual({
+      enabled: false,
+      maxCountriesPerTick: 25,
+      maxDecisionCandidatesPerCountry: 12,
+      contextCacheTtlTurns: 3,
+      maxBuildCompletionTurns: 9,
+    });
   });
 
   it("rejects invalid AI defines", () => {
@@ -182,6 +189,13 @@ describe("scenarioDefinesLoader", () => {
         baseAi,
       ),
     ).toThrow("INVALID_SCENARIO_AI_ENABLED");
+
+    expect(() =>
+      normalizeScenarioAiDefines(
+        { maxBuildCompletionTurns: 0 },
+        baseAi,
+      ),
+    ).toThrow("INVALID_SCENARIO_AI_MAX_BUILD_COMPLETION_TURNS");
   });
 
   it("normalizes economy defines", () => {
@@ -372,7 +386,7 @@ describe("scenarioDefinesLoader", () => {
       applyScenarioDefinesToGameSettings(
         settings,
         {
-          ai: { maxCountriesPerTick: 30 },
+          ai: { maxCountriesPerTick: 30, maxBuildCompletionTurns: 11 },
           economy: { baseGoldPerTurn: 12, marketPriceSmoothing: 0.4 },
           auditLog: { maxEntries: 25, retentionTurns: 4 },
           colonization: { pointsPerTurn: 60 },
@@ -385,7 +399,7 @@ describe("scenarioDefinesLoader", () => {
         options,
       ),
     ).toMatchObject({
-      ai: { maxCountriesPerTick: 30, enabled: true },
+      ai: { maxCountriesPerTick: 30, enabled: true, maxBuildCompletionTurns: 11 },
       economy: { baseGoldPerTurn: 12, marketPriceSmoothing: 0.4, baseCulturePerTurn: 1 },
       auditLog: { maxEntries: 25, retentionTurns: 4 },
       colonization: { pointsPerTurn: 60, maxActiveColonizations: 3 },

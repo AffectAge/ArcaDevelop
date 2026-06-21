@@ -22,6 +22,8 @@ project_assets/
 - `scripts` contains root-level build/data preparation scripts.
 - `project_assets` contains source/reference assets, not scenario-owned runtime uploads.
 
+Repo-owned base client assets that are part of the game itself live under `apps/client/public/game-assets/`. Resource point icons use `apps/client/public/game-assets/resource-icons/*.png`; they are not scenario-owned uploads and are not configured through runtime game settings.
+
 ## Target Server Layout After Refactor
 
 Server code should move away from a giant `src/index.ts` toward:

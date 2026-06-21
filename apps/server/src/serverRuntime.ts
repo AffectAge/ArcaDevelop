@@ -101,6 +101,7 @@ import {
   validateImageRule,
 } from "./uploads/uploadValidation";
 import {
+  type ResourceId,
   type WorldBase,
   type WorldDelta,
 } from "@arcanorum/shared";
@@ -272,6 +273,16 @@ registerServerCoreRouteRuntime({
   getGameSettings: () => gameSettings,
   getAiControlledCountryIds: () => new Set(aiControlledCountryIds),
   getCountryResources: (countryId) => worldBase.resourcesByCountry[countryId] ?? null,
+  getCountryResourceNetByTurn: (countryId) => {
+    const latestTurnId = Math.max(0, ...Object.keys(worldBase.resourceLedgerByTurn ?? {}).map((turn) => Number(turn)).filter(Number.isFinite));
+    const netByResource: Partial<Record<ResourceId, number>> = {};
+    for (const flow of worldBase.resourceLedgerByTurn?.[latestTurnId] ?? []) {
+      if (flow.countryId !== countryId) continue;
+      const signedAmount = flow.direction === "expense" ? -flow.amount : flow.amount;
+      netByResource[flow.resourceId] = (netByResource[flow.resourceId] ?? 0) + signedAmount;
+    }
+    return netByResource;
+  },
   savePersistentState: persistenceFacade.savePersistentState,
   validateImageDimensions,
   removeUploadedFile,
@@ -359,6 +370,7 @@ const persistedStateRestoreRuntime = createPersistedStateRestoreRuntime({
   round3,
   normalizeResourcesByCountryMap: worldStateNormalizerRuntime.normalizeResourcesByCountryMap,
   normalizeResourceLedgerByTurn: worldStateNormalizerRuntime.normalizeResourceLedgerByTurn,
+  normalizeExplanationRecordsByTurn: worldStateNormalizerRuntime.normalizeExplanationRecordsByTurn,
   normalizeRegionColonizationMap,
   normalizeRegionPopulationMap: worldPopulationRuntime.normalizeRegionPopulationMap,
   normalizeRegionBuildingsMap: worldPopulationRuntime.normalizeRegionBuildingsMap,
@@ -371,6 +383,10 @@ const persistedStateRestoreRuntime = createPersistedStateRestoreRuntime({
   normalizeTechnologyByCountryMap: worldStateNormalizerRuntime.normalizeTechnologyByCountryMap,
   normalizeCountryDecisionsMap: worldStateNormalizerRuntime.normalizeCountryDecisionsMap,
   normalizeCountryEventsMap: worldStateNormalizerRuntime.normalizeCountryEventsMap,
+  normalizeScheduledCountryEventsMap: worldStateNormalizerRuntime.normalizeScheduledCountryEventsMap,
+  normalizeCountryEventFlagsMap: worldStateNormalizerRuntime.normalizeCountryEventFlagsMap,
+  normalizeJournalEntriesMap: worldStateNormalizerRuntime.normalizeJournalEntriesMap,
+  normalizeCountryModifiersMap: worldStateNormalizerRuntime.normalizeCountryModifiersMap,
   normalizeDivisionTemplatesByCountry: militaryRuntimeFacade.normalizeDivisionTemplatesByCountry,
   normalizeDivisionsById: militaryRuntimeFacade.normalizeDivisionsById,
   normalizeMilitaryFormationQueueByCountry: militaryRuntimeFacade.normalizeMilitaryFormationQueueByCountry,
@@ -434,6 +450,10 @@ const { progressionRuntime, countryWorldRuntime } = createCountrySystemsRuntime(
   normalizeCountryEventRecord: worldStateNormalizerRuntime.normalizeCountryEventRecord,
   normalizeResourceTotals: worldStateNormalizerRuntime.normalizeResourceTotals,
   modifierConditionsMatchCountry: modifierFacade.modifierConditionsMatchCountry,
+  countryHasModifier: (countryId, modifierId) =>
+    modifierFacade
+      .getActiveCountryModifierRows(countryId)
+      .some((row) => row.sourceId === modifierId || row.id === modifierId || row.id.endsWith(`:${modifierId}`)),
   resolveModifiedValue: modifierFacade.resolveModifiedValue,
   addResourceLedgerIncome: resourceLedgerRuntime.addIncome,
   addResourceLedgerExpense: resourceLedgerRuntime.addExpense,
@@ -593,8 +613,10 @@ const turnRuntime = createTurnRuntime({
   resolveResourceExplorationTurn: turnMechanicsAdapterRuntime.resolveResourceExplorationTurn,
   resolveTransportCorridorConstructionTurn: turnMechanicsAdapterRuntime.resolveTransportCorridorConstructionTurn,
   applyPerTurnTreatyMoneyTransfers: diplomacyFacade.applyPerTurnTreatyMoneyTransfers,
+  rechargeDecisionCharges: progressionRuntime.rechargeDecisionCharges,
   resolveTechnologyTurn: progressionRuntime.resolveTechnologyTurn,
   autoResolveExpiredCountryEvents: progressionRuntime.autoResolveExpiredCountryEvents,
+  resolveJournalEntriesTurn: progressionRuntime.resolveJournalEntriesTurn,
   maybeGenerateCountryEvents: progressionRuntime.maybeGenerateCountryEvents,
   resolvePopulationTurn: worldPopulationRuntime.resolvePopulationTurn,
   resolveParliamentTurn: progressionRuntime.resolveParliamentTurn,
@@ -628,12 +650,13 @@ function createAiRuntimeCandidateProviders(): AiRuntimeCandidateProvider[] {
     },
     {
       id: "economy",
-      selectCandidates: ({ context, world, indexes }) =>
+      selectCandidates: ({ context, world, indexes, aiSettings }) =>
         selectAiEconomyOrderCandidates({
           context,
           world,
           indexes,
           buildings: gameSettings.content.buildings,
+          maxBuildCompletionTurns: aiSettings.maxBuildCompletionTurns,
           isBuildingUnlockedForCountry: progressionRuntime.isBuildingUnlockedForCountry,
           getRegionBuildRestriction: buildingRuntime.getProvinceBuildRestriction,
         }),

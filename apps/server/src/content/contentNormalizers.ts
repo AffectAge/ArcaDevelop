@@ -10,6 +10,7 @@ import {
   normalizeDecision,
   normalizeGameEvent,
   normalizeIdeologyAttractionRules,
+  normalizeJournalEntry,
   normalizeModifiers,
 } from "../mechanics/contentDefinitionNormalizers";
 import { normalizeGoodFlows, normalizeWorkforceRequirements } from "../mechanics/contentFieldNormalizers";
@@ -136,6 +137,7 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       modifiers: unknown;
       decision: unknown;
       event: unknown;
+      journalEntry: unknown;
       ideologyAttractionRules: unknown;
     }>;
     const id = typeof row.id === "string" ? row.id.trim() : "";
@@ -217,6 +219,7 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       modifiers: normalizeModifiers(row.modifiers),
       decision: normalizeDecision(row.decision),
       event: normalizeGameEvent(row.event),
+      journalEntry: normalizeJournalEntry(row.journalEntry),
       ideologyAttractionRules: normalizeIdeologyAttractionRules(row.ideologyAttractionRules),
     });
   }

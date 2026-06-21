@@ -1,7 +1,7 @@
 import express from "express";
 import { describe, expect, it, vi } from "vitest";
 import type { RouteAuth } from "../security/routeAuth";
-import { registerAdminAssetRoutes, type AdminAssetRoutesDependencies, type ResourceIconMap } from "./adminAssetRoutes";
+import { registerAdminAssetRoutes, type AdminAssetRoutesDependencies } from "./adminAssetRoutes";
 
 describe("adminAssetRoutes", () => {
   it("uploads civilopedia images after admin auth", async () => {
@@ -25,24 +25,6 @@ describe("adminAssetRoutes", () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "IMAGE_DIMENSIONS_TOO_LARGE", max: "64x64" });
     expect(deps.removeUploadedFile).toHaveBeenCalledWith(file);
-  });
-
-  it("updates resource icons and removes replaced uploads", async () => {
-    const deps = makeDeps({
-      fieldFiles: { population: makeFile("population.png") },
-      resourceIcons: { ...defaultResourceIcons(), population: "/scenario-assets/demo/assets/uploads/old-population.png?v=1" },
-    });
-    const app = makeApp(deps);
-
-    const response = await request(app, "/admin/resource-icons", { method: "PATCH" });
-
-    expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({
-      resourceIcons: { population: "/scenario-assets/demo/assets/uploads/resource-icons/population.png?v=1" },
-    });
-    expect(deps.removeUploadedByUrl).toHaveBeenCalledWith("/scenario-assets/demo/assets/uploads/old-population.png?v=1");
-    expect(deps.savePersistentState).toHaveBeenCalledOnce();
-    expect(deps.afterResourceIconsUpdated).toHaveBeenCalledWith("admin-country");
   });
 
   it("updates ui background and removes previous background", async () => {
@@ -70,10 +52,8 @@ function makeDeps(options?: {
   singleFile?: Express.Multer.File;
   fieldFiles?: Record<string, Express.Multer.File>;
   validateImageDimensions?: (file: Express.Multer.File, maxDimension: number) => boolean;
-  resourceIcons?: ResourceIconMap;
   uiBackgroundUrl?: string | null;
 }): AdminAssetRoutesDependencies {
-  const resourceIcons = options?.resourceIcons ?? defaultResourceIcons();
   let uiBackgroundUrl = options?.uiBackgroundUrl ?? null;
   return {
     routeAuth: createAllowedRouteAuth(),
@@ -94,17 +74,12 @@ function makeDeps(options?: {
     removeUploadedFiles: vi.fn(),
     removeUploadedByUrl: vi.fn(),
     makeVersionedUploadUrl: (relativePath) => `/scenario-assets/demo/assets/uploads/${relativePath}?v=1`,
-    getResourceIcons: () => resourceIcons,
-    setResourceIcon: (key, url) => {
-      resourceIcons[key] = url;
-    },
     getUiBackgroundUrl: () => uiBackgroundUrl,
     setUiBackgroundUrl: (url) => {
       uiBackgroundUrl = url;
     },
     getMapSettings: () => ({ backgroundImageUrl: uiBackgroundUrl }),
     savePersistentState: vi.fn(),
-    afterResourceIconsUpdated: vi.fn(),
     afterUiBackgroundUpdated: vi.fn(),
   };
 }
@@ -117,19 +92,6 @@ function createAllowedRouteAuth(): RouteAuth {
     requireAdminOrCleanup: vi.fn().mockResolvedValue({ countryId: "admin-country" }),
     requireSelfOrAdmin: vi.fn(),
   } as unknown as RouteAuth;
-}
-
-function defaultResourceIcons(): ResourceIconMap {
-  return {
-    population: null,
-    culture: null,
-    science: null,
-    religion: null,
-    colonization: null,
-    construction: null,
-    ducats: null,
-    gold: null,
-  };
 }
 
 function makeFile(filename: string): Express.Multer.File {

@@ -110,7 +110,7 @@ describe("adminCountryRoutes", () => {
         targetId: "country:b",
       }),
     );
-    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({ mask: 4095 });
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({ mask: 65535 });
     expect(deps.broadcast).toHaveBeenCalledWith(expect.objectContaining({ type: "NEWS_EVENT" }));
   });
 
@@ -156,10 +156,14 @@ function makeDeps(options?: {
       technologyByCountry: 32,
       countryDecisionsByCountryId: 64,
       countryEventsByCountryId: 128,
-      divisionTemplatesByCountry: 256,
-      divisionsById: 512,
-      militaryFormationQueueByCountry: 1024,
-      diplomacyProposals: 2048,
+      countryScheduledEventsByCountryId: 256,
+      countryEventFlagsByCountryId: 512,
+      journalEntriesByCountryId: 1024,
+      countryModifiersByCountryId: 2048,
+      divisionTemplatesByCountry: 4096,
+      divisionsById: 8192,
+      militaryFormationQueueByCountry: 16_384,
+      diplomacyProposals: 32_768,
     },
     getTurnId: () => 8,
     findCountry: vi.fn(async (countryId: string) => (countryId === "country:b" ? country : null)),
@@ -231,6 +235,10 @@ function makeDeletionPlan(): CountryDeletionPlan {
     parliamentEntry: false,
     decisionEntry: false,
     eventEntry: false,
+    scheduledEventEntry: false,
+    eventFlagsEntry: false,
+    journalEntry: false,
+    countryModifiersEntry: false,
     orderTurns: [],
     resolveReadyTurns: [],
     assetRefs: [{ kind: "flag", url: "/scenario-assets/demo/assets/uploads/old-flag.png?v=1" }],

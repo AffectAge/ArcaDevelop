@@ -6,7 +6,6 @@ import {
   normalizeContentLogoUrl,
   resolveContentUploadDir,
   resolveContentUploadUrlSegment,
-  resourceIconFields,
   setActiveUploadScenario,
 } from "./uploadPaths";
 
@@ -56,9 +55,4 @@ describe("uploadPaths", () => {
     expect(resolveContentUploadDir("cultures")).toBe(join(getActiveScenarioUploadsRoot(), "cultures"));
   });
 
-  it("classifies resource icon upload fields", () => {
-    expect(resourceIconFields.has("culture")).toBe(true);
-    expect(resourceIconFields.has("ducats")).toBe(true);
-    expect(resourceIconFields.has("flag")).toBe(false);
-  });
 });

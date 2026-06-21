@@ -2,6 +2,7 @@ import type {
   DecisionDefinition,
   DivisionStats,
   GameEventDefinition,
+  JournalEntryDefinition,
   IdeologyAttractionRule,
   LawParliamentPowerEffect,
   ModifierDefinition,
@@ -14,6 +15,7 @@ import type { BuildingExtractionFlow, GoodFlow, WorkforceRequirement } from "../
 
 export type GameContentEntry = {
   id: string;
+  nameKey?: string | null;
   name: string;
   description: string;
   color: string;
@@ -47,6 +49,7 @@ export type GameContentEntry = {
   modifiers?: ModifierDefinition[];
   decision?: DecisionDefinition | null;
   event?: GameEventDefinition | null;
+  journalEntry?: JournalEntryDefinition | null;
   ideologyAttractionRules?: IdeologyAttractionRule[];
 };
 
@@ -248,6 +251,7 @@ export type GameSettings = {
     modifiers: GameContentEntry[];
     decisions: GameContentEntry[];
     events: GameContentEntry[];
+    journalEntries: GameContentEntry[];
     battalions: BattalionContentEntry[];
     shipTypes: MilitaryContentEntry[];
     aircraftTypes: MilitaryContentEntry[];
@@ -257,6 +261,7 @@ export type GameSettings = {
     maxCountriesPerTick: number;
     maxDecisionCandidatesPerCountry: number;
     contextCacheTtlTurns: number;
+    maxBuildCompletionTurns: number;
   };
   civilopedia: {
     categories: string[];
@@ -371,15 +376,5 @@ export type GameSettings = {
   map: {
     showAntarctica: boolean;
     backgroundImageUrl: string | null;
-  };
-  resourceIcons: {
-    population: string | null;
-    culture: string | null;
-    science: string | null;
-    religion: string | null;
-    colonization: string | null;
-    construction: string | null;
-    ducats: string | null;
-    gold: string | null;
   };
 };

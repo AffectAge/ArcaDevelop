@@ -1,0 +1,79 @@
+{
+  "id": "building:tourism_office",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 203,
+  "costDucats": 160,
+  "startingDucats": 55,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 119,
+  "upgradeCostConstruction": 152,
+  "sectorId": "sector:services",
+  "industryId": "industry:services",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:electricity",
+      "amount": 4
+    },
+    {
+      "goodId": "good:paper",
+      "amount": 2
+    },
+    {
+      "goodId": "good:communications",
+      "amount": 3
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:tourism",
+      "amount": 16.27
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:service",
+      "workers": 420
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 280
+    },
+    {
+      "professionId": "profession:manager",
+      "workers": 80
+    }
+  ],
+  "infrastructureUse": 1,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.tourism_office.name"
+}

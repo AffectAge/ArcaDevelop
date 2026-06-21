@@ -1,0 +1,74 @@
+{
+  "id": "building:natural_gas_mine_01",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 308,
+  "costDucats": 242,
+  "startingDucats": 84,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 180,
+  "upgradeCostConstruction": 231,
+  "sectorId": "sector:mining",
+  "industryId": "industry:mining",
+  "extractionGoodId": "good:natural_gas",
+  "extractionAmountPerTurn": 58.45,
+  "extractionRequiresDeposit": true,
+  "inputs": [
+    {
+      "goodId": "good:electricity",
+      "amount": 5
+    },
+    {
+      "goodId": "good:mining_equipment",
+      "amount": 1.8
+    },
+    {
+      "goodId": "good:chemicals",
+      "amount": 1.2
+    }
+  ],
+  "outputs": [],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:miner",
+      "workers": 900
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 55
+    }
+  ],
+  "infrastructureUse": 6,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.natural_gas_mine_01.name"
+}

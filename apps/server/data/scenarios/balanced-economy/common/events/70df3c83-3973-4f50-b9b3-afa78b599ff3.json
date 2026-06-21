@@ -22,9 +22,14 @@
   "modifiers": [],
   "decision": null,
   "event": {
+    "namespace": "balanced_economy",
     "category": "politics",
     "priority": "medium",
     "visibility": "private",
+    "titleKey": "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.name",
+    "descriptionKey": "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.description",
+    "imageUrl": null,
+    "iconId": null,
     "triggerConditions": [
       {
         "type": "always",
@@ -35,11 +40,12 @@
     "options": [
       {
         "id": "ok",
-        "label": "Понятно",
-        "description": null,
+        "labelKey": "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.option.ok",
+        "descriptionKey": null,
+        "tooltipKey": null,
         "effects": [],
-        "autoChancePct": 100,
-        "buttonColor": "#15505b"
+        "playerDefault": true,
+        "buttonTone": "primary"
       }
     ],
     "cooldownTurns": 0,

@@ -79,7 +79,8 @@ export function createModifierRuntime(params: ModifierRuntimeParams): ModifierRu
 
   const getActiveCountryModifierRows = (countryId: string): ActiveCountryModifierRow[] => {
     const rows: ActiveCountryModifierRow[] = [];
-    for (const entry of params.getGameSettings().content.modifiers) {
+    const modifierEntries = params.getGameSettings().content.modifiers;
+    for (const entry of modifierEntries) {
       for (const modifier of normalizeModifiers(entry.modifiers)) {
         if (!modifierConditionsMatchCountry(modifier.conditions, countryId)) continue;
         rows.push({
@@ -88,6 +89,26 @@ export function createModifierRuntime(params: ModifierRuntimeParams): ModifierRu
           sourceId: entry.id,
           sourceName: entry.name,
           sourceKind: "modifier",
+          scope: modifier.scope,
+          effects: modifier.effects,
+        });
+      }
+    }
+    const worldBase = params.getWorldBase();
+    const appliedModifiers = (worldBase.countryModifiersByCountryId[countryId] ?? []).filter(
+      (entry) => entry.expiresTurnId == null || entry.expiresTurnId > worldBase.turnId,
+    );
+    for (const applied of appliedModifiers) {
+      const entry = modifierEntries.find((candidate) => candidate.id === applied.modifierId);
+      if (!entry) continue;
+      for (const modifier of normalizeModifiers(entry.modifiers)) {
+        if (!modifierConditionsMatchCountry(modifier.conditions, countryId)) continue;
+        rows.push({
+          id: `${applied.id}:${modifier.id}`,
+          label: modifier.label,
+          sourceId: applied.modifierId,
+          sourceName: entry.name,
+          sourceKind: applied.sourceSystem === "event" ? "event" : "modifier",
           scope: modifier.scope,
           effects: modifier.effects,
         });

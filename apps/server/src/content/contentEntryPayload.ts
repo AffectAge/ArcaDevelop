@@ -4,6 +4,7 @@ import {
   normalizeDecision,
   normalizeGameEvent,
   normalizeIdeologyAttractionRules,
+  normalizeJournalEntry,
   normalizeModifiers,
 } from "../mechanics/contentDefinitionNormalizers";
 import {
@@ -128,6 +129,10 @@ const modifierPayloadSchema = z.object({
 
 const decisionPayloadSchema = z.object({
   category: z.enum(["economy", "politics", "military", "diplomacy", "colonization", "culture", "religion", "technology"]),
+  scope: z.lazy(() => eventScopePayloadSchema).nullable().optional(),
+  potential: z.lazy(() => eventTriggerPayloadSchema).nullable().optional(),
+  allow: z.lazy(() => eventTriggerPayloadSchema).nullable().optional(),
+  visibleWhenUnavailable: z.boolean().optional(),
   visibilityConditions: z
     .array(
       z.object({
@@ -156,40 +161,204 @@ const decisionPayloadSchema = z.object({
     .optional(),
   effects: z
     .array(
-      z.object({
-        type: z.literal("resource_delta"),
-        resource: z.enum(["culture", "science", "religion", "colonization", "construction", "ducats", "gold"]),
-        amount: z.number().finite().min(-SETTINGS_MAX_NUMBER).max(SETTINGS_MAX_NUMBER),
-      }),
+      z.union([
+        z.object({
+          type: z.literal("resource_delta"),
+          resource: z.enum(["culture", "science", "religion", "colonization", "construction", "ducats", "gold"]),
+          amount: z.number().finite().min(-SETTINGS_MAX_NUMBER).max(SETTINGS_MAX_NUMBER),
+        }),
+        z.lazy(() => gameEffectPayloadSchema),
+      ]),
     )
     .max(30)
     .optional(),
+  charges: z.number().int().positive().max(SETTINGS_MAX_NUMBER).optional(),
+  rechargeTurns: z.number().int().positive().max(SETTINGS_MAX_NUMBER).optional(),
+  maxUses: z.number().int().positive().max(SETTINGS_MAX_NUMBER).optional(),
+  maxUsesPerCountry: z.number().int().positive().max(SETTINGS_MAX_NUMBER).optional(),
+  maxUsesPerTarget: z.number().int().positive().max(SETTINGS_MAX_NUMBER).optional(),
   cooldownTurns: z.number().int().min(0).max(SETTINGS_MAX_NUMBER).optional(),
   repeatable: z.boolean().optional(),
 });
 
+const gameEffectPayloadSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("add_resource"),
+    resource: z.enum(["culture", "science", "religion", "colonization", "construction", "ducats", "gold"]),
+    amount: z.number().finite().positive().max(SETTINGS_MAX_NUMBER),
+    labelKey: z.string().trim().min(1).max(160).nullable().optional(),
+  }),
+  z.object({
+    type: z.literal("spend_resource"),
+    resource: z.enum(["culture", "science", "religion", "colonization", "construction", "ducats", "gold"]),
+    amount: z.number().finite().positive().max(SETTINGS_MAX_NUMBER),
+    labelKey: z.string().trim().min(1).max(160).nullable().optional(),
+  }),
+  z.object({
+    type: z.literal("add_resource_flow"),
+    resource: z.enum(["culture", "science", "religion", "colonization", "construction", "ducats", "gold"]),
+    amount: z.number().finite().positive().max(SETTINGS_MAX_NUMBER),
+    direction: z.enum(["income", "expense"]),
+    categoryId: z.string().trim().min(1).max(120).nullable().optional(),
+    labelKey: z.string().trim().min(1).max(160),
+  }),
+  z.object({
+    type: z.literal("trigger_event"),
+    eventId: z.string().trim().min(1).max(120),
+  }),
+  z.object({
+    type: z.literal("schedule_event"),
+    eventId: z.string().trim().min(1).max(120),
+    delayTurns: z.number().int().min(0).max(SETTINGS_MAX_NUMBER).optional(),
+    chancePct: z.number().finite().min(0).max(100).optional(),
+  }),
+  z.object({
+    type: z.literal("cancel_event"),
+    eventId: z.string().trim().min(1).max(120),
+  }),
+  z.object({
+    type: z.literal("set_event_flag"),
+    flagId: z.string().trim().min(1).max(160),
+    value: z.union([z.string().trim().max(160), z.number().finite(), z.boolean()]).nullable().optional(),
+  }),
+  z.object({
+    type: z.literal("clear_event_flag"),
+    flagId: z.string().trim().min(1).max(160),
+  }),
+  z.object({
+    type: z.enum(["start_journal_entry", "complete_journal_entry", "fail_journal_entry", "cancel_journal_entry"]),
+    journalEntryId: z.string().trim().min(1).max(120),
+  }),
+  z.object({
+    type: z.literal("advance_journal_entry"),
+    journalEntryId: z.string().trim().min(1).max(120),
+    amount: z.number().finite().positive().max(SETTINGS_MAX_NUMBER),
+  }),
+  z.object({
+    type: z.literal("set_journal_variable"),
+    journalEntryId: z.string().trim().min(1).max(120),
+    variableId: z.string().trim().min(1).max(160),
+    value: z.union([z.string().trim().max(160), z.number().finite(), z.boolean()]).nullable().optional(),
+  }),
+  z.object({
+    type: z.literal("clear_journal_variable"),
+    journalEntryId: z.string().trim().min(1).max(120),
+    variableId: z.string().trim().min(1).max(160),
+  }),
+]);
+
 const eventOptionPayloadSchema = z.object({
   id: z.string().trim().min(1).max(120).optional(),
-  label: z.string().trim().min(1).max(120),
-  description: z.string().trim().max(1000).nullable().optional(),
-  effects: z
+  labelKey: z.string().trim().min(1).max(160),
+  descriptionKey: z.string().trim().min(1).max(160).nullable().optional(),
+  tooltipKey: z.string().trim().min(1).max(160).nullable().optional(),
+  effects: z.array(gameEffectPayloadSchema).max(30).optional(),
+  aiWeight: z
+    .array(
+      z.union([
+        z.object({ base: z.number().finite().min(-SETTINGS_MAX_NUMBER).max(SETTINGS_MAX_NUMBER) }),
+        z.object({
+          if: z.lazy(() => eventTriggerPayloadSchema),
+          add: z.number().finite().min(-SETTINGS_MAX_NUMBER).max(SETTINGS_MAX_NUMBER).nullable().optional(),
+          multiply: z.number().finite().min(-SETTINGS_MAX_NUMBER).max(SETTINGS_MAX_NUMBER).nullable().optional(),
+        }),
+      ]),
+    )
+    .max(20)
+    .nullable()
+    .optional(),
+  playerDefault: z.boolean().nullable().optional(),
+  buttonTone: z.enum(["default", "primary", "danger", "warning"]).nullable().optional(),
+});
+
+const eventTriggerPayloadSchema: z.ZodType<unknown> = z.lazy(() =>
+  z.union([
+    z.object({
+      type: z.enum([
+        "always",
+        "law_active",
+        "technology_researched",
+        "country_is",
+        "has_building",
+        "country_has_law",
+        "country_lacks_law",
+        "country_has_technology",
+        "country_lacks_technology",
+      ]),
+      targetId: z.string().trim().min(1).max(120).nullable().optional(),
+      invert: z.boolean().nullable().optional(),
+    }),
+    z.object({
+      type: z.enum(["country_resource_above", "country_resource_below"]),
+      resource: z.enum(["culture", "science", "religion", "colonization", "construction", "ducats", "gold"]),
+      value: z.number().finite().min(0).max(SETTINGS_MAX_NUMBER),
+    }),
+    z.object({
+      type: z.enum(["treasury_below", "country_controls_region_count_above", "country_controls_region_count_below"]),
+      value: z.number().finite().min(0).max(SETTINGS_MAX_NUMBER),
+    }),
+    z.object({
+      type: z.enum(["region_population_above", "region_population_below", "region_has_population_above", "region_has_population_below"]),
+      value: z.number().finite().min(0).max(SETTINGS_MAX_NUMBER),
+    }),
+    z.object({
+      type: z.enum(["region_owner_is", "region_controller_is", "region_has_building"]),
+      targetId: z.string().trim().min(1).max(120).nullable().optional(),
+    }),
+    z.object({ all: z.array(eventTriggerPayloadSchema).min(1).max(20) }),
+    z.object({ any: z.array(eventTriggerPayloadSchema).min(1).max(20) }),
+    z.object({ not: eventTriggerPayloadSchema }),
+  ]),
+);
+
+const eventScopePayloadSchema = z.object({
+  root: z.object({ kind: z.literal("country") }).optional(),
+  region: z
+    .object({
+      kind: z.literal("region"),
+      from: z.enum(["root.controlled_regions", "root.owned_regions"]).optional(),
+      where: eventTriggerPayloadSchema.nullable().optional(),
+      pick: z
+        .object({
+          orderBy: z.enum(["regionId", "population", "buildings"]).optional(),
+          direction: z.enum(["asc", "desc"]).optional(),
+        })
+        .nullable()
+        .optional(),
+    })
+    .nullable()
+    .optional(),
+});
+
+const eventChainPayloadSchema = z.object({
+  chainId: z.string().trim().min(1).max(120),
+  stepId: z.string().trim().min(1).max(120),
+  startsChain: z.boolean().optional(),
+  endsChain: z.boolean().optional(),
+  followups: z
     .array(
       z.object({
-        type: z.literal("resource_delta"),
-        resource: z.enum(["culture", "science", "religion", "colonization", "construction", "ducats", "gold"]),
-        amount: z.number().finite().min(-SETTINGS_MAX_NUMBER).max(SETTINGS_MAX_NUMBER),
+        eventId: z.string().trim().min(1).max(120),
+        delayTurns: z.number().int().min(0).max(SETTINGS_MAX_NUMBER).optional(),
+        chancePct: z.number().finite().min(0).max(100).optional(),
+        conditions: eventTriggerPayloadSchema.nullable().optional(),
       }),
     )
-    .max(30)
+    .max(12)
     .optional(),
-  autoChancePct: z.number().finite().min(0).max(100).nullable().optional(),
-  buttonColor: z.string().trim().regex(/^#[0-9A-Fa-f]{6}$/).nullable().optional(),
 });
 
 const gameEventPayloadSchema = z.object({
+  namespace: z.string().trim().min(1).max(80).optional(),
   category: z.enum(["system", "colonization", "politics", "economy", "military", "diplomacy"]),
   priority: z.enum(["low", "medium", "high"]).optional(),
   visibility: z.enum(["public", "private"]).optional(),
+  titleKey: z.string().trim().min(1).max(160).optional(),
+  descriptionKey: z.string().trim().min(1).max(160).optional(),
+  imageUrl: z.string().trim().max(500).nullable().optional(),
+  iconId: z.string().trim().min(1).max(120).nullable().optional(),
+  scope: eventScopePayloadSchema.nullable().optional(),
+  trigger: eventTriggerPayloadSchema.nullable().optional(),
   triggerConditions: z
     .array(
       z.object({
@@ -201,11 +370,55 @@ const gameEventPayloadSchema = z.object({
     .max(20)
     .optional(),
   options: z.array(eventOptionPayloadSchema).min(1).max(8).optional(),
+  chain: eventChainPayloadSchema.nullable().optional(),
   cooldownTurns: z.number().int().min(0).max(SETTINGS_MAX_NUMBER).optional(),
   repeatable: z.boolean().optional(),
+  timeoutTurns: z.number().int().min(0).max(SETTINGS_MAX_NUMBER).nullable().optional(),
+  defaultOptionId: z.string().trim().min(1).max(120).nullable().optional(),
   checkIntervalTurns: z.number().int().min(1).max(SETTINGS_MAX_NUMBER).optional(),
   chancePct: z.number().finite().min(0).max(100).optional(),
   blocking: z.boolean().optional(),
+});
+
+const journalProgressPayloadSchema = z.object({
+  type: z.enum(["manual", "trigger"]),
+  target: z.number().finite().positive().max(SETTINGS_MAX_NUMBER),
+  labelKey: z.string().trim().min(1).max(160),
+});
+
+const journalEventHooksPayloadSchema = z.object({
+  onStart: z.array(z.string().trim().min(1).max(120)).max(20).optional(),
+  onComplete: z.array(z.string().trim().min(1).max(120)).max(20).optional(),
+  onFail: z.array(z.string().trim().min(1).max(120)).max(20).optional(),
+  onCancel: z.array(z.string().trim().min(1).max(120)).max(20).optional(),
+});
+
+const journalEntryPayloadSchema = z.object({
+  namespace: z.string().trim().min(1).max(80).optional(),
+  category: z.enum(["politics", "economy", "military", "diplomacy", "colonization", "technology", "society", "regional", "crisis"]),
+  titleKey: z.string().trim().min(1).max(160),
+  descriptionKey: z.string().trim().min(1).max(160),
+  shortDescriptionKey: z.string().trim().min(1).max(160).nullable().optional(),
+  iconId: z.string().trim().min(1).max(120).nullable().optional(),
+  imageUrl: z.string().trim().max(500).nullable().optional(),
+  visibility: z.enum(["public", "private"]).optional(),
+  priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+  scope: eventScopePayloadSchema.nullable().optional(),
+  startTrigger: eventTriggerPayloadSchema.nullable().optional(),
+  completeTrigger: eventTriggerPayloadSchema.nullable().optional(),
+  failTrigger: eventTriggerPayloadSchema.nullable().optional(),
+  cancelTrigger: eventTriggerPayloadSchema.nullable().optional(),
+  progress: journalProgressPayloadSchema.nullable().optional(),
+  timeoutTurns: z.number().int().min(0).max(SETTINGS_MAX_NUMBER).nullable().optional(),
+  onStartEffects: z.array(gameEffectPayloadSchema).max(30).optional(),
+  onCompleteEffects: z.array(gameEffectPayloadSchema).max(30).optional(),
+  onFailEffects: z.array(gameEffectPayloadSchema).max(30).optional(),
+  onCancelEffects: z.array(gameEffectPayloadSchema).max(30).optional(),
+  events: journalEventHooksPayloadSchema.nullable().optional(),
+  decisions: z.object({ availableDecisionIds: z.array(z.string().trim().min(1).max(120)).max(50).optional() }).nullable().optional(),
+  modifiers: z.object({ activeModifierIds: z.array(z.string().trim().min(1).max(120)).max(50).optional() }).nullable().optional(),
+  repeatable: z.boolean().optional(),
+  cooldownTurns: z.number().int().min(0).max(SETTINGS_MAX_NUMBER).optional(),
 });
 
 const ideologyAttractionRulePayloadSchema = z.object({
@@ -361,6 +574,7 @@ export const culturePayloadSchema = z.object({
   modifiers: z.array(modifierPayloadSchema).max(50).optional(),
   decision: decisionPayloadSchema.nullable().optional(),
   event: gameEventPayloadSchema.nullable().optional(),
+  journalEntry: journalEntryPayloadSchema.nullable().optional(),
   ideologyAttractionRules: z.array(ideologyAttractionRulePayloadSchema).max(100).optional(),
 });
 
@@ -389,6 +603,7 @@ export const contentEntryKindSchema = z.enum([
   "modifiers",
   "decisions",
   "events",
+  "journalEntries",
   "battalions",
   "shipTypes",
   "aircraftTypes",
@@ -508,13 +723,47 @@ export function sanitizeContentEntryByKind(
         category: "politics",
         priority: "medium",
         visibility: "private",
+        titleKey: undefined,
+        descriptionKey: undefined,
+        imageUrl: null,
+        iconId: null,
         triggerConditions: [],
-        options: [{ id: "ok", label: "Понятно", description: null, effects: [], autoChancePct: 100, buttonColor: null }],
+        options: [],
         cooldownTurns: 0,
         repeatable: false,
         checkIntervalTurns: 1,
         chancePct: 100,
         blocking: false,
+      },
+    };
+  }
+  if (kind === "journalEntries") {
+    return {
+      journalEntry: normalizeJournalEntry(payload.journalEntry) ?? {
+        category: "politics",
+        titleKey: "journal.untitled.title",
+        descriptionKey: "journal.untitled.description",
+        shortDescriptionKey: null,
+        iconId: null,
+        imageUrl: null,
+        visibility: "private",
+        priority: "medium",
+        scope: null,
+        startTrigger: null,
+        completeTrigger: null,
+        failTrigger: null,
+        cancelTrigger: null,
+        progress: null,
+        timeoutTurns: null,
+        onStartEffects: [],
+        onCompleteEffects: [],
+        onFailEffects: [],
+        onCancelEffects: [],
+        events: null,
+        decisions: null,
+        modifiers: null,
+        repeatable: false,
+        cooldownTurns: 0,
       },
     };
   }

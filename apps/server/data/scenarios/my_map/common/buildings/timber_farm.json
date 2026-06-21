@@ -1,0 +1,75 @@
+{
+  "id": "building:timber_farm",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": "/scenario-assets/balanced-economy/assets/uploads/buildings/3a01677f-b523-402b-a5e3-2dd0bf59c833.png?v=1777741847481",
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 175,
+  "costDucats": 138,
+  "startingDucats": 48,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 103,
+  "upgradeCostConstruction": 131,
+  "sectorId": "sector:agriculture",
+  "industryId": "industry:farms",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:tools",
+      "amount": 4
+    },
+    {
+      "goodId": "good:electricity",
+      "amount": 3
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:timber",
+      "amount": 59.51
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:farmer",
+      "workers": 850
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 250
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 35
+    }
+  ],
+  "infrastructureUse": 5,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.timber_farm.name"
+}

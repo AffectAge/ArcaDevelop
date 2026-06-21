@@ -32,7 +32,7 @@
     "pointsCostPer1000Km2": 5,
     "ducatsCostPer1000Km2": 5,
     "settlementEnabled": true,
-    "settlementPopulationOnCapture": 1000
+    "settlementPopulationOnCapture": 10000
   },
   "customization": {
     "renameDucats": 20,

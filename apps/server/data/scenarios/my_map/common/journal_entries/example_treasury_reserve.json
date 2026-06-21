@@ -1,0 +1,51 @@
+{
+  "id": "journal:example_treasury_reserve",
+  "nameKey": "journal.example_treasury_reserve.name",
+  "journalEntry": {
+    "namespace": "balanced_economy",
+    "category": "economy",
+    "titleKey": "journal.example_treasury_reserve.title",
+    "descriptionKey": "journal.example_treasury_reserve.description",
+    "shortDescriptionKey": "journal.example_treasury_reserve.short",
+    "priority": "medium",
+    "visibility": "private",
+    "startTrigger": {
+      "type": "country_resource_above",
+      "resource": "ducats",
+      "value": 50000
+    },
+    "completeTrigger": {
+      "type": "country_resource_above",
+      "resource": "ducats",
+      "value": 120000
+    },
+    "failTrigger": {
+      "type": "treasury_below",
+      "value": 0
+    },
+    "progress": {
+      "type": "trigger",
+      "target": 1,
+      "labelKey": "journal.example_treasury_reserve.progress"
+    },
+    "timeoutTurns": 24,
+    "onCompleteEffects": [
+      {
+        "type": "add_resource",
+        "resource": "science",
+        "amount": 10,
+        "labelKey": "resourceLedger.source.generic"
+      }
+    ],
+    "onFailEffects": [
+      {
+        "type": "add_resource",
+        "resource": "culture",
+        "amount": 5,
+        "labelKey": "resourceLedger.source.generic"
+      }
+    ],
+    "repeatable": false,
+    "cooldownTurns": 0
+  }
+}

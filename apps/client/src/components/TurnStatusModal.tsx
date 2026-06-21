@@ -1,29 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  BookOpen,
-  CircleDollarSign,
-  Coins,
-  Flag,
-  FlaskConical,
-  Hammer,
-  Landmark,
-  LoaderCircle,
-  type LucideIcon,
-} from "lucide-react";
+import { LoaderCircle } from "lucide-react";
+import { BASE_RESOURCE_ICON_URLS } from "../assets/baseResourceIcons";
 import { fetchTurnStatus, type TurnStatusItem } from "../lib/api";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { useUiText } from "../i18n/useUiText";
 import type { UiTextKey } from "../i18n/uiText";
 
 const resourceCards = [
-  { key: "culture", labelKey: "shell.resource.culture", icon: BookOpen },
-  { key: "science", labelKey: "shell.resource.science", icon: FlaskConical },
-  { key: "religion", labelKey: "shell.resource.religion", icon: Landmark },
-  { key: "colonization", labelKey: "shell.resource.colonization", icon: Flag },
-  { key: "construction", labelKey: "shell.resource.construction", icon: Hammer },
-  { key: "ducats", labelKey: "shell.resource.ducats", icon: Coins },
-  { key: "gold", labelKey: "shell.resource.gold", icon: CircleDollarSign },
-] as const satisfies readonly { key: keyof TurnStatusItem["resources"]; labelKey: UiTextKey; icon: LucideIcon }[];
+  { key: "culture", labelKey: "shell.resource.culture" },
+  { key: "science", labelKey: "shell.resource.science" },
+  { key: "religion", labelKey: "shell.resource.religion" },
+  { key: "colonization", labelKey: "shell.resource.colonization" },
+  { key: "construction", labelKey: "shell.resource.construction" },
+  { key: "ducats", labelKey: "shell.resource.ducats" },
+  { key: "gold", labelKey: "shell.resource.gold" },
+] as const satisfies readonly { key: keyof TurnStatusItem["resources"]; labelKey: UiTextKey }[];
 
 type Props = {
   open: boolean;
@@ -116,16 +107,20 @@ function ResourceStrip({ item }: { item: TurnStatusItem }) {
   return (
     <div className="arc-turn-status-resources">
       {resourceCards.map((card) => {
-        const Icon = card.icon;
+        const net = Math.floor(item.resourceNetByTurn?.[card.key] ?? 0);
+        const netColorClass =
+          net > 0 ? "text-[var(--arc-color-success-text)]" : net < 0 ? "text-[var(--arc-color-danger-text)]" : "text-[var(--arc-color-text-soft)]";
         return (
           <div
             key={card.key}
-            className="arc-turn-status-resource"
+            className="arc-turn-status-resource arc-hud-chip flex items-center gap-1 rounded-lg px-2 py-1 text-xs"
             title={t(card.labelKey)}
           >
-            <Icon size={13} />
-            <span>{t(card.labelKey)}</span>
+            <img src={BASE_RESOURCE_ICON_URLS[card.key]} alt="" className="h-[35px] w-[35px] object-contain" />
             <strong>{formatCompact(item.resources[card.key] ?? 0)}</strong>
+            <span className={`arc-turn-status-resource-delta ${netColorClass}`}>
+              {net >= 0 ? `+${formatCompact(net)}` : formatCompact(net)}
+            </span>
           </div>
         );
       })}

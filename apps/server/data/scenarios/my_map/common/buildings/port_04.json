@@ -1,0 +1,81 @@
+{
+  "id": "building:port_04",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 336,
+  "costDucats": 264,
+  "startingDucats": 91,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 197,
+  "upgradeCostConstruction": 252,
+  "sectorId": "sector:infrastructure",
+  "industryId": "industry:infrastructure",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:electricity",
+      "amount": 6
+    },
+    {
+      "goodId": "good:machinery",
+      "amount": 1.2
+    },
+    {
+      "goodId": "good:vehicles",
+      "amount": 1.2
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:logistics",
+      "amount": 28.81
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:sailor",
+      "workers": 460
+    },
+    {
+      "professionId": "profession:driver",
+      "workers": 220
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 250
+    }
+  ],
+  "infrastructureUse": -8,
+  "marketInfrastructureByCategory": {
+    "resource_category:raw_materials": 16
+  },
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.port_04.name"
+}

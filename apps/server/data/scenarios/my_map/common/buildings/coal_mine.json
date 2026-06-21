@@ -1,0 +1,89 @@
+{
+  "id": "building:coal_mine",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": "/scenario-assets/balanced-economy/assets/uploads/buildings/03e235fc-34d2-418d-8275-9839f098805b.png?v=1777057082803",
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [
+    {
+      "id": "modifier-1",
+      "label": "Новый модификатор",
+      "scope": "country",
+      "conditions": [],
+      "effects": [
+        {
+          "stat": "ducats_gain",
+          "mode": "add_pct",
+          "value": 4,
+          "target": null
+        }
+      ]
+    }
+  ],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 210,
+  "costDucats": 165,
+  "startingDucats": 57,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 123,
+  "upgradeCostConstruction": 158,
+  "sectorId": "sector:mining",
+  "industryId": "industry:mining",
+  "extractionGoodId": "good:coal",
+  "extractionAmountPerTurn": 79.72,
+  "extractionRequiresDeposit": true,
+  "inputs": [
+    {
+      "goodId": "good:electricity",
+      "amount": 4
+    },
+    {
+      "goodId": "good:tools",
+      "amount": 3
+    },
+    {
+      "goodId": "good:mining_equipment",
+      "amount": 1.2
+    }
+  ],
+  "outputs": [],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:miner",
+      "workers": 900
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 55
+    }
+  ],
+  "infrastructureUse": 5,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.coal_mine.name"
+}

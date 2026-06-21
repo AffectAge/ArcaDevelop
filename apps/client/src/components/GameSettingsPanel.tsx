@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { Coins, Flag, Image as ImageIcon, Map, Palette, RefreshCcw, Save, ScrollText, Timer, Wallet, Monitor } from "lucide-react";
+import { Coins, Flag, Map, Palette, RefreshCcw, Save, ScrollText, Timer, Wallet, Monitor } from "lucide-react";
 import { toast } from "sonner";
-import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
-import { adminRecalculateAutoRegionCosts, adminUploadResourceIcons, adminUploadUiBackground, applyAdminScenario, fetchAdminScenarios, fetchGameSettings, type GameSettings, type ResourceIconsMap, type ScenarioDescriptor, updateGameSettings } from "../lib/api";
+import { adminRecalculateAutoRegionCosts, adminUploadUiBackground, applyAdminScenario, fetchAdminScenarios, fetchGameSettings, type GameSettings, type ScenarioDescriptor, updateGameSettings } from "../lib/api";
 import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppSection } from "./ui/AppSurface";
@@ -12,7 +11,6 @@ type Props = {
   open: boolean;
   token: string;
   onClose: () => void;
-  onResourceIconsUpdated?: (icons: ResourceIconsMap) => void;
   onSettingsUpdated?: (settings: GameSettings) => void;
 };
 
@@ -25,7 +23,6 @@ const categories = [
   { id: "customization", labelKey: "gameSettings.category.customization", icon: Palette },
   { id: "eventLog", labelKey: "gameSettings.category.eventLog", icon: ScrollText },
   { id: "background", labelKey: "gameSettings.category.background", icon: Monitor },
-  { id: "resourceIcons", labelKey: "gameSettings.category.resourceIcons", icon: ImageIcon },
 ] as const;
 
 const panelClass = "space-y-4 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-4";
@@ -47,17 +44,6 @@ const toggleKnobClass = (enabled: boolean) =>
       : "translate-x-1 bg-[rgb(var(--theme-text-muted))]"
   }`;
 
-const resourceLabelKeyById: Record<keyof ResourceIconsMap, UiTextKey> = {
-  population: "gameSettings.resource.population",
-  culture: "shell.resource.culture",
-  science: "shell.resource.science",
-  religion: "shell.resource.religion",
-  colonization: "shell.resource.colonization",
-  construction: "shell.resource.construction",
-  ducats: "shell.resource.ducats",
-  gold: "shell.resource.gold",
-};
-
 async function isImageWithinMaxSize(file: File, maxSize = 64): Promise<boolean> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
@@ -75,7 +61,7 @@ async function isImageWithinMaxSize(file: File, maxSize = 64): Promise<boolean> 
   });
 }
 
-export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated, onSettingsUpdated }: Props) {
+export function GameSettingsPanel({ open, token, onClose, onSettingsUpdated }: Props) {
   const { t } = useUiText();
   const [activeCategory, setActiveCategory] = useState<(typeof categories)[number]["id"]>("economy");
   const [loading, setLoading] = useState(false);
@@ -112,17 +98,6 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
   const [turnTimerSeconds, setTurnTimerSeconds] = useState(300);
   const [turnTimerPauseWhenNoPlayersOnline, setTurnTimerPauseWhenNoPlayersOnline] = useState(false);
   const [showAntarctica, setShowAntarctica] = useState(true);
-  const [resourceIcons, setResourceIcons] = useState<ResourceIconsMap>({
-    population: null,
-    culture: null,
-    science: null,
-    religion: null,
-    colonization: null,
-    construction: null,
-    ducats: null,
-    gold: null,
-  });
-  const [resourceIconFiles, setResourceIconFiles] = useState<Partial<Record<keyof ResourceIconsMap, File | null>>>({});
   const [uiBackgroundImageUrl, setUiBackgroundImageUrl] = useState<string | null>(null);
   const [uiBackgroundFile, setUiBackgroundFile] = useState<File | null>(null);
   const [scenarios, setScenarios] = useState<ScenarioDescriptor[]>([]);
@@ -175,8 +150,6 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
         setShowAntarctica(settings.map?.showAntarctica ?? true);
         setUiBackgroundImageUrl(settings.map?.backgroundImageUrl ?? null);
         setUiBackgroundFile(null);
-        setResourceIcons(settings.resourceIcons);
-        setResourceIconFiles({});
       })
       .catch(() => {
         if (!cancelled) toast.error(t("gameSettings.loadFailed"));
@@ -384,40 +357,6 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
     }
   };
 
-  const saveResourceIcons = async () => {
-    const selected = Object.entries(resourceIconFiles).filter(([, f]) => f) as Array<[keyof ResourceIconsMap, File]>;
-    if (selected.length === 0) {
-      toast.error(t("gameSettings.resourceIconSelectFirst"));
-      return;
-    }
-
-    for (const [key, file] of selected) {
-      const ok = await isImageWithinMaxSize(file, 64);
-      if (!ok) {
-        toast.error(t("gameSettings.resourceIconTooLargeFor", { resource: t(resourceLabelKeyById[key]) }));
-        return;
-      }
-    }
-
-    setSaving(true);
-    try {
-      const updated = await adminUploadResourceIcons(token, resourceIconFiles);
-      setResourceIcons(updated.resourceIcons);
-      setResourceIconFiles({});
-      onResourceIconsUpdated?.(updated.resourceIcons);
-      toast.success(t("gameSettings.resourceIconsSaved"));
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "RESOURCE_ICONS_UPDATE_FAILED";
-      if (msg === "IMAGE_DIMENSIONS_TOO_LARGE") {
-        toast.error(t("gameSettings.resourceIconTooLarge"));
-      } else {
-        toast.error(t("gameSettings.resourceIconsSaveFailed"));
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const saveUiBackground = async () => {
     if (!uiBackgroundFile) {
       toast.error(t("gameSettings.backgroundSelectFirst"));
@@ -480,8 +419,6 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
       setApplyingScenarioId(null);
     }
   };
-
-  const resourceLabels = Object.entries(resourceLabelKeyById) as Array<[keyof ResourceIconsMap, UiTextKey]>;
 
   return (
     <AppModal open={open} onClose={onClose} modalKey="game-settings" zIndexClassName="z-[125]" paddingClassName="p-4" panelClassName="rounded-none">
@@ -954,39 +891,6 @@ export function GameSettingsPanel({ open, token, onClose, onResourceIconsUpdated
                     </div>
                   )}
 
-                  {activeCategory === "resourceIcons" && (
-                    <div className={panelClass}>
-                      <div className={sectionTitleClass}>
-                        <Coins size={15} className="text-[rgb(var(--theme-accent))]" />
-                        {t("gameSettings.resourceIconsTitle")}
-                      </div>
-
-                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                        {resourceLabels.map(([key, labelKey]) => (
-                          <div key={key} className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-3">
-                            <div className="mb-2 text-xs text-[rgb(var(--theme-text-secondary))]">{t(labelKey)}</div>
-                            <div className="mb-2 flex h-16 items-center justify-center rounded-md bg-[rgb(var(--theme-surface-3))]">
-                              {resourceIcons[key] ? <img src={resourceIcons[key] ?? undefined} alt={t(labelKey)} className="h-12 w-12 object-contain" /> : <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("gameSettings.resourceIconEmpty")}</div>}
-                            </div>
-                            <label className="flex cursor-pointer items-center justify-center rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-3))] px-2 py-2 text-xs text-[rgb(var(--theme-text-primary))] transition hover:border-[rgb(var(--theme-accent))]">
-                              {t("gameSettings.chooseFile")}
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => setResourceIconFiles((prev) => ({ ...prev, [key]: e.target.files?.[0] ?? null }))}
-                              />
-                            </label>
-                            {resourceIconFiles[key] ? <div className="mt-1 truncate text-[10px] text-[rgb(var(--theme-success))]">{resourceIconFiles[key]?.name}</div> : null}
-                          </div>
-                        ))}
-                      </div>
-
-                      <AppButton onClick={saveResourceIcons} disabled={saving} variant="primary" icon={<Save size={14} />}>
-                        {t("gameSettings.resourceIconsUpload")}
-                      </AppButton>
-                    </div>
-                  )}
                 </div>
               )}
             </AppSection>

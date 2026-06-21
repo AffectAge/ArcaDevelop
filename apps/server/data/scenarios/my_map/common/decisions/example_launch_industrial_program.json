@@ -1,0 +1,72 @@
+{
+  "id": "decision:example_launch_industrial_program",
+  "nameKey": "decisions.example_launch_industrial_program.name",
+  "description": "",
+  "color": "#2f855a",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": {
+    "category": "economy",
+    "visibleWhenUnavailable": true,
+    "visibilityConditions": [
+      {
+        "type": "always",
+        "targetId": null,
+        "invert": false
+      }
+    ],
+    "availabilityConditions": [
+      {
+        "type": "always",
+        "targetId": null,
+        "invert": false
+      }
+    ],
+    "allow": {
+      "type": "country_resource_above",
+      "resource": "ducats",
+      "value": 500
+    },
+    "costs": {
+      "ducats": 500
+    },
+    "effects": [
+      {
+        "type": "start_journal_entry",
+        "journalEntryId": "journal:example_industrial_program"
+      },
+      {
+        "type": "add_resource_flow",
+        "resource": "construction",
+        "amount": 25,
+        "direction": "income",
+        "categoryId": "decision",
+        "labelKey": "resourceLedger.source.generic"
+      }
+    ],
+    "charges": 1,
+    "rechargeTurns": 12,
+    "maxUsesPerCountry": 1,
+    "cooldownTurns": 0,
+    "repeatable": true
+  },
+  "event": null,
+  "journalEntry": null,
+  "ideologyAttractionRules": []
+}

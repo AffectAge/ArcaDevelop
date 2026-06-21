@@ -15,7 +15,6 @@ describe("uploadMiddleware", () => {
     expect(resolveUploadDestination("cultureLogo", "goods")).toBe(resolveContentUploadDir("goods"));
     expect(resolveUploadDestination("racePortrait")).toBe(resolveContentUploadDir("races"));
     expect(resolveUploadDestination("flag")).toBe(resolveUploadDir("flags"));
-    expect(resolveUploadDestination("ducats")).toBe(resolveUploadDir("resource-icons"));
     expect(resolveUploadDestination("unknown")).toBe(resolveUploadDir("crests"));
     expect(resolveUploadDestination("flag")).toBe(join(getActiveScenarioUploadsRoot(), "flags"));
   });

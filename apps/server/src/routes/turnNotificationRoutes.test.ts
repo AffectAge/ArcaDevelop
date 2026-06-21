@@ -26,6 +26,7 @@ describe("turnNotificationRoutes", () => {
       onlineCountryIds: new Set(["ready"]),
       aiControlledCountryIds: new Set(),
       getCountryResources: () => null,
+      getCountryResourceNetByTurn: (countryId) => (countryId === "ready" ? { ducats: 5, science: -2 } : {}),
       getCountryBlockInfo: (country, turnId) =>
         country.blockedUntilTurn != null && turnId <= country.blockedUntilTurn
           ? { blocked: true, reason: "TURN", blockedUntilTurn: country.blockedUntilTurn, blockedUntilAt: null }
@@ -43,7 +44,11 @@ describe("turnNotificationRoutes", () => {
       ["ready", "ready"],
       ["waiting", "waiting"],
     ]);
-    expect(items.find((item) => item.id === "ready")).toMatchObject({ online: true, lastLoginAt: "login" });
+    expect(items.find((item) => item.id === "ready")).toMatchObject({
+      online: true,
+      lastLoginAt: "login",
+      resourceNetByTurn: { ducats: 5, science: -2 },
+    });
   });
 
   it("treats AI countries as online and ready without a socket or ready marker", () => {
@@ -55,6 +60,7 @@ describe("turnNotificationRoutes", () => {
       onlineCountryIds: new Set(),
       aiControlledCountryIds: new Set(["ai"]),
       getCountryResources: () => null,
+      getCountryResourceNetByTurn: () => ({}),
       getCountryBlockInfo: () => ({ blocked: false, reason: null, blockedUntilTurn: null, blockedUntilAt: null }),
       getCountrySkipInfo: () => ({ ignored: false, ignoreUntilTurn: null }),
       getLastLoginAt: () => null,
@@ -74,6 +80,7 @@ describe("turnNotificationRoutes", () => {
       getReadySetForTurn: () => new Set(["ready"]),
       getOnlineCountryIds: () => new Set(["ready"]),
       getAiControlledCountryIds: () => new Set(),
+      getCountryResourceNetByTurn: () => ({ culture: 3 }),
       getLastLoginAt: () => "login",
     });
 
@@ -84,7 +91,7 @@ describe("turnNotificationRoutes", () => {
       turnId: 5,
       readyCount: 1,
       requiredCount: 1,
-      countries: [{ id: "ready", status: "ready", online: true, lastLoginAt: "login" }],
+      countries: [{ id: "ready", status: "ready", online: true, lastLoginAt: "login", resourceNetByTurn: { culture: 3 } }],
     });
     expect(cleanupExpiredPunishments).toHaveBeenCalledOnce();
   });
@@ -168,6 +175,7 @@ function makeDeps() {
     getOnlineCountryIds: () => new Set<string>(),
     getAiControlledCountryIds: () => new Set<string>(),
     getCountryResources: () => null,
+    getCountryResourceNetByTurn: () => ({}),
     getCountryBlockInfo: () => ({
       blocked: false,
       reason: null,

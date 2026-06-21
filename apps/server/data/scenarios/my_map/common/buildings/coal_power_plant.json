@@ -1,0 +1,75 @@
+{
+  "id": "building:coal_power_plant",
+  "description": "вапваогр7",
+  "color": "#a78bfa",
+  "logoUrl": "/scenario-assets/balanced-economy/assets/uploads/buildings/282bd096-b29e-4919-b642-42ccedf2f350.png?v=1777111756877",
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 245,
+  "costDucats": 193,
+  "startingDucats": 67,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 144,
+  "upgradeCostConstruction": 184,
+  "sectorId": "sector:energy",
+  "industryId": "industry:energy",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:coal",
+      "amount": 24
+    },
+    {
+      "goodId": "good:energy_equipment",
+      "amount": 1
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:electricity",
+      "amount": 94.6
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:electrician",
+      "workers": 540
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 120
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 180
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.coal_power_plant.name"
+}

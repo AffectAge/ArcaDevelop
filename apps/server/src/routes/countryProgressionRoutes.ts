@@ -5,22 +5,38 @@ import type {
   CountryParliamentPowers,
   CountryDecisionRecord,
   CountryEventRecord,
+  DecisionAvailabilityReason,
   DecisionDefinition,
+  EventResolvedScope,
+  EventTriggerExplanation,
   DecisionEffect,
   EventCategory,
+  EventLogEntry,
   EventPriority,
   EventVisibility,
+  GameEffect,
   GameEventDefinition,
   GameEventOption,
   LawParliamentPowerEffect,
+  ModifierCondition,
   ModifierDefinition,
   IdeologyAttractionRule,
   ResourceTotals,
+  ScheduledCountryEvent,
+  WorldBase,
   WsOutMessage,
 } from "@arcanorum/shared";
 import { z } from "zod";
 import type { RouteAuth } from "../security/routeAuth";
 import { setActiveTechnologyState } from "../mechanics/technologyMechanics";
+import {
+  applyEventOptionEventEffects,
+  createEventResourceExplanationRecords,
+  getDecisionTargetUsageKey,
+  scheduleEventFollowups,
+  spendDecisionCharge,
+  summarizeGameEffects,
+} from "../mechanics/decisionEventMechanics";
 
 export type CountryProgressionCultureNeed = {
   id: string;
@@ -46,6 +62,7 @@ export type CountryProgressionCultureNeedsProfile = {
 
 export type CountryProgressionContentEntry = {
   id: string;
+  nameKey?: string | null;
   name: string;
   description: string;
   color: string;
@@ -105,6 +122,9 @@ export type CountryTechnologyStateRouteShape = {
 export type CountryDecisionView = {
   available: boolean;
   reason?: string | null;
+  reasons?: DecisionAvailabilityReason[];
+  scopes?: Record<string, EventResolvedScope>;
+  triggerExplanation?: EventTriggerExplanation[];
   decision: DecisionDefinition;
 };
 
@@ -112,8 +132,14 @@ export type CountryProgressionMasks = {
   parliamentByCountry: number;
   technologyByCountry: number;
   resourcesByCountry: number;
+  colonyProgressByRegion: number;
   countryDecisionsByCountryId: number;
   countryEventsByCountryId: number;
+  countryScheduledEventsByCountryId: number;
+  countryEventFlagsByCountryId: number;
+  journalEntriesByCountryId: number;
+  countryModifiersByCountryId: number;
+  explanationRecordsByTurn: number;
 };
 
 export type CountryProgressionRoutesDependencies = {
@@ -121,7 +147,24 @@ export type CountryProgressionRoutesDependencies = {
   masks: CountryProgressionMasks;
   getTurnId: () => number;
   getContent: () => CountryProgressionContent;
+  getWorldBase: () => Pick<
+    WorldBase,
+    | "resourcesByCountry"
+    | "resourceLedgerByTurn"
+    | "regionOwner"
+    | "regionController"
+    | "regionPopulationByRegion"
+    | "regionBuildingsByRegion"
+    | "colonyProgressByRegion"
+    | "regionResourceDepositsByRegion"
+    | "regionColonizationByRegion"
+    | "countryEventsByCountryId"
+    | "countryScheduledEventsByCountryId"
+    | "countryModifiersByCountryId"
+    | "explanationRecordsByTurn"
+  >;
   getCountryResources: (countryId: string) => ResourceTotals;
+  modifierConditionsMatchCountry: (conditions: ModifierCondition[] | undefined, countryId: string) => boolean;
   ensureCountryInWorldBase: (countryId: string) => void;
   ensureCountryParliament: (countryId: string) => CountryParliament;
   setCountryParliament: (countryId: string, parliament: CountryParliament) => void;
@@ -141,15 +184,25 @@ export type CountryProgressionRoutesDependencies = {
   ensureCountryTechnologyState: (countryId: string) => CountryTechnologyStateRouteShape;
   setCountryTechnologyState: (countryId: string, state: CountryTechnologyStateRouteShape) => void;
   getActiveCountryModifierRows: (countryId: string) => unknown[];
+  countryHasModifier: (countryId: string, modifierId: string) => boolean;
   getVisibleCountryDecisions: (countryId: string) => unknown[];
   ensureCountryDecisionRecord: (countryId: string) => CountryDecisionRecord;
   getCountryDecisionView: (countryId: string, decision: CountryProgressionContentEntry) => CountryDecisionView;
-  applyDecisionEffects: (countryId: string, effects: DecisionEffect[] | undefined) => void;
+  applyDecisionEffects: (countryId: string, effects: Array<DecisionEffect | GameEffect> | undefined) => void;
+  applyJournalGameEffects: (input: {
+    countryId: string;
+    effects: GameEffect[] | undefined;
+    scopes?: CountryEventRecord["pending"][number]["scopes"];
+    explanations?: CountryEventRecord["pending"][number]["triggerExplanation"];
+    news?: EventLogEntry[];
+  }) => unknown;
   applyDecisionCosts: (countryId: string, decisionId: string, costs: Partial<ResourceTotals> | undefined) => void;
   flushResourceLedger?: () => void;
   ensureCountryEventRecord: (countryId: string) => CountryEventRecord;
   getPendingCountryEvents: (countryId: string) => Record<string, unknown>;
   getGameEventDefinition: (entry: CountryProgressionContentEntry) => GameEventDefinition;
+  getCountryScheduledEventsByCountryId: () => Record<string, ScheduledCountryEvent[]>;
+  getCountryEventFlagsByCountryId: () => Record<string, Record<string, string | number | boolean>>;
   removeQueuedUiNotification: (notificationId: string) => void;
   cloneWorldBaseSectionSnapshot: (mask: number) => unknown;
   savePersistentState: () => void;
@@ -188,6 +241,30 @@ export const setActiveTechnologySchema = z.object({
   technologyId: z.string().trim().min(1).max(120).nullable(),
   active: z.boolean().optional(),
 });
+
+function isGameEffect(effect: DecisionEffect | GameEffect): effect is GameEffect {
+  return (
+    effect.type === "add_resource" ||
+    effect.type === "spend_resource" ||
+    effect.type === "add_resource_flow" ||
+    effect.type === "trigger_event" ||
+    effect.type === "schedule_event" ||
+    effect.type === "cancel_event" ||
+    effect.type === "set_event_flag" ||
+    effect.type === "clear_event_flag" ||
+    effect.type === "start_journal_entry" ||
+    effect.type === "advance_journal_entry" ||
+    effect.type === "complete_journal_entry" ||
+    effect.type === "fail_journal_entry" ||
+    effect.type === "cancel_journal_entry" ||
+    effect.type === "set_journal_variable" ||
+    effect.type === "clear_journal_variable" ||
+    effect.type === "add_modifier" ||
+    effect.type === "remove_modifier" ||
+    effect.type === "extend_modifier" ||
+    effect.type === "change_colonization_progress"
+  );
+}
 
 export function registerCountryProgressionRoutes(
   app: express.Express,
@@ -338,19 +415,88 @@ export function registerCountryProgressionRoutes(
     }
     const view = deps.getCountryDecisionView(countryId, entry);
     if (!view.available) {
-      return res.status(400).json({ error: "DECISION_UNAVAILABLE", reason: view.reason });
+      return res.status(400).json({ error: "DECISION_UNAVAILABLE", reason: view.reason, reasons: view.reasons ?? [] });
     }
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
-      deps.masks.resourcesByCountry | deps.masks.countryDecisionsByCountryId,
+      deps.masks.resourcesByCountry |
+        deps.masks.colonyProgressByRegion |
+        deps.masks.countryDecisionsByCountryId |
+        deps.masks.countryEventsByCountryId |
+        deps.masks.countryScheduledEventsByCountryId |
+        deps.masks.countryEventFlagsByCountryId |
+        deps.masks.journalEntriesByCountryId |
+        deps.masks.countryModifiersByCountryId |
+        deps.masks.explanationRecordsByTurn,
     );
+    const worldBase = deps.getWorldBase();
+    const previousResources = structuredClone(worldBase.resourcesByCountry[countryId] ?? deps.getCountryResources(countryId));
     deps.applyDecisionCosts(countryId, decisionId, view.decision.costs);
     deps.applyDecisionEffects(countryId, view.decision.effects);
+    const gameEffects = (view.decision.effects ?? []).filter(isGameEffect);
+    applyEventOptionEventEffects({
+      effects: gameEffects,
+      countryId,
+      pending: { scopes: { root: { kind: "country", id: countryId } }, triggerExplanation: [] },
+      eventById: new Map(deps.getContent().events.map((item) => [item.id, item] as const)),
+      recordsByCountryId: deps.getWorldBase().countryEventsByCountryId,
+      countryScheduledEventsByCountryId: deps.getCountryScheduledEventsByCountryId(),
+      countryEventFlagsByCountryId: deps.getCountryEventFlagsByCountryId(),
+      countryModifiersByCountryId: deps.getWorldBase().countryModifiersByCountryId,
+      colonyProgressByRegion: deps.getWorldBase().colonyProgressByRegion,
+      turnId: deps.getTurnId(),
+      createId: randomUUID,
+      sourceSystem: "decision",
+      sourceId: decisionId,
+    });
+    const journalNews: EventLogEntry[] = [];
+    deps.applyJournalGameEffects({
+      countryId,
+      effects: gameEffects,
+      scopes: { root: { kind: "country", id: countryId } },
+      explanations: [],
+      news: journalNews,
+    });
     deps.flushResourceLedger?.();
+    const decisionCostEffects = Object.entries(view.decision.costs ?? {})
+      .map(([resource, amount]): GameEffect | null => {
+        const safeAmount = Number(amount);
+        if (!Number.isFinite(safeAmount) || safeAmount <= 0) return null;
+        return { type: "spend_resource", resource: resource as keyof ResourceTotals, amount: safeAmount, labelKey: "resourceLedger.source.generic" };
+      })
+      .filter((effect): effect is GameEffect => Boolean(effect));
+    const explanationRecords = createEventResourceExplanationRecords({
+      sourceSystem: "decision",
+      eventId: decisionId,
+      optionId: decisionId,
+      countryId,
+      turnId: deps.getTurnId(),
+      scopes: view.scopes ?? { root: { kind: "country", id: countryId } },
+      effects: [...decisionCostEffects, ...(view.decision.effects ?? [])],
+      previousResources,
+      nextResources: deps.getWorldBase().resourcesByCountry[countryId] ?? deps.getCountryResources(countryId),
+      createId: randomUUID,
+    });
+    if (explanationRecords.length > 0) {
+      const turnId = deps.getTurnId();
+      const target = deps.getWorldBase().explanationRecordsByTurn;
+      target[turnId] = [...(target[turnId] ?? []), ...explanationRecords].slice(-2_000);
+    }
     const record = deps.ensureCountryDecisionRecord(countryId);
+    record.usesByDecisionId[decisionId] = (record.usesByDecisionId[decisionId] ?? 0) + 1;
+    const targetUsageKey = getDecisionTargetUsageKey(decisionId, view.scopes ?? { root: { kind: "country", id: countryId } });
+    record.usesByDecisionTargetKey[targetUsageKey] = (record.usesByDecisionTargetKey[targetUsageKey] ?? 0) + 1;
+    spendDecisionCharge(record, decisionId, view.decision, deps.getTurnId());
     if (!record.completedDecisionIds.includes(decisionId)) record.completedDecisionIds.push(decisionId);
     const cooldown = Math.max(0, Math.floor(Number(view.decision.cooldownTurns ?? 0)));
     if (cooldown > 0) record.cooldownUntilTurnByDecisionId[decisionId] = deps.getTurnId() + cooldown;
-    record.history.unshift({ decisionId, takenTurnId: deps.getTurnId(), label: entry.name });
+    record.history.unshift({
+      decisionId,
+      takenTurnId: deps.getTurnId(),
+      label: entry.name,
+      scopes: view.scopes ?? { root: { kind: "country", id: countryId } },
+      appliedEffects: summarizeGameEffects(view.decision.effects),
+      explanationIds: explanationRecords.map((item) => item.id),
+    });
     record.history = record.history.slice(0, 200);
     deps.savePersistentState();
     deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
@@ -366,6 +512,9 @@ export function registerCountryProgressionRoutes(
         visibility: "public",
       }),
     });
+    for (const event of journalNews) {
+      deps.broadcast({ type: "NEWS_EVENT", event });
+    }
     return res.json({ ok: true, decisions: deps.getVisibleCountryDecisions(countryId), record });
   });
 
@@ -402,10 +551,68 @@ export function registerCountryProgressionRoutes(
       return res.status(404).json({ error: "OPTION_NOT_FOUND" });
     }
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
-      deps.masks.resourcesByCountry | deps.masks.countryEventsByCountryId,
+      deps.masks.resourcesByCountry |
+        deps.masks.colonyProgressByRegion |
+        deps.masks.countryEventsByCountryId |
+        deps.masks.countryScheduledEventsByCountryId |
+        deps.masks.countryEventFlagsByCountryId |
+        deps.masks.journalEntriesByCountryId |
+        deps.masks.countryModifiersByCountryId |
+        deps.masks.explanationRecordsByTurn,
     );
+    const worldBase = deps.getWorldBase();
+    const previousResources = structuredClone(worldBase.resourcesByCountry[countryId] ?? deps.getCountryResources(countryId));
     deps.applyDecisionEffects(countryId, option.effects);
     deps.flushResourceLedger?.();
+    const explanationRecords = createEventResourceExplanationRecords({
+      eventId: entry.id,
+      optionId: option.id,
+      countryId,
+      turnId: deps.getTurnId(),
+      scopes: pending.scopes,
+      effects: option.effects,
+      previousResources,
+      nextResources: deps.getWorldBase().resourcesByCountry[countryId] ?? deps.getCountryResources(countryId),
+      createId: randomUUID,
+    });
+    if (explanationRecords.length > 0) {
+      const turnId = deps.getTurnId();
+      const target = deps.getWorldBase().explanationRecordsByTurn;
+      target[turnId] = [...(target[turnId] ?? []), ...explanationRecords].slice(-2_000);
+    }
+    scheduleEventFollowups({
+      event,
+      pending,
+      countryScheduledEventsByCountryId: deps.getCountryScheduledEventsByCountryId(),
+      turnId: deps.getTurnId(),
+      createId: randomUUID,
+      worldBase: deps.getWorldBase(),
+      conditionsMatchCountry: deps.modifierConditionsMatchCountry,
+      countryHasModifier: deps.countryHasModifier,
+    });
+    applyEventOptionEventEffects({
+      effects: option.effects,
+      countryId,
+      pending,
+      eventById: new Map(deps.getContent().events.map((item) => [item.id, item] as const)),
+      recordsByCountryId: deps.getWorldBase().countryEventsByCountryId,
+      countryScheduledEventsByCountryId: deps.getCountryScheduledEventsByCountryId(),
+      countryEventFlagsByCountryId: deps.getCountryEventFlagsByCountryId(),
+      countryModifiersByCountryId: deps.getWorldBase().countryModifiersByCountryId,
+      colonyProgressByRegion: deps.getWorldBase().colonyProgressByRegion,
+      turnId: deps.getTurnId(),
+      createId: randomUUID,
+      sourceSystem: "event",
+      sourceId: entry.id,
+    });
+    const journalNews: EventLogEntry[] = [];
+    deps.applyJournalGameEffects({
+      countryId,
+      effects: option.effects,
+      scopes: pending.scopes,
+      explanations: pending.triggerExplanation,
+      news: journalNews,
+    });
     record.pending = record.pending.filter((item) => item.id !== pending.id);
     if (!record.completedEventIds.includes(entry.id)) record.completedEventIds.push(entry.id);
     const cooldown = Math.max(0, Math.floor(Number(event.cooldownTurns ?? 0)));
@@ -414,8 +621,11 @@ export function registerCountryProgressionRoutes(
       eventId: entry.id,
       optionId: option.id,
       resolvedTurnId: deps.getTurnId(),
-      label: entry.name,
-      optionLabel: option.label,
+      titleKey: entry.nameKey ?? null,
+      optionLabelKey: option.labelKey,
+      scopes: pending.scopes ?? {},
+      appliedEffects: summarizeGameEffects(option.effects),
+      explanationIds: explanationRecords.map((item) => item.id),
     });
     record.history = record.history.slice(0, 200);
     deps.removeQueuedUiNotification(`country-event:${countryId}:${pending.id}`);
@@ -427,12 +637,15 @@ export function registerCountryProgressionRoutes(
         turn: deps.getTurnId(),
         category: event.category ?? "politics",
         title: "Событие обработано",
-        message: `${countryId}: ${entry.name} - ${option.label}`,
+        message: `${countryId}: ${entry.name} - ${option.labelKey}`,
         countryId,
         priority: event.priority ?? "medium",
         visibility: event.visibility ?? "private",
       }),
     });
+    for (const event of journalNews) {
+      deps.broadcast({ type: "NEWS_EVENT", event });
+    }
     return res.json({ ok: true, ...deps.getPendingCountryEvents(countryId) });
   });
 }

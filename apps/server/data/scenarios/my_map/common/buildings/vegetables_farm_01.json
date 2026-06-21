@@ -1,0 +1,75 @@
+{
+  "id": "building:vegetables_farm_01",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": "/scenario-assets/balanced-economy/assets/uploads/buildings/bdd656ea-0469-419e-abbb-f5bd926d877d.png?v=1777741814249",
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 147,
+  "costDucats": 116,
+  "startingDucats": 40,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 86,
+  "upgradeCostConstruction": 110,
+  "sectorId": "sector:agriculture",
+  "industryId": "industry:farms",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:tools",
+      "amount": 2
+    },
+    {
+      "goodId": "good:fertilizer",
+      "amount": 3
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:vegetables",
+      "amount": 63.47
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:farmer",
+      "workers": 850
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 250
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 35
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.vegetables_farm_01.name"
+}

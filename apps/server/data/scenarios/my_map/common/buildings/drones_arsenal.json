@@ -1,0 +1,83 @@
+{
+  "id": "building:drones_arsenal",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": "/scenario-assets/balanced-economy/assets/uploads/buildings/dd628905-87e4-4125-bc68-49eb24eb33b2.png?v=1778418781807",
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 378,
+  "costDucats": 297,
+  "startingDucats": 103,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 221,
+  "upgradeCostConstruction": 284,
+  "sectorId": "sector:military",
+  "industryId": "industry:advanced",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:electronics",
+      "amount": 14
+    },
+    {
+      "goodId": "good:engines",
+      "amount": 3
+    },
+    {
+      "goodId": "good:plastics",
+      "amount": 8
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:drones",
+      "amount": 21.48
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:engineer",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:scientist",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:technician",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:manager",
+      "workers": 80
+    }
+  ],
+  "infrastructureUse": 4,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.drones_arsenal.name"
+}

@@ -126,6 +126,149 @@ describe("AI economy candidates", () => {
     expect(candidates.some((candidate) => candidate.kind === "upgrade")).toBe(false);
   });
 
+  it("does not queue a duplicate build for the same building in the same region", () => {
+    const world = createAiFixtureWorld({
+      regionConstructionQueueByRegion: {
+        "region:alpha-core": [
+          {
+            queueId: "queue:farm",
+            requestedByCountryId: "country:alpha",
+            buildingId: "building:farm",
+            owner: { type: "state", countryId: "country:alpha" },
+            projectType: "build",
+            progressConstruction: 1,
+            costConstruction: 10,
+            costDucats: 5,
+            createdTurnId: 1,
+          },
+        ],
+      },
+    });
+    const indexes = buildAiWorldIndexes(world);
+    const context = buildAiCountryContext({ countryId: "country:alpha", world, indexes });
+
+    const candidates = selectAiEconomyOrderCandidates({
+      context,
+      world,
+      indexes,
+      buildings: [farm, mine],
+      isBuildingUnlockedForCountry: () => true,
+      getRegionBuildRestriction: () => null,
+    });
+
+    expect(candidates).not.toContainEqual(expect.objectContaining({
+      kind: "build",
+      regionId: "region:alpha-core",
+      buildingId: "building:farm",
+    }));
+    expect(candidates).toContainEqual(expect.objectContaining({
+      kind: "build",
+      regionId: "region:alpha-core",
+      buildingId: "building:mine",
+    }));
+  });
+
+  it("filters build candidates that are unaffordable or too slow for current construction capacity", () => {
+    const world = createAiFixtureWorld({
+      resourcesByCountry: {
+        "country:alpha": {
+          culture: 0,
+          science: 0,
+          religion: 0,
+          colonization: 0,
+          construction: 5,
+          ducats: 10,
+          gold: 0,
+        },
+      },
+      regionConstructionQueueByRegion: {},
+    });
+    const indexes = buildAiWorldIndexes(world);
+    const context = buildAiCountryContext({ countryId: "country:alpha", world, indexes });
+
+    const candidates = selectAiEconomyOrderCandidates({
+      context,
+      world,
+      indexes,
+      buildings: [
+        { id: "building:cheap", costConstruction: 40, costDucats: 10 },
+        { id: "building:expensive", costConstruction: 40, costDucats: 11 },
+        { id: "building:slow", costConstruction: 41, costDucats: 10 },
+      ],
+      isBuildingUnlockedForCountry: () => true,
+      getRegionBuildRestriction: () => null,
+    });
+
+    expect(candidates.filter((candidate) => candidate.kind === "build")).toEqual([
+      expect.objectContaining({
+        kind: "build",
+        regionId: "region:alpha-core",
+        buildingId: "building:cheap",
+      }),
+    ]);
+  });
+
+  it("uses the configured build completion turn limit for build affordability", () => {
+    const world = createAiFixtureWorld({
+      resourcesByCountry: {
+        "country:alpha": {
+          culture: 0,
+          science: 0,
+          religion: 0,
+          colonization: 0,
+          construction: 5,
+          ducats: 10,
+          gold: 0,
+        },
+      },
+      regionConstructionQueueByRegion: {},
+    });
+    const indexes = buildAiWorldIndexes(world);
+    const context = buildAiCountryContext({ countryId: "country:alpha", world, indexes });
+
+    const candidates = selectAiEconomyOrderCandidates({
+      context,
+      world,
+      indexes,
+      buildings: [{ id: "building:long", costConstruction: 30, costDucats: 10 }],
+      maxBuildCompletionTurns: 4,
+      isBuildingUnlockedForCountry: () => true,
+      getRegionBuildRestriction: () => null,
+    });
+
+    expect(candidates.filter((candidate) => candidate.kind === "build")).toEqual([]);
+  });
+
+  it("does not build when the country has no construction points", () => {
+    const world = createAiFixtureWorld({
+      resourcesByCountry: {
+        "country:alpha": {
+          culture: 0,
+          science: 0,
+          religion: 0,
+          colonization: 0,
+          construction: 0,
+          ducats: 100,
+          gold: 0,
+        },
+      },
+      regionConstructionQueueByRegion: {},
+    });
+    const indexes = buildAiWorldIndexes(world);
+    const context = buildAiCountryContext({ countryId: "country:alpha", world, indexes });
+
+    const candidates = selectAiEconomyOrderCandidates({
+      context,
+      world,
+      indexes,
+      buildings: [farm],
+      isBuildingUnlockedForCountry: () => true,
+      getRegionBuildRestriction: () => null,
+    });
+
+    expect(candidates.filter((candidate) => candidate.kind === "build")).toEqual([]);
+  });
+
   it("filters upgrade candidates when unaffordable", () => {
     const world = createAiFixtureWorld({
       regionConstructionQueueByRegion: {},

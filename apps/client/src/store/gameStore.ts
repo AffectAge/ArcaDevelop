@@ -92,6 +92,19 @@ export const useGameStore = create<GameState>((set) => ({
         }
       }
 
+      if ((delta.mask & WORLD_DELTA_MASK.explanationRecordsByTurn) !== 0 && delta.xr) {
+        nextWorldBase.explanationRecordsByTurn = { ...nextWorldBase.explanationRecordsByTurn };
+        for (const [turnIdText, value] of Object.entries(delta.xr)) {
+          const turnId = Number(turnIdText);
+          if (!Number.isInteger(turnId)) continue;
+          if (!value) {
+            delete nextWorldBase.explanationRecordsByTurn[turnId];
+            continue;
+          }
+          nextWorldBase.explanationRecordsByTurn[turnId] = value;
+        }
+      }
+
       if ((delta.mask & WORLD_DELTA_MASK.provinceOwner) !== 0 && delta.o) {
         nextWorldBase.provinceOwner = { ...nextWorldBase.provinceOwner };
         for (const [provinceId, value] of Object.entries(delta.o)) {
@@ -291,6 +304,50 @@ export const useGameStore = create<GameState>((set) => ({
             continue;
           }
           nextWorldBase.countryEventsByCountryId[countryId] = value;
+        }
+      }
+
+      if ((delta.mask & WORLD_DELTA_MASK.countryScheduledEventsByCountryId) !== 0 && delta.s) {
+        nextWorldBase.countryScheduledEventsByCountryId = { ...nextWorldBase.countryScheduledEventsByCountryId };
+        for (const [countryId, value] of Object.entries(delta.s)) {
+          if (!value) {
+            delete nextWorldBase.countryScheduledEventsByCountryId[countryId];
+            continue;
+          }
+          nextWorldBase.countryScheduledEventsByCountryId[countryId] = value;
+        }
+      }
+
+      if ((delta.mask & WORLD_DELTA_MASK.countryEventFlagsByCountryId) !== 0 && delta.xg) {
+        nextWorldBase.countryEventFlagsByCountryId = { ...nextWorldBase.countryEventFlagsByCountryId };
+        for (const [countryId, value] of Object.entries(delta.xg)) {
+          if (!value) {
+            delete nextWorldBase.countryEventFlagsByCountryId[countryId];
+            continue;
+          }
+          nextWorldBase.countryEventFlagsByCountryId[countryId] = value;
+        }
+      }
+
+      if ((delta.mask & WORLD_DELTA_MASK.journalEntriesByCountryId) !== 0 && delta.jo) {
+        nextWorldBase.journalEntriesByCountryId = { ...nextWorldBase.journalEntriesByCountryId };
+        for (const [countryId, value] of Object.entries(delta.jo)) {
+          if (!value) {
+            delete nextWorldBase.journalEntriesByCountryId[countryId];
+            continue;
+          }
+          nextWorldBase.journalEntriesByCountryId[countryId] = value;
+        }
+      }
+
+      if ((delta.mask & WORLD_DELTA_MASK.countryModifiersByCountryId) !== 0 && delta.cm) {
+        nextWorldBase.countryModifiersByCountryId = { ...nextWorldBase.countryModifiersByCountryId };
+        for (const [countryId, value] of Object.entries(delta.cm)) {
+          if (!value) {
+            delete nextWorldBase.countryModifiersByCountryId[countryId];
+            continue;
+          }
+          nextWorldBase.countryModifiersByCountryId[countryId] = value;
         }
       }
 

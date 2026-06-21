@@ -264,6 +264,7 @@
       "sectors": "scenarios/<scenarioId>/common/sectors/*.json",
       "decisions": "scenarios/<scenarioId>/common/decisions/*.json",
       "events": "scenarios/<scenarioId>/common/events/*.json",
+      "journalEntries": "scenarios/<scenarioId>/common/journal_entries/*.json",
       "battalions": "scenarios/<scenarioId>/common/battalions/*.json",
       "shipTypes": "scenarios/<scenarioId>/common/shipTypes/*.json",
       "aircraftTypes": "scenarios/<scenarioId>/common/aircraftTypes/*.json",
@@ -283,7 +284,8 @@
           "enabled": { "type": "boolean" },
           "maxCountriesPerTick": { "type": "integer", "min": 1, "max": 1000 },
           "maxDecisionCandidatesPerCountry": { "type": "integer", "min": 1, "max": 1000 },
-          "contextCacheTtlTurns": { "type": "integer", "min": 1, "max": 100 }
+          "contextCacheTtlTurns": { "type": "integer", "min": 1, "max": 100 },
+          "maxBuildCompletionTurns": { "type": "integer", "min": 1, "max": 3650 }
         },
         "economy": {
           "baseCulturePerTurn": { "type": "integer", "min": 0, "max": 1000000000000 },

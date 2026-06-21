@@ -37,8 +37,8 @@ import {
   upgradeCountryBuildState,
   type ContentEntry,
   type MarketOverviewResponse,
-  type ResourceIconsMap,
 } from "../lib/api";
+import { BASE_RESOURCE_ICON_URLS } from "../assets/baseResourceIcons";
 import { useGameStore } from "../store/gameStore";
 import { CustomSelect } from "./CustomSelect";
 import { TextInputModal } from "./TextInputModal";
@@ -143,7 +143,7 @@ function BuildingCardTooltip({
   sectorName,
   goodById,
   professionById,
-  resourceIcons,
+  baseResourceIconUrls,
 }: {
   building: ContentEntry;
   availability: BuildAvailability;
@@ -153,7 +153,7 @@ function BuildingCardTooltip({
   sectorName: string | null;
   goodById: Map<string, ContentEntry>;
   professionById: Map<string, ContentEntry>;
-  resourceIcons: ResourceIconsMap;
+  baseResourceIconUrls: typeof BASE_RESOURCE_ICON_URLS;
 }) {
   const inputs = (building.inputs ?? []).filter((entry) => Number(entry.amount ?? 0) > 0);
   const outputs = (building.outputs ?? []).filter((entry) => Number(entry.amount ?? 0) > 0);
@@ -176,7 +176,7 @@ function BuildingCardTooltip({
   ) => (
     <div className="flex items-center justify-between gap-4">
       <span className="inline-flex min-w-0 items-center gap-2 text-[var(--arc-modal-tooltip-muted)]">
-        {iconUrl ? <img src={iconUrl} alt="" className="h-4 w-4 object-contain" /> : fallback}
+        {iconUrl ? <img src={iconUrl} alt="" className="h-6 w-6 object-contain" /> : fallback}
         <span className="truncate">{label}</span>
       </span>
       <span className={`shrink-0 font-semibold tabular-nums ${tone}`}>{value}</span>
@@ -204,9 +204,9 @@ function BuildingCardTooltip({
 
       <div className="space-y-3 p-3 text-sm">
         <div className="space-y-1.5">
-          {resourceLine(resourceIcons.construction, <Hammer size={14} className="text-[var(--arc-modal-tooltip-positive)]" />, tUi("shell.resource.construction"), formatCompact(costConstruction), "text-[var(--arc-modal-tooltip-positive)]")}
-          {resourceLine(resourceIcons.ducats, <Coins size={14} className="text-[var(--arc-modal-tooltip-warning)]" />, tUi("shell.resource.ducats"), formatCompact(costDucats), costDucats > 0 ? "text-[var(--arc-modal-tooltip-warning)]" : "text-[var(--arc-modal-tooltip-muted)]")}
-          {startingDucats > 0 ? resourceLine(resourceIcons.ducats, <Coins size={14} className="text-[var(--arc-modal-tooltip-warning)]" />, tUi("buildings.startingCapital"), formatCompact(startingDucats), "text-[var(--arc-modal-tooltip-warning)]") : null}
+          {resourceLine(baseResourceIconUrls.construction, <Hammer size={14} className="text-[var(--arc-modal-tooltip-positive)]" />, tUi("shell.resource.construction"), formatCompact(costConstruction), "text-[var(--arc-modal-tooltip-positive)]")}
+          {resourceLine(baseResourceIconUrls.ducats, <Coins size={14} className="text-[var(--arc-modal-tooltip-warning)]" />, tUi("shell.resource.ducats"), formatCompact(costDucats), costDucats > 0 ? "text-[var(--arc-modal-tooltip-warning)]" : "text-[var(--arc-modal-tooltip-muted)]")}
+          {startingDucats > 0 ? resourceLine(baseResourceIconUrls.ducats, <Coins size={14} className="text-[var(--arc-modal-tooltip-warning)]" />, tUi("buildings.startingCapital"), formatCompact(startingDucats), "text-[var(--arc-modal-tooltip-warning)]") : null}
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-xs">
@@ -291,7 +291,7 @@ function IndustryBuildingTooltip({
   productivityPct,
   durabilityPct,
   maxLevel,
-  resourceIcons,
+  baseResourceIconUrls,
 }: {
   card: Card;
   building?: ContentEntry;
@@ -319,7 +319,7 @@ function IndustryBuildingTooltip({
   productivityPct: number;
   durabilityPct: number;
   maxLevel: number;
-  resourceIcons: ResourceIconsMap;
+  baseResourceIconUrls: typeof BASE_RESOURCE_ICON_URLS;
 }) {
   const netPerTurn = economy?.netPerTurn ?? 0;
   const storageAmount = economy?.storageAmount ?? 0;
@@ -329,7 +329,7 @@ function IndustryBuildingTooltip({
   const moneyChip = (label: string, value: number, tone: string) => (
     <div className="flex items-center justify-between gap-4">
       <span className="inline-flex min-w-0 items-center gap-2 text-[var(--arc-modal-tooltip-muted)]">
-        {resourceIcons.ducats ? <img src={resourceIcons.ducats} alt="" className="h-4 w-4 object-contain" /> : <Coins size={14} className="text-[var(--arc-modal-tooltip-warning)]" />}
+        {baseResourceIconUrls.ducats ? <img src={baseResourceIconUrls.ducats} alt="" className="h-6 w-6 object-contain" /> : <Coins size={14} className="text-[var(--arc-modal-tooltip-warning)]" />}
         <span className="truncate">{label}</span>
       </span>
       <span className={`shrink-0 font-semibold tabular-nums ${tone}`}>
@@ -459,16 +459,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
   const [professions, setProfessions] = useState<ContentEntry[]>([]);
   const [companies, setCompanies] = useState<ContentEntry[]>([]);
   const [countries, setCountries] = useState<Array<{ id: string; name: string; flagUrl?: string | null }>>([]);
-  const [resourceIcons, setResourceIcons] = useState<ResourceIconsMap>({
-    population: null,
-    culture: null,
-    science: null,
-    religion: null,
-    colonization: null,
-    construction: null,
-    ducats: null,
-    gold: null,
-  });
+  const baseResourceIconUrls = BASE_RESOURCE_ICON_URLS;
   const [constructionOpen, setConstructionOpen] = useState(false);
   const [openConstructionIndustryGroups, setOpenConstructionIndustryGroups] = useState<Record<string, boolean>>({});
   const [demolitionCostConstructionPercent, setDemolitionCostConstructionPercent] = useState(20);
@@ -564,7 +555,6 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
         setProfessions(prof);
         setCompanies(c);
         setCountries(ctr);
-        setResourceIcons(ui.resourceIcons);
         setDemolitionCostConstructionPercent(ui.economy?.demolitionCostConstructionPercent ?? 20);
       })
       .catch(() => {
@@ -577,16 +567,6 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
         setProfessions([]);
         setCompanies([]);
         setCountries([]);
-        setResourceIcons({
-          population: null,
-          culture: null,
-          science: null,
-          religion: null,
-          colonization: null,
-          construction: null,
-          ducats: null,
-          gold: null,
-        });
         setDemolitionCostConstructionPercent(20);
       });
     return () => {
@@ -2024,7 +2004,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                                 productivityPct={productivityPct}
                                 durabilityPct={durabilityPct}
                                 maxLevel={maxLevel}
-                                resourceIcons={resourceIcons}
+                                baseResourceIconUrls={baseResourceIconUrls}
                               />
                             }
                           >
@@ -2355,8 +2335,8 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       <div className="flex items-center gap-2">
                         <Tooltip content={t("buildings.buildingCashTooltip")}>
                           <span className="arc-building-economy-chip min-h-[22px] gap-1 leading-none">
-                            {resourceIcons.ducats ? (
-                              <img src={resourceIcons.ducats} alt="" className="h-3.5 w-3.5 shrink-0 self-center object-contain" />
+                            {baseResourceIconUrls.ducats ? (
+                              <img src={baseResourceIconUrls.ducats} alt="" className="h-[21px] w-[21px] shrink-0 self-center object-contain" />
                             ) : (
                               <Coins size={11} />
                             )}
@@ -2372,8 +2352,8 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             }`}
                           >
                             <span className="inline-flex items-center justify-center gap-1">
-                              {resourceIcons.ducats ? (
-                                <img src={resourceIcons.ducats} alt="" className="h-3.5 w-3.5 shrink-0 self-center object-contain" />
+                              {baseResourceIconUrls.ducats ? (
+                                <img src={baseResourceIconUrls.ducats} alt="" className="h-[21px] w-[21px] shrink-0 self-center object-contain" />
                               ) : (
                                 <Coins size={11} />
                               )}
@@ -2393,8 +2373,8 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                             }`}
                           >
                             <span className="inline-flex items-center justify-center gap-1">
-                              {resourceIcons.ducats ? (
-                                <img src={resourceIcons.ducats} alt="" className="h-3.5 w-3.5 shrink-0 self-center object-contain" />
+                              {baseResourceIconUrls.ducats ? (
+                                <img src={baseResourceIconUrls.ducats} alt="" className="h-[21px] w-[21px] shrink-0 self-center object-contain" />
                               ) : (
                                 <Coins size={11} />
                               )}
@@ -2861,8 +2841,8 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                     <div className="flex items-center gap-1.5">
                       <Tooltip content={t("buildings.availableConstructionTooltip")}>
                         <div className="arc-construction-resource-chip">
-                          {resourceIcons.construction ? (
-                            <img src={resourceIcons.construction} alt="" className="h-3.5 w-3.5 object-contain" />
+                          {baseResourceIconUrls.construction ? (
+                            <img src={baseResourceIconUrls.construction} alt="" className="h-[21px] w-[21px] object-contain" />
                           ) : (
                             <Hammer size={12} />
                           )}
@@ -2871,8 +2851,8 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                       </Tooltip>
                       <Tooltip content={t("buildings.availableDucatsTooltip")}>
                         <div className="arc-construction-resource-chip">
-                          {resourceIcons.ducats ? (
-                            <img src={resourceIcons.ducats} alt="" className="h-3.5 w-3.5 object-contain" />
+                          {baseResourceIconUrls.ducats ? (
+                            <img src={baseResourceIconUrls.ducats} alt="" className="h-[21px] w-[21px] object-contain" />
                           ) : (
                             <Coins size={12} />
                           )}
@@ -2935,7 +2915,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                                             sectorName={sectorName}
                                             goodById={goodById}
                                             professionById={professionById}
-                                            resourceIcons={resourceIcons}
+                                            baseResourceIconUrls={baseResourceIconUrls}
                                           />
                                         }
                                       >
@@ -2958,16 +2938,16 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                                                 </div>
                                                 <div className="text-[11px] text-[var(--arc-color-atlas-muted)]">
                                                   <div className="flex items-center gap-1">
-                                                    {resourceIcons.construction ? (
-                                                      <img src={resourceIcons.construction} alt="" className="h-3.5 w-3.5 object-contain" />
+                                                    {baseResourceIconUrls.construction ? (
+                                                      <img src={baseResourceIconUrls.construction} alt="" className="h-[21px] w-[21px] object-contain" />
                                                     ) : (
                                                       <Hammer size={12} />
                                                     )}
                                                     <span>{formatCompact(costConstruction)}</span>
                                                   </div>
                                                   <div className="flex items-center gap-1">
-                                                    {resourceIcons.ducats ? (
-                                                      <img src={resourceIcons.ducats} alt="" className="h-3.5 w-3.5 object-contain" />
+                                                    {baseResourceIconUrls.ducats ? (
+                                                      <img src={baseResourceIconUrls.ducats} alt="" className="h-[21px] w-[21px] object-contain" />
                                                     ) : (
                                                       <Coins size={12} />
                                                     )}
@@ -2980,7 +2960,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
                                               </div>
                                                 <button
                                                     type="button"
-                                                    title={canAdd ? t("buildings.addToQueueTitle", { building: building.name }) : availability.reasons.join(", ")}
+                                                    aria-label={canAdd ? t("buildings.addToQueueTitle", { building: building.name }) : availability.reasons.join(", ")}
                                                     onClick={() => submitBuild(building.id)}
                                                     disabled={!canAdd}
                                                     className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full disabled:opacity-40 ${

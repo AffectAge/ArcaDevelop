@@ -10,6 +10,7 @@ type RestorePersistedWorldBaseParams = {
   defaultWorldBase: (turnId: number) => WorldBase;
   normalizeResourcesByCountryMap: (input: unknown) => Record<string, ResourceTotals>;
   normalizeResourceLedgerByTurn: (input: unknown) => WorldBase["resourceLedgerByTurn"];
+  normalizeExplanationRecordsByTurn: (input: unknown) => WorldBase["explanationRecordsByTurn"];
   normalizeRegionColonizationMap: (input: unknown) => WorldBase["regionColonizationByRegion"];
   normalizeRegionPopulationMap: (input: unknown) => WorldBase["regionPopulationByRegion"];
   normalizeRegionBuildingsMap: (input: unknown) => WorldBase["regionBuildingsByRegion"];
@@ -22,6 +23,10 @@ type RestorePersistedWorldBaseParams = {
   normalizeTechnologyByCountryMap: (input: unknown) => WorldBase["technologyByCountry"];
   normalizeCountryDecisionsMap: (input: unknown) => WorldBase["countryDecisionsByCountryId"];
   normalizeCountryEventsMap: (input: unknown) => WorldBase["countryEventsByCountryId"];
+  normalizeScheduledCountryEventsMap: (input: unknown) => WorldBase["countryScheduledEventsByCountryId"];
+  normalizeCountryEventFlagsMap: (input: unknown) => WorldBase["countryEventFlagsByCountryId"];
+  normalizeJournalEntriesMap: (input: unknown) => WorldBase["journalEntriesByCountryId"];
+  normalizeCountryModifiersMap: (input: unknown) => WorldBase["countryModifiersByCountryId"];
   normalizeDivisionTemplatesByCountry: (input: unknown) => WorldBase["divisionTemplatesByCountry"];
   normalizeDivisionsById: (input: unknown, base: WorldBase) => WorldBase["divisionsById"];
   normalizeMilitaryFormationQueueByCountry: (input: unknown) => WorldBase["militaryFormationQueueByCountry"];
@@ -55,6 +60,9 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     resourcesByCountry: params.normalizeResourcesByCountryMap(candidate.resourcesByCountry),
     resourceLedgerByTurn: params.normalizeResourceLedgerByTurn(
       (candidate as Partial<WorldBase> & { resourceLedgerByTurn?: unknown }).resourceLedgerByTurn,
+    ),
+    explanationRecordsByTurn: params.normalizeExplanationRecordsByTurn(
+      (candidate as Partial<WorldBase> & { explanationRecordsByTurn?: unknown }).explanationRecordsByTurn,
     ),
     regionOwner: candidate.regionOwner as Record<string, string>,
     regionController: candidate.regionController as Record<string, string>,
@@ -103,6 +111,18 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     ),
     countryEventsByCountryId: params.normalizeCountryEventsMap(
       (candidate as Partial<WorldBase> & { countryEventsByCountryId?: unknown }).countryEventsByCountryId,
+    ),
+    countryScheduledEventsByCountryId: params.normalizeScheduledCountryEventsMap(
+      (candidate as Partial<WorldBase> & { countryScheduledEventsByCountryId?: unknown }).countryScheduledEventsByCountryId,
+    ),
+    countryEventFlagsByCountryId: params.normalizeCountryEventFlagsMap(
+      (candidate as Partial<WorldBase> & { countryEventFlagsByCountryId?: unknown }).countryEventFlagsByCountryId,
+    ),
+    journalEntriesByCountryId: params.normalizeJournalEntriesMap(
+      (candidate as Partial<WorldBase> & { journalEntriesByCountryId?: unknown }).journalEntriesByCountryId,
+    ),
+    countryModifiersByCountryId: params.normalizeCountryModifiersMap(
+      (candidate as Partial<WorldBase> & { countryModifiersByCountryId?: unknown }).countryModifiersByCountryId,
     ),
     divisionTemplatesByCountry: params.normalizeDivisionTemplatesByCountry(
       (candidate as Partial<WorldBase> & { divisionTemplatesByCountry?: unknown }).divisionTemplatesByCountry,

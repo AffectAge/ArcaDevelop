@@ -3,10 +3,10 @@ import { Dialog } from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import type { DiplomacyProposal, OrderDelta, WsOutMessage } from "@arcanorum/shared";
+import type { Country, DiplomacyProposal, OrderDelta, WsOutMessage } from "@arcanorum/shared";
 import { AuthPanel, type AuthSuccess } from "./components/AuthPanel";
-import { MapView, type MapModeId } from "./components/MapView";
-import { StrategyShell, type StrategyMode } from "./components/strategy-shell/StrategyShell";
+import { MapView } from "./components/MapView";
+import { StrategyShell, type MarketTradeOverviewRow, type StrategyMode } from "./components/strategy-shell/StrategyShell";
 import { CommandPalette } from "./components/CommandPalette";
 import { AdminPanel } from "./components/AdminPanel";
 import { TurnStatusModal } from "./components/TurnStatusModal";
@@ -24,6 +24,7 @@ import { TechnologyModal } from "./components/TechnologyModal";
 import { CountryModifiersModal } from "./components/CountryModifiersModal";
 import { CountryDecisionsModal } from "./components/CountryDecisionsModal";
 import { CountryEventsModal } from "./components/CountryEventsModal";
+import { CountryJournalModal } from "./components/CountryJournalModal";
 import { DiplomacyModal } from "./components/DiplomacyModal";
 import { DiplomacyProposalStoryModal } from "./components/DiplomacyProposalStoryModal";
 import { ArmyModal } from "./components/ArmyModal";
@@ -38,18 +39,18 @@ import {
   fetchCountries,
   fetchCountryEvents,
   fetchCurrentTurnOrders,
+  fetchMarketOverview,
   fetchPendingUiNotifications,
   fetchProvinceIndex,
-  fetchTurnStatus,
   fetchPublicGameUiSettings,
   fetchWorldSnapshot,
   markUiNotificationViewed,
   acceptDiplomacyProposal,
   rejectDiplomacyProposal,
   type ContentEntry,
-  type ResourceIconsMap,
-  type TurnStatusItem,
+  type MarketOverviewResponse,
 } from "./lib/api";
+import { BASE_RESOURCE_ICON_URLS } from "./assets/baseResourceIcons";
 import { useWs } from "./lib/useWs";
 import { useGameStore } from "./store/gameStore";
 import type { UiTextKey } from "./i18n/uiText";
@@ -67,15 +68,69 @@ type RegistrationApprovalCountry = Extract<
   { type: "registration-approval" }
 >["country"];
 type ElectionResultsAction = Extract<InAppUiNotification["action"], { type: "election-results" }>;
-type TurnReadinessPreview = {
-  turnId: number;
-  readyCount: number;
-  requiredCount: number;
-  countries: TurnStatusItem[];
-};
-
 const RESOLVE_START_TIMEOUT_MS = 12_000;
-const TURN_READINESS_POLL_MS = 5_000;
+const MARKET_SHELL_PARTNER_LIMIT = 3;
+
+function sumPositiveRecord(input: Record<string, number> | undefined): number {
+  return Object.values(input ?? {}).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0);
+}
+
+function calculateLastRelativeDeltaPct(history: number[] | undefined): number {
+  if (!history || history.length < 2) return 0;
+  const previous = Number(history[history.length - 2] ?? 0);
+  const current = Number(history[history.length - 1] ?? 0);
+  if (!Number.isFinite(previous) || Math.abs(previous) < 1e-9) return 0;
+  return ((current - previous) / previous) * 100;
+}
+
+function buildMarketShellPartners(input: Record<string, number> | undefined, countryById: Map<string, Country>) {
+  return Object.entries(input ?? {})
+    .map(([countryId, value]) => {
+      const country = countryById.get(countryId);
+      return {
+        id: countryId,
+        name: country?.name ?? countryId,
+        flagUrl: country?.flagUrl ?? country?.crestUrl ?? null,
+        value: Math.max(0, Number(value) || 0),
+      };
+    })
+    .filter((partner) => partner.value > 0)
+    .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name, "ru"))
+    .slice(0, MARKET_SHELL_PARTNER_LIMIT);
+}
+
+function isTechnicalContentName(name: string, entry: ContentEntry | undefined, fallbackId: string): boolean {
+  const normalizedFallbackId = fallbackId.replace(/^building:/, "");
+  return (
+    name === fallbackId ||
+    name === normalizedFallbackId ||
+    name === entry?.id ||
+    name === entry?.nameKey ||
+    name === `buildings.${normalizedFallbackId}.name` ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(name)
+  );
+}
+
+function formatShortEntityId(id: string): string {
+  const normalized = id.replace(/^[a-z]+:/i, "");
+  const uuidMatch = normalized.match(/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}/i);
+  if (uuidMatch) {
+    return uuidMatch[0].slice(0, 8);
+  }
+  return normalized.length > 24 ? `${normalized.slice(0, 24)}...` : normalized;
+}
+
+function getBuildingDisplayName(
+  entry: ContentEntry | undefined,
+  fallbackId: string,
+  t: (key: UiTextKey, params?: Record<string, string | number>) => string,
+): string {
+  const name = entry?.name?.trim() ?? "";
+  if (name && !isTechnicalContentName(name, entry, fallbackId)) {
+    return name;
+  }
+  return t("shell.preview.unknownBuilding", { id: formatShortEntityId(fallbackId) });
+}
 
 function notificationSemanticKey(item: InAppUiNotification): string {
   if (item.action.type === "country-event") {
@@ -154,27 +209,6 @@ export default function App() {
     setActiveStrategyMode(mode);
     setStrategyWorkspaceOpen(true);
   }, []);
-  const strategyMapModeId = useMemo<MapModeId>(() => {
-    switch (activeStrategyMode) {
-      case "construction":
-        return "infrastructure";
-      case "colonization":
-        return "colonization";
-      case "population":
-        return "population";
-      case "market":
-        return "markets";
-      case "diplomacy":
-        return "diplomacy";
-      case "army":
-        return "military";
-      case "governance":
-        return "regions";
-      case "overview":
-      default:
-        return "political";
-    }
-  }, [activeStrategyMode]);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [contentPanelOpen, setContentPanelOpen] = useState(false);
@@ -185,10 +219,14 @@ export default function App() {
   const [stateBudgetOpen, setStateBudgetOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
   const [globalMarketOpen, setGlobalMarketOpen] = useState(false);
+  const [marketShellOverview, setMarketShellOverview] = useState<MarketOverviewResponse | null>(null);
+  const [marketShellCountries, setMarketShellCountries] = useState<Country[]>([]);
+  const [marketShellLoading, setMarketShellLoading] = useState(false);
   const [politicsOpen, setPoliticsOpen] = useState(false);
   const [technologyOpen, setTechnologyOpen] = useState(false);
   const [modifiersOpen, setModifiersOpen] = useState(false);
   const [decisionsOpen, setDecisionsOpen] = useState(false);
+  const [journalOpen, setJournalOpen] = useState(false);
   const [focusedDiplomacyProposalId, setFocusedDiplomacyProposalId] = useState<string | null>(null);
   const [diplomacyStoryOpen, setDiplomacyStoryOpen] = useState(false);
   const [diplomacyRevisionDraft, setDiplomacyRevisionDraft] = useState<DiplomacyProposal | null>(null);
@@ -207,16 +245,6 @@ export default function App() {
     | { type: "province"; provinceId: string; provinceName: string; createIfMissing: boolean }
     | null
   >(null);
-  const [resourceIcons, setResourceIcons] = useState<ResourceIconsMap>({
-    population: null,
-    culture: null,
-    science: null,
-    religion: null,
-    colonization: null,
-    construction: null,
-    ducats: null,
-    gold: null,
-  });
   const [uiBackgroundImageUrl, setUiBackgroundImageUrl] = useState<string | null>(null);
   const [resourceGrowthByTurn, setResourceGrowthByTurn] = useState<{
     culture: number;
@@ -252,14 +280,14 @@ export default function App() {
   const [sortNotifications, setSortNotifications] = useState(true);
   const [provinceIndexLoaded, setProvinceIndexLoaded] = useState(false);
   const [publicUiLoaded, setPublicUiLoaded] = useState(false);
+  const [buildingEntries, setBuildingEntries] = useState<ContentEntry[]>([]);
   const [technologyEntries, setTechnologyEntries] = useState<ContentEntry[]>([]);
+  const [journalEntries, setJournalEntries] = useState<ContentEntry[]>([]);
   const [turnTimerUi, setTurnTimerUi] = useState<{ enabled: boolean; secondsPerTurn: number; startedAtMs: number | null }>({
     enabled: false,
     secondsPerTurn: 300,
     startedAtMs: null,
   });
-  const [turnReadinessPreview, setTurnReadinessPreview] = useState<TurnReadinessPreview | null>(null);
-
   const auth = useGameStore((s) => s.auth);
   const wsResumeFromWorldStateVersion = useGameStore((s) => (s.worldBase ? s.worldStateVersion : null));
   const turnId = useGameStore((s) => s.turnId);
@@ -291,7 +319,6 @@ export default function App() {
       setUiNotifications([]);
       setUiNotificationHistory([]);
       setViewedUiNotificationIds(new Set());
-      setTurnReadinessPreview(null);
       return;
     }
     const belongsToCurrentCountry = (item: InAppUiNotification) =>
@@ -302,33 +329,6 @@ export default function App() {
       next.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       return next.slice(0, 200);
     });
-  }, [auth?.countryId]);
-
-  useEffect(() => {
-    if (!auth?.countryId) {
-      return;
-    }
-
-    let cancelled = false;
-    const loadTurnReadiness = async () => {
-      try {
-        const data = await fetchTurnStatus();
-        if (!cancelled) {
-          setTurnReadinessPreview(data);
-        }
-      } catch {
-        if (!cancelled) {
-          setTurnReadinessPreview(null);
-        }
-      }
-    };
-
-    loadTurnReadiness();
-    const timer = window.setInterval(loadTurnReadiness, TURN_READINESS_POLL_MS);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
   }, [auth?.countryId]);
 
   useEffect(() => {
@@ -655,7 +655,6 @@ export default function App() {
     fetchPublicGameUiSettings()
       .then((ui) => {
         if (!cancelled) {
-          setResourceIcons(ui.resourceIcons);
           setResourceGrowthByTurn({
             culture: ui.economy.baseCulturePerTurn ?? 1,
             science: ui.economy.baseSciencePerTurn ?? 1,
@@ -696,12 +695,40 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
+    fetchContentEntries("buildings")
+      .then((items) => {
+        if (!cancelled) setBuildingEntries(items);
+      })
+      .catch(() => {
+        if (!cancelled) setBuildingEntries([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
     fetchContentEntries("technologies")
       .then((items) => {
         if (!cancelled) setTechnologyEntries(items);
       })
       .catch(() => {
         if (!cancelled) setTechnologyEntries([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchContentEntries("journalEntries")
+      .then((items) => {
+        if (!cancelled) setJournalEntries(items);
+      })
+      .catch(() => {
+        if (!cancelled) setJournalEntries([]);
       });
     return () => {
       cancelled = true;
@@ -734,6 +761,33 @@ export default function App() {
     };
   }, [auth?.countryId, country?.name]);
 
+  useEffect(() => {
+    if (!auth?.token || !strategyWorkspaceOpen || activeStrategyMode !== "market") return;
+
+    let cancelled = false;
+    setMarketShellLoading(true);
+    Promise.all([fetchMarketOverview(auth.token), fetchCountries()])
+      .then(([overview, countries]) => {
+        if (cancelled) return;
+        setMarketShellOverview(overview);
+        setMarketShellCountries(countries);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMarketShellOverview(null);
+        setMarketShellCountries([]);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setMarketShellLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeStrategyMode, auth?.token, strategyWorkspaceOpen, turnId]);
+
   const onAuthSuccess = (payload: AuthSuccess) => {
     setEntryLoadingGate("loading");
     setAuth({ token: payload.token, playerId: payload.playerId, countryId: payload.countryId, isAdmin: payload.isAdmin });
@@ -749,6 +803,10 @@ export default function App() {
       return { culture: 0, science: 0, religion: 0, colonization: 0, construction: 0, ducats: 0, gold: 0 };
     }
     return worldBase.resourcesByCountry[auth.countryId] ?? { culture: 0, science: 0, religion: 0, colonization: 0, construction: 0, ducats: 0, gold: 0 };
+  }, [auth, worldBase]);
+  const activeJournalCount = useMemo(() => {
+    if (!worldBase || !auth) return 0;
+    return worldBase.journalEntriesByCountryId[auth.countryId]?.active.length ?? 0;
   }, [auth, worldBase]);
   const currentCountryDetails = useMemo(() => {
     if (!auth || !worldBase) {
@@ -953,7 +1011,8 @@ export default function App() {
   ]);
   const constructionQueuePreview = useMemo(() => {
     if (!auth || !worldBase) return [];
-    const rows: Array<{ regionId: string; buildingId: string; progressPct: number; remainingConstruction: number; selected: boolean }> = [];
+    const buildingById = new Map(buildingEntries.map((building) => [building.id, building] as const));
+    const rows: Array<{ regionId: string; buildingId: string; buildingName: string; progressPct: number; remainingConstruction: number; selected: boolean }> = [];
     for (const [regionId, queue] of Object.entries(worldBase.regionConstructionQueueByRegion ?? {})) {
       const controllingCountryId = worldBase.regionController?.[regionId] ?? worldBase.regionOwner?.[regionId] ?? "";
       if (controllingCountryId !== auth.countryId) continue;
@@ -966,6 +1025,7 @@ export default function App() {
         rows.push({
           regionId,
           buildingId: project.buildingId,
+          buildingName: getBuildingDisplayName(buildingById.get(project.buildingId), project.buildingId, t),
           progressPct: Math.max(0, Math.min(100, (progress / cost) * 100)),
           remainingConstruction,
           selected: selectedProvinceId === regionId,
@@ -974,7 +1034,7 @@ export default function App() {
     }
     rows.sort((a, b) => Number(b.selected) - Number(a.selected) || b.remainingConstruction - a.remainingConstruction || a.regionId.localeCompare(b.regionId));
     return rows.slice(0, 5).map(({ selected: _selected, ...row }) => row);
-  }, [auth, selectedProvinceId, worldBase]);
+  }, [auth, buildingEntries, selectedProvinceId, t, worldBase]);
   const myTechnologyProjection = useMemo(() => {
     if (!auth || !worldBase) {
       return { activeCount: 0, predictedPointsSpend: 0 };
@@ -1253,6 +1313,30 @@ export default function App() {
       resourceGrowthByTurn.gold,
     ],
   );
+  const marketTradeRows = useMemo<MarketTradeOverviewRow[]>(() => {
+    const overview = marketShellOverview;
+    if (!overview) return [];
+    const countryById = new Map(marketShellCountries.map((item) => [item.id, item] as const));
+    return overview.goods
+      .map((good) => {
+        const trade = overview.tradeByGood?.[good.goodId];
+        const importsByCountry = trade?.countryImportsByCountry ?? {};
+        const exportsByCountry = trade?.countryExportsByCountry ?? {};
+        const importsTotal = sumPositiveRecord(importsByCountry);
+        const exportsTotal = sumPositiveRecord(exportsByCountry);
+        return {
+          goodId: good.goodId,
+          goodName: good.goodName,
+          price: Math.max(0, Number(good.countryPrice) || 0),
+          priceDeltaPct: calculateLastRelativeDeltaPct(good.countryPriceHistory),
+          importsTotal,
+          exportsTotal,
+          imports: buildMarketShellPartners(importsByCountry, countryById),
+          exports: buildMarketShellPartners(exportsByCountry, countryById),
+        };
+      })
+      .sort((a, b) => b.importsTotal + b.exportsTotal - (a.importsTotal + a.exportsTotal) || a.goodName.localeCompare(b.goodName, "ru"));
+  }, [marketShellCountries, marketShellOverview]);
   useEffect(() => {
     setCustomizationDucatSpend((prev) => (prev.turnId === turnId ? prev : { turnId, amount: 0 }));
     setProvinceRenameDucatSpend((prev) => (prev.turnId === turnId ? prev : { turnId, amount: 0 }));
@@ -1560,8 +1644,9 @@ export default function App() {
             setUiNotificationHistory((prev) => prev.filter(removeStaleEventNotification));
             setFocusedEventPendingId((current) => (current === action.pendingId ? null : current));
             if (autoResolved) {
+              const optionLabel = autoResolved.optionLabelKey ? t(autoResolved.optionLabelKey) : autoResolved.optionLabel ?? autoResolved.optionId;
               toast.info(t("shell.eventAutoResolved"), {
-                description: t("shell.eventAutoResolvedDescription", { option: autoResolved.optionLabel }),
+                description: t("shell.eventAutoResolvedDescription", { option: optionLabel }),
               });
             } else {
               toast.info(t("shell.eventAlreadyResolved"));
@@ -1653,14 +1738,13 @@ export default function App() {
         onQueueBuildOrder={openProvinceBuildingsForProvince}
         onQueueColonizeOrder={queueColonizeOrder}
         onQueueArmyMoveOrder={queueArmyMoveOrder}
-        colonizationIconUrl={resourceIcons.colonization}
-        ducatsIconUrl={resourceIcons.ducats}
+        colonizationIconUrl={BASE_RESOURCE_ICON_URLS.colonization}
+        ducatsIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
         maxActiveColonizations={maxActiveColonizations}
         colonizationCostPer1000Km2={colonizationCostPer1000Km2}
         provinceRenameDucatsCost={provinceRenameDucatsCost}
         showMapControls={showMapControls}
         showAntarctica={showAntarctica}
-        strategyMapModeId={strategyMapModeId}
         onOpenAdminProvinceEditor={(provinceId) => {
           setAdminInitialProvinceId(provinceId);
           setAdminOpen(true);
@@ -1819,11 +1903,12 @@ export default function App() {
             constructionQueuePreview={constructionQueuePreview}
             populationPreview={populationPreview}
             marketPreview={marketPreview}
+            marketTradeRows={marketTradeRows}
+            marketTradeLoading={marketShellLoading}
             diplomacyPreview={diplomacyPreview}
             armyPreview={armyPreview}
             governancePreview={governancePreview}
             storyPreview={storyPreview}
-            turnReadinessPreview={turnReadinessPreview}
             onOpenTurnStatus={() => setTurnStatusOpen(true)}
             onNextTurn={requestNextTurn}
             onLogout={logoutToAuth}
@@ -1838,7 +1923,6 @@ export default function App() {
               setCivilopediaIntent(null);
               setCivilopediaOpen(true);
             }}
-            resourceIconUrls={resourceIcons}
             resourceLedgerByTurn={worldBase?.resourceLedgerByTurn}
             resourceGrowthByTurn={resourceGrowthByTurn}
             resourceExpenseByTurn={currentTurnExpenses}
@@ -1846,6 +1930,7 @@ export default function App() {
             countryDetails={currentCountryDetails}
             notificationCount={uiNotificationHistory.length}
             pendingDecisionCount={pendingDecisionNotificationCount}
+            activeJournalCount={activeJournalCount}
             onOpenNotifications={() => setNotificationHistoryOpen(true)}
             onOpenBudget={() => setStateBudgetOpen(true)}
             onOpenBuildings={() => {
@@ -1861,6 +1946,7 @@ export default function App() {
             onOpenTechnology={() => setTechnologyOpen(true)}
             onOpenModifiers={() => setModifiersOpen(true)}
             onOpenDecisions={() => setDecisionsOpen(true)}
+            onOpenJournal={() => setJournalOpen(true)}
             onOpenEvents={() => {
               setFocusedEventPendingId(null);
               setEventsOpen(true);
@@ -1889,7 +1975,7 @@ export default function App() {
           projectedIncomeDucats={Math.max(0, Math.floor(resourceGrowthByTurn.ducats ?? 0))}
           ducatExpenses={ducatExpenseBreakdown}
           subsidyItems={subsidyBudgetBreakdown.items}
-          ducatIconUrl={resourceIcons.ducats}
+          ducatIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
         />
       )}
 
@@ -1984,6 +2070,14 @@ export default function App() {
               setFocusedEventPendingId((current) => (current === pendingId ? null : current));
             }}
             onClose={() => setEventsOpen(false)}
+          />
+          <CountryJournalModal
+            open={journalOpen}
+            countryId={auth.countryId}
+            journalState={worldBase?.journalEntriesByCountryId[auth.countryId] ?? null}
+            journalEntries={journalEntries}
+            turnId={turnId}
+            onClose={() => setJournalOpen(false)}
           />
         </>
       )}
@@ -2080,7 +2174,6 @@ export default function App() {
           open={gameSettingsOpen}
           token={auth.token}
           onClose={() => setGameSettingsOpen(false)}
-          onResourceIconsUpdated={setResourceIcons}
           onSettingsUpdated={(updated) => {
             setMaxActiveColonizations(updated.colonization.maxActiveColonizations);
             setColonizationCostPer1000Km2({
@@ -2116,7 +2209,7 @@ export default function App() {
           token={auth.token}
           country={country}
           currentDucats={currentResources.ducats}
-          ducatsIconUrl={resourceIcons.ducats}
+          ducatsIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
           onClose={() => setCountryCustomizationOpen(false)}
           onSaved={(updated) => {
             setCountry((prev) => ({

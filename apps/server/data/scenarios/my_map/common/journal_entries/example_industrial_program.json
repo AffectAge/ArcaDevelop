@@ -1,0 +1,59 @@
+{
+  "id": "journal:example_industrial_program",
+  "nameKey": "journal.example_industrial_program.name",
+  "journalEntry": {
+    "namespace": "balanced_economy",
+    "category": "economy",
+    "titleKey": "journal.example_industrial_program.title",
+    "descriptionKey": "journal.example_industrial_program.description",
+    "shortDescriptionKey": "journal.example_industrial_program.short",
+    "priority": "high",
+    "visibility": "private",
+    "completeTrigger": {
+      "type": "country_resource_above",
+      "resource": "construction",
+      "value": 150
+    },
+    "failTrigger": {
+      "type": "treasury_below",
+      "value": 100
+    },
+    "progress": {
+      "type": "trigger",
+      "target": 1,
+      "labelKey": "journal.example_industrial_program.progress"
+    },
+    "timeoutTurns": 18,
+    "events": {
+      "onComplete": [
+        "event:example_industrial_program_success"
+      ],
+      "onFail": [
+        "event:example_industrial_program_failure"
+      ]
+    },
+    "decisions": {
+      "availableDecisionIds": [
+        "decision:example_launch_industrial_program"
+      ]
+    },
+    "onCompleteEffects": [
+      {
+        "type": "add_resource",
+        "resource": "science",
+        "amount": 10,
+        "labelKey": "resourceLedger.source.generic"
+      }
+    ],
+    "onFailEffects": [
+      {
+        "type": "add_resource",
+        "resource": "culture",
+        "amount": 3,
+        "labelKey": "resourceLedger.source.generic"
+      }
+    ],
+    "repeatable": false,
+    "cooldownTurns": 0
+  }
+}

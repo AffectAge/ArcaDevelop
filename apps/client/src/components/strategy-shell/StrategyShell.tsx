@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import {
+  ArrowDownUp,
   Bell,
   BookOpen,
   Building2,
@@ -25,8 +26,10 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { ResourceFlow } from "@arcanorum/shared";
+import { BASE_RESOURCE_ICON_URLS } from "../../assets/baseResourceIcons";
 import type { UiTextKey } from "../../i18n/uiText";
 import { useUiText } from "../../i18n/useUiText";
+import { Tooltip, type TooltipStructuredContent } from "../Tooltip";
 
 export type StrategyMode = "overview" | "construction" | "colonization" | "population" | "market" | "diplomacy" | "army" | "governance";
 
@@ -59,17 +62,25 @@ type ActionItem = {
   tone?: "primary" | "danger";
 };
 
-type TurnReadinessCountry = {
+type WorkspaceTabKey = "actions" | "summary" | "records" | "trade";
+
+type MarketTradePartner = {
   id: string;
   name: string;
-  color?: string;
   flagUrl?: string | null;
-  status: "ready" | "waiting" | "blocked" | "ignored";
-  online: boolean;
-  resources: Resources;
+  value: number;
 };
 
-type WorkspaceTabKey = "actions" | "summary" | "readiness" | "records" | "admin";
+export type MarketTradeOverviewRow = {
+  goodId: string;
+  goodName: string;
+  price: number;
+  priceDeltaPct: number;
+  importsTotal: number;
+  exportsTotal: number;
+  imports: MarketTradePartner[];
+  exports: MarketTradePartner[];
+};
 
 type Props = {
   activeMode: StrategyMode;
@@ -83,7 +94,6 @@ type Props = {
   resources: Resources;
   countryId?: string;
   resourceLedgerByTurn?: Record<number, ResourceFlow[]>;
-  resourceIconUrls?: Partial<Record<ResourceKey | "population", string | null>>;
   resourceGrowthByTurn?: Partial<Record<ResourceKey, number>>;
   resourceExpenseByTurn?: Partial<Record<ResourceKey, number>>;
   populationTotal: number;
@@ -93,11 +103,14 @@ type Props = {
   constructionQueuePreview?: Array<{
     regionId: string;
     buildingId: string;
+    buildingName: string;
     progressPct: number;
     remainingConstruction: number;
   }>;
   populationPreview?: GenericPreviewItem[];
   marketPreview?: GenericPreviewItem[];
+  marketTradeRows?: MarketTradeOverviewRow[];
+  marketTradeLoading?: boolean;
   diplomacyPreview?: GenericPreviewItem[];
   armyPreview?: GenericPreviewItem[];
   governancePreview?: GenericPreviewItem[];
@@ -110,15 +123,10 @@ type Props = {
     categoryKey: UiTextKey;
   }>;
   colonizationLimit?: { active: number; max: number } | null;
-  turnReadinessPreview?: {
-    turnId: number;
-    readyCount: number;
-    requiredCount: number;
-    countries: TurnReadinessCountry[];
-  } | null;
   countryDetails?: { provinceCount: number; totalAreaKm2: number } | null;
   notificationCount: number;
   pendingDecisionCount: number;
+  activeJournalCount: number;
   isAdmin?: boolean;
   onOpenTurnStatus: () => void;
   onNextTurn: () => void;
@@ -142,6 +150,7 @@ type Props = {
   onOpenTechnology: () => void;
   onOpenModifiers: () => void;
   onOpenDecisions: () => void;
+  onOpenJournal: () => void;
   onOpenEvents: () => void;
 };
 
@@ -166,12 +175,11 @@ const resourceDescriptors: Array<{ key: ResourceKey; labelKey: UiTextKey; icon: 
   { key: "gold", labelKey: "shell.resource.gold", icon: CircleDollarSign },
 ];
 
-const workspaceTabDescriptors: Array<{ key: WorkspaceTabKey; labelKey: UiTextKey; icon: LucideIcon; adminOnly?: boolean }> = [
+const workspaceTabDescriptors: Array<{ key: WorkspaceTabKey; labelKey: UiTextKey; icon: LucideIcon }> = [
   { key: "actions", labelKey: "shell.workspaceTab.actions", icon: Sparkles },
   { key: "summary", labelKey: "shell.workspaceTab.summary", icon: Users },
-  { key: "readiness", labelKey: "shell.workspaceTab.readiness", icon: ScrollText },
   { key: "records", labelKey: "shell.workspaceTab.records", icon: BookOpen },
-  { key: "admin", labelKey: "shell.workspaceTab.admin", icon: SlidersHorizontal, adminOnly: true },
+  { key: "trade", labelKey: "shell.workspaceTab.trade", icon: ArrowDownUp },
 ];
 
 type ResourceLedgerChipSummary = {
@@ -182,28 +190,6 @@ type ResourceLedgerChipSummary = {
   expenseCategories: Array<{ categoryId: string; amount: number }>;
   entries: ResourceFlow[];
 };
-
-function getModeMapLensKey(mode: StrategyMode): UiTextKey {
-  switch (mode) {
-    case "construction":
-      return "shell.mapLens.construction";
-    case "colonization":
-      return "shell.mapLens.colonization";
-    case "population":
-      return "shell.mapLens.population";
-    case "market":
-      return "shell.mapLens.market";
-    case "diplomacy":
-      return "shell.mapLens.diplomacy";
-    case "army":
-      return "shell.mapLens.army";
-    case "governance":
-      return "shell.mapLens.governance";
-    case "overview":
-    default:
-      return "shell.mapLens.overview";
-  }
-}
 
 function getStoryPriorityKey(priority: "low" | "medium" | "high"): UiTextKey {
   switch (priority) {
@@ -217,37 +203,24 @@ function getStoryPriorityKey(priority: "low" | "medium" | "high"): UiTextKey {
   }
 }
 
-function getReadinessStatusKey(status: TurnReadinessCountry["status"]): UiTextKey {
-  switch (status) {
-    case "ready":
-      return "shell.readiness.status.ready";
-    case "blocked":
-      return "shell.readiness.status.blocked";
-    case "ignored":
-      return "shell.readiness.status.ignored";
-    case "waiting":
-    default:
-      return "shell.readiness.status.waiting";
-  }
-}
-
-function getReadinessStatusRank(status: TurnReadinessCountry["status"]): number {
-  if (status === "waiting") return 0;
-  if (status === "blocked") return 1;
-  if (status === "ready") return 2;
-  return 3;
-}
-
 export function StrategyShell(props: Props) {
   const { t } = useUiText();
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTabKey>("actions");
   const activeMode = modeDescriptors.find((mode) => mode.key === props.activeMode) ?? modeDescriptors[0];
   const activeActions = getModeActions(props.activeMode, props);
-  const availableWorkspaceTabs = workspaceTabDescriptors.filter((tab) => !tab.adminOnly || props.isAdmin);
+  const availableWorkspaceTabs =
+    props.activeMode === "market" ? workspaceTabDescriptors : workspaceTabDescriptors.filter((tab) => tab.key !== "trade");
+  const activeWorkspaceTab = availableWorkspaceTabs.find((tab) => tab.key === workspaceTab) ?? availableWorkspaceTabs[0] ?? workspaceTabDescriptors[0];
   const resourceLedgerSummaries = buildResourceLedgerSummaries({
     countryId: props.countryId,
     ledgerByTurn: props.resourceLedgerByTurn,
   });
+
+  useEffect(() => {
+    if (!availableWorkspaceTabs.some((tab) => tab.key === workspaceTab)) {
+      setWorkspaceTab("actions");
+    }
+  }, [availableWorkspaceTabs, workspaceTab]);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[111] text-[var(--arc-color-atlas-ink)]">
@@ -277,7 +250,7 @@ export function StrategyShell(props: Props) {
               growth={props.resourceGrowthByTurn?.[resource.key] ?? 0}
               expense={props.resourceExpenseByTurn?.[resource.key] ?? 0}
               icon={resource.icon}
-              iconUrl={props.resourceIconUrls?.[resource.key] ?? null}
+              iconUrl={BASE_RESOURCE_ICON_URLS[resource.key]}
               ledgerSummary={resourceLedgerSummaries[resource.key]}
             />
           ))}
@@ -286,7 +259,7 @@ export function StrategyShell(props: Props) {
         <div className="flex items-center gap-2">
           <TopActionButton
             label={t("shell.notifications")}
-            badge={props.pendingDecisionCount || props.notificationCount || undefined}
+            badge={props.pendingDecisionCount || props.activeJournalCount || props.notificationCount || undefined}
             icon={Bell}
             onClick={props.onOpenNotifications}
           />
@@ -296,14 +269,25 @@ export function StrategyShell(props: Props) {
           {props.isAdmin && props.onOpenAdminPanel ? (
             <TopActionButton label={t("shell.admin")} icon={SlidersHorizontal} onClick={props.onOpenAdminPanel} />
           ) : null}
+          {props.isAdmin && props.onOpenContentPanel ? (
+            <TopActionButton label={t("shell.contentPanel")} icon={BookOpen} onClick={props.onOpenContentPanel} />
+          ) : null}
+          {props.isAdmin && props.onOpenGameSettings ? (
+            <TopActionButton label={t("shell.gameSettings")} icon={Network} onClick={props.onOpenGameSettings} />
+          ) : null}
+          {props.isAdmin && props.onAdminForceResolve ? (
+            <TopActionButton label={t("shell.forceResolve")} icon={SkipForward} onClick={props.onAdminForceResolve} />
+          ) : null}
           {props.onOpenClientSettings ? (
             <TopActionButton label={t("shell.clientSettings")} icon={Menu} onClick={props.onOpenClientSettings} />
           ) : null}
           <TopActionButton label={t("shell.turnStatus")} icon={ScrollText} onClick={props.onOpenTurnStatus} />
-          <button type="button" className="arc-strategy-primary" onClick={props.onNextTurn} aria-label={t("shell.endTurn")} title={t("shell.endTurn")}>
-            <SkipForward size={15} />
-            <span>{t("shell.endTurn")}</span>
-          </button>
+          <Tooltip content={t("shell.endTurn")} placement="bottom">
+            <button type="button" className="arc-strategy-primary" onClick={props.onNextTurn} aria-label={t("shell.endTurn")}>
+              <SkipForward size={15} />
+              <span>{t("shell.endTurn")}</span>
+            </button>
+          </Tooltip>
           <TopActionButton label={t("shell.logout")} icon={LogOut} onClick={props.onLogout} tone="danger" />
         </div>
       </div>
@@ -313,154 +297,122 @@ export function StrategyShell(props: Props) {
           const Icon = mode.icon;
           const active = mode.key === props.activeMode;
           return (
-            <button
-              key={mode.key}
-              type="button"
-              className={`arc-strategy-mode-button ${active ? "arc-strategy-mode-button--active" : ""}`}
-              onClick={() => props.onModeChange(mode.key)}
-              aria-pressed={active}
-              aria-label={t(mode.labelKey)}
-              title={t(mode.labelKey)}
-            >
-              <Icon size={18} />
-              <span>{t(mode.labelKey)}</span>
-            </button>
+            <Tooltip key={mode.key} content={t(mode.descriptionKey)} placement="right">
+              <button
+                type="button"
+                className={`arc-strategy-mode-button ${active ? "arc-strategy-mode-button--active" : ""}`}
+                onClick={() => props.onModeChange(mode.key)}
+                aria-pressed={active}
+                aria-label={t(mode.labelKey)}
+              >
+                <Icon size={18} />
+                <span>{t(mode.labelKey)}</span>
+              </button>
+            </Tooltip>
           );
         })}
       </nav>
 
       <AnimatePresence initial={false}>
         {props.workspaceOpen ? (
-          <motion.aside
+          <motion.div
             key={props.activeMode}
             initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 28 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="arc-strategy-workspace pointer-events-auto"
+            className="arc-strategy-workspace-frame pointer-events-auto"
           >
-            <div className="arc-strategy-workspace-header">
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--arc-color-atlas-muted)]">
-                  {t("shell.workspace")}
-                </div>
-                <div className="mt-1 flex items-center gap-2 text-xl font-bold">
-                  <activeMode.icon size={20} />
-                  <span>{t(activeMode.labelKey)}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button type="button" className="arc-strategy-icon-button arc-strategy-icon-button--danger" onClick={props.onCloseWorkspace} aria-label={t("shell.closeWorkspace")} title={t("shell.closeWorkspace")}>
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-
             <div className="arc-strategy-workspace-tabs" role="tablist" aria-label={t("shell.workspaceTabs")}>
               {availableWorkspaceTabs.map((tab) => {
                 const Icon = tab.icon;
                 const active = tab.key === workspaceTab;
                 return (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    aria-label={t(tab.labelKey)}
-                    title={t(tab.labelKey)}
-                    className={`arc-strategy-workspace-tab ${active ? "arc-strategy-workspace-tab--active" : ""}`}
-                    onClick={() => setWorkspaceTab(tab.key)}
-                  >
-                    <Icon size={17} />
-                  </button>
+                  <Tooltip key={tab.key} content={t(tab.labelKey)} placement="left">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      aria-label={t(tab.labelKey)}
+                      className={`arc-strategy-workspace-tab ${active ? "arc-strategy-workspace-tab--active" : ""}`}
+                      onClick={() => setWorkspaceTab(tab.key)}
+                    >
+                      <Icon size={17} />
+                    </button>
+                  </Tooltip>
                 );
               })}
             </div>
 
-            <div className="arc-strategy-workspace-body">
-              {workspaceTab === "actions" ? (
-                <div className="arc-strategy-tab-panel">
-                  <p className="text-sm leading-5 text-[var(--arc-color-atlas-muted)]">{t(activeMode.descriptionKey)}</p>
-                  <div className="arc-strategy-lens-note">
-                    <span>{t("shell.mapLens.title")}</span>
-                    <strong>{t(getModeMapLensKey(props.activeMode))}</strong>
+            <aside className="arc-strategy-workspace">
+              <div className="arc-strategy-workspace-header">
+                <div>
+                  <div className="flex items-center gap-2 text-xl font-bold">
+                    <activeMode.icon size={20} />
+                    <span>{t(activeMode.labelKey)}</span>
                   </div>
-                  <div className="mt-4">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--arc-color-atlas-muted)]">
-                      {t("shell.availableActions")}
-                    </div>
-                    <div className="grid gap-2">
-                      {activeActions.map((action) => (
-                        <WorkspaceAction key={action.key} action={action} />
-                      ))}
-                    </div>
+                  <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--arc-color-atlas-muted)]">
+                    {t(activeWorkspaceTab.labelKey)}
                   </div>
                 </div>
-              ) : null}
-
-              {workspaceTab === "summary" ? (
-                <div className="arc-strategy-tab-panel">
-                  <div className="arc-strategy-metric-grid grid grid-cols-3 gap-2">
-                    <AtlasMetric label={t("shell.metric.population")} value={formatCompact(props.populationTotal)} delta={props.populationNetGrowth} />
-                    <AtlasMetric
-                      label={t("shell.metric.regions")}
-                      value={formatCompact(props.countryDetails?.provinceCount ?? 0)}
-                      note={props.countryDetails ? t("shell.metric.area", { area: formatCompact(props.countryDetails.totalAreaKm2) }) : undefined}
-                    />
-                    <AtlasMetric
-                      label={t("shell.metric.colonies")}
-                      value={props.colonizationLimit ? `${props.colonizationLimit.active}/${props.colonizationLimit.max}` : "0/0"}
-                    />
-                  </div>
-                  <ModeDashboard mode={props.activeMode} props={props} />
+                <div className="flex items-center gap-2">
+                  <Tooltip content={t("shell.closeWorkspace")} placement="left">
+                    <button type="button" className="arc-strategy-icon-button arc-strategy-icon-button--danger" onClick={props.onCloseWorkspace} aria-label={t("shell.closeWorkspace")}>
+                      <X size={18} />
+                    </button>
+                  </Tooltip>
                 </div>
-              ) : null}
+              </div>
 
-              {workspaceTab === "readiness" ? (
-                <div className="arc-strategy-tab-panel">
-                  {props.turnReadinessPreview ? (
-                    <TurnReadinessBoard
-                      preview={props.turnReadinessPreview}
-                      resourceIconUrls={props.resourceIconUrls}
-                      onOpen={props.onOpenTurnStatus}
-                    />
-                  ) : (
-                    <EmptyPreview text={t("shell.readiness.empty")} />
-                  )}
-                </div>
-              ) : null}
-
-              {workspaceTab === "records" ? (
-                <div className="arc-strategy-tab-panel">
-                  <ModePreview mode={props.activeMode} props={props} />
-                </div>
-              ) : null}
-
-              {workspaceTab === "admin" && props.isAdmin ? (
-                <div className="arc-strategy-tab-panel">
-                  <div className="arc-strategy-admin-panel">
-                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--arc-color-atlas-muted)]">
-                      {t("shell.adminConsole")}
-                    </div>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      {props.onOpenAdminPanel ? (
-                        <SmallAction label={t("shell.adminPanel")} icon={<SlidersHorizontal size={14} />} onClick={props.onOpenAdminPanel} />
-                      ) : null}
-                      {props.onOpenContentPanel ? (
-                        <SmallAction label={t("shell.contentPanel")} icon={<BookOpen size={14} />} onClick={props.onOpenContentPanel} />
-                      ) : null}
-                      {props.onOpenGameSettings ? (
-                        <SmallAction label={t("shell.gameSettings")} icon={<Network size={14} />} onClick={props.onOpenGameSettings} />
-                      ) : null}
-                      {props.onAdminForceResolve ? (
-                        <SmallAction label={t("shell.forceResolve")} icon={<SkipForward size={14} />} onClick={props.onAdminForceResolve} />
-                      ) : null}
+              <div className="arc-strategy-workspace-body">
+                {workspaceTab === "actions" ? (
+                  <div className="arc-strategy-tab-panel">
+                    <p className="text-sm leading-5 text-[var(--arc-color-atlas-muted)]">{t(activeMode.descriptionKey)}</p>
+                    <div className="mt-4">
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--arc-color-atlas-muted)]">
+                        {t("shell.availableActions")}
+                      </div>
+                      <div className="grid gap-2">
+                        {activeActions.map((action) => (
+                          <WorkspaceAction key={action.key} action={action} />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : null}
-            </div>
-          </motion.aside>
+                ) : null}
+
+                {workspaceTab === "summary" ? (
+                  <div className="arc-strategy-tab-panel">
+                    <div className="arc-strategy-metric-grid grid grid-cols-3 gap-2">
+                      <AtlasMetric label={t("shell.metric.population")} value={formatCompact(props.populationTotal)} delta={props.populationNetGrowth} />
+                      <AtlasMetric
+                        label={t("shell.metric.regions")}
+                        value={formatCompact(props.countryDetails?.provinceCount ?? 0)}
+                        note={props.countryDetails ? t("shell.metric.area", { area: formatCompact(props.countryDetails.totalAreaKm2) }) : undefined}
+                      />
+                      <AtlasMetric
+                        label={t("shell.metric.colonies")}
+                        value={props.colonizationLimit ? `${props.colonizationLimit.active}/${props.colonizationLimit.max}` : "0/0"}
+                      />
+                    </div>
+                    <ModeDashboard mode={props.activeMode} props={props} />
+                  </div>
+                ) : null}
+
+                {workspaceTab === "records" ? (
+                  <div className="arc-strategy-tab-panel">
+                    <ModePreview mode={props.activeMode} props={props} />
+                  </div>
+                ) : null}
+
+                {workspaceTab === "trade" && props.activeMode === "market" ? (
+                  <div className="arc-strategy-tab-panel">
+                    <MarketTradeOverview rows={props.marketTradeRows ?? []} loading={Boolean(props.marketTradeLoading)} />
+                  </div>
+                ) : null}
+              </div>
+            </aside>
+          </motion.div>
         ) : null}
       </AnimatePresence>
     </div>
@@ -643,7 +595,7 @@ function ConstructionPreviewRow({ item }: { item: NonNullable<Props["constructio
   return (
     <div className="arc-strategy-construction-row">
       <div className="min-w-0">
-        <div className="truncate text-sm font-bold">{item.buildingId}</div>
+        <div className="truncate text-sm font-bold">{item.buildingName}</div>
         <div className="mt-0.5 truncate text-xs text-[var(--arc-color-atlas-muted)]">{item.regionId}</div>
       </div>
       <div className="w-28">
@@ -661,6 +613,116 @@ function ConstructionPreviewRow({ item }: { item: NonNullable<Props["constructio
 
 function EmptyPreview({ text }: { text: string }) {
   return <div className="arc-strategy-empty-preview">{text}</div>;
+}
+
+function MarketTradeOverview({ rows, loading }: { rows: MarketTradeOverviewRow[]; loading: boolean }) {
+  const { t } = useUiText();
+  if (loading) {
+    return (
+      <section className="arc-strategy-market-trade">
+        <div className="arc-strategy-preview-header">
+          <span>{t("shell.marketTrade.title")}</span>
+        </div>
+        <div className="arc-strategy-empty-preview mt-2">{t("shell.marketTrade.loading")}</div>
+      </section>
+    );
+  }
+  if (rows.length === 0) {
+    return (
+      <section className="arc-strategy-market-trade">
+        <div className="arc-strategy-preview-header">
+          <span>{t("shell.marketTrade.title")}</span>
+        </div>
+        <div className="arc-strategy-empty-preview mt-2">{t("shell.marketTrade.empty")}</div>
+      </section>
+    );
+  }
+  return (
+    <section className="arc-strategy-market-trade" aria-label={t("shell.marketTrade.title")}>
+      <div className="arc-strategy-preview-header">
+        <span>{t("shell.marketTrade.title")}</span>
+      </div>
+      <div className="arc-strategy-market-trade-grid mt-2">
+        <div className="arc-strategy-market-trade-header">
+          <span>{t("shell.marketTrade.good")}</span>
+          <span>{t("shell.marketTrade.price")}</span>
+          <span>{t("shell.marketTrade.exports")}</span>
+          <span>{t("shell.marketTrade.imports")}</span>
+        </div>
+        <div className="arc-scrollbar arc-strategy-market-trade-body">
+          {rows.map((row) => (
+            <div key={row.goodId} className="arc-strategy-market-trade-row">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-bold">{row.goodName}</div>
+                <Tooltip content={t("shell.marketTrade.priceDeltaTooltip")} placement="top">
+                  <div
+                    className={row.priceDeltaPct >= 0 ? "arc-strategy-market-trade-delta arc-strategy-market-trade-delta--up" : "arc-strategy-market-trade-delta arc-strategy-market-trade-delta--down"}
+                  >
+                    {formatSignedPercent(row.priceDeltaPct)}
+                  </div>
+                </Tooltip>
+              </div>
+              <Tooltip content={t("shell.marketTrade.priceTooltip")} placement="top">
+                <div className="arc-strategy-market-trade-price tabular-nums">
+                  {formatCompact(row.price)}
+                </div>
+              </Tooltip>
+              <TradePartnerStack
+                total={row.exportsTotal}
+                partners={row.exports}
+                emptyLabel={t("shell.marketTrade.noPartners")}
+                title={t("shell.marketTrade.exportsTooltip")}
+              />
+              <TradePartnerStack
+                total={row.importsTotal}
+                partners={row.imports}
+                emptyLabel={t("shell.marketTrade.noPartners")}
+                title={t("shell.marketTrade.importsTooltip")}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TradePartnerStack(props: {
+  total: number;
+  partners: MarketTradePartner[];
+  emptyLabel: string;
+  title: string;
+}) {
+  const content: TooltipStructuredContent = {
+    title: props.title,
+    rows: [
+      { id: "total", label: props.title, value: formatCompact(props.total), tone: props.total > 0 ? "accent" : "muted" },
+      ...props.partners.map((partner) => ({
+        id: partner.id,
+        label: partner.name,
+        value: formatCompact(partner.value),
+        tone: "info" as const,
+      })),
+    ],
+  };
+  return (
+    <Tooltip content={content} placement="top">
+      <div className="arc-strategy-market-trade-partners">
+        <span className="arc-strategy-market-trade-total tabular-nums">{formatCompact(props.total)}</span>
+        <span className="arc-strategy-market-trade-flags" aria-label={props.title}>
+          {props.partners.length > 0 ? (
+            props.partners.map((partner) => (
+              <span key={partner.id} className="arc-strategy-market-trade-flag">
+                {partner.flagUrl ? <img src={partner.flagUrl} alt="" /> : <span>{partner.name.slice(0, 1).toUpperCase()}</span>}
+              </span>
+            ))
+          ) : (
+            <span className="arc-strategy-market-trade-none">{props.emptyLabel}</span>
+          )}
+        </span>
+      </div>
+    </Tooltip>
+  );
 }
 
 function ModeDashboard({ mode, props }: { mode: StrategyMode; props: Props }) {
@@ -818,88 +880,13 @@ function DashboardSection(props: {
   );
 }
 
-function TurnReadinessBoard(props: {
-  preview: NonNullable<Props["turnReadinessPreview"]>;
-  resourceIconUrls?: Props["resourceIconUrls"];
-  onOpen: () => void;
-}) {
-  const { t } = useUiText();
-  const progressPct =
-    props.preview.requiredCount > 0
-      ? Math.max(0, Math.min(100, (props.preview.readyCount / props.preview.requiredCount) * 100))
-      : 100;
-  const countries = [...props.preview.countries]
-    .sort((a, b) => getReadinessStatusRank(a.status) - getReadinessStatusRank(b.status) || a.name.localeCompare(b.name))
-    .slice(0, 4);
-
-  return (
-    <section className="arc-strategy-readiness">
-      <div className="arc-strategy-preview-header">
-        <span>{t("shell.readiness.title")}</span>
-        <button type="button" onClick={props.onOpen}>{t("shell.preview.open")}</button>
-      </div>
-      <div className="mt-3">
-        <div className="flex items-center justify-between gap-3 text-xs text-[var(--arc-color-atlas-muted)]">
-          <span>{t("shell.turn", { turn: props.preview.turnId })}</span>
-          <strong className="text-[var(--arc-color-atlas-ink)]">
-            {t("shell.readiness.progress", { ready: props.preview.readyCount, required: props.preview.requiredCount })}
-          </strong>
-        </div>
-        <div className="mt-2 h-1.5 overflow-hidden bg-[var(--arc-color-atlas-paper-deep)]">
-          <div className="h-full bg-[var(--arc-color-atlas-primary)]" style={{ width: `${progressPct}%` }} />
-        </div>
-      </div>
-
-      <div className="mt-3 grid gap-2">
-        {countries.length > 0 ? (
-          countries.map((country) => (
-            <div key={country.id} className={`arc-strategy-readiness-row arc-strategy-readiness-row--${country.status}`}>
-              <div className="flex min-w-0 items-center gap-2">
-                {country.flagUrl ? (
-                  <img src={country.flagUrl} alt="" className="h-5 w-7 flex-none object-cover" />
-                ) : (
-                  <span className="arc-strategy-country-dot" style={country.color ? { backgroundColor: country.color } : undefined} />
-                )}
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-bold">{country.name}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-[var(--arc-color-atlas-muted)]">
-                    <span>{t(country.online ? "shell.readiness.online" : "shell.readiness.offline")}</span>
-                    <span>·</span>
-                    <span>{t(getReadinessStatusKey(country.status))}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="arc-strategy-readiness-resources">
-                {resourceDescriptors.slice(0, 5).map((resource) => {
-                  const Icon = resource.icon;
-                  return (
-                    <span key={resource.key} className="arc-strategy-readiness-resource" title={t(resource.labelKey)}>
-                      {props.resourceIconUrls?.[resource.key] ? (
-                        <img src={props.resourceIconUrls[resource.key] ?? undefined} alt="" className="h-3.5 w-3.5 object-contain" />
-                      ) : (
-                        <Icon size={12} />
-                      )}
-                      <strong>{formatCompact(country.resources[resource.key] ?? 0)}</strong>
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          ))
-        ) : (
-          <EmptyPreview text={t("shell.readiness.empty")} />
-        )}
-      </div>
-    </section>
-  );
-}
-
 function getModeActions(mode: StrategyMode, props: Props): ActionItem[] {
   if (mode === "overview") {
     return [
       { key: "colonization", labelKey: "shell.action.colonization", descriptionKey: "shell.action.colonizationDescription", icon: Flag, onClick: () => props.onModeChange("colonization"), tone: "primary" },
       { key: "turn-status", labelKey: "shell.action.turnStatus", descriptionKey: "shell.action.turnStatusDescription", icon: ScrollText, onClick: props.onOpenTurnStatus },
       { key: "budget", labelKey: "shell.action.budget", descriptionKey: "shell.action.budgetDescription", icon: Wallet, onClick: props.onOpenBudget },
+      { key: "journal", labelKey: "shell.action.journal", descriptionKey: "shell.action.journalDescription", icon: BookOpen, onClick: props.onOpenJournal },
       { key: "events", labelKey: "shell.action.events", descriptionKey: "shell.action.eventsDescription", icon: Bell, onClick: props.onOpenEvents },
     ];
   }
@@ -940,6 +927,7 @@ function getModeActions(mode: StrategyMode, props: Props): ActionItem[] {
     { key: "politics", labelKey: "shell.action.politics", descriptionKey: "shell.action.politicsDescription", icon: Landmark, onClick: props.onOpenPolitics },
     { key: "technology", labelKey: "shell.action.technology", descriptionKey: "shell.action.technologyDescription", icon: Network, onClick: props.onOpenTechnology },
     { key: "decisions", labelKey: "shell.action.decisions", descriptionKey: "shell.action.decisionsDescription", icon: ScrollText, onClick: props.onOpenDecisions },
+    { key: "journal", labelKey: "shell.action.journal", descriptionKey: "shell.action.journalDescription", icon: BookOpen, onClick: props.onOpenJournal },
     { key: "events", labelKey: "shell.action.events", descriptionKey: "shell.action.eventsDescription", icon: Bell, onClick: props.onOpenEvents },
     { key: "modifiers", labelKey: "shell.action.modifiers", descriptionKey: "shell.action.modifiersDescription", icon: SlidersHorizontal, onClick: props.onOpenModifiers },
     { key: "customization", labelKey: "shell.action.customization", descriptionKey: "shell.action.customizationDescription", icon: Flag, onClick: props.onOpenCountryCustomization ?? props.onOpenPolitics },
@@ -960,7 +948,7 @@ function ResourceChip(props: {
   const incomeTotal = props.ledgerSummary?.incomeTotal ?? props.growth;
   const expenseTotal = props.ledgerSummary?.expenseTotal ?? props.expense;
   const net = props.ledgerSummary?.net ?? props.growth - props.expense;
-  const title = buildResourceLedgerTitle({
+  const tooltipContent = buildResourceLedgerTooltip({
     label: props.label,
     value: props.value,
     incomeTotal,
@@ -970,15 +958,17 @@ function ResourceChip(props: {
     t,
   });
   return (
-    <div className="arc-strategy-resource" title={title}>
-      <span className="arc-strategy-resource-icon">
-        {props.iconUrl ? <img src={props.iconUrl} alt="" className="h-4 w-4 object-contain" /> : <Icon size={14} />}
-      </span>
-      <span className="font-semibold tabular-nums">{formatCompact(props.value)}</span>
-      <span className={net >= 0 ? "text-[var(--arc-color-atlas-good)]" : "text-[var(--arc-color-atlas-bad)]"}>
-        {formatSignedCompact(net)}
-      </span>
-    </div>
+    <Tooltip content={tooltipContent} placement="bottom">
+      <div className="arc-strategy-resource">
+        <span className={`arc-strategy-resource-icon ${props.iconUrl ? "arc-strategy-resource-icon--texture" : ""}`}>
+          {props.iconUrl ? <img src={props.iconUrl} alt="" className="h-6 w-6 object-contain" /> : <Icon size={14} />}
+        </span>
+        <span className="font-semibold tabular-nums">{formatCompact(props.value)}</span>
+        <span className={net >= 0 ? "text-[var(--arc-color-atlas-good)]" : "text-[var(--arc-color-atlas-bad)]"}>
+          {formatSignedCompact(net)}
+        </span>
+      </div>
+    </Tooltip>
   );
 }
 
@@ -1032,7 +1022,7 @@ function addCategoryTotal(categories: Array<{ categoryId: string; amount: number
   categories.push({ categoryId, amount });
 }
 
-function buildResourceLedgerTitle(params: {
+function buildResourceLedgerTooltip(params: {
   label: string;
   value: number;
   incomeTotal: number;
@@ -1040,41 +1030,58 @@ function buildResourceLedgerTitle(params: {
   net: number;
   summary?: ResourceLedgerChipSummary;
   t: (key: UiTextKey, params?: Record<string, string | number>) => string;
-}): string {
-  const lines = [
-    params.label,
-    `${params.t("resourceLedger.currentValue")}: ${formatCompact(params.value)}`,
-    `${params.t("resourceLedger.incomeTotal")}: +${formatCompact(params.incomeTotal)}`,
-    `${params.t("resourceLedger.expenseTotal")}: -${formatCompact(params.expenseTotal)}`,
-    `${params.t("resourceLedger.net")}: ${formatSignedCompact(params.net)}`,
-  ];
+}): TooltipStructuredContent {
+  const sections: NonNullable<TooltipStructuredContent["sections"]> = [];
   if (params.summary) {
-    appendCategoryLines(lines, params.t("resourceLedger.incomes"), params.summary.incomeCategories, params.t, "+");
-    appendCategoryLines(lines, params.t("resourceLedger.expenses"), params.summary.expenseCategories, params.t, "-");
+    const incomeRows = buildCategoryRows(params.summary.incomeCategories, params.t, "+", "positive");
+    if (incomeRows.length > 0) {
+      sections.push({ title: params.t("resourceLedger.incomes"), rows: incomeRows });
+    }
+    const expenseRows = buildCategoryRows(params.summary.expenseCategories, params.t, "-", "negative");
+    if (expenseRows.length > 0) {
+      sections.push({ title: params.t("resourceLedger.expenses"), rows: expenseRows });
+    }
     const entries = params.summary.entries.slice(0, 4);
     if (entries.length > 0) {
-      lines.push(params.t("resourceLedger.recentEntries"));
-      for (const entry of entries) {
-        const sign = entry.direction === "income" ? "+" : "-";
-        lines.push(`${sign}${formatCompact(entry.amount)} ${getResourceLedgerSourceLabel(entry.labelKey, params.t)}`);
-      }
+      sections.push({
+        title: params.t("resourceLedger.recentEntries"),
+        rows: entries.map((entry, index) => ({
+          id: `${entry.resourceId}:${index}`,
+          label: getResourceLedgerSourceLabel(entry.labelKey, params.t),
+          value: `${entry.direction === "income" ? "+" : "-"}${formatCompact(entry.amount)}`,
+          tone: entry.direction === "income" ? "positive" : "negative",
+        })),
+      });
     }
   }
-  return lines.join("\n");
+  return {
+    title: params.label,
+    rows: [
+      { id: "current", label: params.t("resourceLedger.currentValue"), value: formatCompact(params.value) },
+      { id: "income", label: params.t("resourceLedger.incomeTotal"), value: `+${formatCompact(params.incomeTotal)}`, tone: "positive" },
+      { id: "expense", label: params.t("resourceLedger.expenseTotal"), value: `-${formatCompact(params.expenseTotal)}`, tone: "negative" },
+      { id: "net", label: params.t("resourceLedger.net"), value: formatSignedCompact(params.net), tone: params.net >= 0 ? "positive" : "negative" },
+    ],
+    sections,
+  };
 }
 
-function appendCategoryLines(
-  lines: string[],
-  header: string,
+function buildCategoryRows(
   categories: Array<{ categoryId: string; amount: number }>,
   t: (key: UiTextKey, params?: Record<string, string | number>) => string,
   sign: "+" | "-",
-): void {
-  if (categories.length === 0) return;
-  lines.push(header);
-  for (const category of categories.slice().sort((a, b) => b.amount - a.amount).slice(0, 4)) {
-    lines.push(`${sign}${formatCompact(category.amount)} ${getResourceLedgerCategoryLabel(category.categoryId, t)}`);
-  }
+  tone: "positive" | "negative",
+): NonNullable<TooltipStructuredContent["rows"]> {
+  return categories
+    .slice()
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 4)
+    .map((category) => ({
+      id: category.categoryId,
+      label: getResourceLedgerCategoryLabel(category.categoryId, t),
+      value: `${sign}${formatCompact(category.amount)}`,
+      tone,
+    }));
 }
 
 function getResourceLedgerCategoryLabel(
@@ -1144,16 +1151,17 @@ function TopActionButton(props: {
 }) {
   const Icon = props.icon;
   return (
-    <button
-      type="button"
-      className={`arc-strategy-icon-button ${props.tone === "danger" ? "arc-strategy-icon-button--danger" : ""}`}
-      onClick={props.onClick}
-      aria-label={props.label}
-      title={props.label}
-    >
-      <Icon size={17} />
-      {props.badge ? <span className="arc-strategy-badge">{formatCompact(props.badge)}</span> : null}
-    </button>
+    <Tooltip content={props.label} placement="bottom">
+      <button
+        type="button"
+        className={`arc-strategy-icon-button ${props.tone === "danger" ? "arc-strategy-icon-button--danger" : ""}`}
+        onClick={props.onClick}
+        aria-label={props.label}
+      >
+        <Icon size={17} />
+        {props.badge ? <span className="arc-strategy-badge">{formatCompact(props.badge)}</span> : null}
+      </button>
+    </Tooltip>
   );
 }
 
@@ -1171,15 +1179,6 @@ function WorkspaceAction({ action }: { action: ActionItem }) {
           <span className="mt-0.5 block text-xs leading-4 text-[var(--arc-color-atlas-muted)]">{t(action.descriptionKey)}</span>
         ) : null}
       </span>
-    </button>
-  );
-}
-
-function SmallAction(props: { label: string; icon: ReactNode; onClick?: () => void }) {
-  return (
-    <button type="button" className="arc-strategy-small-action" onClick={props.onClick}>
-      {props.icon}
-      <span className="truncate">{props.label}</span>
     </button>
   );
 }
@@ -1223,6 +1222,11 @@ function formatCompact(value: number): string {
     }
   }
   return `${sign}${Math.floor(abs)}`;
+}
+
+function formatSignedPercent(value: number): string {
+  const sign = value >= 0 ? "+" : "-";
+  return `${sign}${Math.abs(value).toFixed(1)}%`;
 }
 
 function formatSignedCompact(value: number): string {

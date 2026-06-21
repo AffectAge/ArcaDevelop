@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { ReactNode } from "react";
 import { Tooltip } from "../Tooltip";
-import { Briefcase, Crosshair, Flag, Gauge, Globe2, Landmark, Pickaxe, Scale, Users, type LucideIcon } from "lucide-react";
+import { Briefcase, type LucideIcon } from "lucide-react";
 
 type MapLensModeOption<T extends string> = {
   id: T;
   label: string;
+  icon?: LucideIcon;
 };
 
 type Props<T extends string> = {
@@ -16,31 +17,14 @@ type Props<T extends string> = {
   onModeChange: (modeId: T) => void;
 };
 
-const lensIconButtonClass =
-  "arc-hud-button-solid relative inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl transition hover:scale-105";
-
-const activeLensIconButtonClass =
-  "relative inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--arc-color-primary-border)] bg-gradient-to-b from-[var(--arc-color-primary-top)] to-[var(--arc-color-primary-bottom)] text-[var(--arc-color-text)] shadow-[var(--arc-shadow-inset-button)] transition hover:scale-105 hover:brightness-110";
-
 export function getLensIconButtonClass(active: boolean) {
-  return active ? activeLensIconButtonClass : lensIconButtonClass;
+  return `arc-map-lens-button ${active ? "arc-map-lens-button--active" : ""}`;
 }
-
-const modeIcons: Partial<Record<string, LucideIcon>> = {
-  political: Landmark,
-  diplomacy: Scale,
-  markets: Globe2,
-  population: Users,
-  resources: Pickaxe,
-  infrastructure: Gauge,
-  colonization: Flag,
-  military: Crosshair,
-};
 
 export function MapLensHud<T extends string>({ modes, activeModeId, activeLensControl, activeLensFilterControl, onModeChange }: Props<T>) {
   return (
-    <div className="pointer-events-auto absolute bottom-0 left-1/2 z-[34] w-[min(92vw,860px)] -translate-x-1/2 text-[var(--arc-color-text-soft)] drop-shadow-[0_18px_28px_rgba(0,0,0,0.42)]">
-      <div className="relative mx-auto mb-3 w-[min(100%,820px)] rounded-xl">
+    <div className="arc-map-lens-hud pointer-events-auto absolute bottom-0 left-1/2 z-[34] w-[min(92vw,860px)] -translate-x-1/2 text-[var(--arc-color-text-soft)]">
+      <div className="relative mx-auto mb-3 w-[min(100%,820px)]">
         <div className="arc-hud-content">
           <AnimatePresence initial={false}>
             {activeLensFilterControl ? (
@@ -66,9 +50,10 @@ export function MapLensHud<T extends string>({ modes, activeModeId, activeLensCo
         </div>
       </div>
 
-      <div className="relative z-10 flex justify-center gap-2 pb-2">
+      <div className="arc-map-lens-mode-row relative z-10 flex justify-center gap-2 pb-2">
         {modes.map((mode) => {
           const active = activeModeId === mode.id;
+          const Icon = mode.icon ?? Briefcase;
           return (
             <Tooltip key={mode.id} content={mode.label}>
               <motion.button
@@ -78,10 +63,7 @@ export function MapLensHud<T extends string>({ modes, activeModeId, activeLensCo
                 aria-label={mode.label}
                 aria-pressed={active}
               >
-                {(() => {
-                  const Icon = modeIcons[mode.id] ?? Briefcase;
-                  return <Icon size={20} />;
-                })()}
+                <Icon size={20} />
               </motion.button>
             </Tooltip>
           );

@@ -22,6 +22,7 @@ export type BaselineWorldDeltaPayload = {
   changes: {
     resourcesByCountry?: WorldDelta["c"];
     resourceLedgerByTurn?: WorldDelta["l"];
+    explanationRecordsByTurn?: WorldDelta["xr"];
     regionOwner?: WorldDelta["a"];
     regionController?: WorldDelta["f"];
     provinceOwner?: WorldDelta["o"];
@@ -40,6 +41,10 @@ export type BaselineWorldDeltaPayload = {
     technologyByCountry?: WorldDelta["h"];
     countryDecisionsByCountryId?: WorldDelta["d"];
     countryEventsByCountryId?: WorldDelta["v"];
+    countryScheduledEventsByCountryId?: WorldDelta["s"];
+    countryEventFlagsByCountryId?: WorldDelta["xg"];
+    journalEntriesByCountryId?: WorldDelta["jo"];
+    countryModifiersByCountryId?: WorldDelta["cm"];
     divisionTemplatesByCountry?: WorldDelta["g"];
     divisionsById?: WorldDelta["x"];
     militaryFormationQueueByCountry?: WorldDelta["w"];
@@ -61,6 +66,7 @@ export function buildWorldDeltaPayload(params: {
     mask: params.compact.mask,
     c: params.compact.c,
     l: params.compact.l,
+    xr: params.compact.xr,
     a: params.compact.a,
     f: params.compact.f,
     o: params.compact.o,
@@ -79,6 +85,10 @@ export function buildWorldDeltaPayload(params: {
     h: params.compact.h,
     d: params.compact.d,
     v: params.compact.v,
+    s: params.compact.s,
+    xg: params.compact.xg,
+    jo: params.compact.jo,
+    cm: params.compact.cm,
     g: params.compact.g,
     x: params.compact.x,
     w: params.compact.w,
@@ -100,6 +110,7 @@ export function buildBaselineWorldDeltaPayload(params: {
     changes: {
       resourcesByCountry: params.compact.c,
       resourceLedgerByTurn: params.compact.l,
+      explanationRecordsByTurn: params.compact.xr,
       regionOwner: params.compact.a,
       regionController: params.compact.f,
       provinceOwner: params.compact.o,
@@ -118,6 +129,10 @@ export function buildBaselineWorldDeltaPayload(params: {
       technologyByCountry: params.compact.h,
       countryDecisionsByCountryId: params.compact.d,
       countryEventsByCountryId: params.compact.v,
+      countryScheduledEventsByCountryId: params.compact.s,
+      countryEventFlagsByCountryId: params.compact.xg,
+      journalEntriesByCountryId: params.compact.jo,
+      countryModifiersByCountryId: params.compact.cm,
       divisionTemplatesByCountry: params.compact.g,
       divisionsById: params.compact.x,
       militaryFormationQueueByCountry: params.compact.w,
@@ -132,6 +147,7 @@ export type WorldBaseSectionSnapshot = {
   mask: number;
   resourcesByCountry?: WorldBase["resourcesByCountry"];
   resourceLedgerByTurn?: WorldBase["resourceLedgerByTurn"];
+  explanationRecordsByTurn?: WorldBase["explanationRecordsByTurn"];
   regionOwner?: WorldBase["regionOwner"];
   regionController?: WorldBase["regionController"];
   provinceOwner?: WorldBase["provinceOwner"];
@@ -150,6 +166,10 @@ export type WorldBaseSectionSnapshot = {
   technologyByCountry?: WorldBase["technologyByCountry"];
   countryDecisionsByCountryId?: WorldBase["countryDecisionsByCountryId"];
   countryEventsByCountryId?: WorldBase["countryEventsByCountryId"];
+  countryScheduledEventsByCountryId?: WorldBase["countryScheduledEventsByCountryId"];
+  countryEventFlagsByCountryId?: WorldBase["countryEventFlagsByCountryId"];
+  journalEntriesByCountryId?: WorldBase["journalEntriesByCountryId"];
+  countryModifiersByCountryId?: WorldBase["countryModifiersByCountryId"];
   divisionTemplatesByCountry?: WorldBase["divisionTemplatesByCountry"];
   divisionsById?: WorldBase["divisionsById"];
   militaryFormationQueueByCountry?: WorldBase["militaryFormationQueueByCountry"];
@@ -172,6 +192,9 @@ export function cloneWorldBaseSectionSnapshot(params: {
   }
   if ((mask & WORLD_DELTA_MASK.resourceLedgerByTurn) !== 0) {
     snapshot.resourceLedgerByTurn = structuredClone(worldBase.resourceLedgerByTurn);
+  }
+  if ((mask & WORLD_DELTA_MASK.explanationRecordsByTurn) !== 0) {
+    snapshot.explanationRecordsByTurn = structuredClone(worldBase.explanationRecordsByTurn);
   }
   if ((mask & WORLD_DELTA_MASK.regionOwner) !== 0) {
     snapshot.regionOwner = { ...worldBase.regionOwner };
@@ -230,6 +253,18 @@ export function cloneWorldBaseSectionSnapshot(params: {
   }
   if ((mask & WORLD_DELTA_MASK.countryEventsByCountryId) !== 0) {
     snapshot.countryEventsByCountryId = structuredClone(worldBase.countryEventsByCountryId);
+  }
+  if ((mask & WORLD_DELTA_MASK.countryScheduledEventsByCountryId) !== 0) {
+    snapshot.countryScheduledEventsByCountryId = structuredClone(worldBase.countryScheduledEventsByCountryId);
+  }
+  if ((mask & WORLD_DELTA_MASK.countryEventFlagsByCountryId) !== 0) {
+    snapshot.countryEventFlagsByCountryId = structuredClone(worldBase.countryEventFlagsByCountryId);
+  }
+  if ((mask & WORLD_DELTA_MASK.journalEntriesByCountryId) !== 0) {
+    snapshot.journalEntriesByCountryId = structuredClone(worldBase.journalEntriesByCountryId);
+  }
+  if ((mask & WORLD_DELTA_MASK.countryModifiersByCountryId) !== 0) {
+    snapshot.countryModifiersByCountryId = structuredClone(worldBase.countryModifiersByCountryId);
   }
   if ((mask & WORLD_DELTA_MASK.divisionTemplatesByCountry) !== 0) {
     snapshot.divisionTemplatesByCountry = structuredClone(worldBase.divisionTemplatesByCountry);
@@ -301,6 +336,7 @@ export function buildCompactWorldDelta(params: {
   const { prev, next } = params;
   const resourcesByCountry: Record<string, ResourceTotals | null> = {};
   const resourceLedgerByTurn: WorldDelta["l"] = {};
+  const explanationRecordsByTurn: WorldDelta["xr"] = {};
   const regionOwner: Record<string, string | null> = {};
   const regionController: Record<string, string | null> = {};
   const provinceOwner: Record<string, string | null> = {};
@@ -319,6 +355,10 @@ export function buildCompactWorldDelta(params: {
   const technologyByCountry: Record<string, WorldBase["technologyByCountry"][string] | null> = {};
   const countryDecisionsByCountryId: Record<string, WorldBase["countryDecisionsByCountryId"][string] | null> = {};
   const countryEventsByCountryId: Record<string, WorldBase["countryEventsByCountryId"][string] | null> = {};
+  const countryScheduledEventsByCountryId: Record<string, WorldBase["countryScheduledEventsByCountryId"][string] | null> = {};
+  const countryEventFlagsByCountryId: Record<string, WorldBase["countryEventFlagsByCountryId"][string] | null> = {};
+  const journalEntriesByCountryId: Record<string, WorldBase["journalEntriesByCountryId"][string] | null> = {};
+  const countryModifiersByCountryId: Record<string, WorldBase["countryModifiersByCountryId"][string] | null> = {};
   const divisionTemplatesByCountry: Record<string, DivisionTemplate[] | null> = {};
   const divisionsById: Record<string, Division | null> = {};
   const militaryFormationQueueByCountry: Record<string, MilitaryFormationQueueItem[] | null> = {};
@@ -355,6 +395,19 @@ export function buildCompactWorldDelta(params: {
     }
     if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
       resourceLedgerByTurn[turnId] = nextValue;
+    }
+  }
+
+  for (const key of new Set([...Object.keys(prev.explanationRecordsByTurn), ...Object.keys(next.explanationRecordsByTurn)])) {
+    const turnId = Number(key);
+    const prevValue = prev.explanationRecordsByTurn[turnId];
+    const nextValue = next.explanationRecordsByTurn[turnId];
+    if (!nextValue) {
+      explanationRecordsByTurn[turnId] = null;
+      continue;
+    }
+    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+      explanationRecordsByTurn[turnId] = nextValue;
     }
   }
 
@@ -585,6 +638,70 @@ export function buildCompactWorldDelta(params: {
       countryEventsByCountryId[key] = nextValue;
     }
   }
+  for (
+    const key of new Set([
+      ...Object.keys(prev.countryScheduledEventsByCountryId),
+      ...Object.keys(next.countryScheduledEventsByCountryId),
+    ])
+  ) {
+    const prevValue = prev.countryScheduledEventsByCountryId[key];
+    const nextValue = next.countryScheduledEventsByCountryId[key];
+    if (!nextValue) {
+      countryScheduledEventsByCountryId[key] = null;
+      continue;
+    }
+    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+      countryScheduledEventsByCountryId[key] = nextValue;
+    }
+  }
+  for (
+    const key of new Set([
+      ...Object.keys(prev.countryEventFlagsByCountryId),
+      ...Object.keys(next.countryEventFlagsByCountryId),
+    ])
+  ) {
+    const prevValue = prev.countryEventFlagsByCountryId[key];
+    const nextValue = next.countryEventFlagsByCountryId[key];
+    if (!nextValue) {
+      countryEventFlagsByCountryId[key] = null;
+      continue;
+    }
+    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+      countryEventFlagsByCountryId[key] = nextValue;
+    }
+  }
+  for (
+    const key of new Set([
+      ...Object.keys(prev.journalEntriesByCountryId),
+      ...Object.keys(next.journalEntriesByCountryId),
+    ])
+  ) {
+    const prevValue = prev.journalEntriesByCountryId[key];
+    const nextValue = next.journalEntriesByCountryId[key];
+    if (!nextValue) {
+      journalEntriesByCountryId[key] = null;
+      continue;
+    }
+    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+      journalEntriesByCountryId[key] = nextValue;
+    }
+  }
+  for (
+    const key of new Set([
+      ...Object.keys(prev.countryModifiersByCountryId),
+      ...Object.keys(next.countryModifiersByCountryId),
+    ])
+  ) {
+    const prevValue = prev.countryModifiersByCountryId[key];
+    const nextValue = next.countryModifiersByCountryId[key];
+    if (!nextValue) {
+      countryModifiersByCountryId[key] = null;
+      continue;
+    }
+    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+      countryModifiersByCountryId[key] = nextValue;
+    }
+  }
   for (const key of new Set([...Object.keys(prev.divisionTemplatesByCountry), ...Object.keys(next.divisionTemplatesByCountry)])) {
     const prevValue = prev.divisionTemplatesByCountry[key];
     const nextValue = next.divisionTemplatesByCountry[key];
@@ -628,6 +745,10 @@ export function buildCompactWorldDelta(params: {
   if (Object.keys(resourceLedgerByTurn).length > 0) {
     mask |= WORLD_DELTA_MASK.resourceLedgerByTurn;
     compact.l = resourceLedgerByTurn;
+  }
+  if (Object.keys(explanationRecordsByTurn).length > 0) {
+    mask |= WORLD_DELTA_MASK.explanationRecordsByTurn;
+    compact.xr = explanationRecordsByTurn;
   }
   if (Object.keys(regionOwner).length > 0) {
     mask |= WORLD_DELTA_MASK.regionOwner;
@@ -701,6 +822,22 @@ export function buildCompactWorldDelta(params: {
     mask |= WORLD_DELTA_MASK.countryEventsByCountryId;
     compact.v = countryEventsByCountryId;
   }
+  if (Object.keys(countryScheduledEventsByCountryId).length > 0) {
+    mask |= WORLD_DELTA_MASK.countryScheduledEventsByCountryId;
+    compact.s = countryScheduledEventsByCountryId;
+  }
+  if (Object.keys(countryEventFlagsByCountryId).length > 0) {
+    mask |= WORLD_DELTA_MASK.countryEventFlagsByCountryId;
+    compact.xg = countryEventFlagsByCountryId;
+  }
+  if (Object.keys(journalEntriesByCountryId).length > 0) {
+    mask |= WORLD_DELTA_MASK.journalEntriesByCountryId;
+    compact.jo = journalEntriesByCountryId;
+  }
+  if (Object.keys(countryModifiersByCountryId).length > 0) {
+    mask |= WORLD_DELTA_MASK.countryModifiersByCountryId;
+    compact.cm = countryModifiersByCountryId;
+  }
   if (Object.keys(divisionTemplatesByCountry).length > 0) {
     mask |= WORLD_DELTA_MASK.divisionTemplatesByCountry;
     compact.g = divisionTemplatesByCountry;
@@ -732,6 +869,10 @@ export function toWorldBaseForDeltaDiff(previous: WorldBaseSectionSnapshot, next
       (previous.mask & WORLD_DELTA_MASK.resourceLedgerByTurn) !== 0 && previous.resourceLedgerByTurn
         ? previous.resourceLedgerByTurn
         : next.resourceLedgerByTurn,
+    explanationRecordsByTurn:
+      (previous.mask & WORLD_DELTA_MASK.explanationRecordsByTurn) !== 0 && previous.explanationRecordsByTurn
+        ? previous.explanationRecordsByTurn
+        : next.explanationRecordsByTurn,
     regionOwner:
       (previous.mask & WORLD_DELTA_MASK.regionOwner) !== 0 && previous.regionOwner
         ? previous.regionOwner
@@ -807,6 +948,22 @@ export function toWorldBaseForDeltaDiff(previous: WorldBaseSectionSnapshot, next
       (previous.mask & WORLD_DELTA_MASK.countryEventsByCountryId) !== 0 && previous.countryEventsByCountryId
         ? previous.countryEventsByCountryId
         : next.countryEventsByCountryId,
+    countryScheduledEventsByCountryId:
+      (previous.mask & WORLD_DELTA_MASK.countryScheduledEventsByCountryId) !== 0 && previous.countryScheduledEventsByCountryId
+        ? previous.countryScheduledEventsByCountryId
+        : next.countryScheduledEventsByCountryId,
+    countryEventFlagsByCountryId:
+      (previous.mask & WORLD_DELTA_MASK.countryEventFlagsByCountryId) !== 0 && previous.countryEventFlagsByCountryId
+        ? previous.countryEventFlagsByCountryId
+        : next.countryEventFlagsByCountryId,
+    journalEntriesByCountryId:
+      (previous.mask & WORLD_DELTA_MASK.journalEntriesByCountryId) !== 0 && previous.journalEntriesByCountryId
+        ? previous.journalEntriesByCountryId
+        : next.journalEntriesByCountryId,
+    countryModifiersByCountryId:
+      (previous.mask & WORLD_DELTA_MASK.countryModifiersByCountryId) !== 0 && previous.countryModifiersByCountryId
+        ? previous.countryModifiersByCountryId
+        : next.countryModifiersByCountryId,
     divisionTemplatesByCountry:
       (previous.mask & WORLD_DELTA_MASK.divisionTemplatesByCountry) !== 0 && previous.divisionTemplatesByCountry
         ? previous.divisionTemplatesByCountry

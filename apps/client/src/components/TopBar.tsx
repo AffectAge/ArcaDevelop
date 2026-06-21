@@ -1,8 +1,10 @@
 import { BookOpen, FlaskConical, Landmark, Coins, CircleDollarSign, ListChecks, LogOut, ShieldAlert, SkipForward, SlidersHorizontal, Cog, Flag, Sliders, Clock3, Palette, Hammer, Users, type LucideIcon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { BASE_RESOURCE_ICON_URLS } from "../assets/baseResourceIcons";
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
+import { TooltipPanel } from "./Tooltip";
 
 type Resources = {
   culture: number;
@@ -36,7 +38,6 @@ type Props = {
   onOpenCountryCustomization?: () => void;
   onOpenClientSettings?: () => void;
   onOpenCivilopedia?: () => void;
-  resourceIconUrls?: Partial<Record<(typeof cards)[number]["key"], string | null>>;
   resourceGrowthByTurn?: Partial<Record<(typeof cards)[number]["key"], number>>;
   resourceExpenseByTurn?: Partial<Record<(typeof cards)[number]["key"], number>>;
   colonizationLimit?: { active: number; max: number } | null;
@@ -156,7 +157,6 @@ export function TopBar({
   onOpenCountryCustomization,
   onOpenClientSettings,
   onOpenCivilopedia,
-  resourceIconUrls,
   resourceGrowthByTurn,
   resourceExpenseByTurn,
   colonizationLimit,
@@ -293,27 +293,27 @@ export function TopBar({
                 transition={{ duration: 0.16, ease: "easeOut" }}
                 className="absolute left-0 top-full z-50 mt-1 min-w-[240px] rounded-xl"
               >
-                <div className="arc-hud-panel rounded-xl p-3 text-xs">
-                  <div className="arc-hud-content mb-2 flex items-center gap-2 text-[var(--arc-color-text)]">
+                <TooltipPanel variant="rich">
+                  <div className="arc-hud-content mb-2 flex items-center gap-2 text-[var(--arc-color-atlas-ink)]">
                     <img src={flagUrl || "/placeholder-flag.svg"} alt="" className="h-4 w-6 rounded object-cover" />
                     <span className="font-semibold">{countryName}</span>
                   </div>
-                  <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-text-soft)]">{t("topBar.countryDetails")}</div>
-                  <div className="arc-hud-content space-y-1 text-[var(--arc-color-text-soft)]">
+                  <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-atlas-muted)]">{t("topBar.countryDetails")}</div>
+                  <div className="arc-hud-content space-y-1 text-[var(--arc-color-atlas-muted)]">
                     <div className="flex items-center justify-between gap-3">
                       <span>{t("topBar.controlledProvinces")}</span>
-                      <span className="text-[var(--arc-color-text)]">{countryDetails?.provinceCount ?? 0}</span>
+                      <span className="text-[var(--arc-color-atlas-ink)]">{countryDetails?.provinceCount ?? 0}</span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <span>{t("topBar.totalArea")}</span>
-                      <span className="text-[var(--arc-color-text)]">{formatAreaKm2(countryDetails?.totalAreaKm2 ?? 0, locale)}</span>
+                      <span className="text-[var(--arc-color-atlas-ink)]">{formatAreaKm2(countryDetails?.totalAreaKm2 ?? 0, locale)}</span>
                     </div>
-                    <div className="mt-1 flex items-center justify-between gap-3 border-t border-[var(--arc-color-brown)] pt-1">
+                    <div className="mt-1 flex items-center justify-between gap-3 border-t border-[var(--arc-color-atlas-line)] pt-1">
                       <span>{t("topBar.currentTurn")}</span>
-                      <span className="text-[var(--arc-color-gold)]">#{turnId}</span>
+                      <span className="text-[var(--arc-color-atlas-primary)]">#{turnId}</span>
                     </div>
                   </div>
-                </div>
+                </TooltipPanel>
               </motion.div>
             )}
           </AnimatePresence>
@@ -328,7 +328,7 @@ export function TopBar({
               aria-label={t("topBar.populationAria", { population: formatCompact(populationTotal), growth: formatSignedCompact(populationNetGrowth) })}
             >
               {populationIconUrl ? (
-                <img src={populationIconUrl} alt="" className="h-[18px] w-[18px] rounded-sm object-contain" />
+                <img src={populationIconUrl} alt="" className="h-[41px] w-[41px] object-contain" />
               ) : (
                 <Users size={17} className="text-[var(--arc-color-gold)]" />
               )}
@@ -365,32 +365,32 @@ export function TopBar({
                   transition={{ duration: 0.16, ease: "easeOut" }}
                   className="absolute left-0 top-full z-20 mt-1 min-w-[220px] rounded-xl"
                 >
-                  <div className="arc-hud-panel rounded-xl p-3 text-xs">
-                    <div className="arc-hud-content mb-2 flex items-center gap-2 text-[var(--arc-color-text)]">
+                  <TooltipPanel variant="rich">
+                    <div className="arc-hud-content mb-2 flex items-center gap-2 text-[var(--arc-color-atlas-ink)]">
                       {populationIconUrl ? (
-                        <img src={populationIconUrl} alt="" className="h-4 w-4 rounded-sm object-contain" />
+                        <img src={populationIconUrl} alt="" className="h-6 w-6 object-contain" />
                       ) : (
-                        <Users size={14} className="text-[var(--arc-color-gold)]" />
+                        <Users size={14} className="text-[var(--arc-color-atlas-primary)]" />
                       )}
                       <span className="font-semibold">{t("shell.metric.population")}</span>
                     </div>
-                    <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-text-soft)]">
+                    <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-atlas-muted)]">
                       {t("topBar.populationDescription")}
                     </div>
-                    <div className="arc-hud-content space-y-1 text-[var(--arc-color-text-soft)]">
+                    <div className="arc-hud-content space-y-1 text-[var(--arc-color-atlas-muted)]">
                       <div className="flex items-center justify-between gap-3">
                         <span>{t("population.totalPopulation")}</span>
-                        <span className="text-[var(--arc-color-text)]">{formatCompact(populationTotal)}</span>
+                        <span className="text-[var(--arc-color-atlas-ink)]">{formatCompact(populationTotal)}</span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span>{t("population.births")}</span>
-                        <span className="text-[var(--arc-color-success-text)]">
+                        <span className="text-[var(--arc-color-atlas-good)]">
                           +{formatCompact(populationBirths)} · {formatPercent(populationBirthRatePct)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span>{t("population.deaths")}</span>
-                        <span className="text-[var(--arc-color-danger-text)]">
+                        <span className="text-[var(--arc-color-atlas-bad)]">
                           -{formatCompact(populationDeaths)} · {formatPercent(populationDeathRatePct)}
                         </span>
                       </div>
@@ -399,20 +399,19 @@ export function TopBar({
                         <span className={populationNetColorClass}>{formatSignedCompact(populationNetGrowth)}</span>
                       </div>
                     </div>
-                  </div>
+                  </TooltipPanel>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
           {cards.map((card) => {
             const Icon = card.icon;
-            const customIconUrl = resourceIconUrls?.[card.key] ?? null;
+            const customIconUrl = BASE_RESOURCE_ICON_URLS[card.key];
             const growth = Math.max(0, Math.floor(resourceGrowthByTurn?.[card.key] ?? 0));
             const expense = Math.max(0, Math.floor(resourceExpenseByTurn?.[card.key] ?? 0));
             const net = growth - expense;
             const netColorClass =
               net > 0 ? "text-[var(--arc-color-success-text)]" : net < 0 ? "text-[var(--arc-color-danger-text)]" : "text-[var(--arc-color-text-soft)]";
-            const netDetailColorClass = net > 0 ? "text-[var(--arc-color-success-text)]" : net < 0 ? "text-[var(--arc-color-danger-text)]" : "text-[var(--arc-color-text)]";
             const label = t(card.labelKey);
             return (
               <div
@@ -428,7 +427,7 @@ export function TopBar({
                     aria-label={t("topBar.openResourceDetails", { resource: label })}
                   >
                     {customIconUrl ? (
-                      <img src={customIconUrl} alt="" className="h-[18px] w-[18px] rounded-sm object-contain" />
+                      <img src={customIconUrl} alt="" className="h-[41px] w-[41px] object-contain" />
                     ) : (
                       <Icon size={17} className="text-[var(--arc-color-gold)]" />
                     )}
@@ -467,45 +466,45 @@ export function TopBar({
                         transition={{ duration: 0.16, ease: "easeOut" }}
                         className="absolute left-0 top-full z-20 mt-1 min-w-[220px] rounded-xl"
                       >
-                        <div className="arc-hud-panel rounded-xl p-3 text-xs">
-                          <div className="arc-hud-content mb-2 flex items-center gap-2 text-[var(--arc-color-text)]">
+                        <TooltipPanel variant="rich">
+                          <div className="arc-hud-content mb-2 flex items-center gap-2 text-[var(--arc-color-atlas-ink)]">
                             {customIconUrl ? (
-                              <img src={customIconUrl} alt="" className="h-4 w-4 rounded-sm object-contain" />
+                              <img src={customIconUrl} alt="" className="h-6 w-6 object-contain" />
                             ) : (
-                              <Icon size={14} className="text-[var(--arc-color-gold)]" />
+                              <Icon size={14} className="text-[var(--arc-color-atlas-primary)]" />
                             )}
                             <span className="font-semibold">{label}</span>
                           </div>
-                          <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-text-soft)]">{t(card.tipKey)}</div>
-                          <div className="arc-hud-content space-y-1 text-[var(--arc-color-text-soft)]">
+                          <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-atlas-muted)]">{t(card.tipKey)}</div>
+                          <div className="arc-hud-content space-y-1 text-[var(--arc-color-atlas-muted)]">
                             <div className="flex items-center justify-between gap-3">
                               <span>{t("topBar.currentValue")}</span>
-                              <span className="text-[var(--arc-color-text)]">{formatCompact(resources[card.key])}</span>
+                              <span className="text-[var(--arc-color-atlas-ink)]">{formatCompact(resources[card.key])}</span>
                             </div>
                             <div className="flex items-center justify-between gap-3">
                               <span>{t("topBar.growthPerTurn")}</span>
-                              <span className="text-[var(--arc-color-success-text)]">+{formatCompact(growth)}</span>
+                              <span className="text-[var(--arc-color-atlas-good)]">+{formatCompact(growth)}</span>
                             </div>
                             <div className="flex items-center justify-between gap-3">
                               <span>{t("topBar.expensePerTurn")}</span>
-                              <span className="text-[var(--arc-color-danger-text)]">-{formatCompact(expense)}</span>
+                              <span className="text-[var(--arc-color-atlas-bad)]">-{formatCompact(expense)}</span>
                             </div>
-                            <div className="mt-1 flex items-center justify-between gap-3 border-t border-[var(--arc-color-brown)] pt-1">
+                            <div className="mt-1 flex items-center justify-between gap-3 border-t border-[var(--arc-color-atlas-line)] pt-1">
                               <span>{t("topBar.netPerTurn")}</span>
-                              <span className={netDetailColorClass}>
+                              <span className={net > 0 ? "text-[var(--arc-color-atlas-good)]" : net < 0 ? "text-[var(--arc-color-atlas-bad)]" : "text-[var(--arc-color-atlas-ink)]"}>
                                 {net >= 0 ? `+${formatCompact(net)}` : formatCompact(net)}
                               </span>
                             </div>
                             {card.key === "colonization" && colonizationLimit && (
-                              <div className="mt-1 flex items-center justify-between gap-3 border-t border-[var(--arc-color-brown)] pt-1">
+                              <div className="mt-1 flex items-center justify-between gap-3 border-t border-[var(--arc-color-atlas-line)] pt-1">
                                 <span>{t("topBar.colonizationLimit")}</span>
                                 <span
                                   className={
                                     colonizationLimit.active >= colonizationLimit.max
-                                      ? "text-[var(--arc-color-danger-text)]"
+                                      ? "text-[var(--arc-color-atlas-bad)]"
                                       : colonizationLimit.active > 0
-                                        ? "text-[var(--arc-color-gold)]"
-                                        : "text-[var(--arc-color-success-text)]"
+                                        ? "text-[var(--arc-color-atlas-primary)]"
+                                        : "text-[var(--arc-color-atlas-good)]"
                                   }
                                 >
                                   {colonizationLimit.active} / {colonizationLimit.max}
@@ -513,7 +512,7 @@ export function TopBar({
                               </div>
                             )}
                           </div>
-                        </div>
+                        </TooltipPanel>
                       </motion.div>
                     )}
                   </AnimatePresence>

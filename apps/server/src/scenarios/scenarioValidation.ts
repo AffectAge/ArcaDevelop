@@ -4,6 +4,7 @@ import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join, relative, resolve, sep } from "node:path";
 import {
   assertScenarioDefinesShape,
+  normalizeScenarioAiDefines,
   normalizeScenarioAuditLogDefines,
   normalizeScenarioColonizationDefines,
   normalizeScenarioCustomizationDefines,
@@ -29,6 +30,9 @@ export type ScenarioValidationIssueCode =
   | "INVALID_COUNTRY_COLOR"
   | "INVALID_ENTITY_COLOR"
   | "INVALID_DEFINES"
+  | "INVALID_DECISION_DEFINITION"
+  | "INVALID_EVENT_DEFINITION"
+  | "INVALID_JOURNAL_DEFINITION"
   | "BROKEN_REFERENCE"
   | "MISSING_LOCALIZATION_KEY"
   | "MISSING_REGION_MEMBERSHIP"
@@ -112,6 +116,8 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "sector", path: "common/sectors" },
   { kind: "decision", path: "common/decisions" },
   { kind: "event", path: "common/events" },
+  { kind: "journalEntry", path: "common/journalEntries" },
+  { kind: "journalEntry", path: "common/journal_entries" },
   { kind: "battalion", path: "common/battalions" },
   { kind: "shipType", path: "common/shipTypes" },
   { kind: "aircraftType", path: "common/aircraftTypes" },
@@ -190,6 +196,53 @@ const VALIDATION_TURN_TIMER_DEFAULTS = {
   secondsPerTurn: 86_400,
   pauseWhenNoPlayersOnline: false,
 };
+const VALIDATION_AI_DEFAULTS = {
+  enabled: true,
+  maxCountriesPerTick: 50,
+  maxDecisionCandidatesPerCountry: 20,
+  contextCacheTtlTurns: 1,
+  maxBuildCompletionTurns: 8,
+};
+const EVENT_TRIGGER_TYPES = new Set([
+  "always",
+  "law_active",
+  "technology_researched",
+  "country_is",
+  "has_building",
+  "country_resource_above",
+  "country_resource_below",
+  "treasury_below",
+  "resource_flow_negative",
+  "country_has_law",
+  "country_lacks_law",
+  "country_has_technology",
+  "country_lacks_technology",
+  "country_has_modifier",
+  "country_controls_region_count_above",
+  "country_controls_region_count_below",
+  "controls_foreign_region",
+  "region_owner_is",
+  "region_controller_is",
+  "region_is_colonizable",
+  "region_population_above",
+  "region_population_below",
+  "region_has_population_above",
+  "region_has_population_below",
+  "region_has_building",
+  "region_has_resource_deposit",
+  "region_radicals_above",
+  "region_loyalists_above",
+  "region_standard_of_living_below",
+  "region_colonization_progress_above",
+  "region_colonization_progress_below",
+  "building_profit_below",
+  "building_employment_below",
+  "building_output_above",
+]);
+const EVENT_RESOURCE_IDS = new Set(["culture", "science", "religion", "colonization", "construction", "ducats", "gold"]);
+const EVENT_CATEGORY_IDS = new Set(["system", "colonization", "politics", "economy", "military", "diplomacy"]);
+const EVENT_PRIORITY_IDS = new Set(["low", "medium", "high"]);
+const EVENT_VISIBILITY_IDS = new Set(["public", "private"]);
 
 export const SCENARIO_PROVINCE_FORBIDDEN_HEAVY_FIELDS = [
   "pops",
@@ -243,6 +296,9 @@ export async function validateScenarioDirectory(
   validateProvinceHeavyFields(root, loadedEntities, issues);
   validateRegionMembership(root, loadedEntities, issues);
   validateEntityReferences(root, loadedEntities, issues);
+  validateDecisionDefinitions(root, loadedEntities, issues);
+  validateEventDefinitions(root, loadedEntities, localizationKeys, issues);
+  validateJournalDefinitions(root, loadedEntities, localizationKeys, issues);
   validateEntityLocalization(root, loadedEntities, localizationKeys, issues);
   await validateGeneratedManifest(root, summary, issues, options.requireGeneratedIndexes === true);
 
@@ -583,6 +639,7 @@ async function validateDefines(root: string, issues: ScenarioValidationIssue[]):
       hardMaxAuditLogEntries: VALIDATION_HARD_MAX_AUDIT_LOG_ENTRIES,
       maxSettingNumber: VALIDATION_MAX_SETTING_NUMBER,
     };
+    normalizeScenarioAiDefines(defines.ai, VALIDATION_AI_DEFAULTS);
     normalizeScenarioEconomyDefines(
       defines.economy,
       VALIDATION_ECONOMY_DEFAULTS,
@@ -810,6 +867,895 @@ function validateKnownStableReferences(root: string, entity: LoadedEntity, ids: 
       code: "BROKEN_REFERENCE",
       path: normalizePath(relative(root, entity.path)),
       message: `${entity.id}.${field} references missing id ${value}.`,
+    });
+  }
+}
+
+function validateDecisionDefinitions(
+  root: string,
+  entities: LoadedEntity[],
+  issues: ScenarioValidationIssue[],
+): void {
+  const eventIds = new Set(entities.filter((item) => item.kind === "event").map((item) => item.id));
+  const journalEntryIds = new Set(entities.filter((item) => item.kind === "journalEntry").map((item) => item.id));
+  const triggerRefs = getEventTriggerValidationRefs(entities);
+  const modifierIds = triggerRefs.modifierIds ?? new Set<string>();
+  for (const entity of entities.filter((item) => item.kind === "decision")) {
+    const decision = entity.data.decision;
+    if (!isObject(decision)) continue;
+    const path = normalizePath(relative(root, entity.path));
+    validateEventScope(entity, decision.scope, path, issues, triggerRefs);
+    validateEventTrigger(entity, decision.potential, path, issues, "decision.potential", triggerRefs);
+    validateEventTrigger(entity, decision.allow, path, issues, "decision.allow", triggerRefs);
+    validateEventEffects(
+      entity,
+      decision.effects,
+      eventIds,
+      journalEntryIds,
+      modifierIds,
+      path,
+      issues,
+      0,
+      "decision",
+      "INVALID_DECISION_DEFINITION",
+      false,
+    );
+  }
+}
+
+function validateEventDefinitions(
+  root: string,
+  entities: LoadedEntity[],
+  localizationKeys: Set<string>,
+  issues: ScenarioValidationIssue[],
+): void {
+  const eventIds = new Set(entities.filter((item) => item.kind === "event").map((item) => item.id));
+  const journalEntryIds = new Set(entities.filter((item) => item.kind === "journalEntry").map((item) => item.id));
+  const triggerRefs = getEventTriggerValidationRefs(entities);
+  const modifierIds = triggerRefs.modifierIds ?? new Set<string>();
+  for (const entity of entities.filter((item) => item.kind === "event")) {
+    const event = entity.data.event;
+    const path = normalizePath(relative(root, entity.path));
+    if (!isObject(event)) {
+      issues.push({
+        code: "INVALID_EVENT_DEFINITION",
+        path,
+        message: `${entity.id}.event must be an object using the key-based event format.`,
+      });
+      continue;
+    }
+
+    for (const legacyField of ["title", "description", "buttonColor", "autoChancePct"]) {
+      if (!(legacyField in event)) continue;
+      issues.push({
+        code: "INVALID_EVENT_DEFINITION",
+        path,
+        message: `${entity.id}.event uses legacy field ${legacyField}.`,
+      });
+    }
+    validateRequiredStringSetField(entity, event, "category", EVENT_CATEGORY_IDS, path, issues, "event");
+    validateRequiredStringSetField(entity, event, "priority", EVENT_PRIORITY_IDS, path, issues, "event");
+    validateRequiredStringSetField(entity, event, "visibility", EVENT_VISIBILITY_IDS, path, issues, "event");
+    validateLocalizedField(entity, event, "titleKey", localizationKeys, path, issues);
+    validateLocalizedField(entity, event, "descriptionKey", localizationKeys, path, issues);
+    validateEventScope(entity, event.scope, path, issues, triggerRefs);
+    validateEventTrigger(entity, event.trigger, path, issues, "event.trigger", triggerRefs);
+    validateEventChain(entity, event.chain, eventIds, path, issues, triggerRefs);
+
+    const options = event.options;
+    if (!Array.isArray(options) || options.length === 0) {
+      issues.push({
+        code: "INVALID_EVENT_DEFINITION",
+        path,
+        message: `${entity.id}.event.options must contain at least one option.`,
+      });
+      continue;
+    }
+
+    for (const [index, option] of options.entries()) {
+      if (!isObject(option)) {
+        issues.push({
+          code: "INVALID_EVENT_DEFINITION",
+          path,
+          message: `${entity.id}.event.options[${index}] must be an object.`,
+        });
+        continue;
+      }
+      for (const legacyField of ["label", "description", "buttonColor", "autoChancePct"]) {
+        if (!(legacyField in option)) continue;
+        issues.push({
+          code: "INVALID_EVENT_DEFINITION",
+          path,
+          message: `${entity.id}.event.options[${index}] uses legacy field ${legacyField}.`,
+        });
+      }
+      validateLocalizedField(entity, option, "labelKey", localizationKeys, path, issues, `event.options[${index}]`);
+      validateOptionalLocalizedField(entity, option, "descriptionKey", localizationKeys, path, issues, `event.options[${index}]`);
+      validateOptionalLocalizedField(entity, option, "tooltipKey", localizationKeys, path, issues, `event.options[${index}]`);
+      validateEventEffects(entity, option.effects, eventIds, journalEntryIds, modifierIds, path, issues, index);
+      validateEventAiWeight(entity, option.aiWeight, path, issues, index, triggerRefs);
+    }
+    if (event.defaultOptionId != null) {
+      const defaultOptionId = typeof event.defaultOptionId === "string" ? event.defaultOptionId : "";
+      const hasDefaultOption = options.some((option) => isObject(option) && option.id === defaultOptionId);
+      if (!hasDefaultOption) {
+        issues.push({
+          code: "INVALID_EVENT_DEFINITION",
+          path,
+          message: `${entity.id}.event.defaultOptionId must reference an event option id.`,
+        });
+      }
+    }
+    if (
+      event.timeoutTurns != null &&
+      (typeof event.timeoutTurns !== "number" || !Number.isInteger(event.timeoutTurns) || event.timeoutTurns < 0)
+    ) {
+      issues.push({
+        code: "INVALID_EVENT_DEFINITION",
+        path,
+        message: `${entity.id}.event.timeoutTurns must be a non-negative integer when provided.`,
+      });
+    }
+  }
+}
+
+function validateEventAiWeight(
+  entity: LoadedEntity,
+  aiWeight: unknown,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  optionIndex: number,
+  triggerRefs: EventTriggerValidationRefs,
+): void {
+  if (aiWeight == null) return;
+  if (!Array.isArray(aiWeight)) {
+    issues.push({
+      code: "INVALID_EVENT_DEFINITION",
+      path,
+      message: `${entity.id}.event.options[${optionIndex}].aiWeight must be an array.`,
+    });
+    return;
+  }
+  for (const [ruleIndex, rule] of aiWeight.entries()) {
+    if (!isObject(rule)) {
+      issues.push({
+        code: "INVALID_EVENT_DEFINITION",
+        path,
+        message: `${entity.id}.event.options[${optionIndex}].aiWeight[${ruleIndex}] must be an object.`,
+      });
+      continue;
+    }
+    if ("base" in rule) {
+      if (typeof rule.base === "number" && Number.isFinite(rule.base)) continue;
+      issues.push({
+        code: "INVALID_EVENT_DEFINITION",
+        path,
+        message: `${entity.id}.event.options[${optionIndex}].aiWeight[${ruleIndex}].base must be a finite number.`,
+      });
+      continue;
+    }
+    if ("if" in rule) {
+      validateEventTrigger(entity, rule.if, path, issues, `event.options[${optionIndex}].aiWeight[${ruleIndex}].if`, triggerRefs);
+      continue;
+    }
+    issues.push({
+      code: "INVALID_EVENT_DEFINITION",
+      path,
+      message: `${entity.id}.event.options[${optionIndex}].aiWeight[${ruleIndex}] must define base or if.`,
+    });
+  }
+}
+
+function validateJournalDefinitions(
+  root: string,
+  entities: LoadedEntity[],
+  localizationKeys: Set<string>,
+  issues: ScenarioValidationIssue[],
+): void {
+  const eventIds = new Set(entities.filter((item) => item.kind === "event").map((item) => item.id));
+  const decisionIds = new Set(entities.filter((item) => item.kind === "decision").map((item) => item.id));
+  const triggerRefs = getEventTriggerValidationRefs(entities);
+  const modifierIds = triggerRefs.modifierIds ?? new Set<string>();
+  const journalEntryIds = new Set(entities.filter((item) => item.kind === "journalEntry").map((item) => item.id));
+  for (const entity of entities.filter((item) => item.kind === "journalEntry")) {
+    const journalEntry = entity.data.journalEntry;
+    const path = normalizePath(relative(root, entity.path));
+    if (!isObject(journalEntry)) {
+      issues.push({
+        code: "INVALID_JOURNAL_DEFINITION",
+        path,
+        message: `${entity.id}.journalEntry must be an object using the key-based journal format.`,
+      });
+      continue;
+    }
+
+    validateLocalizedField(entity, journalEntry, "titleKey", localizationKeys, path, issues, "journalEntry");
+    validateLocalizedField(entity, journalEntry, "descriptionKey", localizationKeys, path, issues, "journalEntry");
+    validateOptionalLocalizedField(entity, journalEntry, "shortDescriptionKey", localizationKeys, path, issues, "journalEntry");
+    validateEventScope(entity, journalEntry.scope, path, issues, triggerRefs);
+    validateEventTrigger(entity, journalEntry.startTrigger, path, issues, "journalEntry.startTrigger", triggerRefs);
+    validateEventTrigger(entity, journalEntry.completeTrigger, path, issues, "journalEntry.completeTrigger", triggerRefs);
+    validateEventTrigger(entity, journalEntry.failTrigger, path, issues, "journalEntry.failTrigger", triggerRefs);
+    validateEventTrigger(entity, journalEntry.cancelTrigger, path, issues, "journalEntry.cancelTrigger", triggerRefs);
+    validateJournalProgress(entity, journalEntry.progress, localizationKeys, path, issues);
+    validateJournalEffects(entity, "onStartEffects", journalEntry.onStartEffects, eventIds, journalEntryIds, modifierIds, path, issues);
+    validateJournalEffects(entity, "onCompleteEffects", journalEntry.onCompleteEffects, eventIds, journalEntryIds, modifierIds, path, issues);
+    validateJournalEffects(entity, "onFailEffects", journalEntry.onFailEffects, eventIds, journalEntryIds, modifierIds, path, issues);
+    validateJournalEffects(entity, "onCancelEffects", journalEntry.onCancelEffects, eventIds, journalEntryIds, modifierIds, path, issues);
+    validateJournalEventHooks(entity, journalEntry.events, eventIds, path, issues);
+    validateJournalDecisionHooks(entity, journalEntry.decisions, decisionIds, path, issues);
+    validateJournalModifierHooks(entity, journalEntry.modifiers, modifierIds, path, issues);
+    if (
+      journalEntry.timeoutTurns != null &&
+      (typeof journalEntry.timeoutTurns !== "number" || !Number.isInteger(journalEntry.timeoutTurns) || journalEntry.timeoutTurns < 0)
+    ) {
+      issues.push({
+        code: "INVALID_JOURNAL_DEFINITION",
+        path,
+        message: `${entity.id}.journalEntry.timeoutTurns must be a non-negative integer when provided.`,
+      });
+    }
+  }
+}
+
+function validateJournalProgress(
+  entity: LoadedEntity,
+  progress: unknown,
+  localizationKeys: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+): void {
+  if (progress == null) return;
+  if (!isObject(progress)) {
+    issues.push({ code: "INVALID_JOURNAL_DEFINITION", path, message: `${entity.id}.journalEntry.progress must be an object.` });
+    return;
+  }
+  if (progress.type !== "manual" && progress.type !== "trigger") {
+    issues.push({ code: "INVALID_JOURNAL_DEFINITION", path, message: `${entity.id}.journalEntry.progress.type is unsupported.` });
+  }
+  if (typeof progress.target !== "number" || !Number.isFinite(progress.target) || progress.target <= 0) {
+    issues.push({ code: "INVALID_JOURNAL_DEFINITION", path, message: `${entity.id}.journalEntry.progress.target must be a positive number.` });
+  }
+  validateLocalizedField(entity, progress, "labelKey", localizationKeys, path, issues, "journalEntry.progress");
+}
+
+function validateJournalEffects(
+  entity: LoadedEntity,
+  field: string,
+  effects: unknown,
+  eventIds: Set<string>,
+  journalEntryIds: Set<string>,
+  modifierIds: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+): void {
+  if (effects == null) return;
+  if (!Array.isArray(effects)) {
+    issues.push({ code: "INVALID_JOURNAL_DEFINITION", path, message: `${entity.id}.journalEntry.${field} must be an array.` });
+    return;
+  }
+  for (const [index, effect] of effects.entries()) {
+    if (!isObject(effect)) {
+      issues.push({ code: "INVALID_JOURNAL_DEFINITION", path, message: `${entity.id}.journalEntry.${field}[${index}] must be an object.` });
+      continue;
+    }
+    if (effect.type === "add_resource" || effect.type === "spend_resource") continue;
+    if (effect.type === "add_resource_flow" && typeof effect.labelKey === "string" && effect.labelKey.trim()) continue;
+    if (effect.type === "trigger_event" || effect.type === "schedule_event" || effect.type === "cancel_event") {
+      if (typeof effect.eventId === "string" && eventIds.has(effect.eventId)) continue;
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path,
+        message: `${entity.id}.journalEntry.${field}[${index}].eventId references missing event ${String(effect.eventId)}.`,
+      });
+      continue;
+    }
+    if ((effect.type === "set_event_flag" || effect.type === "clear_event_flag") && typeof effect.flagId === "string" && effect.flagId.trim()) {
+      continue;
+    }
+    if (effect.type === "add_modifier" || effect.type === "remove_modifier" || effect.type === "extend_modifier") {
+      validateModifierEffectReference(entity, effect, modifierIds, path, issues, `journalEntry.${field}`, index, "INVALID_JOURNAL_DEFINITION");
+      continue;
+    }
+    if (
+      effect.type === "start_journal_entry" ||
+      effect.type === "advance_journal_entry" ||
+      effect.type === "complete_journal_entry" ||
+      effect.type === "fail_journal_entry" ||
+      effect.type === "cancel_journal_entry" ||
+      effect.type === "set_journal_variable" ||
+      effect.type === "clear_journal_variable"
+    ) {
+      if (typeof effect.journalEntryId === "string" && journalEntryIds.has(effect.journalEntryId)) continue;
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path,
+        message: `${entity.id}.journalEntry.${field}[${index}].journalEntryId references missing journal entry ${String(effect.journalEntryId)}.`,
+      });
+      continue;
+    }
+    if (effect.type === "change_colonization_progress") {
+      const amount = Number(effect.amount);
+      if (!Number.isFinite(amount) || amount === 0) {
+        issues.push({
+          code: "INVALID_JOURNAL_DEFINITION",
+          path,
+          message: `${entity.id}.journalEntry.${field}[${index}].amount must be a non-zero finite number.`,
+        });
+      }
+      continue;
+    }
+    issues.push({
+      code: "INVALID_JOURNAL_DEFINITION",
+      path,
+      message: `${entity.id}.journalEntry.${field}[${index}] has unsupported event effect type.`,
+    });
+  }
+}
+
+function validateJournalEventHooks(
+  entity: LoadedEntity,
+  hooks: unknown,
+  eventIds: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+): void {
+  if (hooks == null) return;
+  if (!isObject(hooks)) {
+    issues.push({ code: "INVALID_JOURNAL_DEFINITION", path, message: `${entity.id}.journalEntry.events must be an object.` });
+    return;
+  }
+  for (const field of ["onStart", "onComplete", "onFail", "onCancel"]) {
+    const ids = hooks[field];
+    if (ids == null) continue;
+    if (!Array.isArray(ids)) {
+      issues.push({ code: "INVALID_JOURNAL_DEFINITION", path, message: `${entity.id}.journalEntry.events.${field} must be an array.` });
+      continue;
+    }
+    for (const [index, eventId] of ids.entries()) {
+      if (typeof eventId === "string" && eventIds.has(eventId)) continue;
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path,
+        message: `${entity.id}.journalEntry.events.${field}[${index}] references missing event ${String(eventId)}.`,
+      });
+    }
+  }
+}
+
+function validateJournalDecisionHooks(
+  entity: LoadedEntity,
+  hooks: unknown,
+  decisionIds: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+): void {
+  if (hooks == null) return;
+  if (!isObject(hooks)) {
+    issues.push({ code: "INVALID_JOURNAL_DEFINITION", path, message: `${entity.id}.journalEntry.decisions must be an object.` });
+    return;
+  }
+  const ids = hooks.availableDecisionIds;
+  if (ids == null) return;
+  if (!Array.isArray(ids)) {
+    issues.push({ code: "INVALID_JOURNAL_DEFINITION", path, message: `${entity.id}.journalEntry.decisions.availableDecisionIds must be an array.` });
+    return;
+  }
+  for (const [index, decisionId] of ids.entries()) {
+    if (typeof decisionId === "string" && decisionIds.has(decisionId)) continue;
+    issues.push({
+      code: "BROKEN_REFERENCE",
+      path,
+      message: `${entity.id}.journalEntry.decisions.availableDecisionIds[${index}] references missing decision ${String(decisionId)}.`,
+    });
+  }
+}
+
+function validateJournalModifierHooks(
+  entity: LoadedEntity,
+  hooks: unknown,
+  modifierIds: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+): void {
+  if (hooks == null) return;
+  if (!isObject(hooks)) {
+    issues.push({ code: "INVALID_JOURNAL_DEFINITION", path, message: `${entity.id}.journalEntry.modifiers must be an object.` });
+    return;
+  }
+  const ids = hooks.activeModifierIds;
+  if (ids == null) return;
+  if (!Array.isArray(ids)) {
+    issues.push({ code: "INVALID_JOURNAL_DEFINITION", path, message: `${entity.id}.journalEntry.modifiers.activeModifierIds must be an array.` });
+    return;
+  }
+  for (const [index, modifierId] of ids.entries()) {
+    if (typeof modifierId === "string" && modifierIds.has(modifierId)) continue;
+    issues.push({
+      code: "BROKEN_REFERENCE",
+      path,
+      message: `${entity.id}.journalEntry.modifiers.activeModifierIds[${index}] references missing modifier ${String(modifierId)}.`,
+    });
+  }
+}
+
+function validateEventChain(
+  entity: LoadedEntity,
+  chain: unknown,
+  eventIds: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  triggerRefs: EventTriggerValidationRefs,
+): void {
+  if (chain == null) return;
+  if (!isObject(chain)) {
+    issues.push({ code: "INVALID_EVENT_DEFINITION", path, message: `${entity.id}.event.chain must be an object.` });
+    return;
+  }
+  for (const field of ["chainId", "stepId"]) {
+    if (typeof chain[field] !== "string" || !chain[field].trim()) {
+      issues.push({ code: "INVALID_EVENT_DEFINITION", path, message: `${entity.id}.event.chain.${field} must be a non-empty string.` });
+    }
+  }
+  if (chain.followups == null) return;
+  if (!Array.isArray(chain.followups)) {
+    issues.push({ code: "INVALID_EVENT_DEFINITION", path, message: `${entity.id}.event.chain.followups must be an array.` });
+    return;
+  }
+  for (const [index, followup] of chain.followups.entries()) {
+    if (!isObject(followup)) {
+      issues.push({ code: "INVALID_EVENT_DEFINITION", path, message: `${entity.id}.event.chain.followups[${index}] must be an object.` });
+      continue;
+    }
+    if (typeof followup.eventId !== "string" || !eventIds.has(followup.eventId)) {
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path,
+        message: `${entity.id}.event.chain.followups[${index}].eventId references missing event ${String(followup.eventId)}.`,
+      });
+    }
+    if (
+      followup.delayTurns != null &&
+      (typeof followup.delayTurns !== "number" || !Number.isInteger(followup.delayTurns) || followup.delayTurns < 0)
+    ) {
+      issues.push({
+        code: "INVALID_EVENT_DEFINITION",
+        path,
+        message: `${entity.id}.event.chain.followups[${index}].delayTurns must be a non-negative integer.`,
+      });
+    }
+    if (
+      followup.chancePct != null &&
+      (typeof followup.chancePct !== "number" || !Number.isFinite(followup.chancePct) || followup.chancePct < 0 || followup.chancePct > 100)
+    ) {
+      issues.push({
+        code: "INVALID_EVENT_DEFINITION",
+        path,
+        message: `${entity.id}.event.chain.followups[${index}].chancePct must be between 0 and 100.`,
+      });
+    }
+    validateEventTrigger(entity, followup.conditions, path, issues, `event.chain.followups[${index}].conditions`, triggerRefs);
+  }
+}
+
+function validateEventScope(
+  entity: LoadedEntity,
+  scope: unknown,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  triggerRefs: EventTriggerValidationRefs,
+): void {
+  if (scope == null) return;
+  if (!isObject(scope)) {
+    issues.push({
+      code: "INVALID_EVENT_DEFINITION",
+      path,
+      message: `${entity.id}.event.scope must be an object.`,
+    });
+    return;
+  }
+  const region = scope.region;
+  if (region == null) return;
+  if (!isObject(region)) {
+    issues.push({
+      code: "INVALID_EVENT_DEFINITION",
+      path,
+      message: `${entity.id}.event.scope.region must be an object.`,
+    });
+    return;
+  }
+  if (region.kind !== "region") {
+    issues.push({
+      code: "INVALID_EVENT_DEFINITION",
+      path,
+      message: `${entity.id}.event.scope.region.kind must be region.`,
+    });
+  }
+  if (region.from != null && region.from !== "root.controlled_regions" && region.from !== "root.owned_regions") {
+    issues.push({
+      code: "INVALID_EVENT_DEFINITION",
+      path,
+      message: `${entity.id}.event.scope.region.from has unsupported source.`,
+    });
+  }
+  validateEventTrigger(entity, region.where, path, issues, "event.scope.region.where", triggerRefs);
+}
+
+type EventTriggerValidationRefs = {
+  modifierIds?: Set<string>;
+  lawIds?: Set<string>;
+  technologyIds?: Set<string>;
+  buildingIds?: Set<string>;
+  goodIds?: Set<string>;
+};
+
+function getEventTriggerValidationRefs(entities: LoadedEntity[]): EventTriggerValidationRefs {
+  return {
+    modifierIds: new Set(entities.filter((item) => item.kind === "modifier").map((item) => item.id)),
+    lawIds: new Set(entities.filter((item) => item.kind === "law").map((item) => item.id)),
+    technologyIds: new Set(entities.filter((item) => item.kind === "technology").map((item) => item.id)),
+    buildingIds: new Set(entities.filter((item) => item.kind === "building").map((item) => item.id)),
+    goodIds: new Set(entities.filter((item) => item.kind === "good").map((item) => item.id)),
+  };
+}
+
+function validateTriggerTargetReference(
+  entity: LoadedEntity,
+  trigger: JsonObject,
+  validIds: Set<string> | undefined,
+  targetKind: string,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  fieldPath: string,
+): void {
+  if (typeof trigger.targetId !== "string" || !trigger.targetId.trim()) {
+    issues.push({
+      code: "INVALID_EVENT_DEFINITION",
+      path,
+      message: `${entity.id}.${fieldPath}.targetId must reference a ${targetKind} id.`,
+    });
+    return;
+  }
+  if (validIds && !validIds.has(trigger.targetId)) {
+    issues.push({
+      code: "BROKEN_REFERENCE",
+      path,
+      message: `${entity.id}.${fieldPath}.targetId references missing ${targetKind} ${trigger.targetId}.`,
+    });
+  }
+}
+
+function validateEventTrigger(
+  entity: LoadedEntity,
+  trigger: unknown,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  fieldPath: string,
+  refs: EventTriggerValidationRefs = {},
+  depth = 0,
+): void {
+  if (trigger == null) return;
+  if (!isObject(trigger) || depth > 5) {
+    issues.push({
+      code: "INVALID_EVENT_DEFINITION",
+      path,
+      message: `${entity.id}.${fieldPath} must be a supported trigger object.`,
+    });
+    return;
+  }
+  if (Array.isArray(trigger.all)) {
+    if (trigger.all.length === 0 || trigger.all.length > 20) {
+      issues.push({ code: "INVALID_EVENT_DEFINITION", path, message: `${entity.id}.${fieldPath}.all must contain 1-20 triggers.` });
+    }
+    trigger.all.forEach((child, index) => validateEventTrigger(entity, child, path, issues, `${fieldPath}.all[${index}]`, refs, depth + 1));
+    return;
+  }
+  if (Array.isArray(trigger.any)) {
+    if (trigger.any.length === 0 || trigger.any.length > 20) {
+      issues.push({ code: "INVALID_EVENT_DEFINITION", path, message: `${entity.id}.${fieldPath}.any must contain 1-20 triggers.` });
+    }
+    trigger.any.forEach((child, index) => validateEventTrigger(entity, child, path, issues, `${fieldPath}.any[${index}]`, refs, depth + 1));
+    return;
+  }
+  if (trigger.not != null) {
+    validateEventTrigger(entity, trigger.not, path, issues, `${fieldPath}.not`, refs, depth + 1);
+    return;
+  }
+  const type = trigger.type;
+  if (typeof type !== "string" || !EVENT_TRIGGER_TYPES.has(type)) {
+    issues.push({ code: "INVALID_EVENT_DEFINITION", path, message: `${entity.id}.${fieldPath}.type is unsupported.` });
+    return;
+  }
+  if ((type === "country_resource_above" || type === "country_resource_below") && !EVENT_RESOURCE_IDS.has(String(trigger.resource))) {
+    issues.push({ code: "INVALID_EVENT_DEFINITION", path, message: `${entity.id}.${fieldPath}.resource is unsupported.` });
+  }
+  if (type === "resource_flow_negative" && !EVENT_RESOURCE_IDS.has(String(trigger.resource))) {
+    issues.push({ code: "INVALID_EVENT_DEFINITION", path, message: `${entity.id}.${fieldPath}.resource is unsupported.` });
+  }
+  if (type === "country_has_modifier") {
+    if (typeof trigger.targetId !== "string" || !trigger.targetId.trim()) {
+      issues.push({ code: "INVALID_EVENT_DEFINITION", path, message: `${entity.id}.${fieldPath}.targetId must reference a modifier id.` });
+    } else if (refs.modifierIds && !refs.modifierIds.has(trigger.targetId)) {
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path,
+        message: `${entity.id}.${fieldPath}.targetId references missing modifier ${trigger.targetId}.`,
+      });
+    }
+  }
+  if (type === "country_has_law" || type === "country_lacks_law" || type === "law_active") {
+    validateTriggerTargetReference(entity, trigger, refs.lawIds, "law", path, issues, fieldPath);
+  }
+  if (type === "country_has_technology" || type === "country_lacks_technology" || type === "technology_researched") {
+    validateTriggerTargetReference(entity, trigger, refs.technologyIds, "technology", path, issues, fieldPath);
+  }
+  if (type === "has_building" || type === "region_has_building") {
+    validateTriggerTargetReference(entity, trigger, refs.buildingIds, "building", path, issues, fieldPath);
+  }
+  if (type === "region_has_resource_deposit") {
+    validateTriggerTargetReference(entity, trigger, refs.goodIds, "good", path, issues, fieldPath);
+  }
+  if (type === "building_output_above") {
+    validateTriggerTargetReference(entity, trigger, refs.goodIds, "good", path, issues, fieldPath);
+  }
+  if (
+    (type === "country_resource_above" ||
+      type === "country_resource_below" ||
+      type === "treasury_below" ||
+      type === "country_controls_region_count_above" ||
+      type === "country_controls_region_count_below" ||
+      type === "region_population_above" ||
+      type === "region_population_below" ||
+      type === "region_has_population_above" ||
+      type === "region_has_population_below" ||
+      type === "region_radicals_above" ||
+      type === "region_loyalists_above" ||
+      type === "region_standard_of_living_below" ||
+      type === "region_colonization_progress_above" ||
+      type === "region_colonization_progress_below" ||
+      type === "building_profit_below" ||
+      type === "building_employment_below" ||
+      type === "building_output_above") &&
+    (typeof trigger.value !== "number" || !Number.isFinite(trigger.value))
+  ) {
+    issues.push({ code: "INVALID_EVENT_DEFINITION", path, message: `${entity.id}.${fieldPath}.value must be a finite number.` });
+  }
+}
+
+function validateLocalizedField(
+  entity: LoadedEntity,
+  data: JsonObject,
+  field: string,
+  localizationKeys: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  prefix = "event",
+): void {
+  const value = data[field];
+  if (typeof value === "string" && localizationKeys.has(value)) return;
+  issues.push({
+    code: "MISSING_LOCALIZATION_KEY",
+    path,
+    message: `${entity.id}.${prefix}.${field} is missing from en/ru localization files.`,
+  });
+}
+
+function validateRequiredStringSetField(
+  entity: LoadedEntity,
+  data: JsonObject,
+  field: string,
+  allowedValues: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  prefix: string,
+): void {
+  const value = data[field];
+  if (typeof value === "string" && allowedValues.has(value)) return;
+  issues.push({
+    code: "INVALID_EVENT_DEFINITION",
+    path,
+    message: `${entity.id}.${prefix}.${field} must be one of ${Array.from(allowedValues).join(", ")}.`,
+  });
+}
+
+function validateOptionalLocalizedField(
+  entity: LoadedEntity,
+  data: JsonObject,
+  field: string,
+  localizationKeys: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  prefix: string,
+): void {
+  const value = data[field];
+  if (value == null) return;
+  if (typeof value === "string" && localizationKeys.has(value)) return;
+  issues.push({
+    code: "MISSING_LOCALIZATION_KEY",
+    path,
+    message: `${entity.id}.${prefix}.${field} is missing from en/ru localization files.`,
+  });
+}
+
+function validateEventEffects(
+  entity: LoadedEntity,
+  effects: unknown,
+  eventIds: Set<string>,
+  journalEntryIds: Set<string>,
+  modifierIds: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  optionIndex: number,
+  context = `event.options[${optionIndex}]`,
+  invalidCode: ScenarioValidationIssueCode = "INVALID_EVENT_DEFINITION",
+  allowResourceDelta = true,
+): void {
+  if (effects == null) return;
+  if (!Array.isArray(effects)) {
+    issues.push({
+      code: invalidCode,
+      path,
+      message: `${entity.id}.${context}.effects must be an array.`,
+    });
+    return;
+  }
+  for (const [effectIndex, effect] of effects.entries()) {
+    if (!isObject(effect)) {
+      issues.push({
+        code: invalidCode,
+        path,
+        message: `${entity.id}.${context}.effects[${effectIndex}] must be an object.`,
+      });
+      continue;
+    }
+    if (effect.type === "resource_delta") {
+      if (allowResourceDelta) {
+        validateResourceEffectFields(entity, effect, path, issues, context, effectIndex, invalidCode, true);
+        continue;
+      }
+      issues.push({
+        code: invalidCode,
+        path,
+        message: `${entity.id}.${context}.effects[${effectIndex}] uses legacy resource_delta; use add_resource, spend_resource, or add_resource_flow.`,
+      });
+      continue;
+    }
+    if (effect.type === "add_resource" || effect.type === "spend_resource") {
+      validateResourceEffectFields(entity, effect, path, issues, context, effectIndex, invalidCode, false);
+      continue;
+    }
+    if (effect.type === "add_resource_flow") {
+      validateResourceEffectFields(entity, effect, path, issues, context, effectIndex, invalidCode, false);
+      if (effect.direction !== "income" && effect.direction !== "expense") {
+        issues.push({
+          code: invalidCode,
+          path,
+          message: `${entity.id}.${context}.effects[${effectIndex}].direction must be income or expense.`,
+        });
+      }
+      if (typeof effect.labelKey !== "string" || !effect.labelKey.trim()) {
+        issues.push({
+          code: invalidCode,
+          path,
+          message: `${entity.id}.${context}.effects[${effectIndex}].labelKey is required for add_resource_flow.`,
+        });
+      }
+      continue;
+    }
+    if (effect.type === "trigger_event" || effect.type === "schedule_event" || effect.type === "cancel_event") {
+      if (typeof effect.eventId === "string" && eventIds.has(effect.eventId)) continue;
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path,
+        message: `${entity.id}.${context}.effects[${effectIndex}].eventId references missing event ${String(effect.eventId)}.`,
+      });
+      continue;
+    }
+    if (effect.type === "set_event_flag" || effect.type === "clear_event_flag") {
+      if (typeof effect.flagId === "string" && effect.flagId.trim()) continue;
+    }
+    if (effect.type === "add_modifier" || effect.type === "remove_modifier" || effect.type === "extend_modifier") {
+      validateModifierEffectReference(entity, effect, modifierIds, path, issues, context, effectIndex, invalidCode);
+      continue;
+    }
+    if (
+      effect.type === "start_journal_entry" ||
+      effect.type === "advance_journal_entry" ||
+      effect.type === "complete_journal_entry" ||
+      effect.type === "fail_journal_entry" ||
+      effect.type === "cancel_journal_entry" ||
+      effect.type === "set_journal_variable" ||
+      effect.type === "clear_journal_variable"
+    ) {
+      if (typeof effect.journalEntryId === "string" && journalEntryIds.has(effect.journalEntryId)) continue;
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path,
+        message: `${entity.id}.${context}.effects[${effectIndex}].journalEntryId references missing journal entry ${String(effect.journalEntryId)}.`,
+      });
+      continue;
+    }
+    if (effect.type === "change_colonization_progress") {
+      const amount = Number(effect.amount);
+      if (!Number.isFinite(amount) || amount === 0) {
+        issues.push({
+          code: invalidCode,
+          path,
+          message: `${entity.id}.${context}.effects[${effectIndex}].amount must be a non-zero finite number.`,
+        });
+      }
+      continue;
+    }
+    issues.push({
+      code: invalidCode,
+      path,
+      message: `${entity.id}.${context}.effects[${effectIndex}] has unsupported event effect type.`,
+    });
+  }
+}
+
+function validateResourceEffectFields(
+  entity: LoadedEntity,
+  effect: JsonObject,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  context: string,
+  effectIndex: number,
+  invalidCode: ScenarioValidationIssueCode,
+  allowSignedAmount: boolean,
+): void {
+  if (typeof effect.resource !== "string" || !EVENT_RESOURCE_IDS.has(effect.resource)) {
+    issues.push({
+      code: invalidCode,
+      path,
+      message: `${entity.id}.${context}.effects[${effectIndex}].resource is unsupported.`,
+    });
+  }
+  const amount = Number(effect.amount);
+  if (!Number.isFinite(amount) || amount === 0 || (!allowSignedAmount && amount <= 0)) {
+    issues.push({
+      code: invalidCode,
+      path,
+      message: `${entity.id}.${context}.effects[${effectIndex}].amount must be ${allowSignedAmount ? "a non-zero" : "a positive"} finite number.`,
+    });
+  }
+}
+
+function validateModifierEffectReference(
+  entity: LoadedEntity,
+  effect: JsonObject,
+  modifierIds: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  context: string,
+  effectIndex: number,
+  invalidCode: ScenarioValidationIssueCode,
+): void {
+  if (typeof effect.modifierId !== "string" || !modifierIds.has(effect.modifierId)) {
+    issues.push({
+      code: "BROKEN_REFERENCE",
+      path,
+      message: `${entity.id}.${context}.effects[${effectIndex}].modifierId references missing modifier ${String(effect.modifierId)}.`,
+    });
+  }
+  if (effect.type === "extend_modifier") {
+    if (typeof effect.durationTurns !== "number" || !Number.isInteger(effect.durationTurns) || effect.durationTurns <= 0) {
+      issues.push({
+        code: invalidCode,
+        path,
+        message: `${entity.id}.${context}.effects[${effectIndex}].durationTurns must be a positive integer for extend_modifier.`,
+      });
+    }
+  }
+  if (
+    effect.type === "add_modifier" &&
+    effect.durationTurns != null &&
+    (typeof effect.durationTurns !== "number" || !Number.isInteger(effect.durationTurns) || effect.durationTurns <= 0)
+  ) {
+    issues.push({
+      code: invalidCode,
+      path,
+      message: `${entity.id}.${context}.effects[${effectIndex}].durationTurns must be a positive integer when provided.`,
     });
   }
 }

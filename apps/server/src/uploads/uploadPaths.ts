@@ -66,22 +66,11 @@ const contentUploadKinds = [
 export const FLAG_IMAGE_RULE = { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 } as const;
 export const CREST_IMAGE_RULE = { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 } as const;
 
-export const resourceIconFields = new Set([
-  "culture",
-  "science",
-  "religion",
-  "colonization",
-  "construction",
-  "ducats",
-  "gold",
-]);
-
 export function ensureUploadDirectories(): void {
   const dirs = [
     resolveUploadDir("flags"),
     resolveUploadDir("crests"),
     resolveUploadDir("markets"),
-    resolveUploadDir("resource-icons"),
     resolveUploadDir("ui-backgrounds"),
     resolveUploadDir("civilopedia"),
     resolveUploadDir("division-icons"),

@@ -1,0 +1,79 @@
+{
+  "id": "building:nonferrous_metals_factory",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": "/scenario-assets/balanced-economy/assets/uploads/buildings/5a400690-5207-418b-aa7e-0db6a842f804.png?v=1777741827472",
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 294,
+  "costDucats": 231,
+  "startingDucats": 80,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 172,
+  "upgradeCostConstruction": 221,
+  "sectorId": "sector:industry",
+  "industryId": "industry:metallurgy",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:copper_ore",
+      "amount": 26
+    },
+    {
+      "goodId": "good:electricity",
+      "amount": 10
+    },
+    {
+      "goodId": "good:chemicals",
+      "amount": 3
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:nonferrous_metals",
+      "amount": 49.5
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:machinist",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 480
+    }
+  ],
+  "infrastructureUse": 6,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.nonferrous_metals_factory.name"
+}

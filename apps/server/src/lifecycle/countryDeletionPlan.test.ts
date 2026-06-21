@@ -9,6 +9,7 @@ function createWorldBase(): WorldBase {
       "country:a": { culture: 1, science: 1, religion: 1, colonization: 1, construction: 1, ducats: 1, gold: 1 },
     },
     resourceLedgerByTurn: {},
+    explanationRecordsByTurn: {},
     regionOwner: {
       "6": "country:a",
     },
@@ -68,9 +69,25 @@ function createWorldBase(): WorldBase {
         lastCompletedTechnologyIds: [],
       },
     },
-    countryDecisionsByCountryId: { "country:a": { completedDecisionIds: [], cooldownUntilTurnByDecisionId: {}, history: [] } },
+    countryDecisionsByCountryId: { "country:a": { completedDecisionIds: [], cooldownUntilTurnByDecisionId: {}, usesByDecisionId: {}, usesByDecisionTargetKey: {}, chargesByDecisionId: {}, lastChargeTurnByDecisionId: {}, history: [] } },
     countryEventsByCountryId: {
       "country:a": { pending: [], completedEventIds: [], cooldownUntilTurnByEventId: {}, history: [] },
+    },
+    countryScheduledEventsByCountryId: { "country:a": [] },
+    countryEventFlagsByCountryId: { "country:a": { "event:test": true } },
+    journalEntriesByCountryId: { "country:a": { active: [], completedJournalEntryIds: [], failedJournalEntryIds: [], cooldownUntilTurnByJournalEntryId: {}, history: [] } },
+    countryModifiersByCountryId: {
+      "country:a": [
+        {
+          id: "applied-modifier:a",
+          modifierId: "modifier:test",
+          countryId: "country:a",
+          sourceSystem: "event",
+          sourceId: "event:test",
+          createdTurnId: 1,
+          expiresTurnId: null,
+        },
+      ],
     },
     divisionTemplatesByCountry: { "country:a": [] },
     divisionsById: {
@@ -153,6 +170,10 @@ describe("country deletion plan", () => {
       parliamentEntry: true,
       decisionEntry: true,
       eventEntry: true,
+      scheduledEventEntry: true,
+      eventFlagsEntry: true,
+      journalEntry: true,
+      countryModifiersEntry: true,
       orderTurns: [5],
       resolveReadyTurns: [5],
       assetRefs: [

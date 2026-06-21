@@ -36,8 +36,26 @@ export function createBuildingRuntime(params: BuildingRuntimeParams) {
   const parseRequestedBuildingIdFromPayloadForRuntime = (payload: Record<string, unknown>): string =>
     parseRequestedBuildingIdFromPayload(payload, params.getGameSettings().content.buildings[0]?.id || "");
 
-  const getProvinceBuildRestrictionForRuntime = (building: BuildingContentEntry, provinceId: string): string | null =>
-    getProvinceBuildRestriction(building, params.getProvinceById().get(provinceId));
+  const getProvinceBuildRestrictionForRuntime = (building: BuildingContentEntry, provinceOrRegionId: string): string | null => {
+    const provinceById = params.getProvinceById();
+    const exactProvince = provinceById.get(provinceOrRegionId);
+    if (exactProvince) {
+      return getProvinceBuildRestriction(building, exactProvince);
+    }
+
+    const regionProvinces = [...provinceById.values()].filter((province) => province.regionId === provinceOrRegionId);
+    if (regionProvinces.length === 0) {
+      return "Регион не найден в индексе карты";
+    }
+
+    let firstRestriction: string | null = null;
+    for (const province of regionProvinces) {
+      const restriction = getProvinceBuildRestriction(building, province);
+      if (!restriction) return null;
+      firstRestriction ??= restriction;
+    }
+    return firstRestriction;
+  };
 
   const getProvinceFertilityMultiplier = (provinceId: string): number => {
     const fertility = Number(params.getProvinceById().get(provinceId)?.fertility ?? 100);

@@ -24,7 +24,7 @@ import type { GameSettings } from "./gameSettingsTypes";
 import type { ContentEntryKind } from "../content/contentEntryPayload";
 import type { ContentEntryPayload, ContentEntryRouteItem } from "../routes/contentEntryRoutes";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
-import type { EventLogEntry, ResourceTotals, ServerStatus, WORLD_DELTA_MASK, WsOutMessage } from "@arcanorum/shared";
+import type { EventLogEntry, ResourceId, ResourceTotals, ServerStatus, WORLD_DELTA_MASK, WsOutMessage } from "@arcanorum/shared";
 
 type CoreRouteCompositionParams = {
   app: Express;
@@ -57,6 +57,7 @@ type CoreRouteCompositionParams = {
   getOnlineCountryIds: () => Set<string>;
   getAiControlledCountryIds: () => Set<string>;
   getCountryResources: (countryId: string) => ResourceTotals | null;
+  getCountryResourceNetByTurn: (countryId: string) => Partial<Record<ResourceId, number>>;
   getLastLoginAt: (countryId: string) => string | null;
   getCurrentTurnStartedAtMs: () => number;
   getGameSettings: () => GameSettings;
@@ -117,6 +118,7 @@ export function registerCoreRouteComposition(params: CoreRouteCompositionParams)
     getOnlineCountryIds: params.getOnlineCountryIds,
     getAiControlledCountryIds: params.getAiControlledCountryIds,
     getCountryResources: params.getCountryResources,
+    getCountryResourceNetByTurn: params.getCountryResourceNetByTurn,
     getCountryBlockInfo: params.countryRuntimeHelpers.getCountryBlockInfo,
     getCountrySkipInfo: params.countryRuntimeHelpers.getCountrySkipInfo,
     getLastLoginAt: params.getLastLoginAt,
@@ -146,7 +148,6 @@ export function registerCoreRouteComposition(params: CoreRouteCompositionParams)
           currentTurnStartedAtMs: params.getCurrentTurnStartedAtMs(),
         },
         map: gameSettings.map,
-        resourceIcons: gameSettings.resourceIcons,
       };
     },
     getCivilopedia: () => params.getGameSettings().civilopedia,

@@ -1,0 +1,79 @@
+{
+  "id": "building:steel_factory",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 294,
+  "costDucats": 231,
+  "startingDucats": 80,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 172,
+  "upgradeCostConstruction": 221,
+  "sectorId": "sector:industry",
+  "industryId": "industry:metallurgy",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:iron_ore",
+      "amount": 32
+    },
+    {
+      "goodId": "good:coal",
+      "amount": 16
+    },
+    {
+      "goodId": "good:electricity",
+      "amount": 6
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:steel",
+      "amount": 59.41
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:machinist",
+      "workers": 520
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 480
+    }
+  ],
+  "infrastructureUse": 7,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.steel_factory.name"
+}

@@ -1,0 +1,83 @@
+{
+  "id": "building:nuclear_fuel_power_plant",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 560,
+  "costDucats": 440,
+  "startingDucats": 152,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 328,
+  "upgradeCostConstruction": 420,
+  "sectorId": "sector:energy",
+  "industryId": "industry:energy",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:nuclear_fuel",
+      "amount": 3
+    },
+    {
+      "goodId": "good:energy_equipment",
+      "amount": 3
+    },
+    {
+      "goodId": "good:research",
+      "amount": 2
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:electricity",
+      "amount": 169.4
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:engineer",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:scientist",
+      "workers": 180
+    },
+    {
+      "professionId": "profession:technician",
+      "workers": 260
+    },
+    {
+      "professionId": "profession:manager",
+      "workers": 80
+    }
+  ],
+  "infrastructureUse": 2,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.nuclear_fuel_power_plant.name"
+}

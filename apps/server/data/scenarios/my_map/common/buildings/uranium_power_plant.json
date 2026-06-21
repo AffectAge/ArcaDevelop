@@ -1,0 +1,75 @@
+{
+  "id": "building:uranium_power_plant",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 448,
+  "costDucats": 352,
+  "startingDucats": 122,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 262,
+  "upgradeCostConstruction": 336,
+  "sectorId": "sector:energy",
+  "industryId": "industry:energy",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:uranium",
+      "amount": 5
+    },
+    {
+      "goodId": "good:energy_equipment",
+      "amount": 2
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:electricity",
+      "amount": 117.87
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:electrician",
+      "workers": 540
+    },
+    {
+      "professionId": "profession:engineer",
+      "workers": 120
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 180
+    }
+  ],
+  "infrastructureUse": 2,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.uranium_power_plant.name"
+}

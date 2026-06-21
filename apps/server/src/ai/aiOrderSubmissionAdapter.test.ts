@@ -73,6 +73,7 @@ function createPlan(
       maxCountriesPerTick: 1,
       maxDecisionCandidatesPerCountry: 1,
       contextCacheTtlTurns: 1,
+      maxBuildCompletionTurns: 8,
     },
     actions: [
       {

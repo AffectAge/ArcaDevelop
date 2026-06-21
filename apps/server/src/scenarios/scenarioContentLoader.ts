@@ -27,12 +27,17 @@ export const scenarioContentFileNames = [
   ["modifiers", ["modifiers.json"]],
   ["decisions", ["decisions.json"]],
   ["events", ["events.json"]],
+  ["journalEntries", ["journal_entries.json", "journalEntries.json"]],
   ["battalions", ["battalions.json"]],
   ["shipTypes", ["ship_types.json", "shipTypes.json"]],
   ["aircraftTypes", ["aircraft_types.json", "aircraftTypes.json"]],
 ] as const;
 
 export type ScenarioContentKey = (typeof scenarioContentFileNames)[number][0];
+
+const perEntityDirectoryAliases: Partial<Record<ScenarioContentKey, string[]>> = {
+  journalEntries: ["journal_entries", "journalEntries"],
+};
 
 export function loadRawScenarioContent(scenarioDir: string): Record<string, unknown> | null {
   const perEntityContent = loadPerEntityScenarioContent(scenarioDir);
@@ -66,7 +71,8 @@ function loadPerEntityScenarioContent(scenarioDir: string): Record<string, unkno
   const merged: Record<string, unknown> = {};
 
   for (const [key] of scenarioContentFileNames) {
-    const entries = listJsonObjectsRecursively(resolve(commonDir, key)).map((entry) => {
+    const directories = perEntityDirectoryAliases[key] ?? [key];
+    const entries = directories.flatMap((directory) => listJsonObjectsRecursively(resolve(commonDir, directory))).map((entry) => {
       const nameKey = typeof entry.nameKey === "string" ? entry.nameKey : null;
       if (!nameKey || typeof entry.name === "string") return entry;
       return {

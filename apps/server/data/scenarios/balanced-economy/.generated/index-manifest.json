@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "scenarioId": "balanced-economy",
-  "authoredHash": "9257208b516ad859ec22fbbac1908b28aa6e9f2e15486e835e2a966f84479cbb",
-  "generatedAt": "2026-06-17T17:05:25.639Z",
+  "authoredHash": "3a2c774e2d9b89472f169d840b1cbd403cbb15944fd44a6066154144bba6f4bf",
+  "generatedAt": "2026-06-21T09:57:46.229Z",
   "files": [
     "common/buildings/02b92dab-5bb9-4e7e-bc43-406a5e0a16fe.json",
     "common/buildings/06145427-80c2-48cb-929f-9e04d9ce83bd.json",
@@ -127,9 +127,12 @@
     "common/companies/6b813210-eb6d-48ff-a931-dc903f666368.json",
     "common/cultures/default.json",
     "common/decisions/38d624ab-e2a6-4479-9e60-0507988043d7.json",
+    "common/decisions/example_launch_industrial_program.json",
     "common/defines.json",
     "common/events/489296a7-2807-4a34-9866-4c287612e8fd.json",
     "common/events/70df3c83-3973-4f50-b9b3-afa78b599ff3.json",
+    "common/events/example_industrial_program_failure.json",
+    "common/events/example_industrial_program_success.json",
     "common/goods/07f3ef5a-24be-4236-b112-fdc9fbf27286.json",
     "common/goods/156a58bb-3e5f-4fa4-9c8e-f929db64e7a4.json",
     "common/goods/39a4b3da-d82a-4f4a-828c-1355dc0936a8.json",
@@ -239,6 +242,8 @@
     "common/industries/military.json",
     "common/industries/mining.json",
     "common/industries/services.json",
+    "common/journal_entries/example_industrial_program.json",
+    "common/journal_entries/example_treasury_reserve.json",
     "common/lawGroups/bc6ce292-c6ee-470b-bde0-1470d260a66a.json",
     "common/laws/21aa620e-ace9-4aa4-8d30-d9fc00c1561e.json",
     "common/laws/99fcdfd5-4d2f-40a5-ba09-89d476a50a88.json",
@@ -6418,13 +6423,14 @@
     "history/regions/world.json",
     "localisation/en.json",
     "localisation/ru.json",
+    "map/map-meta.json",
     "scenario.json"
   ],
   "counts": {
     "provinces": 6119,
     "regions": 1,
     "countries": 1,
-    "contentEntries": 290,
+    "contentEntries": 295,
     "arcawikiEntries": 0
   }
 }

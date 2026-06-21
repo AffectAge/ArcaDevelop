@@ -114,6 +114,84 @@ describe("worldDeltaDiff", () => {
     expect(compact.f).toEqual({ "region:a": "country:a" });
   });
 
+  it("diffs explanation records by turn with compact xr payload", () => {
+    const prev = makeWorldBase({
+      explanationRecordsByTurn: {},
+    });
+    const next = makeWorldBase({
+      explanationRecordsByTurn: {
+        5: [
+          {
+            id: "explanation:test",
+            turnId: 5,
+            sourceSystem: "event",
+            sourceId: "event:test",
+            affectedObject: { kind: "country", id: "country:a" },
+            valueKey: "resource.science",
+            previousValue: 1,
+            newValue: 3,
+            causes: [{ labelKey: "resourceLedger.source.generic", sourceId: "option:test", amount: 2 }],
+            modifierIds: [],
+          },
+        ],
+      },
+    });
+
+    const compact = buildCompactWorldDelta({
+      prev,
+      next,
+      isEqualRegionPopulation: (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b),
+    });
+
+    expect(compact.mask).toBe(WORLD_DELTA_MASK.explanationRecordsByTurn);
+    expect(compact.xr).toEqual(next.explanationRecordsByTurn);
+  });
+
+  it("diffs country applied modifiers with compact cm payload", () => {
+    const prev = makeWorldBase({
+      countryModifiersByCountryId: {
+        "country:old": [
+          {
+            id: "applied:old",
+            modifierId: "modifier:old",
+            countryId: "country:old",
+            sourceSystem: "event",
+            sourceId: "event:old",
+            createdTurnId: 1,
+            expiresTurnId: null,
+          },
+        ],
+      },
+    });
+    const next = makeWorldBase({
+      countryModifiersByCountryId: {
+        "country:a": [
+          {
+            id: "applied:test",
+            modifierId: "modifier:test",
+            countryId: "country:a",
+            sourceSystem: "decision",
+            sourceId: "decision:test",
+            createdTurnId: 5,
+            expiresTurnId: 8,
+          },
+        ],
+      },
+    });
+
+    const compact = buildCompactWorldDelta({
+      prev,
+      next,
+      isEqualRegionPopulation: (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b),
+    });
+
+    expect(compact.mask).toBe(WORLD_DELTA_MASK.countryModifiersByCountryId);
+    expect(compact.cm).toEqual({
+      "country:old": null,
+      "country:a": next.countryModifiersByCountryId["country:a"],
+    });
+  });
+
   it("builds region-owned heavy compact deltas and baseline payload sections", () => {
     const building = makeBuildingInstance({ instanceId: "instance:region-a" });
     const project = makeProject({ queueId: "queue:region-a", progressConstruction: 4 });
@@ -402,12 +480,17 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     technologyByCountry: {},
     countryDecisionsByCountryId: {},
     countryEventsByCountryId: {},
+    countryScheduledEventsByCountryId: {},
+    countryEventFlagsByCountryId: {},
+    journalEntriesByCountryId: {},
     divisionTemplatesByCountry: {},
     divisionsById: {},
     militaryFormationQueueByCountry: {},
     diplomacyProposals: [],
     ...overrides,
+    countryModifiersByCountryId: overrides?.countryModifiersByCountryId ?? {},
     resourceLedgerByTurn: overrides?.resourceLedgerByTurn ?? {},
+    explanationRecordsByTurn: overrides?.explanationRecordsByTurn ?? {},
   };
 }
 

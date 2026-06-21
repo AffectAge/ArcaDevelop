@@ -1,0 +1,8 @@
+{
+  "id": "industry:light",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "sectorId": "sector:consumer",
+  "nameKey": "industries.light.name"
+}

@@ -143,6 +143,7 @@ export type UiTextKey =
   | "contentPanel.category.ideologies"
   | "contentPanel.category.industries"
   | "contentPanel.category.interestGroups"
+  | "contentPanel.category.journalEntries"
   | "contentPanel.category.lawGroups"
   | "contentPanel.category.laws"
   | "contentPanel.category.modifiers"
@@ -702,6 +703,12 @@ export type UiTextKey =
   | "contentPanel.meta.events.namePlaceholder"
   | "contentPanel.meta.events.descriptionPlaceholder"
   | "contentPanel.meta.events.sectionTitle"
+  | "contentPanel.meta.journalEntries.singular"
+  | "contentPanel.meta.journalEntries.createBaseName"
+  | "contentPanel.meta.journalEntries.createLabel"
+  | "contentPanel.meta.journalEntries.namePlaceholder"
+  | "contentPanel.meta.journalEntries.descriptionPlaceholder"
+  | "contentPanel.meta.journalEntries.sectionTitle"
   | "contentPanel.searchPlaceholder"
   | "contentPanel.option.decisionCategory.colonization"
   | "contentPanel.option.decisionCategory.culture"
@@ -814,12 +821,34 @@ export type UiTextKey =
   | "contentPanel.section.triggersOptions"
   | "countryEvents.choiceRequired"
   | "countryEvents.defaultEvent"
+  | "countryEvents.effectAddModifier"
+  | "countryEvents.effectCancelEvent"
+  | "countryEvents.effectClearFlag"
+  | "countryEvents.effectExtendModifier"
   | "countryEvents.effectFallback"
+  | "countryEvents.effectAdvanceJournal"
+  | "countryEvents.effectCancelJournal"
+  | "countryEvents.effectChangeColonizationProgress"
+  | "countryEvents.effectRemoveModifier"
+  | "countryEvents.effectScheduleEvent"
+  | "countryEvents.effectSetFlag"
+  | "countryEvents.effectClearJournalVariable"
+  | "countryEvents.effectCompleteJournal"
+  | "countryEvents.effectFailJournal"
+  | "countryEvents.effectSetJournalVariable"
+  | "countryEvents.effectStartJournal"
+  | "countryEvents.effectTriggerEvent"
   | "countryEvents.empty"
   | "countryEvents.emptyDescription"
+  | "countryEvents.expiresTurn"
   | "countryEvents.historyEmpty"
   | "countryEvents.historyEmptyDescription"
+  | "countryEvents.historyEffectLine"
+  | "countryEvents.historyEffects"
+  | "countryEvents.historyExplanations"
   | "countryEvents.historyMeta"
+  | "countryEvents.historyScopes"
+  | "countryEvents.historyScopesNone"
   | "countryEvents.important"
   | "countryEvents.importantPending"
   | "countryEvents.loadFailed"
@@ -828,8 +857,73 @@ export type UiTextKey =
   | "countryEvents.notificationLoadingDescription"
   | "countryEvents.optionFailed"
   | "countryEvents.processed"
+  | "countryEvents.scopeRegion"
   | "countryEvents.storySubtitle"
+  | "countryEvents.triggerExplanationLine"
   | "countryEvents.title"
+  | "countryJournal.activeSummary"
+  | "countryJournal.activeTab"
+  | "countryJournal.category.colonization"
+  | "countryJournal.category.crisis"
+  | "countryJournal.category.diplomacy"
+  | "countryJournal.category.economy"
+  | "countryJournal.category.military"
+  | "countryJournal.category.politics"
+  | "countryJournal.category.regional"
+  | "countryJournal.category.society"
+  | "countryJournal.category.technology"
+  | "countryJournal.countryStateHint"
+  | "countryJournal.description"
+  | "countryJournal.emptyActive"
+  | "countryJournal.emptyActiveDescription"
+  | "countryJournal.emptyHistory"
+  | "countryJournal.emptyHistoryDescription"
+  | "countryJournal.explanationLine"
+  | "countryJournal.historyMeta"
+  | "countryJournal.historyTab"
+  | "countryJournal.priority.critical"
+  | "countryJournal.priority.high"
+  | "countryJournal.priority.low"
+  | "countryJournal.priority.medium"
+  | "countryJournal.progressValue"
+  | "countryJournal.scope"
+  | "countryJournal.state.cancelled"
+  | "countryJournal.state.completed"
+  | "countryJournal.state.failed"
+  | "countryJournal.title"
+  | "countryJournal.turnsRemaining"
+  | "event.trigger.always"
+  | "event.trigger.buildingEmploymentBelow"
+  | "event.trigger.buildingOutputAbove"
+  | "event.trigger.buildingProfitBelow"
+  | "event.trigger.countryControlsRegionCountAbove"
+  | "event.trigger.countryControlsRegionCountBelow"
+  | "event.trigger.countryHasModifier"
+  | "event.trigger.countryIs"
+  | "event.trigger.countryResourceAbove"
+  | "event.trigger.countryResourceBelow"
+  | "event.trigger.controlsForeignRegion"
+  | "event.trigger.invalid"
+  | "event.trigger.legacyConditions"
+  | "event.trigger.regionControllerIs"
+  | "event.trigger.regionColonizationProgressAbove"
+  | "event.trigger.regionColonizationProgressBelow"
+  | "event.trigger.regionHasBuilding"
+  | "event.trigger.regionHasResourceDeposit"
+  | "event.trigger.regionIsColonizable"
+  | "event.trigger.regionLoyalistsAbove"
+  | "event.trigger.regionOwnerIs"
+  | "event.trigger.regionPopulationAbove"
+  | "event.trigger.regionPopulationBelow"
+  | "event.trigger.regionRadicalsAbove"
+  | "event.trigger.regionStandardOfLivingBelow"
+  | "event.trigger.resourceFlowNegative"
+  | "events.489296a7_2807_4a34_9866_4c287612e8fd.name"
+  | "events.489296a7_2807_4a34_9866_4c287612e8fd.description"
+  | "events.489296a7_2807_4a34_9866_4c287612e8fd.option.acknowledge"
+  | "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.name"
+  | "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.description"
+  | "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.option.ok"
   | "customization.afterPurchase"
   | "customization.applied"
   | "customization.applyFailed"
@@ -905,7 +999,6 @@ export type UiTextKey =
   | "gameSettings.category.economy"
   | "gameSettings.category.eventLog"
   | "gameSettings.category.registration"
-  | "gameSettings.category.resourceIcons"
   | "gameSettings.category.scenarios"
   | "gameSettings.category.turnTimer"
   | "gameSettings.chooseFile"
@@ -970,14 +1063,6 @@ export type UiTextKey =
   | "gameSettings.registrationSaveFailed"
   | "gameSettings.registrationTitle"
   | "gameSettings.resource.population"
-  | "gameSettings.resourceIconEmpty"
-  | "gameSettings.resourceIconSelectFirst"
-  | "gameSettings.resourceIconsSaved"
-  | "gameSettings.resourceIconsSaveFailed"
-  | "gameSettings.resourceIconsTitle"
-  | "gameSettings.resourceIconsUpload"
-  | "gameSettings.resourceIconTooLarge"
-  | "gameSettings.resourceIconTooLargeFor"
   | "gameSettings.scenarioActive"
   | "gameSettings.scenarioApplied"
   | "gameSettings.scenarioAppliedDescription"
@@ -1163,8 +1248,13 @@ export type UiTextKey =
   | "decisions.emptyLocked"
   | "decisions.emptyTitle"
   | "decisions.history"
+  | "decisions.historyEffectLine"
+  | "decisions.historyEffects"
   | "decisions.historyEmpty"
   | "decisions.historyEmptyDescription"
+  | "decisions.historyExplanations"
+  | "decisions.historyScopes"
+  | "decisions.historyScopesNone"
   | "decisions.loadFailed"
   | "decisions.loading"
   | "decisions.loadingDescription"
@@ -1179,6 +1269,30 @@ export type UiTextKey =
   | "decisions.resource.gold"
   | "decisions.resource.religion"
   | "decisions.resource.science"
+  | "decisions.reason.alreadyTaken"
+  | "decisions.reason.chargesEmpty"
+  | "decisions.reason.conditionsFailed"
+  | "decisions.reason.countryUseLimit"
+  | "decisions.reason.cooldown"
+  | "decisions.reason.insufficientResource"
+  | "decisions.reason.missingResources"
+  | "decisions.reason.potentialFailed"
+  | "decisions.reason.scopeFailed"
+  | "decisions.reason.targetUseLimit"
+  | "decisions.reason.visibilityFailed"
+  | "decisions.scope"
+  | "decisions.scope.building"
+  | "decisions.scope.country"
+  | "decisions.scope.diplomaticRelation"
+  | "decisions.scope.interestGroup"
+  | "decisions.scope.journalEntry"
+  | "decisions.scope.law"
+  | "decisions.scope.market"
+  | "decisions.scope.object"
+  | "decisions.scope.pop"
+  | "decisions.scope.region"
+  | "decisions.scope.war"
+  | "decisions.scopeLine"
   | "decisions.storySubtitle"
   | "decisions.take"
   | "decisions.taken"
@@ -2286,6 +2400,8 @@ export type UiTextKey =
   | "shell.action.eventsDescription"
   | "shell.action.globalMarket"
   | "shell.action.globalMarketDescription"
+  | "shell.action.journal"
+  | "shell.action.journalDescription"
   | "shell.action.market"
   | "shell.action.marketDescription"
   | "shell.action.modifiers"
@@ -2299,7 +2415,6 @@ export type UiTextKey =
   | "shell.action.turnStatus"
   | "shell.action.turnStatusDescription"
   | "shell.admin"
-  | "shell.adminConsole"
   | "shell.adminPanel"
   | "shell.availableActions"
   | "shell.clientSettings"
@@ -2365,19 +2480,22 @@ export type UiTextKey =
   | "shell.logoutMessage"
   | "shell.logoutToast"
   | "shell.logoutTitle"
-  | "shell.mapLens.army"
-  | "shell.mapLens.colonization"
-  | "shell.mapLens.construction"
-  | "shell.mapLens.diplomacy"
-  | "shell.mapLens.governance"
-  | "shell.mapLens.market"
-  | "shell.mapLens.overview"
-  | "shell.mapLens.population"
-  | "shell.mapLens.title"
   | "shell.metric.area"
   | "shell.metric.colonies"
   | "shell.metric.population"
   | "shell.metric.regions"
+  | "shell.marketTrade.empty"
+  | "shell.marketTrade.exports"
+  | "shell.marketTrade.exportsTooltip"
+  | "shell.marketTrade.good"
+  | "shell.marketTrade.imports"
+  | "shell.marketTrade.importsTooltip"
+  | "shell.marketTrade.loading"
+  | "shell.marketTrade.noPartners"
+  | "shell.marketTrade.price"
+  | "shell.marketTrade.priceDeltaTooltip"
+  | "shell.marketTrade.priceTooltip"
+  | "shell.marketTrade.title"
   | "shell.mode.army"
   | "shell.mode.armyDescription"
   | "shell.mode.colonization"
@@ -2437,6 +2555,7 @@ export type UiTextKey =
   | "shell.preview.subsidies"
   | "shell.preview.topCulture"
   | "shell.preview.topProfession"
+  | "shell.preview.unknownBuilding"
   | "shell.resource.colonization"
   | "shell.resource.construction"
   | "shell.resource.culture"
@@ -2549,12 +2668,10 @@ export type UiTextKey =
   | "shell.unnamedCountry"
   | "shell.worldResyncFailed"
   | "shell.worldResynced"
-  | "shell.workspace"
   | "shell.workspaceTab.actions"
-  | "shell.workspaceTab.admin"
-  | "shell.workspaceTab.readiness"
   | "shell.workspaceTab.records"
   | "shell.workspaceTab.summary"
+  | "shell.workspaceTab.trade"
   | "shell.workspaceTabs"
   | "resourceLedger.category.base"
   | "resourceLedger.category.colonization"
@@ -2762,6 +2879,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.category.ideologies": "Ideologies",
     "contentPanel.category.industries": "Industries",
     "contentPanel.category.interestGroups": "Interest groups",
+    "contentPanel.category.journalEntries": "Journal entries",
     "contentPanel.category.lawGroups": "Law groups",
     "contentPanel.category.laws": "Laws",
     "contentPanel.category.modifiers": "Modifiers",
@@ -3321,6 +3439,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.meta.events.namePlaceholder": "Event name",
     "contentPanel.meta.events.descriptionPlaceholder": "Event text shown to the player",
     "contentPanel.meta.events.sectionTitle": "Country event creation and editing section",
+    "contentPanel.meta.journalEntries.singular": "journal entry",
+    "contentPanel.meta.journalEntries.createBaseName": "New journal entry",
+    "contentPanel.meta.journalEntries.createLabel": "Create journal entry",
+    "contentPanel.meta.journalEntries.namePlaceholder": "Journal entry name",
+    "contentPanel.meta.journalEntries.descriptionPlaceholder": "Long-term objective text shown to the player",
+    "contentPanel.meta.journalEntries.sectionTitle": "Journal entry creation and editing section",
     "contentPanel.searchPlaceholder": "Search: {item}",
     "contentPanel.option.decisionCategory.colonization": "Colonization",
     "contentPanel.option.decisionCategory.culture": "Culture",
@@ -3433,12 +3557,34 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.section.triggersOptions": "Triggers and options",
     "countryEvents.choiceRequired": "Event requires a choice",
     "countryEvents.defaultEvent": "Event",
+    "countryEvents.effectAddModifier": "Add modifier {modifierId} for {turns} turns (0 = permanent)",
+    "countryEvents.effectCancelEvent": "Cancel event {eventId}",
+    "countryEvents.effectClearFlag": "Clear flag {flagId}",
+    "countryEvents.effectExtendModifier": "Extend modifier {modifierId} by {turns} turns",
     "countryEvents.effectFallback": "Effect",
+    "countryEvents.effectAdvanceJournal": "Advance journal entry {journalEntryId} by {amount}",
+    "countryEvents.effectCancelJournal": "Cancel journal entry {journalEntryId}",
+    "countryEvents.effectChangeColonizationProgress": "Change colonization progress by {amount}",
+    "countryEvents.effectRemoveModifier": "Remove modifier {modifierId}",
+    "countryEvents.effectClearJournalVariable": "Clear journal variable {variableId} in {journalEntryId}",
+    "countryEvents.effectCompleteJournal": "Complete journal entry {journalEntryId}",
+    "countryEvents.effectFailJournal": "Fail journal entry {journalEntryId}",
+    "countryEvents.effectScheduleEvent": "Schedule event {eventId} in {turns} turns",
+    "countryEvents.effectSetFlag": "Set flag {flagId}",
+    "countryEvents.effectSetJournalVariable": "Set journal variable {variableId} in {journalEntryId}",
+    "countryEvents.effectStartJournal": "Start journal entry {journalEntryId}",
+    "countryEvents.effectTriggerEvent": "Trigger event {eventId}",
     "countryEvents.empty": "No events",
     "countryEvents.emptyDescription": "The country has no pending events right now.",
+    "countryEvents.expiresTurn": "Auto choice can happen on turn {turn}",
     "countryEvents.historyEmpty": "History is empty",
     "countryEvents.historyEmptyDescription": "The country has not chosen event options yet.",
+    "countryEvents.historyEffectLine": "{type}: {resource} {amount} ({target})",
+    "countryEvents.historyEffects": "Applied effects",
+    "countryEvents.historyExplanations": "{count} explanation records",
     "countryEvents.historyMeta": "{option} · turn {turn}",
+    "countryEvents.historyScopes": "Targets: {scopes}",
+    "countryEvents.historyScopesNone": "none",
     "countryEvents.important": "Important",
     "countryEvents.importantPending": "{count} important events await a choice",
     "countryEvents.loadFailed": "Failed to load events",
@@ -3447,8 +3593,73 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "countryEvents.notificationLoadingDescription": "Opening the event from notification.",
     "countryEvents.optionFailed": "Failed to choose option",
     "countryEvents.processed": "Event processed",
+    "countryEvents.scopeRegion": "Region",
     "countryEvents.storySubtitle": "Country event · turn {turn}",
+    "countryEvents.triggerExplanationLine": "{label}: {value} / {threshold}",
     "countryEvents.title": "Country events",
+    "countryJournal.activeSummary": "{count} active entries, {critical} critical",
+    "countryJournal.activeTab": "Active",
+    "countryJournal.category.colonization": "Colonization",
+    "countryJournal.category.crisis": "Crisis",
+    "countryJournal.category.diplomacy": "Diplomacy",
+    "countryJournal.category.economy": "Economy",
+    "countryJournal.category.military": "Military",
+    "countryJournal.category.politics": "Politics",
+    "countryJournal.category.regional": "Regional",
+    "countryJournal.category.society": "Society",
+    "countryJournal.category.technology": "Technology",
+    "countryJournal.countryStateHint": "State shown for {countryId}",
+    "countryJournal.description": "Track long-term country objectives and their outcomes.",
+    "countryJournal.emptyActive": "No active journal entries",
+    "countryJournal.emptyActiveDescription": "New entries appear when scenario triggers pass during turn resolution.",
+    "countryJournal.emptyHistory": "No journal history",
+    "countryJournal.emptyHistoryDescription": "Completed, failed, and cancelled entries will appear here.",
+    "countryJournal.explanationLine": "{label}: {value} / {threshold}",
+    "countryJournal.historyMeta": "{state} · started {started} · resolved {resolved}",
+    "countryJournal.historyTab": "History",
+    "countryJournal.priority.critical": "Critical",
+    "countryJournal.priority.high": "High",
+    "countryJournal.priority.low": "Low",
+    "countryJournal.priority.medium": "Medium",
+    "countryJournal.progressValue": "{current}/{target}",
+    "countryJournal.scope": "Scope",
+    "countryJournal.state.cancelled": "Cancelled",
+    "countryJournal.state.completed": "Completed",
+    "countryJournal.state.failed": "Failed",
+    "countryJournal.title": "Journal",
+    "countryJournal.turnsRemaining": "{turns} turns",
+    "event.trigger.always": "Always",
+    "event.trigger.buildingEmploymentBelow": "Building employment below",
+    "event.trigger.buildingOutputAbove": "Building output above",
+    "event.trigger.buildingProfitBelow": "Building profit below",
+    "event.trigger.countryControlsRegionCountAbove": "Controlled regions above",
+    "event.trigger.countryControlsRegionCountBelow": "Controlled regions below",
+    "event.trigger.countryHasModifier": "Country modifier active",
+    "event.trigger.countryIs": "Country",
+    "event.trigger.countryResourceAbove": "Country resource above",
+    "event.trigger.countryResourceBelow": "Country resource below",
+    "event.trigger.controlsForeignRegion": "Controls foreign region",
+    "event.trigger.invalid": "Invalid trigger",
+    "event.trigger.legacyConditions": "Legacy conditions",
+    "event.trigger.regionControllerIs": "Region controller",
+    "event.trigger.regionColonizationProgressAbove": "Region colonization progress above",
+    "event.trigger.regionColonizationProgressBelow": "Region colonization progress below",
+    "event.trigger.regionHasBuilding": "Region building",
+    "event.trigger.regionHasResourceDeposit": "Region resource deposit",
+    "event.trigger.regionIsColonizable": "Region is colonizable",
+    "event.trigger.regionLoyalistsAbove": "Region loyalists above",
+    "event.trigger.regionOwnerIs": "Region owner",
+    "event.trigger.regionPopulationAbove": "Region population above",
+    "event.trigger.regionPopulationBelow": "Region population below",
+    "event.trigger.regionRadicalsAbove": "Region radicals above",
+    "event.trigger.regionStandardOfLivingBelow": "Region standard of living below",
+    "event.trigger.resourceFlowNegative": "Resource flow negative",
+    "events.489296a7_2807_4a34_9866_4c287612e8fd.name": "Global Climate Pact",
+    "events.489296a7_2807_4a34_9866_4c287612e8fd.description": "An emergency international summit on climate, energy, and industrial transformation has concluded in the capital of a neutral state.\n\nAfter a series of destructive droughts, floods, and energy crises, the world's leading powers are demanding a new global agreement. Some states insist on strict emissions limits and major investment in green energy. Others argue that these measures will undermine industry, exports, and economic growth.\n\nDiplomats warn that the summit's outcome will shape international politics for decades.",
+    "events.489296a7_2807_4a34_9866_4c287612e8fd.option.acknowledge": "Acknowledge",
+    "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.name": "New Event",
+    "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.description": "A scenario-authored event is waiting for a country response.",
+    "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.option.ok": "Understood",
     "customization.afterPurchase": "After purchase",
     "customization.applied": "Changes applied (-{ducats} ducats)",
     "customization.applyFailed": "Failed to apply country changes",
@@ -3524,7 +3735,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "gameSettings.category.economy": "Economy",
     "gameSettings.category.eventLog": "Event log",
     "gameSettings.category.registration": "Registration",
-    "gameSettings.category.resourceIcons": "Point icons",
     "gameSettings.category.scenarios": "Scenarios",
     "gameSettings.category.turnTimer": "Turn timer",
     "gameSettings.chooseFile": "Choose file",
@@ -3589,14 +3799,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "gameSettings.registrationSaveFailed": "Failed to save registration settings",
     "gameSettings.registrationTitle": "New country registration",
     "gameSettings.resource.population": "Population",
-    "gameSettings.resourceIconEmpty": "No icon",
-    "gameSettings.resourceIconSelectFirst": "Choose at least one icon first",
-    "gameSettings.resourceIconsSaved": "Point icons updated",
-    "gameSettings.resourceIconsSaveFailed": "Failed to update point icons",
-    "gameSettings.resourceIconsTitle": "Top bar point icons (max 64x64)",
-    "gameSettings.resourceIconsUpload": "Upload icons",
-    "gameSettings.resourceIconTooLarge": "Icon must be at most 64x64",
-    "gameSettings.resourceIconTooLargeFor": "{resource} icon must be at most 64x64",
     "gameSettings.scenarioActive": "Active",
     "gameSettings.scenarioApplied": "Scenario applied",
     "gameSettings.scenarioAppliedDescription": "Reloading map and world state",
@@ -3782,8 +3984,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "decisions.emptyLocked": "There are no locked decisions.",
     "decisions.emptyTitle": "No decisions",
     "decisions.history": "History",
+    "decisions.historyEffectLine": "{type}: {resource} {amount} ({target})",
+    "decisions.historyEffects": "Applied effects",
     "decisions.historyEmpty": "History is empty",
     "decisions.historyEmptyDescription": "The country has not taken decisions yet.",
+    "decisions.historyExplanations": "{count} explanation records",
+    "decisions.historyScopes": "Targets: {scopes}",
+    "decisions.historyScopesNone": "none",
     "decisions.loadFailed": "Failed to load decisions",
     "decisions.loading": "Loading decisions",
     "decisions.loadingDescription": "Checking country conditions.",
@@ -3798,6 +4005,30 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "decisions.resource.gold": "Gold",
     "decisions.resource.religion": "Religion",
     "decisions.resource.science": "Science",
+    "decisions.reason.alreadyTaken": "Already taken.",
+    "decisions.reason.chargesEmpty": "No charges available: {current}/{required}.",
+    "decisions.reason.conditionsFailed": "Required conditions are not met.",
+    "decisions.reason.countryUseLimit": "Country use limit reached: {current}/{required}.",
+    "decisions.reason.cooldown": "Available after turn {required}.",
+    "decisions.reason.insufficientResource": "Need {required}; current value is {current}.",
+    "decisions.reason.missingResources": "Country resource state is unavailable.",
+    "decisions.reason.potentialFailed": "This decision does not currently apply to the country.",
+    "decisions.reason.scopeFailed": "No valid target exists for this decision.",
+    "decisions.reason.targetUseLimit": "Target use limit reached: {current}/{required}.",
+    "decisions.reason.visibilityFailed": "Hidden by visibility conditions.",
+    "decisions.scope": "Target",
+    "decisions.scope.building": "Building",
+    "decisions.scope.country": "Country",
+    "decisions.scope.diplomaticRelation": "Diplomatic relation",
+    "decisions.scope.interestGroup": "Interest group",
+    "decisions.scope.journalEntry": "Journal entry",
+    "decisions.scope.law": "Law",
+    "decisions.scope.market": "Market",
+    "decisions.scope.object": "Object",
+    "decisions.scope.pop": "Pop",
+    "decisions.scope.region": "Region",
+    "decisions.scope.war": "War",
+    "decisions.scopeLine": "{slot}: {kind} {id}",
     "decisions.storySubtitle": "Country decision · {category}",
     "decisions.take": "Take decision",
     "decisions.taken": "Decision taken",
@@ -4905,6 +5136,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.eventsDescription": "Open pending events and the country's narrative record.",
     "shell.action.globalMarket": "Global market",
     "shell.action.globalMarketDescription": "Compare goods and prices across the world.",
+    "shell.action.journal": "Journal",
+    "shell.action.journalDescription": "Open active long-term objectives and their history.",
     "shell.action.market": "Country market",
     "shell.action.marketDescription": "Review goods, prices, shortages, and trade pressure.",
     "shell.action.modifiers": "Modifiers",
@@ -4918,7 +5151,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.turnStatus": "Country readiness",
     "shell.action.turnStatusDescription": "Review who is ready to resolve the current turn.",
     "shell.admin": "Admin",
-    "shell.adminConsole": "Operator console",
     "shell.adminPanel": "Admin panel",
     "shell.availableActions": "Available actions",
     "shell.clientSettings": "Client settings",
@@ -4984,19 +5216,22 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.logoutMessage": "Player session ended",
     "shell.logoutToast": "You left the country",
     "shell.logoutTitle": "Logout",
-    "shell.mapLens.army": "Military formations and movement",
-    "shell.mapLens.colonization": "Neutral colonizable regions",
-    "shell.mapLens.construction": "Infrastructure pressure and routes",
-    "shell.mapLens.diplomacy": "Treaties and foreign reach",
-    "shell.mapLens.governance": "State regions and administration",
-    "shell.mapLens.market": "Market membership and capitals",
-    "shell.mapLens.overview": "Political ownership",
-    "shell.mapLens.population": "Population density and society",
-    "shell.mapLens.title": "Map lens",
     "shell.metric.area": "{area} km2",
     "shell.metric.colonies": "Colonies",
     "shell.metric.population": "Population",
     "shell.metric.regions": "Regions",
+    "shell.marketTrade.empty": "No trade flow is available for the current market yet.",
+    "shell.marketTrade.exports": "Exports",
+    "shell.marketTrade.exportsTooltip": "Countries buying this good from your market.",
+    "shell.marketTrade.good": "Good",
+    "shell.marketTrade.imports": "Imports",
+    "shell.marketTrade.importsTooltip": "Countries selling this good into your market.",
+    "shell.marketTrade.loading": "Loading trade overview...",
+    "shell.marketTrade.noPartners": "None",
+    "shell.marketTrade.price": "Price",
+    "shell.marketTrade.priceDeltaTooltip": "Last-turn relative price change in your market.",
+    "shell.marketTrade.priceTooltip": "Current unit price in your market.",
+    "shell.marketTrade.title": "Trade",
     "shell.mode.army": "Army",
     "shell.mode.armyDescription": "Map command mode for formations, routes, and operational control.",
     "shell.mode.colonization": "Colonization",
@@ -5056,6 +5291,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.subsidies": "Subsidies",
     "shell.preview.topCulture": "Top culture",
     "shell.preview.topProfession": "Top profession",
+    "shell.preview.unknownBuilding": "Building {id}",
     "shell.resource.colonization": "Colonization",
     "shell.resource.construction": "Construction",
     "shell.resource.culture": "Culture",
@@ -5196,12 +5432,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.unnamedCountry": "Unnamed power",
     "shell.worldResyncFailed": "Failed to synchronize world; reloading",
     "shell.worldResynced": "World state synchronized again",
-    "shell.workspace": "Workspace",
     "shell.workspaceTab.actions": "Available actions",
-    "shell.workspaceTab.admin": "Operator console",
-    "shell.workspaceTab.readiness": "Country readiness",
     "shell.workspaceTab.records": "Records",
     "shell.workspaceTab.summary": "Country summary",
+    "shell.workspaceTab.trade": "Trade",
     "shell.workspaceTabs": "Workspace tabs",
     "turnStatus.blockedPermanent": "Blocked permanently",
     "turnStatus.blockedUntilTime": "Blocked until {time}",
@@ -5380,6 +5614,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.category.ideologies": "Идеологии",
     "contentPanel.category.industries": "Отрасли",
     "contentPanel.category.interestGroups": "Группы интересов",
+    "contentPanel.category.journalEntries": "Записи журнала",
     "contentPanel.category.lawGroups": "Группы законов",
     "contentPanel.category.laws": "Законы",
     "contentPanel.category.modifiers": "Модификаторы",
@@ -5939,6 +6174,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.meta.events.namePlaceholder": "Название ивента",
     "contentPanel.meta.events.descriptionPlaceholder": "Текст события, который увидит игрок",
     "contentPanel.meta.events.sectionTitle": "Раздел создания и редактирования событий страны",
+    "contentPanel.meta.journalEntries.singular": "запись журнала",
+    "contentPanel.meta.journalEntries.createBaseName": "Новая запись журнала",
+    "contentPanel.meta.journalEntries.createLabel": "Создать запись журнала",
+    "contentPanel.meta.journalEntries.namePlaceholder": "Название записи журнала",
+    "contentPanel.meta.journalEntries.descriptionPlaceholder": "Текст долгосрочной задачи, который увидит игрок",
+    "contentPanel.meta.journalEntries.sectionTitle": "Раздел создания и редактирования записей журнала",
     "contentPanel.searchPlaceholder": "Поиск: {item}",
     "contentPanel.option.decisionCategory.colonization": "Колонизация",
     "contentPanel.option.decisionCategory.culture": "Культура",
@@ -6051,12 +6292,34 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.section.triggersOptions": "Триггеры и варианты",
     "countryEvents.choiceRequired": "Событие требует выбора",
     "countryEvents.defaultEvent": "Событие",
+    "countryEvents.effectAddModifier": "Добавить модификатор {modifierId} на {turns} ход. (0 = бессрочно)",
+    "countryEvents.effectCancelEvent": "Отменить событие {eventId}",
+    "countryEvents.effectClearFlag": "Снять флаг {flagId}",
+    "countryEvents.effectExtendModifier": "Продлить модификатор {modifierId} на {turns} ход.",
     "countryEvents.effectFallback": "Эффект",
+    "countryEvents.effectAdvanceJournal": "Продвинуть запись журнала {journalEntryId} на {amount}",
+    "countryEvents.effectCancelJournal": "Отменить запись журнала {journalEntryId}",
+    "countryEvents.effectChangeColonizationProgress": "Изменить прогресс колонизации на {amount}",
+    "countryEvents.effectRemoveModifier": "Удалить модификатор {modifierId}",
+    "countryEvents.effectClearJournalVariable": "Очистить переменную журнала {variableId} в {journalEntryId}",
+    "countryEvents.effectCompleteJournal": "Завершить запись журнала {journalEntryId}",
+    "countryEvents.effectFailJournal": "Провалить запись журнала {journalEntryId}",
+    "countryEvents.effectScheduleEvent": "Запланировать событие {eventId} через {turns} ход.",
+    "countryEvents.effectSetFlag": "Установить флаг {flagId}",
+    "countryEvents.effectSetJournalVariable": "Установить переменную журнала {variableId} в {journalEntryId}",
+    "countryEvents.effectStartJournal": "Начать запись журнала {journalEntryId}",
+    "countryEvents.effectTriggerEvent": "Запустить событие {eventId}",
     "countryEvents.empty": "Нет событий",
     "countryEvents.emptyDescription": "Сейчас у страны нет ожидающих событий.",
+    "countryEvents.expiresTurn": "Автовыбор возможен на ходу {turn}",
     "countryEvents.historyEmpty": "История пуста",
     "countryEvents.historyEmptyDescription": "Страна ещё не выбирала варианты событий.",
+    "countryEvents.historyEffectLine": "{type}: {resource} {amount} ({target})",
+    "countryEvents.historyEffects": "Применённые эффекты",
+    "countryEvents.historyExplanations": "{count} записей объяснений",
     "countryEvents.historyMeta": "{option} · ход {turn}",
+    "countryEvents.historyScopes": "Цели: {scopes}",
+    "countryEvents.historyScopesNone": "нет",
     "countryEvents.important": "Важное",
     "countryEvents.importantPending": "{count} важных событий ждут выбора",
     "countryEvents.loadFailed": "Не удалось загрузить события",
@@ -6065,8 +6328,73 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "countryEvents.notificationLoadingDescription": "Открываем событие из уведомления.",
     "countryEvents.optionFailed": "Не удалось выбрать вариант",
     "countryEvents.processed": "Событие обработано",
+    "countryEvents.scopeRegion": "Регион",
     "countryEvents.storySubtitle": "Событие страны · ход {turn}",
+    "countryEvents.triggerExplanationLine": "{label}: {value} / {threshold}",
     "countryEvents.title": "События страны",
+    "countryJournal.activeSummary": "Активно: {count}, критичных: {critical}",
+    "countryJournal.activeTab": "Активные",
+    "countryJournal.category.colonization": "Колонизация",
+    "countryJournal.category.crisis": "Кризис",
+    "countryJournal.category.diplomacy": "Дипломатия",
+    "countryJournal.category.economy": "Экономика",
+    "countryJournal.category.military": "Армия",
+    "countryJournal.category.politics": "Политика",
+    "countryJournal.category.regional": "Регионы",
+    "countryJournal.category.society": "Общество",
+    "countryJournal.category.technology": "Технологии",
+    "countryJournal.countryStateHint": "Состояние показано для {countryId}",
+    "countryJournal.description": "Долгосрочные задачи страны и их исходы.",
+    "countryJournal.emptyActive": "Нет активных записей",
+    "countryJournal.emptyActiveDescription": "Новые записи появятся после выполнения сценарных триггеров во время резолва хода.",
+    "countryJournal.emptyHistory": "История журнала пуста",
+    "countryJournal.emptyHistoryDescription": "Завершенные, проваленные и отмененные записи появятся здесь.",
+    "countryJournal.explanationLine": "{label}: {value} / {threshold}",
+    "countryJournal.historyMeta": "{state} · старт {started} · итог {resolved}",
+    "countryJournal.historyTab": "История",
+    "countryJournal.priority.critical": "Критично",
+    "countryJournal.priority.high": "Высоко",
+    "countryJournal.priority.low": "Низко",
+    "countryJournal.priority.medium": "Средне",
+    "countryJournal.progressValue": "{current}/{target}",
+    "countryJournal.scope": "Область",
+    "countryJournal.state.cancelled": "Отменено",
+    "countryJournal.state.completed": "Завершено",
+    "countryJournal.state.failed": "Провалено",
+    "countryJournal.title": "Журнал",
+    "countryJournal.turnsRemaining": "{turns} ход.",
+    "event.trigger.always": "Всегда",
+    "event.trigger.buildingEmploymentBelow": "Занятость здания ниже",
+    "event.trigger.buildingOutputAbove": "Выпуск здания выше",
+    "event.trigger.buildingProfitBelow": "Прибыль здания ниже",
+    "event.trigger.countryControlsRegionCountAbove": "Контролируемых регионов больше",
+    "event.trigger.countryControlsRegionCountBelow": "Контролируемых регионов меньше",
+    "event.trigger.countryHasModifier": "Модификатор страны активен",
+    "event.trigger.countryIs": "Страна",
+    "event.trigger.countryResourceAbove": "Ресурс страны больше",
+    "event.trigger.countryResourceBelow": "Ресурс страны меньше",
+    "event.trigger.controlsForeignRegion": "Контролирует чужой регион",
+    "event.trigger.invalid": "Некорректный триггер",
+    "event.trigger.legacyConditions": "Условия совместимости",
+    "event.trigger.regionControllerIs": "Контролер региона",
+    "event.trigger.regionColonizationProgressAbove": "Прогресс колонизации региона выше",
+    "event.trigger.regionColonizationProgressBelow": "Прогресс колонизации региона ниже",
+    "event.trigger.regionHasBuilding": "Постройка в регионе",
+    "event.trigger.regionHasResourceDeposit": "Месторождение в регионе",
+    "event.trigger.regionIsColonizable": "Регион можно колонизировать",
+    "event.trigger.regionLoyalistsAbove": "Лоялисты региона выше",
+    "event.trigger.regionOwnerIs": "Владелец региона",
+    "event.trigger.regionPopulationAbove": "Население региона больше",
+    "event.trigger.regionPopulationBelow": "Население региона меньше",
+    "event.trigger.regionRadicalsAbove": "Радикалы региона выше",
+    "event.trigger.regionStandardOfLivingBelow": "Уровень жизни региона ниже",
+    "event.trigger.resourceFlowNegative": "Поток ресурса отрицательный",
+    "events.489296a7_2807_4a34_9866_4c287612e8fd.name": "Глобальный климатический пакт",
+    "events.489296a7_2807_4a34_9866_4c287612e8fd.description": "В столице нейтрального государства завершился чрезвычайный международный саммит по вопросам климата, энергетики и промышленной трансформации.\n\nПосле серии разрушительных засух, наводнений и энергетических кризисов крупнейшие державы мира требуют создания нового глобального соглашения. Одни государства настаивают на жестком ограничении выбросов и масштабных инвестициях в зеленую энергетику. Другие считают, что подобные меры подорвут промышленность, экспорт и экономический рост.\n\nДипломаты предупреждают: итог этого саммита определит международную политику на десятилетия вперед.",
+    "events.489296a7_2807_4a34_9866_4c287612e8fd.option.acknowledge": "Принять к сведению",
+    "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.name": "Новый ивент",
+    "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.description": "Сценарное событие ожидает ответа страны.",
+    "events.70df3c83_3973_4f50_b9b3_afa78b599ff3.option.ok": "Понятно",
     "customization.afterPurchase": "После покупки",
     "customization.applied": "Изменения применены (-{ducats} дукатов)",
     "customization.applyFailed": "Не удалось применить изменения страны",
@@ -6142,7 +6470,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "gameSettings.category.economy": "Экономика",
     "gameSettings.category.eventLog": "Журнал событий",
     "gameSettings.category.registration": "Регистрация",
-    "gameSettings.category.resourceIcons": "Иконки очков",
     "gameSettings.category.scenarios": "Сценарии",
     "gameSettings.category.turnTimer": "Таймер хода",
     "gameSettings.chooseFile": "Выбрать файл",
@@ -6207,14 +6534,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "gameSettings.registrationSaveFailed": "Не удалось сохранить настройки регистрации",
     "gameSettings.registrationTitle": "Регистрация новых стран",
     "gameSettings.resource.population": "Население",
-    "gameSettings.resourceIconEmpty": "Нет иконки",
-    "gameSettings.resourceIconSelectFirst": "Сначала выберите хотя бы одну иконку",
-    "gameSettings.resourceIconsSaved": "Иконки очков обновлены",
-    "gameSettings.resourceIconsSaveFailed": "Не удалось обновить иконки очков",
-    "gameSettings.resourceIconsTitle": "Иконки очков в верхней панели (макс. 64x64)",
-    "gameSettings.resourceIconsUpload": "Загрузить иконки",
-    "gameSettings.resourceIconTooLarge": "Иконка должна быть максимум 64x64",
-    "gameSettings.resourceIconTooLargeFor": "Иконка \"{resource}\" должна быть максимум 64x64",
     "gameSettings.scenarioActive": "Активен",
     "gameSettings.scenarioApplied": "Сценарий применен",
     "gameSettings.scenarioAppliedDescription": "Перезагружаем карту и состояние мира",
@@ -6400,8 +6719,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "decisions.emptyLocked": "Недоступных решений нет.",
     "decisions.emptyTitle": "Нет решений",
     "decisions.history": "История",
+    "decisions.historyEffectLine": "{type}: {resource} {amount} ({target})",
+    "decisions.historyEffects": "Применённые эффекты",
     "decisions.historyEmpty": "История пуста",
     "decisions.historyEmptyDescription": "Страна ещё не принимала решений.",
+    "decisions.historyExplanations": "{count} записей объяснений",
+    "decisions.historyScopes": "Цели: {scopes}",
+    "decisions.historyScopesNone": "нет",
     "decisions.loadFailed": "Не удалось загрузить решения",
     "decisions.loading": "Загрузка решений",
     "decisions.loadingDescription": "Проверяем условия для страны.",
@@ -6416,6 +6740,30 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "decisions.resource.gold": "Золото",
     "decisions.resource.religion": "Религия",
     "decisions.resource.science": "Наука",
+    "decisions.reason.alreadyTaken": "Уже принято.",
+    "decisions.reason.chargesEmpty": "Нет доступных зарядов: {current}/{required}.",
+    "decisions.reason.conditionsFailed": "Не выполнены необходимые условия.",
+    "decisions.reason.countryUseLimit": "Лимит использований страной исчерпан: {current}/{required}.",
+    "decisions.reason.cooldown": "Будет доступно после хода {required}.",
+    "decisions.reason.insufficientResource": "Требуется {required}; сейчас {current}.",
+    "decisions.reason.missingResources": "Состояние ресурсов страны недоступно.",
+    "decisions.reason.potentialFailed": "Сейчас это решение не применимо к стране.",
+    "decisions.reason.scopeFailed": "Для этого решения нет допустимой цели.",
+    "decisions.reason.targetUseLimit": "Лимит использований для цели исчерпан: {current}/{required}.",
+    "decisions.reason.visibilityFailed": "Скрыто условиями видимости.",
+    "decisions.scope": "Цель",
+    "decisions.scope.building": "Здание",
+    "decisions.scope.country": "Страна",
+    "decisions.scope.diplomaticRelation": "Дипломатическое отношение",
+    "decisions.scope.interestGroup": "Группа интересов",
+    "decisions.scope.journalEntry": "Запись журнала",
+    "decisions.scope.law": "Закон",
+    "decisions.scope.market": "Рынок",
+    "decisions.scope.object": "Объект",
+    "decisions.scope.pop": "Поп",
+    "decisions.scope.region": "Регион",
+    "decisions.scope.war": "Война",
+    "decisions.scopeLine": "{slot}: {kind} {id}",
     "decisions.storySubtitle": "Решение страны · {category}",
     "decisions.take": "Принять решение",
     "decisions.taken": "Решение принято",
@@ -7523,6 +7871,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.eventsDescription": "Открыть события страны и повествовательный журнал.",
     "shell.action.globalMarket": "Глобальный рынок",
     "shell.action.globalMarketDescription": "Сравнить товары и цены по миру.",
+    "shell.action.journal": "Журнал",
+    "shell.action.journalDescription": "Открыть долгосрочные задачи страны и их историю.",
     "shell.action.market": "Рынок страны",
     "shell.action.marketDescription": "Посмотреть товары, цены, дефициты и давление рынка.",
     "shell.action.modifiers": "Модификаторы",
@@ -7536,7 +7886,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.turnStatus": "Готовность стран",
     "shell.action.turnStatusDescription": "Проверить, кто готов к завершению текущего хода.",
     "shell.admin": "Админ",
-    "shell.adminConsole": "Консоль оператора",
     "shell.adminPanel": "Админ-панель",
     "shell.availableActions": "Доступные действия",
     "shell.clientSettings": "Настройки клиента",
@@ -7602,19 +7951,22 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.logoutMessage": "Сессия игрока завершена",
     "shell.logoutToast": "Вы вышли из страны",
     "shell.logoutTitle": "Выход",
-    "shell.mapLens.army": "Военные формирования и перемещение",
-    "shell.mapLens.colonization": "Нейтральные колонизируемые регионы",
-    "shell.mapLens.construction": "Нагрузка инфраструктуры и маршруты",
-    "shell.mapLens.diplomacy": "Договоры и внешнее влияние",
-    "shell.mapLens.governance": "Госрегионы и управление",
-    "shell.mapLens.market": "Состав рынков и столицы",
-    "shell.mapLens.overview": "Политическое владение",
-    "shell.mapLens.population": "Плотность населения и общество",
-    "shell.mapLens.title": "Линза карты",
     "shell.metric.area": "{area} км²",
     "shell.metric.colonies": "Колонии",
     "shell.metric.population": "Население",
     "shell.metric.regions": "Регионы",
+    "shell.marketTrade.empty": "Для текущего рынка пока нет торговых потоков.",
+    "shell.marketTrade.exports": "Экспорт",
+    "shell.marketTrade.exportsTooltip": "Страны, покупающие этот товар у вашего рынка.",
+    "shell.marketTrade.good": "Товар",
+    "shell.marketTrade.imports": "Импорт",
+    "shell.marketTrade.importsTooltip": "Страны, продающие этот товар на ваш рынок.",
+    "shell.marketTrade.loading": "Загружаем торговый обзор...",
+    "shell.marketTrade.noPartners": "Нет",
+    "shell.marketTrade.price": "Цена",
+    "shell.marketTrade.priceDeltaTooltip": "Относительное изменение цены за последний ход на вашем рынке.",
+    "shell.marketTrade.priceTooltip": "Текущая цена за единицу на вашем рынке.",
+    "shell.marketTrade.title": "Торговля",
     "shell.mode.army": "Армия",
     "shell.mode.armyDescription": "Командный режим карты для соединений, маршрутов и операций.",
     "shell.mode.colonization": "Колонизация",
@@ -7674,6 +8026,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.subsidies": "Субсидии",
     "shell.preview.topCulture": "Крупнейшая культура",
     "shell.preview.topProfession": "Крупнейшая профессия",
+    "shell.preview.unknownBuilding": "Здание {id}",
     "shell.resource.colonization": "Колонизация",
     "shell.resource.construction": "Строительство",
     "shell.resource.culture": "Культура",
@@ -7814,12 +8167,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.unnamedCountry": "Безымянная держава",
     "shell.worldResyncFailed": "Не удалось синхронизировать мир, выполняется перезагрузка",
     "shell.worldResynced": "Состояние мира синхронизировано заново",
-    "shell.workspace": "Рабочая область",
     "shell.workspaceTab.actions": "Доступные действия",
-    "shell.workspaceTab.admin": "Консоль оператора",
-    "shell.workspaceTab.readiness": "Готовность стран",
     "shell.workspaceTab.records": "Записи",
     "shell.workspaceTab.summary": "Сводка страны",
+    "shell.workspaceTab.trade": "Торговля",
     "shell.workspaceTabs": "Вкладки рабочей области",
     "turnStatus.blockedPermanent": "Заблокирована бессрочно",
     "turnStatus.blockedUntilTime": "Заблокирована до {time}",
@@ -7879,8 +8230,8 @@ export function subscribeUiLocale(listener: () => void): () => void {
   };
 }
 
-export function tUi(key: UiTextKey, params: Record<string, string | number> = {}, locale: UiLocale = getUiLocale()): string {
-  const template = uiText[locale][key];
+export function tUi(key: UiTextKey | string, params: Record<string, string | number> = {}, locale: UiLocale = getUiLocale()): string {
+  const template = uiText[locale][key as UiTextKey] ?? key;
   return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (match, paramKey: string) => {
     const value = params[paramKey];
     return value == null ? match : String(value);

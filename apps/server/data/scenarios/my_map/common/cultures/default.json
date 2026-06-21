@@ -1,0 +1,57 @@
+{
+  "id": "culture:default",
+  "description": "",
+  "color": "#38bdf8",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": {
+    "tiers": [
+      {
+        "id": "tier-1",
+        "minStandardOfLiving": 1,
+        "needs": [
+          {
+            "id": "basic-food",
+            "label": "Базовая еда",
+            "category": "basic",
+            "amountPerPerson": 0.001,
+            "weight": 1,
+            "goods": [
+              {
+                "goodId": "good:crude_oil",
+                "weight": 1
+              },
+              {
+                "goodId": "good:coal",
+                "weight": 1
+              },
+              {
+                "goodId": "good:electricity",
+                "weight": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "nameKey": "cultures.default.name"
+}

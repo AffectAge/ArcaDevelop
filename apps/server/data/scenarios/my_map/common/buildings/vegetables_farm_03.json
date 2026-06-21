@@ -1,0 +1,79 @@
+{
+  "id": "building:vegetables_farm_03",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "costConstruction": 154,
+  "costDucats": 121,
+  "startingDucats": 42,
+  "maxLevel": 10,
+  "maxDurability": 100,
+  "upgradeCostDucats": 90,
+  "upgradeCostConstruction": 116,
+  "sectorId": "sector:agriculture",
+  "industryId": "industry:farms",
+  "extractionGoodId": null,
+  "extractionAmountPerTurn": 0,
+  "extractionRequiresDeposit": false,
+  "inputs": [
+    {
+      "goodId": "good:tools",
+      "amount": 2
+    },
+    {
+      "goodId": "good:fertilizer",
+      "amount": 2
+    }
+  ],
+  "outputs": [
+    {
+      "goodId": "good:vegetables",
+      "amount": 13.8
+    },
+    {
+      "goodId": "good:commerce",
+      "amount": 13.8
+    }
+  ],
+  "workforceRequirements": [
+    {
+      "professionId": "profession:farmer",
+      "workers": 850
+    },
+    {
+      "professionId": "profession:laborer",
+      "workers": 250
+    },
+    {
+      "professionId": "profession:clerk",
+      "workers": 35
+    }
+  ],
+  "infrastructureUse": 3,
+  "marketInfrastructureByCategory": {},
+  "allowedCountryIds": [],
+  "deniedCountryIds": [],
+  "countryBuildLimits": [],
+  "globalBuildLimit": null,
+  "nameKey": "buildings.vegetables_farm_03.name"
+}

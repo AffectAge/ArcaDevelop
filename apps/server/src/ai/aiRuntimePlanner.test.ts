@@ -14,6 +14,7 @@ const enabledAiSettings: AiRuntimeSettings = {
   maxCountriesPerTick: 2,
   maxDecisionCandidatesPerCountry: 4,
   contextCacheTtlTurns: 1,
+  maxBuildCompletionTurns: 8,
 };
 
 function createBuildCandidate(countryId: string, regionId = "region:alpha-core"): AiEconomyOrderCandidate {
@@ -177,5 +178,29 @@ describe("planAiRuntimeTick", () => {
       kind: "colonize-region",
       regionId: "region:frontier",
     });
+  });
+
+  it("passes scenario and profile build completion limits to candidate providers", () => {
+    const world = createAiFixtureWorld();
+    const seenLimits: number[] = [];
+    const provider: AiRuntimeCandidateProvider = {
+      id: "economy",
+      selectCandidates: ({ countryId, aiSettings }) => {
+        seenLimits.push(aiSettings.maxBuildCompletionTurns);
+        return [createBuildCandidate(countryId)];
+      },
+    };
+
+    planAiRuntimeTick({
+      world,
+      aiSettings: { ...enabledAiSettings, maxBuildCompletionTurns: 8 },
+      countryIds: ["country:alpha"],
+      candidateProviders: [provider],
+      strategyProfilesByCountryId: {
+        "country:alpha": [{ id: "personality:long-builder", maxBuildCompletionTurns: 14 }],
+      },
+    });
+
+    expect(seenLimits).toEqual([14]);
   });
 });

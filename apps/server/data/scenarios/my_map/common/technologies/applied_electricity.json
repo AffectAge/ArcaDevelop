@@ -1,0 +1,32 @@
+{
+  "id": "technology:applied_electricity",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "costScience": 100,
+  "prerequisiteTechnologyIds": [
+    "technology:industrial_extraction"
+  ],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [
+    "law:subsistence_economy"
+  ],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "nameKey": "technologies.applied_electricity.name"
+}

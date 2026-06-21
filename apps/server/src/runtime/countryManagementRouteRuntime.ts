@@ -26,6 +26,10 @@ type CountryManagementMasks = {
   technologyByCountry: number;
   countryDecisionsByCountryId: number;
   countryEventsByCountryId: number;
+  countryScheduledEventsByCountryId: number;
+  countryEventFlagsByCountryId: number;
+  journalEntriesByCountryId: number;
+  countryModifiersByCountryId: number;
   divisionTemplatesByCountry: number;
   divisionsById: number;
   militaryFormationQueueByCountry: number;

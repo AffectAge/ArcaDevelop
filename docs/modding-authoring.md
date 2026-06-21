@@ -62,6 +62,8 @@ scenarios/<scenario_id>/
 
 Scenario-owned uploaded assets live under `assets/uploads/` inside the scenario folder. Server-managed URLs use `/scenario-assets/<scenario_id>/assets/uploads/<relative_path>`; global upload roots and `/uploads/...` URLs are not valid authored or runtime targets.
 
+Base game resource point icons are not scenario content. Population, culture, science, religion, colonization, construction, ducats, and gold icons live as repo-owned PNG assets in `apps/client/public/game-assets/resource-icons/` and are mapped by the client. Scenarios must not define, upload, or override these icons; scenario assets remain for scenario-owned visuals such as flags, crests, backgrounds, buildings, goods, and authored art.
+
 ## Defines
 
 `common/defines.json` is scenario-owned configuration for values that should not be hardcoded in runtime code. Use it for balance, pacing, limits, retention policies, AI bonuses, and similar tunables.
@@ -74,7 +76,8 @@ Currently supported runtime defines:
     "enabled": true,
     "maxCountriesPerTick": 50,
     "maxDecisionCandidatesPerCountry": 20,
-    "contextCacheTtlTurns": 1
+    "contextCacheTtlTurns": 1,
+    "maxBuildCompletionTurns": 8
   },
   "economy": {
     "baseCulturePerTurn": 1,
@@ -186,6 +189,249 @@ Scenario-authored buildings live in `scenarios/<scenarioId>/common/buildings/*.j
 `minLevel` and `maxLevel` are optional integer building levels starting at `1`. If omitted or `null`, that side of the window is unbounded. Validation rejects non-integer levels below `1` and rejects `maxLevel` lower than `minLevel`. Inactive flows do not create demand, consume inputs, report production capacity, produce goods, or extract deposits.
 
 Legacy extraction fields (`extractionGoodId`, `extractionAmountPerTurn`, and `extractionRequiresDeposit`) remain supported for older scenario content, but new authored buildings should prefer `extractions` so every extracted good can declare its own deposit and level rules.
+
+## Decision Authoring
+
+Current decision content lives in `scenarios/<scenarioId>/common/decisions/*.json`. Scenario-authored decision `effects` must use the shared `GameEffect` slice used by events and journal lifecycle hooks. Legacy `resource_delta` is rejected in authored decision files; use `add_resource`, `spend_resource`, or `add_resource_flow` instead.
+
+Decision availability uses the same trigger DSL as events and journal entries:
+
+- `scope` resolves the country/region target using the same scope shape as events;
+- `potential` decides whether the decision applies to the country at all;
+- `allow` decides whether the visible decision can be taken right now;
+- `visibleWhenUnavailable` can keep a failed `potential` decision visible as locked for player explanation.
+
+The server returns resolved `scopes`, trigger explanations, and structured availability reasons with `code`, `labelKey`, `passed`, optional current/required values, and optional scope. Client UI must prefer these reason keys over raw fallback strings.
+
+Decision `GameEffect` entries can add or spend resources through the ledger, trigger or schedule same-country events, update country event flags, and start, advance, complete, fail, cancel, or update variables for journal entries. Scenario validation requires referenced event ids and journal entry ids to exist.
+
+Resource effects must use a supported country resource id (`culture`, `science`, `religion`, `colonization`, `construction`, `ducats`, or `gold`) and a positive finite `amount`. `add_resource_flow` must also provide `direction` (`income` or `expense`) and a localized ledger `labelKey`.
+
+Decisions may also define usage limits:
+
+- `maxUses` or `maxUsesPerCountry` limits how many times a country may take the decision;
+- `maxUsesPerTarget` limits usage for each resolved target scope, such as a specific region.
+
+The runtime stores bounded usage counters in `CountryDecisionRecord` and returns localized structured reasons when a limit is exhausted.
+
+Decision history rows store the taken turn, legacy label, resolved scopes, bounded applied effect summaries, and explanation ids. Resource costs and resource-changing effects create explanation records with previous/new values when the runtime can inspect the country resource state. Scenario authors should keep decision ids, target scopes, resource ids, event ids, journal ids, and flag ids stable because these references are shown in player-facing history.
+
+Decisions can also define rechargeable charges:
+
+- `charges` sets the maximum stored charge count for the decision;
+- `rechargeTurns` restores one spent charge after that many turns;
+- decisions with zero available charges return the localized `charges_empty` availability reason.
+
+Taking a charged decision spends one charge after costs and effects are applied. The turn resolver recharges country decision records once per turn from scenario-authored decision definitions.
+
+## Event Authoring
+
+Current event content lives in `scenarios/<scenarioId>/common/events/*.json`. Event files must use localization keys for player-facing event text and option text:
+
+- `event.titleKey`
+- `event.descriptionKey`
+- `event.options[].labelKey`
+- optional `event.options[].descriptionKey`
+- optional `event.options[].tooltipKey`
+
+Legacy raw option fields are invalid for authored scenario events:
+
+- `label`
+- `description`
+- `buttonColor`
+- `autoChancePct`
+
+Use `buttonTone` with `default`, `primary`, `danger`, or `warning` instead of raw button colors. Event option effects use the first shared `GameEffect` slice:
+
+```json
+{
+  "type": "add_resource",
+  "resource": "science",
+  "amount": 10,
+  "labelKey": "resourceLedger.source.generic"
+}
+```
+
+Supported event resource effects are `add_resource`, `spend_resource`, and `add_resource_flow`. Country resource effects are applied through the resource ledger when runtime ledger hooks are available.
+
+Supported event-control effects are:
+
+- `trigger_event`, which immediately creates a pending event for the same country;
+- `schedule_event`, which stores a future event in `countryScheduledEventsByCountryId`;
+- `cancel_event`, which removes pending and scheduled events with the referenced event id for the same country;
+- `set_event_flag`, which writes a country-scoped event flag value;
+- `clear_event_flag`, which removes a country-scoped event flag.
+
+Supported modifier effects are:
+
+- `add_modifier`, which applies a country-scoped modifier from `common/modifiers/*.json`; optional `durationTurns` makes it temporary, and omitted duration makes it permanent until removed;
+- `extend_modifier`, which extends an active modifier by positive `durationTurns`, or creates it if it is not active;
+- `remove_modifier`, which removes active instances of the referenced modifier from the country.
+
+Supported region colonization effects are:
+
+- `change_colonization_progress`, which changes the current country's progress in the resolved region scope by `amount`. It requires a resolved `region` scope and writes `WorldBase.colonyProgressByRegion`.
+
+Runtime stores applied modifier state in `WorldBase.countryModifiersByCountryId`. Scenario validation requires referenced event ids in event-control effects and referenced modifier ids in modifier effects to exist. Population effects, politics effects, and diplomacy effects are target architecture items and should not be hardcoded in scenario-specific core branches.
+
+Event options may define `aiWeight` rules for automatic timeout resolution. If any option has `aiWeight`, the server scores options and chooses the highest score; otherwise it falls back to `defaultOptionId`, `playerDefault`, then the first option.
+
+```json
+{
+  "id": "pay_debt",
+  "labelKey": "events.example.option.payDebt",
+  "aiWeight": [
+    { "base": 5 },
+    {
+      "if": { "type": "country_resource_above", "resource": "ducats", "value": 100 },
+      "add": 25
+    }
+  ]
+}
+```
+
+Events may use the first data-driven trigger DSL through `event.trigger`. Supported predicates are:
+
+- legacy country predicates: `always`, `country_is`, `law_active`, `technology_researched`, `has_building`;
+- country law/technology/modifier aliases: `country_has_law`, `country_lacks_law`, `country_has_technology`, `country_lacks_technology`, `country_has_modifier`;
+- country resource predicates: `country_resource_above`, `country_resource_below`, `treasury_below`;
+- country ledger predicates: `resource_flow_negative` checks the latest resource ledger turn for a country/resource net below zero;
+- country region-count predicates: `country_controls_region_count_above`, `country_controls_region_count_below`;
+- territorial predicates: `controls_foreign_region` passes when a country controls at least one region with a different legal owner;
+- scoped region predicates: `region_owner_is`, `region_controller_is`, `region_is_colonizable`, `region_population_above`, `region_population_below`, `region_has_population_above`, `region_has_population_below`, `region_has_building`, `region_has_resource_deposit`, `region_radicals_above`, `region_loyalists_above`, `region_standard_of_living_below`, `region_colonization_progress_above`, `region_colonization_progress_below`;
+- scoped building economy predicates: `building_profit_below` and `building_employment_below` evaluate the worst matching building in the resolved region. `building_profit_below` uses `lastNetDucats`; `building_employment_below` uses `lastLaborCoverage` as a `0..1` labor coverage ratio. `building_output_above` evaluates the highest `lastProductionByGoodId[targetId]` in the resolved region and validates `targetId` against `common/goods`.
+- composition predicates: `all`, `any`, and `not`.
+
+For `country_has_modifier`, `targetId` must reference a scenario-authored modifier entity id from `common/modifiers/*.json`. Law, technology, building, and resource-deposit triggers validate `targetId` against `common/laws`, `common/technologies`, `common/buildings`, and `common/goods` respectively.
+
+Events may also resolve a region scope before trigger evaluation:
+
+```json
+{
+  "scope": {
+    "root": { "kind": "country" },
+    "region": {
+      "kind": "region",
+      "from": "root.controlled_regions",
+      "where": { "type": "region_population_above", "value": 1000 },
+      "pick": { "orderBy": "population", "direction": "desc" }
+    }
+  },
+  "trigger": {
+    "all": [
+      { "type": "country_resource_above", "resource": "ducats", "value": 25 },
+      { "type": "region_has_building", "targetId": "building:university" }
+    ]
+  }
+}
+```
+
+The server stores resolved event scopes and trigger explanation rows on pending country events. Player-facing event UI must expose these explanations so event visibility is inspectable rather than hidden in server logic.
+
+Events may declare `timeoutTurns` and `defaultOptionId`. When `timeoutTurns` is omitted or `null`, the event stays pending until a player chooses an option. When it is present, the server sets `expiresTurnId` on the pending event and may auto-resolve it at or after that turn using `defaultOptionId`, then `playerDefault`, then the first valid option.
+
+Events may declare `chain` followups:
+
+```json
+{
+  "chain": {
+    "chainId": "chain:industrial_unrest",
+    "stepId": "start",
+    "startsChain": true,
+    "followups": [
+      {
+        "eventId": "event:industrial_unrest_followup",
+        "delayTurns": 2,
+        "chancePct": 75,
+        "conditions": { "type": "country_resource_above", "resource": "ducats", "value": 10 }
+      }
+    ]
+  }
+}
+```
+
+Followups are stored in `WorldBase.countryScheduledEventsByCountryId` until their `scheduledTurnId`, then promoted into normal pending country events with the resolved scopes from the source event. Scenario validation requires followup `eventId` values to reference existing event entries.
+
+Event resolution history is stored in `CountryEventRecord.history`. Each history row stores:
+
+- `eventId`, `optionId`, and `resolvedTurnId`;
+- localization keys for the event title and chosen option when available;
+- resolved `scopes` from the pending event;
+- bounded `appliedEffects` summaries with effect type and key resource/event/journal/flag references;
+- `explanationIds` pointing to structured `WorldBase.explanationRecordsByTurn` rows when the runtime can explain the applied effects.
+
+History rows are player-visible in the event history UI, so scenario-authored event and option text must remain localized and effect references must stay stable.
+
+Manual event option resource effects create structured explanation records. Each record stores the turn, source event id, option cause, affected country, resource value key, previous value, and new value. Resource effects should therefore keep stable resource ids and label keys so history and future tooltips can explain the outcome.
+
+Scenario validation rejects legacy raw event text and styling fields. Event definitions must explicitly set `category`, `priority`, and `visibility`, and must use `titleKey` and `descriptionKey`, not raw `title` or `description`; options must use `labelKey`, optional `descriptionKey`, optional `tooltipKey`, and `buttonTone`, not raw `label`, raw `description`, `buttonColor`, or `autoChancePct`.
+
+## Journal Entry Authoring
+
+Scenario-authored journal entries live in `scenarios/<scenarioId>/common/journal_entries/*.json`. The loader also accepts `common/journalEntries` as a compatibility alias, but new authored content should use `journal_entries`.
+
+Each journal file has a stable top-level `id` and a `journalEntry` object. Required player-facing text uses localization keys:
+
+- `journalEntry.titleKey`
+- `journalEntry.descriptionKey`
+- optional `journalEntry.shortDescriptionKey`
+- optional `journalEntry.progress.labelKey`
+
+The first implemented lifecycle slice supports country entries with optional resolved region scope. Journal entries may define:
+
+- `startTrigger`, `completeTrigger`, `failTrigger`, and `cancelTrigger` using the same trigger DSL as events;
+- `scope` using the same country/region event scope shape;
+- `timeoutTurns`, which fails an active journal entry when the expiration turn is reached;
+- `repeatable` and `cooldownTurns`;
+- lifecycle effect arrays: `onStartEffects`, `onCompleteEffects`, `onFailEffects`, `onCancelEffects`;
+- lifecycle event hooks in `events.onStart`, `events.onComplete`, `events.onFail`, and `events.onCancel`.
+
+Example:
+
+```json
+{
+  "id": "journal:industrialize_capital",
+  "nameKey": "journal.industrialize_capital.name",
+  "journalEntry": {
+    "category": "economy",
+    "titleKey": "journal.industrialize_capital.title",
+    "descriptionKey": "journal.industrialize_capital.description",
+    "priority": "high",
+    "visibility": "private",
+    "scope": {
+      "region": {
+        "kind": "region",
+        "from": "root.controlled_regions",
+        "where": { "type": "region_population_above", "value": 1000 },
+        "pick": { "orderBy": "population", "direction": "desc" }
+      }
+    },
+    "startTrigger": { "type": "country_resource_above", "resource": "ducats", "value": 25 },
+    "completeTrigger": { "type": "region_has_building", "targetId": "building:factory" },
+    "timeoutTurns": 12,
+    "onCompleteEffects": [
+      { "type": "add_resource", "resource": "science", "amount": 10, "labelKey": "resourceLedger.source.generic" }
+    ],
+    "events": {
+      "onComplete": ["event:industrial_success"]
+    }
+  }
+}
+```
+
+Runtime stores active and historical state in `WorldBase.journalEntriesByCountryId`. Lifecycle effects use the shared `GameEffect` slice; resource effects go through the resource ledger when runtime ledger hooks are available, event hooks/effects use the country event pipeline, and modifier effects update `WorldBase.countryModifiersByCountryId`.
+
+Events and journal lifecycle hooks may also use journal-control `GameEffect` entries:
+
+- `start_journal_entry`;
+- `advance_journal_entry`;
+- `complete_journal_entry`;
+- `fail_journal_entry`;
+- `cancel_journal_entry`;
+- `set_journal_variable`;
+- `clear_journal_variable`.
+
+Scenario validation requires `journalEntryId` references in these effects to point to existing journal entries. Manual event choices apply journal effects immediately and include journal state in the broadcast world delta.
 
 ## Authoring Checks
 

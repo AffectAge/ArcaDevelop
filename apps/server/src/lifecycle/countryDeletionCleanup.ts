@@ -45,6 +45,10 @@ export function cleanupWorldBaseAfterCountryRemovalFromState(params: CountryWorl
   delete worldBase.parliamentByCountry[countryId];
   delete worldBase.countryDecisionsByCountryId[countryId];
   delete worldBase.countryEventsByCountryId[countryId];
+  delete worldBase.countryScheduledEventsByCountryId[countryId];
+  delete worldBase.countryEventFlagsByCountryId[countryId];
+  delete worldBase.journalEntriesByCountryId[countryId];
+  delete worldBase.countryModifiersByCountryId[countryId];
   delete worldBase.divisionTemplatesByCountry[countryId];
   delete worldBase.militaryFormationQueueByCountry[countryId];
 

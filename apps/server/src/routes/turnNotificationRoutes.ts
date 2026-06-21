@@ -1,5 +1,6 @@
 import type express from "express";
 import type { ResourceTotals, WsOutMessage } from "@arcanorum/shared";
+import type { ResourceId } from "@arcanorum/shared";
 import type { RouteAuth } from "../security/routeAuth";
 
 export type TurnStatusCountryRecord = {
@@ -26,6 +27,7 @@ export type TurnStatusCountryItem = {
   online: boolean;
   lastLoginAt: string | null;
   resources: ResourceTotals;
+  resourceNetByTurn: Partial<Record<ResourceId, number>>;
 };
 
 export type QueuedUiNotificationRouteItem = {
@@ -44,6 +46,7 @@ export type TurnNotificationRoutesDependencies = {
   getOnlineCountryIds: () => Set<string>;
   getAiControlledCountryIds: () => Set<string>;
   getCountryResources: (countryId: string) => ResourceTotals | null;
+  getCountryResourceNetByTurn: (countryId: string) => Partial<Record<ResourceId, number>>;
   getCountryBlockInfo: (
     country: Pick<TurnStatusCountryRecord, "isLocked" | "blockedUntilTurn" | "blockedUntilAt">,
     turnId: number,
@@ -82,6 +85,7 @@ export function registerTurnNotificationRoutes(
       onlineCountryIds: deps.getOnlineCountryIds(),
       aiControlledCountryIds: deps.getAiControlledCountryIds(),
       getCountryResources: deps.getCountryResources,
+      getCountryResourceNetByTurn: deps.getCountryResourceNetByTurn,
       getCountryBlockInfo: deps.getCountryBlockInfo,
       getCountrySkipInfo: deps.getCountrySkipInfo,
       getLastLoginAt: deps.getLastLoginAt,
@@ -125,6 +129,7 @@ export function buildTurnStatusItems(params: {
   onlineCountryIds: Set<string>;
   aiControlledCountryIds: Set<string>;
   getCountryResources: (countryId: string) => ResourceTotals | null;
+  getCountryResourceNetByTurn: (countryId: string) => Partial<Record<ResourceId, number>>;
   getCountryBlockInfo: TurnNotificationRoutesDependencies["getCountryBlockInfo"];
   getCountrySkipInfo: TurnNotificationRoutesDependencies["getCountrySkipInfo"];
   getLastLoginAt: (countryId: string) => string | null;
@@ -149,6 +154,7 @@ export function buildTurnStatusItems(params: {
       online: params.onlineCountryIds.has(country.id) || isAiControlled,
       lastLoginAt: params.getLastLoginAt(country.id),
       resources: params.getCountryResources(country.id) ?? emptyResourceTotals(),
+      resourceNetByTurn: params.getCountryResourceNetByTurn(country.id),
     };
   });
 }

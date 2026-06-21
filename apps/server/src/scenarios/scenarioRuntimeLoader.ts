@@ -72,6 +72,7 @@ export function normalizeScenarioContentForRuntime(source: unknown): GameSetting
     modifiers: normalizeContentCultures(contentSource.modifiers),
     decisions: normalizeContentCultures(contentSource.decisions),
     events: normalizeContentCultures(contentSource.events),
+    journalEntries: normalizeContentCultures(contentSource.journalEntries ?? contentSource.journal_entries),
     battalions: normalizeContentBattalions(contentSource.battalions),
     shipTypes: normalizeContentShipTypes(contentSource.shipTypes ?? contentSource.ship_types),
     aircraftTypes: normalizeContentAircraftTypes(contentSource.aircraftTypes ?? contentSource.aircraft_types),

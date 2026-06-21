@@ -6,7 +6,7 @@ import { PathStyleExtension } from "@deck.gl/extensions";
 import type { PathStyleExtensionProps } from "@deck.gl/extensions";
 import { bezierSpline, lineString } from "@turf/turf";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Briefcase, Building2, Check, Coins, Crosshair, Flag, Gauge, Hammer, Info, Landmark, Layers3, Lock, LockOpen, LocateFixed, Minus, Move, Network, Package, Pickaxe, Plane, Plus, Route, Ship, Sparkles, TrainFront, Trash2, Truck, Users, X, Zap } from "lucide-react";
+import { AlertTriangle, Briefcase, Building2, Check, Coins, Crosshair, Flag, Gauge, Hammer, Info, Landmark, Layers3, Lock, LockOpen, LocateFixed, Minus, Move, Network, Package, Pickaxe, Plane, Plus, Route, Ship, Sparkles, TrainFront, Trash2, Truck, Users, X, Zap, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import type { Country, WorldBase } from "@arcanorum/shared";
 import { Tooltip } from "./Tooltip";
@@ -127,7 +127,6 @@ type Props = {
   provinceRenameDucatsCost?: number;
   showMapControls?: boolean;
   showAntarctica?: boolean;
-  strategyMapModeId?: MapModeId;
 };
 
 const DEFAULT_CENTER: [number, number] = [0, 0];
@@ -409,6 +408,54 @@ const DIPLOMACY_LENS_OPTIONS = [
 const MILITARY_LENS_OPTIONS = [
   { id: "armies", labelKey: "map.lens.military.armies" },
 ] as const;
+const POLITICAL_LENS_ICONS: Record<PoliticalLensId, LucideIcon> = {
+  owners: Landmark,
+  country: Landmark,
+  mine: LocateFixed,
+  colonies: Flag,
+};
+const MARKET_LENS_ICONS: Record<MarketLensId, LucideIcon> = {
+  membership: Package,
+  selectedMarketMembers: LocateFixed,
+  capitals: Landmark,
+};
+const POPULATION_LENS_ICONS: Record<PopulationLensId, LucideIcon> = {
+  density: Users,
+  cultures: Sparkles,
+  religions: Landmark,
+  races: Users,
+  professions: Briefcase,
+  ideologies: Flag,
+  standardOfLiving: Coins,
+  radicals: Zap,
+  loyalists: Check,
+  needs: Package,
+};
+const RESOURCE_LENS_ICONS: Record<ResourceLensId, LucideIcon> = {
+  deposits: Pickaxe,
+  exploration: Sparkles,
+};
+const INFRASTRUCTURE_LENS_VIEW_ICONS: Record<InfrastructureLensViewId, LucideIcon> = {
+  load: Gauge,
+  coverage: Check,
+  problems: AlertTriangle,
+  corridors: Route,
+};
+const COLONIZATION_LENS_ICONS: Record<ColonizationLensId, LucideIcon> = {
+  available: Flag,
+  cost: Coins,
+  ownRaces: LocateFixed,
+  foreignRaces: Flag,
+  blocked: Lock,
+};
+const DIPLOMACY_LENS_ICONS: Record<DiplomacyLensId, LucideIcon> = {
+  treaties: Briefcase,
+  transit: Route,
+  corridorAccess: LockOpen,
+};
+const MILITARY_LENS_ICONS: Record<MilitaryLensId, LucideIcon> = {
+  armies: Crosshair,
+};
 const INFRASTRUCTURE_LENS_TRANSPORT_MODES: TransportMode[] = ["land", "sea", "air", "pipeline", "powerGrid"];
 const MAP_MODE_IDS = [
   "political",
@@ -752,7 +799,6 @@ export function MapView({
   provinceRenameDucatsCost = 25,
   showMapControls = false,
   showAntarctica = false,
-  strategyMapModeId,
 }: Props) {
   const { t } = useUiText();
   const transportModeLabel = (mode: TransportMode) => t(TRANSPORT_MODE_LABEL_KEYS[mode]);
@@ -767,10 +813,6 @@ export function MapView({
   });
   const activeModeConfig = useMemo(() => getMapModeConfig(activeModeId, t), [activeModeId, t]);
 
-  useEffect(() => {
-    if (!strategyMapModeId) return;
-    setActiveModeId(strategyMapModeId);
-  }, [strategyMapModeId]);
   const mapRef = useRef<MapLibreMap | null>(null);
   const deckOverlayRef = useRef<MapboxOverlay | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -4131,7 +4173,7 @@ export function MapView({
       >
         {icon}
         {badge != null && badge > 0 && (
-          <span className="absolute -right-1 -top-1 z-10 min-w-4 rounded-full border border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-muted)] px-1 text-[10px] font-bold leading-4 text-[var(--arc-color-text-paper)]">
+          <span className="arc-map-lens-badge">
             {badge}
           </span>
         )}
@@ -4143,9 +4185,10 @@ export function MapView({
     if (activeModeId === "political") {
       return (
         <>
-          {POLITICAL_LENS_OPTIONS.map((option) =>
-            renderLensOptionButton(option.id, t(option.labelKey), politicalLens === option.id, () => setPoliticalLens(option.id), <Landmark size={22} />),
-          )}
+          {POLITICAL_LENS_OPTIONS.map((option) => {
+            const Icon = POLITICAL_LENS_ICONS[option.id];
+            return renderLensOptionButton(option.id, t(option.labelKey), politicalLens === option.id, () => setPoliticalLens(option.id), <Icon size={22} />);
+          })}
           {renderLensOptionButton("political-current", t("map.lens.political.myLands"), politicalOnlyMine, () => setPoliticalOnlyMine((value) => !value), <LocateFixed size={22} />)}
           {renderLensOptionButton("political-neutral", t("map.lens.political.neutral"), politicalOnlyNeutral, () => setPoliticalOnlyNeutral((value) => !value), <Flag size={22} />)}
         </>
@@ -4155,30 +4198,34 @@ export function MapView({
       return null;
     }
     if (activeModeId === "diplomacy") {
-      return DIPLOMACY_LENS_OPTIONS.map((option) =>
-        renderLensOptionButton(option.id, t(option.labelKey), diplomacyLens === option.id, () => setDiplomacyLens(option.id), <Briefcase size={22} />),
-      );
+      return DIPLOMACY_LENS_OPTIONS.map((option) => {
+        const Icon = DIPLOMACY_LENS_ICONS[option.id];
+        return renderLensOptionButton(option.id, t(option.labelKey), diplomacyLens === option.id, () => setDiplomacyLens(option.id), <Icon size={22} />);
+      });
     }
     if (activeModeId === "markets") {
       return (
         <>
-          {MARKET_LENS_OPTIONS.map((option) =>
-            renderLensOptionButton(option.id, t(option.labelKey), marketLens === option.id, () => setMarketLens(option.id), option.id === "capitals" ? <Landmark size={22} /> : <Package size={22} />),
-          )}
+          {MARKET_LENS_OPTIONS.map((option) => {
+            const Icon = MARKET_LENS_ICONS[option.id];
+            return renderLensOptionButton(option.id, t(option.labelKey), marketLens === option.id, () => setMarketLens(option.id), <Icon size={22} />);
+          })}
         </>
       );
     }
     if (activeModeId === "population") {
-      return POPULATION_LENS_OPTIONS.map((option) =>
-        renderLensOptionButton(option.id, t(option.labelKey), populationLens === option.id, () => setPopulationLens(option.id), <Users size={22} />),
-      );
+      return POPULATION_LENS_OPTIONS.map((option) => {
+        const Icon = POPULATION_LENS_ICONS[option.id];
+        return renderLensOptionButton(option.id, t(option.labelKey), populationLens === option.id, () => setPopulationLens(option.id), <Icon size={22} />);
+      });
     }
     if (activeModeId === "resources") {
       return (
         <>
-          {RESOURCE_LENS_OPTIONS.map((option) =>
-            renderLensOptionButton(option.id, t(option.labelKey), resourceLens === option.id, () => setResourceLens(option.id), <Pickaxe size={22} />),
-          )}
+          {RESOURCE_LENS_OPTIONS.map((option) => {
+            const Icon = RESOURCE_LENS_ICONS[option.id];
+            return renderLensOptionButton(option.id, t(option.labelKey), resourceLens === option.id, () => setResourceLens(option.id), <Icon size={22} />);
+          })}
         </>
       );
     }
@@ -4196,26 +4243,29 @@ export function MapView({
             );
           })}
           <span className="mx-1 h-8 w-px shrink-0 bg-gradient-to-b from-transparent via-white/15 to-transparent" />
-          {INFRASTRUCTURE_LENS_VIEW_OPTIONS.map((option) =>
-            renderLensOptionButton(
+          {INFRASTRUCTURE_LENS_VIEW_OPTIONS.map((option) => {
+            const Icon = INFRASTRUCTURE_LENS_VIEW_ICONS[option.id];
+            return renderLensOptionButton(
               option.id,
               t(option.labelKey),
               infrastructureLensView === option.id,
               () => setInfrastructureLens(`${infrastructureTransportMode}:${option.id}` as InfrastructureLensId),
-              option.id === "corridors" ? <Route size={22} /> : <Gauge size={22} />,
-            ),
-          )}
+              <Icon size={22} />,
+            );
+          })}
         </>
       );
     }
     if (activeModeId === "colonization") {
-      return COLONIZATION_LENS_OPTIONS.map((option) =>
-        renderLensOptionButton(option.id, t(option.labelKey), colonizationLens === option.id, () => setColonizationLens(option.id), <Flag size={22} />),
-      );
+      return COLONIZATION_LENS_OPTIONS.map((option) => {
+        const Icon = COLONIZATION_LENS_ICONS[option.id];
+        return renderLensOptionButton(option.id, t(option.labelKey), colonizationLens === option.id, () => setColonizationLens(option.id), <Icon size={22} />);
+      });
     }
-    return MILITARY_LENS_OPTIONS.map((option) =>
-      renderLensOptionButton(option.id, t(option.labelKey), militaryLens === option.id, () => setMilitaryLens(option.id), <Crosshair size={22} />),
-    );
+    return MILITARY_LENS_OPTIONS.map((option) => {
+      const Icon = MILITARY_LENS_ICONS[option.id];
+      return renderLensOptionButton(option.id, t(option.labelKey), militaryLens === option.id, () => setMilitaryLens(option.id), <Icon size={22} />);
+    });
   })();
 
   const activeLensFilterControl = (() => {
@@ -5289,7 +5339,7 @@ export function MapView({
                       <div className="inline-flex items-center gap-1 text-white/60">
                         <span>Стоимость переименования:</span>
                         {ducatsIconUrl ? (
-                          <img src={ducatsIconUrl} alt="" className="h-[14px] w-[14px] rounded-sm object-contain" />
+                          <img src={ducatsIconUrl} alt="" className="h-[21px] w-[21px] object-contain" />
                         ) : (
                           <Coins size={13} className="text-amber-300" />
                         )}

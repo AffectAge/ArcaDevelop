@@ -1,0 +1,46 @@
+{
+  "id": "ideology:populist",
+  "description": "",
+  "color": "#313036",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": null,
+  "defaultLawId": null,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [
+    {
+      "id": "rule-1",
+      "type": "sol_below",
+      "weight": 20,
+      "threshold": 8,
+      "targetId": null,
+      "label": "цуйецуе",
+      "invert": false
+    },
+    {
+      "id": "rule-2",
+      "type": "radicals_above",
+      "weight": 20,
+      "threshold": 8,
+      "targetId": null,
+      "label": "рапрпар",
+      "invert": false
+    }
+  ],
+  "nameKey": "ideologies.populist.name"
+}

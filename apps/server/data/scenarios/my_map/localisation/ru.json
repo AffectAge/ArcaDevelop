@@ -18364,13 +18364,975 @@
     }
   },
   "region": {
-    "world": {
-      "name": "World Region"
+    "north_america": {
+      "name": "Северная Америка"
+    },
+    "south_america": {
+      "name": "Южная Америка"
+    },
+    "europe": {
+      "name": "Европа"
+    },
+    "africa": {
+      "name": "Африка"
+    },
+    "asia": {
+      "name": "Азия"
+    },
+    "oceania": {
+      "name": "Океания"
     }
   },
   "scenario": {
     "my_map": {
       "name": "my_map"
+    }
+  },
+  "buildings": {
+    "commercial_office_01": {
+      "name": "commercial office 01"
+    },
+    "machinery_factory_01": {
+      "name": "машины factory 01"
+    },
+    "chemicals_factory": {
+      "name": "химикаты factory"
+    },
+    "commercial_office_02": {
+      "name": "commercial office 02"
+    },
+    "financial_centre": {
+      "name": "financial centre"
+    },
+    "organic_chemicals_factory_01": {
+      "name": "organic химикаты factory 01"
+    },
+    "tools_factory": {
+      "name": "инструменты factory"
+    },
+    "textiles_workshop": {
+      "name": "текстиль workshop"
+    },
+    "energy_equipment_factory": {
+      "name": "energy equipment factory"
+    },
+    "railcars_factory": {
+      "name": "вагоны factory"
+    },
+    "fertilizer_factory": {
+      "name": "удобрения factory"
+    },
+    "spacecraft_factory_01": {
+      "name": "космические аппараты factory 01"
+    },
+    "steel_factory": {
+      "name": "сталь factory"
+    },
+    "confectionery_workshop": {
+      "name": "кондитерские изделия workshop"
+    },
+    "nonferrous_metals_factory": {
+      "name": "nonferrous metals factory"
+    },
+    "copper_ore_mine": {
+      "name": "copper ore mine"
+    },
+    "machinery_factory_02": {
+      "name": "машины factory 02"
+    },
+    "flour_workshop": {
+      "name": "мука workshop"
+    },
+    "timber_farm": {
+      "name": "древесина farm"
+    },
+    "tractors_factory_01": {
+      "name": "тракторы factory 01"
+    },
+    "silicates_factory": {
+      "name": "силикаты factory"
+    },
+    "wine_workshop": {
+      "name": "вино workshop"
+    },
+    "communications_hub": {
+      "name": "связь hub"
+    },
+    "logistics_hub_01": {
+      "name": "логистика hub 01"
+    },
+    "inorganic_chemicals_mine_01": {
+      "name": "inorganic химикаты mine 01"
+    },
+    "vegetables_farm_01": {
+      "name": "овощи farm 01"
+    },
+    "leather_workshop": {
+      "name": "кожа workshop"
+    },
+    "port_01": {
+      "name": "port 01"
+    },
+    "construction_machinery_factory_01": {
+      "name": "construction машины factory 01"
+    },
+    "port_02": {
+      "name": "port 02"
+    },
+    "clothes_workshop_01": {
+      "name": "одежда workshop 01"
+    },
+    "construction_machinery_factory_02": {
+      "name": "construction машины factory 02"
+    },
+    "vegetable_oil_workshop": {
+      "name": "vegetable oil workshop"
+    },
+    "tractors_factory_02": {
+      "name": "тракторы factory 02"
+    },
+    "machinery_factory_03": {
+      "name": "машины factory 03"
+    },
+    "fish_farm_01": {
+      "name": "рыба farm 01"
+    },
+    "engines_factory": {
+      "name": "двигатели factory"
+    },
+    "organic_chemicals_factory_02": {
+      "name": "organic химикаты factory 02"
+    },
+    "machinery_factory_04": {
+      "name": "машины factory 04"
+    },
+    "canned_fish_workshop": {
+      "name": "canned рыба workshop"
+    },
+    "precious_ore_mine": {
+      "name": "precious ore mine"
+    },
+    "spirits_workshop": {
+      "name": "крепкий алкоголь workshop"
+    },
+    "tourism_office": {
+      "name": "туризм office"
+    },
+    "prepared_food_workshop_01": {
+      "name": "prepared food workshop 01"
+    },
+    "meat_farm_01": {
+      "name": "мясо farm 01"
+    },
+    "cotton_farm_01": {
+      "name": "хлопок farm 01"
+    },
+    "gems_mine": {
+      "name": "драгоценные камни mine"
+    },
+    "cotton_farm_02": {
+      "name": "хлопок farm 02"
+    },
+    "mushrooms_farm": {
+      "name": "грибы farm"
+    },
+    "processed_meat_workshop": {
+      "name": "processed мясо workshop"
+    },
+    "port_03": {
+      "name": "port 03"
+    },
+    "robots_factory": {
+      "name": "роботы factory"
+    },
+    "clinic": {
+      "name": "clinic"
+    },
+    "clothes_workshop_02": {
+      "name": "одежда workshop 02"
+    },
+    "bread_workshop": {
+      "name": "хлеб workshop"
+    },
+    "fish_farm_02": {
+      "name": "рыба farm 02"
+    },
+    "grain_farm": {
+      "name": "зерно farm"
+    },
+    "spacecraft_factory_02": {
+      "name": "космические аппараты factory 02"
+    },
+    "meat_farm_02": {
+      "name": "мясо farm 02"
+    },
+    "port_04": {
+      "name": "port 04"
+    },
+    "porcelain_workshop": {
+      "name": "фарфор workshop"
+    },
+    "ships_arsenal": {
+      "name": "корабли arsenal"
+    },
+    "vegetables_farm_02": {
+      "name": "овощи farm 02"
+    },
+    "machinery_factory_05": {
+      "name": "машины factory 05"
+    },
+    "soft_drinks_workshop": {
+      "name": "soft drinks workshop"
+    },
+    "rockets_arsenal": {
+      "name": "ракеты arsenal"
+    },
+    "mining_equipment_factory": {
+      "name": "mining equipment factory"
+    },
+    "sugar_workshop": {
+      "name": "сахар workshop"
+    },
+    "household_chemicals_workshop": {
+      "name": "household химикаты workshop"
+    },
+    "shoes_workshop": {
+      "name": "обувь workshop"
+    },
+    "logistics_hub_02": {
+      "name": "логистика hub 02"
+    },
+    "oilseed_farm": {
+      "name": "масличные культуры farm"
+    },
+    "artillery_arsenal": {
+      "name": "артиллерия arsenal"
+    },
+    "ships_factory": {
+      "name": "корабли factory"
+    },
+    "beer_workshop": {
+      "name": "пиво workshop"
+    },
+    "appliances_workshop": {
+      "name": "бытовая техника workshop"
+    },
+    "explosives_factory": {
+      "name": "взрывчатка factory"
+    },
+    "stone_mine": {
+      "name": "камень mine"
+    },
+    "inorganic_chemicals_mine_02": {
+      "name": "inorganic химикаты mine 02"
+    },
+    "fodder_farm": {
+      "name": "корм farm"
+    },
+    "paper_workshop": {
+      "name": "бумага workshop"
+    },
+    "jewelry_workshop": {
+      "name": "ювелирные изделия workshop"
+    },
+    "beans_farm": {
+      "name": "бобы farm"
+    },
+    "school": {
+      "name": "school"
+    },
+    "rubber_factory": {
+      "name": "резина factory"
+    },
+    "machinery_factory_06": {
+      "name": "машины factory 06"
+    },
+    "machinery_factory_07": {
+      "name": "машины factory 07"
+    },
+    "cosmetics_workshop": {
+      "name": "косметика workshop"
+    },
+    "knitwear_workshop": {
+      "name": "трикотаж workshop"
+    },
+    "prepared_food_workshop_02": {
+      "name": "prepared food workshop 02"
+    },
+    "processed_vegetables_workshop": {
+      "name": "processed овощи workshop"
+    },
+    "aircraft_arsenal": {
+      "name": "самолеты arsenal"
+    },
+    "vegetables_farm_03": {
+      "name": "овощи farm 03"
+    },
+    "machinery_factory_08": {
+      "name": "машины factory 08"
+    },
+    "pharmaceuticals_workshop": {
+      "name": "фармацевтика workshop"
+    },
+    "vehicles_factory": {
+      "name": "транспорт factory"
+    },
+    "drones_arsenal": {
+      "name": "дроны arsenal"
+    },
+    "aircraft_factory": {
+      "name": "самолеты factory"
+    },
+    "iron_ore_mine": {
+      "name": "iron ore mine"
+    },
+    "pasta_workshop": {
+      "name": "макароны workshop"
+    },
+    "tanks_arsenal": {
+      "name": "танки arsenal"
+    },
+    "plastics_factory": {
+      "name": "пластмассы factory"
+    },
+    "uranium_mine": {
+      "name": "уран рудник"
+    },
+    "lignite_mine": {
+      "name": "бурый уголь рудник"
+    },
+    "power_plant_01": {
+      "name": "электростанция станция 01"
+    },
+    "power_plant_02": {
+      "name": "электростанция станция 02"
+    },
+    "power_plant_03": {
+      "name": "электростанция станция 03"
+    },
+    "lignite_power_plant": {
+      "name": "бурый уголь электростанция станция"
+    },
+    "coal_power_plant": {
+      "name": "уголь электростанция станция"
+    },
+    "nuclear_fuel_power_plant": {
+      "name": "nuclear fuel электростанция станция"
+    },
+    "power_plant_04": {
+      "name": "электростанция станция 04"
+    },
+    "uranium_power_plant": {
+      "name": "уран электростанция станция"
+    },
+    "natural_gas_power_plant": {
+      "name": "natural gas электростанция станция"
+    },
+    "crude_oil_power_plant": {
+      "name": "crude oil электростанция станция"
+    },
+    "refined_fuel_power_plant": {
+      "name": "refined fuel электростанция станция"
+    },
+    "coal_mine": {
+      "name": "уголь рудник"
+    },
+    "crude_oil_mine_01": {
+      "name": "crude oil рудник 01"
+    },
+    "crude_oil_mine_02": {
+      "name": "crude oil рудник 02"
+    },
+    "natural_gas_mine_01": {
+      "name": "natural gas рудник 01"
+    },
+    "natural_gas_mine_02": {
+      "name": "natural gas рудник 02"
+    }
+  },
+  "companies": {
+    "national_development_company": {
+      "name": "Национальная компания развития"
+    }
+  },
+  "decisions": {
+    "black_death_response": {
+      "name": "Ответ на Черную смерть"
+    },
+    "example_launch_industrial_program": {
+      "name": "Запустить промышленную программу"
+    }
+  },
+  "events": {
+    "global_climate_pact": {
+      "name": "Глобальный климатический пакт",
+      "description": "Мировой саммит обсуждает климатические ограничения, энергетический переход и будущее промышленного роста.",
+      "option": {
+        "acknowledge": "Принять к сведению"
+      }
+    },
+    "country_briefing": {
+      "name": "Сводка страны",
+      "description": "Сценарное событие ожидает ответа страны.",
+      "option": {
+        "ok": "Понятно"
+      }
+    },
+    "example_industrial_program_failure": {
+      "name": "Промышленная программа провалена",
+      "description": "Сценарная запись: Промышленная программа провалена.",
+      "option": {
+        "acknowledge": "Принять к сведению"
+      }
+    },
+    "example_industrial_program_success": {
+      "name": "Промышленная программа успешна",
+      "description": "Сценарная запись: Промышленная программа успешна.",
+      "option": {
+        "acknowledge": "Принять к сведению"
+      }
+    }
+  },
+  "goods": {
+    "nuclear_fuel": {
+      "name": "Ядерное топливо"
+    },
+    "uranium": {
+      "name": "Уран"
+    },
+    "lignite": {
+      "name": "Бурый уголь"
+    },
+    "refined_fuel": {
+      "name": "Топливо"
+    },
+    "electricity": {
+      "name": "Электроэнергия"
+    },
+    "coal": {
+      "name": "Уголь"
+    },
+    "crude_oil": {
+      "name": "Нефть"
+    },
+    "natural_gas": {
+      "name": "Природный газ"
+    },
+    "aircraft": {
+      "name": "самолеты"
+    },
+    "appliances": {
+      "name": "бытовая техника"
+    },
+    "artillery": {
+      "name": "артиллерия"
+    },
+    "beans": {
+      "name": "бобы"
+    },
+    "beer": {
+      "name": "пиво"
+    },
+    "bread": {
+      "name": "хлеб"
+    },
+    "canned_fish": {
+      "name": "консервированная рыба"
+    },
+    "chemicals": {
+      "name": "химикаты"
+    },
+    "clothes": {
+      "name": "одежда"
+    },
+    "commerce": {
+      "name": "торговля"
+    },
+    "communications": {
+      "name": "связь"
+    },
+    "confectionery": {
+      "name": "кондитерские изделия"
+    },
+    "construction_machinery": {
+      "name": "строительная техника"
+    },
+    "copper_ore": {
+      "name": "медная руда"
+    },
+    "cosmetics": {
+      "name": "косметика"
+    },
+    "cotton": {
+      "name": "хлопок"
+    },
+    "dairy": {
+      "name": "молочные продукты"
+    },
+    "drones": {
+      "name": "дроны"
+    },
+    "education": {
+      "name": "образование"
+    },
+    "electronics": {
+      "name": "электроника"
+    },
+    "energy_equipment": {
+      "name": "энергия оборудование"
+    },
+    "engines": {
+      "name": "двигатели"
+    },
+    "explosives": {
+      "name": "взрывчатка"
+    },
+    "fertilizer": {
+      "name": "удобрения"
+    },
+    "finance": {
+      "name": "финансы"
+    },
+    "fish": {
+      "name": "рыба"
+    },
+    "flour": {
+      "name": "мука"
+    },
+    "fodder": {
+      "name": "корм"
+    },
+    "fur": {
+      "name": "мех"
+    },
+    "gems": {
+      "name": "драгоценные камни"
+    },
+    "grain": {
+      "name": "зерно"
+    },
+    "healthcare": {
+      "name": "здравоохранение"
+    },
+    "household_chemicals": {
+      "name": "бытовая химикаты"
+    },
+    "inorganic_chemicals": {
+      "name": "неорганическая химикаты"
+    },
+    "iron_ore": {
+      "name": "железная руда"
+    },
+    "jewelry": {
+      "name": "ювелирные изделия"
+    },
+    "knitwear": {
+      "name": "трикотаж"
+    },
+    "leather": {
+      "name": "кожа"
+    },
+    "logistics": {
+      "name": "логистика"
+    },
+    "machinery": {
+      "name": "техника"
+    },
+    "meat": {
+      "name": "мясо"
+    },
+    "mining_equipment": {
+      "name": "добыча оборудование"
+    },
+    "mushrooms": {
+      "name": "грибы"
+    },
+    "nonferrous_metals": {
+      "name": "цветные металлы"
+    },
+    "oilseed": {
+      "name": "масличные культуры"
+    },
+    "organic_chemicals": {
+      "name": "органическая химикаты"
+    },
+    "paper": {
+      "name": "бумага"
+    },
+    "pasta": {
+      "name": "макароны"
+    },
+    "pharmaceuticals": {
+      "name": "фармацевтика"
+    },
+    "plastics": {
+      "name": "пластмассы"
+    },
+    "porcelain": {
+      "name": "фарфор"
+    },
+    "precious_ore": {
+      "name": "драгоценная руда"
+    },
+    "prepared_food": {
+      "name": "готовая еда"
+    },
+    "processed_meat": {
+      "name": "переработанная мясо"
+    },
+    "processed_vegetables": {
+      "name": "переработанная овощи"
+    },
+    "railcars": {
+      "name": "вагоны"
+    },
+    "research": {
+      "name": "исследования"
+    },
+    "robots": {
+      "name": "роботы"
+    },
+    "rockets": {
+      "name": "ракеты"
+    },
+    "rubber": {
+      "name": "резина"
+    },
+    "security": {
+      "name": "безопасность"
+    },
+    "ships": {
+      "name": "корабли"
+    },
+    "shoes": {
+      "name": "обувь"
+    },
+    "silicates": {
+      "name": "силикаты"
+    },
+    "soft_drinks": {
+      "name": "безалкогольные напитки"
+    },
+    "spacecraft": {
+      "name": "космические аппараты"
+    },
+    "spirits": {
+      "name": "крепкий алкоголь"
+    },
+    "steel": {
+      "name": "сталь"
+    },
+    "stone": {
+      "name": "камень"
+    },
+    "sugar": {
+      "name": "сахар"
+    },
+    "tanks": {
+      "name": "танки"
+    },
+    "textiles": {
+      "name": "текстиль"
+    },
+    "timber": {
+      "name": "древесина"
+    },
+    "tools": {
+      "name": "инструменты"
+    },
+    "tourism": {
+      "name": "туризм"
+    },
+    "tractors": {
+      "name": "тракторы"
+    },
+    "vegetables": {
+      "name": "овощи"
+    },
+    "vegetable_oil": {
+      "name": "растительное oil"
+    },
+    "vehicles": {
+      "name": "транспорт"
+    },
+    "weapons": {
+      "name": "оружие"
+    },
+    "wine": {
+      "name": "вино"
+    }
+  },
+  "ideologies": {
+    "traditionalist": {
+      "name": "Традиционалист"
+    },
+    "populist": {
+      "name": "Популист"
+    },
+    "conservative": {
+      "name": "Консерватор"
+    },
+    "moderate": {
+      "name": "Умеренный"
+    },
+    "technocrat": {
+      "name": "Технократ"
+    },
+    "socialist": {
+      "name": "Социалист"
+    },
+    "liberal": {
+      "name": "Либерал"
+    },
+    "default": {
+      "name": "Идеология по умолчанию"
+    }
+  },
+  "lawGroups": {
+    "economic_policy": {
+      "name": "Экономическая политика"
+    }
+  },
+  "laws": {
+    "subsistence_economy": {
+      "name": "Натуральное хозяйство"
+    },
+    "industrial_investment": {
+      "name": "Промышленные инвестиции"
+    },
+    "traditional_taxes": {
+      "name": "Традиционные налоги"
+    }
+  },
+  "modifiers": {
+    "development_drive": {
+      "name": "Курс на развитие"
+    }
+  },
+  "parties": {
+    "populist_bloc": {
+      "name": "Популистский блок"
+    },
+    "workers_front": {
+      "name": "Рабочий фронт"
+    },
+    "liberal_union": {
+      "name": "Либеральный союз"
+    },
+    "civic_centre": {
+      "name": "Гражданский центр"
+    }
+  },
+  "professions": {
+    "farmer": {
+      "name": "Фермер"
+    },
+    "miner": {
+      "name": "Шахтер"
+    },
+    "electrician": {
+      "name": "Электрик"
+    },
+    "artisan": {
+      "name": "ремесленник"
+    },
+    "chemist": {
+      "name": "химик"
+    },
+    "clerk": {
+      "name": "служащий"
+    },
+    "default": {
+      "name": "Работник"
+    },
+    "doctor": {
+      "name": "врач"
+    },
+    "driver": {
+      "name": "водитель"
+    },
+    "engineer": {
+      "name": "инженер"
+    },
+    "financier": {
+      "name": "финансист"
+    },
+    "laborer": {
+      "name": "рабочий"
+    },
+    "machinist": {
+      "name": "машинист"
+    },
+    "manager": {
+      "name": "управляющий"
+    },
+    "officer": {
+      "name": "офицер"
+    },
+    "sailor": {
+      "name": "моряк"
+    },
+    "scientist": {
+      "name": "ученый"
+    },
+    "service": {
+      "name": "услуги"
+    },
+    "soldier": {
+      "name": "солдат"
+    },
+    "teacher": {
+      "name": "учитель"
+    },
+    "technician": {
+      "name": "техник"
+    }
+  },
+  "resourceCategories": {
+    "raw_materials": {
+      "name": "Сырье"
+    }
+  },
+  "technologies": {
+    "applied_electricity": {
+      "name": "Прикладное электричество"
+    },
+    "early_metallurgy": {
+      "name": "Ранняя металлургия"
+    },
+    "organized_agriculture": {
+      "name": "Организованное земледелие"
+    },
+    "combustion_engines": {
+      "name": "Двигатели внутреннего сгорания"
+    },
+    "mass_production": {
+      "name": "Массовое производство"
+    },
+    "steam_power": {
+      "name": "Паровая энергия"
+    },
+    "administrative_records": {
+      "name": "Административный учет"
+    },
+    "electrical_theory": {
+      "name": "Теория электричества"
+    },
+    "industrial_extraction": {
+      "name": "Промышленная добыча"
+    },
+    "industrial_chemistry": {
+      "name": "Промышленная химия"
+    },
+    "mechanical_engineering": {
+      "name": "Машиностроение"
+    },
+    "wheel_transport": {
+      "name": "Колесный транспорт"
+    },
+    "electronics": {
+      "name": "Электроника"
+    },
+    "state_accounting": {
+      "name": "Государственный учет"
+    }
+  },
+  "cultures": {
+    "default": {
+      "name": "Культура по умолчанию"
+    }
+  },
+  "industries": {
+    "advanced": {
+      "name": "передовое производство"
+    },
+    "chemicals": {
+      "name": "химикаты"
+    },
+    "energy": {
+      "name": "энергия"
+    },
+    "farms": {
+      "name": "farms"
+    },
+    "food": {
+      "name": "еда"
+    },
+    "infrastructure": {
+      "name": "infrastructure"
+    },
+    "light": {
+      "name": "легкая промышленность"
+    },
+    "machinery": {
+      "name": "техника"
+    },
+    "metallurgy": {
+      "name": "metallurgy"
+    },
+    "military": {
+      "name": "военная промышленность"
+    },
+    "mining": {
+      "name": "добыча"
+    },
+    "services": {
+      "name": "услуги"
+    }
+  },
+  "journal": {
+    "example_industrial_program": {
+      "name": "Промышленная программа",
+      "title": "Промышленная программа",
+      "description": "Сценарная запись: Промышленная программа.",
+      "short": "Промышленная программа",
+      "progress": "Прогресс"
+    },
+    "example_treasury_reserve": {
+      "name": "Резерв казны",
+      "title": "Резерв казны",
+      "description": "Сценарная запись: Резерв казны.",
+      "short": "Резерв казны",
+      "progress": "Прогресс"
+    }
+  },
+  "races": {
+    "default": {
+      "name": "Раса по умолчанию"
+    }
+  },
+  "religions": {
+    "default": {
+      "name": "Религия по умолчанию"
+    }
+  },
+  "sectors": {
+    "advanced": {
+      "name": "передовое производство"
+    },
+    "agriculture": {
+      "name": "сельское хозяйство"
+    },
+    "consumer": {
+      "name": "consumer"
+    },
+    "energy": {
+      "name": "энергия"
+    },
+    "industry": {
+      "name": "industry"
+    },
+    "infrastructure": {
+      "name": "infrastructure"
+    },
+    "military": {
+      "name": "военная промышленность"
+    },
+    "mining": {
+      "name": "добыча"
+    },
+    "services": {
+      "name": "услуги"
     }
   }
 }

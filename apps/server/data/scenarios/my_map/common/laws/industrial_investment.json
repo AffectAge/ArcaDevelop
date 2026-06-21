@@ -1,0 +1,44 @@
+{
+  "id": "law:industrial_investment",
+  "description": "",
+  "color": "#a78bfa",
+  "logoUrl": null,
+  "malePortraitUrl": null,
+  "femalePortraitUrl": null,
+  "needsProfile": null,
+  "ideologyWeights": {},
+  "interestGroupWeights": {},
+  "professionWeights": {},
+  "religionWeights": {},
+  "buildingWeights": {},
+  "lawPreferences": {},
+  "defaultPartyId": null,
+  "lawGroupId": "law_group:economic_policy",
+  "defaultLawId": null,
+  "enactmentDifficulty": 1,
+  "votingDurationTurns": 3,
+  "parliamentPower": null,
+  "prerequisiteTechnologyIds": [],
+  "unlockBuildingIds": [],
+  "unlockLawIds": [],
+  "modifiers": [
+    {
+      "id": "modifier-1",
+      "label": "Новый модификатор",
+      "scope": "country",
+      "conditions": [],
+      "effects": [
+        {
+          "stat": "ducats_gain",
+          "mode": "add_pct",
+          "value": 0.1,
+          "target": null
+        }
+      ]
+    }
+  ],
+  "decision": null,
+  "event": null,
+  "ideologyAttractionRules": [],
+  "nameKey": "laws.industrial_investment.name"
+}

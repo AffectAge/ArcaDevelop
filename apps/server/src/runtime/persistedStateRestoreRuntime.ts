@@ -34,6 +34,7 @@ type PersistedStateRestoreRuntimeParams = {
   round3: (value: number) => number;
   normalizeResourcesByCountryMap: (input: unknown) => Record<string, ResourceTotals>;
   normalizeResourceLedgerByTurn: (input: unknown) => WorldBase["resourceLedgerByTurn"];
+  normalizeExplanationRecordsByTurn: (input: unknown) => WorldBase["explanationRecordsByTurn"];
   normalizeRegionColonizationMap: (input: unknown) => WorldBase["regionColonizationByRegion"];
   normalizeRegionPopulationMap: (input: unknown) => WorldBase["regionPopulationByRegion"];
   normalizeRegionBuildingsMap: (input: unknown) => WorldBase["regionBuildingsByRegion"];
@@ -46,6 +47,10 @@ type PersistedStateRestoreRuntimeParams = {
   normalizeTechnologyByCountryMap: (input: unknown) => WorldBase["technologyByCountry"];
   normalizeCountryDecisionsMap: (input: unknown) => WorldBase["countryDecisionsByCountryId"];
   normalizeCountryEventsMap: (input: unknown) => WorldBase["countryEventsByCountryId"];
+  normalizeScheduledCountryEventsMap: (input: unknown) => WorldBase["countryScheduledEventsByCountryId"];
+  normalizeCountryEventFlagsMap: (input: unknown) => WorldBase["countryEventFlagsByCountryId"];
+  normalizeJournalEntriesMap: (input: unknown) => WorldBase["journalEntriesByCountryId"];
+  normalizeCountryModifiersMap: (input: unknown) => WorldBase["countryModifiersByCountryId"];
   normalizeDivisionTemplatesByCountry: (input: unknown) => WorldBase["divisionTemplatesByCountry"];
   normalizeDivisionsById: (input: unknown, base: WorldBase) => WorldBase["divisionsById"];
   normalizeMilitaryFormationQueueByCountry: (input: unknown) => WorldBase["militaryFormationQueueByCountry"];
@@ -123,6 +128,7 @@ export function createPersistedStateRestoreRuntime(params: PersistedStateRestore
         defaultWorldBase: params.getDefaultWorldBase,
         normalizeResourcesByCountryMap: params.normalizeResourcesByCountryMap,
         normalizeResourceLedgerByTurn: params.normalizeResourceLedgerByTurn,
+        normalizeExplanationRecordsByTurn: params.normalizeExplanationRecordsByTurn,
         normalizeRegionColonizationMap: params.normalizeRegionColonizationMap,
         normalizeRegionPopulationMap: params.normalizeRegionPopulationMap,
         normalizeRegionBuildingsMap: params.normalizeRegionBuildingsMap,
@@ -135,6 +141,10 @@ export function createPersistedStateRestoreRuntime(params: PersistedStateRestore
         normalizeTechnologyByCountryMap: params.normalizeTechnologyByCountryMap,
         normalizeCountryDecisionsMap: params.normalizeCountryDecisionsMap,
         normalizeCountryEventsMap: params.normalizeCountryEventsMap,
+        normalizeScheduledCountryEventsMap: params.normalizeScheduledCountryEventsMap,
+        normalizeCountryEventFlagsMap: params.normalizeCountryEventFlagsMap,
+        normalizeJournalEntriesMap: params.normalizeJournalEntriesMap,
+        normalizeCountryModifiersMap: params.normalizeCountryModifiersMap,
         normalizeDivisionTemplatesByCountry: params.normalizeDivisionTemplatesByCountry,
         normalizeDivisionsById: params.normalizeDivisionsById,
         normalizeMilitaryFormationQueueByCountry: params.normalizeMilitaryFormationQueueByCountry,
