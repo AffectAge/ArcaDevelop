@@ -2,6 +2,7 @@ import type { WorldBase } from "@arcanorum/shared";
 import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
 import type { GameSettings } from "./gameSettingsTypes";
 import type { MarketPriceRuntimeState } from "./marketPriceRuntimeState";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 import { createWorldPopulationRuntime } from "./worldPopulationRuntime";
 
 type PopulationSystemsRuntimeParams = {
@@ -28,6 +29,8 @@ type PopulationSystemsRuntimeParams = {
   normalizeProvinceIdList: Parameters<typeof createWorldPopulationRuntime>[0]["normalizeProvinceIdList"];
   resolveModifiedValue: Parameters<typeof createWorldPopulationRuntime>[0]["resolveModifiedValue"];
   round3: (value: number) => number;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
+  flushResourceLedger?: () => void;
   buildingBaseThroughput: number;
   buildingBaseWagePerWorkerGold: number;
   buildingDurabilityDecayPerTurnFallback: number;
@@ -61,6 +64,8 @@ export function createPopulationSystemsRuntime(params: PopulationSystemsRuntimeP
     normalizeProvinceIdList: params.normalizeProvinceIdList,
     resolveModifiedValue: params.resolveModifiedValue,
     round3: params.round3,
+    addResourceLedgerExpense: params.addResourceLedgerExpense,
+    flushResourceLedger: params.flushResourceLedger,
     buildingBaseThroughput: params.buildingBaseThroughput,
     buildingBaseWagePerWorkerGold: params.buildingBaseWagePerWorkerGold,
     buildingDurabilityDecayPerTurnFallback: params.buildingDurabilityDecayPerTurnFallback,

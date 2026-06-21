@@ -140,3 +140,8 @@ This is the day-to-day coding standard for Arcanorum agents. It applies to new a
 - Unbounded arrays/maps for logs, metrics, queues, replay, or caches.
 - Empty `catch` blocks or `console.log`-only error handling.
 - Tests that only lock implementation details while skipping domain behavior.
+## Resource Ledger
+
+Country-level resource mutations must go through the resource ledger. Mechanics and routes emit `ResourceFlow` entries with `resourceId`, `direction`, `amount`, `sourceType`, `sourceId`, `categoryId`, and `labelKey`; `ResourceLedgerRuntime` applies net totals to `worldBase.resourcesByCountry`.
+
+Do not add direct gameplay writes such as `resources.science +=`, `resources.ducats =`, or `worldBase.resourcesByCountry[countryId].construction = ...` outside ledger runtime and world-state normalizers.

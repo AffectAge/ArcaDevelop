@@ -13,6 +13,7 @@ import type {
   GameEventDefinition,
   ModifierCondition,
   ModifierStat,
+  ResourceTotals,
   WorldBase,
   WsOutMessage,
 } from "@arcanorum/shared";
@@ -40,10 +41,12 @@ import {
   getPendingCountryEvents,
   getVisibleCountryDecisions,
   maybeGenerateCountryEvents,
+  applyDecisionCosts,
   type CountryDecisionView,
   type CountryEventView,
 } from "../mechanics/decisionEventMechanics";
 import type { GameContentEntry, GameSettings } from "./gameSettingsTypes";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
 export type CountryEventUiNotification = {
   countryId: string;
@@ -59,6 +62,8 @@ type CountryProgressionRuntimeParams = {
   normalizeCountryEventRecord: (input: unknown) => CountryEventRecord;
   modifierConditionsMatchCountry: (conditions: ModifierCondition[] | undefined, countryId: string) => boolean;
   resolveModifiedValue: (stat: ModifierStat, base: number, context: { countryId: string }) => number;
+  addResourceLedgerIncome?: (input: ResourceLedgerEntryInput) => void;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
   removeQueuedUiNotification: (notificationId: string) => void;
   makeOfficialNews: (input: {
     turn: number;
@@ -241,7 +246,22 @@ export function createCountryProgressionRuntime(params: CountryProgressionRuntim
     });
 
   const applyDecisionEffectsForRuntime = (countryId: string, effects: DecisionEffect[] | undefined): void => {
-    applyDecisionEffects(params.getWorldBase().resourcesByCountry[countryId], effects);
+    applyDecisionEffects(params.getWorldBase().resourcesByCountry[countryId], effects, {
+      countryId,
+      sourceType: "event",
+      sourceId: `decision-event:${countryId}:${params.getTurnId()}`,
+      addIncome: params.addResourceLedgerIncome,
+      addExpense: params.addResourceLedgerExpense,
+    });
+  };
+
+  const applyDecisionCostsForRuntime = (countryId: string, decisionId: string, costs: Partial<ResourceTotals> | undefined): void => {
+    applyDecisionCosts(params.getWorldBase().resourcesByCountry[countryId], costs, {
+      countryId,
+      sourceType: "event",
+      sourceId: decisionId,
+      addExpense: params.addResourceLedgerExpense,
+    });
   };
 
   const makeCountryEventUiNotification = (input: {
@@ -320,6 +340,8 @@ export function createCountryProgressionRuntime(params: CountryProgressionRuntim
       resourcesByCountry: params.getWorldBase().resourcesByCountry,
       turnId: params.getTurnId(),
       normalizeCountryEventRecord: params.normalizeCountryEventRecord,
+      addIncome: params.addResourceLedgerIncome,
+      addExpense: params.addResourceLedgerExpense,
     });
     for (const notificationId of result.notificationIdsToRemove) {
       params.removeQueuedUiNotification(notificationId);
@@ -346,6 +368,7 @@ export function createCountryProgressionRuntime(params: CountryProgressionRuntim
       ensureCountryTechnologyState,
       resolveTechnologyCost: (countryId, technology) =>
         params.resolveModifiedValue("technology_cost", Number(technology.costScience ?? 100), { countryId }),
+      addExpense: params.addResourceLedgerExpense,
     });
     for (const completion of completions) {
       news.push(
@@ -380,6 +403,7 @@ export function createCountryProgressionRuntime(params: CountryProgressionRuntim
     getCountryDecisionView: getCountryDecisionViewForRuntime,
     getVisibleCountryDecisions: getVisibleCountryDecisionsForRuntime,
     applyDecisionEffects: applyDecisionEffectsForRuntime,
+    applyDecisionCosts: applyDecisionCostsForRuntime,
     getGameEventDefinition: getGameEventDefinitionForRuntime,
     getPendingCountryEvents: getPendingCountryEventsForRuntime,
     maybeGenerateCountryEvents: maybeGenerateCountryEventsForRuntime,

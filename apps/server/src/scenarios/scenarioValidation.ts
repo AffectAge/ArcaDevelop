@@ -11,6 +11,7 @@ import {
   normalizeScenarioEventLogDefines,
   normalizeScenarioMilitaryDefines,
   normalizeScenarioRegistrationDefines,
+  normalizeScenarioResourceLedgerDefines,
   normalizeScenarioTurnTimerDefines,
 } from "./scenarioDefinesLoader";
 
@@ -179,6 +180,10 @@ const VALIDATION_REGISTRATION_DEFAULTS = {
 };
 const VALIDATION_EVENT_LOG_DEFAULTS = {
   retentionTurns: 3,
+};
+const VALIDATION_RESOURCE_LEDGER_DEFAULTS = {
+  retentionTurns: 20,
+  maxEntriesPerTurn: 10_000,
 };
 const VALIDATION_TURN_TIMER_DEFAULTS = {
   enabled: true,
@@ -606,6 +611,10 @@ async function validateDefines(root: string, issues: ScenarioValidationIssue[]):
     normalizeScenarioEventLogDefines(
       defines.eventLog,
       VALIDATION_EVENT_LOG_DEFAULTS,
+    );
+    normalizeScenarioResourceLedgerDefines(
+      defines.resourceLedger,
+      VALIDATION_RESOURCE_LEDGER_DEFAULTS,
     );
     normalizeScenarioTurnTimerDefines(
       defines.turnTimer,

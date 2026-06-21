@@ -33,6 +33,7 @@ function createWorldBase(): WorldBase {
   return {
     turnId: 1,
     resourcesByCountry: {},
+    resourceLedgerByTurn: {},
     regionOwner: {},
     regionController: {},
     provinceOwner: {},

@@ -1,4 +1,4 @@
-import type { Order, RegionPopulation, WorldBase } from "@arcanorum/shared";
+import type { Order, RegionPopulation, ResourceFlowSourceType, ResourceId, WorldBase } from "@arcanorum/shared";
 import {
   dropTurnOrderIndexes,
   removeOrderFromTurnIndexes,
@@ -39,6 +39,18 @@ export type ColonizationTurnWorldState = Pick<
   | "resourcesByCountry"
   | "regionPopulationByRegion"
 >;
+
+export type ColonizationLedgerFlowInput = {
+  countryId: string;
+  resourceId: ResourceId;
+  amount: number;
+  sourceType: ResourceFlowSourceType;
+  sourceId: string;
+  categoryId: string;
+  labelKey: string;
+  labelParams?: Record<string, string | number | boolean | null>;
+  metadata?: Record<string, string | number | boolean | null>;
+};
 
 export type ColonizationCaptureResult = {
   regionId: string;
@@ -338,6 +350,7 @@ export function resolveColonizationSupportTurn(params: {
   activeColonizeRegionsByCountry: Map<string, Set<string>>;
   getRegionColonizationConfig: (regionId: string) => RegionColonizationConfig;
   getRegionDerivedColonizationCosts: (regionId: string) => { pointsCost: number; ducatsCost: number };
+  addExpense?: (input: ColonizationLedgerFlowInput) => void;
 }): void {
   for (const [countryId, targets] of params.colonizeTargetsByCountry.entries()) {
     const regionIds = [...targets];
@@ -390,8 +403,28 @@ export function resolveColonizationSupportTurn(params: {
       params.touchedRegionIds.add(regionId);
     }
     if (countryResource) {
-      countryResource.colonization = Math.max(0, countryResource.colonization - spentColonizationPoints);
-      countryResource.ducats = Math.max(0, countryResource.ducats - spentSupportDucats);
+      params.addExpense?.({
+        countryId,
+        resourceId: "colonization",
+        amount: spentColonizationPoints,
+        sourceType: "colonization",
+        sourceId: `colonization:${countryId}`,
+        categoryId: "colonization",
+        labelKey: "resourceLedger.source.colonization.progress",
+      });
+      params.addExpense?.({
+        countryId,
+        resourceId: "ducats",
+        amount: spentSupportDucats,
+        sourceType: "colonization",
+        sourceId: `colonization:${countryId}`,
+        categoryId: "colonization",
+        labelKey: "resourceLedger.source.colonization.support",
+      });
+      if (!params.addExpense) {
+        countryResource.colonization = Math.max(0, countryResource.colonization - spentColonizationPoints);
+        countryResource.ducats = Math.max(0, countryResource.ducats - spentSupportDucats);
+      }
     }
   }
 }

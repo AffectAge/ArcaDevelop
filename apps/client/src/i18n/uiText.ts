@@ -2274,6 +2274,8 @@ export type UiTextKey =
   | "shell.action.budgetDescription"
   | "shell.action.buildings"
   | "shell.action.buildingsDescription"
+  | "shell.action.colonization"
+  | "shell.action.colonizationDescription"
   | "shell.action.customization"
   | "shell.action.customizationDescription"
   | "shell.action.decisions"
@@ -2301,6 +2303,7 @@ export type UiTextKey =
   | "shell.adminPanel"
   | "shell.availableActions"
   | "shell.clientSettings"
+  | "shell.closeWorkspace"
   | "shell.codex"
   | "shell.connectedMessage"
   | "shell.connectedTitle"
@@ -2312,6 +2315,10 @@ export type UiTextKey =
   | "shell.dashboard.army"
   | "shell.dashboard.armyIntro"
   | "shell.dashboard.availableConstruction"
+  | "shell.dashboard.colonization"
+  | "shell.dashboard.colonizationIntro"
+  | "shell.dashboard.colonizationReserve"
+  | "shell.dashboard.colonyCapacity"
   | "shell.dashboard.construction"
   | "shell.dashboard.constructionIntro"
   | "shell.dashboard.constructionSpend"
@@ -2359,6 +2366,7 @@ export type UiTextKey =
   | "shell.logoutToast"
   | "shell.logoutTitle"
   | "shell.mapLens.army"
+  | "shell.mapLens.colonization"
   | "shell.mapLens.construction"
   | "shell.mapLens.diplomacy"
   | "shell.mapLens.governance"
@@ -2372,6 +2380,8 @@ export type UiTextKey =
   | "shell.metric.regions"
   | "shell.mode.army"
   | "shell.mode.armyDescription"
+  | "shell.mode.colonization"
+  | "shell.mode.colonizationDescription"
   | "shell.mode.construction"
   | "shell.mode.constructionDescription"
   | "shell.mode.diplomacy"
@@ -2396,6 +2406,7 @@ export type UiTextKey =
   | "shell.preview.averageOrganizationDetail"
   | "shell.preview.bills"
   | "shell.preview.billsDetail"
+  | "shell.preview.colonizationLedger"
   | "shell.preview.constructionQueue"
   | "shell.preview.diplomacyLedger"
   | "shell.preview.divisions"
@@ -2404,6 +2415,7 @@ export type UiTextKey =
   | "shell.preview.governanceLedger"
   | "shell.preview.marketLedger"
   | "shell.preview.noArmy"
+  | "shell.preview.noColonization"
   | "shell.preview.noConstruction"
   | "shell.preview.noDiplomacy"
   | "shell.preview.noGovernance"
@@ -2538,6 +2550,40 @@ export type UiTextKey =
   | "shell.worldResyncFailed"
   | "shell.worldResynced"
   | "shell.workspace"
+  | "shell.workspaceTab.actions"
+  | "shell.workspaceTab.admin"
+  | "shell.workspaceTab.readiness"
+  | "shell.workspaceTab.records"
+  | "shell.workspaceTab.summary"
+  | "shell.workspaceTabs"
+  | "resourceLedger.category.base"
+  | "resourceLedger.category.colonization"
+  | "resourceLedger.category.construction"
+  | "resourceLedger.category.customization"
+  | "resourceLedger.category.demolition"
+  | "resourceLedger.category.diplomacy"
+  | "resourceLedger.category.military"
+  | "resourceLedger.category.other"
+  | "resourceLedger.category.research"
+  | "resourceLedger.category.stateSubsidies"
+  | "resourceLedger.currentValue"
+  | "resourceLedger.expenseTotal"
+  | "resourceLedger.expenses"
+  | "resourceLedger.incomeTotal"
+  | "resourceLedger.incomes"
+  | "resourceLedger.net"
+  | "resourceLedger.recentEntries"
+  | "resourceLedger.source.army.formation"
+  | "resourceLedger.source.building.stateSubsidy"
+  | "resourceLedger.source.colonization.support"
+  | "resourceLedger.source.construction.building"
+  | "resourceLedger.source.construction.corridor"
+  | "resourceLedger.source.construction.demolition"
+  | "resourceLedger.source.customization.country"
+  | "resourceLedger.source.customization.provinceRename"
+  | "resourceLedger.source.diplomacy.transfer"
+  | "resourceLedger.source.generic"
+  | "resourceLedger.source.technology.research"
   | "turnStatus.blockedPermanent"
   | "turnStatus.blockedUntilTime"
   | "turnStatus.blockedUntilTurn"
@@ -4847,6 +4893,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.budgetDescription": "Review treasury pressure, subsidies, and current-turn expenses.",
     "shell.action.buildings": "Regional construction",
     "shell.action.buildingsDescription": "Open the selected region's buildings and construction queue.",
+    "shell.action.colonization": "Colonization",
+    "shell.action.colonizationDescription": "Switch to the colonization lens, then select a neutral region on the map.",
     "shell.action.customization": "Country identity",
     "shell.action.customizationDescription": "Edit name, colors, flag, and crest.",
     "shell.action.decisions": "Decisions",
@@ -4874,6 +4922,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.adminPanel": "Admin panel",
     "shell.availableActions": "Available actions",
     "shell.clientSettings": "Client settings",
+    "shell.closeWorkspace": "Close workspace",
     "shell.codex": "Arcawiki",
     "shell.connectedMessage": "Connection to the game server established",
     "shell.connectedTitle": "Connection",
@@ -4885,6 +4934,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.dashboard.army": "Command posture",
     "shell.dashboard.armyIntro": "Use the map to read positions and open the army board for orders.",
     "shell.dashboard.availableConstruction": "Construction reserve",
+    "shell.dashboard.colonization": "Colonial office",
+    "shell.dashboard.colonizationIntro": "Use the colonization lens to find neutral regions and start a validated colonization order from the selected region.",
+    "shell.dashboard.colonizationReserve": "Colonization reserve",
+    "shell.dashboard.colonyCapacity": "Active colonies",
     "shell.dashboard.construction": "Regional works",
     "shell.dashboard.constructionIntro": "Construction remains region-first: select land, then open the queue.",
     "shell.dashboard.constructionSpend": "Planned spend",
@@ -4932,6 +4985,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.logoutToast": "You left the country",
     "shell.logoutTitle": "Logout",
     "shell.mapLens.army": "Military formations and movement",
+    "shell.mapLens.colonization": "Neutral colonizable regions",
     "shell.mapLens.construction": "Infrastructure pressure and routes",
     "shell.mapLens.diplomacy": "Treaties and foreign reach",
     "shell.mapLens.governance": "State regions and administration",
@@ -4945,6 +4999,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.metric.regions": "Regions",
     "shell.mode.army": "Army",
     "shell.mode.armyDescription": "Map command mode for formations, routes, and operational control.",
+    "shell.mode.colonization": "Colonization",
+    "shell.mode.colonizationDescription": "Map mode for neutral regions, colony limits, and first settlement orders.",
     "shell.mode.construction": "Construction",
     "shell.mode.constructionDescription": "Region-first building management with queues, costs, and local limits.",
     "shell.mode.diplomacy": "Diplomacy",
@@ -4969,6 +5025,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.averageOrganizationDetail": "Across field divisions",
     "shell.preview.bills": "Bills",
     "shell.preview.billsDetail": "Parliament agenda",
+    "shell.preview.colonizationLedger": "Colonization board",
     "shell.preview.constructionQueue": "Construction queue",
     "shell.preview.diplomacyLedger": "Diplomatic desk",
     "shell.preview.divisions": "Divisions",
@@ -4977,6 +5034,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.governanceLedger": "Office ledger",
     "shell.preview.marketLedger": "Market ledger",
     "shell.preview.noArmy": "No field divisions or formations yet.",
+    "shell.preview.noColonization": "Select a neutral region on the map to inspect colonization cost and availability.",
     "shell.preview.noConstruction": "No active construction projects for your controlled regions.",
     "shell.preview.noDiplomacy": "No visible diplomatic proposals involving your country.",
     "shell.preview.noGovernance": "No governance records are available yet.",
@@ -5005,6 +5063,34 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.resource.gold": "Gold",
     "shell.resource.religion": "Religion",
     "shell.resource.science": "Science",
+    "resourceLedger.category.base": "Base",
+    "resourceLedger.category.colonization": "Colonization",
+    "resourceLedger.category.construction": "Construction",
+    "resourceLedger.category.customization": "Customization",
+    "resourceLedger.category.demolition": "Demolition",
+    "resourceLedger.category.diplomacy": "Diplomacy",
+    "resourceLedger.category.military": "Military",
+    "resourceLedger.category.other": "Other",
+    "resourceLedger.category.research": "Research",
+    "resourceLedger.category.stateSubsidies": "State subsidies",
+    "resourceLedger.currentValue": "Current value",
+    "resourceLedger.expenseTotal": "Expenses",
+    "resourceLedger.expenses": "Expenses by category",
+    "resourceLedger.incomeTotal": "Income",
+    "resourceLedger.incomes": "Income by category",
+    "resourceLedger.net": "Net",
+    "resourceLedger.recentEntries": "Recent entries",
+    "resourceLedger.source.army.formation": "Army formation",
+    "resourceLedger.source.building.stateSubsidy": "State subsidy",
+    "resourceLedger.source.colonization.support": "Colonization support",
+    "resourceLedger.source.construction.building": "Building construction",
+    "resourceLedger.source.construction.corridor": "Transport corridor",
+    "resourceLedger.source.construction.demolition": "Building demolition",
+    "resourceLedger.source.customization.country": "Country customization",
+    "resourceLedger.source.customization.provinceRename": "Province rename",
+    "resourceLedger.source.diplomacy.transfer": "Diplomatic transfer",
+    "resourceLedger.source.generic": "Resource flow",
+    "resourceLedger.source.technology.research": "Technology research",
     "sideNav.army": "Army",
     "sideNav.budget": "Budget",
     "sideNav.buildings": "Buildings",
@@ -5111,6 +5197,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.worldResyncFailed": "Failed to synchronize world; reloading",
     "shell.worldResynced": "World state synchronized again",
     "shell.workspace": "Workspace",
+    "shell.workspaceTab.actions": "Available actions",
+    "shell.workspaceTab.admin": "Operator console",
+    "shell.workspaceTab.readiness": "Country readiness",
+    "shell.workspaceTab.records": "Records",
+    "shell.workspaceTab.summary": "Country summary",
+    "shell.workspaceTabs": "Workspace tabs",
     "turnStatus.blockedPermanent": "Blocked permanently",
     "turnStatus.blockedUntilTime": "Blocked until {time}",
     "turnStatus.blockedUntilTurn": "Blocked until turn {turn}",
@@ -6453,6 +6545,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.transport.air": "Воздух",
     "map.transport.pipeline": "Трубы",
     "map.transport.powerGrid": "Электросети",
+    "map.common.noData": "нет данных",
+    "map.common.none": "нет",
+    "map.common.neutral": "Нейтрал",
+    "map.common.yes": "есть",
+    "map.filter.currentMarket": "Текущий рынок",
+    "map.filter.allResources": "Все ресурсы",
     "map.lens.fallback": "Слой",
     "map.lens.political.owners": "Владельцы",
     "map.lens.political.mine": "Мои",
@@ -6488,6 +6586,83 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.lens.diplomacy.corridorAccess": "Доступ к коридорам",
     "map.lens.military.armies": "Расположение армий",
     "map.corridor.levelShort": "ур. {level}",
+    "map.corridor.marketCapitalTitle": "{market} - столица рынка",
+    "map.corridor.requiresConstructionRight": "Нужен договор строительства коридоров: владелец провинции должен разрешить {mode}",
+    "map.corridor.buildAccessibleOnly": "Коридор можно строить только по доступным провинциям",
+    "map.corridor.nextPointAdjacent": "Следующая точка коридора должна быть в соседней провинции",
+    "map.corridor.buildStarted": "Коридор добавлен в строительство",
+    "map.corridor.buildFailed": "Не удалось начать строительство коридора",
+    "map.corridor.ownOnly": "Управлять можно только своими коридорами",
+    "map.corridor.updated": "Коридор обновлен",
+    "map.corridor.upgradeQueued": "Улучшение добавлено в строительство",
+    "map.corridor.demolished": "Коридор снесен",
+    "map.corridor.updateFailed": "Не удалось изменить коридор",
+    "map.owner.neutral": "Нейтральная",
+    "map.owner.neutralTerritory": "Нейтральная территория",
+    "map.owner.controlled": "Под управлением",
+    "map.selected.summary": "{owner} · {population} жителей · {buildings} зданий",
+    "map.selected.populationSuffix": "жителей",
+    "map.selected.buildingsSuffix": "зданий",
+    "map.issue.inactiveBuildings": "Простаивает зданий: {count}",
+    "map.issue.noPopulation": "Нет населения",
+    "map.issue.radicals": "Радикалов больше лоялистов",
+    "map.issue.exploration": "Идет разведка ресурсов",
+    "map.issue.blockedColony": "Колонизация запрещена",
+    "map.issue.stable": "Критичных проблем нет",
+    "map.hover.status": "Статус",
+    "map.hover.countryTerritory": "Территория страны",
+    "map.hover.colonyRace": "Колониальная гонка",
+    "map.hover.raceLeader": "Лидер гонки",
+    "map.hover.relation": "Отношение",
+    "map.hover.ownTerritory": "Своя территория",
+    "map.hover.otherCountry": "Другая страна",
+    "map.hover.country": "Страна",
+    "map.hover.market": "Рынок",
+    "map.hover.noMarket": "нет рынка",
+    "map.hover.marketCapital": "Столица рынка",
+    "map.hover.thisProvince": "эта провинция",
+    "map.hover.corridor": "Коридор",
+    "map.hover.corridorPasses": "проходит через провинцию",
+    "map.hover.noCorridor": "нет коридора",
+    "map.hover.corridorConnection": "Связь по коридорам",
+    "map.hover.population": "Население",
+    "map.hover.density": "Плотность",
+    "map.hover.radicalsLoyalists": "Рад./лоял.",
+    "map.hover.culture": "Культура",
+    "map.hover.religion": "Религия",
+    "map.hover.ideology": "Идеология",
+    "map.hover.deposits": "Залежи",
+    "map.hover.notDiscovered": "не обнаружены",
+    "map.hover.largest": "Крупнейшая",
+    "map.hover.exploration": "Разведка",
+    "map.hover.activeCount": "{count} активно",
+    "map.hover.completedCount": "{count} завершено",
+    "map.hover.armies": "Армии",
+    "map.hover.firstArmy": "Первая армия",
+    "map.hover.access": "Доступ",
+    "map.hover.occupied": "занято",
+    "map.hover.unavailable": "недоступно",
+    "map.hover.available": "доступно",
+    "map.hover.cost": "Стоимость",
+    "map.hover.leader": "Лидер",
+    "map.hover.myOrder": "Мой приказ",
+    "map.hover.queued": "в очереди",
+    "map.units.perKm2": "/км2",
+    "map.toast.explorationStarted": "Разведка запущена",
+    "map.toast.explorationStartedDescription": "Провинция {province}",
+    "map.toast.explorationAlreadyQueued": "Разведка уже запущена",
+    "map.toast.explorationRegionNotControlled": "Разведка доступна только в подконтрольных регионах",
+    "map.toast.explorationStartFailed": "Не удалось запустить разведку",
+    "map.toast.renameEmpty": "Название не может быть пустым",
+    "map.toast.renameTooLong": "Максимум 64 символа",
+    "map.toast.renameSuccess": "Провинция переименована (-{ducats} дукатов)",
+    "map.event.renameTitle": "Переименование провинции",
+    "map.event.renameMessage": "Вы переименовали провинцию в \"{province}\"",
+    "map.toast.renameOwnOnly": "Можно переименовывать только свои провинции",
+    "map.toast.renameInsufficientDucats": "Недостаточно дукатов",
+    "map.toast.renameProvinceNotFound": "Провинция не найдена",
+    "map.toast.renameInvalid": "Некорректное название провинции",
+    "map.toast.renameFailed": "Не удалось переименовать провинцию",
     "modifiers.activeCount": "Действующие эффекты: {count}",
     "modifiers.column.effect": "Параметр",
     "modifiers.column.modifier": "Модификатор",
@@ -7336,6 +7511,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.budgetDescription": "Проверить казну, субсидии и расходы текущего хода.",
     "shell.action.buildings": "Строительство региона",
     "shell.action.buildingsDescription": "Открыть здания выбранного региона и очередь строительства.",
+    "shell.action.colonization": "Колонизация",
+    "shell.action.colonizationDescription": "Переключиться на линзу колонизации, затем выбрать нейтральный регион на карте.",
     "shell.action.customization": "Облик страны",
     "shell.action.customizationDescription": "Изменить название, цвета, флаг и герб.",
     "shell.action.decisions": "Решения",
@@ -7363,6 +7540,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.adminPanel": "Админ-панель",
     "shell.availableActions": "Доступные действия",
     "shell.clientSettings": "Настройки клиента",
+    "shell.closeWorkspace": "Закрыть рабочую область",
     "shell.codex": "Аркавики",
     "shell.connectedMessage": "Соединение с игровым сервером установлено",
     "shell.connectedTitle": "Подключение",
@@ -7374,6 +7552,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.dashboard.army": "Командное положение",
     "shell.dashboard.armyIntro": "Читайте позиции на карте и открывайте армейскую панель для приказов.",
     "shell.dashboard.availableConstruction": "Резерв строительства",
+    "shell.dashboard.colonization": "Колониальная канцелярия",
+    "shell.dashboard.colonizationIntro": "Используйте линзу колонизации, чтобы найти нейтральный регион и начать проверенный приказ колонизации из выбранного региона.",
+    "shell.dashboard.colonizationReserve": "Резерв колонизации",
+    "shell.dashboard.colonyCapacity": "Активные колонии",
     "shell.dashboard.construction": "Работы в регионах",
     "shell.dashboard.constructionIntro": "Строительство остаётся региональным: выберите землю, затем откройте очередь.",
     "shell.dashboard.constructionSpend": "Плановые расходы",
@@ -7421,6 +7603,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.logoutToast": "Вы вышли из страны",
     "shell.logoutTitle": "Выход",
     "shell.mapLens.army": "Военные формирования и перемещение",
+    "shell.mapLens.colonization": "Нейтральные колонизируемые регионы",
     "shell.mapLens.construction": "Нагрузка инфраструктуры и маршруты",
     "shell.mapLens.diplomacy": "Договоры и внешнее влияние",
     "shell.mapLens.governance": "Госрегионы и управление",
@@ -7434,6 +7617,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.metric.regions": "Регионы",
     "shell.mode.army": "Армия",
     "shell.mode.armyDescription": "Командный режим карты для соединений, маршрутов и операций.",
+    "shell.mode.colonization": "Колонизация",
+    "shell.mode.colonizationDescription": "Режим карты для нейтральных регионов, лимита колоний и первых поселений.",
     "shell.mode.construction": "Строительство",
     "shell.mode.constructionDescription": "Региональное управление зданиями, очередями, стоимостью и ограничениями.",
     "shell.mode.diplomacy": "Дипломатия",
@@ -7458,6 +7643,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.averageOrganizationDetail": "По полевым дивизиям",
     "shell.preview.bills": "Законопроекты",
     "shell.preview.billsDetail": "Повестка парламента",
+    "shell.preview.colonizationLedger": "Сводка колонизации",
     "shell.preview.constructionQueue": "Очередь строительства",
     "shell.preview.diplomacyLedger": "Дипломатический стол",
     "shell.preview.divisions": "Дивизии",
@@ -7466,6 +7652,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.governanceLedger": "Реестр канцелярии",
     "shell.preview.marketLedger": "Реестр рынка",
     "shell.preview.noArmy": "Полевых дивизий и формирований пока нет.",
+    "shell.preview.noColonization": "Выберите нейтральный регион на карте, чтобы проверить цену и доступность колонизации.",
     "shell.preview.noConstruction": "Нет активных строительных проектов в контролируемых регионах.",
     "shell.preview.noDiplomacy": "Нет видимых дипломатических предложений с участием вашей страны.",
     "shell.preview.noGovernance": "Записи управления пока недоступны.",
@@ -7494,6 +7681,34 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.resource.gold": "Золото",
     "shell.resource.religion": "Религия",
     "shell.resource.science": "Наука",
+    "resourceLedger.category.base": "База",
+    "resourceLedger.category.colonization": "Колонизация",
+    "resourceLedger.category.construction": "Строительство",
+    "resourceLedger.category.customization": "Кастомизация",
+    "resourceLedger.category.demolition": "Снос",
+    "resourceLedger.category.diplomacy": "Дипломатия",
+    "resourceLedger.category.military": "Армия",
+    "resourceLedger.category.other": "Другое",
+    "resourceLedger.category.research": "Исследования",
+    "resourceLedger.category.stateSubsidies": "Госсубсидии",
+    "resourceLedger.currentValue": "Текущее значение",
+    "resourceLedger.expenseTotal": "Расходы",
+    "resourceLedger.expenses": "Расходы по категориям",
+    "resourceLedger.incomeTotal": "Доходы",
+    "resourceLedger.incomes": "Доходы по категориям",
+    "resourceLedger.net": "Итог",
+    "resourceLedger.recentEntries": "Последние записи",
+    "resourceLedger.source.army.formation": "Формирование армии",
+    "resourceLedger.source.building.stateSubsidy": "Госсубсидия",
+    "resourceLedger.source.colonization.support": "Поддержка колонизации",
+    "resourceLedger.source.construction.building": "Строительство здания",
+    "resourceLedger.source.construction.corridor": "Транспортный коридор",
+    "resourceLedger.source.construction.demolition": "Снос здания",
+    "resourceLedger.source.customization.country": "Кастомизация страны",
+    "resourceLedger.source.customization.provinceRename": "Переименование провинции",
+    "resourceLedger.source.diplomacy.transfer": "Дипломатический перевод",
+    "resourceLedger.source.generic": "Поток ресурса",
+    "resourceLedger.source.technology.research": "Исследование технологии",
     "sideNav.army": "Армия",
     "sideNav.budget": "Бюджет",
     "sideNav.buildings": "Постройки",
@@ -7600,6 +7815,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.worldResyncFailed": "Не удалось синхронизировать мир, выполняется перезагрузка",
     "shell.worldResynced": "Состояние мира синхронизировано заново",
     "shell.workspace": "Рабочая область",
+    "shell.workspaceTab.actions": "Доступные действия",
+    "shell.workspaceTab.admin": "Консоль оператора",
+    "shell.workspaceTab.readiness": "Готовность стран",
+    "shell.workspaceTab.records": "Записи",
+    "shell.workspaceTab.summary": "Сводка страны",
+    "shell.workspaceTabs": "Вкладки рабочей области",
     "turnStatus.blockedPermanent": "Заблокирована бессрочно",
     "turnStatus.blockedUntilTime": "Заблокирована до {time}",
     "turnStatus.blockedUntilTurn": "Заблокирована до хода {turn}",

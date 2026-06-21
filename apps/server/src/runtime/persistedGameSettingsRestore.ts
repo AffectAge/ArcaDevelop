@@ -150,6 +150,16 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
           ? Math.max(1, Math.floor(next.eventLog.retentionTurns))
           : defaults.eventLog.retentionTurns,
     },
+    resourceLedger: {
+      retentionTurns:
+        typeof next.resourceLedger?.retentionTurns === "number"
+          ? Math.max(1, Math.min(3_650, Math.floor(next.resourceLedger.retentionTurns)))
+          : defaults.resourceLedger.retentionTurns,
+      maxEntriesPerTurn:
+        typeof next.resourceLedger?.maxEntriesPerTurn === "number"
+          ? Math.max(1, Math.min(100_000, Math.floor(next.resourceLedger.maxEntriesPerTurn)))
+          : defaults.resourceLedger.maxEntriesPerTurn,
+    },
     auditLog: restoreAuditLog(next, defaults),
     turnTimer: restoreTurnTimer(next, defaults),
     map: {

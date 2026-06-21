@@ -12,11 +12,10 @@ type ScenarioApplyRouteParams = {
   routeAuth: RouteAuth;
   findScenario: (scenarioId: string) => FoundScenario | null;
   applyMapRuntime: (mapRoot: string, provinceIndexPath: string) => void;
-  loadScenarioHistory: (scenarioDir: string | null) => ScenarioHistory | null;
-  applyScenarioCountryMetadata: (scenarioDir: string | null, history: ScenarioHistory | null) => Promise<void>;
-  loadScenarioContent: (scenarioDir: string | null) => GameSettings["content"] | null;
-  clearPersistedContentLibraryCache: () => void;
-  loadScenarioDefines: (scenarioDir: string | null) => ScenarioDefines | null;
+  loadScenarioHistory: (scenarioDir: string) => ScenarioHistory | null;
+  applyScenarioCountryMetadata: (scenarioDir: string, history: ScenarioHistory | null) => Promise<void>;
+  loadScenarioContent: (scenarioDir: string) => GameSettings["content"] | null;
+  loadScenarioDefines: (scenarioDir: string) => ScenarioDefines | null;
   applyScenarioDefines: (settings: GameSettings, defines: ScenarioDefines | null) => GameSettings;
   getGameSettings: () => GameSettings;
   setGameSettings: (settings: GameSettings) => void;
@@ -83,7 +82,6 @@ export function registerScenarioApplyRoute(params: ScenarioApplyRouteParams): vo
         const settings = params.getGameSettings();
         settings.content = scenarioContent;
         params.setGameSettings(settings);
-        params.clearPersistedContentLibraryCache();
       }
       params.setGameSettings(
         params.applyScenarioDefines(params.getGameSettings(), params.loadScenarioDefines(scenario.scenarioDir)),

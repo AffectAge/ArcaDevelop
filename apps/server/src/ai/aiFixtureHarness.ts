@@ -81,6 +81,7 @@ export function createAiFixtureWorld(overrides: AiFixtureWorldOverrides = {}): W
     militaryFormationQueueByCountry: {},
     diplomacyProposals: [],
     ...overrides,
+    resourceLedgerByTurn: overrides.resourceLedgerByTurn ?? {},
   };
 }
 

@@ -3,6 +3,7 @@ import type { EventLogEntry, WsOutMessage } from "@arcanorum/shared";
 import type { PrismaClient } from "@prisma/client";
 import type { RouteAuth } from "../security/routeAuth";
 import type { GameSettings } from "./gameSettingsTypes";
+import type { ResourceLedgerRuntime } from "./resourceLedgerRuntime";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
 import { countrySelect } from "./countryRuntimeHelpers";
 import { registerAccountRouteRuntime } from "./accountRouteRuntime";
@@ -65,6 +66,7 @@ type AccountControlRouteCompositionParams = {
     cloneWorldBaseSectionSnapshot: (mask: number) => WorldBaseSectionSnapshot;
     broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase: WorldBaseSectionSnapshot) => void;
   };
+  resourceLedgerRuntime: ResourceLedgerRuntime;
   validateImageRule: AccountDeps["validateImageRule"];
   removeUploadedFile: AccountDeps["removeUploadedFile"];
   removeUploadedFiles: CountryManagementDeps["removeUploadedFiles"];
@@ -118,6 +120,8 @@ export function registerAccountControlRouteComposition(params: AccountControlRou
     cloneWorldBaseSectionSnapshot: params.worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot,
     savePersistentState: params.savePersistentState,
     broadcastWorldDeltaFromSectionSnapshot: params.worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot,
+    addResourceLedgerExpense: params.resourceLedgerRuntime.addExpense,
+    flushResourceLedger: params.resourceLedgerRuntime.flushTurn,
     makeOfficialNews: params.makeOfficialNews,
     broadcast: params.broadcast,
   });

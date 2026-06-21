@@ -1,5 +1,12 @@
 import type express from "express";
-import type { BuildingInstance, Order, RegionConstructionProject, ResourceTotals } from "@arcanorum/shared";
+import type {
+  BuildingInstance,
+  Order,
+  RegionConstructionProject,
+  ResourceFlowSourceType,
+  ResourceId,
+  ResourceTotals,
+} from "@arcanorum/shared";
 import { z } from "zod";
 import type { RouteAuth } from "../security/routeAuth";
 
@@ -110,6 +117,17 @@ export type CountryBuildRoutesDependencies = {
   cloneWorldBaseSectionSnapshot: (mask: number) => unknown;
   savePersistentState: () => void;
   broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase: unknown) => void;
+  addResourceExpense?: (input: {
+    countryId: string;
+    resourceId: ResourceId;
+    amount: number;
+    sourceType: ResourceFlowSourceType;
+    sourceId: string;
+    categoryId: string;
+    labelKey: string;
+    labelParams?: Record<string, string | number | boolean | null>;
+  }) => void;
+  flushResourceLedger?: () => void;
 };
 
 type BuildingInstanceSelection =
@@ -246,7 +264,21 @@ export function registerCountryBuildRoutes(
         deps.masks.regionConstructionQueueByRegion |
         deps.masks.regionBuildingDucatsByRegion,
     );
-    countryResource.construction = Math.max(0, countryResource.construction - demolitionCostConstruction);
+    if (demolitionCostConstruction > 0 && deps.addResourceExpense) {
+      deps.addResourceExpense({
+        countryId: auth.countryId,
+        resourceId: "construction",
+        amount: demolitionCostConstruction,
+        sourceType: "construction",
+        sourceId: selection.targetInstance.instanceId,
+        categoryId: "demolition",
+        labelKey: "resourceLedger.source.construction.demolition",
+        labelParams: { buildingId, regionId },
+      });
+      deps.flushResourceLedger?.();
+    } else {
+      countryResource.construction = Math.max(0, countryResource.construction - demolitionCostConstruction);
+    }
     const previousTotalLevel = selection.matchingInstances.reduce(
       (sum, instance) => sum + Math.max(1, Math.floor(Number(instance.level ?? 1))),
       0,

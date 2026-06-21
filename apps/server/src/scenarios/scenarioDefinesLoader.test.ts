@@ -23,6 +23,7 @@ import {
   type EventLogSettings,
   type MilitarySettings,
   type RegistrationSettings,
+  type ResourceLedgerSettings,
   type TurnTimerSettings,
 } from "./scenarioDefinesLoader";
 
@@ -81,6 +82,10 @@ const baseTurnTimer: TurnTimerSettings = {
   enabled: true,
   secondsPerTurn: 86_400,
   pauseWhenNoPlayersOnline: false,
+};
+const baseResourceLedger: ResourceLedgerSettings = {
+  retentionTurns: 20,
+  maxEntriesPerTurn: 10_000,
 };
 const options = {
   hardMaxAuditLogEntries: 10_000,
@@ -359,6 +364,7 @@ describe("scenarioDefinesLoader", () => {
       registration: baseRegistration,
       eventLog: baseEventLog,
       turnTimer: baseTurnTimer,
+      resourceLedger: baseResourceLedger,
       content: { races: [] },
     };
 

@@ -10,6 +10,7 @@ import type { createWorldDeltaBroadcastRuntime } from "./worldDeltaBroadcastRunt
 import type { GameSettings } from "./gameSettingsTypes";
 import type { WorldBase } from "@arcanorum/shared";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
+import type { ResourceLedgerRuntime } from "./resourceLedgerRuntime";
 
 type MilitaryRuntimeDeps = Parameters<typeof registerMilitaryRuntimeRoutes>[0];
 
@@ -27,6 +28,7 @@ type MilitaryRouteCompositionParams = {
   marketRuntimeFacade: ReturnType<typeof createMarketRuntimeFacade>;
   militaryRuntimeFacade: ReturnType<typeof createMilitaryRuntimeFacade>;
   worldDeltaBroadcastRuntime: ReturnType<typeof createWorldDeltaBroadcastRuntime>;
+  resourceLedgerRuntime: ResourceLedgerRuntime;
   savePersistentState: () => void;
   removeUploadedFile: MilitaryRuntimeDeps["removeUploadedFile"];
   removeUploadedByUrl: MilitaryRuntimeDeps["removeUploadedByUrl"];
@@ -58,6 +60,8 @@ export function registerMilitaryRouteComposition(params: MilitaryRouteCompositio
     savePersistentState: params.savePersistentState,
     broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase) =>
       params.worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase as WorldBaseSectionSnapshot),
+    addResourceLedgerExpense: params.resourceLedgerRuntime.addExpense,
+    flushResourceLedger: params.resourceLedgerRuntime.flushTurn,
     removeUploadedFile: params.removeUploadedFile,
     removeUploadedByUrl: params.removeUploadedByUrl,
     makeVersionedUploadUrl: params.makeVersionedUploadUrl,

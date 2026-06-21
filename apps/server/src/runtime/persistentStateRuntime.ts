@@ -8,7 +8,6 @@ export type PersistedFileReadResult =
 
 export type PersistentStateRuntimeParams<TDelta> = {
   debounceMs: number;
-  persistContentLibrary: () => void;
   persistStateToDb: () => Promise<void>;
   persistWorldDeltaToDb: (delta: TDelta) => Promise<void>;
   pruneWorldDeltaLog: () => Promise<void>;
@@ -40,10 +39,7 @@ export function createPersistentStateRuntime<TDelta>(
   const worldDeltaPersistenceQueue = new SerialTaskQueue();
   const persistentStateScheduler = new PersistentStateScheduler({
     debounceMs: params.debounceMs,
-    persist: async () => {
-      params.persistContentLibrary();
-      await params.persistStateToDb();
-    },
+    persist: params.persistStateToDb,
     onError: (error) => {
       params.logError("[state] Failed to save game state to DB:", error);
     },

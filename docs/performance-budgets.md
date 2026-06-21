@@ -23,3 +23,8 @@ Performance-sensitive systems need explicit budgets before large changes.
 ## Reporting
 
 If performance was not verified for a touched hot path, say so in the final report.
+## Resource Ledger Budget
+
+Resource ledger history is bounded by scenario defines. Keep `resourceLedger.retentionTurns` and `resourceLedger.maxEntriesPerTurn` conservative for large multiplayer worlds, and avoid per-client full-history broadcasts. Normal deltas should include only changed/pruned ledger turns.
+
+Hot-path mechanics should aggregate where possible before appending flows, but must preserve enough source/category information for player-facing explanations.

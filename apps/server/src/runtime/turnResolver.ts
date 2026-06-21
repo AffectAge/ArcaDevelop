@@ -39,6 +39,7 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
     colonizeTargetsByCountry: Map<string, Set<string>>;
     touchedRegionIds: Set<string>;
   }) => void;
+  flushResourceLedger: () => void;
   enqueueBuildingAutoUpgradesTurn: () => void;
   resolveBuildingConstructionQueuesTurn: () => void;
   resolveResourceExplorationTurn: () => void;
@@ -101,19 +102,26 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
   deps.advanceStoredArmyRoutesTurn({ movedDivisionIds, news });
   deps.advanceMilitaryFormationQueue(news);
   deps.resolveColonizationSupportTurn({ colonizeTargetsByCountry, touchedRegionIds });
+  deps.flushResourceLedger();
   deps.enqueueBuildingAutoUpgradesTurn();
   deps.resolveBuildingConstructionQueuesTurn();
+  deps.flushResourceLedger();
   deps.resolveResourceExplorationTurn();
   deps.resolveTransportCorridorConstructionTurn();
+  deps.flushResourceLedger();
 
   for (const capture of deps.resolveColonizationCapturesTurn(touchedRegionIds)) {
     news.push(deps.makeColonizationCaptureNews(capture));
   }
 
   deps.applyCountryResourceIncomeTurn();
+  deps.flushResourceLedger();
   deps.applyPerTurnTreatyMoneyTransfers();
+  deps.flushResourceLedger();
   deps.resolveTechnologyTurn(news);
+  deps.flushResourceLedger();
   deps.autoResolveExpiredCountryEvents(news);
+  deps.flushResourceLedger();
   deps.maybeGenerateCountryEvents(news, uiNotifications);
   deps.resolvePopulationTurn();
   deps.resolveParliamentTurn(uiNotifications);

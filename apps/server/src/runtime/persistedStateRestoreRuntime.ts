@@ -33,6 +33,7 @@ type PersistedStateRestoreRuntimeParams = {
   setLatestMarketOverview: (overview: MarketOverviewState) => void;
   round3: (value: number) => number;
   normalizeResourcesByCountryMap: (input: unknown) => Record<string, ResourceTotals>;
+  normalizeResourceLedgerByTurn: (input: unknown) => WorldBase["resourceLedgerByTurn"];
   normalizeRegionColonizationMap: (input: unknown) => WorldBase["regionColonizationByRegion"];
   normalizeRegionPopulationMap: (input: unknown) => WorldBase["regionPopulationByRegion"];
   normalizeRegionBuildingsMap: (input: unknown) => WorldBase["regionBuildingsByRegion"];
@@ -121,6 +122,7 @@ export function createPersistedStateRestoreRuntime(params: PersistedStateRestore
         turnId,
         defaultWorldBase: params.getDefaultWorldBase,
         normalizeResourcesByCountryMap: params.normalizeResourcesByCountryMap,
+        normalizeResourceLedgerByTurn: params.normalizeResourceLedgerByTurn,
         normalizeRegionColonizationMap: params.normalizeRegionColonizationMap,
         normalizeRegionPopulationMap: params.normalizeRegionPopulationMap,
         normalizeRegionBuildingsMap: params.normalizeRegionBuildingsMap,

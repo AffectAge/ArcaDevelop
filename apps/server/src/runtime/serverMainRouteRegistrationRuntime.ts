@@ -8,7 +8,6 @@ import type { upload } from "../uploads/uploadMiddleware";
 import type { countrySelect } from "./countryRuntimeHelpers";
 import type { createBuildingSystemsRuntime } from "./buildingSystemsRuntime";
 import type { createColonizationRuntimeFacade } from "./colonizationRuntimeFacade";
-import type { createContentLibraryRuntime } from "./contentLibraryRuntime";
 import type { createCountryRuntimeHelpers } from "./countryRuntimeHelpers";
 import type { createCountrySystemsRuntime } from "./countrySystemsRuntime";
 import type { createCountryWorldRuntime } from "./countryWorldRuntime";
@@ -23,6 +22,7 @@ import type { createTurnOrderRuntimeFacade } from "./turnOrderRuntimeFacade";
 import type { createUiNotificationRuntime } from "./uiNotificationRuntime";
 import type { createWorldDeltaBroadcastRuntime } from "./worldDeltaBroadcastRuntime";
 import type { createWorldPopulationRuntime } from "./worldPopulationRuntime";
+import type { ResourceLedgerRuntime } from "./resourceLedgerRuntime";
 import type { GameSettings } from "./gameSettingsTypes";
 import type { MarketPriceRuntimeState } from "./marketPriceRuntimeState";
 import { getTransportCorridorBuildCost } from "./marketSettingsNormalizers";
@@ -63,7 +63,6 @@ type ServerMainRouteRegistrationRuntimeParams = {
   countryWorldRuntime: ReturnType<typeof createCountryWorldRuntime>;
   progressionRuntime: CountrySystemsRuntime["progressionRuntime"];
   modifierRuntime: Parameters<typeof registerCountryRouteComposition>[0]["modifierRuntime"];
-  contentLibraryRuntime: ReturnType<typeof createContentLibraryRuntime>;
   scenarioServerRuntime: ReturnType<typeof createScenarioServerRuntime>;
   marketRuntimeFacade: ReturnType<typeof createMarketRuntimeFacade>;
   marketAccessRuntime: ReturnType<typeof createMarketAccessRuntime>;
@@ -75,6 +74,7 @@ type ServerMainRouteRegistrationRuntimeParams = {
   turnOrderRuntime: ReturnType<typeof createTurnOrderRuntimeFacade>;
   uiNotificationRuntime: UiNotificationRuntime;
   worldDeltaBroadcastRuntime: ReturnType<typeof createWorldDeltaBroadcastRuntime>;
+  resourceLedgerRuntime: ResourceLedgerRuntime;
   diplomacyRuntimeRef: DiplomacyRuntimeRef;
   refreshExpiredDiplomacyProposals: () => void;
   getTurnId: () => number;
@@ -141,6 +141,7 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
     marketRuntimeFacade: params.marketRuntimeFacade,
     militaryRuntimeFacade: params.militaryRuntimeFacade,
     worldDeltaBroadcastRuntime: params.worldDeltaBroadcastRuntime,
+    resourceLedgerRuntime: params.resourceLedgerRuntime,
     savePersistentState: params.savePersistentState,
     removeUploadedFile: params.removeUploadedFile,
     removeUploadedByUrl: params.removeUploadedByUrl,
@@ -201,6 +202,7 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
     modifierRuntime: params.modifierRuntime,
     uiNotificationRuntime: params.uiNotificationRuntime,
     worldDeltaBroadcastRuntime: params.worldDeltaBroadcastRuntime,
+    resourceLedgerRuntime: params.resourceLedgerRuntime,
     getTurnId: params.getTurnId,
     getGameSettings: params.getGameSettings,
     getWorldBase: params.getWorldBase,
@@ -236,6 +238,7 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
     countryWorldRuntime: params.countryWorldRuntime,
     normalizeDiplomacyProposals: params.normalizeDiplomacyProposals,
     worldDeltaBroadcastRuntime: params.worldDeltaBroadcastRuntime,
+    resourceLedgerRuntime: params.resourceLedgerRuntime,
     uiNotificationRuntime: {
       removeQueuedUiNotification: params.uiNotificationRuntime.removeQueuedUiNotification,
       sendUiNotificationToCountry: params.sendUiNotificationToCountry,
@@ -253,7 +256,6 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
     loadScenarioHistory: loadScenarioHistoryOrNull,
     applyScenarioCountryMetadata: params.scenarioServerRuntime.applyScenarioCountryMetadata,
     loadScenarioContent: params.scenarioServerRuntime.loadScenarioContent,
-    contentLibraryRuntime: params.contentLibraryRuntime,
     loadScenarioDefines,
     applyScenarioDefines: (settings, defines) =>
       applyScenarioDefinesToGameSettings(settings, defines, {
@@ -314,6 +316,7 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
     worldPopulationRuntime: params.worldPopulationRuntime,
     countryWorldRuntime: params.countryWorldRuntime,
     worldDeltaBroadcastRuntime: params.worldDeltaBroadcastRuntime,
+    resourceLedgerRuntime: params.resourceLedgerRuntime,
     getActiveColonizeRegionIds: params.getActiveColonizeRegionIds,
     getQueuedColonizeRegionIds: params.getQueuedColonizeRegionIds,
     getProvinceRenameDucatsCost: params.getProvinceRenameDucatsCost,

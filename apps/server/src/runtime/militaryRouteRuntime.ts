@@ -13,6 +13,7 @@ import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
 import type { RouteAuth } from "../security/routeAuth";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
 import type { GameSettings } from "./gameSettingsTypes";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 import type { MilitaryUploadMiddleware } from "../routes/militaryRoutes";
 import type {
   MilitaryBranch,
@@ -61,6 +62,8 @@ type MilitaryRuntimeParams = {
   cloneWorldBaseSectionSnapshot: (mask: number) => WorldBaseSectionSnapshot;
   savePersistentState: () => void;
   broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase: WorldBaseSectionSnapshot) => void;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
+  flushResourceLedger?: () => void;
   removeUploadedFile: (file: Express.Multer.File | undefined) => void;
   removeUploadedByUrl: (url: string) => void;
   makeVersionedUploadUrl: (relativePath: string) => string;
@@ -127,11 +130,17 @@ export function registerMilitaryRuntimeRoutes(params: MilitaryRuntimeParams): vo
   ): { ok: true } | { ok: false; error: string; details?: unknown } => {
     const marketRecord = params.getCountryMarketRecord(countryId);
     marketRecord.warehouseByResourceId ??= {};
-    return spendMilitaryFormationCost({
+    const spend = spendMilitaryFormationCost({
       countryResource: params.getWorldBase().resourcesByCountry[countryId],
+      countryId,
       warehouseByResourceId: marketRecord.warehouseByResourceId,
       cost,
+      addExpense: params.addResourceLedgerExpense,
     });
+    if (spend.ok && cost.ducats > 0 && params.addResourceLedgerExpense) {
+      params.flushResourceLedger?.();
+    }
+    return spend;
   };
 
   registerMilitaryRoutes(params.app, {

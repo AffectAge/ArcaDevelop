@@ -41,7 +41,6 @@ type GameStatePersistenceRuntimeParams = {
   getWorldStateVersion: () => number;
   getAdminAuditSnapshot: () => AdminAuditLogEntry[];
   replaceWorldDeltaHistory: (history: WorldDelta[]) => void;
-  persistContentLibrary: () => void;
   parseAndApplyPersistentState: (input: unknown) => boolean;
   normalizeRegionManualCostFlags: () => number;
   normalizeRegionColonizationCosts: () => number;
@@ -74,7 +73,6 @@ export function createGameStatePersistenceRuntime(
 
   return createPersistentStateRuntime<WorldDelta>({
     debounceMs: params.debounceMs,
-    persistContentLibrary: params.persistContentLibrary,
     persistStateToDb,
     persistWorldDeltaToDb: (delta) => persistWorldDeltaToDb(params.prisma, delta),
     pruneWorldDeltaLog: () => prunePersistedWorldDeltaLog(params.prisma, params.maxPersistedWorldDeltaLog),

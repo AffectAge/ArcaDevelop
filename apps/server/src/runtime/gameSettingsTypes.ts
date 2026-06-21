@@ -355,6 +355,10 @@ export type GameSettings = {
   eventLog: {
     retentionTurns: number;
   };
+  resourceLedger: {
+    retentionTurns: number;
+    maxEntriesPerTurn: number;
+  };
   auditLog: {
     maxEntries: number;
     retentionTurns: number | null;

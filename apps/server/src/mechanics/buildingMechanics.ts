@@ -6,6 +6,8 @@ import type {
   Order,
   RegionConstructionProject,
   RegionResourceDeposit,
+  ResourceFlowSourceType,
+  ResourceId,
   ResourceTotals,
   WorldBase,
 } from "@arcanorum/shared";
@@ -243,6 +245,18 @@ export type BuildingConstructionWorldState = Pick<
 >;
 
 export type BuildingConstructionResources = Record<string, ResourceTotals>;
+
+export type BuildingLedgerFlowInput = {
+  countryId: string;
+  resourceId: ResourceId;
+  amount: number;
+  sourceType: ResourceFlowSourceType;
+  sourceId: string;
+  categoryId: string;
+  labelKey: string;
+  labelParams?: Record<string, string | number | boolean | null>;
+  metadata?: Record<string, string | number | boolean | null>;
+};
 
 export function roundBuildingNumber(value: number): number {
   return Number((Number.isFinite(value) ? value : 0).toFixed(3));
@@ -1178,6 +1192,7 @@ export function resolveBuildingConstructionQueuesTurn(params: {
   buildings: BuildingMechanicsContentEntry[];
   turnId: number;
   createId?: () => string;
+  addExpense?: (input: BuildingLedgerFlowInput) => void;
 }): void {
   type ProjectRef = { regionId: string; index: number };
   const projectsByCountry = new Map<string, ProjectRef[]>();
@@ -1266,8 +1281,28 @@ export function resolveBuildingConstructionQueuesTurn(params: {
       activeRefs = nextActiveRefs;
     }
 
-    countryResource.construction = Math.max(0, Number((countryResource.construction - spentConstruction).toFixed(3)));
-    countryResource.ducats = Math.max(0, Number((countryResource.ducats - spentDucats).toFixed(3)));
+    params.addExpense?.({
+      countryId,
+      resourceId: "construction",
+      amount: spentConstruction,
+      sourceType: "construction",
+      sourceId: `construction:${countryId}`,
+      categoryId: "construction",
+      labelKey: "resourceLedger.source.construction.points",
+    });
+    params.addExpense?.({
+      countryId,
+      resourceId: "ducats",
+      amount: spentDucats,
+      sourceType: "construction",
+      sourceId: `construction:${countryId}`,
+      categoryId: "construction",
+      labelKey: "resourceLedger.source.construction.ducats",
+    });
+    if (!params.addExpense) {
+      countryResource.construction = Math.max(0, Number((countryResource.construction - spentConstruction).toFixed(3)));
+      countryResource.ducats = Math.max(0, Number((countryResource.ducats - spentDucats).toFixed(3)));
+    }
   }
 
   for (const [regionId, queue] of Object.entries(params.worldBase.regionConstructionQueueByRegion ?? {})) {

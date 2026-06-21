@@ -5,7 +5,6 @@ import {
   DEFAULT_EXPLORATION_EMPTY_CHANCE_PCT,
   DEFAULT_EXPLORATION_ROLLS_PER_EXPEDITION,
 } from "../mechanics/resourceExplorationMechanics";
-import type { PersistedContentLibrary } from "../persistence/contentLibraryFile";
 import { buildDefaultGameSettings } from "../content/defaultGameSettings";
 import type { GameSettings } from "./gameSettingsTypes";
 
@@ -24,11 +23,8 @@ export const DEFAULT_MARKET_PRICE_SMOOTHING = 0.3;
 export const DEFAULT_BUILDING_DURABILITY_DECAY_PER_TURN = 10;
 export const DEFAULT_BUILDING_DURABILITY_RECOVERY_PER_TURN = 5;
 
-export function buildServerDefaultGameSettings(params: {
-  persistedContentLibrary: PersistedContentLibrary | null;
-}): GameSettings {
+export function buildServerDefaultGameSettings(): GameSettings {
   return buildDefaultGameSettings({
-    persistedContentLibrary: params.persistedContentLibrary,
     defaultAdminAuditMaxEntries: DEFAULT_ADMIN_AUDIT_MAX_ENTRIES,
     buildingDurabilityDecayPerTurn: DEFAULT_BUILDING_DURABILITY_DECAY_PER_TURN,
     buildingDurabilityRecoveryPerTurn: DEFAULT_BUILDING_DURABILITY_RECOVERY_PER_TURN,

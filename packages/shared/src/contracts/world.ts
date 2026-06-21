@@ -1,4 +1,5 @@
 import type { ResourceTotals } from "./core";
+import type { ResourceFlow } from "./resource-ledger";
 import type { DiplomacyProposal } from "./diplomacy";
 import type { CountryDecisionRecord, CountryEventRecord } from "./content";
 import type { Division, DivisionTemplate, MilitaryFormationQueueItem } from "./military";
@@ -7,6 +8,7 @@ import type { CountryParliament, CountryTechnologyState } from "./politics";
 export type WorldBase = {
   turnId: number;
   resourcesByCountry: Record<string, ResourceTotals>;
+  resourceLedgerByTurn: Record<number, ResourceFlow[]>;
   regionOwner: Record<string, string>;
   regionController: Record<string, string>;
   provinceOwner: Record<string, string>;
@@ -55,6 +57,7 @@ export const WORLD_DELTA_MASK = {
   diplomacyProposals: 1 << 21,
   regionOwner: 1 << 22,
   regionController: 1 << 23,
+  resourceLedgerByTurn: 1 << 24,
 } as const;
 
 export type WorldDelta = {
@@ -63,6 +66,7 @@ export type WorldDelta = {
   worldStateVersion: number;
   mask: number;
   c?: Record<string, ResourceTotals | null>;
+  l?: Record<number, ResourceFlow[] | null>;
   a?: Record<string, string | null>;
   f?: Record<string, string | null>;
   o?: Record<string, string | null>;

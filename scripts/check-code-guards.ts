@@ -57,6 +57,20 @@ const forbiddenChecks: Array<{
 
 const issues: string[] = [];
 
+const forbiddenRootDataFiles = [
+  {
+    path: "apps/server/data/content-library.json",
+    id: "legacy-content-library",
+    message: "Root content-library.json is forbidden. Scenario content must live under scenarios/<scenarioId>/common/*/*.json.",
+  },
+] as const;
+
+for (const file of forbiddenRootDataFiles) {
+  const absolutePath = resolve(repoRoot, file.path);
+  if (!exists(absolutePath)) continue;
+  issues.push(`${file.path} [${file.id}] ${file.message}`);
+}
+
 for (const root of CODE_GUARD_SCANNED_ROOTS) {
   const absoluteRoot = resolve(repoRoot, root);
   collectFiles(absoluteRoot)

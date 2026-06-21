@@ -30,7 +30,7 @@ async function createScenario(dataRoot: string, folder: string, manifest: Record
 }
 
 describe("scenario catalog", () => {
-  it("lists active and folder scenarios with generated province indexes", async () => {
+  it("lists folder scenarios with generated province indexes", async () => {
     const dataRoot = await createDataRoot();
     await createScenario(dataRoot, "demo", {
       id: "demo",
@@ -46,9 +46,8 @@ describe("scenario catalog", () => {
       activeScenarioId: "demo",
     });
 
-    expect(scenarios.map((scenario) => scenario.id)).toEqual(["active", "demo"]);
-    expect(scenarios[0]?.map.hasProvinces).toBe(true);
-    expect(scenarios[1]).toMatchObject({
+    expect(scenarios.map((scenario) => scenario.id)).toEqual(["demo"]);
+    expect(scenarios[0]).toMatchObject({
       id: "demo",
       name: "Demo Scenario",
       active: true,
@@ -65,7 +64,7 @@ describe("scenario catalog", () => {
     const found = findScenario("demo", {
       dataRoot,
       scenariosRoot: join(dataRoot, "scenarios"),
-      activeScenarioId: "active",
+      activeScenarioId: "demo",
     });
 
     expect(found?.scenarioDir?.replaceAll("\\", "/")).toContain("/scenarios/demo");
@@ -81,7 +80,7 @@ describe("scenario catalog", () => {
     const scenarios = listScenarios({
       dataRoot,
       scenariosRoot: join(dataRoot, "scenarios"),
-      activeScenarioId: "active",
+      activeScenarioId: "same",
     });
 
     expect(scenarios.filter((scenario) => scenario.id === "same")).toHaveLength(1);

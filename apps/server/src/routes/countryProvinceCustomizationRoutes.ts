@@ -1,5 +1,5 @@
 import type express from "express";
-import type { EventLogEntry, ResourceTotals, WsOutMessage } from "@arcanorum/shared";
+import type { EventLogEntry, ResourceFlowSourceType, ResourceId, ResourceTotals, WsOutMessage } from "@arcanorum/shared";
 import { z } from "zod";
 import type { RouteAuth } from "../security/routeAuth";
 
@@ -40,6 +40,18 @@ export type CountryProvinceCustomizationRoutesDependencies = {
     visibility: "public";
   }) => EventLogEntry;
   broadcast: (message: WsOutMessage) => void;
+  addResourceExpense?: (input: {
+    countryId: string;
+    resourceId: ResourceId;
+    amount: number;
+    sourceType: ResourceFlowSourceType;
+    sourceId: string;
+    categoryId: string;
+    labelKey: string;
+    labelParams?: Record<string, string | number | boolean | null>;
+    metadata?: Record<string, string | number | boolean | null>;
+  }) => void;
+  flushResourceLedger?: () => void;
 };
 
 export function registerCountryProvinceCustomizationRoutes(
@@ -83,7 +95,21 @@ export function registerCountryProvinceCustomizationRoutes(
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
       deps.masks.resourcesByCountry | deps.masks.provinceNameById,
     );
-    resources.ducats = Math.max(0, resources.ducats - provinceRenameDucatsCost);
+    if (provinceRenameDucatsCost > 0 && deps.addResourceExpense) {
+      deps.addResourceExpense({
+        countryId: auth.countryId,
+        resourceId: "ducats",
+        amount: provinceRenameDucatsCost,
+        sourceType: "customization",
+        sourceId: `province:${provinceId}:rename`,
+        categoryId: "customization",
+        labelKey: "resourceLedger.source.customization.provinceRename",
+        labelParams: { provinceId },
+      });
+      deps.flushResourceLedger?.();
+    } else {
+      resources.ducats = Math.max(0, resources.ducats - provinceRenameDucatsCost);
+    }
     worldBase.provinceNameById[provinceId] = provinceName;
 
     deps.savePersistentState();

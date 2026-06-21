@@ -1,5 +1,5 @@
 import type express from "express";
-import type { Country, ResourceTotals } from "@arcanorum/shared";
+import type { Country, ResourceFlowSourceType, ResourceId, ResourceTotals } from "@arcanorum/shared";
 import { z } from "zod";
 import type { RouteAuth } from "../security/routeAuth";
 import type { ImageDimensionRule } from "../uploads/uploadValidation";
@@ -49,6 +49,17 @@ export type CountryCustomizationRoutesDependencies = {
   makeVersionedUploadUrl: (relativePath: string) => string;
   savePersistentState: () => void;
   invalidateCountryQueryCache: () => void;
+  addResourceExpense?: (input: {
+    countryId: string;
+    resourceId: ResourceId;
+    amount: number;
+    sourceType: ResourceFlowSourceType;
+    sourceId: string;
+    categoryId: string;
+    labelKey: string;
+    metadata?: Record<string, string | number | boolean | null>;
+  }) => void;
+  flushResourceLedger?: () => void;
 };
 
 export function registerCountryCustomizationRoutes(
@@ -159,7 +170,21 @@ export function registerCountryCustomizationRoutes(
           deps.removeUploadedByUrl(target.crestUrl);
         }
 
-        countryResource.ducats = Math.max(0, countryResource.ducats - totalCost);
+        if (totalCost > 0 && deps.addResourceExpense) {
+          deps.addResourceExpense({
+            countryId: auth.countryId,
+            resourceId: "ducats",
+            amount: totalCost,
+            sourceType: "customization",
+            sourceId: `country:${auth.countryId}:customization`,
+            categoryId: "customization",
+            labelKey: "resourceLedger.source.customization.country",
+            metadata: costBreakdown,
+          });
+          deps.flushResourceLedger?.();
+        } else {
+          countryResource.ducats = Math.max(0, countryResource.ducats - totalCost);
+        }
         deps.savePersistentState();
         deps.invalidateCountryQueryCache();
 

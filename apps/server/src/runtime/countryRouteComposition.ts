@@ -11,6 +11,7 @@ import type { createUiNotificationRuntime } from "./uiNotificationRuntime";
 import type { createWorldDeltaBroadcastRuntime } from "./worldDeltaBroadcastRuntime";
 import type { createModifierRuntime } from "./modifierRuntime";
 import type { GameSettings } from "./gameSettingsTypes";
+import type { ResourceLedgerRuntime } from "./resourceLedgerRuntime";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
 
 type CountryProgressionDeps = Parameters<typeof registerCountryProgressionRoutes>[1];
@@ -27,6 +28,7 @@ type CountryRouteCompositionParams = {
   modifierRuntime: ReturnType<typeof createModifierRuntime>;
   uiNotificationRuntime: ReturnType<typeof createUiNotificationRuntime>;
   worldDeltaBroadcastRuntime: ReturnType<typeof createWorldDeltaBroadcastRuntime>;
+  resourceLedgerRuntime: ResourceLedgerRuntime;
   getTurnId: () => number;
   getGameSettings: () => GameSettings;
   getWorldBase: () => WorldBase;
@@ -72,6 +74,8 @@ export function registerCountryRouteComposition(params: CountryRouteCompositionP
     ensureCountryDecisionRecord: params.progressionRuntime.ensureCountryDecisionRecord,
     getCountryDecisionView: params.progressionRuntime.getCountryDecisionView,
     applyDecisionEffects: params.progressionRuntime.applyDecisionEffects,
+    applyDecisionCosts: params.progressionRuntime.applyDecisionCosts,
+    flushResourceLedger: params.resourceLedgerRuntime.flushTurn,
     ensureCountryEventRecord: params.progressionRuntime.ensureCountryEventRecord,
     getPendingCountryEvents: params.progressionRuntime.getPendingCountryEvents,
     getGameEventDefinition: params.progressionRuntime.getGameEventDefinition,

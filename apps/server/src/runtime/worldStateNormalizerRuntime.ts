@@ -17,6 +17,7 @@ type WorldStateNormalizerRuntimeParams = {
 export function createWorldStateNormalizerRuntime(params: WorldStateNormalizerRuntimeParams): {
   normalizeResourceTotals: (input: unknown) => ResourceTotals;
   normalizeResourcesByCountryMap: (input: unknown) => Record<string, ResourceTotals>;
+  normalizeResourceLedgerByTurn: (input: unknown) => WorldBase["resourceLedgerByTurn"];
   normalizeTechnologyByCountryMap: (input: unknown) => WorldBase["technologyByCountry"];
   normalizeCountryDecisionRecord: (input: unknown) => CountryDecisionRecord;
   normalizeCountryDecisionsMap: (input: unknown) => WorldBase["countryDecisionsByCountryId"];
@@ -37,6 +38,7 @@ export function createWorldStateNormalizerRuntime(params: WorldStateNormalizerRu
   return {
     normalizeResourceTotals: (input) => getWorldStateNormalizers().normalizeResourceTotals(input),
     normalizeResourcesByCountryMap: (input) => getWorldStateNormalizers().normalizeResourcesByCountryMap(input),
+    normalizeResourceLedgerByTurn: (input) => getWorldStateNormalizers().normalizeResourceLedgerByTurn(input),
     normalizeTechnologyByCountryMap: (input) => getWorldStateNormalizers().normalizeTechnologyByCountryMap(input),
     normalizeCountryDecisionRecord: (input) => getWorldStateNormalizers().normalizeCountryDecisionRecord(input),
     normalizeCountryDecisionsMap: (input) => getWorldStateNormalizers().normalizeCountryDecisionsMap(input),

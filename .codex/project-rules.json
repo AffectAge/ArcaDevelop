@@ -156,6 +156,10 @@
     "The server is authoritative for game decisions.",
     "AI countries use normal validated orders.",
     "No hidden gameplay fallback.",
+    "New mechanics require player-visible UI, explanatory tooltips, and explanation trails for important visible values.",
+    "Country-level resource mutations must go through resource ledger flows; only resource ledger runtime and world normalizers apply final resourcesByCountry totals.",
+    "Concrete gameplay content must be scenario-authored data, not hardcoded core simulation branches.",
+    "Bonuses, penalties, multipliers, and rule changes must use the shared modifier system.",
     "All visible UI text uses localization keys with English and Russian values.",
     "Balance and pacing values belong in scenario defines.",
     "Scenario-owned data/assets stay under scenario ownership.",
@@ -168,8 +172,13 @@
     "hardcoded player-facing UI text",
     "hardcoded UI colors or theme values",
     "hardcoded balance numbers in code",
+    "hidden visible-value calculations without tooltips or explanation records",
+    "direct country resource mutations outside resource ledger runtime or world normalizers",
+    "hardcoded concrete gameplay content instead of scenario-authored data",
+    "mechanic-specific bonus or penalty conditionals that bypass the shared modifier system",
     "new province-level population/buildings/construction/resources/colonization/diplomacy transfer",
     "authored aggregate map/provinces.json or monolithic scenario content libraries in the target scenario format",
+    "root apps/server/data/content-library.json legacy content library",
     "manual edits to scenarios/<scenarioId>/.generated/",
     "admin/security checks only on the client",
     "upload flow without owner, scenario scope, validation, and cleanup lifecycle",
@@ -325,6 +334,10 @@
           "enabled": { "type": "boolean" },
           "secondsPerTurn": { "type": "integer", "min": 10, "max": 2592000 },
           "pauseWhenNoPlayersOnline": { "type": "boolean" }
+        },
+        "resourceLedger": {
+          "retentionTurns": { "type": "integer", "min": 1, "max": 3650 },
+          "maxEntriesPerTurn": { "type": "integer", "min": 1, "max": 100000 }
         }
       }
     },

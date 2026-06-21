@@ -21,6 +21,7 @@ export type BaselineWorldDeltaPayload = {
   worldStateVersion: number;
   changes: {
     resourcesByCountry?: WorldDelta["c"];
+    resourceLedgerByTurn?: WorldDelta["l"];
     regionOwner?: WorldDelta["a"];
     regionController?: WorldDelta["f"];
     provinceOwner?: WorldDelta["o"];
@@ -59,6 +60,7 @@ export function buildWorldDeltaPayload(params: {
     worldStateVersion: params.worldStateVersion,
     mask: params.compact.mask,
     c: params.compact.c,
+    l: params.compact.l,
     a: params.compact.a,
     f: params.compact.f,
     o: params.compact.o,
@@ -97,6 +99,7 @@ export function buildBaselineWorldDeltaPayload(params: {
     worldStateVersion: params.worldStateVersion,
     changes: {
       resourcesByCountry: params.compact.c,
+      resourceLedgerByTurn: params.compact.l,
       regionOwner: params.compact.a,
       regionController: params.compact.f,
       provinceOwner: params.compact.o,
@@ -128,6 +131,7 @@ export type WorldBaseSectionSnapshot = {
   turnId: number;
   mask: number;
   resourcesByCountry?: WorldBase["resourcesByCountry"];
+  resourceLedgerByTurn?: WorldBase["resourceLedgerByTurn"];
   regionOwner?: WorldBase["regionOwner"];
   regionController?: WorldBase["regionController"];
   provinceOwner?: WorldBase["provinceOwner"];
@@ -165,6 +169,9 @@ export function cloneWorldBaseSectionSnapshot(params: {
 
   if ((mask & WORLD_DELTA_MASK.resourcesByCountry) !== 0) {
     snapshot.resourcesByCountry = structuredClone(worldBase.resourcesByCountry);
+  }
+  if ((mask & WORLD_DELTA_MASK.resourceLedgerByTurn) !== 0) {
+    snapshot.resourceLedgerByTurn = structuredClone(worldBase.resourceLedgerByTurn);
   }
   if ((mask & WORLD_DELTA_MASK.regionOwner) !== 0) {
     snapshot.regionOwner = { ...worldBase.regionOwner };
@@ -293,6 +300,7 @@ export function buildCompactWorldDelta(params: {
 }): CompactWorldDeltaPayload {
   const { prev, next } = params;
   const resourcesByCountry: Record<string, ResourceTotals | null> = {};
+  const resourceLedgerByTurn: WorldDelta["l"] = {};
   const regionOwner: Record<string, string | null> = {};
   const regionController: Record<string, string | null> = {};
   const provinceOwner: Record<string, string | null> = {};
@@ -334,6 +342,19 @@ export function buildCompactWorldDelta(params: {
       prevValue.gold !== nextValue.gold
     ) {
       resourcesByCountry[key] = nextValue;
+    }
+  }
+
+  for (const key of new Set([...Object.keys(prev.resourceLedgerByTurn), ...Object.keys(next.resourceLedgerByTurn)])) {
+    const turnId = Number(key);
+    const prevValue = prev.resourceLedgerByTurn[turnId];
+    const nextValue = next.resourceLedgerByTurn[turnId];
+    if (!nextValue) {
+      resourceLedgerByTurn[turnId] = null;
+      continue;
+    }
+    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+      resourceLedgerByTurn[turnId] = nextValue;
     }
   }
 
@@ -604,6 +625,10 @@ export function buildCompactWorldDelta(params: {
     mask |= WORLD_DELTA_MASK.resourcesByCountry;
     compact.c = resourcesByCountry;
   }
+  if (Object.keys(resourceLedgerByTurn).length > 0) {
+    mask |= WORLD_DELTA_MASK.resourceLedgerByTurn;
+    compact.l = resourceLedgerByTurn;
+  }
   if (Object.keys(regionOwner).length > 0) {
     mask |= WORLD_DELTA_MASK.regionOwner;
     compact.a = regionOwner;
@@ -703,6 +728,10 @@ export function toWorldBaseForDeltaDiff(previous: WorldBaseSectionSnapshot, next
       (previous.mask & WORLD_DELTA_MASK.resourcesByCountry) !== 0 && previous.resourcesByCountry
         ? previous.resourcesByCountry
         : next.resourcesByCountry,
+    resourceLedgerByTurn:
+      (previous.mask & WORLD_DELTA_MASK.resourceLedgerByTurn) !== 0 && previous.resourceLedgerByTurn
+        ? previous.resourceLedgerByTurn
+        : next.resourceLedgerByTurn,
     regionOwner:
       (previous.mask & WORLD_DELTA_MASK.regionOwner) !== 0 && previous.regionOwner
         ? previous.regionOwner

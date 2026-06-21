@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import type { PrismaClient } from "@prisma/client";
 import type { WorldBase } from "@arcanorum/shared";
-import type { PersistedContentLibrary } from "../persistence/contentLibraryFile";
 import {
   buildAiControlledCountryIdsFromHistory,
   buildScenarioCountryMetadata,
@@ -25,7 +24,6 @@ type ScenarioServerRuntimeParams = {
   dataRoot: string;
   scenariosRoot: string;
   getActiveScenarioId: () => string;
-  getPersistedContentLibrary: () => PersistedContentLibrary | null;
   defaultWorldBase: (currentTurnId: number) => WorldBase;
   addEconomyTickCountry: (countryId: string) => void;
   setAiControlledCountryIds: (countryIds: string[]) => void;
@@ -47,7 +45,7 @@ type ScenarioServerRuntimeParams = {
 export function createScenarioServerRuntime(params: ScenarioServerRuntimeParams): {
   listScenarios: () => ScenarioDescriptor[];
   findScenario: (scenarioId: string) => FoundScenario | null;
-  loadScenarioContent: (scenarioDir: string | null) => GameSettings["content"] | null;
+  loadScenarioContent: (scenarioDir: string) => GameSettings["content"] | null;
   buildWorldBaseFromScenario: (
     currentTurnId: number,
     scenarioDir: string | null,
@@ -71,10 +69,9 @@ export function createScenarioServerRuntime(params: ScenarioServerRuntimeParams)
     });
   }
 
-  function loadScenarioContent(scenarioDir: string | null): GameSettings["content"] | null {
+  function loadScenarioContent(scenarioDir: string): GameSettings["content"] | null {
     return loadScenarioContentForRuntime({
       scenarioDir,
-      getPersistedContentLibrary: params.getPersistedContentLibrary,
     });
   }
 

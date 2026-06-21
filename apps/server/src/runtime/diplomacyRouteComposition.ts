@@ -27,6 +27,11 @@ type DiplomacyRouteCompositionParams = {
     cloneWorldBaseSectionSnapshot: (mask: number) => WorldBaseSectionSnapshot;
     broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase: WorldBaseSectionSnapshot) => void;
   };
+  resourceLedgerRuntime?: {
+    addIncome: DiplomacyDeps["addResourceLedgerIncome"];
+    addExpense: DiplomacyDeps["addResourceLedgerExpense"];
+    flushTurn: DiplomacyDeps["flushResourceLedger"];
+  };
   uiNotificationRuntime: {
     removeQueuedUiNotification: DiplomacyDeps["removeQueuedUiNotification"];
     sendUiNotificationToCountry: DiplomacyDeps["sendUiNotificationToCountry"];
@@ -65,6 +70,9 @@ export function createDiplomacyRouteComposition(params: DiplomacyRouteCompositio
     savePersistentState: params.savePersistentState,
     broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase) =>
       params.worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase as WorldBaseSectionSnapshot),
+    addResourceLedgerIncome: params.resourceLedgerRuntime?.addIncome,
+    addResourceLedgerExpense: params.resourceLedgerRuntime?.addExpense,
+    flushResourceLedger: params.resourceLedgerRuntime?.flushTurn,
     removeQueuedUiNotification: params.uiNotificationRuntime.removeQueuedUiNotification,
     sendUiNotificationToCountry: params.uiNotificationRuntime.sendUiNotificationToCountry,
     makeOfficialNews: params.makeOfficialNews,

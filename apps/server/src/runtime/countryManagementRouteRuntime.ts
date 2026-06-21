@@ -10,6 +10,7 @@ import { registerCountryClientSettingsRoutes } from "../routes/countryClientSett
 import { registerCountryCustomizationRoutes } from "../routes/countryCustomizationRoutes";
 import type { RouteAuth } from "../security/routeAuth";
 import type { ImageDimensionRule } from "../uploads/uploadValidation";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
 
 type CountryManagementUploadMiddleware = {
@@ -74,6 +75,8 @@ type CountryManagementRouteRuntimeParams = {
   cloneWorldBaseSectionSnapshot: (mask: number) => WorldBaseSectionSnapshot;
   savePersistentState: () => void;
   broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase: WorldBaseSectionSnapshot) => void;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
+  flushResourceLedger?: () => void;
   makeOfficialNews: (input: {
     turn: number;
     category: "politics";
@@ -181,5 +184,7 @@ export function registerCountryManagementRouteRuntime(params: CountryManagementR
     makeVersionedUploadUrl: params.makeVersionedUploadUrl,
     savePersistentState: params.savePersistentState,
     invalidateCountryQueryCache: params.invalidateCountryQueryCache,
+    addResourceExpense: params.addResourceLedgerExpense,
+    flushResourceLedger: params.flushResourceLedger,
   });
 }

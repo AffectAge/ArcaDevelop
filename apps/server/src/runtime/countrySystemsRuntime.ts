@@ -2,6 +2,7 @@ import type { WorldBase } from "@arcanorum/shared";
 import type { GameSettings } from "./gameSettingsTypes";
 import { createCountryProgressionRuntime } from "./countryProgressionRuntime";
 import { createCountryWorldRuntime } from "./countryWorldRuntime";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
 type CountrySystemsRuntimeParams = {
   getWorldBase: () => WorldBase;
@@ -14,6 +15,8 @@ type CountrySystemsRuntimeParams = {
   normalizeResourceTotals: Parameters<typeof createCountryWorldRuntime>[0]["normalizeResourceTotals"];
   modifierConditionsMatchCountry: Parameters<typeof createCountryProgressionRuntime>[0]["modifierConditionsMatchCountry"];
   resolveModifiedValue: Parameters<typeof createCountryProgressionRuntime>[0]["resolveModifiedValue"];
+  addResourceLedgerIncome?: (input: ResourceLedgerEntryInput) => void;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
   removeQueuedUiNotification: Parameters<typeof createCountryProgressionRuntime>[0]["removeQueuedUiNotification"];
   makeOfficialNews: Parameters<typeof createCountryProgressionRuntime>[0]["makeOfficialNews"];
   savePersistentState: () => void;
@@ -32,6 +35,8 @@ export function createCountrySystemsRuntime(params: CountrySystemsRuntimeParams)
     normalizeCountryEventRecord: params.normalizeCountryEventRecord,
     modifierConditionsMatchCountry: params.modifierConditionsMatchCountry,
     resolveModifiedValue: params.resolveModifiedValue,
+    addResourceLedgerIncome: params.addResourceLedgerIncome,
+    addResourceLedgerExpense: params.addResourceLedgerExpense,
     removeQueuedUiNotification: params.removeQueuedUiNotification,
     makeOfficialNews: params.makeOfficialNews,
   });

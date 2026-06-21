@@ -18,6 +18,7 @@ import {
 } from "../mechanics/buildingMechanics";
 import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
 import type { BuildingContentEntry, GameSettings } from "./gameSettingsTypes";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
 type BuildingRuntimeParams = {
   getWorldBase: () => WorldBase;
@@ -26,6 +27,7 @@ type BuildingRuntimeParams = {
   getOrdersByTurn: () => Map<number, Map<string, Order[]>>;
   getProvinceById: () => Map<string, Adm1ProvinceIndexEntry>;
   ensureCountryInWorldBase: (countryId: string) => void;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
 };
 
 export type BuildingRuntime = ReturnType<typeof createBuildingRuntime>;
@@ -94,6 +96,7 @@ export function createBuildingRuntime(params: BuildingRuntimeParams) {
       buildings: params.getGameSettings().content.buildings,
       turnId: params.getTurnId(),
       createId: randomUUID,
+      addExpense: params.addResourceLedgerExpense,
     });
   };
 

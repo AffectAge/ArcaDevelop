@@ -8,6 +8,8 @@ import type {
   MilitaryBranch,
   MilitaryTemplateComponent,
   Order,
+  ResourceFlowSourceType,
+  ResourceId,
   ResourceTotals,
   WorldBase,
 } from "@arcanorum/shared";
@@ -28,6 +30,18 @@ export type MilitaryFormationCost = {
   ducats: number;
   manpower: number;
   equipmentNeeds: MilitaryEquipmentNeed[];
+};
+
+export type MilitaryLedgerFlowInput = {
+  countryId: string;
+  resourceId: ResourceId;
+  amount: number;
+  sourceType: ResourceFlowSourceType;
+  sourceId: string;
+  categoryId: string;
+  labelKey: string;
+  labelParams?: Record<string, string | number | boolean | null>;
+  metadata?: Record<string, string | number | boolean | null>;
 };
 
 export type MilitaryIdFactory = () => string;
@@ -615,8 +629,10 @@ export function calculateFormationTurns(params: {
 
 export function spendMilitaryFormationCost(params: {
   countryResource: ResourceTotals | null | undefined;
+  countryId?: string;
   warehouseByResourceId: Record<string, number>;
   cost: { ducats: number; equipmentNeeds: MilitaryEquipmentNeed[] };
+  addExpense?: (input: MilitaryLedgerFlowInput) => void;
 }): MilitaryFormationSpendResult {
   if (params.countryResource && params.cost.ducats > 0 && Number(params.countryResource.ducats ?? 0) < params.cost.ducats) {
     return { ok: false, error: "NOT_ENOUGH_DUCATS" };
@@ -631,7 +647,17 @@ export function spendMilitaryFormationCost(params: {
       };
     }
   }
-  if (params.countryResource && params.cost.ducats > 0) {
+  if (params.countryResource && params.cost.ducats > 0 && params.addExpense && params.countryId) {
+    params.addExpense({
+      countryId: params.countryId,
+      resourceId: "ducats",
+      amount: params.cost.ducats,
+      sourceType: "army",
+      sourceId: `army:formation:${params.countryId}`,
+      categoryId: "military",
+      labelKey: "resourceLedger.source.army.formation",
+    });
+  } else if (params.countryResource && params.cost.ducats > 0) {
     params.countryResource.ducats = round3(Math.max(0, Number(params.countryResource.ducats ?? 0) - params.cost.ducats));
   }
   for (const need of params.cost.equipmentNeeds) {

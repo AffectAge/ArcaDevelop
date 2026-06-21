@@ -1,4 +1,4 @@
-import type { CountryTechnologyState, ResourceTotals, WorldBase } from "@arcanorum/shared";
+import type { CountryTechnologyState, ResourceFlowSourceType, ResourceId, ResourceTotals, WorldBase } from "@arcanorum/shared";
 
 export type TechnologyContentEntry = {
   id: string;
@@ -15,6 +15,18 @@ export type TechnologyCompletion = {
   countryId: string;
   technologyId: string;
   technologyName: string;
+};
+
+export type TechnologyLedgerFlowInput = {
+  countryId: string;
+  resourceId: ResourceId;
+  amount: number;
+  sourceType: ResourceFlowSourceType;
+  sourceId: string;
+  categoryId: string;
+  labelKey: string;
+  labelParams?: Record<string, string | number | boolean | null>;
+  metadata?: Record<string, string | number | boolean | null>;
 };
 
 export function getTechnologyById(technologies: TechnologyContentEntry[]): Map<string, TechnologyContentEntry> {
@@ -104,6 +116,7 @@ export function resolveTechnologyTurn(params: {
   technologies: TechnologyContentEntry[];
   ensureCountryTechnologyState: (countryId: string) => CountryTechnologyState;
   resolveTechnologyCost: (countryId: string, technology: TechnologyContentEntry) => number;
+  addExpense?: (input: TechnologyLedgerFlowInput) => void;
 }): TechnologyCompletion[] {
   const technologyById = getTechnologyById(params.technologies);
   const completions: TechnologyCompletion[] = [];
@@ -129,6 +142,7 @@ export function resolveTechnologyTurn(params: {
       technologyById,
       activeTechnologyIds: validActiveTechnologyIds,
       resolveTechnologyCost: params.resolveTechnologyCost,
+      addExpense: params.addExpense,
     });
 
     for (const technologyId of result.completedTechnologyIds) {
@@ -170,6 +184,7 @@ function spendScienceOnTechnologies(params: {
   technologyById: Map<string, TechnologyContentEntry>;
   activeTechnologyIds: string[];
   resolveTechnologyCost: (countryId: string, technology: TechnologyContentEntry) => number;
+  addExpense?: (input: TechnologyLedgerFlowInput) => void;
 }): { completedTechnologyIds: string[] } {
   let remainingScience = Math.max(0, Number(params.resources.science ?? 0));
   let spentTotal = 0;
@@ -198,6 +213,16 @@ function spendScienceOnTechnologies(params: {
         continue;
       }
       spentThisPass += spent;
+      params.addExpense?.({
+        countryId: params.countryId,
+        resourceId: "science",
+        amount: spent,
+        sourceType: "technology",
+        sourceId: technology.id,
+        categoryId: "research",
+        labelKey: "resourceLedger.source.technology.research",
+        labelParams: { technologyId: technology.id },
+      });
       const nextProgress = round3(currentProgress + spent);
       if (nextProgress + 1e-9 >= cost) {
         params.state.progressByTechnologyId[technology.id] = cost;
@@ -214,10 +239,10 @@ function spendScienceOnTechnologies(params: {
     remainingTechnologyIds = nextRemainingTechnologyIds;
   }
 
-  if (spentTotal > 0) {
+  if (spentTotal > 0 && !params.addExpense) {
     params.resources.science = round3(Math.max(0, Number(params.resources.science ?? 0) - spentTotal));
-    params.state.lastScienceSpent = round3(spentTotal);
   }
+  if (spentTotal > 0) params.state.lastScienceSpent = round3(spentTotal);
 
   if (completedTechnologyIds.length > 0) {
     const completedIds = normalizeIdList(completedTechnologyIds);

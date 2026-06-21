@@ -1,4 +1,5 @@
 export * from "./contracts/core";
+export * from "./contracts/resource-ledger";
 export * from "./contracts/diplomacy";
 export * from "./contracts/content";
 export * from "./contracts/orders";

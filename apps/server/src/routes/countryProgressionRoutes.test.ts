@@ -63,7 +63,8 @@ describe("countryProgressionRoutes", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(resources.ducats).toBe(7);
+    expect(resources.ducats).toBe(10);
+    expect(deps.applyDecisionCosts).toHaveBeenCalledWith("country:a", "decision:mint", { ducats: 3 });
     expect(deps.applyDecisionEffects).toHaveBeenCalledWith("country:a", [
       { type: "resource_delta", resource: "gold", amount: 1 },
     ]);
@@ -166,6 +167,8 @@ function makeDeps(options?: {
       },
     }),
     applyDecisionEffects: vi.fn(),
+    applyDecisionCosts: vi.fn(),
+    flushResourceLedger: vi.fn(),
     ensureCountryEventRecord: () => ({
       pending: [],
       completedEventIds: [],

@@ -14,14 +14,19 @@ Also read:
 
 ## UI And Localization Agent
 
-All visible UI text must use localization keys with English and Russian strings. Do not add inline player-facing text.
+All visible UI text must use localization keys with English and Russian values. Do not add inline player-facing text.
 
 When changing UI:
 
 - use design tokens and scenario theme variables,
+- ensure all visible UI text uses localization keys with English and Russian values,
 - keep important actions consequence-aware and localized,
 - preserve keyboard and accessibility behavior,
 - explain failed player actions with localized reasons,
+- make new mechanics player-visible through UI and explanatory tooltips,
+- explain country resource totals and per-turn changes from ledger balances when ledger entries are available,
+- show ledger `labelKey` through localization; raw source ids are allowed only in admin/debug surfaces,
+- ensure tooltips for important values explain meaning, current causes, increasing/decreasing sources, modifiers, and gameplay effects,
 - do not expose raw server error messages to normal players.
 - do not hardcode UI text, colors, theme values, or balance values.
 - map server error codes to localized player-facing text.

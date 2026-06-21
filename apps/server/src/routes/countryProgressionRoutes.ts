@@ -21,7 +21,6 @@ import type {
 import { z } from "zod";
 import type { RouteAuth } from "../security/routeAuth";
 import { setActiveTechnologyState } from "../mechanics/technologyMechanics";
-import { applyDecisionCosts } from "../mechanics/decisionEventMechanics";
 
 export type CountryProgressionCultureNeed = {
   id: string;
@@ -146,6 +145,8 @@ export type CountryProgressionRoutesDependencies = {
   ensureCountryDecisionRecord: (countryId: string) => CountryDecisionRecord;
   getCountryDecisionView: (countryId: string, decision: CountryProgressionContentEntry) => CountryDecisionView;
   applyDecisionEffects: (countryId: string, effects: DecisionEffect[] | undefined) => void;
+  applyDecisionCosts: (countryId: string, decisionId: string, costs: Partial<ResourceTotals> | undefined) => void;
+  flushResourceLedger?: () => void;
   ensureCountryEventRecord: (countryId: string) => CountryEventRecord;
   getPendingCountryEvents: (countryId: string) => Record<string, unknown>;
   getGameEventDefinition: (entry: CountryProgressionContentEntry) => GameEventDefinition;
@@ -342,8 +343,9 @@ export function registerCountryProgressionRoutes(
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
       deps.masks.resourcesByCountry | deps.masks.countryDecisionsByCountryId,
     );
-    applyDecisionCosts(deps.getCountryResources(countryId), view.decision.costs);
+    deps.applyDecisionCosts(countryId, decisionId, view.decision.costs);
     deps.applyDecisionEffects(countryId, view.decision.effects);
+    deps.flushResourceLedger?.();
     const record = deps.ensureCountryDecisionRecord(countryId);
     if (!record.completedDecisionIds.includes(decisionId)) record.completedDecisionIds.push(decisionId);
     const cooldown = Math.max(0, Math.floor(Number(view.decision.cooldownTurns ?? 0)));
@@ -403,6 +405,7 @@ export function registerCountryProgressionRoutes(
       deps.masks.resourcesByCountry | deps.masks.countryEventsByCountryId,
     );
     deps.applyDecisionEffects(countryId, option.effects);
+    deps.flushResourceLedger?.();
     record.pending = record.pending.filter((item) => item.id !== pending.id);
     if (!record.completedEventIds.includes(entry.id)) record.completedEventIds.push(entry.id);
     const cooldown = Math.max(0, Math.floor(Number(event.cooldownTurns ?? 0)));

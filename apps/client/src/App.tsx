@@ -149,10 +149,17 @@ export default function App() {
   }>({ open: false, action: null });
   const [country, setCountry] = useState<SessionCountry | null>(null);
   const [activeStrategyMode, setActiveStrategyMode] = useState<StrategyMode>("overview");
+  const [strategyWorkspaceOpen, setStrategyWorkspaceOpen] = useState(true);
+  const setStrategyModeAndOpenWorkspace = useCallback((mode: StrategyMode) => {
+    setActiveStrategyMode(mode);
+    setStrategyWorkspaceOpen(true);
+  }, []);
   const strategyMapModeId = useMemo<MapModeId>(() => {
     switch (activeStrategyMode) {
       case "construction":
         return "infrastructure";
+      case "colonization":
+        return "colonization";
       case "population":
         return "population";
       case "market":
@@ -1796,8 +1803,11 @@ export default function App() {
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="pointer-events-none absolute inset-0 z-[111]">
           <StrategyShell
             activeMode={activeStrategyMode}
-            onModeChange={setActiveStrategyMode}
+            onModeChange={setStrategyModeAndOpenWorkspace}
+            workspaceOpen={strategyWorkspaceOpen}
+            onCloseWorkspace={() => setStrategyWorkspaceOpen(false)}
             countryName={country?.name ?? t("shell.unnamedCountry")}
+            countryId={auth.countryId}
             flagUrl={country?.flagUrl}
             crestUrl={country?.crestUrl}
             turnId={turnId}
@@ -1829,6 +1839,7 @@ export default function App() {
               setCivilopediaOpen(true);
             }}
             resourceIconUrls={resourceIcons}
+            resourceLedgerByTurn={worldBase?.resourceLedgerByTurn}
             resourceGrowthByTurn={resourceGrowthByTurn}
             resourceExpenseByTurn={currentTurnExpenses}
             colonizationLimit={{ active: activeColonizationCount, max: maxActiveColonizations }}

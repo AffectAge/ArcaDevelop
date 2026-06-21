@@ -16,13 +16,10 @@ type ScenarioRouteCompositionParams = {
   mapRuntime: {
     applyMapRuntime: ScenarioApplyDeps["applyMapRuntime"];
   };
-  loadScenarioHistory: (scenarioDir: string | null) => ScenarioHistory | null;
+  loadScenarioHistory: (scenarioDir: string) => ScenarioHistory | null;
   applyScenarioCountryMetadata: ScenarioApplyDeps["applyScenarioCountryMetadata"];
-  loadScenarioContent: (scenarioDir: string | null) => GameSettings["content"] | null;
-  contentLibraryRuntime: {
-    clearPersistedContentLibraryCache: () => void;
-  };
-  loadScenarioDefines: (scenarioDir: string | null) => ScenarioDefines | null;
+  loadScenarioContent: (scenarioDir: string) => GameSettings["content"] | null;
+  loadScenarioDefines: (scenarioDir: string) => ScenarioDefines | null;
   applyScenarioDefines: ScenarioApplyDeps["applyScenarioDefines"];
   getGameSettings: () => GameSettings;
   setGameSettings: (settings: GameSettings) => void;
@@ -75,7 +72,6 @@ export function registerScenarioRouteComposition(params: ScenarioRouteCompositio
     loadScenarioHistory: params.loadScenarioHistory,
     applyScenarioCountryMetadata: params.applyScenarioCountryMetadata,
     loadScenarioContent: params.loadScenarioContent,
-    clearPersistedContentLibraryCache: params.contentLibraryRuntime.clearPersistedContentLibraryCache,
     loadScenarioDefines: params.loadScenarioDefines,
     applyScenarioDefines: params.applyScenarioDefines,
     getGameSettings: params.getGameSettings,

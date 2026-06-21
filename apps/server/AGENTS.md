@@ -76,6 +76,8 @@ Heavy server systems need bounded metrics/logs and admin diagnostics:
 
 Do not add unbounded in-memory arrays for metrics or logs.
 
+Important gameplay calculations must also produce structured explanation records when they change visible values such as resources, population, legitimacy, production, market access, migration, radicalism, construction, technology, diplomacy, or colonization. Explanation records should include turn, affected object, previous value, new value, causes, source systems, related modifiers, and related events.
+
 ## API And WS Contract Agent
 
 API/WS changes require typed payloads, stable message/endpoint names, stable error codes, authorization policy, idempotency decision, compatibility/removal decision, and tests.
@@ -104,6 +106,8 @@ Region ownership uses:
 - detailed claims.
 
 The controller receives the region economy. Diplomacy transfers whole regions. Colonization targets whole regions.
+
+Bonuses, penalties, multipliers, and rule changes must be expressed through the shared modifier system. Do not add law/technology/building-specific conditionals directly inside mechanic calculations when a data-authored modifier can represent the rule.
 
 ## Province Movement Agent
 

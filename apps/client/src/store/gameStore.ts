@@ -79,6 +79,19 @@ export const useGameStore = create<GameState>((set) => ({
         }
       }
 
+      if ((delta.mask & WORLD_DELTA_MASK.resourceLedgerByTurn) !== 0 && delta.l) {
+        nextWorldBase.resourceLedgerByTurn = { ...nextWorldBase.resourceLedgerByTurn };
+        for (const [turnIdText, value] of Object.entries(delta.l)) {
+          const turnId = Number(turnIdText);
+          if (!Number.isInteger(turnId)) continue;
+          if (!value) {
+            delete nextWorldBase.resourceLedgerByTurn[turnId];
+            continue;
+          }
+          nextWorldBase.resourceLedgerByTurn[turnId] = value;
+        }
+      }
+
       if ((delta.mask & WORLD_DELTA_MASK.provinceOwner) !== 0 && delta.o) {
         nextWorldBase.provinceOwner = { ...nextWorldBase.provinceOwner };
         for (const [provinceId, value] of Object.entries(delta.o)) {

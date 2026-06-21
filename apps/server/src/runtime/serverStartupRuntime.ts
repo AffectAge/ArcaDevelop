@@ -18,7 +18,6 @@ type ServerStartupRuntimeParams = {
   getTurnId: () => number;
   loadPersistentState: () => Promise<void>;
   refreshAiControlledCountryIds: () => void;
-  persistContentLibraryFromSettings: () => void;
   cleanupOrphanUploadsOnServerStart: () => Promise<void>;
   migratePersistedMarketNamesToReadable: () => Promise<boolean>;
   savePersistentState: () => void;
@@ -49,7 +48,6 @@ export async function startServerRuntime(params: ServerStartupRuntimeParams): Pr
   await ensureWorldDeltaLogTable(params.prisma);
   await params.loadPersistentState();
   params.refreshAiControlledCountryIds();
-  params.persistContentLibraryFromSettings();
   await params.cleanupOrphanUploadsOnServerStart();
   if (await params.migratePersistedMarketNamesToReadable()) {
     params.savePersistentState();

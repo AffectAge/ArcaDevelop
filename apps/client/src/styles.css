@@ -1050,7 +1050,7 @@ body {
 .arc-strategy-mode-dock {
   position: absolute;
   left: 16px;
-  top: 92px;
+  top: 206px;
   display: flex;
   width: 170px;
   flex-direction: column;
@@ -1090,9 +1090,11 @@ body {
   top: 92px;
   right: 16px;
   bottom: 18px;
+  display: flex;
+  flex-direction: column;
   width: min(45vw, 680px);
   min-width: 460px;
-  overflow: auto;
+  overflow: hidden;
   border: 1px solid var(--arc-color-atlas-line-strong);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 94%, white), var(--arc-color-atlas-paper)),
@@ -1104,12 +1106,68 @@ body {
 }
 
 .arc-strategy-workspace-header {
+  flex: none;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
   border-bottom: 1px solid var(--arc-color-atlas-line);
   padding-bottom: 14px;
+}
+
+.arc-strategy-workspace-tabs {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  margin: 12px -18px 0;
+  border-top: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 70%, transparent);
+  border-bottom: 1px solid var(--arc-color-atlas-line-strong);
+  background: color-mix(in srgb, var(--arc-color-atlas-paper-deep) 62%, var(--arc-color-atlas-paper));
+  padding: 0 8px;
+}
+
+.arc-strategy-workspace-tab {
+  display: inline-flex;
+  flex: 1 1 0;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-bottom-color: var(--arc-color-atlas-line);
+  background: color-mix(in srgb, var(--arc-color-atlas-paper) 82%, transparent);
+  color: var(--arc-color-atlas-muted);
+  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.arc-strategy-workspace-tab:hover,
+.arc-strategy-workspace-tab--active {
+  border-color: var(--arc-color-atlas-line-strong);
+  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 88%, white);
+  color: var(--arc-color-atlas-ink);
+  transform: translateY(-1px);
+}
+
+.arc-strategy-workspace-tab--active {
+  box-shadow: 0 -4px 0 var(--arc-color-atlas-primary) inset, 0 1px 0 rgb(255 255 255 / 0.55) inset;
+}
+
+.arc-strategy-workspace-body {
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  padding-top: 14px;
+}
+
+.arc-strategy-tab-panel {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.arc-strategy-tab-panel > .arc-strategy-dashboard,
+.arc-strategy-tab-panel > .arc-strategy-preview,
+.arc-strategy-tab-panel > .arc-strategy-readiness {
+  margin-top: 0;
 }
 
 .arc-strategy-lens-note {
@@ -1627,6 +1685,11 @@ body {
 
   .arc-strategy-workspace-header {
     gap: 10px;
+  }
+
+  .arc-strategy-workspace-tabs {
+    margin-right: -14px;
+    margin-left: -14px;
   }
 
   .arc-strategy-lens-note,

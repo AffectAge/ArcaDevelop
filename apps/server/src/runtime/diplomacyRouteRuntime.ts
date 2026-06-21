@@ -15,6 +15,7 @@ import { registerDiplomacyRoutes, type DiplomacyTreatyClausePayload } from "../r
 import type { RouteAuth } from "../security/routeAuth";
 import type { GameSettings } from "./gameSettingsTypes";
 import { normalizeInfrastructureConstructionExpirationPolicy } from "./marketSettingsNormalizers";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
 type DiplomacyRuntimeParams = {
   app: express.Express;
@@ -37,6 +38,9 @@ type DiplomacyRuntimeParams = {
   cloneWorldBaseSectionSnapshot: (mask: number) => unknown;
   savePersistentState: () => void;
   broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase: unknown) => void;
+  addResourceLedgerIncome?: (input: ResourceLedgerEntryInput) => void;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
+  flushResourceLedger?: () => void;
   removeQueuedUiNotification: (notificationId: string) => void;
   sendUiNotificationToCountry: (
     countryId: string,
@@ -243,7 +247,10 @@ export function createDiplomacyRuntime(params: DiplomacyRuntimeParams): Diplomac
       gameSettings: params.getGameSettings(),
       ensureCountryInWorldBase: params.ensureCountryInWorldBase,
       normalizeTransportModes: (input) => normalizeGoodTransportModesList(input, DEFAULT_TRADEABLE_TRANSPORT_MODES),
+      addExpense: params.addResourceLedgerExpense,
+      addIncome: params.addResourceLedgerIncome,
     });
+    params.flushResourceLedger?.();
   }
 
   function applyPerTurnTreatyMoneyTransfers(): void {
@@ -251,7 +258,10 @@ export function createDiplomacyRuntime(params: DiplomacyRuntimeParams): Diplomac
       worldBase: params.getWorldBase(),
       turnId: params.getTurnId(),
       ensureCountryInWorldBase: params.ensureCountryInWorldBase,
+      addExpense: params.addResourceLedgerExpense,
+      addIncome: params.addResourceLedgerIncome,
     });
+    params.flushResourceLedger?.();
   }
 
   function registerRoutes(): void {

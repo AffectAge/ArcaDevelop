@@ -1,11 +1,25 @@
 import type {
   DiplomacyProposal,
+  ResourceFlowSourceType,
+  ResourceId,
   ResourceTotals,
   TreatyConstructionExpirationPolicy,
   WorldBase,
 } from "@arcanorum/shared";
 
 export type DiplomacyResourceTransferWorldState = Pick<WorldBase, "resourcesByCountry" | "diplomacyProposals">;
+
+export type DiplomacyLedgerFlowInput = {
+  countryId: string;
+  resourceId: ResourceId;
+  amount: number;
+  sourceType: ResourceFlowSourceType;
+  sourceId: string;
+  categoryId: string;
+  labelKey: string;
+  labelParams?: Record<string, string | number | boolean | null>;
+  metadata?: Record<string, string | number | boolean | null>;
+};
 
 export type DiplomacyInfrastructureSettings<TMode extends string = string> = {
   markets: {
@@ -215,6 +229,9 @@ export function applyTreatyMoneyTransferOnce(params: {
   resource: keyof ResourceTotals;
   amount: number;
   ensureCountryInWorldBase: (countryId: string) => void;
+  addExpense?: (input: DiplomacyLedgerFlowInput) => void;
+  addIncome?: (input: DiplomacyLedgerFlowInput) => void;
+  sourceId?: string;
 }): number {
   params.ensureCountryInWorldBase(params.fromCountryId);
   params.ensureCountryInWorldBase(params.toCountryId);
@@ -224,8 +241,31 @@ export function applyTreatyMoneyTransferOnce(params: {
   const available = Math.max(0, Number(from[params.resource] ?? 0));
   const paid = roundDiplomacyNumber(Math.min(available, Math.max(0, Number(params.amount))));
   if (paid <= 0) return 0;
-  from[params.resource] = roundDiplomacyNumber(available - paid);
-  to[params.resource] = roundDiplomacyNumber(Math.max(0, Number(to[params.resource] ?? 0)) + paid);
+  const sourceId = params.sourceId ?? `diplomacy:${params.fromCountryId}:${params.toCountryId}:${params.resource}`;
+  params.addExpense?.({
+    countryId: params.fromCountryId,
+    resourceId: params.resource,
+    amount: paid,
+    sourceType: "diplomacy",
+    sourceId,
+    categoryId: "diplomacy",
+    labelKey: "resourceLedger.source.diplomacy.transferExpense",
+    metadata: { toCountryId: params.toCountryId },
+  });
+  params.addIncome?.({
+    countryId: params.toCountryId,
+    resourceId: params.resource,
+    amount: paid,
+    sourceType: "diplomacy",
+    sourceId,
+    categoryId: "diplomacy",
+    labelKey: "resourceLedger.source.diplomacy.transferIncome",
+    metadata: { fromCountryId: params.fromCountryId },
+  });
+  if (!params.addExpense || !params.addIncome) {
+    from[params.resource] = roundDiplomacyNumber(available - paid);
+    to[params.resource] = roundDiplomacyNumber(Math.max(0, Number(to[params.resource] ?? 0)) + paid);
+  }
   return paid;
 }
 
@@ -236,6 +276,8 @@ export function applyTreatyClauses<TMode extends string>(params: {
   ensureCountryInWorldBase: (countryId: string) => void;
   normalizeTransportModes: (input: unknown) => TMode[];
   nowIso?: string;
+  addExpense?: (input: DiplomacyLedgerFlowInput) => void;
+  addIncome?: (input: DiplomacyLedgerFlowInput) => void;
 }): void {
   const now = params.nowIso ?? new Date().toISOString();
   for (const clause of params.proposal.clauses) {
@@ -247,6 +289,9 @@ export function applyTreatyClauses<TMode extends string>(params: {
         resource: clause.resource,
         amount: clause.amount,
         ensureCountryInWorldBase: params.ensureCountryInWorldBase,
+        addExpense: params.addExpense,
+        addIncome: params.addIncome,
+        sourceId: `diplomacy:${params.proposal.id}:${clause.id}`,
       });
     } else if (clause.kind === "transfer_region") {
       params.worldBase.regionOwner[clause.regionId] = clause.toCountryId;
@@ -295,6 +340,8 @@ export function applyPerTurnTreatyMoneyTransfers(params: {
   worldBase: DiplomacyResourceTransferWorldState;
   turnId: number;
   ensureCountryInWorldBase: (countryId: string) => void;
+  addExpense?: (input: DiplomacyLedgerFlowInput) => void;
+  addIncome?: (input: DiplomacyLedgerFlowInput) => void;
 }): TreatyMoneyTransferResult[] {
   const transfers: TreatyMoneyTransferResult[] = [];
   for (const proposal of params.worldBase.diplomacyProposals ?? []) {
@@ -308,6 +355,9 @@ export function applyPerTurnTreatyMoneyTransfers(params: {
         resource: clause.resource,
         amount: clause.amount,
         ensureCountryInWorldBase: params.ensureCountryInWorldBase,
+        addExpense: params.addExpense,
+        addIncome: params.addIncome,
+        sourceId: `diplomacy:${proposal.id}:${clause.id}`,
       });
       if (paid <= 0) continue;
       transfers.push({

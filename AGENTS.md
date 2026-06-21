@@ -100,6 +100,10 @@ Use this routing before work. `docs/task-routing.md` is the standalone source fo
 - Do not add new province-level population, buildings, construction, resources, production, taxes, colonization, or diplomacy transfer without explicit approval.
 - Heavy mechanics belong to state regions.
 - Provinces remain for map rendering, adjacency, terrain, climate, movement cost, passability, and unit movement.
+- Tooltip-first development is mandatory: every new mechanic must have player-visible UI representation and explanatory tooltips before it is considered complete.
+- Important visible state changes must produce structured explanation records that can support debugging and player-facing inspection.
+- New gameplay content must be data-driven through scenario files, not hardcoded as one-off core simulation branches.
+- Bonuses, penalties, multipliers, and rule changes must use the shared modifier system instead of mechanic-specific conditionals.
 - AI countries must use the same validated order pipeline as players.
 - No default AI cheats. Any AI bonuses must be explicit in scenario defines.
 - No hidden gameplay fallback. Technical safety defaults are allowed only when documented and reported.
@@ -107,6 +111,8 @@ Use this routing before work. `docs/task-routing.md` is the standalone source fo
 - Any admin or privileged behavior must be enforced server-side.
 - Important player/admin actions require localized consequence-aware confirmation.
 - Balance, pacing, limits, rates, and costs belong in scenario-owned defines.
+- Country-level resources must not be mutated directly by mechanics or routes. Mechanics emit `ResourceFlow` entries through `ResourceLedgerService`/resource ledger runtime with resource id, direction, source, category, and localization label key; only ledger runtime/world normalizers apply final `resourcesByCountry` totals.
+- Player-facing country resource values must have ledger-backed income, expense, net, category, and recent-entry explanations when they are shown as flows.
 - Major architecture, protocol, persistence, AI, dependency, world-model, or scenario-format decisions require an ADR.
 - No real secrets, tokens, passwords, JWTs, `.env` files, or private player/admin data may be committed, logged, or embedded.
 - Mutating flows must choose a concurrency strategy: transaction, lock, queue, optimistic version, idempotency key, or explicit rejection.
@@ -116,7 +122,99 @@ Use this routing before work. `docs/task-routing.md` is the standalone source fo
 - New folders require a clear responsibility and, for non-trivial cases, a New Folder Proposal as defined in `docs/folder-structure.md`.
 - Scenario-authored data uses strict JSON, one entity per file, authoritative JSON `id` fields, and stable-ID references.
 - Province authored data belongs in `history/provinces/*.json`; old aggregate `provinces.json` files are not target authored sources.
+- Root legacy aggregate content libraries such as `apps/server/data/content-library.json` are forbidden; scenario content belongs under `scenarios/<scenario_id>/common/*/*.json`.
 - Scenario generated indexes belong only under `scenarios/<scenario_id>/.generated/` and must not be manually edited.
+
+## Tooltip-First Development
+
+Every new mechanic must answer immediately: how will the player see and understand this?
+
+A mechanic is incomplete until it has proper UI representation and explanatory tooltips. Tooltips for visible values must explain:
+
+- what the value means,
+- why the value currently has this number,
+- which sources increase it,
+- which sources decrease it,
+- which modifiers affect it,
+- what gameplay effects it produces.
+
+If a system changes science, money, population, legitimacy, production, market access, migration, radicalism, or any other visible value, the player must be able to inspect the reason. Do not implement hidden calculations that only developers can understand.
+
+## Data-Driven Content
+
+New gameplay content must be added through data files, not hardcoded logic. This applies to buildings, goods, technologies, laws, events, decisions, modifiers, units, institutions, cultures, and religions.
+
+Preferred formats are JSON and, where already supported by the project, JSON-compatible scenario files. JSONC or YAML may be introduced only after explicit project support is added and documented.
+
+Adding a new building, good, law, or event must not require editing core simulation code. Core code provides reusable systems; scenario data defines concrete content.
+
+Bad:
+
+```ts
+if (buildingId === "university") {
+  science += 10;
+}
+```
+
+Good:
+
+```json
+{
+  "id": "building:university",
+  "effects": [
+    {
+      "type": "add_resource_flow",
+      "resource": "science",
+      "amount": 10,
+      "category": "education"
+    }
+  ]
+}
+```
+
+## Unified Modifier System
+
+All bonuses, penalties, multipliers, and rule changes must use the shared modifier system.
+
+Do not add mechanic-specific conditional logic such as:
+
+```ts
+if (hasLawA) value += 10;
+if (hasLawB) value *= 1.2;
+if (hasTechnologyC) cost -= 5;
+```
+
+Instead, laws, technologies, buildings, traits, events, institutions, and country effects must create modifiers. A modifier must define target, operation, value, scope, source, duration, and priority/order when needed.
+
+Example:
+
+```json
+{
+  "id": "modifier:public_schools_science_bonus",
+  "target": "country.science_generation",
+  "operation": "multiply",
+  "value": 1.15,
+  "source": "law:public_schools"
+}
+```
+
+The same modifier system must be usable by economy, population, politics, military, technology, construction, diplomacy, colonization, and market systems.
+
+## Logging And Explanations
+
+The game must be able to explain important state changes quickly. Developers and players should be able to answer:
+
+- why a region lost population,
+- why a country went bankrupt,
+- why legitimacy fell,
+- why market access collapsed,
+- why radicals increased,
+- why a building stopped producing,
+- why migration changed.
+
+Important calculations must produce structured explanation records. These records should include turn number, affected object, changed value, previous value, new value, causes, source systems, related modifiers, and related events.
+
+The explanation system must support both debugging and player-facing UI. If a system changes an important value but does not leave an explanation trail, it is incomplete.
 
 ## Forbidden Patterns
 
@@ -125,10 +223,15 @@ Treat these as immediate red flags:
 - New hardcoded Russian or English player-facing text in JSX/TS instead of localization keys.
 - New hardcoded colors, radii, shadows, spacing, or theme values in UI.
 - New balance numbers in code instead of scenario defines.
+- New hidden visible-value calculation without UI, tooltip, and explanation trail.
+- New hardcoded concrete gameplay content that should be scenario-authored data.
+- New mechanic-specific bonus/penalty conditional that bypasses the shared modifier system.
+- Root `apps/server/data/content-library.json` or any monolithic scenario content-library fallback.
 - New `provincePopulation*`, `provinceBuildings*`, `provinceConstruction*`, `provinceResources*`, or province-level colonization/diplomacy mechanics.
 - Admin endpoint, admin WS command, or scenario mutation without server-side permission enforcement.
 - Upload flow without owner, scenario scope, validation, and cleanup lifecycle.
 - AI direct world-state mutation instead of normal validated orders.
+- Direct country resource writes such as `resources.science +=`, `resources.ducats =`, or `worldBase.resourcesByCountry[...]... =` outside resource ledger runtime or world normalizers.
 - Raw server error messages exposed to players.
 - Full-world scans in resolver, AI, WS, economy, market, or map hot paths without justification.
 - Destructive operation without confirmation, audit, and dry-run/preview where practical.

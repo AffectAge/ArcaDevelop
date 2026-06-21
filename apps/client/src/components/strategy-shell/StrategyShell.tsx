@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Bell,
   BookOpen,
@@ -20,13 +20,15 @@ import {
   Sparkles,
   Users,
   Wallet,
+  X,
   type LucideIcon,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import type { ResourceFlow } from "@arcanorum/shared";
 import type { UiTextKey } from "../../i18n/uiText";
 import { useUiText } from "../../i18n/useUiText";
 
-export type StrategyMode = "overview" | "construction" | "population" | "market" | "diplomacy" | "army" | "governance";
+export type StrategyMode = "overview" | "construction" | "colonization" | "population" | "market" | "diplomacy" | "army" | "governance";
 
 type Resources = {
   culture: number;
@@ -67,14 +69,20 @@ type TurnReadinessCountry = {
   resources: Resources;
 };
 
+type WorkspaceTabKey = "actions" | "summary" | "readiness" | "records" | "admin";
+
 type Props = {
   activeMode: StrategyMode;
   onModeChange: (mode: StrategyMode) => void;
+  workspaceOpen: boolean;
+  onCloseWorkspace: () => void;
   countryName: string;
   flagUrl?: string | null;
   crestUrl?: string | null;
   turnId: number;
   resources: Resources;
+  countryId?: string;
+  resourceLedgerByTurn?: Record<number, ResourceFlow[]>;
   resourceIconUrls?: Partial<Record<ResourceKey | "population", string | null>>;
   resourceGrowthByTurn?: Partial<Record<ResourceKey, number>>;
   resourceExpenseByTurn?: Partial<Record<ResourceKey, number>>;
@@ -140,6 +148,7 @@ type Props = {
 const modeDescriptors: Array<{ key: StrategyMode; labelKey: UiTextKey; descriptionKey: UiTextKey; icon: LucideIcon }> = [
   { key: "overview", labelKey: "shell.mode.overview", descriptionKey: "shell.mode.overviewDescription", icon: Sparkles },
   { key: "construction", labelKey: "shell.mode.construction", descriptionKey: "shell.mode.constructionDescription", icon: Hammer },
+  { key: "colonization", labelKey: "shell.mode.colonization", descriptionKey: "shell.mode.colonizationDescription", icon: Flag },
   { key: "population", labelKey: "shell.mode.population", descriptionKey: "shell.mode.populationDescription", icon: Users },
   { key: "market", labelKey: "shell.mode.market", descriptionKey: "shell.mode.marketDescription", icon: HandCoins },
   { key: "diplomacy", labelKey: "shell.mode.diplomacy", descriptionKey: "shell.mode.diplomacyDescription", icon: Handshake },
@@ -157,10 +166,29 @@ const resourceDescriptors: Array<{ key: ResourceKey; labelKey: UiTextKey; icon: 
   { key: "gold", labelKey: "shell.resource.gold", icon: CircleDollarSign },
 ];
 
+const workspaceTabDescriptors: Array<{ key: WorkspaceTabKey; labelKey: UiTextKey; icon: LucideIcon; adminOnly?: boolean }> = [
+  { key: "actions", labelKey: "shell.workspaceTab.actions", icon: Sparkles },
+  { key: "summary", labelKey: "shell.workspaceTab.summary", icon: Users },
+  { key: "readiness", labelKey: "shell.workspaceTab.readiness", icon: ScrollText },
+  { key: "records", labelKey: "shell.workspaceTab.records", icon: BookOpen },
+  { key: "admin", labelKey: "shell.workspaceTab.admin", icon: SlidersHorizontal, adminOnly: true },
+];
+
+type ResourceLedgerChipSummary = {
+  incomeTotal: number;
+  expenseTotal: number;
+  net: number;
+  incomeCategories: Array<{ categoryId: string; amount: number }>;
+  expenseCategories: Array<{ categoryId: string; amount: number }>;
+  entries: ResourceFlow[];
+};
+
 function getModeMapLensKey(mode: StrategyMode): UiTextKey {
   switch (mode) {
     case "construction":
       return "shell.mapLens.construction";
+    case "colonization":
+      return "shell.mapLens.colonization";
     case "population":
       return "shell.mapLens.population";
     case "market":
@@ -212,8 +240,14 @@ function getReadinessStatusRank(status: TurnReadinessCountry["status"]): number 
 
 export function StrategyShell(props: Props) {
   const { t } = useUiText();
+  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTabKey>("actions");
   const activeMode = modeDescriptors.find((mode) => mode.key === props.activeMode) ?? modeDescriptors[0];
   const activeActions = getModeActions(props.activeMode, props);
+  const availableWorkspaceTabs = workspaceTabDescriptors.filter((tab) => !tab.adminOnly || props.isAdmin);
+  const resourceLedgerSummaries = buildResourceLedgerSummaries({
+    countryId: props.countryId,
+    ledgerByTurn: props.resourceLedgerByTurn,
+  });
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[111] text-[var(--arc-color-atlas-ink)]">
@@ -244,6 +278,7 @@ export function StrategyShell(props: Props) {
               expense={props.resourceExpenseByTurn?.[resource.key] ?? 0}
               icon={resource.icon}
               iconUrl={props.resourceIconUrls?.[resource.key] ?? null}
+              ledgerSummary={resourceLedgerSummaries[resource.key]}
             />
           ))}
         </div>
@@ -260,6 +295,9 @@ export function StrategyShell(props: Props) {
           ) : null}
           {props.isAdmin && props.onOpenAdminPanel ? (
             <TopActionButton label={t("shell.admin")} icon={SlidersHorizontal} onClick={props.onOpenAdminPanel} />
+          ) : null}
+          {props.onOpenClientSettings ? (
+            <TopActionButton label={t("shell.clientSettings")} icon={Menu} onClick={props.onOpenClientSettings} />
           ) : null}
           <TopActionButton label={t("shell.turnStatus")} icon={ScrollText} onClick={props.onOpenTurnStatus} />
           <button type="button" className="arc-strategy-primary" onClick={props.onNextTurn} aria-label={t("shell.endTurn")} title={t("shell.endTurn")}>
@@ -291,95 +329,140 @@ export function StrategyShell(props: Props) {
         })}
       </nav>
 
-      <motion.aside
-        key={props.activeMode}
-        initial={{ opacity: 0, x: 24 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-        className="arc-strategy-workspace pointer-events-auto"
-      >
-        <div className="arc-strategy-workspace-header">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--arc-color-atlas-muted)]">
-              {t("shell.workspace")}
+      <AnimatePresence initial={false}>
+        {props.workspaceOpen ? (
+          <motion.aside
+            key={props.activeMode}
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 28 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="arc-strategy-workspace pointer-events-auto"
+          >
+            <div className="arc-strategy-workspace-header">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--arc-color-atlas-muted)]">
+                  {t("shell.workspace")}
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-xl font-bold">
+                  <activeMode.icon size={20} />
+                  <span>{t(activeMode.labelKey)}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" className="arc-strategy-icon-button arc-strategy-icon-button--danger" onClick={props.onCloseWorkspace} aria-label={t("shell.closeWorkspace")} title={t("shell.closeWorkspace")}>
+                  <X size={18} />
+                </button>
+              </div>
             </div>
-            <div className="mt-1 flex items-center gap-2 text-xl font-bold">
-              <activeMode.icon size={20} />
-              <span>{t(activeMode.labelKey)}</span>
+
+            <div className="arc-strategy-workspace-tabs" role="tablist" aria-label={t("shell.workspaceTabs")}>
+              {availableWorkspaceTabs.map((tab) => {
+                const Icon = tab.icon;
+                const active = tab.key === workspaceTab;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    aria-label={t(tab.labelKey)}
+                    title={t(tab.labelKey)}
+                    className={`arc-strategy-workspace-tab ${active ? "arc-strategy-workspace-tab--active" : ""}`}
+                    onClick={() => setWorkspaceTab(tab.key)}
+                  >
+                    <Icon size={17} />
+                  </button>
+                );
+              })}
             </div>
-          </div>
-          <button type="button" className="arc-strategy-icon-button" onClick={props.onOpenClientSettings} aria-label={t("shell.clientSettings")}>
-            <Menu size={18} />
-          </button>
-        </div>
 
-        <p className="mt-3 text-sm leading-5 text-[var(--arc-color-atlas-muted)]">{t(activeMode.descriptionKey)}</p>
+            <div className="arc-strategy-workspace-body">
+              {workspaceTab === "actions" ? (
+                <div className="arc-strategy-tab-panel">
+                  <p className="text-sm leading-5 text-[var(--arc-color-atlas-muted)]">{t(activeMode.descriptionKey)}</p>
+                  <div className="arc-strategy-lens-note">
+                    <span>{t("shell.mapLens.title")}</span>
+                    <strong>{t(getModeMapLensKey(props.activeMode))}</strong>
+                  </div>
+                  <div className="mt-4">
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--arc-color-atlas-muted)]">
+                      {t("shell.availableActions")}
+                    </div>
+                    <div className="grid gap-2">
+                      {activeActions.map((action) => (
+                        <WorkspaceAction key={action.key} action={action} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
 
-        <div className="arc-strategy-lens-note">
-          <span>{t("shell.mapLens.title")}</span>
-          <strong>{t(getModeMapLensKey(props.activeMode))}</strong>
-        </div>
+              {workspaceTab === "summary" ? (
+                <div className="arc-strategy-tab-panel">
+                  <div className="arc-strategy-metric-grid grid grid-cols-3 gap-2">
+                    <AtlasMetric label={t("shell.metric.population")} value={formatCompact(props.populationTotal)} delta={props.populationNetGrowth} />
+                    <AtlasMetric
+                      label={t("shell.metric.regions")}
+                      value={formatCompact(props.countryDetails?.provinceCount ?? 0)}
+                      note={props.countryDetails ? t("shell.metric.area", { area: formatCompact(props.countryDetails.totalAreaKm2) }) : undefined}
+                    />
+                    <AtlasMetric
+                      label={t("shell.metric.colonies")}
+                      value={props.colonizationLimit ? `${props.colonizationLimit.active}/${props.colonizationLimit.max}` : "0/0"}
+                    />
+                  </div>
+                  <ModeDashboard mode={props.activeMode} props={props} />
+                </div>
+              ) : null}
 
-        <div className="arc-strategy-metric-grid mt-4 grid grid-cols-3 gap-2">
-          <AtlasMetric label={t("shell.metric.population")} value={formatCompact(props.populationTotal)} delta={props.populationNetGrowth} />
-          <AtlasMetric
-            label={t("shell.metric.regions")}
-            value={formatCompact(props.countryDetails?.provinceCount ?? 0)}
-            note={props.countryDetails ? t("shell.metric.area", { area: formatCompact(props.countryDetails.totalAreaKm2) }) : undefined}
-          />
-          <AtlasMetric
-            label={t("shell.metric.colonies")}
-            value={props.colonizationLimit ? `${props.colonizationLimit.active}/${props.colonizationLimit.max}` : "0/0"}
-          />
-        </div>
+              {workspaceTab === "readiness" ? (
+                <div className="arc-strategy-tab-panel">
+                  {props.turnReadinessPreview ? (
+                    <TurnReadinessBoard
+                      preview={props.turnReadinessPreview}
+                      resourceIconUrls={props.resourceIconUrls}
+                      onOpen={props.onOpenTurnStatus}
+                    />
+                  ) : (
+                    <EmptyPreview text={t("shell.readiness.empty")} />
+                  )}
+                </div>
+              ) : null}
 
-        {props.turnReadinessPreview ? (
-          <TurnReadinessBoard
-            preview={props.turnReadinessPreview}
-            resourceIconUrls={props.resourceIconUrls}
-            onOpen={props.onOpenTurnStatus}
-          />
+              {workspaceTab === "records" ? (
+                <div className="arc-strategy-tab-panel">
+                  <ModePreview mode={props.activeMode} props={props} />
+                </div>
+              ) : null}
+
+              {workspaceTab === "admin" && props.isAdmin ? (
+                <div className="arc-strategy-tab-panel">
+                  <div className="arc-strategy-admin-panel">
+                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--arc-color-atlas-muted)]">
+                      {t("shell.adminConsole")}
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      {props.onOpenAdminPanel ? (
+                        <SmallAction label={t("shell.adminPanel")} icon={<SlidersHorizontal size={14} />} onClick={props.onOpenAdminPanel} />
+                      ) : null}
+                      {props.onOpenContentPanel ? (
+                        <SmallAction label={t("shell.contentPanel")} icon={<BookOpen size={14} />} onClick={props.onOpenContentPanel} />
+                      ) : null}
+                      {props.onOpenGameSettings ? (
+                        <SmallAction label={t("shell.gameSettings")} icon={<Network size={14} />} onClick={props.onOpenGameSettings} />
+                      ) : null}
+                      {props.onAdminForceResolve ? (
+                        <SmallAction label={t("shell.forceResolve")} icon={<SkipForward size={14} />} onClick={props.onAdminForceResolve} />
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </motion.aside>
         ) : null}
-
-        <ModeDashboard mode={props.activeMode} props={props} />
-        <ModePreview mode={props.activeMode} props={props} />
-
-        <div className="mt-5">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--arc-color-atlas-muted)]">
-            {t("shell.availableActions")}
-          </div>
-          <div className="grid gap-2">
-            {activeActions.map((action) => (
-              <WorkspaceAction key={action.key} action={action} />
-            ))}
-          </div>
-        </div>
-
-        {props.isAdmin ? (
-          <div className="mt-5 rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper-soft)] p-3">
-            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--arc-color-atlas-muted)]">
-              {t("shell.adminConsole")}
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {props.onOpenAdminPanel ? (
-                <SmallAction label={t("shell.adminPanel")} icon={<SlidersHorizontal size={14} />} onClick={props.onOpenAdminPanel} />
-              ) : null}
-              {props.onOpenContentPanel ? (
-                <SmallAction label={t("shell.contentPanel")} icon={<BookOpen size={14} />} onClick={props.onOpenContentPanel} />
-              ) : null}
-              {props.onOpenGameSettings ? (
-                <SmallAction label={t("shell.gameSettings")} icon={<Network size={14} />} onClick={props.onOpenGameSettings} />
-              ) : null}
-              {props.onAdminForceResolve ? (
-                <SmallAction label={t("shell.forceResolve")} icon={<SkipForward size={14} />} onClick={props.onAdminForceResolve} />
-              ) : null}
-              {props.onOpenClientSettings ? (
-                <SmallAction label={t("shell.clientSettings")} icon={<Menu size={14} />} onClick={props.onOpenClientSettings} />
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-      </motion.aside>
+      </AnimatePresence>
     </div>
   );
 }
@@ -416,6 +499,18 @@ function ModePreview({ mode, props }: { mode: StrategyMode; props: Props }) {
           ) : (
             <EmptyPreview text={t("shell.preview.noConstruction")} />
           )}
+        </div>
+      </section>
+    );
+  }
+  if (mode === "colonization") {
+    return (
+      <section className="arc-strategy-preview">
+        <div className="arc-strategy-preview-header">
+          <span>{t("shell.preview.colonizationLedger")}</span>
+        </div>
+        <div className="mt-2 grid gap-2">
+          <EmptyPreview text={t("shell.preview.noColonization")} />
         </div>
       </section>
     );
@@ -607,6 +702,26 @@ function ModeDashboard({ mode, props }: { mode: StrategyMode; props: Props }) {
       />
     );
   }
+  if (mode === "colonization") {
+    return (
+      <DashboardSection
+        title={t("shell.dashboard.colonization")}
+        intro={t("shell.dashboard.colonizationIntro")}
+        rows={[
+          {
+            label: t("shell.dashboard.colonizationReserve"),
+            value: formatCompact(props.resources.colonization),
+            delta: props.resourceGrowthByTurn?.colonization ?? 0,
+          },
+          {
+            label: t("shell.dashboard.colonyCapacity"),
+            value: props.colonizationLimit ? `${props.colonizationLimit.active}/${props.colonizationLimit.max}` : "0/0",
+          },
+          { label: t("shell.dashboard.treasury"), value: formatCompact(props.resources.ducats), delta: props.resourceGrowthByTurn?.ducats ?? 0 },
+        ]}
+      />
+    );
+  }
   if (mode === "population") {
     return (
       <DashboardSection
@@ -782,6 +897,7 @@ function TurnReadinessBoard(props: {
 function getModeActions(mode: StrategyMode, props: Props): ActionItem[] {
   if (mode === "overview") {
     return [
+      { key: "colonization", labelKey: "shell.action.colonization", descriptionKey: "shell.action.colonizationDescription", icon: Flag, onClick: () => props.onModeChange("colonization"), tone: "primary" },
       { key: "turn-status", labelKey: "shell.action.turnStatus", descriptionKey: "shell.action.turnStatusDescription", icon: ScrollText, onClick: props.onOpenTurnStatus },
       { key: "budget", labelKey: "shell.action.budget", descriptionKey: "shell.action.budgetDescription", icon: Wallet, onClick: props.onOpenBudget },
       { key: "events", labelKey: "shell.action.events", descriptionKey: "shell.action.eventsDescription", icon: Bell, onClick: props.onOpenEvents },
@@ -790,6 +906,12 @@ function getModeActions(mode: StrategyMode, props: Props): ActionItem[] {
   if (mode === "construction") {
     return [
       { key: "buildings", labelKey: "shell.action.buildings", descriptionKey: "shell.action.buildingsDescription", icon: Building2, onClick: props.onOpenBuildings, tone: "primary" },
+      { key: "budget", labelKey: "shell.action.budget", descriptionKey: "shell.action.budgetDescription", icon: Wallet, onClick: props.onOpenBudget },
+    ];
+  }
+  if (mode === "colonization") {
+    return [
+      { key: "colonization-map", labelKey: "shell.action.colonization", descriptionKey: "shell.action.colonizationDescription", icon: Flag, onClick: () => props.onModeChange("colonization"), tone: "primary" },
       { key: "budget", labelKey: "shell.action.budget", descriptionKey: "shell.action.budgetDescription", icon: Wallet, onClick: props.onOpenBudget },
     ];
   }
@@ -831,11 +953,24 @@ function ResourceChip(props: {
   expense: number;
   icon: LucideIcon;
   iconUrl?: string | null;
+  ledgerSummary?: ResourceLedgerChipSummary;
 }) {
+  const { t } = useUiText();
   const Icon = props.icon;
-  const net = props.growth - props.expense;
+  const incomeTotal = props.ledgerSummary?.incomeTotal ?? props.growth;
+  const expenseTotal = props.ledgerSummary?.expenseTotal ?? props.expense;
+  const net = props.ledgerSummary?.net ?? props.growth - props.expense;
+  const title = buildResourceLedgerTitle({
+    label: props.label,
+    value: props.value,
+    incomeTotal,
+    expenseTotal,
+    net,
+    summary: props.ledgerSummary,
+    t,
+  });
   return (
-    <div className="arc-strategy-resource" title={props.label}>
+    <div className="arc-strategy-resource" title={title}>
       <span className="arc-strategy-resource-icon">
         {props.iconUrl ? <img src={props.iconUrl} alt="" className="h-4 w-4 object-contain" /> : <Icon size={14} />}
       </span>
@@ -845,6 +980,159 @@ function ResourceChip(props: {
       </span>
     </div>
   );
+}
+
+function buildResourceLedgerSummaries(params: {
+  countryId?: string;
+  ledgerByTurn?: Record<number, ResourceFlow[]>;
+}): Partial<Record<ResourceKey, ResourceLedgerChipSummary>> {
+  if (!params.countryId || !params.ledgerByTurn) return {};
+  const summaries: Partial<Record<ResourceKey, ResourceLedgerChipSummary>> = {};
+  const turnEntries = Object.entries(params.ledgerByTurn)
+    .map(([turn, entries]) => ({ turn: Number(turn), entries }))
+    .filter((entry) => Number.isFinite(entry.turn) && Array.isArray(entry.entries))
+    .sort((a, b) => b.turn - a.turn);
+  const latestTurn = turnEntries[0]?.turn;
+  if (!Number.isFinite(latestTurn)) return summaries;
+  const recentEntries = turnEntries
+    .filter((entry) => entry.turn >= latestTurn - 2)
+    .flatMap((entry) => entry.entries)
+    .filter((entry) => entry.countryId === params.countryId);
+  for (const entry of recentEntries) {
+    const resourceId = entry.resourceId as ResourceKey;
+    if (!resourceDescriptors.some((resource) => resource.key === resourceId)) continue;
+    const summary = summaries[resourceId] ?? {
+      incomeTotal: 0,
+      expenseTotal: 0,
+      net: 0,
+      incomeCategories: [],
+      expenseCategories: [],
+      entries: [],
+    };
+    if (entry.direction === "income") {
+      summary.incomeTotal += entry.amount;
+      addCategoryTotal(summary.incomeCategories, entry.categoryId, entry.amount);
+    } else {
+      summary.expenseTotal += entry.amount;
+      addCategoryTotal(summary.expenseCategories, entry.categoryId, entry.amount);
+    }
+    summary.net = summary.incomeTotal - summary.expenseTotal;
+    summary.entries.push(entry);
+    summaries[resourceId] = summary;
+  }
+  return summaries;
+}
+
+function addCategoryTotal(categories: Array<{ categoryId: string; amount: number }>, categoryId: string, amount: number): void {
+  const existing = categories.find((entry) => entry.categoryId === categoryId);
+  if (existing) {
+    existing.amount += amount;
+    return;
+  }
+  categories.push({ categoryId, amount });
+}
+
+function buildResourceLedgerTitle(params: {
+  label: string;
+  value: number;
+  incomeTotal: number;
+  expenseTotal: number;
+  net: number;
+  summary?: ResourceLedgerChipSummary;
+  t: (key: UiTextKey, params?: Record<string, string | number>) => string;
+}): string {
+  const lines = [
+    params.label,
+    `${params.t("resourceLedger.currentValue")}: ${formatCompact(params.value)}`,
+    `${params.t("resourceLedger.incomeTotal")}: +${formatCompact(params.incomeTotal)}`,
+    `${params.t("resourceLedger.expenseTotal")}: -${formatCompact(params.expenseTotal)}`,
+    `${params.t("resourceLedger.net")}: ${formatSignedCompact(params.net)}`,
+  ];
+  if (params.summary) {
+    appendCategoryLines(lines, params.t("resourceLedger.incomes"), params.summary.incomeCategories, params.t, "+");
+    appendCategoryLines(lines, params.t("resourceLedger.expenses"), params.summary.expenseCategories, params.t, "-");
+    const entries = params.summary.entries.slice(0, 4);
+    if (entries.length > 0) {
+      lines.push(params.t("resourceLedger.recentEntries"));
+      for (const entry of entries) {
+        const sign = entry.direction === "income" ? "+" : "-";
+        lines.push(`${sign}${formatCompact(entry.amount)} ${getResourceLedgerSourceLabel(entry.labelKey, params.t)}`);
+      }
+    }
+  }
+  return lines.join("\n");
+}
+
+function appendCategoryLines(
+  lines: string[],
+  header: string,
+  categories: Array<{ categoryId: string; amount: number }>,
+  t: (key: UiTextKey, params?: Record<string, string | number>) => string,
+  sign: "+" | "-",
+): void {
+  if (categories.length === 0) return;
+  lines.push(header);
+  for (const category of categories.slice().sort((a, b) => b.amount - a.amount).slice(0, 4)) {
+    lines.push(`${sign}${formatCompact(category.amount)} ${getResourceLedgerCategoryLabel(category.categoryId, t)}`);
+  }
+}
+
+function getResourceLedgerCategoryLabel(
+  categoryId: string,
+  t: (key: UiTextKey, params?: Record<string, string | number>) => string,
+): string {
+  switch (categoryId) {
+    case "base":
+      return t("resourceLedger.category.base");
+    case "construction":
+      return t("resourceLedger.category.construction");
+    case "colonization":
+      return t("resourceLedger.category.colonization");
+    case "customization":
+      return t("resourceLedger.category.customization");
+    case "demolition":
+      return t("resourceLedger.category.demolition");
+    case "diplomacy":
+      return t("resourceLedger.category.diplomacy");
+    case "military":
+      return t("resourceLedger.category.military");
+    case "research":
+      return t("resourceLedger.category.research");
+    case "state_subsidies":
+      return t("resourceLedger.category.stateSubsidies");
+    default:
+      return t("resourceLedger.category.other");
+  }
+}
+
+function getResourceLedgerSourceLabel(
+  labelKey: string | undefined,
+  t: (key: UiTextKey, params?: Record<string, string | number>) => string,
+): string {
+  switch (labelKey) {
+    case "resourceLedger.source.army.formation":
+      return t("resourceLedger.source.army.formation");
+    case "resourceLedger.source.building.stateSubsidy":
+      return t("resourceLedger.source.building.stateSubsidy");
+    case "resourceLedger.source.colonization.support":
+      return t("resourceLedger.source.colonization.support");
+    case "resourceLedger.source.construction.building":
+      return t("resourceLedger.source.construction.building");
+    case "resourceLedger.source.construction.corridor":
+      return t("resourceLedger.source.construction.corridor");
+    case "resourceLedger.source.construction.demolition":
+      return t("resourceLedger.source.construction.demolition");
+    case "resourceLedger.source.customization.country":
+      return t("resourceLedger.source.customization.country");
+    case "resourceLedger.source.customization.provinceRename":
+      return t("resourceLedger.source.customization.provinceRename");
+    case "resourceLedger.source.diplomacy.transfer":
+      return t("resourceLedger.source.diplomacy.transfer");
+    case "resourceLedger.source.technology.research":
+      return t("resourceLedger.source.technology.research");
+    default:
+      return t("resourceLedger.source.generic");
+  }
 }
 
 function TopActionButton(props: {

@@ -54,6 +54,10 @@ export type ScenarioDefines = {
   eventLog?: {
     retentionTurns?: unknown;
   };
+  resourceLedger?: {
+    retentionTurns?: unknown;
+    maxEntriesPerTurn?: unknown;
+  };
   turnTimer?: {
     enabled?: unknown;
     secondsPerTurn?: unknown;
@@ -126,6 +130,10 @@ export const SCENARIO_DEFINES_SUPPORTED_SECTIONS = {
   eventLog: {
     retentionTurns: { type: "integer", min: 1, max: 100 },
   },
+  resourceLedger: {
+    retentionTurns: { type: "integer", min: 1, max: 3650 },
+    maxEntriesPerTurn: { type: "integer", min: 1, max: 100000 },
+  },
   turnTimer: {
     enabled: { type: "boolean" },
     secondsPerTurn: { type: "integer", min: 10, max: 2_592_000 },
@@ -147,6 +155,7 @@ export type SettingsWithScenarioDefines = {
   military: MilitarySettings;
   registration: RegistrationSettings;
   eventLog: EventLogSettings;
+  resourceLedger: ResourceLedgerSettings;
   turnTimer: TurnTimerSettings;
 };
 
@@ -202,6 +211,11 @@ export type RegistrationSettings = {
 
 export type EventLogSettings = {
   retentionTurns: number;
+};
+
+export type ResourceLedgerSettings = {
+  retentionTurns: number;
+  maxEntriesPerTurn: number;
 };
 
 export type TurnTimerSettings = {
@@ -287,6 +301,13 @@ const scenarioDefinesShapeSchema = z
       })
       .strict()
       .optional(),
+    resourceLedger: z
+      .object({
+        retentionTurns: z.unknown().optional(),
+        maxEntriesPerTurn: z.unknown().optional(),
+      })
+      .strict()
+      .optional(),
     turnTimer: z
       .object({
         enabled: z.unknown().optional(),
@@ -342,6 +363,7 @@ export function applyScenarioDefinesToGameSettings<TSettings extends SettingsWit
   const military = normalizeScenarioMilitaryDefines(defines.military, settings.military, options) ?? settings.military;
   const registration = normalizeScenarioRegistrationDefines(defines.registration, settings.registration) ?? settings.registration;
   const eventLog = normalizeScenarioEventLogDefines(defines.eventLog, settings.eventLog) ?? settings.eventLog;
+  const resourceLedger = normalizeScenarioResourceLedgerDefines(defines.resourceLedger, settings.resourceLedger) ?? settings.resourceLedger;
   const turnTimer = normalizeScenarioTurnTimerDefines(defines.turnTimer, settings.turnTimer) ?? settings.turnTimer;
 
   return {
@@ -354,6 +376,7 @@ export function applyScenarioDefinesToGameSettings<TSettings extends SettingsWit
     military,
     registration,
     eventLog,
+    resourceLedger,
     turnTimer,
   };
 }
@@ -699,6 +722,33 @@ export function normalizeScenarioEventLogDefines(
       1,
       100,
       "INVALID_SCENARIO_EVENT_LOG_RETENTION_TURNS",
+    ),
+  };
+}
+
+export function normalizeScenarioResourceLedgerDefines(
+  resourceLedgerDefines: ScenarioDefines["resourceLedger"] | undefined,
+  defaults: ResourceLedgerSettings,
+): ResourceLedgerSettings | null {
+  if (resourceLedgerDefines == null) return null;
+  if (typeof resourceLedgerDefines !== "object" || Array.isArray(resourceLedgerDefines)) {
+    throw new Error("INVALID_SCENARIO_RESOURCE_LEDGER_DEFINES");
+  }
+
+  return {
+    retentionTurns: normalizeIntegerInRange(
+      resourceLedgerDefines.retentionTurns,
+      defaults.retentionTurns,
+      1,
+      3_650,
+      "INVALID_SCENARIO_RESOURCE_LEDGER_RETENTION_TURNS",
+    ),
+    maxEntriesPerTurn: normalizeIntegerInRange(
+      resourceLedgerDefines.maxEntriesPerTurn,
+      defaults.maxEntriesPerTurn,
+      1,
+      100_000,
+      "INVALID_SCENARIO_RESOURCE_LEDGER_MAX_ENTRIES",
     ),
   };
 }

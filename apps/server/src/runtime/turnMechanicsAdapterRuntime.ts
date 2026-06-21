@@ -10,6 +10,7 @@ import {
 } from "../mechanics/militaryMechanics";
 import { resolveTransportCorridorConstructionTurn as resolveTransportCorridorConstructionTurnInState } from "../mechanics/transportCorridorMechanics";
 import type { GameSettings } from "./gameSettingsTypes";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
 type TurnMechanicsAdapterRuntimeParams = {
   getWorldBase: () => WorldBase;
@@ -19,6 +20,7 @@ type TurnMechanicsAdapterRuntimeParams = {
   getProvinceAreaKm2: (provinceId: string) => number;
   ensureMarketModelReady: () => void;
   areProvinceIdsAdjacentOrSame: (leftProvinceId: string, rightProvinceId: string) => boolean;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
 };
 
 export function createTurnMechanicsAdapterRuntime(params: TurnMechanicsAdapterRuntimeParams): {
@@ -64,6 +66,7 @@ export function createTurnMechanicsAdapterRuntime(params: TurnMechanicsAdapterRu
       worldBase: params.getWorldBase(),
       baseConstructionPerTurn: gameSettings.economy.baseConstructionPerTurn,
       nowIso: new Date().toISOString(),
+      addExpense: params.addResourceLedgerExpense,
     });
   }
 

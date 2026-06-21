@@ -70,6 +70,7 @@ import {
   type PopulationDomainKeys,
 } from "../mechanics/populationMechanics";
 import type { WorkforceRequirement } from "../mechanics/contentFieldNormalizers";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
 export type ResolveBuildingsTurnRuntimeDeps = {
   adm1ProvinceIndex: Adm1ProvinceIndexEntry[];
@@ -103,6 +104,8 @@ export type ResolveBuildingsTurnRuntimeDeps = {
   resolveModifiedValue: (stat: ModifierStat, base: number, context: { countryId: string; provinceId?: string; buildingId?: string; goodId?: string; resourceCategoryId?: string | null; professionId?: string }) => number;
   resolvePopulationFallbackKeys: (domains: PopulationDomainKeys) => Record<PopulationDimensionKey, string>;
   round3: (value: number) => number;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
+  flushResourceLedger?: () => void;
   sortCultureNeedsByPriority: (needs: CultureNeed[]) => CultureNeed[];
   turnId: number;
   worldBase: WorldBase;
@@ -499,7 +502,23 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         getCountryDucats: (countryId) => Number(worldBase.resourcesByCountry[countryId]?.ducats ?? 0),
         setCountryDucats: (countryId, amount) => {
           ensureCountryInWorldBase(countryId);
-          worldBase.resourcesByCountry[countryId].ducats = amount;
+          const current = Number(worldBase.resourcesByCountry[countryId]?.ducats ?? 0);
+          const next = Math.max(0, amount);
+          const spent = round3(Math.max(0, current - next));
+          if (spent > 0 && deps.addResourceLedgerExpense) {
+            deps.addResourceLedgerExpense({
+              countryId,
+              resourceId: "ducats",
+              amount: spent,
+              sourceType: "building",
+              sourceId: `state-subsidy:${countryId}`,
+              categoryId: "state_subsidies",
+              labelKey: "resourceLedger.source.building.stateSubsidy",
+            });
+            deps.flushResourceLedger?.();
+          } else {
+            worldBase.resourcesByCountry[countryId].ducats = next;
+          }
         },
       });
       const {

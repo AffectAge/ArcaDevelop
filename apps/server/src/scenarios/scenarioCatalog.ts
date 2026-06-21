@@ -26,7 +26,7 @@ export type ScenarioDescriptor = {
 
 export type FoundScenario = {
   descriptor: ScenarioDescriptor;
-  scenarioDir: string | null;
+  scenarioDir: string;
   manifest: ScenarioManifest;
   mapRoot: string;
   provinceIndexPath: string;
@@ -40,7 +40,7 @@ export type ScenarioCatalogParams = {
 };
 
 export function listScenarios(params: ScenarioCatalogParams): ScenarioDescriptor[] {
-  const scenarios: ScenarioDescriptor[] = [describeActiveScenario(params)];
+  const scenarios: ScenarioDescriptor[] = [];
   const { scenariosRoot } = params;
 
   if (existsSync(scenariosRoot)) {
@@ -63,18 +63,6 @@ export function listScenarios(params: ScenarioCatalogParams): ScenarioDescriptor
 
 export function findScenario(scenarioId: string, params: ScenarioCatalogParams): FoundScenario | null {
   const { dataRoot, scenariosRoot } = params;
-  if (scenarioId === "active") {
-    const descriptor = listScenarios(params).find((scenario) => scenario.id === "active");
-    return descriptor
-      ? {
-          descriptor,
-          scenarioDir: null,
-          manifest: { id: "active", name: params.activeScenarioName ?? "Текущая игра", startTurn: 1 },
-          mapRoot: dataRoot,
-          provinceIndexPath: resolve(dataRoot, "provinces.json"),
-        }
-      : null;
-  }
 
   if (!existsSync(scenariosRoot)) return null;
   for (const entry of readdirSync(scenariosRoot, { withFileTypes: true })) {
@@ -124,26 +112,6 @@ function describeScenario(
     },
     contentFiles: listJsonFileNames(resolve(scenarioDir, "content")),
     setupFiles: listJsonFileNames(resolve(scenarioDir, "setup")),
-  };
-}
-
-function describeActiveScenario(params: ScenarioCatalogParams): ScenarioDescriptor {
-  const { dataRoot, activeScenarioId } = params;
-  return {
-    id: "active",
-    name: params.activeScenarioName ?? "Текущая игра",
-    description: "Активные файлы из apps/server/data без отдельной папки сценария.",
-    startTurn: 1,
-    startDate: null,
-    active: activeScenarioId === "active",
-    map: {
-      root: ".",
-      hasVectorTiles: existsSync(resolve(dataRoot, "tiles/adm1")),
-      hasRasterTiles: existsSync(resolve(dataRoot, "tiles/raster")),
-      hasProvinces: existsSync(resolve(dataRoot, "provinces.json")),
-    },
-    contentFiles: ["content-library.json"].filter((name) => existsSync(resolve(dataRoot, name))),
-    setupFiles: [],
   };
 }
 

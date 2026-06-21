@@ -32,17 +32,11 @@ export function readScenarioManifest(scenarioDir: string, fallbackId: string): {
 }
 
 export function getScenarioRuntimePaths(params: {
-  scenarioDir: string | null;
+  scenarioDir: string;
   manifest: ScenarioManifest;
   dataRoot: string;
 }): ScenarioRuntimePaths {
   const { scenarioDir, manifest, dataRoot } = params;
-  if (!scenarioDir) {
-    return {
-      mapRoot: dataRoot,
-      provinceIndexPath: resolve(dataRoot, "provinces.json"),
-    };
-  }
   const mapRoot = getScenarioMapRoot(scenarioDir, manifest, dataRoot);
   const generatedProvinceIndexPath = resolve(scenarioDir, ".generated/provinces.json");
   return {
@@ -53,7 +47,6 @@ export function getScenarioRuntimePaths(params: {
 
 export function getScenarioMapRoot(scenarioDir: string, manifest: ScenarioManifest, dataRoot: string): string {
   const raw = typeof manifest.mapRoot === "string" && manifest.mapRoot.trim() ? manifest.mapRoot.trim() : "map";
-  if (raw === "active") return dataRoot;
   return safeScenarioChildPath(scenarioDir, raw, dataRoot);
 }
 

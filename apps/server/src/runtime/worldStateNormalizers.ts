@@ -3,6 +3,7 @@ import type {
   CountryEventRecord,
   DiplomacyProposal,
   DiplomacyProposalStatus,
+  ResourceFlow,
   ResourceTotals,
   TreatyClause,
   TreatyMoneyPaymentCadence,
@@ -53,6 +54,43 @@ export function createWorldStateNormalizers(params: WorldStateNormalizerContext)
     for (const [countryId, totals] of Object.entries(source)) {
       if (!countryId) continue;
       normalized[countryId] = normalizeResourceTotals(totals);
+    }
+    return normalized;
+  }
+
+  function normalizeResourceLedgerByTurn(input: unknown): WorldBase["resourceLedgerByTurn"] {
+    const source = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
+    const normalized: WorldBase["resourceLedgerByTurn"] = {};
+    for (const [turnIdText, rawFlows] of Object.entries(source)) {
+      const flowTurnId = Number(turnIdText);
+      if (!Number.isInteger(flowTurnId) || flowTurnId < 1 || !Array.isArray(rawFlows)) continue;
+      const flows: ResourceFlow[] = [];
+      for (const raw of rawFlows) {
+        if (!raw || typeof raw !== "object") continue;
+        const row = raw as Partial<ResourceFlow>;
+        if (!RESOURCE_TOTAL_KEYS.includes(row.resourceId as keyof ResourceTotals)) continue;
+        const countryId = typeof row.countryId === "string" ? row.countryId.trim() : "";
+        const sourceId = typeof row.sourceId === "string" ? row.sourceId.trim() : "";
+        const categoryId = typeof row.categoryId === "string" ? row.categoryId.trim() : "";
+        const labelKey = typeof row.labelKey === "string" ? row.labelKey.trim() : "";
+        const amount = typeof row.amount === "number" && Number.isFinite(row.amount) ? Number(Math.max(0, row.amount).toFixed(3)) : null;
+        if (!countryId || !sourceId || !categoryId || !labelKey || amount == null) continue;
+        flows.push({
+          id: typeof row.id === "string" && row.id.trim() ? row.id.trim().slice(0, 160) : randomUUID(),
+          turnId: flowTurnId,
+          countryId,
+          resourceId: row.resourceId as keyof ResourceTotals,
+          direction: row.direction === "expense" ? "expense" : "income",
+          amount,
+          sourceType: normalizeResourceFlowSourceType(row.sourceType),
+          sourceId,
+          categoryId,
+          labelKey,
+          labelParams: normalizeFlatMetadata(row.labelParams),
+          metadata: normalizeFlatMetadata(row.metadata),
+        });
+      }
+      normalized[flowTurnId] = flows.slice(0, 10_000);
     }
     return normalized;
   }
@@ -356,6 +394,7 @@ export function createWorldStateNormalizers(params: WorldStateNormalizerContext)
   return {
     normalizeResourceTotals,
     normalizeResourcesByCountryMap,
+    normalizeResourceLedgerByTurn,
     normalizeTechnologyByCountryMap,
     normalizeCountryDecisionRecord,
     normalizeCountryDecisionsMap,
@@ -366,4 +405,44 @@ export function createWorldStateNormalizers(params: WorldStateNormalizerContext)
     normalizeTreatyClauses,
     normalizeDiplomacyProposals,
   };
+}
+
+const RESOURCE_TOTAL_KEYS: Array<keyof ResourceTotals> = [
+  "culture",
+  "science",
+  "religion",
+  "colonization",
+  "construction",
+  "ducats",
+  "gold",
+];
+
+function normalizeResourceFlowSourceType(input: unknown): ResourceFlow["sourceType"] {
+  return input === "base" ||
+    input === "building" ||
+    input === "law" ||
+    input === "technology" ||
+    input === "event" ||
+    input === "trade" ||
+    input === "army" ||
+    input === "diplomacy" ||
+    input === "colonization" ||
+    input === "construction" ||
+    input === "customization" ||
+    input === "modifier" ||
+    input === "system"
+    ? input
+    : "system";
+}
+
+function normalizeFlatMetadata(input: unknown): Record<string, string | number | boolean | null> | undefined {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return undefined;
+  const normalized: Record<string, string | number | boolean | null> = {};
+  for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
+    if (!key) continue;
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean" || value === null) {
+      normalized[key.slice(0, 80)] = value;
+    }
+  }
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
 }

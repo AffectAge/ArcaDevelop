@@ -17,6 +17,7 @@ import type { createTurnOrderRuntimeFacade } from "./turnOrderRuntimeFacade";
 import type { createTurnSessionRuntime } from "./turnSessionRuntime";
 import type { createUiNotificationRuntime } from "./uiNotificationRuntime";
 import type { createWorldDeltaBroadcastRuntime } from "./worldDeltaBroadcastRuntime";
+import type { ResourceLedgerRuntime } from "./resourceLedgerRuntime";
 import type { GameSettings } from "./gameSettingsTypes";
 import type { createServerTurnStateRuntime } from "./serverTurnStateRuntime";
 import { getGlobalBuildLimit } from "../mechanics/buildingMechanics";
@@ -48,6 +49,7 @@ type ServerInteractiveRouteRegistrationRuntimeParams = {
   turnSessionRuntime: ReturnType<typeof createTurnSessionRuntime>;
   uiNotificationRuntime: UiNotificationRuntime;
   worldDeltaBroadcastRuntime: ReturnType<typeof createWorldDeltaBroadcastRuntime>;
+  resourceLedgerRuntime: ResourceLedgerRuntime;
   parseAuthToken: Parameters<typeof registerWebSocketRouteComposition>[0]["parseAuthToken"];
   getTurnId: () => number;
   getWorldStateVersion: () => number;
@@ -114,6 +116,7 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
         params.uiNotificationRuntime.broadcastUiNotification(params.wsServer, notification),
     },
     worldDeltaBroadcastRuntime: params.worldDeltaBroadcastRuntime,
+    resourceLedgerRuntime: params.resourceLedgerRuntime,
     validateImageRule: params.validateImageRule,
     removeUploadedFile: params.removeUploadedFile,
     removeUploadedFiles: params.removeUploadedFiles,

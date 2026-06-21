@@ -50,3 +50,9 @@ World deltas must stay compact and versioned. When adding region state:
 Rejected orders must use stable machine-readable error codes for localization.
 
 Do not encode player-facing text in shared protocol payloads when an error code/localization key is appropriate.
+
+## Resource Ledger Contract Agent
+
+Country resource mutations are represented by shared `ResourceFlow` records and bounded `resourceLedgerByTurn` history. `resourcesByCountry` remains the authoritative current balance for compatibility, validation, AI, and existing UI, but contracts must preserve ledger deltas so clients can explain income, expenses, net totals, categories, and recent entries without receiving full history every turn.
+
+`ResourceFlow.labelKey` is the player-facing label contract. Do not put raw player-facing text in ledger entries; use localization keys and optional params.

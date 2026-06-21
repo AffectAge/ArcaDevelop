@@ -109,6 +109,7 @@ function makeWorldBase(currentTurnId: number): WorldBase {
   return {
     turnId: currentTurnId,
     resourcesByCountry: {},
+    resourceLedgerByTurn: {},
     regionOwner: {},
     regionController: {},
     provinceOwner: {},

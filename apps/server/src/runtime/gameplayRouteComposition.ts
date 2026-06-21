@@ -5,6 +5,7 @@ import type { PopulationDomainKeys } from "../mechanics/populationMechanics";
 import type { RouteAuth } from "../security/routeAuth";
 import type { BuildingContentEntry, GameSettings } from "./gameSettingsTypes";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
+import type { ResourceLedgerRuntime } from "./resourceLedgerRuntime";
 import { registerCountryActionRouteRuntime } from "./countryActionRouteRuntime";
 import { registerProvinceRouteRuntime } from "./provinceRouteRuntime";
 
@@ -63,6 +64,7 @@ type GameplayRouteCompositionParams = {
     cloneWorldBaseSectionSnapshot: (mask: number) => WorldBaseSectionSnapshot;
     broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase: WorldBaseSectionSnapshot) => void;
   };
+  resourceLedgerRuntime: ResourceLedgerRuntime;
   getActiveColonizeRegionIds: CountryActionDeps["getActiveColonizeRegionIds"];
   getQueuedColonizeRegionIds: CountryActionDeps["getQueuedColonizeRegionIds"];
   getProvinceRenameDucatsCost: ProvinceDeps["getProvinceRenameDucatsCost"];
@@ -109,6 +111,8 @@ export function registerGameplayRouteComposition(params: GameplayRouteCompositio
     cloneWorldBaseSectionSnapshot: params.worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot,
     savePersistentState: params.savePersistentState,
     broadcastWorldDeltaFromSectionSnapshot: params.worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot,
+    addResourceLedgerExpense: params.resourceLedgerRuntime.addExpense,
+    flushResourceLedger: params.resourceLedgerRuntime.flushTurn,
     makeOfficialNews: (input) => params.makeOfficialNews(input),
     broadcast: params.broadcast,
   });
@@ -140,6 +144,8 @@ export function registerGameplayRouteComposition(params: GameplayRouteCompositio
     cloneWorldBaseSectionSnapshot: params.worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot,
     savePersistentState: params.savePersistentState,
     broadcastWorldDeltaFromSectionSnapshot: params.worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot,
+    addResourceLedgerExpense: params.resourceLedgerRuntime.addExpense,
+    flushResourceLedger: params.resourceLedgerRuntime.flushTurn,
     makeOfficialNews: (input) => params.makeOfficialNews(input),
     broadcast: params.broadcast,
   });

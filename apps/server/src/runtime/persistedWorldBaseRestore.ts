@@ -9,6 +9,7 @@ type RestorePersistedWorldBaseParams = {
   turnId: number;
   defaultWorldBase: (turnId: number) => WorldBase;
   normalizeResourcesByCountryMap: (input: unknown) => Record<string, ResourceTotals>;
+  normalizeResourceLedgerByTurn: (input: unknown) => WorldBase["resourceLedgerByTurn"];
   normalizeRegionColonizationMap: (input: unknown) => WorldBase["regionColonizationByRegion"];
   normalizeRegionPopulationMap: (input: unknown) => WorldBase["regionPopulationByRegion"];
   normalizeRegionBuildingsMap: (input: unknown) => WorldBase["regionBuildingsByRegion"];
@@ -52,6 +53,9 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
   const restored: WorldBase = {
     turnId: params.turnId,
     resourcesByCountry: params.normalizeResourcesByCountryMap(candidate.resourcesByCountry),
+    resourceLedgerByTurn: params.normalizeResourceLedgerByTurn(
+      (candidate as Partial<WorldBase> & { resourceLedgerByTurn?: unknown }).resourceLedgerByTurn,
+    ),
     regionOwner: candidate.regionOwner as Record<string, string>,
     regionController: candidate.regionController as Record<string, string>,
     provinceOwner: candidate.provinceOwner,

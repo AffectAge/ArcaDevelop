@@ -4861,15 +4861,16 @@ export function MapView({
                                 Админ
                               </AppButton>
                             )}
-                            {selectedIsNeutral && (
+                            {selectedRegionId && (
                               <AppButton
                                 type="button"
                                 onClick={() => setColonizationModalOpen(true)}
                                 variant="primary"
                                 size="sm"
+                                icon={<Flag size={12} />}
                                 className="w-full"
                               >
-                                Колонизация
+                                {t("provinceTooltip.colonization")}
                               </AppButton>
                             )}
                           </div>

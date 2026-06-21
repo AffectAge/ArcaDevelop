@@ -8,6 +8,7 @@ function createWorldBase(): WorldBase {
     resourcesByCountry: {
       "country:a": { culture: 1, science: 1, religion: 1, colonization: 1, construction: 1, ducats: 1, gold: 1 },
     },
+    resourceLedgerByTurn: {},
     regionOwner: {
       "6": "country:a",
     },

@@ -13,7 +13,7 @@ Current additive runtime compatibility:
 - Runtime `GameState` row save/load is owned by `apps/server/src/persistence/gameStatePersistence.ts`; `apps/server/src/index.ts` should only assemble/apply runtime state and migration hooks.
 - Debounced runtime state persistence is scheduled by `apps/server/src/persistence/persistentStateScheduler.ts` and must remain serial, bounded, and test-covered.
 - obsolete JSON `game-state.json` import is read through `apps/server/src/persistence/persistedStateFile.ts`; parsing raw files should not grow in `apps/server/src/index.ts`.
-- obsolete `content-library.json` file IO is owned by `apps/server/src/persistence/contentLibraryFile.ts`; raw content-library parsing/writing should not grow in `apps/server/src/index.ts`.
+- obsolete `content-library.json` file IO is removed. Do not restore root content-library persistence; runtime content is stored in `GameState`, and authored scenario content belongs under `scenarios/<scenario_id>/common/*/*.json`.
 - Persisted world-delta replay rows are owned by `apps/server/src/persistence/worldDeltaLogPersistence.ts` and must stay bounded/pruned.
 
 ## Hot Paths

@@ -7,6 +7,7 @@ import { registerProvinceReadRoutes } from "../routes/provinceReadRoutes";
 import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
 import type { RouteAuth } from "../security/routeAuth";
 import type { RegionColonizationConfig } from "../mechanics/colonizationMechanics";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
 
 type ProvinceRouteRuntimeParams = {
@@ -46,6 +47,8 @@ type ProvinceRouteRuntimeParams = {
   cloneWorldBaseSectionSnapshot: (mask: number) => WorldBaseSectionSnapshot;
   savePersistentState: () => void;
   broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase: WorldBaseSectionSnapshot) => void;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
+  flushResourceLedger?: () => void;
   makeOfficialNews: (input: {
     turn: number;
     category: "colonization" | "politics";
@@ -74,6 +77,8 @@ export function registerProvinceRouteRuntime(params: ProvinceRouteRuntimeParams)
     savePersistentState: params.savePersistentState,
     broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase) =>
       params.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase as WorldBaseSectionSnapshot),
+    addResourceExpense: params.addResourceLedgerExpense,
+    flushResourceLedger: params.flushResourceLedger,
     makeOfficialNews: (input) => params.makeOfficialNews(input),
     broadcast: params.broadcast,
   });

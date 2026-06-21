@@ -72,6 +72,10 @@ scenarios/<scenario_id>/
 
 Authored scenario data uses strict JSON and one entity per file. The JSON `id` is authoritative; file names are only human-readable organization aids. Generated indexes live in `.generated/` and are not authored source.
 
+Root aggregate content libraries are not valid runtime or authored sources. Do not create or restore `apps/server/data/content-library.json`; scenario-owned content belongs under `scenarios/<scenario_id>/common/*/*.json`.
+
+Concrete gameplay content must be authored as scenario data. Buildings, goods, technologies, laws, events, decisions, modifiers, units, institutions, cultures, and religions belong in scenario files under `common/`, `history/`, `arcawiki/`, `localisation/`, or other documented scenario-owned folders. Do not ask core simulation code to special-case a concrete content ID when a data-authored effect or modifier can describe it.
+
 `common/defines.json` stores scenario-owned tunables such as audit retention, colonization limits/costs, customization costs, balance, pacing, and explicit AI bonuses. Invalid defines must fail validation/application instead of being silently repaired.
 
 Scenario uploads are owned by the scenario under `assets/uploads/`. Managed server URLs must use `/scenario-assets/<scenario_id>/assets/uploads/<relative_path>`; old global upload roots are not valid scenario data.

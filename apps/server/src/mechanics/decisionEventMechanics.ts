@@ -9,6 +9,8 @@ import type {
   GameEventDefinition,
   GameEventOption,
   ModifierCondition,
+  ResourceFlowSourceType,
+  ResourceId,
   ResourceTotals,
 } from "@arcanorum/shared";
 
@@ -165,21 +167,86 @@ export function getVisibleCountryDecisions(params: {
     .sort((a, b) => a.name.localeCompare(b.name, "ru"));
 }
 
-export function applyDecisionEffects(resources: ResourceTotals | undefined, effects: DecisionEffect[] | undefined): void {
+export type DecisionEventLedgerFlowInput = {
+  countryId: string;
+  resourceId: ResourceId;
+  amount: number;
+  sourceType: ResourceFlowSourceType;
+  sourceId: string;
+  categoryId: string;
+  labelKey: string;
+};
+
+export function applyDecisionEffects(
+  resources: ResourceTotals | undefined,
+  effects: DecisionEffect[] | undefined,
+  options?: {
+    countryId: string;
+    sourceType: ResourceFlowSourceType;
+    sourceId: string;
+    addIncome?: (input: DecisionEventLedgerFlowInput) => void;
+    addExpense?: (input: DecisionEventLedgerFlowInput) => void;
+  },
+): void {
   if (!resources) return;
   for (const effect of effects ?? []) {
     if (effect.type === "resource_delta") {
-      resources[effect.resource] = round3(Math.max(0, (resources[effect.resource] ?? 0) + effect.amount));
+      const amount = round3(Math.abs(Number(effect.amount ?? 0)));
+      if (amount <= 0) continue;
+      if (effect.amount > 0 && options?.addIncome) {
+        options.addIncome({
+          countryId: options.countryId,
+          resourceId: effect.resource,
+          amount,
+          sourceType: options.sourceType,
+          sourceId: options.sourceId,
+          categoryId: options.sourceType,
+          labelKey: "resourceLedger.source.generic",
+        });
+      } else if (effect.amount < 0 && options?.addExpense) {
+        options.addExpense({
+          countryId: options.countryId,
+          resourceId: effect.resource,
+          amount,
+          sourceType: options.sourceType,
+          sourceId: options.sourceId,
+          categoryId: options.sourceType,
+          labelKey: "resourceLedger.source.generic",
+        });
+      } else {
+        resources[effect.resource] = round3(Math.max(0, (resources[effect.resource] ?? 0) + effect.amount));
+      }
     }
   }
 }
 
-export function applyDecisionCosts(resources: ResourceTotals | undefined, costs: Partial<ResourceTotals> | undefined): void {
+export function applyDecisionCosts(
+  resources: ResourceTotals | undefined,
+  costs: Partial<ResourceTotals> | undefined,
+  options?: {
+    countryId: string;
+    sourceType: ResourceFlowSourceType;
+    sourceId: string;
+    addExpense?: (input: DecisionEventLedgerFlowInput) => void;
+  },
+): void {
   if (!resources) return;
   for (const key of RESOURCE_KEYS) {
     const cost = Number(costs?.[key] ?? 0);
     if (cost > 0) {
-      resources[key] = round3(Math.max(0, Number(resources[key] ?? 0) - cost));
+      if (options?.addExpense) {
+        options.addExpense({
+          countryId: options.countryId,
+          resourceId: key,
+          amount: cost,
+          sourceType: options.sourceType,
+          sourceId: options.sourceId,
+          categoryId: options.sourceType,
+          labelKey: "resourceLedger.source.generic",
+        });
+      } else {
+        resources[key] = round3(Math.max(0, Number(resources[key] ?? 0) - cost));
+      }
     }
   }
 }
@@ -289,6 +356,8 @@ export function autoResolveExpiredCountryEvents(params: {
   resourcesByCountry: Record<string, ResourceTotals>;
   turnId: number;
   normalizeCountryEventRecord: (record: CountryEventRecord) => CountryEventRecord;
+  addIncome?: (input: DecisionEventLedgerFlowInput) => void;
+  addExpense?: (input: DecisionEventLedgerFlowInput) => void;
   random?: () => number;
 }): { resolved: AutoResolvedCountryEvent[]; notificationIdsToRemove: string[] } {
   const eventById = new Map(params.entries.map((entry) => [entry.id, entry] as const));
@@ -316,7 +385,13 @@ export function autoResolveExpiredCountryEvents(params: {
         remaining.push(pending);
         continue;
       }
-      applyDecisionEffects(params.resourcesByCountry[countryId], option.effects);
+      applyDecisionEffects(params.resourcesByCountry[countryId], option.effects, {
+        countryId,
+        sourceType: "event",
+        sourceId: entry.id,
+        addIncome: params.addIncome,
+        addExpense: params.addExpense,
+      });
       if (!normalized.completedEventIds.includes(entry.id)) normalized.completedEventIds.push(entry.id);
       const cooldown = Math.max(0, Math.floor(Number(event.cooldownTurns ?? 0)));
       if (cooldown > 0) normalized.cooldownUntilTurnByEventId[entry.id] = params.turnId + cooldown;

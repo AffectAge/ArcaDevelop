@@ -13,7 +13,6 @@ import {
   normalizeContentRaces,
   normalizeContentShipTypes,
 } from "../content/contentNormalizers";
-import type { PersistedContentLibrary } from "../persistence/contentLibraryFile";
 import type { GameSettings } from "../runtime/gameSettingsTypes";
 import { normalizeContentLogoUrl } from "../uploads/uploadPaths";
 import { loadRawScenarioContent } from "./scenarioContentLoader";
@@ -80,13 +79,8 @@ export function normalizeScenarioContentForRuntime(source: unknown): GameSetting
 }
 
 export function loadScenarioContentForRuntime(params: {
-  scenarioDir: string | null;
-  getPersistedContentLibrary: () => PersistedContentLibrary | null;
+  scenarioDir: string;
 }): GameSettings["content"] | null {
-  if (!params.scenarioDir) {
-    const activeLibrary = params.getPersistedContentLibrary();
-    return activeLibrary?.content ? normalizeScenarioContentForRuntime(activeLibrary.content) : null;
-  }
   const rawScenarioContent = loadRawScenarioContent(params.scenarioDir);
   return rawScenarioContent ? normalizeScenarioContentForRuntime(rawScenarioContent) : null;
 }

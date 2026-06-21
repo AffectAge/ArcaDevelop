@@ -8,6 +8,7 @@ import { registerCountryExpansionRoutes } from "../routes/countryExpansionRoutes
 import { registerCountryOrderRoutes } from "../routes/countryOrderRoutes";
 import type { RouteAuth } from "../security/routeAuth";
 import type { GameSettings } from "./gameSettingsTypes";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 import type { RegionColonizationConfig } from "../mechanics/colonizationMechanics";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
 
@@ -47,6 +48,8 @@ type CountryActionRouteRuntimeParams = {
   cloneWorldBaseSectionSnapshot: (mask: number) => WorldBaseSectionSnapshot;
   savePersistentState: () => void;
   broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase: WorldBaseSectionSnapshot) => void;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
+  flushResourceLedger?: () => void;
   makeOfficialNews: (input: {
     turn: number;
     category: "colonization";
@@ -119,6 +122,8 @@ export function registerCountryActionRouteRuntime(params: CountryActionRouteRunt
     savePersistentState: params.savePersistentState,
     broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase) =>
       params.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase as WorldBaseSectionSnapshot),
+    addResourceExpense: params.addResourceLedgerExpense,
+    flushResourceLedger: params.flushResourceLedger,
   });
 
   registerCountryOrderRoutes(params.app, {

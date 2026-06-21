@@ -1,4 +1,4 @@
-import type { ResourceTotals } from "@arcanorum/shared";
+import type { ResourceFlowSourceType, ResourceId, ResourceTotals } from "@arcanorum/shared";
 
 export type TransportCorridorConstructionEntry = {
   id: string;
@@ -11,6 +11,18 @@ export type TransportCorridorConstructionEntry = {
 
 export type TransportCorridorConstructionWorldState = {
   resourcesByCountry: Record<string, ResourceTotals>;
+};
+
+export type TransportCorridorLedgerFlowInput = {
+  countryId: string;
+  resourceId: ResourceId;
+  amount: number;
+  sourceType: ResourceFlowSourceType;
+  sourceId: string;
+  categoryId: string;
+  labelKey: string;
+  labelParams?: Record<string, string | number | boolean | null>;
+  metadata?: Record<string, string | number | boolean | null>;
 };
 
 export type TransportCorridorRouteEntry<TMode extends string = string> = {
@@ -378,6 +390,7 @@ export function resolveTransportCorridorConstructionTurn(params: {
   worldBase: TransportCorridorConstructionWorldState;
   baseConstructionPerTurn: number;
   nowIso: string;
+  addExpense?: (input: TransportCorridorLedgerFlowInput) => void;
 }): void {
   const baseProgress = getTransportCorridorConstructionProgressPerTurn(params.baseConstructionPerTurn);
   for (const corridor of Object.values(params.corridorsById ?? {})) {
@@ -387,7 +400,18 @@ export function resolveTransportCorridorConstructionTurn(params: {
     const availableConstruction = Math.max(0, Number(ownerResource.construction ?? 0));
     if (availableConstruction <= 0) continue;
     const progress = Math.min(baseProgress, availableConstruction);
-    ownerResource.construction = round3(Math.max(0, availableConstruction - progress));
+    params.addExpense?.({
+      countryId: corridor.ownerCountryId,
+      resourceId: "construction",
+      amount: progress,
+      sourceType: "construction",
+      sourceId: corridor.id,
+      categoryId: "transportCorridor",
+      labelKey: "resourceLedger.source.construction.corridor",
+    });
+    if (!params.addExpense) {
+      ownerResource.construction = round3(Math.max(0, availableConstruction - progress));
+    }
     corridor.progressConstruction = round3(
       Math.min(corridor.costConstruction, Math.max(0, corridor.progressConstruction) + progress),
     );

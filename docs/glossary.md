@@ -13,3 +13,10 @@
 - **Order:** Player or AI request validated by the authoritative server.
 - **World Delta:** Compact server-to-client state update with versioning and ACK/replay.
 - **Fallback:** Alternate behavior used when normal data/path is missing. Gameplay fallback requires approval; technical safety fallback must be documented.
+## Resource Ledger
+
+The bounded country resource journal. Mechanics emit `ResourceFlow` income or expense entries; resource ledger runtime applies the net result to `resourcesByCountry` and stores recent history in `resourceLedgerByTurn` for UI explanations.
+
+## Resource Flow
+
+A single ledger entry for one country resource income or expense, including source type, source id, category id, amount, direction, and localization label key.

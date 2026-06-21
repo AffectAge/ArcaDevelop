@@ -15,6 +15,7 @@ Scenario data follows a Victoria-inspired one-entity-per-file layout. Authored f
 - Keep balance numbers, pacing, limits, retention, and AI bonuses in `common/defines.json`.
 - Keep scenario-owned files under scenario `assets/`.
 - Keep generated indexes under `.generated/`; generated files are never manual source.
+- Do not use root or scenario monolithic content libraries. `apps/server/data/content-library.json` is forbidden, and scenario content must be authored under `common/*/*.json`.
 
 ## Per-Entity Layout
 
@@ -57,7 +58,7 @@ scenarios/<scenario_id>/
   .generated/
 ```
 
-`map/provinces.json` and monolithic content libraries are not authored source in the target format. If runtime needs aggregate views, scenario tooling must generate them under `.generated/`.
+`map/provinces.json`, `apps/server/data/content-library.json`, and monolithic content libraries are not authored or runtime source in the target format. If runtime needs aggregate views, scenario tooling must generate them under `.generated/`.
 
 Scenario-owned uploaded assets live under `assets/uploads/` inside the scenario folder. Server-managed URLs use `/scenario-assets/<scenario_id>/assets/uploads/<relative_path>`; global upload roots and `/uploads/...` URLs are not valid authored or runtime targets.
 
@@ -206,3 +207,8 @@ Validation/build tooling should fail loudly instead of silently repairing author
 ## Arcawiki
 
 Arcawiki should explain gameplay to players, not implementation internals.
+## Resource Ledger Defines
+
+Scenario defines may include `resourceLedger.retentionTurns` and `resourceLedger.maxEntriesPerTurn`. Retention controls how many recent turns of country resource flow history are persisted for explanations; max entries bounds one turn's ledger size. Invalid values fail scenario validation.
+
+Scenario-authored mechanics and content that produce country resource income or expenses should be designed around ledger categories and localized source labels rather than hidden direct balance changes.

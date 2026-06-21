@@ -28,6 +28,7 @@ import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
 import { resolveTurnWithPipeline, type TurnResolverResult } from "./turnResolver";
 import type { GameContentEntry, GameSettings } from "./gameSettingsTypes";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
 type CountryEventUiNotification = {
   countryId: string;
@@ -108,6 +109,9 @@ type TurnRuntimeParams = {
   areProvinceIdsAdjacentOrSame: (fromProvinceId: string, toProvinceId: string) => boolean;
   enqueueBuildingAutoUpgradesTurn: () => void;
   resolveBuildingConstructionQueuesTurn: () => void;
+  addResourceLedgerIncome: (input: ResourceLedgerEntryInput) => void;
+  addResourceLedgerExpense: (input: ResourceLedgerEntryInput) => void;
+  flushResourceLedger: () => void;
   resolveResourceExplorationTurn: () => void;
   resolveTransportCorridorConstructionTurn: () => void;
   applyPerTurnTreatyMoneyTransfers: () => void;
@@ -254,10 +258,12 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           activeColonizeRegionsByCountry: params.getActiveColonizeRegionsByCountry(),
           getRegionColonizationConfig: params.getRegionColonizationConfig,
           getRegionDerivedColonizationCosts: params.getRegionDerivedColonizationCosts,
+          addExpense: params.addResourceLedgerExpense,
         });
       },
       enqueueBuildingAutoUpgradesTurn: params.enqueueBuildingAutoUpgradesTurn,
       resolveBuildingConstructionQueuesTurn: params.resolveBuildingConstructionQueuesTurn,
+      flushResourceLedger: params.flushResourceLedger,
       resolveResourceExplorationTurn: params.resolveResourceExplorationTurn,
       resolveTransportCorridorConstructionTurn: params.resolveTransportCorridorConstructionTurn,
       resolveColonizationCapturesTurn: (touchedRegionIds) =>
@@ -298,6 +304,7 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
             baseGoldPerTurn: gameSettings.economy.baseGoldPerTurn,
           },
           resolveModifiedValue: params.resolveModifiedValue,
+          addIncome: params.addResourceLedgerIncome,
         });
       },
       applyPerTurnTreatyMoneyTransfers: params.applyPerTurnTreatyMoneyTransfers,

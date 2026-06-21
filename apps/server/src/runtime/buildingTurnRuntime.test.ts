@@ -191,6 +191,7 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     militaryFormationQueueByCountry: {},
     diplomacyProposals: [],
     ...overrides,
+    resourceLedgerByTurn: overrides?.resourceLedgerByTurn ?? {},
   };
 }
 

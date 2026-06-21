@@ -1,4 +1,5 @@
 import type { ResourceTotals } from "@arcanorum/shared";
+import type { ResourceFlowSourceType, ResourceId } from "@arcanorum/shared";
 
 export type EconomyTickResourceStat =
   | "culture_gain"
@@ -19,11 +20,24 @@ export type EconomyTickBaseValues = {
   baseGoldPerTurn: number;
 };
 
+export type ResourceLedgerFlowInput = {
+  countryId: string;
+  resourceId: ResourceId;
+  amount: number;
+  sourceType: ResourceFlowSourceType;
+  sourceId: string;
+  categoryId: string;
+  labelKey: string;
+  labelParams?: Record<string, string | number | boolean | null>;
+  metadata?: Record<string, string | number | boolean | null>;
+};
+
 export function applyCountryResourceIncomeTurn(params: {
   countryIds: Iterable<string>;
   resourcesByCountry: Record<string, ResourceTotals | undefined>;
   baseValues: EconomyTickBaseValues;
   resolveModifiedValue: (stat: EconomyTickResourceStat, base: number, context: { countryId: string }) => number;
+  addIncome?: (input: ResourceLedgerFlowInput) => void;
 }): void {
   for (const countryId of params.countryIds) {
     const resource = params.resourcesByCountry[countryId];
@@ -31,16 +45,30 @@ export function applyCountryResourceIncomeTurn(params: {
       continue;
     }
     const context = { countryId };
-    resource.culture += params.resolveModifiedValue("culture_gain", params.baseValues.baseCulturePerTurn, context);
-    resource.science += params.resolveModifiedValue("science_gain", params.baseValues.baseSciencePerTurn, context);
-    resource.religion += params.resolveModifiedValue("religion_gain", params.baseValues.baseReligionPerTurn, context);
-    resource.colonization += params.resolveModifiedValue(
-      "colonization_gain",
-      params.baseValues.colonizationPointsPerTurn,
-      context,
-    );
-    resource.construction += params.resolveModifiedValue("construction_gain", params.baseValues.baseConstructionPerTurn, context);
-    resource.ducats += params.resolveModifiedValue("ducats_gain", params.baseValues.baseDucatsPerTurn, context);
-    resource.gold += params.resolveModifiedValue("gold_gain", params.baseValues.baseGoldPerTurn, context);
+    const incomes = [
+      { resourceId: "culture" as const, stat: "culture_gain" as const, base: params.baseValues.baseCulturePerTurn },
+      { resourceId: "science" as const, stat: "science_gain" as const, base: params.baseValues.baseSciencePerTurn },
+      { resourceId: "religion" as const, stat: "religion_gain" as const, base: params.baseValues.baseReligionPerTurn },
+      { resourceId: "colonization" as const, stat: "colonization_gain" as const, base: params.baseValues.colonizationPointsPerTurn },
+      { resourceId: "construction" as const, stat: "construction_gain" as const, base: params.baseValues.baseConstructionPerTurn },
+      { resourceId: "ducats" as const, stat: "ducats_gain" as const, base: params.baseValues.baseDucatsPerTurn },
+      { resourceId: "gold" as const, stat: "gold_gain" as const, base: params.baseValues.baseGoldPerTurn },
+    ];
+    for (const income of incomes) {
+      const amount = params.resolveModifiedValue(income.stat, income.base, context);
+      if (params.addIncome) {
+        params.addIncome({
+          countryId,
+          resourceId: income.resourceId,
+          amount,
+          sourceType: "base",
+          sourceId: `base:${income.resourceId}`,
+          categoryId: "base",
+          labelKey: `resourceLedger.source.base.${income.resourceId}`,
+        });
+      } else {
+        resource[income.resourceId] += amount;
+      }
+    }
   }
 }

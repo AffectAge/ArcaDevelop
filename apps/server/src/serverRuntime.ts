@@ -13,7 +13,6 @@ import { createModifierRuntime } from "./runtime/modifierRuntime";
 import { createUiNotificationRuntime } from "./runtime/uiNotificationRuntime";
 import { createTurnRuntime, TURN_RESOLVE_WORLD_DELTA_MASK } from "./runtime/turnRuntime";
 import { createPersistedStateRestoreRuntime } from "./runtime/persistedStateRestoreRuntime";
-import { createContentLibraryRuntime } from "./runtime/contentLibraryRuntime";
 import { createColonizationRuntimeFacade } from "./runtime/colonizationRuntimeFacade";
 import {
   cloneWorldBaseSectionSnapshot as cloneWorldBaseSectionSnapshotInRuntime,
@@ -43,6 +42,7 @@ import { createServerPersistenceFacadeRuntime } from "./runtime/serverPersistenc
 import { connectOptionalRedis } from "./runtime/serverRedisRuntime";
 import { createServerSessionStateRuntime } from "./runtime/serverSessionStateRuntime";
 import { createServerTurnStateRuntime } from "./runtime/serverTurnStateRuntime";
+import { createResourceLedgerRuntime } from "./runtime/resourceLedgerRuntime";
 import { round3 } from "./runtime/numberRuntime";
 import { makeOfficialNews } from "./runtime/officialNewsRuntime";
 import { buildAiControlledCountryIdsFromHistory, loadScenarioHistory } from "./scenarios/scenarioHistoryLoader";
@@ -206,6 +206,7 @@ const { marketAccessRuntime, marketRuntimeFacade } = createMarketSystemsRuntime(
   removeUploadedByUrl,
   round3,
 });
+let resourceLedgerRuntime!: ReturnType<typeof createResourceLedgerRuntime>;
 const { worldPopulationRuntime } = createPopulationSystemsRuntime({
   getGameSettings: () => gameSettings,
   getWorldBase: () => worldBase,
@@ -229,19 +230,14 @@ const { worldPopulationRuntime } = createPopulationSystemsRuntime({
   normalizeProvinceIdList,
   resolveModifiedValue: modifierFacade.resolveModifiedValue,
   round3,
+  addResourceLedgerExpense: (input) => resourceLedgerRuntime.addExpense(input),
+  flushResourceLedger: () => resourceLedgerRuntime.flushTurn(),
   buildingBaseThroughput: BUILDING_BASE_THROUGHPUT,
   buildingBaseWagePerWorkerGold: BUILDING_BASE_WAGE_PER_WORKER_GOLD,
   buildingDurabilityDecayPerTurnFallback: DEFAULT_BUILDING_DURABILITY_DECAY_PER_TURN,
   buildingDurabilityRecoveryPerTurnFallback: DEFAULT_BUILDING_DURABILITY_RECOVERY_PER_TURN,
   corridorLoadHistoryLength: CORRIDOR_LOAD_HISTORY_LENGTH,
   defaultMarketPriceSmoothing: DEFAULT_MARKET_PRICE_SMOOTHING,
-});
-
-const persistedContentLibraryPath = env.contentLibraryPath;
-const contentLibraryRuntime = createContentLibraryRuntime({
-  path: persistedContentLibraryPath,
-  getGameSettings: () => gameSettings,
-  logError: (message, error) => console.error(message, error),
 });
 
 let aiControlledCountryIds = new Set<string>();
@@ -287,12 +283,17 @@ registerServerCoreRouteRuntime({
 });
 
 const { defaultGameSettings, defaultWorldBase } = createServerDefaultStateRuntime({
-  contentLibraryRuntime,
   worldPopulationRuntime,
 });
 
 let gameSettings: GameSettings = defaultGameSettings();
 let worldBase: WorldBase = defaultWorldBase(turnId);
+resourceLedgerRuntime = createResourceLedgerRuntime({
+  getWorldBase: () => worldBase,
+  getTurnId: () => turnId,
+  getRetentionTurns: () => gameSettings.resourceLedger.retentionTurns,
+  getMaxEntriesPerTurn: () => gameSettings.resourceLedger.maxEntriesPerTurn,
+});
 const adminAuditLogStore = new AdminAuditLogStore(
   () => ({ turnId, activeScenarioId }),
   () => gameSettings,
@@ -305,7 +306,6 @@ const scenarioServerRuntime = createScenarioServerRuntime({
   dataRoot,
   scenariosRoot,
   getActiveScenarioId: () => activeScenarioId,
-  getPersistedContentLibrary: contentLibraryRuntime.getPersistedContentLibraryFromDisk,
   defaultWorldBase,
   addEconomyTickCountry: (countryId) => economyTickCountryIds.add(countryId),
   setAiControlledCountryIds: (countryIds) => {
@@ -358,6 +358,7 @@ const persistedStateRestoreRuntime = createPersistedStateRestoreRuntime({
   setLatestMarketOverview: marketPriceRuntimeState.setLatestMarketOverview,
   round3,
   normalizeResourcesByCountryMap: worldStateNormalizerRuntime.normalizeResourcesByCountryMap,
+  normalizeResourceLedgerByTurn: worldStateNormalizerRuntime.normalizeResourceLedgerByTurn,
   normalizeRegionColonizationMap,
   normalizeRegionPopulationMap: worldPopulationRuntime.normalizeRegionPopulationMap,
   normalizeRegionBuildingsMap: worldPopulationRuntime.normalizeRegionBuildingsMap,
@@ -414,7 +415,6 @@ persistentStateRuntimeRef.current = createGameStatePersistenceRuntime({
   getWorldStateVersion: () => worldStateVersion,
   getAdminAuditSnapshot: () => adminAuditLogStore.snapshot(),
   replaceWorldDeltaHistory: (history) => replaceWorldDeltaHistory(worldDeltaHistory, history),
-  persistContentLibrary: contentLibraryRuntime.persistContentLibraryFromSettings,
   parseAndApplyPersistentState: (input) => persistedStateRestoreRuntime.parseAndApplyPersistentState(input),
   normalizeRegionManualCostFlags: colonizationRuntime.normalizeRegionManualCostFlags,
   normalizeRegionColonizationCosts: colonizationRuntime.normalizeRegionColonizationCosts,
@@ -435,6 +435,8 @@ const { progressionRuntime, countryWorldRuntime } = createCountrySystemsRuntime(
   normalizeResourceTotals: worldStateNormalizerRuntime.normalizeResourceTotals,
   modifierConditionsMatchCountry: modifierFacade.modifierConditionsMatchCountry,
   resolveModifiedValue: modifierFacade.resolveModifiedValue,
+  addResourceLedgerIncome: resourceLedgerRuntime.addIncome,
+  addResourceLedgerExpense: resourceLedgerRuntime.addExpense,
   removeQueuedUiNotification: uiNotificationRuntime.removeQueuedUiNotification,
   makeOfficialNews,
   savePersistentState: persistenceFacade.savePersistentState,
@@ -455,6 +457,7 @@ const { buildingRuntime } = createBuildingSystemsRuntime({
   getOrdersByTurn: () => turnStateRuntime.ordersByTurn,
   getProvinceById: mapRuntime.getProvinceById,
   ensureCountryInWorldBase: countryWorldRuntime.ensureCountryInWorldBase,
+  addResourceLedgerExpense: resourceLedgerRuntime.addExpense,
 });
 
 const turnMechanicsAdapterRuntime = createTurnMechanicsAdapterRuntime({
@@ -465,6 +468,7 @@ const turnMechanicsAdapterRuntime = createTurnMechanicsAdapterRuntime({
   getProvinceAreaKm2: colonizationRuntime.getProvinceAreaKm2,
   ensureMarketModelReady: marketRuntimeFacade.ensureMarketModelReady,
   areProvinceIdsAdjacentOrSame: marketAccessRuntime.areProvinceIdsAdjacentOrSame,
+  addResourceLedgerExpense: resourceLedgerRuntime.addExpense,
 });
 const { diplomacyRuntimeRef, diplomacyFacade } = createServerDiplomacyFacadeRuntime();
 
@@ -583,6 +587,9 @@ const turnRuntime = createTurnRuntime({
   areProvinceIdsAdjacentOrSame: marketAccessRuntime.areProvinceIdsAdjacentOrSame,
   enqueueBuildingAutoUpgradesTurn: buildingRuntime.enqueueBuildingAutoUpgradesTurn,
   resolveBuildingConstructionQueuesTurn: buildingRuntime.resolveBuildingConstructionQueuesTurn,
+  addResourceLedgerIncome: resourceLedgerRuntime.addIncome,
+  addResourceLedgerExpense: resourceLedgerRuntime.addExpense,
+  flushResourceLedger: resourceLedgerRuntime.flushTurn,
   resolveResourceExplorationTurn: turnMechanicsAdapterRuntime.resolveResourceExplorationTurn,
   resolveTransportCorridorConstructionTurn: turnMechanicsAdapterRuntime.resolveTransportCorridorConstructionTurn,
   applyPerTurnTreatyMoneyTransfers: diplomacyFacade.applyPerTurnTreatyMoneyTransfers,
@@ -645,7 +652,6 @@ registerServerMainRouteRuntime({
   countryWorldRuntime,
   progressionRuntime,
   modifierRuntime: getModifierRuntime(),
-  contentLibraryRuntime,
   scenarioServerRuntime,
   marketRuntimeFacade,
   marketAccessRuntime,
@@ -657,6 +663,7 @@ registerServerMainRouteRuntime({
   turnOrderRuntime,
   uiNotificationRuntime,
   worldDeltaBroadcastRuntime,
+  resourceLedgerRuntime,
   diplomacyRuntimeRef,
   refreshExpiredDiplomacyProposals: diplomacyFacade.refreshExpiredDiplomacyProposals,
   getTurnId: () => turnId,
@@ -730,6 +737,7 @@ registerServerInteractiveRouteRuntime({
   turnSessionRuntime,
   uiNotificationRuntime,
   worldDeltaBroadcastRuntime,
+  resourceLedgerRuntime,
   parseAuthToken,
   getTurnId: () => turnId,
   getWorldStateVersion: () => worldStateVersion,
@@ -767,7 +775,6 @@ startServerRuntime({
     const history = scenario?.scenarioDir ? loadScenarioHistory(scenario.scenarioDir) : null;
     aiControlledCountryIds = new Set(buildAiControlledCountryIdsFromHistory(history));
   },
-  persistContentLibraryFromSettings: contentLibraryRuntime.persistContentLibraryFromSettings,
   cleanupOrphanUploadsOnServerStart: uploadStartupCleanupRuntime.cleanupOrphanUploadsOnServerStart,
   migratePersistedMarketNamesToReadable: marketRuntimeFacade.migratePersistedMarketNamesToReadable,
   savePersistentState: persistenceFacade.savePersistentState,

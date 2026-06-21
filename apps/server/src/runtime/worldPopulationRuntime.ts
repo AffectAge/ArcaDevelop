@@ -48,6 +48,7 @@ import {
 } from "./provinceStateNormalizers";
 import { resolveBuildingsTurnForRuntime } from "./buildingTurnRuntime";
 import type { BuildingContentEntry, GameSettings, TransportCorridorEntry } from "./gameSettingsTypes";
+import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
 type WorldPopulationRuntimeParams = {
   getGameSettings: () => GameSettings;
@@ -86,6 +87,8 @@ type WorldPopulationRuntimeParams = {
     },
   ) => number;
   round3: (value: number) => number;
+  addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
+  flushResourceLedger?: () => void;
   buildingBaseThroughput: number;
   buildingBaseWagePerWorkerGold: number;
   buildingDurabilityDecayPerTurnFallback: number;
@@ -288,6 +291,8 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       resolveModifiedValue: params.resolveModifiedValue,
       resolvePopulationFallbackKeys,
       round3: params.round3,
+      addResourceLedgerExpense: params.addResourceLedgerExpense,
+      flushResourceLedger: params.flushResourceLedger,
       sortCultureNeedsByPriority,
       turnId: params.getTurnId(),
       worldBase: params.getWorldBase(),
@@ -369,6 +374,7 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
     return {
       turnId: currentTurnId,
       resourcesByCountry: {},
+      resourceLedgerByTurn: {},
       regionOwner: {},
       regionController: {},
       provinceOwner: {},
