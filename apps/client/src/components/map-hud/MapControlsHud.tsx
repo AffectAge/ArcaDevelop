@@ -1,4 +1,4 @@
-import { LocateFixed, Lock, LockOpen, Minus, Move, Plus } from "lucide-react";
+import { LocateFixed, Lock, LockOpen, Minus, MousePointer2, Move, Plus } from "lucide-react";
 import { Tooltip } from "../Tooltip";
 import { useUiText } from "../../i18n/useUiText";
 
@@ -9,13 +9,15 @@ type Props = {
     lat: number;
   };
   interactionLocked: boolean;
+  edgeScrollEnabled: boolean;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onResetView: () => void;
   onToggleInteraction: () => void;
+  onToggleEdgeScroll: () => void;
 };
 
-export function MapControlsHud({ view, interactionLocked, onZoomIn, onZoomOut, onResetView, onToggleInteraction }: Props) {
+export function MapControlsHud({ view, interactionLocked, edgeScrollEnabled, onZoomIn, onZoomOut, onResetView, onToggleInteraction, onToggleEdgeScroll }: Props) {
   const { t } = useUiText();
 
   return (
@@ -39,6 +41,11 @@ export function MapControlsHud({ view, interactionLocked, onZoomIn, onZoomOut, o
         <Tooltip content={interactionLocked ? t("map.controls.unlockInteraction") : t("map.controls.lockInteraction")}>
           <button onClick={onToggleInteraction} className="map-btn" aria-label={interactionLocked ? t("map.controls.unlockInteraction") : t("map.controls.lockInteraction")}>
             {interactionLocked ? <Lock size={16} /> : <LockOpen size={16} />}
+          </button>
+        </Tooltip>
+        <Tooltip content={edgeScrollEnabled ? t("map.controls.disableEdgeScroll") : t("map.controls.enableEdgeScroll")}>
+          <button onClick={onToggleEdgeScroll} className="map-btn" aria-pressed={edgeScrollEnabled} aria-label={edgeScrollEnabled ? t("map.controls.disableEdgeScroll") : t("map.controls.enableEdgeScroll")}>
+            <MousePointer2 size={16} />
           </button>
         </Tooltip>
       </div>

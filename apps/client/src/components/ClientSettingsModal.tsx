@@ -6,18 +6,23 @@ import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppCard, AppSection } from "./ui/AppSurface";
 import { useUiText } from "../i18n/useUiText";
 import type { UiLocale } from "../i18n/uiText";
+import type { MapTextureQuality } from "../map/hexTextureSystem";
 
 type Props = {
   open: boolean;
   showMapControls: boolean;
+  edgeScrollEnabled: boolean;
+  textureQuality: MapTextureQuality;
   sortNotifications: boolean;
   onClose: () => void;
-  onSave: (settings: { showMapControls: boolean; sortNotifications: boolean }) => void;
+  onSave: (settings: { showMapControls: boolean; edgeScrollEnabled: boolean; textureQuality: MapTextureQuality; sortNotifications: boolean }) => void;
 };
 
-export function ClientSettingsModal({ open, showMapControls, sortNotifications, onClose, onSave }: Props) {
+export function ClientSettingsModal({ open, showMapControls, edgeScrollEnabled, textureQuality, sortNotifications, onClose, onSave }: Props) {
   const { locale, setLocale, t } = useUiText();
   const [draftShowMapControls, setDraftShowMapControls] = useState(showMapControls);
+  const [draftEdgeScrollEnabled, setDraftEdgeScrollEnabled] = useState(edgeScrollEnabled);
+  const [draftTextureQuality, setDraftTextureQuality] = useState<MapTextureQuality>(textureQuality);
   const [draftSortNotifications, setDraftSortNotifications] = useState(sortNotifications);
   const [draftLocale, setDraftLocale] = useState<UiLocale>(locale);
   const [activeCategory, setActiveCategory] = useState<"interface">("interface");
@@ -25,10 +30,12 @@ export function ClientSettingsModal({ open, showMapControls, sortNotifications, 
   useEffect(() => {
     if (open) {
       setDraftShowMapControls(showMapControls);
+      setDraftEdgeScrollEnabled(edgeScrollEnabled);
+      setDraftTextureQuality(textureQuality);
       setDraftSortNotifications(sortNotifications);
       setDraftLocale(locale);
     }
-  }, [locale, open, showMapControls, sortNotifications]);
+  }, [edgeScrollEnabled, locale, open, showMapControls, sortNotifications, textureQuality]);
 
   return (
     <AppModal open={open} onClose={onClose} modalKey="client-settings" zIndexClassName="z-[126]" paddingClassName="p-4" panelClassName="rounded-none">
@@ -82,6 +89,32 @@ export function ClientSettingsModal({ open, showMapControls, sortNotifications, 
                   />
 
                   <AppToggle
+                    checked={draftEdgeScrollEnabled}
+                    onChange={setDraftEdgeScrollEnabled}
+                    label={t("clientSettings.edgeScroll")}
+                    description={t("clientSettings.edgeScrollDescription")}
+                    className="mt-3"
+                  />
+
+                  <label className="mt-3 block">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--arc-color-text-muted)]">
+                      {t("clientSettings.mapTextureQuality")}
+                    </span>
+                    <select
+                      value={draftTextureQuality}
+                      onChange={(event) => setDraftTextureQuality(event.target.value === "low" || event.target.value === "medium" || event.target.value === "high" ? event.target.value : "high")}
+                      className="w-full rounded-lg border border-[var(--arc-color-brown-dark)] bg-[var(--arc-color-paper-muted)] px-3 py-2 text-sm text-[var(--arc-color-text-paper)] shadow-[var(--arc-shadow-inset-soft)] outline-none transition focus:border-[var(--arc-color-primary-top)]"
+                    >
+                      <option value="low">{t("clientSettings.mapTextureQuality.low")}</option>
+                      <option value="medium">{t("clientSettings.mapTextureQuality.medium")}</option>
+                      <option value="high">{t("clientSettings.mapTextureQuality.high")}</option>
+                    </select>
+                    <span className="mt-1 block text-[11px] text-[var(--arc-color-text-muted)]">
+                      {t("clientSettings.mapTextureQualityDescription")}
+                    </span>
+                  </label>
+
+                  <AppToggle
                     checked={draftSortNotifications}
                     onChange={setDraftSortNotifications}
                     label={t("clientSettings.sortNotifications")}
@@ -105,7 +138,7 @@ export function ClientSettingsModal({ open, showMapControls, sortNotifications, 
                     type="button"
                     onClick={() => {
                       setLocale(draftLocale);
-                      onSave({ showMapControls: draftShowMapControls, sortNotifications: draftSortNotifications });
+                      onSave({ showMapControls: draftShowMapControls, edgeScrollEnabled: draftEdgeScrollEnabled, textureQuality: draftTextureQuality, sortNotifications: draftSortNotifications });
                       onClose();
                     }}
                     variant="primary"

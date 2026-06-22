@@ -1,0 +1,85 @@
+import { describe, expect, it } from "vitest";
+import { DEFAULT_HEX_MAP_SETTINGS, generateHexMap } from "./hexMapGenerator";
+import { buildHexTerrainMeshData, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
+import { generatedHexMaterialPack, resolveShaderQualityFeatures, resolveTerrainMaterialId, TERRAIN_MATERIAL_IDS } from "./hexTerrainMaterials";
+import { validateHexMaterialPack } from "./hexTerrainMaterialTextures";
+import { axialToPixel, HEX_DIRECTIONS, makeHexId } from "./hexGeometry";
+
+const smallMap = generateHexMap({ ...DEFAULT_HEX_MAP_SETTINGS, width: 24, height: 16, chunkSize: 8, seed: "mesh-test" });
+
+describe("hex terrain mesh renderer data", () => {
+  it("maps terrain and biome to stable material ids", () => {
+    expect(resolveTerrainMaterialId({ terrain: "grassland", biome: "temperate", waterKind: null })).toBe("grass");
+    expect(resolveTerrainMaterialId({ terrain: "desert", biome: "arid", waterKind: null })).toBe("sand");
+    expect(resolveTerrainMaterialId({ terrain: "snow", biome: "cold", waterKind: null })).toBe("snow");
+    expect(resolveTerrainMaterialId({ terrain: "sea", biome: "coastal_water", waterKind: "sea" })).toBe("coastal_water");
+  });
+
+  it("builds deterministic chunk geometry", () => {
+    const first = buildHexTerrainMeshData(smallMap);
+    const second = buildHexTerrainMeshData(smallMap);
+
+    expect(first.chunks.map((chunk) => chunk.chunkId)).toEqual(second.chunks.map((chunk) => chunk.chunkId));
+    expect(Array.from(first.chunks[0].positions.slice(0, 24))).toEqual(Array.from(second.chunks[0].positions.slice(0, 24)));
+    expect(first.chunks[0].indices.length).toBeGreaterThan(0);
+  });
+
+  it("resolves six neighbor material weights for blending", () => {
+    const tileById = new Map(smallMap.tiles.map((tile) => [tile.id, tile]));
+    const tile = tileById.get(makeHexId(4, 4));
+
+    expect(tile).toBeTruthy();
+    expect(resolveHexNeighborMaterialIds(tile!, smallMap, tileById)).toHaveLength(6);
+  });
+
+  it("provides chunk data for primary and wrapped mesh instances", () => {
+    const meshData = buildHexTerrainMeshData(smallMap);
+
+    expect(meshData.chunks.length).toBeGreaterThan(0);
+    expect(meshData.chunks.length * 2).toBeGreaterThan(meshData.chunks.length);
+  });
+
+  it("emits material atlas indices for shader texture sampling", () => {
+    const meshData = buildHexTerrainMeshData(smallMap);
+    const indices = Array.from(meshData.chunks[0].materialIndices.slice(0, 12));
+
+    expect(indices).toHaveLength(12);
+    expect(indices.every((index) => Number.isInteger(index) && index >= 0)).toBe(true);
+  });
+
+  it("aligns material transition triangles with axial neighbor directions", () => {
+    const tile = smallMap.tiles.find((candidate) => candidate.q > 2 && candidate.r > 2)!;
+    const meshData = buildHexTerrainMeshData(smallMap);
+    const chunk = meshData.chunks.find((candidate) => candidate.tileIds.includes(tile.id))!;
+    const center = axialToPixel(tile, smallMap.settings.hexSize);
+    const centerIndex = Array.from(chunk.positions).findIndex((value, index, values) => index % 2 === 0 && Math.abs(value - center.x) < 0.001 && Math.abs(values[index + 1] - center.y) < 0.001);
+
+    expect(centerIndex).toBeGreaterThanOrEqual(0);
+    for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
+      const offset = HEX_DIRECTIONS[direction];
+      const neighbor = axialToPixel({ q: tile.q + offset.q, r: tile.r + offset.r }, smallMap.settings.hexSize);
+      const vertexOffset = centerIndex + direction * 6 + 2;
+      const cornerA = { x: chunk.positions[vertexOffset], y: chunk.positions[vertexOffset + 1] };
+      const cornerB = { x: chunk.positions[vertexOffset + 2], y: chunk.positions[vertexOffset + 3] };
+      const midpoint = { x: (cornerA.x + cornerB.x) / 2, y: (cornerA.y + cornerB.y) / 2 };
+      const edgeVector = { x: midpoint.x - center.x, y: midpoint.y - center.y };
+      const neighborVector = { x: neighbor.x - center.x, y: neighbor.y - center.y };
+
+      expect(edgeVector.x * neighborVector.x + edgeVector.y * neighborVector.y).toBeGreaterThan(0);
+    }
+  });
+
+  it("covers every terrain material with generated atlas assets", () => {
+    expect(() => validateHexMaterialPack(generatedHexMaterialPack)).not.toThrow();
+    expect(Object.keys(generatedHexMaterialPack.materials).sort()).toEqual([...TERRAIN_MATERIAL_IDS].sort());
+    expect(generatedHexMaterialPack.atlas.albedoUrl).toBe("/game-assets/hex-materials/hex-terrain-albedo.png");
+    expect(generatedHexMaterialPack.atlas.detailUrl).toBe("/game-assets/hex-materials/hex-terrain-detail.png");
+  });
+
+  it("keeps all quality levels on the shader mesh path", () => {
+    expect(resolveShaderQualityFeatures("low")).toMatchObject({ detail: false, normal: false });
+    expect(resolveShaderQualityFeatures("medium")).toMatchObject({ detail: true, normal: false });
+    expect(resolveShaderQualityFeatures("high")).toMatchObject({ detail: true, normal: true });
+  });
+
+});

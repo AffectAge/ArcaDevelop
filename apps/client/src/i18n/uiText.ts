@@ -1163,6 +1163,13 @@ export type UiTextKey =
   | "clientSettings.localNote"
   | "clientSettings.mapControls"
   | "clientSettings.mapControlsDescription"
+  | "clientSettings.edgeScroll"
+  | "clientSettings.edgeScrollDescription"
+  | "clientSettings.mapTextureQuality"
+  | "clientSettings.mapTextureQualityDescription"
+  | "clientSettings.mapTextureQuality.low"
+  | "clientSettings.mapTextureQuality.medium"
+  | "clientSettings.mapTextureQuality.high"
   | "clientSettings.save"
   | "clientSettings.sortNotifications"
   | "clientSettings.sortNotificationsDescription"
@@ -1373,6 +1380,71 @@ export type UiTextKey =
   | "map.controls.resetView"
   | "map.controls.lockInteraction"
   | "map.controls.unlockInteraction"
+  | "map.controls.enableEdgeScroll"
+  | "map.controls.disableEdgeScroll"
+  | "hexMap.title"
+  | "hexMap.renderer"
+  | "hexMap.pixiRenderer"
+  | "hexMap.renderErrorTitle"
+  | "hexMap.renderErrorDescription"
+  | "hexMap.tiles"
+  | "hexMap.seed"
+  | "hexMap.selected"
+  | "hexMap.hexTitle"
+  | "hexMap.region"
+  | "hexMap.terrain"
+  | "hexMap.biome"
+  | "hexMap.feature"
+  | "hexMap.water"
+  | "hexMap.owner"
+  | "hexMap.ownerCountry"
+  | "hexMap.ownerNone"
+  | "hexMap.movementCost"
+  | "hexMap.build"
+  | "hexMap.colonize"
+  | "hexMap.admin"
+  | "hexMap.arcawiki"
+  | "hexMap.createArcawiki"
+  | "hexMap.buildTooltip"
+  | "hexMap.colonizeTooltip"
+  | "hexMap.adminTooltip"
+  | "hexMap.arcawikiTooltip"
+  | "hexMap.createArcawikiTooltip"
+  | "hexMap.hoverMode"
+  | "hexMap.terrain.ocean"
+  | "hexMap.terrain.sea"
+  | "hexMap.terrain.lake"
+  | "hexMap.terrain.coast"
+  | "hexMap.terrain.plains"
+  | "hexMap.terrain.grassland"
+  | "hexMap.terrain.forest"
+  | "hexMap.terrain.hills"
+  | "hexMap.terrain.mountains"
+  | "hexMap.terrain.desert"
+  | "hexMap.terrain.tundra"
+  | "hexMap.terrain.snow"
+  | "hexMap.terrain.wetland"
+  | "hexMap.biome.deep_ocean"
+  | "hexMap.biome.coastal_water"
+  | "hexMap.biome.freshwater"
+  | "hexMap.biome.temperate"
+  | "hexMap.biome.boreal"
+  | "hexMap.biome.tropical"
+  | "hexMap.biome.arid"
+  | "hexMap.biome.cold"
+  | "hexMap.biome.alpine"
+  | "hexMap.biome.marsh"
+  | "hexMap.feature.none"
+  | "hexMap.feature.forest"
+  | "hexMap.feature.dense_forest"
+  | "hexMap.feature.jungle"
+  | "hexMap.feature.marsh"
+  | "hexMap.feature.scrub"
+  | "hexMap.feature.snowcap"
+  | "hexMap.water.none"
+  | "hexMap.water.ocean"
+  | "hexMap.water.sea"
+  | "hexMap.water.lake"
   | "map.mode.political.label"
   | "map.mode.political.shortLabel"
   | "map.mode.political.ownerLegend"
@@ -3899,6 +3971,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "clientSettings.localNote": "Settings are saved locally for each country.",
     "clientSettings.mapControls": "Map controls panel",
     "clientSettings.mapControlsDescription": "Zoom, reset, and map lock buttons in the lower right corner.",
+    "clientSettings.edgeScroll": "Edge scrolling",
+    "clientSettings.edgeScrollDescription": "Move the map when the pointer reaches the screen edge.",
+    "clientSettings.mapTextureQuality": "Map texture quality",
+    "clientSettings.mapTextureQualityDescription": "Low uses flat colors, Medium enables textures and decals, High adds blending and subtle animation.",
+    "clientSettings.mapTextureQuality.low": "Low",
+    "clientSettings.mapTextureQuality.medium": "Medium",
+    "clientSettings.mapTextureQuality.high": "High",
     "clientSettings.save": "Save",
     "clientSettings.sortNotifications": "Notification sorting",
     "clientSettings.sortNotificationsDescription": "When opened, unread notifications are moved left / to the end of the row.",
@@ -4109,6 +4188,71 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.controls.resetView": "Reset center and zoom",
     "map.controls.lockInteraction": "Lock pan/zoom",
     "map.controls.unlockInteraction": "Unlock pan/zoom",
+    "map.controls.enableEdgeScroll": "Enable edge scrolling",
+    "map.controls.disableEdgeScroll": "Disable edge scrolling",
+    "hexMap.title": "Hex world",
+    "hexMap.renderer": "Renderer",
+    "hexMap.pixiRenderer": "PixiJS hex",
+    "hexMap.renderErrorTitle": "Map renderer unavailable",
+    "hexMap.renderErrorDescription": "The terrain shader or material pack failed to initialize. The map is blocked instead of using a fallback renderer.",
+    "hexMap.tiles": "Hexes",
+    "hexMap.seed": "Seed",
+    "hexMap.selected": "Selected hex",
+    "hexMap.hexTitle": "Hex {id}",
+    "hexMap.region": "Region",
+    "hexMap.terrain": "Terrain",
+    "hexMap.biome": "Biome",
+    "hexMap.feature": "Feature",
+    "hexMap.water": "Water",
+    "hexMap.owner": "Owner",
+    "hexMap.ownerCountry": "Country {country}",
+    "hexMap.ownerNone": "Unowned",
+    "hexMap.movementCost": "Move cost",
+    "hexMap.build": "Build",
+    "hexMap.colonize": "Colonize",
+    "hexMap.admin": "Admin",
+    "hexMap.arcawiki": "Arcawiki",
+    "hexMap.createArcawiki": "Create entry",
+    "hexMap.buildTooltip": "Queue a regional construction order from this hex's state region.",
+    "hexMap.colonizeTooltip": "Queue colonization for this hex's state region.",
+    "hexMap.adminTooltip": "Open region administration for this hex's generated region.",
+    "hexMap.arcawikiTooltip": "Open the Arcawiki page for this hex's generated region.",
+    "hexMap.createArcawikiTooltip": "Create an Arcawiki page for this hex's generated region.",
+    "hexMap.hoverMode": "Hex terrain",
+    "hexMap.terrain.ocean": "Ocean",
+    "hexMap.terrain.sea": "Sea",
+    "hexMap.terrain.lake": "Lake",
+    "hexMap.terrain.coast": "Coast",
+    "hexMap.terrain.plains": "Plains",
+    "hexMap.terrain.grassland": "Grassland",
+    "hexMap.terrain.forest": "Forest",
+    "hexMap.terrain.hills": "Hills",
+    "hexMap.terrain.mountains": "Mountains",
+    "hexMap.terrain.desert": "Desert",
+    "hexMap.terrain.tundra": "Tundra",
+    "hexMap.terrain.snow": "Snow",
+    "hexMap.terrain.wetland": "Wetland",
+    "hexMap.biome.deep_ocean": "Deep ocean",
+    "hexMap.biome.coastal_water": "Coastal water",
+    "hexMap.biome.freshwater": "Freshwater",
+    "hexMap.biome.temperate": "Temperate",
+    "hexMap.biome.boreal": "Boreal",
+    "hexMap.biome.tropical": "Tropical",
+    "hexMap.biome.arid": "Arid",
+    "hexMap.biome.cold": "Cold",
+    "hexMap.biome.alpine": "Alpine",
+    "hexMap.biome.marsh": "Marsh",
+    "hexMap.feature.none": "None",
+    "hexMap.feature.forest": "Forest",
+    "hexMap.feature.dense_forest": "Dense forest",
+    "hexMap.feature.jungle": "Jungle",
+    "hexMap.feature.marsh": "Marsh",
+    "hexMap.feature.scrub": "Scrub",
+    "hexMap.feature.snowcap": "Snowcap",
+    "hexMap.water.none": "None",
+    "hexMap.water.ocean": "Ocean",
+    "hexMap.water.sea": "Sea",
+    "hexMap.water.lake": "Lake",
     "map.mode.political.label": "Political",
     "map.mode.political.shortLabel": "Countries",
     "map.mode.political.ownerLegend": "Owner",
@@ -6634,6 +6778,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "clientSettings.localNote": "Настройки сохраняются локально отдельно для каждой страны.",
     "clientSettings.mapControls": "Панель управления картой",
     "clientSettings.mapControlsDescription": "Кнопки зума, сброса и блокировки карты в правом нижнем углу.",
+    "clientSettings.edgeScroll": "Прокрутка у края",
+    "clientSettings.edgeScrollDescription": "Перемещает карту, когда курсор подходит к краю экрана.",
+    "clientSettings.mapTextureQuality": "Качество текстур карты",
+    "clientSettings.mapTextureQualityDescription": "Низкое качество использует плоские цвета, среднее включает текстуры и декали, высокое добавляет смешивание и мягкую анимацию.",
+    "clientSettings.mapTextureQuality.low": "Низкое",
+    "clientSettings.mapTextureQuality.medium": "Среднее",
+    "clientSettings.mapTextureQuality.high": "Высокое",
     "clientSettings.save": "Сохранить",
     "clientSettings.sortNotifications": "Сортировка уведомлений",
     "clientSettings.sortNotificationsDescription": "При открытии непросмотренные уведомления переставляются влево/в конец ряда.",
@@ -6844,6 +6995,71 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.controls.resetView": "Сбросить центр и масштаб",
     "map.controls.lockInteraction": "Заблокировать pan/zoom",
     "map.controls.unlockInteraction": "Разблокировать pan/zoom",
+    "map.controls.enableEdgeScroll": "Включить прокрутку у края",
+    "map.controls.disableEdgeScroll": "Выключить прокрутку у края",
+    "hexMap.title": "Гекс-мир",
+    "hexMap.renderer": "Рендерер",
+    "hexMap.pixiRenderer": "PixiJS hex",
+    "hexMap.renderErrorTitle": "Рендерер карты недоступен",
+    "hexMap.renderErrorDescription": "Шейдер местности или набор материалов не инициализировался. Карта заблокирована вместо использования резервного рендера.",
+    "hexMap.tiles": "Гексы",
+    "hexMap.seed": "Сид",
+    "hexMap.selected": "Выбранный гекс",
+    "hexMap.hexTitle": "Гекс {id}",
+    "hexMap.region": "Регион",
+    "hexMap.terrain": "Местность",
+    "hexMap.biome": "Биом",
+    "hexMap.feature": "Особенность",
+    "hexMap.water": "Вода",
+    "hexMap.owner": "Владелец",
+    "hexMap.ownerCountry": "Страна {country}",
+    "hexMap.ownerNone": "Нет владельца",
+    "hexMap.movementCost": "Стоимость хода",
+    "hexMap.build": "Строить",
+    "hexMap.colonize": "Колонизировать",
+    "hexMap.admin": "Админ",
+    "hexMap.arcawiki": "Аркавики",
+    "hexMap.createArcawiki": "Создать статью",
+    "hexMap.buildTooltip": "Поставить региональное строительство из state region этого гекса.",
+    "hexMap.colonizeTooltip": "Поставить колонизацию для state region этого гекса.",
+    "hexMap.adminTooltip": "Открыть администрирование сгенерированного региона этого гекса.",
+    "hexMap.arcawikiTooltip": "Открыть страницу Аркавики для сгенерированного региона этого гекса.",
+    "hexMap.createArcawikiTooltip": "Создать страницу Аркавики для сгенерированного региона этого гекса.",
+    "hexMap.hoverMode": "Гекс-местность",
+    "hexMap.terrain.ocean": "Океан",
+    "hexMap.terrain.sea": "Море",
+    "hexMap.terrain.lake": "Озеро",
+    "hexMap.terrain.coast": "Побережье",
+    "hexMap.terrain.plains": "Равнины",
+    "hexMap.terrain.grassland": "Луга",
+    "hexMap.terrain.forest": "Лес",
+    "hexMap.terrain.hills": "Холмы",
+    "hexMap.terrain.mountains": "Горы",
+    "hexMap.terrain.desert": "Пустыня",
+    "hexMap.terrain.tundra": "Тундра",
+    "hexMap.terrain.snow": "Снег",
+    "hexMap.terrain.wetland": "Болота",
+    "hexMap.biome.deep_ocean": "Глубокий океан",
+    "hexMap.biome.coastal_water": "Прибрежные воды",
+    "hexMap.biome.freshwater": "Пресная вода",
+    "hexMap.biome.temperate": "Умеренный",
+    "hexMap.biome.boreal": "Бореальный",
+    "hexMap.biome.tropical": "Тропический",
+    "hexMap.biome.arid": "Сухой",
+    "hexMap.biome.cold": "Холодный",
+    "hexMap.biome.alpine": "Высокогорный",
+    "hexMap.biome.marsh": "Топкий",
+    "hexMap.feature.none": "Нет",
+    "hexMap.feature.forest": "Лес",
+    "hexMap.feature.dense_forest": "Густой лес",
+    "hexMap.feature.jungle": "Джунгли",
+    "hexMap.feature.marsh": "Трясина",
+    "hexMap.feature.scrub": "Кустарник",
+    "hexMap.feature.snowcap": "Снежная шапка",
+    "hexMap.water.none": "Нет",
+    "hexMap.water.ocean": "Океан",
+    "hexMap.water.sea": "Море",
+    "hexMap.water.lake": "Озеро",
     "map.mode.political.label": "Политическая",
     "map.mode.political.shortLabel": "Страны",
     "map.mode.political.ownerLegend": "Владелец",

@@ -7,7 +7,7 @@ New dependencies require approval and rationale.
 - React/Vite/TypeScript: client runtime and build.
 - Zustand: client state.
 - Tailwind/CSS: styling.
-- maplibre/deck.gl/turf: map rendering and geospatial work.
+- PixiJS/simplex-noise/tinyqueue: prototype player-facing hex map rendering, deterministic terrain fields, and hex pathfinding queues. See `docs/dependency-hex-map-pixi.md`.
 - ECharts: charts.
 - Zod/react-hook-form: forms and validation.
 - Express/WS: HTTP and WebSocket server.

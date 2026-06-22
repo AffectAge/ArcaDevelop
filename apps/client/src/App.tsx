@@ -53,6 +53,8 @@ import {
 import { BASE_RESOURCE_ICON_URLS } from "./assets/baseResourceIcons";
 import { useWs } from "./lib/useWs";
 import { useGameStore } from "./store/gameStore";
+import { MAP_NAVIGATION_SETTINGS_EVENT, readMapNavigationSettings, writeMapNavigationSettings } from "./map/mapNavigationSettings";
+import type { MapTextureQuality } from "./map/hexTextureSystem";
 import type { UiTextKey } from "./i18n/uiText";
 import { useUiText } from "./i18n/useUiText";
 
@@ -177,6 +179,7 @@ function getStoryCategoryKey(category: string): UiTextKey {
 
 export default function App() {
   const { t } = useUiText();
+
   const worldResyncInFlightRef = useRef(false);
   const replayRequestInFlightRef = useRef(false);
   const resolveStartTimeoutRef = useRef<number | null>(null);
@@ -277,6 +280,8 @@ export default function App() {
   const [provinceAreaKm2ById, setProvinceAreaKm2ById] = useState<Record<string, number>>({});
   const [showAntarctica, setShowAntarctica] = useState(false);
   const [showMapControls, setShowMapControls] = useState(false);
+  const [edgeScrollEnabled, setEdgeScrollEnabled] = useState(true);
+  const [mapTextureQuality, setMapTextureQuality] = useState<MapTextureQuality>("high");
   const [sortNotifications, setSortNotifications] = useState(true);
   const [provinceIndexLoaded, setProvinceIndexLoaded] = useState(false);
   const [publicUiLoaded, setPublicUiLoaded] = useState(false);
@@ -610,6 +615,19 @@ export default function App() {
       // ignore storage failures
     }
   }, [auth?.countryId, showMapControls]);
+
+  useEffect(() => {
+    const settings = readMapNavigationSettings(auth?.countryId);
+    setEdgeScrollEnabled(settings.edgeScrollEnabled);
+    setMapTextureQuality(settings.textureQuality);
+    const onNavigationSettingsChanged = () => {
+      const next = readMapNavigationSettings(auth?.countryId);
+      setEdgeScrollEnabled(next.edgeScrollEnabled);
+      setMapTextureQuality(next.textureQuality);
+    };
+    window.addEventListener(MAP_NAVIGATION_SETTINGS_EVENT, onNavigationSettingsChanged);
+    return () => window.removeEventListener(MAP_NAVIGATION_SETTINGS_EVENT, onNavigationSettingsChanged);
+  }, [auth?.countryId]);
 
   useEffect(() => {
     try {
@@ -2245,10 +2263,15 @@ export default function App() {
         <ClientSettingsModal
           open={clientSettingsOpen}
           showMapControls={showMapControls}
+          edgeScrollEnabled={edgeScrollEnabled}
+          textureQuality={mapTextureQuality}
           sortNotifications={sortNotifications}
           onClose={() => setClientSettingsOpen(false)}
-          onSave={({ showMapControls: nextShowMapControls, sortNotifications: nextSortNotifications }) => {
+          onSave={({ showMapControls: nextShowMapControls, edgeScrollEnabled: nextEdgeScrollEnabled, textureQuality: nextTextureQuality, sortNotifications: nextSortNotifications }) => {
             setShowMapControls(nextShowMapControls);
+            setEdgeScrollEnabled(nextEdgeScrollEnabled);
+            setMapTextureQuality(nextTextureQuality);
+            writeMapNavigationSettings(auth.countryId, { edgeScrollEnabled: nextEdgeScrollEnabled, textureQuality: nextTextureQuality });
             setSortNotifications(nextSortNotifications);
           }}
         />

@@ -40,6 +40,18 @@ npm run map:from-geojson
 
 Builds map data from GeoJSON using `scripts/prepare-map-from-geojson.mjs`.
 
+```bash
+node scripts/measure-hex-map-performance.mjs --url http://127.0.0.1:5175
+```
+
+Runs a Chrome DevTools Protocol benchmark for 50k/200k hex map cases against a running client dev server.
+
+```bash
+node scripts/generate-hex-material-textures.mjs
+```
+
+Regenerates project-owned hex terrain albedo/detail PNG atlases under `apps/client/public/game-assets/hex-materials/`.
+
 ## Server Commands
 
 ```bash
