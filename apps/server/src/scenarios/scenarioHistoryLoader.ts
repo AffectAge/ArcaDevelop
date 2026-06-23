@@ -163,16 +163,38 @@ function normalizeNullableString(value: unknown): string | null {
 
 export function loadScenarioHistory(scenarioDir: string): ScenarioHistory {
   const regions = loadHistoryEntities(scenarioDir, "region", "history/regions");
+  const generatedRegions = loadGeneratedRegionEntities(scenarioDir);
   const countries = loadHistoryEntities(scenarioDir, "country", "history/countries");
-  assertUniqueEntityIds([...regions, ...countries]);
-  const { regionIdByHexId, hexIdsByRegionId } = buildRegionMembershipIndexes(regions);
+  const allRegions = [...regions, ...generatedRegions];
+  assertUniqueEntityIds([...allRegions, ...countries]);
+  const { regionIdByHexId, hexIdsByRegionId } = buildRegionMembershipIndexes(allRegions);
 
   return {
-    regions,
+    regions: allRegions,
     countries,
     regionIdByHexId,
     hexIdsByRegionId,
   };
+}
+
+function loadGeneratedRegionEntities(scenarioDir: string): ScenarioHistoryEntity[] {
+  const path = resolve(scenarioDir, ".generated/regions.json");
+  if (!existsSync(path)) return [];
+  const parsed = JSON.parse(readFileSync(path, "utf8")) as unknown;
+  if (!Array.isArray(parsed)) {
+    throw new Error(`SCENARIO_HISTORY_GENERATED_REGIONS_ARRAY_REQUIRED:${path}`);
+  }
+  return parsed.map((item, index) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      throw new Error(`SCENARIO_HISTORY_GENERATED_REGION_OBJECT_REQUIRED:${path}:${index}`);
+    }
+    const data = item as Record<string, unknown>;
+    const id = typeof data.id === "string" && data.id.trim() ? data.id.trim() : null;
+    if (!id) {
+      throw new Error(`SCENARIO_HISTORY_GENERATED_REGION_ID_MISSING:${path}:${index}`);
+    }
+    return { id, path: `${path}#${index}`, kind: "region", data };
+  });
 }
 
 function loadHistoryEntities(

@@ -1,8 +1,0 @@
-{
-  "id": "industry:energy",
-  "description": "",
-  "color": "#a78bfa",
-  "logoUrl": null,
-  "sectorId": "sector:energy",
-  "nameKey": "industries.energy.name"
-}

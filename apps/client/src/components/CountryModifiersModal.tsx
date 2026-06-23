@@ -42,7 +42,7 @@ const MODE_LABEL: Record<ModifierMode, string> = {
 
 const SCOPE_LABEL_KEY: Record<ModifierScope, UiTextKey> = {
   country: "modifiers.scope.country",
-  province: "modifiers.scope.province",
+  region: "modifiers.scope.region",
   building: "modifiers.scope.building",
   pop: "modifiers.scope.pop",
   market: "modifiers.scope.market",

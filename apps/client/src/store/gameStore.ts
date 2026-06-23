@@ -530,7 +530,7 @@ export const selectOrdersForHex = (hexId: string, turnId: number) => (state: Gam
   const orders: Order[] = [];
   for (const list of byPlayer.values()) {
     for (const order of list) {
-      if (order.type === "ARMY_MOVE" && order.hexId === hexId) {
+      if (order.type === "ARMY_MOVE" && order.targetHexId === hexId) {
         orders.push(order);
       }
     }

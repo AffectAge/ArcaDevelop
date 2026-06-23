@@ -24,6 +24,7 @@ type GameplayRouteCompositionParams = {
   deleteOrdersForTurn: (turnId: number) => void;
   mapRuntime: {
     getHexIndex: HexDeps["getHexIndex"];
+    getHexMapArtifact: HexDeps["getHexMapArtifact"];
   };
   turnOrderRuntime: {
     removeOrderFromTurnIndexes: (order: Order) => void;
@@ -124,6 +125,7 @@ export function registerGameplayRouteComposition(params: GameplayRouteCompositio
     masks: params.masks,
     getTurnId: params.getTurnId,
     getHexIndex: params.mapRuntime.getHexIndex,
+    getHexMapArtifact: params.mapRuntime.getHexMapArtifact,
     getWorldBase: params.getWorldBase,
     getHexRenameDucatsCost: params.getHexRenameDucatsCost,
     getRegionColonizationConfig: params.colonizationRuntime.getRegionColonizationConfig,

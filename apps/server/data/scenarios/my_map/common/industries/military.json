@@ -1,8 +1,0 @@
-{
-  "id": "industry:military",
-  "description": "",
-  "color": "#a78bfa",
-  "logoUrl": null,
-  "sectorId": "sector:military",
-  "nameKey": "industries.military.name"
-}

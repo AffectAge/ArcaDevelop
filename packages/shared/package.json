@@ -10,5 +10,8 @@
     "lint": "echo shared lint skipped",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "simplex-noise": "^4.0.3"
   }
 }

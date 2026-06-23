@@ -1,8 +1,0 @@
-{
-  "id": "industry:machinery",
-  "description": "",
-  "color": "#a78bfa",
-  "logoUrl": null,
-  "sectorId": "sector:industry",
-  "nameKey": "industries.machinery.name"
-}

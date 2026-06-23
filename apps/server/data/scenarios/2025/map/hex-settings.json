@@ -1,0 +1,16 @@
+{
+  "seed": "arcanorum-main-world-v1",
+  "width": 320,
+  "height": 320,
+  "hexSize": 18,
+  "seaLevel": 0.7,
+  "temperature": 0.4,
+  "moisture": 0.58,
+  "mountains": 0.66,
+  "rivers": 0.3,
+  "forests": 0.62,
+  "targetLandRegionSize": 32,
+  "targetWaterRegionSize": 140,
+  "chunkSize": 20,
+  "wrapX": false
+}

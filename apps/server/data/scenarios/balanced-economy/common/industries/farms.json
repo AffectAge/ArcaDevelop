@@ -1,8 +1,0 @@
-{
-  "id": "industry:farms",
-  "description": "",
-  "color": "#a78bfa",
-  "logoUrl": null,
-  "sectorId": "sector:agriculture",
-  "nameKey": "industries.farms.name"
-}

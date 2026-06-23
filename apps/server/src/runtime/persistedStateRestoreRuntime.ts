@@ -25,6 +25,7 @@ type PersistedStateRestoreRuntimeParams = {
   setWorldStateVersion: (worldStateVersion: number) => void;
   setActiveScenario: (scenario: { id: string; name: string }) => void;
   applyMapRuntime: (mapRoot: string, hexIndexPath?: string) => void;
+  resetMapRuntimeToDefault: () => void;
   findScenario: (scenarioId: string) => FoundScenario | null;
   defaultGameSettings: () => GameSettings;
   getDefaultWorldBase: (turnId: number) => WorldBase;
@@ -103,8 +104,8 @@ export function createPersistedStateRestoreRuntime(params: PersistedStateRestore
         });
       } catch (error) {
         params.logError(`[scenario] Failed to restore map runtime for scenario ${savedScenarioId}:`, error);
-        params.applyMapRuntime(params.dataRoot);
-        params.setActiveScenario({ id: "active", name: "Текущая игра" });
+        params.resetMapRuntimeToDefault();
+        params.setActiveScenario({ id: "default", name: "Default" });
       }
     }
 

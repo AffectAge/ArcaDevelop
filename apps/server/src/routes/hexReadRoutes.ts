@@ -1,4 +1,5 @@
 import type express from "express";
+import type { HexMapArtifact } from "@arcanorum/shared";
 import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { RouteAuth } from "../security/routeAuth";
 
@@ -9,6 +10,7 @@ export type HexReadWorldState = {
 export type HexReadRoutesDependencies = {
   routeAuth: RouteAuth;
   getHexIndex: () => HexMapIndexEntry[];
+  getHexMapArtifact: () => HexMapArtifact | null;
   getWorldBase: () => HexReadWorldState;
 };
 
@@ -92,5 +94,15 @@ export function registerHexReadRoutes(
         fertility: province.fertility,
       })),
     });
+  });
+
+  app.get("/hex-map/artifact", (_req, res) => {
+    const artifact = deps.getHexMapArtifact();
+    if (!artifact) {
+      res.status(503);
+      return res.json({ error: "HEX_MAP_ARTIFACT_UNAVAILABLE" });
+    }
+    res.setHeader("Cache-Control", "no-store");
+    return res.json(artifact);
   });
 }

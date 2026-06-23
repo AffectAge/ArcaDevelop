@@ -46,6 +46,7 @@ import { createResourceLedgerRuntime } from "./runtime/resourceLedgerRuntime";
 import { round3 } from "./runtime/numberRuntime";
 import { makeOfficialNews } from "./runtime/officialNewsRuntime";
 import { buildAiControlledCountryIdsFromHistory, loadScenarioHistory } from "./scenarios/scenarioHistoryLoader";
+import { DEFAULT_SCENARIO_ID, ensureDefaultScenario } from "./scenarios/defaultScenarioBootstrap";
 import {
   buildRegionAdjacencyByIdFromHexes,
   selectAiColonizationCandidates,
@@ -122,11 +123,15 @@ const isAdminCountry = createAdminCountryChecker({
 const routeAuth = createRouteAuth({ parseAuthHeader, isAdminCountry });
 
 const dataRoot = env.dataRoot;
-let activeScenarioId = "active";
-let activeScenarioName = "Текущая игра";
+const defaultScenarioBootstrap = ensureDefaultScenario({ dataRoot });
+let activeScenarioId = DEFAULT_SCENARIO_ID;
+let activeScenarioName = "Default";
 setActiveUploadScenario({ dataRoot, scenarioId: activeScenarioId });
 ensureUploadDirectories();
-const mapRuntime = createMapRuntimeState(dataRoot);
+const mapRuntime = createMapRuntimeState(
+  defaultScenarioBootstrap.mapRoot,
+  defaultScenarioBootstrap.hexIndexPath,
+);
 
 const app = createServerApp({ dataRoot });
 
@@ -337,6 +342,13 @@ const scenarioServerRuntime = createScenarioServerRuntime({
   normalizeDiplomacyProposals: worldStateNormalizerRuntime.normalizeDiplomacyProposals,
 });
 
+const defaultScenarioHistory = loadScenarioHistory(defaultScenarioBootstrap.scenarioDir);
+worldBase = scenarioServerRuntime.buildWorldBaseFromScenario(
+  turnId,
+  defaultScenarioBootstrap.scenarioDir,
+  defaultScenarioHistory,
+);
+
 const persistedStateRestoreRuntime = createPersistedStateRestoreRuntime({
   dataRoot,
   corridorLoadHistoryLength: CORRIDOR_LOAD_HISTORY_LENGTH,
@@ -357,6 +369,9 @@ const persistedStateRestoreRuntime = createPersistedStateRestoreRuntime({
     ensureUploadDirectories();
   },
   applyMapRuntime: mapRuntime.applyMapRuntime,
+  resetMapRuntimeToDefault: () => {
+    mapRuntime.applyMapRuntime(defaultScenarioBootstrap.mapRoot, defaultScenarioBootstrap.hexIndexPath);
+  },
   findScenario: scenarioServerRuntime.findScenario,
   defaultGameSettings,
   getDefaultWorldBase: defaultWorldBase,
@@ -781,6 +796,11 @@ registerServerInteractiveRouteRuntime({
 });
 
 app.use(uploadErrorMiddleware);
+
+await scenarioServerRuntime.applyScenarioCountryMetadata(
+  defaultScenarioBootstrap.scenarioDir,
+  defaultScenarioHistory,
+);
 
 startServerRuntime({
   server,

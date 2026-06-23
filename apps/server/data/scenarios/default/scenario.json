@@ -1,0 +1,7 @@
+{
+  "id": "default",
+  "name": "Default",
+  "description": "Server-generated default Arcanorum scenario.",
+  "startTurn": 1,
+  "mapRoot": "map"
+}

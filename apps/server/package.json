@@ -17,7 +17,8 @@
     "scenario:validate": "tsx scripts/scenario-validate.ts",
     "scenario:build-indexes": "tsx scripts/scenario-build-indexes.ts",
     "tiles:build": "node scripts/build-mvt-tiles.mjs",
-    "uploads:cleanup-orphans": "tsx scripts/cleanup-orphan-uploads.ts"
+    "uploads:cleanup-orphans": "tsx scripts/cleanup-orphan-uploads.ts",
+    "scenario:generate-map": "tsx scripts/scenario-generate-map.ts"
   },
   "dependencies": {
     "@arcanorum/shared": "0.1.0",

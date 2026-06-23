@@ -1,0 +1,15 @@
+{
+  "id": "country:default",
+  "nameKey": "country:default.nameKey",
+  "color": "#1f6f8b",
+  "resources": {
+    "culture": 15,
+    "science": 12,
+    "religion": 12,
+    "colonization": 225,
+    "construction": 5,
+    "ducats": 12,
+    "gold": 150
+  },
+  "controlMode": "open"
+}

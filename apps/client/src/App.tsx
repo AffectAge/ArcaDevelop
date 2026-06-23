@@ -3,7 +3,7 @@ import { Dialog } from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import type { Country, DiplomacyProposal, OrderDelta, WsOutMessage } from "@arcanorum/shared";
+import type { Country, DiplomacyProposal, HexId, OrderDelta, WsOutMessage } from "@arcanorum/shared";
 import { AuthPanel, type AuthSuccess } from "./components/AuthPanel";
 import { MapView } from "./components/MapView";
 import { StrategyShell, type MarketTradeOverviewRow, type StrategyMode } from "./components/strategy-shell/StrategyShell";
@@ -16,7 +16,7 @@ import { ClientSettingsModal } from "./components/ClientSettingsModal";
 import { CivilopediaModal } from "./components/CivilopediaModal";
 import { ContentPanel } from "./components/ContentPanel";
 import { PopulationStatsModal } from "./components/PopulationStatsModal";
-import { HexBuildingsModal } from "./components/HexBuildingsModal";
+import { HexBuildingsModal } from "./components/ProvinceBuildingsModal";
 import { StateBudgetModal } from "./components/StateBudgetModal";
 import { MarketModal } from "./components/MarketModal";
 import { PoliticsModal } from "./components/PoliticsModal";
@@ -55,6 +55,7 @@ import { useWs } from "./lib/useWs";
 import { useGameStore } from "./store/gameStore";
 import { MAP_NAVIGATION_SETTINGS_EVENT, readMapNavigationSettings, writeMapNavigationSettings } from "./map/mapNavigationSettings";
 import type { MapTextureQuality } from "./map/hexTextureSystem";
+import type { MapInteractionMode, MapLensId } from "./map/mapLensTypes";
 import type { UiTextKey } from "./i18n/uiText";
 import { useUiText } from "./i18n/useUiText";
 
@@ -72,6 +73,24 @@ type RegistrationApprovalCountry = Extract<
 type ElectionResultsAction = Extract<InAppUiNotification["action"], { type: "election-results" }>;
 const RESOLVE_START_TIMEOUT_MS = 12_000;
 const MARKET_SHELL_PARTNER_LIMIT = 3;
+
+function resolveSuggestedMapMode(strategyMode: StrategyMode): MapInteractionMode {
+  if (strategyMode === "colonization") return "colonization";
+  if (strategyMode === "construction") return "construction";
+  if (strategyMode === "army") return "army";
+  if (strategyMode === "market") return "market";
+  return "overview";
+}
+
+function resolveSuggestedMapLens(strategyMode: StrategyMode): MapLensId {
+  if (strategyMode === "colonization") return "colonization";
+  if (strategyMode === "construction") return "infrastructure";
+  if (strategyMode === "army") return "military";
+  if (strategyMode === "market") return "market";
+  if (strategyMode === "population") return "population";
+  if (strategyMode === "diplomacy" || strategyMode === "governance") return "political";
+  return "terrain";
+}
 
 function sumPositiveRecord(input: Record<string, number> | undefined): number {
   return Object.values(input ?? {}).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0);
@@ -111,6 +130,10 @@ function isTechnicalContentName(name: string, entry: ContentEntry | undefined, f
     name === `buildings.${normalizedFallbackId}.name` ||
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(name)
   );
+}
+
+function isHexId(value: string): value is HexId {
+  return /^hex:-?\d+:-?\d+$/.test(value);
 }
 
 function formatShortEntityId(id: string): string {
@@ -206,6 +229,7 @@ export default function App() {
     action: ElectionResultsAction | null;
   }>({ open: false, action: null });
   const [country, setCountry] = useState<SessionCountry | null>(null);
+  const [countries, setCountries] = useState<Country[]>([]);
   const [activeStrategyMode, setActiveStrategyMode] = useState<StrategyMode>("overview");
   const [strategyWorkspaceOpen, setStrategyWorkspaceOpen] = useState(true);
   const setStrategyModeAndOpenWorkspace = useCallback((mode: StrategyMode) => {
@@ -285,6 +309,11 @@ export default function App() {
   const [sortNotifications, setSortNotifications] = useState(true);
   const [hexIndexLoaded, setHexIndexLoaded] = useState(false);
   const [publicUiLoaded, setPublicUiLoaded] = useState(false);
+
+  const countryColorById = useMemo(
+    () => Object.fromEntries(countries.map((item) => [item.id, item.color] as const)),
+    [countries],
+  );
   const [buildingEntries, setBuildingEntries] = useState<ContentEntry[]>([]);
   const [technologyEntries, setTechnologyEntries] = useState<ContentEntry[]>([]);
   const [journalEntries, setJournalEntries] = useState<ContentEntry[]>([]);
@@ -441,7 +470,7 @@ export default function App() {
         addOrder(msg.order);
         const targetId =
           msg.order.type === "ARMY_MOVE"
-            ? msg.order.hexId
+            ? msg.order.targetHexId
             : msg.order.type === "BUILD" || msg.order.type === "COLONIZE"
               ? msg.order.regionId
               : "";
@@ -755,20 +784,24 @@ export default function App() {
 
   useEffect(() => {
     if (!auth?.countryId) return;
-    if (country?.name && country.name.trim().length > 0) return;
 
     let cancelled = false;
     fetchCountries()
       .then((list) => {
         if (cancelled) return;
+        setCountries(list);
         const found = list.find((c) => c.id === auth.countryId);
         if (!found) return;
-        setCountry({
-          name: found.name,
-          color: found.color,
-          flagUrl: found.flagUrl ?? null,
-          crestUrl: found.crestUrl ?? null,
-        });
+        setCountry((current) =>
+          current?.name && current.name.trim().length > 0
+            ? current
+            : {
+                name: found.name,
+                color: found.color,
+                flagUrl: found.flagUrl ?? null,
+                crestUrl: found.crestUrl ?? null,
+              },
+        );
       })
       .catch(() => {
         // keep fallback label
@@ -777,7 +810,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [auth?.countryId, country?.name]);
+  }, [auth?.countryId]);
 
   useEffect(() => {
     if (!auth?.token || !strategyWorkspaceOpen || activeStrategyMode !== "market") return;
@@ -1470,7 +1503,7 @@ export default function App() {
   };
 
   const queueArmyMoveOrder = (divisionId: string, hexId: string, path?: string[]) => {
-    if (!auth || !divisionId || !hexId) {
+    if (!auth || !divisionId || !isHexId(hexId)) {
       return;
     }
     const routePath = Array.isArray(path) ? path.filter((value) => typeof value === "string" && value.trim().length > 0) : [];
@@ -1481,7 +1514,7 @@ export default function App() {
         turnId,
         playerId: auth.playerId,
         countryId: auth.countryId,
-        hexId,
+        targetHexId: hexId,
         type: "ARMY_MOVE",
         payload: routePath.length > 0 ? { divisionId, path: routePath } : { divisionId },
       },
@@ -1761,6 +1794,9 @@ export default function App() {
         maxActiveColonizations={maxActiveColonizations}
         colonizationCostPer1000Km2={colonizationCostPer1000Km2}
         hexRenameDucatsCost={hexRenameDucatsCost}
+        countryColorById={countryColorById}
+        suggestedMapMode={resolveSuggestedMapMode(activeStrategyMode)}
+        suggestedMapLens={resolveSuggestedMapLens(activeStrategyMode)}
         showMapControls={showMapControls}
         showAntarctica={showAntarctica}
         onOpenAdminHexEditor={(hexId) => {

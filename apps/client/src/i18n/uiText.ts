@@ -1382,9 +1382,60 @@ export type UiTextKey =
   | "map.controls.unlockInteraction"
   | "map.controls.enableEdgeScroll"
   | "map.controls.disableEdgeScroll"
+  | "map.mode.overview"
+  | "map.mode.overviewTooltip"
+  | "map.mode.colonization"
+  | "map.mode.colonizationTooltip"
+  | "map.mode.construction"
+  | "map.mode.constructionTooltip"
+  | "map.mode.army"
+  | "map.mode.armyTooltip"
+  | "map.mode.market"
+  | "map.mode.marketTooltip"
+  | "map.mode.inspection"
+  | "map.mode.inspectionTooltip"
+  | "map.mode.armyUnavailable"
+  | "map.mode.marketUnavailable"
+  | "map.lens.terrain"
+  | "map.lens.terrainTooltip"
+  | "map.lens.political"
+  | "map.lens.politicalTooltip"
+  | "map.lens.regions"
+  | "map.lens.regionsTooltip"
+  | "map.lens.colonization"
+  | "map.lens.colonizationTooltip"
+  | "map.lens.population"
+  | "map.lens.populationTooltip"
+  | "map.lens.market"
+  | "map.lens.marketTooltip"
+  | "map.lens.infrastructure"
+  | "map.lens.infrastructureTooltip"
+  | "map.lens.military"
+  | "map.lens.militaryTooltip"
+  | "map.lens.legend"
+  | "map.lens.legend.baseTerrain"
+  | "map.lens.legend.owned"
+  | "map.lens.legend.unowned"
+  | "map.lens.legend.regionColor"
+  | "map.lens.legend.colonizable"
+  | "map.lens.legend.colonizing"
+  | "map.lens.legend.blocked"
+  | "map.lens.legend.low"
+  | "map.lens.legend.high"
+  | "map.lens.legend.marketOwned"
+  | "map.lens.legend.marketNeutral"
+  | "map.lens.legend.controlled"
+  | "map.lens.legend.foreign"
+  | "map.lens.hoverMode"
+  | "map.lens.activeMode"
+  | "map.lens.activeLens"
   | "hexMap.title"
   | "hexMap.renderer"
   | "hexMap.pixiRenderer"
+  | "hexMap.loadingTitle"
+  | "hexMap.loadingDescription"
+  | "hexMap.artifactErrorTitle"
+  | "hexMap.artifactErrorDescription"
   | "hexMap.renderErrorTitle"
   | "hexMap.renderErrorDescription"
   | "hexMap.tiles"
@@ -1629,6 +1680,7 @@ export type UiTextKey =
   | "modifiers.scope.market"
   | "modifiers.scope.pop"
   | "modifiers.scope.province"
+  | "modifiers.scope.region"
   | "modifiers.source.event"
   | "modifiers.source.law"
   | "modifiers.source.modifier"
@@ -4190,9 +4242,60 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.controls.unlockInteraction": "Unlock pan/zoom",
     "map.controls.enableEdgeScroll": "Enable edge scrolling",
     "map.controls.disableEdgeScroll": "Disable edge scrolling",
+    "map.mode.overview": "Overview",
+    "map.mode.overviewTooltip": "Select and inspect hexes and regions.",
+    "map.mode.colonization": "Colonization",
+    "map.mode.colonizationTooltip": "Click a region to start the colonization flow.",
+    "map.mode.construction": "Construction",
+    "map.mode.constructionTooltip": "Click a region to open construction.",
+    "map.mode.army": "Army",
+    "map.mode.armyTooltip": "Prepare army movement and route inspection.",
+    "map.mode.market": "Market",
+    "map.mode.marketTooltip": "Inspect market context for the selected region.",
+    "map.mode.inspection": "Inspection",
+    "map.mode.inspectionTooltip": "Inspect map data without queueing actions.",
+    "map.mode.armyUnavailable": "Select an army before issuing a movement order.",
+    "map.mode.marketUnavailable": "Market map action is not connected yet; use the market panel for details.",
+    "map.lens.terrain": "Terrain",
+    "map.lens.terrainTooltip": "Show the base textured terrain without analytical tint.",
+    "map.lens.political": "Political",
+    "map.lens.politicalTooltip": "Tint regions by owner and controller.",
+    "map.lens.regions": "Regions",
+    "map.lens.regionsTooltip": "Show generated state-region boundaries.",
+    "map.lens.colonization": "Colonization",
+    "map.lens.colonizationTooltip": "Show neutral, blocked, and active colonization areas.",
+    "map.lens.population": "Population",
+    "map.lens.populationTooltip": "Show regional population intensity.",
+    "map.lens.market": "Market",
+    "map.lens.marketTooltip": "Show market ownership and regional market context.",
+    "map.lens.infrastructure": "Infrastructure",
+    "map.lens.infrastructureTooltip": "Show built and queued regional development intensity.",
+    "map.lens.military": "Military",
+    "map.lens.militaryTooltip": "Show controlled and foreign-controlled regions.",
+    "map.lens.legend": "Map lens legend",
+    "map.lens.legend.baseTerrain": "Base terrain",
+    "map.lens.legend.owned": "Owned",
+    "map.lens.legend.unowned": "Unowned",
+    "map.lens.legend.regionColor": "Region color",
+    "map.lens.legend.colonizable": "Colonizable",
+    "map.lens.legend.colonizing": "Colonizing",
+    "map.lens.legend.blocked": "Blocked",
+    "map.lens.legend.low": "Low",
+    "map.lens.legend.high": "High",
+    "map.lens.legend.marketOwned": "Market owner",
+    "map.lens.legend.marketNeutral": "Neutral market",
+    "map.lens.legend.controlled": "Controlled",
+    "map.lens.legend.foreign": "Foreign",
+    "map.lens.hoverMode": "Map context",
+    "map.lens.activeMode": "Mode",
+    "map.lens.activeLens": "Lens",
     "hexMap.title": "Hex world",
     "hexMap.renderer": "Renderer",
     "hexMap.pixiRenderer": "PixiJS hex",
+    "hexMap.loadingTitle": "Loading map",
+    "hexMap.loadingDescription": "The server is preparing the authoritative scenario map.",
+    "hexMap.artifactErrorTitle": "Map artifact unavailable",
+    "hexMap.artifactErrorDescription": "The server did not return the authoritative hex map artifact.",
     "hexMap.renderErrorTitle": "Map renderer unavailable",
     "hexMap.renderErrorDescription": "The terrain shader or material pack failed to initialize. The map is blocked instead of using a fallback renderer.",
     "hexMap.tiles": "Hexes",
@@ -4437,6 +4540,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "modifiers.scope.market": "Market",
     "modifiers.scope.pop": "Population",
     "modifiers.scope.province": "Hex",
+    "modifiers.scope.region": "Region",
     "modifiers.source.event": "Event",
     "modifiers.source.law": "Law",
     "modifiers.source.modifier": "Modifier",
@@ -6997,9 +7101,60 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.controls.unlockInteraction": "Разблокировать pan/zoom",
     "map.controls.enableEdgeScroll": "Включить прокрутку у края",
     "map.controls.disableEdgeScroll": "Выключить прокрутку у края",
+    "map.mode.overview": "Обзор",
+    "map.mode.overviewTooltip": "Выбирать и осматривать гексы и регионы.",
+    "map.mode.colonization": "Колонизация",
+    "map.mode.colonizationTooltip": "Нажмите регион, чтобы начать колонизацию.",
+    "map.mode.construction": "Строительство",
+    "map.mode.constructionTooltip": "Нажмите регион, чтобы открыть строительство.",
+    "map.mode.army": "Армия",
+    "map.mode.armyTooltip": "Подготовка перемещения армии и осмотр маршрута.",
+    "map.mode.market": "Рынок",
+    "map.mode.marketTooltip": "Осмотр рыночного контекста выбранного региона.",
+    "map.mode.inspection": "Инспекция",
+    "map.mode.inspectionTooltip": "Осматривать данные карты без постановки действий.",
+    "map.mode.armyUnavailable": "Выберите армию перед приказом на перемещение.",
+    "map.mode.marketUnavailable": "Действие рынка на карте пока не подключено; используйте панель рынка.",
+    "map.lens.terrain": "Местность",
+    "map.lens.terrainTooltip": "Показать базовую текстурную местность без аналитической заливки.",
+    "map.lens.political": "Политика",
+    "map.lens.politicalTooltip": "Окрашивать регионы по владельцу и контролеру.",
+    "map.lens.regions": "Регионы",
+    "map.lens.regionsTooltip": "Показать границы сгенерированных государственных регионов.",
+    "map.lens.colonization": "Колонизация",
+    "map.lens.colonizationTooltip": "Показать нейтральные, заблокированные и активные зоны колонизации.",
+    "map.lens.population": "Население",
+    "map.lens.populationTooltip": "Показать интенсивность населения по регионам.",
+    "map.lens.market": "Рынок",
+    "map.lens.marketTooltip": "Показать владельцев рынка и региональный рыночный контекст.",
+    "map.lens.infrastructure": "Инфраструктура",
+    "map.lens.infrastructureTooltip": "Показать интенсивность построенного и запланированного развития.",
+    "map.lens.military": "Военная",
+    "map.lens.militaryTooltip": "Показать контролируемые и чужие регионы.",
+    "map.lens.legend": "Легенда линзы карты",
+    "map.lens.legend.baseTerrain": "Базовая местность",
+    "map.lens.legend.owned": "Во владении",
+    "map.lens.legend.unowned": "Без владельца",
+    "map.lens.legend.regionColor": "Цвет региона",
+    "map.lens.legend.colonizable": "Можно колонизировать",
+    "map.lens.legend.colonizing": "Колонизируется",
+    "map.lens.legend.blocked": "Заблокировано",
+    "map.lens.legend.low": "Низко",
+    "map.lens.legend.high": "Высоко",
+    "map.lens.legend.marketOwned": "Владелец рынка",
+    "map.lens.legend.marketNeutral": "Нейтральный рынок",
+    "map.lens.legend.controlled": "Под контролем",
+    "map.lens.legend.foreign": "Чужой контроль",
+    "map.lens.hoverMode": "Контекст карты",
+    "map.lens.activeMode": "Режим",
+    "map.lens.activeLens": "Линза",
     "hexMap.title": "Гекс-мир",
     "hexMap.renderer": "Рендерер",
     "hexMap.pixiRenderer": "PixiJS hex",
+    "hexMap.loadingTitle": "Загрузка карты",
+    "hexMap.loadingDescription": "Сервер подготавливает авторитетную карту сценария.",
+    "hexMap.artifactErrorTitle": "Артефакт карты недоступен",
+    "hexMap.artifactErrorDescription": "Сервер не вернул авторитетный артефакт гекс-карты.",
     "hexMap.renderErrorTitle": "Рендерер карты недоступен",
     "hexMap.renderErrorDescription": "Шейдер местности или набор материалов не инициализировался. Карта заблокирована вместо использования резервного рендера.",
     "hexMap.tiles": "Гексы",
@@ -7244,6 +7399,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "modifiers.scope.market": "Рынок",
     "modifiers.scope.pop": "Население",
     "modifiers.scope.province": "Гекс",
+    "modifiers.scope.region": "Регион",
     "modifiers.source.event": "Событие",
     "modifiers.source.law": "Закон",
     "modifiers.source.modifier": "Модификатор",

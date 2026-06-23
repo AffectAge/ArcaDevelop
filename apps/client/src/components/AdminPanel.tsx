@@ -142,14 +142,14 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
   const [broadcastMessage, setBroadcastMessage] = useState("");
 
   const selectedCountry = useMemo(() => countries.find((c) => c.id === selectedCountryId) ?? null, [countries, selectedCountryId]);
-  const selectedHex = useMemo(() => provinces.find((p) => p.id === selectedHexId) ?? null, [hexes, selectedHexId]);
+  const selectedHex = useMemo(() => hexes.find((hex) => hex.id === selectedHexId) ?? null, [hexes, selectedHexId]);
   const selectedRegion = useMemo(() => regions.find((region) => region.id === selectedRegionId) ?? null, [regions, selectedRegionId]);
   const selectedHexOwner = useMemo(() => countries.find((c) => c.id === hexOwnerCountryId) ?? null, [countries, hexOwnerCountryId]);
   const filteredHexes = useMemo(() => {
     const q = provinceSearch.trim().toLowerCase();
-    if (!q) return provinces;
-    return provinces.filter((p) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
-  }, [provinceSearch, provinces]);
+    if (!q) return hexes;
+    return hexes.filter((hex) => hex.name.toLowerCase().includes(q) || hex.id.toLowerCase().includes(q));
+  }, [provinceSearch, hexes]);
 
   const punishmentStatus = useMemo(() => {
     if (!selectedCountry) {
@@ -252,11 +252,11 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     }
     setActiveCategory("provinces");
     setSelectedHexId(initialHexId);
-    const regionId = provinces.find((province) => province.id === initialHexId)?.regionId;
+    const regionId = hexes.find((hex) => hex.id === initialHexId)?.regionId;
     if (regionId) {
       setSelectedRegionId(regionId);
     }
-  }, [initialHexId, open, provinces]);
+  }, [initialHexId, open, hexes]);
 
   useEffect(() => {
     if (!flagFile) {
@@ -696,7 +696,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
                           value={selectedHexId}
                           onChange={(hexId) => {
                             setSelectedHexId(hexId);
-                            const regionId = provinces.find((province) => province.id === hexId)?.regionId;
+                            const regionId = hexes.find((hex) => hex.id === hexId)?.regionId;
                             if (regionId) {
                               setSelectedRegionId(regionId);
                             }
@@ -708,16 +708,16 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
                               <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-text-muted))]" />
                             </Listbox.Button>
                             <Listbox.Options className={listboxOptionsClass}>
-                              {filteredHexes.map((province) => (
+                              {filteredHexes.map((hex) => (
                                 <Listbox.Option
-                                  key={province.id}
-                                  value={province.id}
+                                  key={hex.id}
+                                  value={hex.id}
                                   className={({ active }) => optionClass(active)}
                                 >
                                   {({ selected }) => (
                                     <>
-                                      <div className={selected ? "text-[rgb(var(--theme-accent))]" : ""}>{province.name}</div>
-                                      <div className="text-[11px] text-[rgb(var(--theme-text-muted))]">{province.id}</div>
+                                      <div className={selected ? "text-[rgb(var(--theme-accent))]" : ""}>{hex.name}</div>
+                                      <div className="text-[11px] text-[rgb(var(--theme-text-muted))]">{hex.id}</div>
                                       {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-accent))]" />}
                                     </>
                                   )}

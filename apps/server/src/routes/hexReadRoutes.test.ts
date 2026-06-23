@@ -79,6 +79,7 @@ function makeDeps(): HexReadRoutesDependencies & { world: HexReadWorldState } {
     world,
     routeAuth: createRouteAuth(),
     getHexIndex: () => [makeHex({ id: "hex:0:0", name: "Alpha" }), makeHex({ id: "hex:0:1", name: "Beta" })],
+    getHexMapArtifact: () => null,
     getWorldBase: () => world,
   };
 }

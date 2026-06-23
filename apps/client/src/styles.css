@@ -1108,6 +1108,58 @@ body {
   align-items: center;
 }
 
+.arc-map-lens-legend {
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow-x: auto;
+  color: var(--arc-color-atlas-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.arc-map-lens-legend-item {
+  display: inline-flex;
+  min-width: 0;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--arc-color-atlas-line);
+  background: color-mix(in srgb, var(--arc-color-atlas-paper) 84%, transparent);
+  padding: 4px 7px;
+  color: var(--arc-color-atlas-muted);
+}
+
+.arc-map-lens-legend-item--good {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 38%, var(--arc-color-atlas-line));
+}
+
+.arc-map-lens-legend-item--warn {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-warning) 38%, var(--arc-color-atlas-line));
+}
+
+.arc-map-lens-legend-item--bad {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 38%, var(--arc-color-atlas-line));
+}
+
+.arc-map-lens-legend-item--accent {
+  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 38%, var(--arc-color-atlas-line));
+}
+
+.arc-map-lens-swatch {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  flex: none;
+  border: 1px solid var(--arc-color-atlas-line-strong);
+  background: var(--arc-map-lens-swatch-color);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--arc-color-atlas-paper-soft) 74%, transparent) inset;
+}
+
 .arc-map-lens-button {
   position: relative;
   display: inline-flex;
@@ -1158,6 +1210,19 @@ body {
   font-weight: 800;
   line-height: 15px;
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.55) inset;
+}
+
+.arc-map-mode-notice {
+  position: absolute;
+  left: 50%;
+  bottom: 132px;
+  z-index: 36;
+  max-width: min(420px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  color: var(--arc-color-atlas-ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
 }
 
 .arc-strategy-workspace-frame {

@@ -1,7 +1,0 @@
-{
-  "id": "economy",
-  "name": "economy",
-  "description": "Generated from my_map.geojson.",
-  "startTurn": 1,
-  "mapRoot": "map"
-}

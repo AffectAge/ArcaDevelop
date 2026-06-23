@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Application, Container, Graphics } from "pixi.js";
-import { BookOpen, Hammer, Info, Leaf, Mountain, Waves } from "lucide-react";
-import type { HexId, HexMapSettings, HexTile } from "@arcanorum/shared";
+import { Binoculars, BookOpen, Crosshair, Flag, Hammer, HandCoins, Info, Landmark, Layers, Leaf, Mountain, Shield, Users, Waves } from "lucide-react";
+import type { HexId, HexMapArtifact, HexMapSettings, HexTile } from "@arcanorum/shared";
 import { useGameStore } from "../store/gameStore";
 import {
   buildHexCameraBounds,
@@ -15,22 +15,32 @@ import {
   type HexCamera,
   type ScreenPoint,
 } from "../map/hexCamera";
-import { DEFAULT_HEX_MAP_SETTINGS, generateHexMap } from "../map/hexMapGenerator";
+import { DEFAULT_HEX_MAP_SETTINGS } from "../map/hexMapGenerator";
 import { axialToPixel, hexCorner, makeHexId, pixelToAxial, worldPixelWidth } from "../map/hexGeometry";
 import { findHexPath } from "../map/hexPathfinding";
 import { createHexMapOverlayMeshRenderer, type HexMapOverlayMeshRenderer } from "../map/hexMapOverlayMeshRenderer";
 import { createHexTerrainMeshRenderer, type HexTerrainMeshRenderer } from "../map/hexTerrainMeshRenderer";
+import { createHexMapLensOverlayRenderer, type HexMapLensOverlayRenderer } from "../map/hexMapLensOverlayRenderer";
 import {
   readMapTextureQuality,
   type MapTextureQuality,
 } from "../map/hexTextureSystem";
+import {
+  MAP_LENS_DESCRIPTORS,
+  MAP_MODE_DESCRIPTORS,
+  getMapLensDescriptor,
+  selectMapLensCells,
+} from "../map/mapLensRegistry";
+import { readMapLensSetting, readMapModeSetting, writeMapLensSetting, writeMapModeSetting } from "../map/mapLensSettings";
+import type { MapInteractionMode, MapLensId } from "../map/mapLensTypes";
 import { MAP_NAVIGATION_SETTINGS_EVENT, readMapNavigationSettings, writeMapNavigationSettings } from "../map/mapNavigationSettings";
 import { useUiText } from "../i18n/useUiText";
 import { Tooltip } from "./Tooltip";
-import { HexHoverTooltip } from "./HexHoverTooltip";
+import { HexHoverTooltip } from "./ProvinceHoverTooltip";
 import { MapControlsHud } from "./map-hud/MapControlsHud";
+import { MapLensHud } from "./map-hud/MapLensHud";
 
-export type MapModeId = "hexTerrain";
+export type MapModeId = MapInteractionMode;
 
 export type AuthoredHexColorState = {
   provinceMapColor: string;
@@ -64,6 +74,9 @@ type Props = {
   maxActiveColonizations?: number;
   colonizationCostPer1000Km2?: { points: number; ducats: number };
   hexRenameDucatsCost?: number;
+  countryColorById?: Record<string, string>;
+  suggestedMapMode?: MapInteractionMode;
+  suggestedMapLens?: MapLensId;
   showMapControls?: boolean;
   showAntarctica?: boolean;
 };
@@ -110,23 +123,19 @@ function resolveInitialHexScale(): number {
   return Number.isFinite(requested) ? Math.max(0.12, Math.min(1.8, requested)) : DEFAULT_CAMERA.scale;
 }
 
-function resolveMapSettingsOverride(): HexMapSettings {
-  if (typeof window === "undefined") return DEFAULT_HEX_MAP_SETTINGS;
-  const perfSize = new URLSearchParams(window.location.search).get("hexPerf");
-  if (perfSize === "50k") {
-    return { ...DEFAULT_HEX_MAP_SETTINGS, seed: "arcanorum-perf-50k-v1", width: 320, height: 160 };
-  }
-  if (perfSize === "200k") {
-    return { ...DEFAULT_HEX_MAP_SETTINGS, seed: "arcanorum-perf-200k-v1", width: 640, height: 320 };
-  }
-  return DEFAULT_HEX_MAP_SETTINGS;
-}
-
 function shouldShowMapStatsPanel(): boolean {
   if (typeof window === "undefined") return false;
   const params = new URLSearchParams(window.location.search);
   return params.has("hexPerf") || params.get("mapStats") === "1";
 }
+
+const EMPTY_HEX_MAP_ARTIFACT: HexMapArtifact = {
+  version: 1,
+  settings: DEFAULT_HEX_MAP_SETTINGS,
+  tiles: [],
+  riverEdges: [],
+  coastOverlays: [],
+};
 
 type HexMapPerformanceStats = {
   fps: number;
@@ -169,7 +178,7 @@ function darkenHexColor(hex: string): string {
 }
 
 export function MapView({
-  apiBase: _apiBase,
+  apiBase,
   onQueueBuildOrder,
   onQueueColonizeOrder,
   onQueueArmyMoveOrder: _onQueueArmyMoveOrder,
@@ -182,15 +191,21 @@ export function MapView({
   maxActiveColonizations: _maxActiveColonizations,
   colonizationCostPer1000Km2: _colonizationCostPer1000Km2,
   hexRenameDucatsCost: _hexRenameDucatsCost,
+  countryColorById,
+  suggestedMapMode,
+  suggestedMapLens,
   showMapControls = false,
   showAntarctica: _showAntarctica = false,
 }: Props) {
   const { t } = useUiText();
   const authCountryId = useGameStore((state) => state.auth?.countryId ?? null);
+  const turnId = useGameStore((state) => state.turnId);
   const worldBase = useGameStore((state) => state.worldBase);
+  const ordersByTurn = useGameStore((state) => state.ordersByTurn);
   const setSelectedHex = useGameStore((state) => state.setSelectedHex);
-  const mapSettings = useMemo(() => resolveMapSettingsOverride(), []);
-  const mapArtifact = useMemo(() => generateHexMap(mapSettings), [mapSettings]);
+  const [serverMapArtifact, setServerMapArtifact] = useState<HexMapArtifact | null>(null);
+  const [mapLoadError, setMapLoadError] = useState(false);
+  const mapArtifact = serverMapArtifact ?? EMPTY_HEX_MAP_ARTIFACT;
   const initialCamera = useMemo(() => buildInitialHexCamera(mapArtifact.settings), [mapArtifact.settings]);
   const showStatsPanel = useMemo(() => shouldShowMapStatsPanel(), []);
   const tileById = useMemo(() => new Map(mapArtifact.tiles.map((tile) => [tile.id, tile])), [mapArtifact]);
@@ -201,6 +216,7 @@ export function MapView({
   const worldContainerRef = useRef<Container | null>(null);
   const terrainMeshRendererRef = useRef<HexTerrainMeshRenderer | null>(null);
   const overlayMeshRendererRef = useRef<HexMapOverlayMeshRenderer | null>(null);
+  const lensOverlayRendererRef = useRef<HexMapLensOverlayRenderer | null>(null);
   const overlayLayerRef = useRef<Graphics | null>(null);
   const cameraRef = useRef<HexCamera>(initialCamera);
   const cameraTargetRef = useRef<HexCamera>(initialCamera);
@@ -231,12 +247,96 @@ export function MapView({
   const [mapRenderError, setMapRenderError] = useState(false);
   const [edgeScrollEnabled, setEdgeScrollEnabled] = useState(() => readMapNavigationSettings(useGameStore.getState().auth?.countryId).edgeScrollEnabled);
   const [textureQuality, setTextureQuality] = useState<MapTextureQuality>(() => readMapTextureQuality(useGameStore.getState().auth?.countryId));
+  const [activeMode, setActiveMode] = useState<MapInteractionMode>(() => readMapModeSetting(useGameStore.getState().auth?.countryId, suggestedMapMode ?? "overview"));
+  const [activeLens, setActiveLens] = useState<MapLensId>(() => readMapLensSetting(useGameStore.getState().auth?.countryId, suggestedMapLens ?? "terrain"));
+  const [mapActionNotice, setMapActionNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setMapLoadError(false);
+    fetch(`${apiBase}/hex-map/artifact`, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HEX_MAP_ARTIFACT_REQUEST_FAILED:${response.status}`);
+        return response.json() as Promise<HexMapArtifact>;
+      })
+      .then((artifact) => {
+        if (!controller.signal.aborted) {
+          setServerMapArtifact(artifact);
+        }
+      })
+      .catch((error: unknown) => {
+        if ((error as { name?: string }).name === "AbortError") return;
+        setMapLoadError(true);
+      });
+    return () => controller.abort();
+  }, [apiBase]);
 
   const selectedTile = selectedTileId ? tileById.get(selectedTileId) ?? null : null;
   const hoverPath = useMemo(() => {
     if (!selectedTile || !hoverState?.tile || selectedTile.id === hoverState.tile.id) return [];
     return findHexPath(mapArtifact, selectedTile.id, hoverState.tile.id, 1600);
   }, [hoverState?.tile, mapArtifact, selectedTile]);
+
+  const pendingColonyProgressByRegion = useMemo(() => {
+    const byPlayer = ordersByTurn.get(turnId);
+    if (!byPlayer) return {};
+    const progressByRegion: Record<string, Record<string, number>> = {};
+    for (const orders of byPlayer.values()) {
+      for (const order of orders) {
+        if (order.type !== "COLONIZE") continue;
+        const byCountry = progressByRegion[order.regionId] ?? {};
+        byCountry[order.countryId] = Math.max(byCountry[order.countryId] ?? 0, 0.001);
+        progressByRegion[order.regionId] = byCountry;
+      }
+    }
+    return progressByRegion;
+  }, [ordersByTurn, turnId]);
+
+  const activeLensDescriptor = useMemo(() => getMapLensDescriptor(activeLens), [activeLens]);
+  const lensCells = useMemo(
+    () => selectMapLensCells(activeLens, { map: mapArtifact, worldBase, authCountryId, countryColorById, pendingColonyProgressByRegion }),
+    [activeLens, authCountryId, countryColorById, mapArtifact, pendingColonyProgressByRegion, worldBase],
+  );
+
+  const modeOptions = useMemo(
+    () =>
+      MAP_MODE_DESCRIPTORS.map((mode) => ({
+        id: mode.id,
+        label: t(mode.labelKey),
+        tooltip: t(mode.tooltipKey),
+        icon: getMapModeIcon(mode.id),
+      })),
+    [t],
+  );
+
+  const lensOptions = useMemo(
+    () =>
+      MAP_LENS_DESCRIPTORS.map((lens) => ({
+        id: lens.id,
+        label: t(lens.labelKey),
+        tooltip: t(lens.tooltipKey),
+        icon: getMapLensIcon(lens.id),
+      })),
+    [t],
+  );
+
+  const lensLegend = useMemo(
+    () => (
+      <div className="arc-map-lens-legend" aria-label={t("map.lens.legend")}>
+        {activeLensDescriptor.legend.map((entry) => (
+          <span key={entry.labelKey} className={`arc-map-lens-legend-item arc-map-lens-legend-item--${entry.tone ?? "neutral"}`}>
+            <span
+              className="arc-map-lens-swatch"
+              style={{ "--arc-map-lens-swatch-color": entry.color } as CSSProperties}
+              aria-hidden="true"
+            />
+            <span>{t(entry.labelKey)}</span>
+          </span>
+        ))}
+      </div>
+    ),
+    [activeLensDescriptor.legend, t],
+  );
 
   const resolveHexName = useCallback(
     (tile: HexTile) => worldBase?.hexNameById[tile.id] ?? t("hexMap.hexTitle", { id: tile.id.replace("hex:", "") }),
@@ -267,6 +367,53 @@ export function MapView({
     [cameraBounds, mapArtifact.settings.hexSize, setCameraTarget],
   );
 
+  const handleModeChange = useCallback(
+    (mode: MapInteractionMode) => {
+      setActiveMode(mode);
+      writeMapModeSetting(authCountryId, mode);
+    },
+    [authCountryId],
+  );
+
+  const handleLensChange = useCallback(
+    (lens: MapLensId) => {
+      setActiveLens(lens);
+      writeMapLensSetting(authCountryId, lens);
+    },
+    [authCountryId],
+  );
+
+  const selectTile = useCallback(
+    (tile: HexTile | null) => {
+      setSelectedTileId(tile?.id ?? null);
+      setSelectedHex(tile?.regionId ?? null);
+    },
+    [setSelectedHex],
+  );
+
+  const applyTileInteraction = useCallback(
+    (tile: HexTile | null) => {
+      selectTile(tile);
+      if (!tile) return;
+      if (activeMode === "colonization") {
+        onQueueColonizeOrder(tile.regionId);
+        return;
+      }
+      if (activeMode === "construction") {
+        onQueueBuildOrder(tile.regionId);
+        return;
+      }
+      if (activeMode === "army") {
+        setMapActionNotice(t("map.mode.armyUnavailable"));
+        return;
+      }
+      if (activeMode === "market") {
+        setMapActionNotice(t("map.mode.marketUnavailable"));
+      }
+    },
+    [activeMode, onQueueBuildOrder, onQueueColonizeOrder, selectTile, t],
+  );
+
   useEffect(() => {
     const next = readMapNavigationSettings(authCountryId).edgeScrollEnabled;
     const nextQuality = readMapTextureQuality(authCountryId);
@@ -285,12 +432,34 @@ export function MapView({
   }, [authCountryId]);
 
   useEffect(() => {
+    setActiveMode(readMapModeSetting(authCountryId, suggestedMapMode ?? "overview"));
+  }, [authCountryId, suggestedMapMode]);
+
+  useEffect(() => {
+    setActiveLens(readMapLensSetting(authCountryId, suggestedMapLens ?? "terrain"));
+  }, [authCountryId, suggestedMapLens]);
+
+  useEffect(() => {
+    if (!mapActionNotice) return;
+    const timer = window.setTimeout(() => setMapActionNotice(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [mapActionNotice]);
+
+  useEffect(() => {
     selectedTileIdRef.current = selectedTileId;
   }, [selectedTileId]);
 
   useEffect(() => {
+    if (!serverMapArtifact) return;
+    const nextCamera = buildInitialHexCamera(serverMapArtifact.settings);
+    cameraRef.current = nextCamera;
+    cameraTargetRef.current = nextCamera;
+    setCamera(nextCamera);
+  }, [serverMapArtifact]);
+
+  useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || !serverMapArtifact) return;
     let disposed = false;
     let initialized = false;
     let resizeObserver: ResizeObserver | null = null;
@@ -314,6 +483,7 @@ export function MapView({
       try {
         terrainMeshRendererRef.current = await createHexTerrainMeshRenderer(mapArtifact);
         overlayMeshRendererRef.current = createHexMapOverlayMeshRenderer(mapArtifact);
+        lensOverlayRendererRef.current = createHexMapLensOverlayRenderer(mapArtifact);
       } catch {
         setMapRenderError(true);
         return;
@@ -323,25 +493,30 @@ export function MapView({
         terrainMeshRendererRef.current = null;
         safeDestroyMapRenderer(overlayMeshRendererRef.current);
         overlayMeshRendererRef.current = null;
+        safeDestroyMapRenderer(lensOverlayRendererRef.current);
+        lensOverlayRendererRef.current = null;
         safeDestroyPixiApp(app);
         return;
       }
       const terrainRenderer = terrainMeshRendererRef.current;
       const overlayRenderer = overlayMeshRendererRef.current;
-      if (!terrainRenderer || !overlayRenderer) {
+      const lensRenderer = lensOverlayRendererRef.current;
+      if (!terrainRenderer || !overlayRenderer || !lensRenderer) {
         setMapRenderError(true);
         return;
       }
-      worldContainer.addChild(terrainRenderer.container, overlayRenderer.container, overlayLayer);
+      lensRenderer.updateLens(lensCells);
+      worldContainer.addChild(terrainRenderer.container, overlayRenderer.container, lensRenderer.container, overlayLayer);
       app.stage.addChild(worldContainer);
       const rect = container.getBoundingClientRect();
       terrainRenderer.setQuality(readMapTextureQuality(authCountryId), window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
       overlayRenderer.setQuality(readMapTextureQuality(authCountryId), window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
       const visibleMeshes = terrainRenderer.updateVisibility(cameraRef.current, rect);
       const visibleOverlayMeshes = overlayRenderer.updateVisibility(cameraRef.current, rect);
+      const visibleLensMeshes = lensRenderer.updateVisibility(cameraRef.current, rect);
       performanceStatsRef.current.visibleSprites = 0;
       performanceStatsRef.current.visibleTerrainMeshes = visibleMeshes;
-      performanceStatsRef.current.visibleOverlayMeshes = visibleOverlayMeshes;
+      performanceStatsRef.current.visibleOverlayMeshes = visibleOverlayMeshes + visibleLensMeshes;
       resizeObserver = new ResizeObserver(() => {
         if (disposed || !app.renderer) return;
         app.renderer.resize(Math.max(1, container.clientWidth), Math.max(1, container.clientHeight));
@@ -361,26 +536,24 @@ export function MapView({
       terrainMeshRendererRef.current = null;
       safeDestroyMapRenderer(overlayMeshRendererRef.current);
       overlayMeshRendererRef.current = null;
+      safeDestroyMapRenderer(lensOverlayRendererRef.current);
+      lensOverlayRendererRef.current = null;
       overlayLayerRef.current = null;
       window.__arcHexMapStats = undefined;
       if (initialized) {
         safeDestroyPixiApp(app);
       }
     };
-  }, [authCountryId, mapArtifact, tileById, wrapWidth]);
+  }, [authCountryId, mapArtifact, serverMapArtifact, tileById, wrapWidth]);
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || !serverMapArtifact) return;
     const readTileFromClientPoint = (clientX: number, clientY: number): HexTile | null => {
       const rect = container.getBoundingClientRect();
       const world = screenToWorld({ x: clientX - rect.left, y: clientY - rect.top }, rect, cameraRef.current);
       const axial = pixelToAxial(world.x, world.y, mapArtifact.settings.hexSize, mapArtifact.settings);
       return axial ? tileById.get(makeHexId(axial.q, axial.r)) ?? null : null;
-    };
-    const selectTile = (tile: HexTile | null) => {
-      setSelectedTileId(tile?.id ?? null);
-      setSelectedHex(tile?.regionId ?? null);
     };
     const updatePointerTracking = (event: PointerEvent) => {
       const rect = container.getBoundingClientRect();
@@ -467,7 +640,7 @@ export function MapView({
         window.clearTimeout(gesture.longPressTimer);
       }
       if (!interactionLocked && gesture && !gesture.moved && tile) {
-        selectTile(tile);
+        applyTileInteraction(tile);
         const now = window.performance.now();
         const lastTap = lastTapRef.current;
         if (lastTap?.tileId === tile.id && now - lastTap.time < 320) {
@@ -525,7 +698,7 @@ export function MapView({
       pointerGestureRef.current = null;
       activePointersRef.current.clear();
     };
-  }, [cameraBounds, centerOnTile, interactionLocked, mapArtifact, setCameraTarget, setSelectedHex, tileById]);
+  }, [applyTileInteraction, cameraBounds, centerOnTile, interactionLocked, mapArtifact, serverMapArtifact, setCameraTarget, tileById]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -636,16 +809,18 @@ export function MapView({
     if (!container) return;
     const rect = container.getBoundingClientRect();
     if (!rect) return;
-    const terrainRenderer = terrainMeshRendererRef.current;
-    const overlayRenderer = overlayMeshRendererRef.current;
-    if (terrainRenderer && overlayRenderer) {
+      const terrainRenderer = terrainMeshRendererRef.current;
+      const overlayRenderer = overlayMeshRendererRef.current;
+      const lensRenderer = lensOverlayRendererRef.current;
+      if (terrainRenderer && overlayRenderer) {
       terrainRenderer.setQuality(textureQuality, window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
-      overlayRenderer.setQuality(textureQuality, window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
-      const visibleTerrainMeshes = terrainRenderer.updateVisibility(camera, rect);
-      const visibleOverlayMeshes = overlayRenderer.updateVisibility(camera, rect);
-      performanceStatsRef.current.visibleSprites = 0;
-      performanceStatsRef.current.visibleTerrainMeshes = visibleTerrainMeshes;
-      performanceStatsRef.current.visibleOverlayMeshes = visibleOverlayMeshes;
+        overlayRenderer.setQuality(textureQuality, window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
+        const visibleTerrainMeshes = terrainRenderer.updateVisibility(camera, rect);
+        const visibleOverlayMeshes = overlayRenderer.updateVisibility(camera, rect);
+        const visibleLensMeshes = lensRenderer?.updateVisibility(camera, rect) ?? 0;
+        performanceStatsRef.current.visibleSprites = 0;
+        performanceStatsRef.current.visibleTerrainMeshes = visibleTerrainMeshes;
+        performanceStatsRef.current.visibleOverlayMeshes = visibleOverlayMeshes + visibleLensMeshes;
       performanceStatsRef.current.tiles = mapArtifact.tiles.length;
       performanceStatsRef.current.quality = textureQuality;
       performanceStatsRef.current.shaderActive = true;
@@ -655,6 +830,19 @@ export function MapView({
     worldContainer.scale.set(camera.scale);
     app.render();
   }, [camera, mapArtifact, pixiReady, textureQuality, tileById, wrapWidth]);
+
+  useEffect(() => {
+    const lensRenderer = lensOverlayRendererRef.current;
+    const app = appRef.current;
+    if (!pixiReady || !lensRenderer || !app || !app.renderer) return;
+    lensRenderer.updateLens(lensCells);
+    const container = containerRef.current;
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      lensRenderer.updateVisibility(cameraRef.current, rect);
+    }
+    app.render();
+  }, [lensCells, pixiReady]);
 
   useEffect(() => {
     const overlayLayer = overlayLayerRef.current;
@@ -678,6 +866,18 @@ export function MapView({
   return (
     <div className="arc-hex-map">
       <div ref={containerRef} className="arc-hex-map__surface" />
+      {!serverMapArtifact && !mapLoadError ? (
+        <div className="arc-hex-map__render-error arc-hud-panel" role="status">
+          <strong>{t("hexMap.loadingTitle")}</strong>
+          <span>{t("hexMap.loadingDescription")}</span>
+        </div>
+      ) : null}
+      {mapLoadError ? (
+        <div className="arc-hex-map__render-error arc-hud-panel" role="alert">
+          <strong>{t("hexMap.artifactErrorTitle")}</strong>
+          <span>{t("hexMap.artifactErrorDescription")}</span>
+        </div>
+      ) : null}
       {mapRenderError ? (
         <div className="arc-hex-map__render-error arc-hud-panel" role="alert">
           <strong>{t("hexMap.renderErrorTitle")}</strong>
@@ -715,6 +915,22 @@ export function MapView({
             writeMapNavigationSettings(authCountryId, { edgeScrollEnabled: next });
           }}
         />
+      ) : null}
+      {serverMapArtifact ? (
+        <MapLensHud
+          modes={modeOptions}
+          lenses={lensOptions}
+          activeModeId={activeMode}
+          activeLensId={activeLens}
+          legend={lensLegend}
+          onModeChange={handleModeChange}
+          onLensChange={handleLensChange}
+        />
+      ) : null}
+      {mapActionNotice ? (
+        <div className="arc-map-mode-notice arc-hud-panel" role="status">
+          <div className="arc-hud-content">{mapActionNotice}</div>
+        </div>
       ) : null}
       {selectedTile ? (
         <section className="arc-hex-map__selection arc-hud-panel">
@@ -784,8 +1000,10 @@ export function MapView({
           areaKm2={null}
           ownerName={resolveOwnerName(hoverState.tile)}
           colonizers={[]}
-          modeLabel={t("hexMap.hoverMode")}
+          modeLabel={t("map.lens.hoverMode")}
           modeRows={[
+            { label: t("map.lens.activeMode"), value: t(MAP_MODE_DESCRIPTORS.find((mode) => mode.id === activeMode)?.labelKey ?? "map.mode.overview") },
+            { label: t("map.lens.activeLens"), value: t(activeLensDescriptor.labelKey) },
             { label: t("hexMap.region"), value: hoverState.tile.regionId },
             { label: t("hexMap.terrain"), value: t(`hexMap.terrain.${hoverState.tile.terrain}`) },
             { label: t("hexMap.biome"), value: t(`hexMap.biome.${hoverState.tile.biome}`) },
@@ -844,6 +1062,26 @@ function calculateKeyboardZoomDirection(keys: Set<string>): number {
 
 function hasCameraChanged(current: HexCamera, next: HexCamera): boolean {
   return Math.abs(current.x - next.x) > 0.01 || Math.abs(current.y - next.y) > 0.01 || Math.abs(current.scale - next.scale) > 0.0001;
+}
+
+function getMapModeIcon(mode: MapInteractionMode) {
+  if (mode === "colonization") return Flag;
+  if (mode === "construction") return Hammer;
+  if (mode === "army") return Shield;
+  if (mode === "market") return HandCoins;
+  if (mode === "inspection") return Binoculars;
+  return Crosshair;
+}
+
+function getMapLensIcon(lens: MapLensId) {
+  if (lens === "political") return Flag;
+  if (lens === "regions") return Layers;
+  if (lens === "colonization") return Leaf;
+  if (lens === "population") return Users;
+  if (lens === "market") return HandCoins;
+  if (lens === "infrastructure") return Landmark;
+  if (lens === "military") return Shield;
+  return Mountain;
 }
 
 function HexDetail({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {

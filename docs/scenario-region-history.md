@@ -108,6 +108,14 @@ scenarios/<scenario_id>/.generated/
 
 Generated files are not authored source. They must not be manually edited, and should not be committed unless explicitly approved later. Static hex artifacts and indexes belong under `.generated/`; generated province indexes are not target runtime artifacts.
 
+Generated scenario maps may also include:
+
+```text
+scenarios/<scenario_id>/.generated/regions.json
+```
+
+This file is produced by scenario map generation and contains generated region membership plus empty starting region state for bootstrap scenarios. It is read by the runtime together with authored `history/regions/*.json`, but it remains generated output and must not be manually edited. Authored scenario regions should still use one file per region under `history/regions/`.
+
 ## Validation
 
 Scenario validation must reject:

@@ -90,6 +90,7 @@ npm run test:unit
 npm run test:e2e
 npm run scenario:validate -- --scenario <scenarioId>
 npm run scenario:build-indexes -- --scenario <scenarioId>
+npm run scenario:generate-map -- --scenario default
 npm run localization:check
 npm run theme:validate
 npm run docs:check
@@ -98,6 +99,8 @@ npm run docs:check
 Do not pretend these commands exist until package scripts are added.
 
 `scenario:validate` should validate strict per-entity JSON, stable-ID references, localization, assets, region/province membership, forbidden province-heavy fields, and generated index freshness. `scenario:build-indexes` should create or refresh `scenarios/<scenario_id>/.generated/` from authored per-entity files.
+
+`scenario:generate-map` creates or refreshes the server-authoritative generated hex map artifacts for the built-in `default` scenario, including `.generated/hex-map-artifact.json`, `.generated/hexes.json`, and `.generated/regions.json`.
 
 `docs:check` verifies required documentation links, checks that `docs/README.md` lists required docs and templates from `.codex/project-rules.json`, checks that `.codex/project-rules.json` stays synchronized with runtime scenario contracts, and runs `scripts/check-code-guards.ts`. The project-rules sync verifies required entry points, core docs, template files, task-routing files, folder-level `AGENTS.md` files, mandatory folder-agent start lines, supported defines from `apps/server/src/scenarios/scenarioDefinesLoader.ts`, authored entity paths from `apps/server/src/scenarios/scenarioValidation.ts`, and forbidden province-heavy fields from `apps/server/src/scenarios/scenarioValidation.ts`. The code/data guard currently blocks reintroducing `sourceProperties`, `@ts-ignore`, broad `any` usage in guarded modules, root `apps/server/data/content-library.json`, province-heavy fields in authored `history/provinces/*.json`, hardcoded color values in `apps/client/src/components/ui`, and inline Cyrillic text in guarded client UI zones: `apps/client/src/components/ui`, `apps/client/src/components/map-hud`, and `apps/client/src/components/ClientSettingsModal.tsx`.
 

@@ -1,8 +1,0 @@
-{
-  "id": "industry:chemicals",
-  "description": "",
-  "color": "#a78bfa",
-  "logoUrl": null,
-  "sectorId": "sector:industry",
-  "nameKey": "industries.chemicals.name"
-}
