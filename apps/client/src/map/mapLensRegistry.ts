@@ -173,6 +173,8 @@ function selectTileCell(
       tile,
       groupId: owner ?? `unowned:${tile.regionId}`,
       borderGroupId: owner ?? `unowned:${tile.regionId}`,
+      labelGroupId: owner && !tile.waterKind ? owner : undefined,
+      label: owner && !tile.waterKind ? resolveCountryName(owner, context.countryNameById) : undefined,
       color: owner ? ownerColor : 0x77706a,
       alpha: owner ? 0.7 : 0.26,
       surfaceAlpha: tile.waterKind ? 0.16 : 0.28,
@@ -378,6 +380,10 @@ function applyAnalyticalBaseStyle(cell: MapLensRenderCell): MapLensRenderCell {
 
 function resolveCountryColor(countryId: string, countryColorById: Record<string, string> | undefined): number {
   return parseHexColor(countryColorById?.[countryId]) ?? colorFromId(countryId);
+}
+
+function resolveCountryName(countryId: string, countryNameById: Record<string, string> | undefined): string {
+  return countryNameById?.[countryId]?.trim() || countryId;
 }
 
 function parseHexColor(input: string | null | undefined): number | null {

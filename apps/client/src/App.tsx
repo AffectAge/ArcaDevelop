@@ -314,6 +314,10 @@ export default function App() {
     () => Object.fromEntries(countries.map((item) => [item.id, item.color] as const)),
     [countries],
   );
+  const countryNameById = useMemo(
+    () => Object.fromEntries(countries.map((item) => [item.id, item.name] as const)),
+    [countries],
+  );
   const [buildingEntries, setBuildingEntries] = useState<ContentEntry[]>([]);
   const [technologyEntries, setTechnologyEntries] = useState<ContentEntry[]>([]);
   const [journalEntries, setJournalEntries] = useState<ContentEntry[]>([]);
@@ -1795,6 +1799,7 @@ export default function App() {
         colonizationCostPer1000Km2={colonizationCostPer1000Km2}
         hexRenameDucatsCost={hexRenameDucatsCost}
         countryColorById={countryColorById}
+        countryNameById={countryNameById}
         suggestedMapMode={resolveSuggestedMapMode(activeStrategyMode)}
         suggestedMapLens={resolveSuggestedMapLens(activeStrategyMode)}
         showMapControls={showMapControls}

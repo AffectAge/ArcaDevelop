@@ -75,6 +75,7 @@ type Props = {
   colonizationCostPer1000Km2?: { points: number; ducats: number };
   hexRenameDucatsCost?: number;
   countryColorById?: Record<string, string>;
+  countryNameById?: Record<string, string>;
   suggestedMapMode?: MapInteractionMode;
   suggestedMapLens?: MapLensId;
   showMapControls?: boolean;
@@ -192,6 +193,7 @@ export function MapView({
   colonizationCostPer1000Km2: _colonizationCostPer1000Km2,
   hexRenameDucatsCost: _hexRenameDucatsCost,
   countryColorById,
+  countryNameById,
   suggestedMapMode,
   suggestedMapLens,
   showMapControls = false,
@@ -294,8 +296,8 @@ export function MapView({
 
   const activeLensDescriptor = useMemo(() => getMapLensDescriptor(activeLens), [activeLens]);
   const lensCells = useMemo(
-    () => selectMapLensCells(activeLens, { map: mapArtifact, worldBase, authCountryId, countryColorById, pendingColonyProgressByRegion }),
-    [activeLens, authCountryId, countryColorById, mapArtifact, pendingColonyProgressByRegion, worldBase],
+    () => selectMapLensCells(activeLens, { map: mapArtifact, worldBase, authCountryId, countryColorById, countryNameById, pendingColonyProgressByRegion }),
+    [activeLens, authCountryId, countryColorById, countryNameById, mapArtifact, pendingColonyProgressByRegion, worldBase],
   );
 
   const modeOptions = useMemo(

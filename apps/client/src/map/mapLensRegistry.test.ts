@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { HexMapArtifact, HexTile, WorldBase } from "@arcanorum/shared";
-import { collectLensBoundaryEdges } from "./hexMapLensOverlayRenderer";
+import { axialToPixel } from "./hexGeometry";
+import { buildCountryLabelSpecs, collectLensBoundaryEdges, resolveLensTerrainBaseAlpha } from "./hexMapLensOverlayRenderer";
 import { MAP_LENS_DESCRIPTORS, MAP_MODE_DESCRIPTORS, selectMapLensCells } from "./mapLensRegistry";
 import type { MapInteractionMode, MapLensId } from "./mapLensTypes";
 
@@ -101,6 +102,18 @@ describe("map lens registry", () => {
     expect(cells[0]?.terrainMute).toBeGreaterThanOrEqual(0.86);
   });
 
+  it("adds political country labels from country data on owned land", () => {
+    const cells = selectMapLensCells("political", {
+      map,
+      worldBase: makeWorldBase({ regionOwner: { [tile.regionId]: "country:blue" } }),
+      authCountryId: null,
+      countryNameById: { "country:blue": "Blue Realm" },
+    });
+
+    expect(cells[0]?.labelGroupId).toBe("country:blue");
+    expect(cells[0]?.label).toBe("Blue Realm");
+  });
+
   it("uses the leading colonizer color as a light striped political colony", () => {
     const cells = selectMapLensCells("political", {
       map,
@@ -164,6 +177,46 @@ describe("map lens registry", () => {
     expect(cells[0]?.alpha).toBeLessThanOrEqual(0.22);
     expect(cells[0]?.surfaceAlpha).toBeGreaterThanOrEqual(0.52);
     expect(cells[0]?.terrainMute).toBeGreaterThanOrEqual(0.76);
+  });
+
+  it("makes analytical terrain suppression fade as the camera zooms in", () => {
+    expect(resolveLensTerrainBaseAlpha(0.25)).toBeGreaterThan(resolveLensTerrainBaseAlpha(0.9));
+    expect(resolveLensTerrainBaseAlpha(1.4)).toBeLessThan(0.3);
+  });
+
+  it("places country labels on the largest connected homeland instead of remote holdings", () => {
+    const remoteTile: HexTile = {
+      ...tile,
+      id: "hex:5:1",
+      q: 5,
+      r: 1,
+      regionId: "region:land:remote",
+    };
+    const clusterTiles: HexTile[] = [
+      tile,
+      { ...tile, id: "hex:1:0", q: 1, r: 0, regionId: "region:land:2" },
+      { ...tile, id: "hex:0:1", q: 0, r: 1, regionId: "region:land:3" },
+      { ...tile, id: "hex:1:1", q: 1, r: 1, regionId: "region:land:4" },
+    ];
+    const countryMap: HexMapArtifact = {
+      ...map,
+      settings: { ...map.settings, width: 6, height: 2, wrapX: false },
+      tiles: [...clusterTiles, remoteTile],
+    };
+    const cells = selectMapLensCells("political", {
+      map: countryMap,
+      worldBase: makeWorldBase({
+        regionOwner: Object.fromEntries(countryMap.tiles.map((item) => [item.regionId, "country:blue"])),
+      }),
+      authCountryId: null,
+      countryNameById: { "country:blue": "Blue Realm" },
+    });
+    const labels = buildCountryLabelSpecs(cells, countryMap);
+    const remoteCenter = axialToPixel(remoteTile, countryMap.settings.hexSize);
+
+    expect(labels).toHaveLength(1);
+    expect(labels[0]?.text).toBe("Blue Realm");
+    expect(labels[0]?.x).toBeLessThan(remoteCenter.x - countryMap.settings.hexSize * 2);
   });
 
   it("does not create internal borders between same-owner political cells", () => {
