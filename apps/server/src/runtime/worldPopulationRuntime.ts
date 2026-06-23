@@ -35,7 +35,7 @@ import {
   ensureDefaultUnemployedProfession,
 } from "../content/contentNormalizers";
 import type { GoodTransportMode, MarketOverviewState } from "../mechanics/marketTurnMechanics";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import {
   normalizeRegionBuildingDucatsMap as normalizeRegionBuildingDucatsMapForRuntime,
   normalizeRegionBuildingsMap as normalizeRegionBuildingsMapForRuntime,
@@ -44,7 +44,7 @@ import {
   normalizeRegionResourceDepositsMap as normalizeRegionResourceDepositsMapForRuntime,
   normalizeRegionResourceExplorationCountMap as normalizeRegionResourceExplorationCountMapForRuntime,
   normalizeRegionResourceExplorationQueueMap as normalizeRegionResourceExplorationQueueMapForRuntime,
-  type ProvinceStateNormalizerParams,
+  type HexStateNormalizerParams,
 } from "./provinceStateNormalizers";
 import { resolveBuildingsTurnForRuntime } from "./buildingTurnRuntime";
 import type { BuildingContentEntry, GameSettings, TransportCorridorEntry } from "./gameSettingsTypes";
@@ -54,32 +54,32 @@ type WorldPopulationRuntimeParams = {
   getGameSettings: () => GameSettings;
   getWorldBase: () => WorldBase;
   getTurnId: () => number;
-  getProvinceIndex: () => Adm1ProvinceIndexEntry[];
+  getHexIndex: () => HexMapIndexEntry[];
   getRegionIds?: () => string[];
-  getProvinceAreaKm2: (provinceId: string) => number;
-  getProvinceOwner: (provinceId: string) => string | null;
+  getHexAreaKm2: (hexId: string) => number;
+  getHexOwner: (hexId: string) => string | null;
   setLatestMarketOverview: (overview: MarketOverviewState) => void;
   getActiveCountryModifierRows: (countryId: string) => Array<{ id: string; sourceId: string; label: string }>;
   ensureCountryParliament: (countryId: string) => { activeLawByGroupId?: Record<string, string> };
   ensureCountryInWorldBase: (countryId: string) => void;
   createDefaultMarketRecord: (marketId: string, ownerCountryId: string) => GameSettings["markets"]["marketById"][string];
   getBuildingMaxDurability: (building: BuildingContentEntry | undefined) => number;
-  getBuildingPollutionProductivityFactor: (building: BuildingContentEntry, provinceId: string) => number;
+  getBuildingPollutionProductivityFactor: (building: BuildingContentEntry, hexId: string) => number;
   getCountryMarketId: (countryId: string) => string;
   getInfrastructureTransitAgreementAllowedCountries: (
     baseCountryIds: Set<string>,
     transportMode: GoodTransportMode | null,
   ) => Set<string>;
   getMarketById: (marketId: string) => GameSettings["markets"]["marketById"][string] | null;
-  getProvinceFertilityMultiplier: (provinceId: string) => number;
+  getHexFertilityMultiplier: (hexId: string) => number;
   getTransportCorridorCapacity: (corridor: TransportCorridorEntry, categoryId: string | null) => number;
-  normalizeProvinceIdList: (input: unknown) => string[];
+  normalizeHexIdList: (input: unknown) => string[];
   resolveModifiedValue: (
     stat: ModifierStat,
     base: number,
     context: {
       countryId: string;
-      provinceId?: string;
+      hexId?: string;
       buildingId?: string;
       goodId?: string;
       resourceCategoryId?: string | null;
@@ -137,10 +137,10 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
     });
   }
 
-  function normalizePopulationPops(rawPops: unknown, provinceId: string, domains: PopulationDomainKeys): PopulationPop[] {
+  function normalizePopulationPops(rawPops: unknown, hexId: string, domains: PopulationDomainKeys): PopulationPop[] {
     return normalizePopulationPopsInState({
       rawPops,
-      provinceId,
+      hexId,
       domains,
       fallbackByDimension: resolvePopulationFallbackKeys(domains),
     });
@@ -150,19 +150,19 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
     return isEqualRegionPopulationInState(prevValue, nextValue);
   }
 
-  function buildDefaultRegionPopulation(provinceId: string, domains: PopulationDomainKeys): RegionPopulation {
+  function buildDefaultRegionPopulation(hexId: string, domains: PopulationDomainKeys): RegionPopulation {
     return normalizeRegionPopulationInState({
       input: null,
-      provinceId,
+      hexId,
       domains,
       fallbackByDimension: resolvePopulationFallbackKeys(domains),
-      getProvinceAreaKm2: params.getProvinceAreaKm2,
+      getHexAreaKm2: params.getHexAreaKm2,
     });
   }
 
   function buildColonizationSettlementPopulation(regionId: string, countryId: string, total: number): RegionPopulation {
     return buildSinglePopRegionPopulation({
-      provinceId: regionId,
+      hexId: regionId,
       total,
       fallbackByDimension: resolvePopulationFallbackKeys(getPopulationDomainKeys()),
       popId: `pop:${toPopulationIdSegment(regionId)}:settlers:${toPopulationIdSegment(countryId)}`,
@@ -171,28 +171,28 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
 
   function normalizeRegionPopulation(
     input: unknown,
-    provinceId: string,
+    hexId: string,
     domains: PopulationDomainKeys,
   ): RegionPopulation {
     return normalizeRegionPopulationInState({
       input,
-      provinceId,
+      hexId,
       domains,
       fallbackByDimension: resolvePopulationFallbackKeys(domains),
-      getProvinceAreaKm2: params.getProvinceAreaKm2,
+      getHexAreaKm2: params.getHexAreaKm2,
     });
   }
 
   function buildRandomRegionPopulation(
-    provinceId: string,
+    hexId: string,
     domains: PopulationDomainKeys,
     populationTotalOverride?: number,
   ): RegionPopulation {
     return buildRandomRegionPopulationInState({
-      provinceId,
+      hexId,
       domains,
       fallbackByDimension: resolvePopulationFallbackKeys(domains),
-      getProvinceAreaKm2: params.getProvinceAreaKm2,
+      getHexAreaKm2: params.getHexAreaKm2,
       populationTotalOverride,
     });
   }
@@ -204,14 +204,14 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       regionIds: getRuntimeRegionIds(),
       domains,
       fallbackByDimension: resolvePopulationFallbackKeys(domains),
-      getProvinceAreaKm2: params.getProvinceAreaKm2,
+      getHexAreaKm2: params.getHexAreaKm2,
     });
   }
 
-  function getProvinceStateNormalizerParams(input: unknown): ProvinceStateNormalizerParams {
+  function getHexStateNormalizerParams(input: unknown): HexStateNormalizerParams {
     return {
       input,
-      provinceIds: getRuntimeRegionIds(),
+      hexIds: getRuntimeRegionIds(),
       fallbackCountryId: Object.keys(params.getWorldBase().resourcesByCountry ?? {})[0] ?? "SYSTEM",
       turnId: params.getTurnId(),
       createId: randomUUID,
@@ -220,33 +220,33 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
   }
 
   function normalizeRegionBuildingsMap(input: unknown): Record<string, BuildingInstance[]> {
-    return normalizeRegionBuildingsMapForRuntime(getProvinceStateNormalizerParams(input));
+    return normalizeRegionBuildingsMapForRuntime(getHexStateNormalizerParams(input));
   }
 
   function normalizeRegionPopulationTreasuryMap(input: unknown): Record<string, number> {
-    return normalizeRegionPopulationTreasuryMapForRuntime(getProvinceStateNormalizerParams(input));
+    return normalizeRegionPopulationTreasuryMapForRuntime(getHexStateNormalizerParams(input));
   }
 
   function normalizeRegionBuildingDucatsMap(input: unknown): Record<string, Record<string, number>> {
-    return normalizeRegionBuildingDucatsMapForRuntime(getProvinceStateNormalizerParams(input));
+    return normalizeRegionBuildingDucatsMapForRuntime(getHexStateNormalizerParams(input));
   }
 
   function normalizeRegionConstructionQueueMap(input: unknown): Record<string, RegionConstructionProject[]> {
-    return normalizeRegionConstructionQueueMapForRuntime(getProvinceStateNormalizerParams(input));
+    return normalizeRegionConstructionQueueMapForRuntime(getHexStateNormalizerParams(input));
   }
 
   function normalizeRegionResourceDepositsMap(input: unknown): Record<string, RegionResourceDeposit[]> {
-    return normalizeRegionResourceDepositsMapForRuntime(getProvinceStateNormalizerParams(input));
+    return normalizeRegionResourceDepositsMapForRuntime(getHexStateNormalizerParams(input));
   }
 
   function normalizeRegionResourceExplorationQueueMap(
     input: unknown,
   ): Record<string, RegionResourceExplorationProject[]> {
-    return normalizeRegionResourceExplorationQueueMapForRuntime(getProvinceStateNormalizerParams(input));
+    return normalizeRegionResourceExplorationQueueMapForRuntime(getHexStateNormalizerParams(input));
   }
 
   function normalizeRegionResourceExplorationCountMap(input: unknown): Record<string, number> {
-    return normalizeRegionResourceExplorationCountMapForRuntime(getProvinceStateNormalizerParams(input));
+    return normalizeRegionResourceExplorationCountMapForRuntime(getHexStateNormalizerParams(input));
   }
 
   function getActiveCultureNeeds(cultureId: string, standardOfLiving: number): CultureNeed[] {
@@ -260,7 +260,7 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
 
   function resolveBuildingsTurn(): Record<string, Record<string, Record<string, PopulationProfessionState>>> {
     const result = resolveBuildingsTurnForRuntime({
-      adm1ProvinceIndex: params.getProvinceIndex(),
+      hexHexIndex: params.getHexIndex(),
       buildingBaseThroughput: params.buildingBaseThroughput,
       buildingBaseWagePerWorkerGold: params.buildingBaseWagePerWorkerGold,
       buildingDurabilityDecayPerTurnFallback: params.buildingDurabilityDecayPerTurnFallback,
@@ -278,7 +278,7 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       getInfrastructureTransitAgreementAllowedCountries: params.getInfrastructureTransitAgreementAllowedCountries,
       getMarketById: params.getMarketById,
       getPopulationDomainKeys,
-      getProvinceFertilityMultiplier: params.getProvinceFertilityMultiplier,
+      getHexFertilityMultiplier: params.getHexFertilityMultiplier,
       getTransportCorridorCapacity: params.getTransportCorridorCapacity,
       globalGoodDemandHistoryByResourceId: params.globalGoodDemandHistoryByResourceId,
       globalGoodOfferHistoryByResourceId: params.globalGoodOfferHistoryByResourceId,
@@ -286,7 +286,7 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       globalGoodPrices: params.globalGoodPrices,
       globalGoodProductionFactHistoryByResourceId: params.globalGoodProductionFactHistoryByResourceId,
       globalGoodProductionMaxHistoryByResourceId: params.globalGoodProductionMaxHistoryByResourceId,
-      normalizeProvinceIdList: params.normalizeProvinceIdList,
+      normalizeHexIdList: params.normalizeHexIdList,
       normalizeRegionPopulation,
       resolveModifiedValue: params.resolveModifiedValue,
       resolvePopulationFallbackKeys,
@@ -298,14 +298,14 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       worldBase: params.getWorldBase(),
     });
     params.setLatestMarketOverview(result.latestMarketOverview);
-    return result.nextProfessionsByPopIdByProvince;
+    return result.nextProfessionsByPopIdByHex;
   }
 
   function resolvePopulationTurn(): void {
     const gameSettings = params.getGameSettings();
     const worldBase = params.getWorldBase();
     const domains = getPopulationDomainKeys();
-    const professionByProvince = resolveBuildingsTurn();
+    const professionByHex = resolveBuildingsTurn();
     const ideologyContent = gameSettings.content.ideologies.map((ideology) => ({
       id: ideology.id,
       ideologyAttractionRules: normalizeIdeologyAttractionRules(ideology.ideologyAttractionRules),
@@ -313,11 +313,11 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
     const result = resolvePopulationTurnForRegions({
       regionIds: getRuntimeRegionIds(),
       currentPopulationByRegion: worldBase.regionPopulationByRegion,
-      nextProfessionsByRegion: professionByProvince,
+      nextProfessionsByRegion: professionByHex,
       domains,
       fallbackByDimension: resolvePopulationFallbackKeys(domains),
       ideologies: ideologyContent,
-      getProvinceAreaKm2: params.getProvinceAreaKm2,
+      getHexAreaKm2: params.getHexAreaKm2,
       getIdeologyContext: (regionId) => {
         const countryId = worldBase.regionController[regionId] ?? worldBase.regionOwner[regionId] ?? null;
         const activeLawIds = new Set<string>();
@@ -378,8 +378,8 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       explanationRecordsByTurn: {},
       regionOwner: {},
       regionController: {},
-      provinceOwner: {},
-      provinceNameById: {},
+      hexOwner: {},
+      hexNameById: {},
       colonyProgressByRegion: {},
       regionColonizationByRegion: {},
       regionPopulationByRegion,

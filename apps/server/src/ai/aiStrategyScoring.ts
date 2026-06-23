@@ -176,7 +176,7 @@ function getCandidateSortKey(candidate: AiCandidate): string {
     return `${candidate.kind}:${candidate.countryId}:${candidate.targetCountryId}`;
   }
   if (candidate.kind === "army-move") {
-    return `${candidate.kind}:${candidate.countryId}:${candidate.divisionId}:${candidate.targetProvinceId}`;
+    return `${candidate.kind}:${candidate.countryId}:${candidate.divisionId}:${candidate.targetHexId}`;
   }
   if (candidate.kind === "colonize-region") {
     return `${candidate.kind}:${candidate.countryId}:${candidate.regionId}`;

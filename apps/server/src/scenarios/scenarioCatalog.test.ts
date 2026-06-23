@@ -13,24 +13,24 @@ afterEach(async () => {
 async function createDataRoot(): Promise<string> {
   const dataRoot = await mkdtemp(join(tmpdir(), "arcanorum-catalog-"));
   tempDirs.push(dataRoot);
-  await mkdir(join(dataRoot, "tiles/adm1"), { recursive: true });
-  await writeFile(join(dataRoot, "provinces.json"), "[]", "utf8");
+  await mkdir(join(dataRoot, "tiles/hex"), { recursive: true });
+  await writeFile(join(dataRoot, "hexes.json"), "[]", "utf8");
   return dataRoot;
 }
 
 async function createScenario(dataRoot: string, folder: string, manifest: Record<string, unknown>): Promise<string> {
   const scenarioDir = join(dataRoot, "scenarios", folder);
-  await mkdir(join(scenarioDir, "map/tiles/adm1"), { recursive: true });
+  await mkdir(join(scenarioDir, "map/tiles/hex"), { recursive: true });
   await mkdir(join(scenarioDir, ".generated"), { recursive: true });
   await mkdir(join(scenarioDir, "content"), { recursive: true });
   await writeFile(join(scenarioDir, "scenario.json"), JSON.stringify(manifest), "utf8");
-  await writeFile(join(scenarioDir, ".generated/provinces.json"), "[]", "utf8");
+  await writeFile(join(scenarioDir, ".generated/hexes.json"), "[]", "utf8");
   await writeFile(join(scenarioDir, "content/goods.json"), "[]", "utf8");
   return scenarioDir;
 }
 
 describe("scenario catalog", () => {
-  it("lists folder scenarios with generated province indexes", async () => {
+  it("lists folder scenarios with generated hex indexes", async () => {
     const dataRoot = await createDataRoot();
     await createScenario(dataRoot, "demo", {
       id: "demo",
@@ -52,7 +52,7 @@ describe("scenario catalog", () => {
       name: "Demo Scenario",
       active: true,
       startTurn: 3,
-      map: { root: "scenarios/demo/map", hasVectorTiles: true, hasProvinces: true },
+      map: { root: "scenarios/demo/map", hasVectorTiles: true, hasHexes: true },
       contentFiles: ["goods.json"],
     });
   });
@@ -69,7 +69,7 @@ describe("scenario catalog", () => {
 
     expect(found?.scenarioDir?.replaceAll("\\", "/")).toContain("/scenarios/demo");
     expect(found?.mapRoot.replaceAll("\\", "/")).toContain("/scenarios/demo/map");
-    expect(found?.provinceIndexPath.replaceAll("\\", "/")).toContain("/scenarios/demo/.generated/provinces.json");
+    expect(found?.hexIndexPath.replaceAll("\\", "/")).toContain("/scenarios/demo/.generated/hexes.json");
   });
 
   it("keeps the first descriptor when scenario ids collide", async () => {

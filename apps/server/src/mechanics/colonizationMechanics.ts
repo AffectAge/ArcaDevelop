@@ -27,7 +27,7 @@ export type RegionColonizationConfigInput = {
 
 export type RegionColonizationWorldState = Pick<
   WorldBase,
-  "regionColonizationByRegion" | "colonyProgressByRegion" | "regionOwner" | "regionController" | "provinceOwner"
+  "regionColonizationByRegion" | "colonyProgressByRegion" | "regionOwner" | "regionController" | "hexOwner"
 >;
 
 export type ColonizationTurnWorldState = Pick<
@@ -35,7 +35,7 @@ export type ColonizationTurnWorldState = Pick<
   | "colonyProgressByRegion"
   | "regionOwner"
   | "regionController"
-  | "provinceOwner"
+  | "hexOwner"
   | "resourcesByCountry"
   | "regionPopulationByRegion"
 >;
@@ -72,8 +72,8 @@ export type ColonizeOrderResolution = {
 
 export type RegionAreaReader = (regionId: string) => number;
 
-export function getProvinceAreaKm2(provinceId: string, areaByProvinceId: Map<string, number>): number {
-  return Math.max(1, areaByProvinceId.get(provinceId) ?? 1_000);
+export function getHexAreaKm2(hexId: string, areaByHexId: Map<string, number>): number {
+  return Math.max(1, areaByHexId.get(hexId) ?? 1_000);
 }
 
 export function getRegionDerivedColonizationCosts(params: {

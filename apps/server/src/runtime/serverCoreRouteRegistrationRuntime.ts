@@ -95,7 +95,7 @@ export function registerServerCoreRouteRuntime(params: ServerCoreRouteRegistrati
     culturePayloadSchema,
     getServerStatus: params.getServerStatus,
     getTurnId: params.getTurnId,
-    getAdm1TileRoot: params.mapRuntime.getAdm1TileRoot,
+    getHexTileRoot: params.mapRuntime.getHexTileRoot,
     getRasterTileRoot: params.mapRuntime.getRasterTileRoot,
     getWsDeltaSizeMetrics: params.getWsDeltaSizeMetrics,
     getWorldDeltaLogDbStatus: () => getWorldDeltaLogStatus(params.prisma),

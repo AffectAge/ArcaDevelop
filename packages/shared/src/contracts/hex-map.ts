@@ -1,6 +1,7 @@
 export type HexId = `hex:${number}:${number}`;
 export type HexChunkId = `hex-chunk:${number}:${number}`;
-export type HexRegionId = `hex-region:${string}:${number}`;
+export type RegionId = `region:${string}`;
+export type HexRegionId = RegionId;
 
 export type HexTerrain =
   | "ocean"
@@ -41,7 +42,7 @@ export type HexAxial = {
 export type HexTile = HexAxial & {
   id: HexId;
   chunkId: HexChunkId;
-  regionId: HexRegionId;
+  regionId: RegionId;
   terrain: HexTerrain;
   biome: HexBiome;
   feature: HexFeature;

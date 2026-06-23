@@ -1,6 +1,6 @@
 import type { WorldBase } from "@arcanorum/shared";
 import type { RegionColonizationConfig } from "../mechanics/colonizationMechanics";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { AiCountryContext } from "./aiContext";
 
 export type AiColonizationCandidate = {
@@ -80,20 +80,20 @@ export function selectAiColonizationCandidates(params: AiColonizationCandidatePa
     .sort(compareAiColonizationCandidates);
 }
 
-export function buildRegionAdjacencyByIdFromProvinces(
-  provinces: Pick<Adm1ProvinceIndexEntry, "id" | "regionId" | "neighbors">[],
+export function buildRegionAdjacencyByIdFromHexes(
+  hexes: Pick<HexMapIndexEntry, "id" | "regionId" | "neighbors">[],
 ): Record<string, string[]> {
-  const regionByProvinceId = new Map<string, string>();
-  for (const province of provinces) {
-    if (province.regionId) regionByProvinceId.set(province.id, province.regionId);
+  const regionByHexId = new Map<string, string>();
+  for (const province of hexes) {
+    if (province.regionId) regionByHexId.set(province.id, province.regionId);
   }
 
   const adjacency = new Map<string, Set<string>>();
-  for (const province of provinces) {
+  for (const province of hexes) {
     if (!province.regionId) continue;
     const sourceRegionId = province.regionId;
-    for (const neighborProvinceId of province.neighbors) {
-      const targetRegionId = regionByProvinceId.get(neighborProvinceId);
+    for (const neighborHexId of province.neighbors) {
+      const targetRegionId = regionByHexId.get(neighborHexId);
       if (!targetRegionId || targetRegionId === sourceRegionId) continue;
       addRegionNeighbor(adjacency, sourceRegionId, targetRegionId);
       addRegionNeighbor(adjacency, targetRegionId, sourceRegionId);

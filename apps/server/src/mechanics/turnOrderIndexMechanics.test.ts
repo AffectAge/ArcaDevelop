@@ -9,7 +9,7 @@ import {
 } from "./turnOrderIndexMechanics";
 
 describe("turnOrderIndexMechanics", () => {
-  it("adds and removes colonize and build orders from per-turn province indexes", () => {
+  it("adds and removes colonize and build orders from per-turn hex indexes", () => {
     const indexes = makeIndexes();
     const colonizeOrder = makeColonizeOrder({ regionId: "region:a" });
     const buildOrder = makeBuildOrder({ regionId: "region:b" });

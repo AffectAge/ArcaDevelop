@@ -77,13 +77,13 @@ describe("transportCorridorMechanics", () => {
 
   it("plans corridor transfer routes and consumes route capacity", () => {
     const corridorsById = {
-      "corridor:a": makeRouteCorridor({ id: "corridor:a", provinceIds: ["province:seller", "province:hub"], level: 2 }),
-      "corridor:b": makeRouteCorridor({ id: "corridor:b", provinceIds: ["province:hub", "province:buyer"], level: 1 }),
+      "corridor:a": makeRouteCorridor({ id: "corridor:a", hexIds: ["province:seller", "province:hub"], level: 2 }),
+      "corridor:b": makeRouteCorridor({ id: "corridor:b", hexIds: ["province:hub", "province:buyer"], level: 1 }),
     };
     const corridorLoadByModeByCorridorId: Record<string, Partial<Record<"land", number>>> = {};
     const planner = createCorridorRoutePlanner<"land", TransportCorridorRouteEntry<"land">>({
       corridorsById,
-      provinceOwnerById: {
+      hexOwnerById: {
         "province:seller": "country:seller",
         "province:hub": "country:transit",
         "province:buyer": "country:buyer",
@@ -93,15 +93,15 @@ describe("transportCorridorMechanics", () => {
       getMarketMemberCountryIds: (marketId) =>
         marketId === "market:buyer" ? ["country:buyer", "country:transit"] : ["country:seller", "country:transit"],
       getTransitAllowedCountries: (members) => members,
-      normalizeProvinceIds: normalizeStringList,
+      normalizeHexIds: normalizeStringList,
     });
 
     const routes = planner.getCorridorRoutesForTransfer({
       buyerMarketId: "market:buyer",
-      buyerProvinceId: "province:buyer",
+      buyerHexId: "province:buyer",
       buyerCountryId: "country:buyer",
       sellerMarketId: "market:seller",
-      sellerProvinceId: "province:seller",
+      sellerHexId: "province:seller",
       sellerCountryId: "country:seller",
       transportModes: ["land"],
       infraPerUnit: 2,
@@ -129,11 +129,11 @@ describe("transportCorridorMechanics", () => {
 
   it("distinguishes physical corridors from transit-allowed reachable routes", () => {
     const corridorsById = {
-      "corridor:a": makeRouteCorridor({ id: "corridor:a", provinceIds: ["province:seller", "province:blocked", "province:buyer"] }),
+      "corridor:a": makeRouteCorridor({ id: "corridor:a", hexIds: ["province:seller", "province:blocked", "province:buyer"] }),
     };
     const planner = createCorridorRoutePlanner<"land", TransportCorridorRouteEntry<"land">>({
       corridorsById,
-      provinceOwnerById: {
+      hexOwnerById: {
         "province:seller": "country:seller",
         "province:blocked": "country:blocked",
         "province:buyer": "country:buyer",
@@ -142,22 +142,22 @@ describe("transportCorridorMechanics", () => {
       getCorridorLoad: () => 0,
       getMarketMemberCountryIds: () => [],
       getTransitAllowedCountries: (members) => members,
-      normalizeProvinceIds: normalizeStringList,
+      normalizeHexIds: normalizeStringList,
     });
     const routeParams: {
       buyerMarketId: string;
-      buyerProvinceId: string;
+      buyerHexId: string;
       buyerCountryId: string;
       sellerMarketId: string;
-      sellerProvinceId: string;
+      sellerHexId: string;
       sellerCountryId: string;
       transportModes: "land"[];
     } = {
       buyerMarketId: "market:buyer",
-      buyerProvinceId: "province:buyer",
+      buyerHexId: "province:buyer",
       buyerCountryId: "country:buyer",
       sellerMarketId: "market:seller",
-      sellerProvinceId: "province:seller",
+      sellerHexId: "province:seller",
       sellerCountryId: "country:seller",
       transportModes: ["land"],
     };
@@ -199,7 +199,7 @@ function makeRouteCorridor(overrides?: Partial<TransportCorridorRouteEntry<"land
     marketId: "market:buyer",
     status: "active",
     transportMode: "land",
-    provinceIds: ["province:a", "province:b"],
+    hexIds: ["province:a", "province:b"],
     level: 1,
     ...overrides,
   };

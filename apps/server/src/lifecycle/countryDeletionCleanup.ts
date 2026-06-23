@@ -34,7 +34,7 @@ export type CountryWorldBaseCleanupParams = {
   worldBase: WorldBase;
   removeCountryFromEconomyTick?: (countryId: string) => void;
   removeCountryFromActiveColonizationIndex?: (countryId: string) => void;
-  removeRegionFromActiveColonizationIndex?: (provinceId: string) => void;
+  removeRegionFromActiveColonizationIndex?: (hexId: string) => void;
 };
 
 export function cleanupWorldBaseAfterCountryRemovalFromState(params: CountryWorldBaseCleanupParams): void {
@@ -60,24 +60,24 @@ export function cleanupWorldBaseAfterCountryRemovalFromState(params: CountryWorl
   worldBase.diplomacyProposals = worldBase.diplomacyProposals.filter(
     (proposal) => proposal.fromCountryId !== countryId && proposal.toCountryId !== countryId,
   );
-  for (const [provinceId, ownerId] of Object.entries(worldBase.provinceOwner)) {
+  for (const [hexId, ownerId] of Object.entries(worldBase.hexOwner)) {
     if (ownerId === countryId) {
-      delete worldBase.provinceOwner[provinceId];
+      delete worldBase.hexOwner[hexId];
     }
   }
   for (const progress of Object.values(worldBase.colonyProgressByRegion)) {
     delete progress[countryId];
   }
   params.removeCountryFromActiveColonizationIndex?.(countryId);
-  for (const [provinceId, progress] of Object.entries(worldBase.colonyProgressByRegion)) {
+  for (const [hexId, progress] of Object.entries(worldBase.colonyProgressByRegion)) {
     if (Object.keys(progress).length === 0) {
-      delete worldBase.colonyProgressByRegion[provinceId];
-      params.removeRegionFromActiveColonizationIndex?.(provinceId);
+      delete worldBase.colonyProgressByRegion[hexId];
+      params.removeRegionFromActiveColonizationIndex?.(hexId);
     }
   }
-  for (const [provinceId, queue] of Object.entries(worldBase.regionConstructionQueueByRegion)) {
+  for (const [hexId, queue] of Object.entries(worldBase.regionConstructionQueueByRegion)) {
     if (!Array.isArray(queue) || queue.length === 0) continue;
-    worldBase.regionConstructionQueueByRegion[provinceId] = queue.filter((project) => {
+    worldBase.regionConstructionQueueByRegion[hexId] = queue.filter((project) => {
       if (project.requestedByCountryId === countryId) return false;
       if (project.owner.type === "state" && project.owner.countryId === countryId) return false;
       return true;

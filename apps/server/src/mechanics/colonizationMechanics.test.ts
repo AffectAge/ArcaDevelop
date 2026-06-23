@@ -67,8 +67,8 @@ describe("colonizationMechanics", () => {
     const updated = recalculateAllRegionColonizationCosts({
       regionIds: ["region:auto", "region:manual"],
       worldBase,
-      getRegionDerivedColonizationCosts: (provinceId, rates) => ({
-        pointsCost: provinceId === "region:auto" ? (rates ? 10 : 20) : 30,
+      getRegionDerivedColonizationCosts: (hexId, rates) => ({
+        pointsCost: hexId === "region:auto" ? (rates ? 10 : 20) : 30,
         ducatsCost: 0,
       }),
       previousRates: { pointsCostPer1000Km2: 1, ducatsCostPer1000Km2: 0 },
@@ -120,9 +120,9 @@ describe("colonizationMechanics", () => {
     rebuildActiveColonizationIndexFromWorldBase({
       activeColonizeRegionsByCountry: activeIndex,
       worldBase,
-      getRegionColonizationConfig: (provinceId) => ({
+      getRegionColonizationConfig: (hexId) => ({
         cost: 10,
-        disabled: provinceId === "region:disabled",
+        disabled: hexId === "region:disabled",
         manualCost: false,
       }),
     });
@@ -253,9 +253,9 @@ describe("colonizationMechanics", () => {
       touchedRegionIds: new Set(["region:a", "region:owned", "region:disabled"]),
       worldBase,
       activeColonizeRegionsByCountry: activeIndex,
-      getRegionColonizationConfig: (provinceId) => ({
+      getRegionColonizationConfig: (hexId) => ({
         cost: 20,
-        disabled: provinceId === "region:disabled",
+        disabled: hexId === "region:disabled",
         manualCost: false,
       }),
       settlementEnabled: true,

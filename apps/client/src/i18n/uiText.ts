@@ -48,7 +48,7 @@ export type UiTextKey =
   | "adminPanel.loadingCountries"
   | "adminPanel.idLabel"
   | "adminPanel.manualCost"
-  | "adminPanel.neutralProvince"
+  | "adminPanel.neutralHex"
   | "adminPanel.populationCleared"
   | "adminPanel.populationClearFailed"
   | "adminPanel.populationGenerateTitle"
@@ -86,11 +86,11 @@ export type UiTextKey =
   | "adminPanel.reset"
   | "adminPanel.resetCostToAuto"
   | "adminPanel.selectCountry"
-  | "adminPanel.selectProvince"
+  | "adminPanel.selectHex"
   | "adminPanel.selectRegion"
   | "adminPanel.saveChanges"
   | "adminPanel.saveRegionPopulation"
-  | "adminPanel.saveProvince"
+  | "adminPanel.saveHex"
   | "adminPanel.provinceSearchPlaceholder"
   | "adminPanel.generatePopulation"
   | "adminPanel.scope.country"
@@ -149,11 +149,11 @@ export type UiTextKey =
   | "contentPanel.category.modifiers"
   | "contentPanel.category.parties"
   | "contentPanel.category.professions"
-  | "contentPanel.category.provinceClimates"
-  | "contentPanel.category.provinceContinents"
-  | "contentPanel.category.provinceLandscapes"
-  | "contentPanel.category.provinceStrategicRegions"
-  | "contentPanel.category.provinceTypes"
+  | "contentPanel.category.hexClimates"
+  | "contentPanel.category.hexContinents"
+  | "contentPanel.category.hexLandscapes"
+  | "contentPanel.category.hexStrategicRegions"
+  | "contentPanel.category.hexTypes"
   | "contentPanel.category.races"
   | "contentPanel.category.religions"
   | "contentPanel.category.resourceCategories"
@@ -372,7 +372,7 @@ export type UiTextKey =
   | "contentPanel.allowedCountries"
   | "contentPanel.allowedCountriesTooltip"
   | "contentPanel.allowedLandscape"
-  | "contentPanel.allowedProvinceTypes"
+  | "contentPanel.allowedHexTypes"
   | "contentPanel.allowedStrategicRegions"
   | "contentPanel.anyValue"
   | "contentPanel.countriesNotFound"
@@ -395,7 +395,7 @@ export type UiTextKey =
   | "contentPanel.deniedCountries"
   | "contentPanel.deniedCountriesTooltip"
   | "contentPanel.deniedLandscape"
-  | "contentPanel.deniedProvinceTypes"
+  | "contentPanel.deniedHexTypes"
   | "contentPanel.deniedStrategicRegions"
   | "contentPanel.globalLimit"
   | "contentPanel.globalLimitTooltip"
@@ -416,7 +416,7 @@ export type UiTextKey =
   | "contentPanel.option.ideologyRule.lawActive"
   | "contentPanel.option.ideologyRule.hasBuilding"
   | "contentPanel.option.ideologyRule.countryModifierActive"
-  | "contentPanel.option.ideologyRule.provinceModifierActive"
+  | "contentPanel.option.ideologyRule.regionModifierActive"
   | "contentPanel.placeholder.solThreshold"
   | "contentPanel.placeholder.radicalsPct"
   | "contentPanel.placeholder.loyalistsPct"
@@ -559,36 +559,36 @@ export type UiTextKey =
   | "contentPanel.meta.resourceCategories.namePlaceholder"
   | "contentPanel.meta.resourceCategories.descriptionPlaceholder"
   | "contentPanel.meta.resourceCategories.sectionTitle"
-  | "contentPanel.meta.provinceTypes.singular"
-  | "contentPanel.meta.provinceTypes.createBaseName"
-  | "contentPanel.meta.provinceTypes.createLabel"
-  | "contentPanel.meta.provinceTypes.namePlaceholder"
-  | "contentPanel.meta.provinceTypes.descriptionPlaceholder"
-  | "contentPanel.meta.provinceTypes.sectionTitle"
-  | "contentPanel.meta.provinceClimates.singular"
-  | "contentPanel.meta.provinceClimates.createBaseName"
-  | "contentPanel.meta.provinceClimates.createLabel"
-  | "contentPanel.meta.provinceClimates.namePlaceholder"
-  | "contentPanel.meta.provinceClimates.descriptionPlaceholder"
-  | "contentPanel.meta.provinceClimates.sectionTitle"
-  | "contentPanel.meta.provinceLandscapes.singular"
-  | "contentPanel.meta.provinceLandscapes.createBaseName"
-  | "contentPanel.meta.provinceLandscapes.createLabel"
-  | "contentPanel.meta.provinceLandscapes.namePlaceholder"
-  | "contentPanel.meta.provinceLandscapes.descriptionPlaceholder"
-  | "contentPanel.meta.provinceLandscapes.sectionTitle"
-  | "contentPanel.meta.provinceContinents.singular"
-  | "contentPanel.meta.provinceContinents.createBaseName"
-  | "contentPanel.meta.provinceContinents.createLabel"
-  | "contentPanel.meta.provinceContinents.namePlaceholder"
-  | "contentPanel.meta.provinceContinents.descriptionPlaceholder"
-  | "contentPanel.meta.provinceContinents.sectionTitle"
-  | "contentPanel.meta.provinceStrategicRegions.singular"
-  | "contentPanel.meta.provinceStrategicRegions.createBaseName"
-  | "contentPanel.meta.provinceStrategicRegions.createLabel"
-  | "contentPanel.meta.provinceStrategicRegions.namePlaceholder"
-  | "contentPanel.meta.provinceStrategicRegions.descriptionPlaceholder"
-  | "contentPanel.meta.provinceStrategicRegions.sectionTitle"
+  | "contentPanel.meta.hexTypes.singular"
+  | "contentPanel.meta.hexTypes.createBaseName"
+  | "contentPanel.meta.hexTypes.createLabel"
+  | "contentPanel.meta.hexTypes.namePlaceholder"
+  | "contentPanel.meta.hexTypes.descriptionPlaceholder"
+  | "contentPanel.meta.hexTypes.sectionTitle"
+  | "contentPanel.meta.hexClimates.singular"
+  | "contentPanel.meta.hexClimates.createBaseName"
+  | "contentPanel.meta.hexClimates.createLabel"
+  | "contentPanel.meta.hexClimates.namePlaceholder"
+  | "contentPanel.meta.hexClimates.descriptionPlaceholder"
+  | "contentPanel.meta.hexClimates.sectionTitle"
+  | "contentPanel.meta.hexLandscapes.singular"
+  | "contentPanel.meta.hexLandscapes.createBaseName"
+  | "contentPanel.meta.hexLandscapes.createLabel"
+  | "contentPanel.meta.hexLandscapes.namePlaceholder"
+  | "contentPanel.meta.hexLandscapes.descriptionPlaceholder"
+  | "contentPanel.meta.hexLandscapes.sectionTitle"
+  | "contentPanel.meta.hexContinents.singular"
+  | "contentPanel.meta.hexContinents.createBaseName"
+  | "contentPanel.meta.hexContinents.createLabel"
+  | "contentPanel.meta.hexContinents.namePlaceholder"
+  | "contentPanel.meta.hexContinents.descriptionPlaceholder"
+  | "contentPanel.meta.hexContinents.sectionTitle"
+  | "contentPanel.meta.hexStrategicRegions.singular"
+  | "contentPanel.meta.hexStrategicRegions.createBaseName"
+  | "contentPanel.meta.hexStrategicRegions.createLabel"
+  | "contentPanel.meta.hexStrategicRegions.namePlaceholder"
+  | "contentPanel.meta.hexStrategicRegions.descriptionPlaceholder"
+  | "contentPanel.meta.hexStrategicRegions.sectionTitle"
   | "contentPanel.meta.religions.singular"
   | "contentPanel.meta.religions.createBaseName"
   | "contentPanel.meta.religions.createLabel"
@@ -777,7 +777,7 @@ export type UiTextKey =
   | "contentPanel.option.modifierScope.country"
   | "contentPanel.option.modifierScope.market"
   | "contentPanel.option.modifierScope.pop"
-  | "contentPanel.option.modifierScope.province"
+  | "contentPanel.option.modifierScope.region"
   | "contentPanel.option.needCategory.basic"
   | "contentPanel.option.needCategory.comfort"
   | "contentPanel.option.needCategory.luxury"
@@ -1020,7 +1020,7 @@ export type UiTextKey =
   | "gameSettings.customization.flag"
   | "gameSettings.customization.recolor"
   | "gameSettings.customization.renameCountry"
-  | "gameSettings.customization.renameProvince"
+  | "gameSettings.customization.renameHex"
   | "gameSettings.customizationSaved"
   | "gameSettings.customizationSaveFailed"
   | "gameSettings.customizationTitle"
@@ -1203,7 +1203,7 @@ export type UiTextKey =
   | "civilopedia.admin.provinceDefaultBody"
   | "civilopedia.admin.provinceDefaultSummary"
   | "civilopedia.admin.provinceDefaultTitle"
-  | "civilopedia.admin.provinceIdLine"
+  | "civilopedia.admin.hexIdLine"
   | "civilopedia.admin.relatedCsv"
   | "civilopedia.admin.removeCategoryBlocked"
   | "civilopedia.admin.removeCategoryBlockedDescription"
@@ -1321,7 +1321,7 @@ export type UiTextKey =
   | "elections.voteShare"
   | "army.air"
   | "army.attack"
-  | "army.baseProvince"
+  | "army.baseHex"
   | "army.battleSlots"
   | "army.branchTemplates"
   | "army.cancel"
@@ -1457,10 +1457,10 @@ export type UiTextKey =
   | "map.mode.regions.shortLabel"
   | "map.mode.regions.legendLabel"
   | "map.mode.regions.legendDescription"
-  | "map.mode.provinceColors.label"
-  | "map.mode.provinceColors.shortLabel"
-  | "map.mode.provinceColors.legendLabel"
-  | "map.mode.provinceColors.legendDescription"
+  | "map.mode.hexColors.label"
+  | "map.mode.hexColors.shortLabel"
+  | "map.mode.hexColors.legendLabel"
+  | "map.mode.hexColors.legendDescription"
   | "map.mode.diplomacy.label"
   | "map.mode.diplomacy.shortLabel"
   | "map.mode.diplomacy.legendLabel"
@@ -1569,7 +1569,7 @@ export type UiTextKey =
   | "map.hover.market"
   | "map.hover.noMarket"
   | "map.hover.marketCapital"
-  | "map.hover.thisProvince"
+  | "map.hover.thisHex"
   | "map.hover.corridor"
   | "map.hover.corridorPasses"
   | "map.hover.noCorridor"
@@ -1609,7 +1609,7 @@ export type UiTextKey =
   | "map.event.renameMessage"
   | "map.toast.renameOwnOnly"
   | "map.toast.renameInsufficientDucats"
-  | "map.toast.renameProvinceNotFound"
+  | "map.toast.renameHexNotFound"
   | "map.toast.renameInvalid"
   | "map.toast.renameFailed"
   | "modifiers.activeCount"
@@ -2420,7 +2420,7 @@ export type UiTextKey =
   | "budget.category.colonization"
   | "budget.category.construction"
   | "budget.category.customization"
-  | "budget.category.provinceRename"
+  | "budget.category.hexRename"
   | "budget.category.subsidies"
   | "budget.chart.expenses"
   | "budget.chart.expensesByCategory"
@@ -2451,8 +2451,8 @@ export type UiTextKey =
   | "budget.total.expenses"
   | "budget.total.income"
   | "provinceContext.openColonization"
-  | "provinceContext.openProvinceKnowledge"
-  | "provinceContext.createProvinceKnowledge"
+  | "provinceContext.openHexKnowledge"
+  | "provinceContext.createHexKnowledge"
   | "provinceContext.openAdminEditor"
   | "shell.action.army"
   | "shell.action.armyDescription"
@@ -2539,7 +2539,7 @@ export type UiTextKey =
   | "shell.entryLoadingDescription"
   | "shell.entryLoadingStatus"
   | "shell.entryReadyStatus"
-  | "shell.entryProvinceIndex"
+  | "shell.entryHexIndex"
   | "shell.entryPublicUi"
   | "shell.entryWorldState"
   | "shell.forceResolve"
@@ -2653,7 +2653,7 @@ export type UiTextKey =
   | "topBar.clientSettings"
   | "topBar.colonizationLimit"
   | "topBar.contentPanel"
-  | "topBar.controlledProvinces"
+  | "topBar.controlledHexes"
   | "topBar.countryDetails"
   | "topBar.currentTurn"
   | "topBar.currentValue"
@@ -2769,7 +2769,7 @@ export type UiTextKey =
   | "resourceLedger.source.construction.corridor"
   | "resourceLedger.source.construction.demolition"
   | "resourceLedger.source.customization.country"
-  | "resourceLedger.source.customization.provinceRename"
+  | "resourceLedger.source.customization.hexRename"
   | "resourceLedger.source.diplomacy.transfer"
   | "resourceLedger.source.generic"
   | "resourceLedger.source.technology.research"
@@ -2828,7 +2828,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "adminPanel.category.countries": "Country management",
     "adminPanel.category.notifications": "Notification broadcast",
     "adminPanel.category.population": "Population management",
-    "adminPanel.category.provinces": "Provinces / Colonization",
+    "adminPanel.category.provinces": "Hexes / Colonization",
     "adminPanel.clearPopulation": "Clear population",
     "adminPanel.clearRegion": "Clear region",
     "adminPanel.autoCost": "Auto (by area)",
@@ -2856,7 +2856,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "adminPanel.idLabel": "ID:",
     "adminPanel.loadingCountries": "Loading countries...",
     "adminPanel.manualCost": "Manual price",
-    "adminPanel.neutralProvince": "Neutral province",
+    "adminPanel.neutralHex": "Neutral province",
     "adminPanel.populationCleared": "Population cleared: {count} regions",
     "adminPanel.populationClearFailed": "Failed to clear population",
     "adminPanel.populationGenerateTitle": "Population generation",
@@ -2895,10 +2895,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "adminPanel.resetCostToAuto": "Reset price to auto (by area)",
     "adminPanel.saveChanges": "Save changes",
     "adminPanel.saveRegionPopulation": "Save region population",
-    "adminPanel.saveProvince": "Save province",
+    "adminPanel.saveHex": "Save province",
     "adminPanel.generatePopulation": "Generate population",
     "adminPanel.selectCountry": "Select a country",
-    "adminPanel.selectProvince": "Select a province",
+    "adminPanel.selectHex": "Select a province",
     "adminPanel.selectRegion": "Select a region",
     "adminPanel.provinceSearchPlaceholder": "Search by name or ID...",
     "adminPanel.scope.country": "Country",
@@ -2957,11 +2957,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.category.modifiers": "Modifiers",
     "contentPanel.category.parties": "Parties",
     "contentPanel.category.professions": "Professions",
-    "contentPanel.category.provinceClimates": "Climates",
-    "contentPanel.category.provinceContinents": "Continents",
-    "contentPanel.category.provinceLandscapes": "Landscapes",
-    "contentPanel.category.provinceStrategicRegions": "Strategic regions",
-    "contentPanel.category.provinceTypes": "Province types",
+    "contentPanel.category.hexClimates": "Climates",
+    "contentPanel.category.hexContinents": "Continents",
+    "contentPanel.category.hexLandscapes": "Landscapes",
+    "contentPanel.category.hexStrategicRegions": "Strategic regions",
+    "contentPanel.category.hexTypes": "Hex types",
     "contentPanel.category.races": "Races",
     "contentPanel.category.religions": "Religions",
     "contentPanel.category.resourceCategories": "Infrastructure categories",
@@ -3128,7 +3128,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.extraction": "Deposit extraction",
     "contentPanel.extractionAmountTooltip": "How many units are extracted per turn at 100% productivity.",
     "contentPanel.extractionGoodTooltip": "Which good the building extracts directly from province deposits.",
-    "contentPanel.extractionTooltip": "Province resource extraction settings. If a resource is set, the building will try to extract it each turn.",
+    "contentPanel.extractionTooltip": "Hex resource extraction settings. If a resource is set, the building will try to extract it each turn.",
     "contentPanel.industryTooltip": "The industry this building belongs to, used in UI filters and grouping.",
     "contentPanel.maxDurabilityTooltip": "Maximum durability of a building instance. Durability caps productivity.",
     "contentPanel.maxLevelTooltip": "Maximum level of one building instance. Auto-upgrades are not queued after this value.",
@@ -3170,7 +3170,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.allowedCountries": "Allowed countries ({count})",
     "contentPanel.allowedCountriesTooltip": "Multi-select: when the list is not empty, only these countries can build it, except explicitly denied ones.",
     "contentPanel.allowedLandscape": "Allowed landscape",
-    "contentPanel.allowedProvinceTypes": "Allowed province types",
+    "contentPanel.allowedHexTypes": "Allowed province types",
     "contentPanel.allowedStrategicRegions": "Allowed strategic regions",
     "contentPanel.anyValue": "Any value",
     "contentPanel.countriesNotFound": "No countries found",
@@ -3193,7 +3193,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.deniedCountries": "Denied countries ({count})",
     "contentPanel.deniedCountriesTooltip": "Countries in this list cannot build this building, even if they are allowed.",
     "contentPanel.deniedLandscape": "Denied landscape",
-    "contentPanel.deniedProvinceTypes": "Denied province types",
+    "contentPanel.deniedHexTypes": "Denied province types",
     "contentPanel.deniedStrategicRegions": "Denied strategic regions",
     "contentPanel.globalLimit": "Global limit (whole world):",
     "contentPanel.globalLimitTooltip": "Empty means no restrictions. The right side shows the current used/limit counter.",
@@ -3212,9 +3212,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.option.ideologyRule.religionIs": "Religion",
     "contentPanel.option.ideologyRule.cultureIs": "Culture",
     "contentPanel.option.ideologyRule.lawActive": "Active law",
-    "contentPanel.option.ideologyRule.hasBuilding": "Province building",
+    "contentPanel.option.ideologyRule.hasBuilding": "Hex building",
     "contentPanel.option.ideologyRule.countryModifierActive": "Country modifier",
-    "contentPanel.option.ideologyRule.provinceModifierActive": "Province modifier",
+    "contentPanel.option.ideologyRule.regionModifierActive": "Region modifier",
     "contentPanel.placeholder.solThreshold": "SoL threshold",
     "contentPanel.placeholder.radicalsPct": "% radicals",
     "contentPanel.placeholder.loyalistsPct": "% loyalists",
@@ -3236,7 +3236,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.option.parliamentPower.government.none": "No effect",
     "contentPanel.option.parliamentPower.government.confidenceVote": "Confidence vote",
     "contentPanel.option.parliamentPower.government.appointGovernment": "Appoints government",
-    "contentPanel.provinceCriteria": "Province conditions",
+    "contentPanel.provinceCriteria": "Hex conditions",
     "contentPanel.provinceCriteriaHint": "Values are selected from content categories. An empty allowed list means any value, and denial has priority over allowance.",
     "contentPanel.provinceCriteriaTooltip": "Restrictions from GeoJSON province data: type, climate, landscape, continent, strategic region, and radiation.",
     "contentPanel.quantityLimits": "Quantity limits",
@@ -3367,36 +3367,36 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.meta.resourceCategories.namePlaceholder": "Infrastructure category name",
     "contentPanel.meta.resourceCategories.descriptionPlaceholder": "Brief infrastructure category description",
     "contentPanel.meta.resourceCategories.sectionTitle": "Infrastructure category creation and editing section",
-    "contentPanel.meta.provinceTypes.singular": "province type",
-    "contentPanel.meta.provinceTypes.createBaseName": "New province type",
-    "contentPanel.meta.provinceTypes.createLabel": "Create type",
-    "contentPanel.meta.provinceTypes.namePlaceholder": "Province type name",
-    "contentPanel.meta.provinceTypes.descriptionPlaceholder": "Brief province type description",
-    "contentPanel.meta.provinceTypes.sectionTitle": "Province type creation and editing section",
-    "contentPanel.meta.provinceClimates.singular": "climate",
-    "contentPanel.meta.provinceClimates.createBaseName": "New climate",
-    "contentPanel.meta.provinceClimates.createLabel": "Create climate",
-    "contentPanel.meta.provinceClimates.namePlaceholder": "Climate name",
-    "contentPanel.meta.provinceClimates.descriptionPlaceholder": "Brief climate description",
-    "contentPanel.meta.provinceClimates.sectionTitle": "Climate creation and editing section",
-    "contentPanel.meta.provinceLandscapes.singular": "landscape",
-    "contentPanel.meta.provinceLandscapes.createBaseName": "New landscape",
-    "contentPanel.meta.provinceLandscapes.createLabel": "Create landscape",
-    "contentPanel.meta.provinceLandscapes.namePlaceholder": "Landscape name",
-    "contentPanel.meta.provinceLandscapes.descriptionPlaceholder": "Brief landscape description",
-    "contentPanel.meta.provinceLandscapes.sectionTitle": "Landscape creation and editing section",
-    "contentPanel.meta.provinceContinents.singular": "continent",
-    "contentPanel.meta.provinceContinents.createBaseName": "New continent",
-    "contentPanel.meta.provinceContinents.createLabel": "Create continent",
-    "contentPanel.meta.provinceContinents.namePlaceholder": "Continent name",
-    "contentPanel.meta.provinceContinents.descriptionPlaceholder": "Brief continent description",
-    "contentPanel.meta.provinceContinents.sectionTitle": "Continent creation and editing section",
-    "contentPanel.meta.provinceStrategicRegions.singular": "strategic region",
-    "contentPanel.meta.provinceStrategicRegions.createBaseName": "New strategic region",
-    "contentPanel.meta.provinceStrategicRegions.createLabel": "Create region",
-    "contentPanel.meta.provinceStrategicRegions.namePlaceholder": "Strategic region name",
-    "contentPanel.meta.provinceStrategicRegions.descriptionPlaceholder": "Brief strategic region description",
-    "contentPanel.meta.provinceStrategicRegions.sectionTitle": "Strategic region creation and editing section",
+    "contentPanel.meta.hexTypes.singular": "province type",
+    "contentPanel.meta.hexTypes.createBaseName": "New province type",
+    "contentPanel.meta.hexTypes.createLabel": "Create type",
+    "contentPanel.meta.hexTypes.namePlaceholder": "Hex type name",
+    "contentPanel.meta.hexTypes.descriptionPlaceholder": "Brief province type description",
+    "contentPanel.meta.hexTypes.sectionTitle": "Hex type creation and editing section",
+    "contentPanel.meta.hexClimates.singular": "climate",
+    "contentPanel.meta.hexClimates.createBaseName": "New climate",
+    "contentPanel.meta.hexClimates.createLabel": "Create climate",
+    "contentPanel.meta.hexClimates.namePlaceholder": "Climate name",
+    "contentPanel.meta.hexClimates.descriptionPlaceholder": "Brief climate description",
+    "contentPanel.meta.hexClimates.sectionTitle": "Climate creation and editing section",
+    "contentPanel.meta.hexLandscapes.singular": "landscape",
+    "contentPanel.meta.hexLandscapes.createBaseName": "New landscape",
+    "contentPanel.meta.hexLandscapes.createLabel": "Create landscape",
+    "contentPanel.meta.hexLandscapes.namePlaceholder": "Landscape name",
+    "contentPanel.meta.hexLandscapes.descriptionPlaceholder": "Brief landscape description",
+    "contentPanel.meta.hexLandscapes.sectionTitle": "Landscape creation and editing section",
+    "contentPanel.meta.hexContinents.singular": "continent",
+    "contentPanel.meta.hexContinents.createBaseName": "New continent",
+    "contentPanel.meta.hexContinents.createLabel": "Create continent",
+    "contentPanel.meta.hexContinents.namePlaceholder": "Continent name",
+    "contentPanel.meta.hexContinents.descriptionPlaceholder": "Brief continent description",
+    "contentPanel.meta.hexContinents.sectionTitle": "Continent creation and editing section",
+    "contentPanel.meta.hexStrategicRegions.singular": "strategic region",
+    "contentPanel.meta.hexStrategicRegions.createBaseName": "New strategic region",
+    "contentPanel.meta.hexStrategicRegions.createLabel": "Create region",
+    "contentPanel.meta.hexStrategicRegions.namePlaceholder": "Strategic region name",
+    "contentPanel.meta.hexStrategicRegions.descriptionPlaceholder": "Brief strategic region description",
+    "contentPanel.meta.hexStrategicRegions.sectionTitle": "Strategic region creation and editing section",
     "contentPanel.meta.religions.singular": "religion",
     "contentPanel.meta.religions.createBaseName": "New religion",
     "contentPanel.meta.religions.createLabel": "Create religion",
@@ -3585,7 +3585,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.option.modifierScope.country": "Country",
     "contentPanel.option.modifierScope.market": "Market",
     "contentPanel.option.modifierScope.pop": "Population",
-    "contentPanel.option.modifierScope.province": "Province",
+    "contentPanel.option.modifierScope.region": "Region",
     "contentPanel.option.needCategory.basic": "Basic",
     "contentPanel.option.needCategory.comfort": "Comfort",
     "contentPanel.option.needCategory.luxury": "Luxury",
@@ -3828,7 +3828,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "gameSettings.customization.flag": "Change flag",
     "gameSettings.customization.recolor": "Change color",
     "gameSettings.customization.renameCountry": "Rename country",
-    "gameSettings.customization.renameProvince": "Rename province",
+    "gameSettings.customization.renameHex": "Rename province",
     "gameSettings.customizationSaved": "Customization prices saved",
     "gameSettings.customizationSaveFailed": "Failed to save customization prices",
     "gameSettings.customizationTitle": "Country change prices in ducats",
@@ -4006,12 +4006,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "civilopedia.admin.inlineUpload": "Upload 64x64",
     "civilopedia.admin.keywords": "Tags (comma-separated)",
     "civilopedia.admin.noImage": "No image",
-    "civilopedia.admin.provinceArticleMissing": "Province article not found",
-    "civilopedia.admin.provinceCategory": "Provinces",
+    "civilopedia.admin.provinceArticleMissing": "Hex article not found",
+    "civilopedia.admin.provinceCategory": "Hexes",
     "civilopedia.admin.provinceDefaultBody": "Fill in the description, strategic value, colonization specifics, and historical notes.",
     "civilopedia.admin.provinceDefaultSummary": "Reference article for province {province}.",
-    "civilopedia.admin.provinceDefaultTitle": "Province: {province}",
-    "civilopedia.admin.provinceIdLine": "Province ID: {provinceId}",
+    "civilopedia.admin.provinceDefaultTitle": "Hex: {province}",
+    "civilopedia.admin.hexIdLine": "Hex ID: {hexId}",
     "civilopedia.admin.relatedCsv": "Related articles (comma-separated IDs)",
     "civilopedia.admin.removeCategoryBlocked": "Cannot delete category",
     "civilopedia.admin.removeCategoryBlockedDescription": "Move or delete articles from this category first",
@@ -4129,7 +4129,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "elections.voteShare": "Votes: {value}",
     "army.air": "Air wings",
     "army.attack": "Attack",
-    "army.baseProvince": "Base province",
+    "army.baseHex": "Base hex",
     "army.battleSlots": "Combat slots",
     "army.branchTemplates": "Templates: {branch}",
     "army.cancel": "Cancel",
@@ -4264,11 +4264,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.mode.regions.label": "Regions",
     "map.mode.regions.shortLabel": "Regions",
     "map.mode.regions.legendLabel": "State region",
-    "map.mode.regions.legendDescription": "Provinces grouped by their gameplay region",
-    "map.mode.provinceColors.label": "Province colors",
-    "map.mode.provinceColors.shortLabel": "Provinces",
-    "map.mode.provinceColors.legendLabel": "Province",
-    "map.mode.provinceColors.legendDescription": "Authored scenario colors for lightweight map provinces",
+    "map.mode.regions.legendDescription": "Hexes grouped by their gameplay region",
+    "map.mode.hexColors.label": "Hex colors",
+    "map.mode.hexColors.shortLabel": "Hexes",
+    "map.mode.hexColors.legendLabel": "Hex",
+    "map.mode.hexColors.legendDescription": "Authored scenario colors for lightweight map provinces",
     "map.mode.diplomacy.label": "Diplomacy",
     "map.mode.diplomacy.shortLabel": "Diplomacy",
     "map.mode.diplomacy.legendLabel": "Treaties",
@@ -4276,11 +4276,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.mode.markets.label": "Markets",
     "map.mode.markets.shortLabel": "Markets",
     "map.mode.markets.legendLabel": "Market",
-    "map.mode.markets.legendDescription": "Provinces by market membership",
+    "map.mode.markets.legendDescription": "Hexes by market membership",
     "map.mode.population.label": "Population",
     "map.mode.population.shortLabel": "Population",
     "map.mode.population.legendLabel": "Metric",
-    "map.mode.population.legendDescription": "Province demographics and quality of life",
+    "map.mode.population.legendDescription": "Hex demographics and quality of life",
     "map.mode.resources.label": "Resources",
     "map.mode.resources.shortLabel": "Resources",
     "map.mode.resources.legendLabel": "Deposits",
@@ -4377,7 +4377,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.hover.market": "Market",
     "map.hover.noMarket": "no market",
     "map.hover.marketCapital": "Market capital",
-    "map.hover.thisProvince": "this province",
+    "map.hover.thisHex": "this province",
     "map.hover.corridor": "Corridor",
     "map.hover.corridorPasses": "passes through province",
     "map.hover.noCorridor": "no corridor",
@@ -4406,19 +4406,19 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.hover.queued": "queued",
     "map.units.perKm2": "/km2",
     "map.toast.explorationStarted": "Prospecting started",
-    "map.toast.explorationStartedDescription": "Province {province}",
+    "map.toast.explorationStartedDescription": "Hex {province}",
     "map.toast.explorationAlreadyQueued": "Prospecting is already queued",
     "map.toast.explorationRegionNotControlled": "Prospecting is available only in controlled regions",
     "map.toast.explorationStartFailed": "Failed to start prospecting",
     "map.toast.renameEmpty": "Name cannot be empty",
     "map.toast.renameTooLong": "Maximum 64 characters",
-    "map.toast.renameSuccess": "Province renamed (-{ducats} ducats)",
-    "map.event.renameTitle": "Province renamed",
+    "map.toast.renameSuccess": "Hex renamed (-{ducats} ducats)",
+    "map.event.renameTitle": "Hex renamed",
     "map.event.renameMessage": "You renamed the province to \"{province}\"",
     "map.toast.renameOwnOnly": "Only your own provinces can be renamed",
     "map.toast.renameInsufficientDucats": "Not enough ducats",
-    "map.toast.renameProvinceNotFound": "Province not found",
-    "map.toast.renameInvalid": "Invalid province name",
+    "map.toast.renameHexNotFound": "Hex not found",
+    "map.toast.renameInvalid": "Invalid hex name",
     "map.toast.renameFailed": "Failed to rename province",
     "modifiers.activeCount": "Active effects: {count}",
     "modifiers.column.effect": "Effect",
@@ -4436,7 +4436,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "modifiers.scope.country": "Country",
     "modifiers.scope.market": "Market",
     "modifiers.scope.pop": "Population",
-    "modifiers.scope.province": "Province",
+    "modifiers.scope.province": "Hex",
     "modifiers.source.event": "Event",
     "modifiers.source.law": "Law",
     "modifiers.source.modifier": "Modifier",
@@ -4595,7 +4595,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "provincePanel.pin": "Pin panel",
     "provincePanel.unpin": "Unpin panel",
     "corridorBuild.title": "Corridor construction",
-    "corridorBuild.summary": "Route points: {points}. Provinces: {provinces}. Click your provinces to lay the path.",
+    "corridorBuild.summary": "Route points: {points}. Hexes: {provinces}. Click your provinces to lay the path.",
     "corridorBuild.undoPoint": "Remove point",
     "colonization.title": "Colonization: {region}",
     "colonization.fallbackRegion": "Region",
@@ -5228,7 +5228,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "budget.category.colonization": "Colonization support",
     "budget.category.construction": "Construction projects",
     "budget.category.customization": "Country customization",
-    "budget.category.provinceRename": "Province renaming",
+    "budget.category.hexRename": "Hex renaming",
     "budget.category.subsidies": "State subsidies",
     "budget.chart.expenses": "Expenses",
     "budget.chart.expensesByCategory": "Expenses by category chart",
@@ -5259,9 +5259,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "budget.total.expenses": "Total expenses",
     "budget.total.income": "Total income",
     "provinceContext.openColonization": "Open colonization",
-    "provinceContext.openProvinceKnowledge": "Province article",
-    "provinceContext.createProvinceKnowledge": "Create province article",
-    "provinceContext.openAdminEditor": "Province management",
+    "provinceContext.openHexKnowledge": "Hex article",
+    "provinceContext.createHexKnowledge": "Create province article",
+    "provinceContext.openAdminEditor": "Hex management",
     "shell.action.army": "Command army",
     "shell.action.armyDescription": "Open formations, routes, and military orders.",
     "shell.action.budget": "State budget",
@@ -5347,7 +5347,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.entryLoadingDescription": "Preparing the map, settings, and your country state",
     "shell.entryLoadingStatus": "Loading game data",
     "shell.entryReadyStatus": "ready",
-    "shell.entryProvinceIndex": "Provinces",
+    "shell.entryHexIndex": "Hexes",
     "shell.entryPublicUi": "UI settings",
     "shell.entryWorldState": "World state",
     "shell.forceResolve": "Force resolve",
@@ -5467,7 +5467,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "resourceLedger.source.construction.corridor": "Transport corridor",
     "resourceLedger.source.construction.demolition": "Building demolition",
     "resourceLedger.source.customization.country": "Country customization",
-    "resourceLedger.source.customization.provinceRename": "Province rename",
+    "resourceLedger.source.customization.hexRename": "Hex rename",
     "resourceLedger.source.diplomacy.transfer": "Diplomatic transfer",
     "resourceLedger.source.generic": "Resource flow",
     "resourceLedger.source.technology.research": "Technology research",
@@ -5489,7 +5489,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "topBar.clientSettings": "Client settings",
     "topBar.colonizationLimit": "Colonization limit",
     "topBar.contentPanel": "Content panel",
-    "topBar.controlledProvinces": "Controlled provinces",
+    "topBar.controlledHexes": "Controlled provinces",
     "topBar.countryDetails": "Country and holdings details",
     "topBar.currentTurn": "Current turn",
     "topBar.currentValue": "Current value",
@@ -5635,7 +5635,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "adminPanel.category.countries": "Управление странами",
     "adminPanel.category.notifications": "Рассылка уведомлений",
     "adminPanel.category.population": "Управление населением",
-    "adminPanel.category.provinces": "Провинции / Колонизация",
+    "adminPanel.category.provinces": "Гексы / Колонизация",
     "adminPanel.clearPopulation": "Очистить население",
     "adminPanel.clearRegion": "Очистить регион",
     "adminPanel.autoCost": "Авто (по площади)",
@@ -5663,7 +5663,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "adminPanel.idLabel": "ID:",
     "adminPanel.loadingCountries": "Загрузка стран...",
     "adminPanel.manualCost": "Ручная цена",
-    "adminPanel.neutralProvince": "Нейтральная провинция",
+    "adminPanel.neutralHex": "Нейтральная провинция",
     "adminPanel.populationCleared": "Население очищено: {count} регионов",
     "adminPanel.populationClearFailed": "Не удалось очистить население",
     "adminPanel.populationGenerateTitle": "Генерация населения",
@@ -5702,10 +5702,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "adminPanel.resetCostToAuto": "Сбросить цену к авто (по площади)",
     "adminPanel.saveChanges": "Сохранить изменения",
     "adminPanel.saveRegionPopulation": "Сохранить население региона",
-    "adminPanel.saveProvince": "Сохранить провинцию",
+    "adminPanel.saveHex": "Сохранить провинцию",
     "adminPanel.generatePopulation": "Сгенерировать население",
     "adminPanel.selectCountry": "Выберите страну",
-    "adminPanel.selectProvince": "Выберите провинцию",
+    "adminPanel.selectHex": "Выберите провинцию",
     "adminPanel.selectRegion": "Выберите регион",
     "adminPanel.provinceSearchPlaceholder": "Поиск по названию или ID...",
     "adminPanel.scope.country": "Страна",
@@ -5731,7 +5731,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "common.no": "Нет",
     "common.yes": "Да",
     "commandPalette.action.budget": "Открыть бюджет",
-    "commandPalette.action.province": "К выбору провинции",
+    "commandPalette.action.province": "К выбору гекса",
     "commandPalette.action.resolve": "Запросить резолв",
     "commandPalette.action.routes": "К торговым маршрутам",
     "commandPalette.action.politics": "Открыть политику",
@@ -5764,11 +5764,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.category.modifiers": "Модификаторы",
     "contentPanel.category.parties": "Партии",
     "contentPanel.category.professions": "Профессии",
-    "contentPanel.category.provinceClimates": "Климаты",
-    "contentPanel.category.provinceContinents": "Континенты",
-    "contentPanel.category.provinceLandscapes": "Ландшафты",
-    "contentPanel.category.provinceStrategicRegions": "Стратегические регионы",
-    "contentPanel.category.provinceTypes": "Типы провинций",
+    "contentPanel.category.hexClimates": "Климаты",
+    "contentPanel.category.hexContinents": "Континенты",
+    "contentPanel.category.hexLandscapes": "Ландшафты",
+    "contentPanel.category.hexStrategicRegions": "Стратегические регионы",
+    "contentPanel.category.hexTypes": "Типы гексов",
     "contentPanel.category.races": "Расы",
     "contentPanel.category.religions": "Религии",
     "contentPanel.category.resourceCategories": "Категории инфраструктуры",
@@ -5935,13 +5935,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.extraction": "Добыча из залежей",
     "contentPanel.extractionAmountTooltip": "Сколько единиц добывается за ход при 100% продуктивности.",
     "contentPanel.extractionGoodTooltip": "Какой товар добывает здание напрямую из провинциальных залежей.",
-    "contentPanel.extractionTooltip": "Параметры добычи ресурсов провинции. Если задан ресурс, здание будет пытаться добывать его каждый ход.",
+    "contentPanel.extractionTooltip": "Параметры добычи ресурсов гекса. Если задан ресурс, здание будет пытаться добывать его каждый ход.",
     "contentPanel.industryTooltip": "Отрасль, к которой относится здание, используется в фильтрах и группировках UI.",
     "contentPanel.maxDurabilityTooltip": "Максимальная прочность инстанса здания. Прочность ограничивает потолок продуктивности.",
     "contentPanel.maxLevelTooltip": "Максимальный уровень одного инстанса здания. При достижении этого значения автоповышение не ставится в очередь.",
     "contentPanel.noExtraction": "Не добывает",
     "contentPanel.notSpecifiedFeminine": "Не указана",
-    "contentPanel.requiresDepositTooltip": "Если включено, добыча ограничена только существующими залежами в провинции.",
+    "contentPanel.requiresDepositTooltip": "Если включено, добыча ограничена только существующими залежами в гекса.",
     "contentPanel.sectorTooltip": "Сектор, к которому относится здание, используется в фильтрах и группировках UI.",
     "contentPanel.startingDucatsTooltip": "Стартовый капитал здания, начисляемый сразу после завершения строительства.",
     "contentPanel.upgradeConstructionTooltip": "Сколько очков строительства требуется для повышения уровня. После автопостановки проект расходует очки строительства страны через обычную очередь.",
@@ -5977,7 +5977,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.allowedCountries": "Разрешенные страны ({count})",
     "contentPanel.allowedCountriesTooltip": "Мультивыбор: если список не пуст, строить смогут только страны из него, кроме явно запрещенных.",
     "contentPanel.allowedLandscape": "Разрешенный ландшафт",
-    "contentPanel.allowedProvinceTypes": "Разрешенные типы провинции",
+    "contentPanel.allowedHexTypes": "Разрешенные типы гекса",
     "contentPanel.allowedStrategicRegions": "Разрешенные стратегические регионы",
     "contentPanel.anyValue": "Любое значение",
     "contentPanel.countriesNotFound": "Страны не найдены",
@@ -6000,7 +6000,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.deniedCountries": "Запрещенные страны ({count})",
     "contentPanel.deniedCountriesTooltip": "Страны из этого списка не смогут строить здание, даже если они есть в разрешенных.",
     "contentPanel.deniedLandscape": "Запрещенный ландшафт",
-    "contentPanel.deniedProvinceTypes": "Запрещенные типы провинции",
+    "contentPanel.deniedHexTypes": "Запрещенные типы гекса",
     "contentPanel.deniedStrategicRegions": "Запрещенные стратегические регионы",
     "contentPanel.globalLimit": "Глобальный лимит (для всего мира):",
     "contentPanel.globalLimitTooltip": "Пусто = без ограничений. Справа показан текущий счётчик: использовано/лимит.",
@@ -6019,9 +6019,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.option.ideologyRule.religionIs": "Религия",
     "contentPanel.option.ideologyRule.cultureIs": "Культура",
     "contentPanel.option.ideologyRule.lawActive": "Действующий закон",
-    "contentPanel.option.ideologyRule.hasBuilding": "Здание в провинции",
+    "contentPanel.option.ideologyRule.hasBuilding": "Здание в гекса",
     "contentPanel.option.ideologyRule.countryModifierActive": "Модификатор страны",
-    "contentPanel.option.ideologyRule.provinceModifierActive": "Модификатор провинции",
+    "contentPanel.option.ideologyRule.regionModifierActive": "Модификатор региона",
     "contentPanel.placeholder.solThreshold": "Порог SoL",
     "contentPanel.placeholder.radicalsPct": "% радикалов",
     "contentPanel.placeholder.loyalistsPct": "% лоялистов",
@@ -6043,15 +6043,15 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.option.parliamentPower.government.none": "Не влияет",
     "contentPanel.option.parliamentPower.government.confidenceVote": "Вотум доверия",
     "contentPanel.option.parliamentPower.government.appointGovernment": "Назначает правительство",
-    "contentPanel.provinceCriteria": "Условия провинции",
+    "contentPanel.provinceCriteria": "Условия гекса",
     "contentPanel.provinceCriteriaHint": "Значения выбираются из категорий контента. Пустой список разрешений означает любое значение, запрет сильнее разрешения.",
-    "contentPanel.provinceCriteriaTooltip": "Ограничения по данным провинции из GeoJSON: тип, климат, ландшафт, континент, стратегический регион и радиация.",
+    "contentPanel.provinceCriteriaTooltip": "Ограничения по данным гекса из GeoJSON: тип, климат, ландшафт, континент, стратегический регион и радиация.",
     "contentPanel.quantityLimits": "Лимиты количества",
     "contentPanel.quantityLimitsTooltip": "Лимиты работают как cap на текущее количество построенных и строящихся зданий.",
     "contentPanel.zeroNoLimitPlaceholder": "Пусто или 0 = без лимита",
     "contentPanel.referencePriceHint": "Используется как заглушка цены до внедрения рынка.",
     "contentPanel.referencePriceTooltip": "После внедрения рынка это значение будет стартовой/референсной ценой.",
-    "contentPanel.resourceDiscoverable": "Можно найти в провинции как ресурс",
+    "contentPanel.resourceDiscoverable": "Можно найти в гекса как ресурс",
     "contentPanel.smallVeinChanceTooltip": "Шанс маленькой жилы в процентах. Нормализуется вместе с другими шансами.",
     "contentPanel.smallVeinRangeTooltip": "Диапазон количества для маленькой жилы.",
     "contentPanel.addInputGoodTooltip": "Добавить новую строку входного товара.",
@@ -6174,36 +6174,36 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.meta.resourceCategories.namePlaceholder": "Название категории инфраструктуры",
     "contentPanel.meta.resourceCategories.descriptionPlaceholder": "Краткое описание категории инфраструктуры",
     "contentPanel.meta.resourceCategories.sectionTitle": "Раздел создания и редактирования категорий инфраструктуры",
-    "contentPanel.meta.provinceTypes.singular": "тип провинции",
-    "contentPanel.meta.provinceTypes.createBaseName": "Новый тип провинции",
-    "contentPanel.meta.provinceTypes.createLabel": "Создать тип",
-    "contentPanel.meta.provinceTypes.namePlaceholder": "Название типа провинции",
-    "contentPanel.meta.provinceTypes.descriptionPlaceholder": "Краткое описание типа провинции",
-    "contentPanel.meta.provinceTypes.sectionTitle": "Раздел создания и редактирования типов провинций",
-    "contentPanel.meta.provinceClimates.singular": "климат",
-    "contentPanel.meta.provinceClimates.createBaseName": "Новый климат",
-    "contentPanel.meta.provinceClimates.createLabel": "Создать климат",
-    "contentPanel.meta.provinceClimates.namePlaceholder": "Название климата",
-    "contentPanel.meta.provinceClimates.descriptionPlaceholder": "Краткое описание климата",
-    "contentPanel.meta.provinceClimates.sectionTitle": "Раздел создания и редактирования климатов",
-    "contentPanel.meta.provinceLandscapes.singular": "ландшафт",
-    "contentPanel.meta.provinceLandscapes.createBaseName": "Новый ландшафт",
-    "contentPanel.meta.provinceLandscapes.createLabel": "Создать ландшафт",
-    "contentPanel.meta.provinceLandscapes.namePlaceholder": "Название ландшафта",
-    "contentPanel.meta.provinceLandscapes.descriptionPlaceholder": "Краткое описание ландшафта",
-    "contentPanel.meta.provinceLandscapes.sectionTitle": "Раздел создания и редактирования ландшафтов",
-    "contentPanel.meta.provinceContinents.singular": "континент",
-    "contentPanel.meta.provinceContinents.createBaseName": "Новый континент",
-    "contentPanel.meta.provinceContinents.createLabel": "Создать континент",
-    "contentPanel.meta.provinceContinents.namePlaceholder": "Название континента",
-    "contentPanel.meta.provinceContinents.descriptionPlaceholder": "Краткое описание континента",
-    "contentPanel.meta.provinceContinents.sectionTitle": "Раздел создания и редактирования континентов",
-    "contentPanel.meta.provinceStrategicRegions.singular": "стратегический регион",
-    "contentPanel.meta.provinceStrategicRegions.createBaseName": "Новый стратегический регион",
-    "contentPanel.meta.provinceStrategicRegions.createLabel": "Создать регион",
-    "contentPanel.meta.provinceStrategicRegions.namePlaceholder": "Название стратегического региона",
-    "contentPanel.meta.provinceStrategicRegions.descriptionPlaceholder": "Краткое описание стратегического региона",
-    "contentPanel.meta.provinceStrategicRegions.sectionTitle": "Раздел создания и редактирования стратегических регионов",
+    "contentPanel.meta.hexTypes.singular": "тип гекса",
+    "contentPanel.meta.hexTypes.createBaseName": "Новый тип гекса",
+    "contentPanel.meta.hexTypes.createLabel": "Создать тип",
+    "contentPanel.meta.hexTypes.namePlaceholder": "Название типа гекса",
+    "contentPanel.meta.hexTypes.descriptionPlaceholder": "Краткое описание типа гекса",
+    "contentPanel.meta.hexTypes.sectionTitle": "Раздел создания и редактирования типов гексов",
+    "contentPanel.meta.hexClimates.singular": "климат",
+    "contentPanel.meta.hexClimates.createBaseName": "Новый климат",
+    "contentPanel.meta.hexClimates.createLabel": "Создать климат",
+    "contentPanel.meta.hexClimates.namePlaceholder": "Название климата",
+    "contentPanel.meta.hexClimates.descriptionPlaceholder": "Краткое описание климата",
+    "contentPanel.meta.hexClimates.sectionTitle": "Раздел создания и редактирования климатов",
+    "contentPanel.meta.hexLandscapes.singular": "ландшафт",
+    "contentPanel.meta.hexLandscapes.createBaseName": "Новый ландшафт",
+    "contentPanel.meta.hexLandscapes.createLabel": "Создать ландшафт",
+    "contentPanel.meta.hexLandscapes.namePlaceholder": "Название ландшафта",
+    "contentPanel.meta.hexLandscapes.descriptionPlaceholder": "Краткое описание ландшафта",
+    "contentPanel.meta.hexLandscapes.sectionTitle": "Раздел создания и редактирования ландшафтов",
+    "contentPanel.meta.hexContinents.singular": "континент",
+    "contentPanel.meta.hexContinents.createBaseName": "Новый континент",
+    "contentPanel.meta.hexContinents.createLabel": "Создать континент",
+    "contentPanel.meta.hexContinents.namePlaceholder": "Название континента",
+    "contentPanel.meta.hexContinents.descriptionPlaceholder": "Краткое описание континента",
+    "contentPanel.meta.hexContinents.sectionTitle": "Раздел создания и редактирования континентов",
+    "contentPanel.meta.hexStrategicRegions.singular": "стратегический регион",
+    "contentPanel.meta.hexStrategicRegions.createBaseName": "Новый стратегический регион",
+    "contentPanel.meta.hexStrategicRegions.createLabel": "Создать регион",
+    "contentPanel.meta.hexStrategicRegions.namePlaceholder": "Название стратегического региона",
+    "contentPanel.meta.hexStrategicRegions.descriptionPlaceholder": "Краткое описание стратегического региона",
+    "contentPanel.meta.hexStrategicRegions.sectionTitle": "Раздел создания и редактирования стратегических регионов",
     "contentPanel.meta.religions.singular": "религия",
     "contentPanel.meta.religions.createBaseName": "Новая религия",
     "contentPanel.meta.religions.createLabel": "Создать религию",
@@ -6392,7 +6392,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.option.modifierScope.country": "Страна",
     "contentPanel.option.modifierScope.market": "Рынок",
     "contentPanel.option.modifierScope.pop": "Население",
-    "contentPanel.option.modifierScope.province": "Провинция",
+    "contentPanel.option.modifierScope.region": "Регион",
     "contentPanel.option.needCategory.basic": "Базовые",
     "contentPanel.option.needCategory.comfort": "Комфорт",
     "contentPanel.option.needCategory.luxury": "Роскошь",
@@ -6635,7 +6635,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "gameSettings.customization.flag": "Смена флага",
     "gameSettings.customization.recolor": "Смена цвета",
     "gameSettings.customization.renameCountry": "Переименование страны",
-    "gameSettings.customization.renameProvince": "Переименование провинции",
+    "gameSettings.customization.renameHex": "Переименование гекса",
     "gameSettings.customizationSaved": "Цены кастомизации сохранены",
     "gameSettings.customizationSaveFailed": "Не удалось сохранить цены кастомизации",
     "gameSettings.customizationTitle": "Цены на изменение страны за дукаты",
@@ -6667,7 +6667,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "gameSettings.map.hideAntarctica": "Скрыть Антарктиду",
     "gameSettings.map.showAntarctica": "Показывать Антарктиду",
     "gameSettings.map.showAntarcticaAction": "Показать Антарктиду",
-    "gameSettings.map.showAntarcticaDescription": "Скрывает провинции Антарктиды на карте для всех игроков",
+    "gameSettings.map.showAntarcticaDescription": "Скрывает гекса Антарктиды на карте для всех игроков",
     "gameSettings.no": "нет",
     "gameSettings.recalculateAutoCosts": "Пересчитать все авто-цены",
     "gameSettings.registrationApprovalDisable": "Выключить подтверждение регистрации",
@@ -6813,12 +6813,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "civilopedia.admin.inlineUpload": "Загрузить 64x64",
     "civilopedia.admin.keywords": "Теги (через запятую)",
     "civilopedia.admin.noImage": "Нет изображения",
-    "civilopedia.admin.provinceArticleMissing": "Статья о провинции не найдена",
-    "civilopedia.admin.provinceCategory": "Провинции",
+    "civilopedia.admin.provinceArticleMissing": "Статья о гекса не найдена",
+    "civilopedia.admin.provinceCategory": "Гексы",
     "civilopedia.admin.provinceDefaultBody": "Заполните описание, стратегическую ценность, особенности колонизации и исторические заметки.",
-    "civilopedia.admin.provinceDefaultSummary": "Справочная статья по провинции {province}.",
-    "civilopedia.admin.provinceDefaultTitle": "Провинция: {province}",
-    "civilopedia.admin.provinceIdLine": "ID провинции: {provinceId}",
+    "civilopedia.admin.provinceDefaultSummary": "Справочная статья по гекса {province}.",
+    "civilopedia.admin.provinceDefaultTitle": "Гекс: {province}",
+    "civilopedia.admin.hexIdLine": "ID гекса: {hexId}",
     "civilopedia.admin.relatedCsv": "Связанные статьи (ID через запятую)",
     "civilopedia.admin.removeCategoryBlocked": "Нельзя удалить категорию",
     "civilopedia.admin.removeCategoryBlockedDescription": "Сначала перенесите или удалите статьи из этой категории",
@@ -6936,7 +6936,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "elections.voteShare": "Голоса: {value}",
     "army.air": "Авиакрылья",
     "army.attack": "Атака",
-    "army.baseProvince": "Провинция базирования",
+    "army.baseHex": "Гекс базирования",
     "army.battleSlots": "Боевые слоты",
     "army.branchTemplates": "Шаблоны: {branch}",
     "army.cancel": "Отменить",
@@ -7071,11 +7071,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.mode.regions.label": "Регионы",
     "map.mode.regions.shortLabel": "Регионы",
     "map.mode.regions.legendLabel": "Государственный регион",
-    "map.mode.regions.legendDescription": "Провинции, сгруппированные по gameplay-региону",
-    "map.mode.provinceColors.label": "Цвета провинций",
-    "map.mode.provinceColors.shortLabel": "Провинции",
-    "map.mode.provinceColors.legendLabel": "Провинция",
-    "map.mode.provinceColors.legendDescription": "Сценарные цвета lightweight map-провинций",
+    "map.mode.regions.legendDescription": "Гексы, сгруппированные по gameplay-региону",
+    "map.mode.hexColors.label": "Цвета гексов",
+    "map.mode.hexColors.shortLabel": "Гексы",
+    "map.mode.hexColors.legendLabel": "Гекс",
+    "map.mode.hexColors.legendDescription": "Сценарные цвета lightweight map-гексов",
     "map.mode.diplomacy.label": "Дипломатия",
     "map.mode.diplomacy.shortLabel": "Дипломатия",
     "map.mode.diplomacy.legendLabel": "Договоры",
@@ -7083,11 +7083,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.mode.markets.label": "Рынки",
     "map.mode.markets.shortLabel": "Рынки",
     "map.mode.markets.legendLabel": "Рынок",
-    "map.mode.markets.legendDescription": "Провинции по рыночной принадлежности",
+    "map.mode.markets.legendDescription": "Гексы по рыночной принадлежности",
     "map.mode.population.label": "Население",
     "map.mode.population.shortLabel": "Население",
     "map.mode.population.legendLabel": "Метрика",
-    "map.mode.population.legendDescription": "Демография и качество жизни провинции",
+    "map.mode.population.legendDescription": "Демография и качество жизни гекса",
     "map.mode.resources.label": "Ресурсы",
     "map.mode.resources.shortLabel": "Ресурсы",
     "map.mode.resources.legendLabel": "Залежи",
@@ -7151,9 +7151,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.lens.military.armies": "Расположение армий",
     "map.corridor.levelShort": "ур. {level}",
     "map.corridor.marketCapitalTitle": "{market} - столица рынка",
-    "map.corridor.requiresConstructionRight": "Нужен договор строительства коридоров: владелец провинции должен разрешить {mode}",
+    "map.corridor.requiresConstructionRight": "Нужен договор строительства коридоров: владелец гекса должен разрешить {mode}",
     "map.corridor.buildAccessibleOnly": "Коридор можно строить только по доступным провинциям",
-    "map.corridor.nextPointAdjacent": "Следующая точка коридора должна быть в соседней провинции",
+    "map.corridor.nextPointAdjacent": "Следующая точка коридора должна быть в соседней гекса",
     "map.corridor.buildStarted": "Коридор добавлен в строительство",
     "map.corridor.buildFailed": "Не удалось начать строительство коридора",
     "map.corridor.ownOnly": "Управлять можно только своими коридорами",
@@ -7184,7 +7184,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.hover.market": "Рынок",
     "map.hover.noMarket": "нет рынка",
     "map.hover.marketCapital": "Столица рынка",
-    "map.hover.thisProvince": "эта провинция",
+    "map.hover.thisHex": "эта провинция",
     "map.hover.corridor": "Коридор",
     "map.hover.corridorPasses": "проходит через провинцию",
     "map.hover.noCorridor": "нет коридора",
@@ -7213,19 +7213,19 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.hover.queued": "в очереди",
     "map.units.perKm2": "/км2",
     "map.toast.explorationStarted": "Разведка запущена",
-    "map.toast.explorationStartedDescription": "Провинция {province}",
+    "map.toast.explorationStartedDescription": "Гекс {province}",
     "map.toast.explorationAlreadyQueued": "Разведка уже запущена",
     "map.toast.explorationRegionNotControlled": "Разведка доступна только в подконтрольных регионах",
     "map.toast.explorationStartFailed": "Не удалось запустить разведку",
     "map.toast.renameEmpty": "Название не может быть пустым",
     "map.toast.renameTooLong": "Максимум 64 символа",
-    "map.toast.renameSuccess": "Провинция переименована (-{ducats} дукатов)",
-    "map.event.renameTitle": "Переименование провинции",
+    "map.toast.renameSuccess": "Гекс переименована (-{ducats} дукатов)",
+    "map.event.renameTitle": "Переименование гекса",
     "map.event.renameMessage": "Вы переименовали провинцию в \"{province}\"",
-    "map.toast.renameOwnOnly": "Можно переименовывать только свои провинции",
+    "map.toast.renameOwnOnly": "Можно переименовывать только свои гекса",
     "map.toast.renameInsufficientDucats": "Недостаточно дукатов",
-    "map.toast.renameProvinceNotFound": "Провинция не найдена",
-    "map.toast.renameInvalid": "Некорректное название провинции",
+    "map.toast.renameHexNotFound": "Гекс не найдена",
+    "map.toast.renameInvalid": "Некорректное название гекса",
     "map.toast.renameFailed": "Не удалось переименовать провинцию",
     "modifiers.activeCount": "Действующие эффекты: {count}",
     "modifiers.column.effect": "Параметр",
@@ -7243,7 +7243,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "modifiers.scope.country": "Страна",
     "modifiers.scope.market": "Рынок",
     "modifiers.scope.pop": "Население",
-    "modifiers.scope.province": "Провинция",
+    "modifiers.scope.province": "Гекс",
     "modifiers.source.event": "Событие",
     "modifiers.source.law": "Закон",
     "modifiers.source.modifier": "Модификатор",
@@ -8035,7 +8035,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "budget.category.colonization": "Поддержка колонизаций",
     "budget.category.construction": "Строительные проекты",
     "budget.category.customization": "Кастомизация страны",
-    "budget.category.provinceRename": "Переименование провинций",
+    "budget.category.hexRename": "Переименование гексов",
     "budget.category.subsidies": "Государственные субсидии",
     "budget.chart.expenses": "Расходы",
     "budget.chart.expensesByCategory": "График расходов по категориям",
@@ -8066,8 +8066,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "budget.total.expenses": "Итого расходов",
     "budget.total.income": "Итого доходов",
     "provinceContext.openColonization": "Открыть колонизацию",
-    "provinceContext.openProvinceKnowledge": "Статья о провинции",
-    "provinceContext.createProvinceKnowledge": "Создать статью о провинции",
+    "provinceContext.openHexKnowledge": "Статья о гекса",
+    "provinceContext.createHexKnowledge": "Создать статью о гекса",
     "provinceContext.openAdminEditor": "Управление провинцией",
     "shell.action.army": "Командовать армией",
     "shell.action.armyDescription": "Открыть соединения, маршруты и военные приказы.",
@@ -8154,7 +8154,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.entryLoadingDescription": "Подготавливаем карту, настройки и состояние вашей страны",
     "shell.entryLoadingStatus": "Загрузка данных игры",
     "shell.entryReadyStatus": "готово",
-    "shell.entryProvinceIndex": "Провинции",
+    "shell.entryHexIndex": "Гексы",
     "shell.entryPublicUi": "UI-настройки",
     "shell.entryWorldState": "Состояние мира",
     "shell.forceResolve": "Форсировать ход",
@@ -8274,7 +8274,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "resourceLedger.source.construction.corridor": "Транспортный коридор",
     "resourceLedger.source.construction.demolition": "Снос здания",
     "resourceLedger.source.customization.country": "Кастомизация страны",
-    "resourceLedger.source.customization.provinceRename": "Переименование провинции",
+    "resourceLedger.source.customization.hexRename": "Переименование гекса",
     "resourceLedger.source.diplomacy.transfer": "Дипломатический перевод",
     "resourceLedger.source.generic": "Поток ресурса",
     "resourceLedger.source.technology.research": "Исследование технологии",
@@ -8296,7 +8296,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "topBar.clientSettings": "Настройки клиента",
     "topBar.colonizationLimit": "Лимит колонизаций",
     "topBar.contentPanel": "Панель контента",
-    "topBar.controlledProvinces": "Провинций под контролем",
+    "topBar.controlledHexes": "Провинций под контролем",
     "topBar.countryDetails": "Детали страны и её владений",
     "topBar.currentTurn": "Текущий ход",
     "topBar.currentValue": "Текущее значение",

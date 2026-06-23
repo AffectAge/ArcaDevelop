@@ -20,7 +20,7 @@ type Tab<T extends string> = {
 type Props<T extends string> = {
   collapsed: boolean;
   pinned: boolean;
-  provinceName: string;
+  hexName: string;
   collapsedSummary: string;
   provinceMeta: ReactNode;
   ownerLabel: string;
@@ -38,10 +38,10 @@ type Props<T extends string> = {
   onTabChange: (tabId: T) => void;
 };
 
-export function SelectedProvincePanelFrame<T extends string>({
+export function SelectedHexPanelFrame<T extends string>({
   collapsed,
   pinned,
-  provinceName,
+  hexName,
   collapsedSummary,
   provinceMeta,
   ownerLabel,
@@ -72,7 +72,7 @@ export function SelectedProvincePanelFrame<T extends string>({
             <button type="button" onClick={onExpand} className="arc-hud-button flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-2 text-left">
               <Crosshair size={14} className="shrink-0 text-[var(--arc-color-gold)]" />
               <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-[var(--arc-color-text)]">{provinceName}</span>
+                <span className="block truncate text-sm font-semibold text-[var(--arc-color-text)]">{hexName}</span>
                 <span className="block truncate text-[10px] text-[var(--arc-color-text-soft)]">{collapsedSummary}</span>
               </span>
             </button>
@@ -94,7 +94,7 @@ export function SelectedProvincePanelFrame<T extends string>({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <Crosshair size={15} className="shrink-0 text-[var(--arc-color-gold)]" />
-              <div className="truncate font-display text-xl font-semibold text-[var(--arc-color-text)]">{provinceName}</div>
+              <div className="truncate font-display text-xl font-semibold text-[var(--arc-color-text)]">{hexName}</div>
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[var(--arc-color-text-soft)]">{provinceMeta}</div>
           </div>

@@ -1,5 +1,5 @@
 import type { WorldBase } from "@arcanorum/shared";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { GameSettings } from "./gameSettingsTypes";
 import type { MarketPriceRuntimeState } from "./marketPriceRuntimeState";
 import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
@@ -9,9 +9,9 @@ type PopulationSystemsRuntimeParams = {
   getGameSettings: () => GameSettings;
   getWorldBase: () => WorldBase;
   getTurnId: () => number;
-  getProvinceIndex: () => Adm1ProvinceIndexEntry[];
-  getProvinceAreaKm2: (provinceId: string) => number;
-  getProvinceOwner: (provinceId: string) => string | null;
+  getHexIndex: () => HexMapIndexEntry[];
+  getHexAreaKm2: (hexId: string) => number;
+  getHexOwner: (hexId: string) => string | null;
   marketPriceRuntimeState: MarketPriceRuntimeState;
   getActiveCountryModifierRows: Parameters<typeof createWorldPopulationRuntime>[0]["getActiveCountryModifierRows"];
   ensureCountryParliament: Parameters<typeof createWorldPopulationRuntime>[0]["ensureCountryParliament"];
@@ -24,9 +24,9 @@ type PopulationSystemsRuntimeParams = {
     typeof createWorldPopulationRuntime
   >[0]["getInfrastructureTransitAgreementAllowedCountries"];
   getMarketById: Parameters<typeof createWorldPopulationRuntime>[0]["getMarketById"];
-  getProvinceFertilityMultiplier: Parameters<typeof createWorldPopulationRuntime>[0]["getProvinceFertilityMultiplier"];
+  getHexFertilityMultiplier: Parameters<typeof createWorldPopulationRuntime>[0]["getHexFertilityMultiplier"];
   getTransportCorridorCapacity: Parameters<typeof createWorldPopulationRuntime>[0]["getTransportCorridorCapacity"];
-  normalizeProvinceIdList: Parameters<typeof createWorldPopulationRuntime>[0]["normalizeProvinceIdList"];
+  normalizeHexIdList: Parameters<typeof createWorldPopulationRuntime>[0]["normalizeHexIdList"];
   resolveModifiedValue: Parameters<typeof createWorldPopulationRuntime>[0]["resolveModifiedValue"];
   round3: (value: number) => number;
   addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
@@ -46,9 +46,9 @@ export function createPopulationSystemsRuntime(params: PopulationSystemsRuntimeP
     getGameSettings: params.getGameSettings,
     getWorldBase: params.getWorldBase,
     getTurnId: params.getTurnId,
-    getProvinceIndex: params.getProvinceIndex,
-    getProvinceAreaKm2: params.getProvinceAreaKm2,
-    getProvinceOwner: params.getProvinceOwner,
+    getHexIndex: params.getHexIndex,
+    getHexAreaKm2: params.getHexAreaKm2,
+    getHexOwner: params.getHexOwner,
     setLatestMarketOverview: params.marketPriceRuntimeState.setLatestMarketOverview,
     getActiveCountryModifierRows: params.getActiveCountryModifierRows,
     ensureCountryParliament: params.ensureCountryParliament,
@@ -59,9 +59,9 @@ export function createPopulationSystemsRuntime(params: PopulationSystemsRuntimeP
     getCountryMarketId: params.getCountryMarketId,
     getInfrastructureTransitAgreementAllowedCountries: params.getInfrastructureTransitAgreementAllowedCountries,
     getMarketById: params.getMarketById,
-    getProvinceFertilityMultiplier: params.getProvinceFertilityMultiplier,
+    getHexFertilityMultiplier: params.getHexFertilityMultiplier,
     getTransportCorridorCapacity: params.getTransportCorridorCapacity,
-    normalizeProvinceIdList: params.normalizeProvinceIdList,
+    normalizeHexIdList: params.normalizeHexIdList,
     resolveModifiedValue: params.resolveModifiedValue,
     round3: params.round3,
     addResourceLedgerExpense: params.addResourceLedgerExpense,

@@ -31,8 +31,8 @@ export type TransportCorridorRouteEntry<TMode extends string = string> = {
   marketId?: string | null;
   status: "building" | "active" | "closed";
   transportMode: TMode;
-  provinceIds?: string[];
-  routePoints?: Array<{ provinceId: string }>;
+  hexIds?: string[];
+  routePoints?: Array<{ hexId: string }>;
   level?: number | null;
 };
 
@@ -51,22 +51,22 @@ type CorridorRoutePlannerContext<
   TCorridor extends TransportCorridorRouteEntry<TMode>,
 > = {
   corridorsById: Record<string, TCorridor>;
-  provinceOwnerById: Record<string, string | undefined>;
+  hexOwnerById: Record<string, string | undefined>;
   getCorridorCapacity: (corridor: TCorridor) => number;
   getCorridorLoad: (corridorId: string, transportMode: TMode) => number;
   getMarketMemberCountryIds: (marketId: string) => string[];
   getTransitAllowedCountries: (memberCountryIds: Set<string>, transportMode: TMode) => Set<string>;
-  normalizeProvinceIds: (provinceIds: unknown) => string[];
+  normalizeHexIds: (hexIds: unknown) => string[];
 };
 
-export function getCorridorRouteProvinceIds<TMode extends string, TCorridor extends TransportCorridorRouteEntry<TMode>>(
+export function getCorridorRouteHexIds<TMode extends string, TCorridor extends TransportCorridorRouteEntry<TMode>>(
   corridor: TCorridor,
-  normalizeProvinceIds: (provinceIds: unknown) => string[],
+  normalizeHexIds: (hexIds: unknown) => string[],
 ): string[] {
-  return normalizeProvinceIds(
+  return normalizeHexIds(
     corridor.routePoints && corridor.routePoints.length >= 2
-      ? corridor.routePoints.map((point) => point.provinceId)
-      : corridor.provinceIds,
+      ? corridor.routePoints.map((point) => point.hexId)
+      : corridor.hexIds,
   );
 }
 
@@ -120,16 +120,16 @@ export function createCorridorRoutePlanner<
       if (corridor.status !== "active") continue;
       if (corridor.transportMode !== params.transportMode) continue;
       if (!allowedCountries.has(corridor.ownerCountryId)) continue;
-      const provinceIds = getCorridorRouteProvinceIds(corridor, context.normalizeProvinceIds);
-      if (provinceIds.length < 2) continue;
-      const corridorProvinceOwnersAllowed = provinceIds.every((provinceId) => {
-        const ownerId = context.provinceOwnerById[provinceId] ?? null;
+      const hexIds = getCorridorRouteHexIds(corridor, context.normalizeHexIds);
+      if (hexIds.length < 2) continue;
+      const corridorHexOwnersAllowed = hexIds.every((hexId) => {
+        const ownerId = context.hexOwnerById[hexId] ?? null;
         return !ownerId || allowedCountries.has(ownerId);
       });
-      if (!corridorProvinceOwnersAllowed) continue;
-      for (let index = 1; index < provinceIds.length; index += 1) {
-        const from = provinceIds[index - 1];
-        const to = provinceIds[index];
+      if (!corridorHexOwnersAllowed) continue;
+      for (let index = 1; index < hexIds.length; index += 1) {
+        const from = hexIds[index - 1];
+        const to = hexIds[index];
         const capacity = Math.max(0, context.getCorridorCapacity(corridor));
         const remaining = Math.max(0, getCorridorRemainingCapacity(corridor.id, corridor.transportMode));
         const utilization = capacity > 0 ? 1 - remaining / capacity : 1;
@@ -147,17 +147,17 @@ export function createCorridorRoutePlanner<
 
   const findBestCorridorRoute = (params: {
     buyerMarketId: string;
-    buyerProvinceId: string;
+    buyerHexId: string;
     buyerCountryId: string;
     sellerMarketId: string;
-    sellerProvinceId: string;
+    sellerHexId: string;
     sellerCountryId: string;
     transportModes: TMode[];
     infraPerUnit: number;
     virtualRemainingByCorridorId: Map<string, number>;
     blockedCorridorIds?: Set<string>;
   }): CorridorTransferRoute<TMode, TCorridor> | null => {
-    if (params.buyerProvinceId === params.sellerProvinceId) return null;
+    if (params.buyerHexId === params.sellerHexId) return null;
     let best: CorridorTransferRoute<TMode, TCorridor> | null = null;
     for (const mode of params.transportModes) {
       const cacheKey = [
@@ -166,8 +166,8 @@ export function createCorridorRoutePlanner<
         params.sellerMarketId,
         params.buyerCountryId,
         params.sellerCountryId,
-        params.sellerProvinceId,
-        params.buyerProvinceId,
+        params.sellerHexId,
+        params.buyerHexId,
         params.infraPerUnit,
         [...(params.blockedCorridorIds ?? new Set<string>())].sort().join(","),
       ].join("|");
@@ -197,18 +197,18 @@ export function createCorridorRoutePlanner<
       }
 
       const graph = getRouteGraph({ ...params, transportMode: mode });
-      const distances = new Map<string, number>([[params.sellerProvinceId, 0]]);
-      const previous = new Map<string, { provinceId: string; corridor: TCorridor }>();
-      const queue: Array<{ provinceId: string; distance: number }> = [{ provinceId: params.sellerProvinceId, distance: 0 }];
+      const distances = new Map<string, number>([[params.sellerHexId, 0]]);
+      const previous = new Map<string, { hexId: string; corridor: TCorridor }>();
+      const queue: Array<{ hexId: string; distance: number }> = [{ hexId: params.sellerHexId, distance: 0 }];
       const visited = new Set<string>();
       while (queue.length > 0) {
         queue.sort((a, b) => a.distance - b.distance);
         const current = queue.shift();
         if (!current) break;
-        if (visited.has(current.provinceId)) continue;
-        visited.add(current.provinceId);
-        if (current.provinceId === params.buyerProvinceId) break;
-        for (const edge of graph.get(current.provinceId) ?? []) {
+        if (visited.has(current.hexId)) continue;
+        visited.add(current.hexId);
+        if (current.hexId === params.buyerHexId) break;
+        for (const edge of graph.get(current.hexId) ?? []) {
           if (params.blockedCorridorIds?.has(edge.corridor.id)) continue;
           const remaining = params.virtualRemainingByCorridorId.get(edge.corridor.id) ??
             getCorridorRemainingCapacity(edge.corridor.id, edge.corridor.transportMode);
@@ -216,21 +216,21 @@ export function createCorridorRoutePlanner<
           const nextDistance = current.distance + edge.cost;
           if (nextDistance >= (distances.get(edge.to) ?? Number.POSITIVE_INFINITY)) continue;
           distances.set(edge.to, nextDistance);
-          previous.set(edge.to, { provinceId: current.provinceId, corridor: edge.corridor });
-          queue.push({ provinceId: edge.to, distance: nextDistance });
+          previous.set(edge.to, { hexId: current.hexId, corridor: edge.corridor });
+          queue.push({ hexId: edge.to, distance: nextDistance });
         }
       }
-      if (!previous.has(params.buyerProvinceId)) {
+      if (!previous.has(params.buyerHexId)) {
         corridorRouteCache.set(cacheKey, null);
         continue;
       }
       const corridors: TCorridor[] = [];
-      let cursor = params.buyerProvinceId;
-      while (cursor !== params.sellerProvinceId) {
+      let cursor = params.buyerHexId;
+      while (cursor !== params.sellerHexId) {
         const step = previous.get(cursor);
         if (!step) break;
         if (!corridors.some((corridor) => corridor.id === step.corridor.id)) corridors.unshift(step.corridor);
-        cursor = step.provinceId;
+        cursor = step.hexId;
       }
       if (corridors.length === 0) {
         corridorRouteCache.set(cacheKey, null);
@@ -246,7 +246,7 @@ export function createCorridorRoutePlanner<
         mode,
         corridors,
         capacityGoods: Math.floor(Math.max(0, bottleneck) / params.infraPerUnit),
-        cost: distances.get(params.buyerProvinceId) ?? Number.POSITIVE_INFINITY,
+        cost: distances.get(params.buyerHexId) ?? Number.POSITIVE_INFINITY,
       };
       corridorRouteCache.set(cacheKey, { mode, corridorIds: corridors.map((corridor) => corridor.id), cost: route.cost });
       if (route.capacityGoods > 0 && (!best || route.cost < best.cost)) best = route;
@@ -256,16 +256,16 @@ export function createCorridorRoutePlanner<
 
   const getCorridorRoutesForTransfer = (params: {
     buyerMarketId: string;
-    buyerProvinceId: string;
+    buyerHexId: string;
     buyerCountryId: string;
     sellerMarketId: string;
-    sellerProvinceId: string;
+    sellerHexId: string;
     sellerCountryId: string;
     transportModes: TMode[];
     infraPerUnit: number;
     requestedGoods: number;
   }): Array<CorridorTransferRoute<TMode, TCorridor>> => {
-    if (params.buyerProvinceId === params.sellerProvinceId) return [];
+    if (params.buyerHexId === params.sellerHexId) return [];
     const routes: Array<CorridorTransferRoute<TMode, TCorridor>> = [];
     const virtualRemainingByCorridorId = new Map<string, number>();
     const blockedCorridorIds = new Set<string>();
@@ -290,10 +290,10 @@ export function createCorridorRoutePlanner<
 
   const hasReachableCorridorRouteIgnoringCapacity = (params: {
     buyerMarketId: string;
-    buyerProvinceId: string;
+    buyerHexId: string;
     buyerCountryId: string;
     sellerMarketId: string;
-    sellerProvinceId: string;
+    sellerHexId: string;
     sellerCountryId: string;
     transportModes: TMode[];
   }): boolean => {
@@ -309,11 +309,11 @@ export function createCorridorRoutePlanner<
   };
 
   const hasPhysicalCorridorRouteIgnoringTransit = (params: {
-    buyerProvinceId: string;
-    sellerProvinceId: string;
+    buyerHexId: string;
+    sellerHexId: string;
     transportModes: TMode[];
   }): boolean => {
-    if (params.buyerProvinceId === params.sellerProvinceId) return true;
+    if (params.buyerHexId === params.sellerHexId) return true;
     const graph = new Map<string, Set<string>>();
     const addEdge = (from: string, to: string): void => {
       if (!graph.has(from)) graph.set(from, new Set<string>());
@@ -324,20 +324,20 @@ export function createCorridorRoutePlanner<
       if (corridor.status !== "active") continue;
       if (!requiredModes.has(corridor.transportMode)) continue;
       if (context.getCorridorCapacity(corridor) <= 0) continue;
-      const provinceIds = getCorridorRouteProvinceIds(corridor, context.normalizeProvinceIds);
-      for (let index = 1; index < provinceIds.length; index += 1) {
-        addEdge(provinceIds[index - 1], provinceIds[index]);
-        addEdge(provinceIds[index], provinceIds[index - 1]);
+      const hexIds = getCorridorRouteHexIds(corridor, context.normalizeHexIds);
+      for (let index = 1; index < hexIds.length; index += 1) {
+        addEdge(hexIds[index - 1], hexIds[index]);
+        addEdge(hexIds[index], hexIds[index - 1]);
       }
     }
-    const queue = [params.sellerProvinceId];
+    const queue = [params.sellerHexId];
     const visited = new Set<string>();
     while (queue.length > 0) {
-      const provinceId = queue.shift();
-      if (!provinceId || visited.has(provinceId)) continue;
-      if (provinceId === params.buyerProvinceId) return true;
-      visited.add(provinceId);
-      for (const next of graph.get(provinceId) ?? []) {
+      const hexId = queue.shift();
+      if (!hexId || visited.has(hexId)) continue;
+      if (hexId === params.buyerHexId) return true;
+      visited.add(hexId);
+      for (const next of graph.get(hexId) ?? []) {
         if (!visited.has(next)) queue.push(next);
       }
     }

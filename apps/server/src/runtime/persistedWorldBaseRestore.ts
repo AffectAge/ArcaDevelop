@@ -39,7 +39,7 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
   }
 
   const candidate = params.input as Partial<WorldBase>;
-  assertNoRemovedProvinceHeavyState(candidate as Record<string, unknown>);
+  assertNoRemovedHexHeavyState(candidate as Record<string, unknown>);
   if (
     !candidate.resourcesByCountry ||
     typeof candidate.resourcesByCountry !== "object" ||
@@ -47,8 +47,8 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     typeof candidate.regionOwner !== "object" ||
     !candidate.regionController ||
     typeof candidate.regionController !== "object" ||
-    !candidate.provinceOwner ||
-    typeof candidate.provinceOwner !== "object" ||
+    !candidate.hexOwner ||
+    typeof candidate.hexOwner !== "object" ||
     !candidate.colonyProgressByRegion ||
     typeof candidate.colonyProgressByRegion !== "object"
   ) {
@@ -66,10 +66,10 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     ),
     regionOwner: candidate.regionOwner as Record<string, string>,
     regionController: candidate.regionController as Record<string, string>,
-    provinceOwner: candidate.provinceOwner,
-    provinceNameById:
-      candidate.provinceNameById && typeof candidate.provinceNameById === "object"
-        ? (candidate.provinceNameById as Record<string, string>)
+    hexOwner: candidate.hexOwner,
+    hexNameById:
+      candidate.hexNameById && typeof candidate.hexNameById === "object"
+        ? (candidate.hexNameById as Record<string, string>)
         : {},
     colonyProgressByRegion: candidate.colonyProgressByRegion,
     regionColonizationByRegion: params.normalizeRegionColonizationMap(
@@ -142,17 +142,17 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
   return restored;
 }
 
-function assertNoRemovedProvinceHeavyState(candidate: Record<string, unknown>): void {
+function assertNoRemovedHexHeavyState(candidate: Record<string, unknown>): void {
   const removedFields = [
-    "provincePopulationByProvince",
-    "provinceBuildingsByProvince",
-    "provincePopulationTreasuryByProvince",
-    "provinceConstructionQueueByProvince",
-    "provinceResourceDepositsByProvince",
-    "provinceResourceExplorationQueueByProvince",
-    "provinceResourceExplorationCountByProvince",
-    "colonyProgressByProvince",
-    "provinceColonizationByProvince",
+    "provincePopulationByHex",
+    "provinceBuildingsByHex",
+    "provincePopulationTreasuryByHex",
+    "provinceConstructionQueueByHex",
+    "provinceResourceDepositsByHex",
+    "provinceResourceExplorationQueueByHex",
+    "provinceResourceExplorationCountByHex",
+    "colonyProgressByHex",
+    "provinceColonizationByHex",
   ];
   const present = removedFields.filter((field) => Object.prototype.hasOwnProperty.call(candidate, field));
   if (present.length > 0) {

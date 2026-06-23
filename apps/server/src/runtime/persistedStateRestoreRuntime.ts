@@ -24,7 +24,7 @@ type PersistedStateRestoreRuntimeParams = {
   setTurnId: (turnId: number) => void;
   setWorldStateVersion: (worldStateVersion: number) => void;
   setActiveScenario: (scenario: { id: string; name: string }) => void;
-  applyMapRuntime: (mapRoot: string, provinceIndexPath?: string) => void;
+  applyMapRuntime: (mapRoot: string, hexIndexPath?: string) => void;
   findScenario: (scenarioId: string) => FoundScenario | null;
   defaultGameSettings: () => GameSettings;
   getDefaultWorldBase: (turnId: number) => WorldBase;
@@ -92,7 +92,7 @@ export function createPersistedStateRestoreRuntime(params: PersistedStateRestore
     const savedScenario = params.findScenario(savedScenarioId);
     if (savedScenario) {
       try {
-        params.applyMapRuntime(savedScenario.mapRoot, savedScenario.provinceIndexPath);
+        params.applyMapRuntime(savedScenario.mapRoot, savedScenario.hexIndexPath);
         params.setActiveScenario({
           id: savedScenario.descriptor.id,
           name:

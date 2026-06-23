@@ -44,7 +44,7 @@ type WebSocketRouteCompositionParams = {
     | "parseRequestedBuildingIdFromPayload"
     | "resolveBuildingOwnerFromPayload"
     | "isCountryAllowedForBuildingWithEngine"
-    | "getProvinceBuildRestriction"
+    | "getHexBuildRestriction"
     | "countBuildingOccurrences"
     | "getCountryBuildLimit"
   >;
@@ -112,7 +112,7 @@ export function registerWebSocketRouteComposition(params: WebSocketRouteComposit
     parseRequestedBuildingIdFromPayload: params.buildingRuntime.parseRequestedBuildingIdFromPayload,
     resolveBuildingOwnerFromPayload: params.buildingRuntime.resolveBuildingOwnerFromPayload,
     isCountryAllowedForBuildingWithEngine: params.buildingRuntime.isCountryAllowedForBuildingWithEngine,
-    getProvinceBuildRestriction: params.buildingRuntime.getProvinceBuildRestriction,
+    getHexBuildRestriction: params.buildingRuntime.getHexBuildRestriction,
     isBuildingUnlockedForCountry: params.progressionRuntime.isBuildingUnlockedForCountry,
     countBuildingOccurrences: params.buildingRuntime.countBuildingOccurrences,
     getCountryBuildLimit: params.buildingRuntime.getCountryBuildLimit,

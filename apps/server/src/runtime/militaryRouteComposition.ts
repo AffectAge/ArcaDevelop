@@ -45,7 +45,6 @@ export function registerMilitaryRouteComposition(params: MilitaryRouteCompositio
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,
     getGameSettings: params.getGameSettings,
-    getProvinceIndex: params.mapRuntime.getProvinceIndex,
     ensureCountryInWorldBase: params.countryWorldRuntime.ensureCountryInWorldBase,
     getCountryMarketRecord: params.marketRuntimeFacade.getCountryMarketRecord,
     normalizeMilitaryTemplateComponents: params.militaryRuntimeFacade.normalizeMilitaryTemplateComponents,

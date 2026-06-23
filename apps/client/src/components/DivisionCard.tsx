@@ -11,8 +11,8 @@ type Props = {
   template: DivisionTemplate | null;
   country: Country | null;
   currentCountryId: string | null;
-  currentProvinceName: string;
-  targetProvinceName?: string | null;
+  currentHexName: string;
+  targetHexName?: string | null;
   isMoving?: boolean;
   onClose: () => void;
   onMoveStart: () => void;
@@ -35,8 +35,8 @@ export function DivisionCard({
   template,
   country,
   currentCountryId,
-  currentProvinceName,
-  targetProvinceName,
+  currentHexName,
+  targetHexName,
   isMoving = false,
   onClose,
   onMoveStart,
@@ -95,7 +95,7 @@ export function DivisionCard({
           <div className="grid grid-cols-2 gap-4 p-4 border-b border-[var(--arc-color-gold-soft)]">
             <div className="arc-pop-panel p-3">
               <p className="arc-pop-label mb-1">{t("army.location")}</p>
-              <p className="text-sm font-semibold text-[var(--arc-color-text)]">{currentProvinceName}</p>
+              <p className="text-sm font-semibold text-[var(--arc-color-text)]">{currentHexName}</p>
             </div>
             <div className="arc-pop-panel p-3">
               <p className="arc-pop-label mb-1">{t("army.composition")}</p>
@@ -146,14 +146,14 @@ export function DivisionCard({
                 <Crosshair className="w-4 h-4" />
                 <span>{t("army.moveActive")}</span>
               </div>
-              {targetProvinceName && (
+              {targetHexName && (
                 <div className="flex items-center gap-2 text-[var(--arc-color-text)] text-sm">
-                  <span>{currentProvinceName}</span>
+                  <span>{currentHexName}</span>
                   <ArrowRight className="w-4 h-4" />
-                  <span className="font-semibold">{targetProvinceName}</span>
+                  <span className="font-semibold">{targetHexName}</span>
                 </div>
               )}
-              {!targetProvinceName && <p className="text-[var(--arc-color-text)] text-sm">{t("army.movePickDestination")}</p>}
+              {!targetHexName && <p className="text-[var(--arc-color-text)] text-sm">{t("army.movePickDestination")}</p>}
             </div>
           )}
 

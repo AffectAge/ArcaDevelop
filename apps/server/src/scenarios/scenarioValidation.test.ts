@@ -11,14 +11,14 @@ afterEach(async () => {
 });
 
 describe("scenarioValidation", () => {
-  it("loads valid per-entity province, region, country, content, and Arcawiki files", async () => {
+  it("loads valid hex-region, country, content, and Arcawiki files", async () => {
     const scenarioDir = await createScenarioFixture();
 
     const result = await validateScenarioDirectory(scenarioDir);
 
     expect(result.ok).toBe(true);
     expect(result.summary).toEqual({
-      provinces: 2,
+      hexes: 0,
       regions: 1,
       countries: 1,
       contentEntries: 1,
@@ -45,7 +45,7 @@ describe("scenarioValidation", () => {
       id: "region:bohemia",
       nameKey: "region.bohemia.name",
       color: "#22d3ee",
-      provinceIds: ["province:praha", "province:missing"],
+      hexIds: ["hex:0:0", "bad-hex"],
       ownerCountryId: "country:bohemia",
       controllerCountryId: "country:bohemia",
       coreCountryIds: ["country:bohemia"],
@@ -58,7 +58,7 @@ describe("scenarioValidation", () => {
     expect(result.issues.some((issue) => issue.code === "BROKEN_REFERENCE")).toBe(true);
   });
 
-  it("fails on forbidden province-heavy fields", async () => {
+  it("fails on legacy province authored paths", async () => {
     const scenarioDir = await createScenarioFixture();
     await writeJson(join(scenarioDir, "history/provinces/praha.json"), {
       id: "province:praha",
@@ -74,10 +74,10 @@ describe("scenarioValidation", () => {
     const result = await validateScenarioDirectory(scenarioDir);
 
     expect(result.ok).toBe(false);
-    expect(result.issues.some((issue) => issue.code === "FORBIDDEN_PROVINCE_HEAVY_FIELD")).toBe(true);
+    expect(result.issues.some((issue) => issue.code === "FORBIDDEN_REMOVED_FORMAT_DIRECTORY")).toBe(true);
   });
 
-  it("fails when province color is missing or invalid", async () => {
+  it("fails on legacy province authored paths before province color validation", async () => {
     const scenarioDir = await createScenarioFixture();
     await writeJson(join(scenarioDir, "history/provinces/praha.json"), {
       id: "province:praha",
@@ -92,7 +92,7 @@ describe("scenarioValidation", () => {
     const result = await validateScenarioDirectory(scenarioDir);
 
     expect(result.ok).toBe(false);
-    expect(result.issues.some((issue) => issue.code === "INVALID_ENTITY_COLOR")).toBe(true);
+    expect(result.issues.some((issue) => issue.code === "FORBIDDEN_REMOVED_FORMAT_DIRECTORY")).toBe(true);
   });
 
   it("fails when region color is missing or invalid", async () => {
@@ -101,7 +101,7 @@ describe("scenarioValidation", () => {
       id: "region:bohemia",
       nameKey: "region.bohemia.name",
       color: "cyan",
-      provinceIds: ["province:praha", "province:plzen"],
+      hexIds: ["hex:0:0", "hex:0:1"],
       ownerCountryId: "country:bohemia",
       controllerCountryId: "country:bohemia",
       coreCountryIds: ["country:bohemia"],
@@ -136,9 +136,21 @@ describe("scenarioValidation", () => {
     expect(result.issues.some((issue) => issue.code === "FORBIDDEN_AGGREGATE_SOURCE")).toBe(true);
   });
 
+  it("fails on legacy province setup ownership sources", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await writeJson(join(scenarioDir, "setup/province_owners.json"), {
+      "province:praha": "country:bohemia",
+    });
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.some((issue) => issue.code === "FORBIDDEN_AGGREGATE_SOURCE")).toBe(true);
+  });
+
   it("fails when generated indexes are outside the scenario root generated directory", async () => {
     const scenarioDir = await createScenarioFixture();
-    await writeJson(join(scenarioDir, "history/provinces/.generated/provinces.json"), []);
+    await writeJson(join(scenarioDir, "history/regions/.generated/hex-regions.json"), []);
 
     const result = await validateScenarioDirectory(scenarioDir);
 
@@ -146,23 +158,14 @@ describe("scenarioValidation", () => {
     expect(result.issues.some((issue) => issue.code === "FORBIDDEN_GENERATED_INDEX_LOCATION")).toBe(true);
   });
 
-  it("fails on removed province-heavy runtime fields in province history", async () => {
+  it("fails on root generated province indexes", async () => {
     const scenarioDir = await createScenarioFixture();
-    await writeJson(join(scenarioDir, "history/provinces/praha.json"), {
-      id: "province:praha",
-      nameKey: "province.praha.name",
-      color: "#8fb9a8",
-      terrain: "terrain:plains",
-      climate: "climate:temperate",
-      movementCost: 1,
-      passable: true,
-      provinceConstructionQueueByProvince: {},
-    });
+    await writeJson(join(scenarioDir, ".generated/provinces.json"), []);
 
     const result = await validateScenarioDirectory(scenarioDir);
 
     expect(result.ok).toBe(false);
-    expect(result.issues.some((issue) => issue.code === "FORBIDDEN_PROVINCE_HEAVY_FIELD")).toBe(true);
+    expect(result.issues.some((issue) => issue.code === "FORBIDDEN_AGGREGATE_SOURCE")).toBe(true);
   });
 
   it("fails on forbidden country security fields", async () => {
@@ -909,26 +912,20 @@ describe("scenarioValidation", () => {
 
     const manifest = await buildScenarioGeneratedIndexes(scenarioDir);
     const validWithGenerated = await validateScenarioDirectory(scenarioDir, { requireGeneratedIndexes: true });
-    const provinceIndex = JSON.parse(await readFile(join(scenarioDir, ".generated/provinces.json"), "utf8")) as Array<{ id: string; regionId?: string; provinceColor?: string; regionColor?: string }>;
+    const hexSettings = JSON.parse(await readFile(join(scenarioDir, ".generated/hex-map-settings.json"), "utf8")) as { seed?: string; width?: number };
 
-    expect(manifest.counts.provinces).toBe(2);
-    expect(provinceIndex.find((province) => province.id === "praha")?.regionId).toBe("region:bohemia");
-    expect(provinceIndex.find((province) => province.id === "praha")?.provinceColor).toBe("#8fb9a8");
-    expect(provinceIndex.find((province) => province.id === "praha")?.regionColor).toBe("#22d3ee");
+    expect(manifest.counts.hexes).toBe(0);
+    expect(hexSettings.seed).toBe("fixture-seed");
+    expect(hexSettings.width).toBe(16);
     expect(validWithGenerated.ok).toBe(true);
   });
 
   it("fails when generated indexes are stale", async () => {
     const scenarioDir = await createScenarioFixture();
     await buildScenarioGeneratedIndexes(scenarioDir);
-    await writeJson(join(scenarioDir, "history/provinces/plzen.json"), {
-      id: "province:plzen",
-      nameKey: "province.plzen.name",
-      color: "#b7a6d9",
-      terrain: "terrain:hills",
-      climate: "climate:temperate",
-      movementCost: 3,
-      passable: true,
+    await writeJson(join(scenarioDir, "map/hex-settings.json"), {
+      ...createHexSettings(),
+      seed: "changed-seed",
     });
 
     const result = await validateScenarioDirectory(scenarioDir, { requireGeneratedIndexes: true });
@@ -958,7 +955,6 @@ async function createScenarioFixture(): Promise<string> {
   });
   await writeJson(join(scenarioDir, "localisation/en.json"), {
     scenario: { fixture: { name: "Fixture" } },
-    province: { praha: { name: "Prague" }, plzen: { name: "Pilsen" } },
     region: { bohemia: { name: "Bohemia" } },
     country: { bohemia: { name: "Bohemia" } },
     good: { grain: { name: "Grain" } },
@@ -969,7 +965,6 @@ async function createScenarioFixture(): Promise<string> {
   });
   await writeJson(join(scenarioDir, "localisation/ru.json"), {
     scenario: { fixture: { name: "Fixture RU" } },
-    province: { praha: { name: "Прага" }, plzen: { name: "Пльзень" } },
     region: { bohemia: { name: "Богемия" } },
     country: { bohemia: { name: "Богемия" } },
     good: { grain: { name: "Зерно" } },
@@ -978,29 +973,12 @@ async function createScenarioFixture(): Promise<string> {
     event: { legacy: { name: "Legacy RU", title: "Legacy RU", description: "Legacy RU", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Экономика" } },
   });
-  await writeJson(join(scenarioDir, "history/provinces/praha.json"), {
-    id: "province:praha",
-    nameKey: "province.praha.name",
-    color: "#8fb9a8",
-    terrain: "terrain:plains",
-    climate: "climate:temperate",
-    movementCost: 1,
-    passable: true,
-  });
-  await writeJson(join(scenarioDir, "history/provinces/plzen.json"), {
-    id: "province:plzen",
-    nameKey: "province.plzen.name",
-    color: "#b7a6d9",
-    terrain: "terrain:hills",
-    climate: "climate:temperate",
-    movementCost: 2,
-    passable: true,
-  });
+  await writeJson(join(scenarioDir, "map/hex-settings.json"), createHexSettings());
   await writeJson(join(scenarioDir, "history/regions/bohemia.json"), {
     id: "region:bohemia",
     nameKey: "region.bohemia.name",
     color: "#22d3ee",
-    provinceIds: ["province:praha", "province:plzen"],
+    hexIds: ["hex:0:0", "hex:0:1"],
     ownerCountryId: "country:bohemia",
     controllerCountryId: "country:bohemia",
     coreCountryIds: ["country:bohemia"],
@@ -1022,6 +1000,25 @@ async function createScenarioFixture(): Promise<string> {
   });
 
   return scenarioDir;
+}
+
+function createHexSettings(): Record<string, unknown> {
+  return {
+    seed: "fixture-seed",
+    width: 16,
+    height: 12,
+    hexSize: 24,
+    seaLevel: 0.42,
+    temperature: 0.5,
+    moisture: 0.5,
+    mountains: 0.78,
+    rivers: 0.45,
+    forests: 0.55,
+    targetLandRegionSize: 8,
+    targetWaterRegionSize: 12,
+    chunkSize: 8,
+    wrapX: true,
+  };
 }
 
 async function writeJson(path: string, data: unknown): Promise<void> {

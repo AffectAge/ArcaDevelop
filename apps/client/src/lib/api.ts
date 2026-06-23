@@ -92,8 +92,8 @@ export type ContentCulture = {
   workforceRequirements?: Array<{ professionId: string; workers: number }> | null;
   allowedCountryIds?: string[] | null;
   deniedCountryIds?: string[] | null;
-  allowedProvinceTypes?: string[] | null;
-  deniedProvinceTypes?: string[] | null;
+  allowedHexTypes?: string[] | null;
+  deniedHexTypes?: string[] | null;
   allowedClimates?: string[] | null;
   deniedClimates?: string[] | null;
   allowedLandscapes?: string[] | null;
@@ -123,11 +123,11 @@ export type ContentEntry = ContentCulture;
 export type ContentEntryKind =
   | "cultures"
   | "resourceCategories"
-  | "provinceTypes"
-  | "provinceClimates"
-  | "provinceLandscapes"
-  | "provinceContinents"
-  | "provinceStrategicRegions"
+  | "hexTypes"
+  | "hexClimates"
+  | "hexLandscapes"
+  | "hexContinents"
+  | "hexStrategicRegions"
   | "religions"
   | "professions"
   | "ideologies"
@@ -219,8 +219,8 @@ type ContentEntryUpsertPayload = {
   workforceRequirements?: Array<{ professionId: string; workers: number }>;
   allowedCountryIds?: string[];
   deniedCountryIds?: string[];
-  allowedProvinceTypes?: string[];
-  deniedProvinceTypes?: string[];
+  allowedHexTypes?: string[];
+  deniedHexTypes?: string[];
   allowedClimates?: string[];
   deniedClimates?: string[];
   allowedLandscapes?: string[];
@@ -328,7 +328,7 @@ export type ArmyOverview = {
   battalionCatalog: ContentEntry[];
   templates: DivisionTemplate[];
   divisions: Division[];
-  provinceOptions: Array<{ id: string; name: string; neighbors: string[] }>;
+  hexOptions: Array<{ id: string; name: string; neighbors: string[] }>;
 };
 
 export type MilitaryOverview = {
@@ -339,7 +339,7 @@ export type MilitaryOverview = {
   units: Division[];
   divisions: Division[];
   queue: MilitaryFormationQueueItem[];
-  provinceOptions: Array<{ id: string; name: string; neighbors: string[] }>;
+  hexOptions: Array<{ id: string; name: string; neighbors: string[] }>;
   formationSpeed: number;
 };
 
@@ -394,7 +394,7 @@ export async function uploadMilitaryTemplateIcon(token: string, templateId: stri
 
 export async function createMilitaryFormation(
   token: string,
-  payload: { templateId: string; provinceId: string; name?: string },
+  payload: { templateId: string; hexId: string; name?: string },
 ): Promise<MilitaryOverview> {
   const response = await fetch(`${API}/military/formations`, {
     method: "POST",
@@ -457,7 +457,7 @@ export async function uploadDivisionTemplateIcon(token: string, templateId: stri
 
 export async function createDivisionFromTemplate(
   token: string,
-  payload: { templateId: string; provinceId: string; name?: string },
+  payload: { templateId: string; hexId: string; name?: string },
 ): Promise<ArmyOverview> {
   const response = await fetch(`${API}/army/divisions`, {
     method: "POST",
@@ -809,7 +809,7 @@ export type MarketOverviewAlert = {
   severity: "warning" | "critical";
   kind: "critical-deficit" | "infra-overload" | "building-inactive";
   message: string;
-  provinceId?: string;
+  hexId?: string;
   buildingId?: string;
   instanceId?: string;
   goodId?: string;
@@ -822,13 +822,13 @@ export type LogisticsSnapshot = {
     marketId: string;
     ownerCountryId: string;
     transportMode: TransportMode;
-    provinceIds: string[];
+    hexIds: string[];
     capacity: number;
     load: number;
     utilization: number;
     status: "building" | "active" | "closed";
   }>;
-  coverageByModeByProvince: Record<
+  coverageByModeByHex: Record<
     TransportMode,
     Record<
       string,
@@ -840,11 +840,11 @@ export type LogisticsSnapshot = {
       }
     >
   >;
-  failuresByProvince: Record<
+  failuresByHex: Record<
     string,
     Array<{
-      provinceId: string;
-      sourceProvinceId?: string | null;
+      hexId: string;
+      sourceHexId?: string | null;
       sourceCountryId?: string | null;
       sourceMarketId?: string | null;
       goodId: string;
@@ -859,7 +859,7 @@ export type MarketOverviewResponse = {
   turnId: number;
   countryId: string;
   marketId: string;
-  marketCapitalProvinceId?: string | null;
+  marketCapitalHexId?: string | null;
   transportCorridors?: MarketTransportCorridor[];
   logisticsSnapshot?: LogisticsSnapshot;
   goods: MarketOverviewItem[];
@@ -888,8 +888,8 @@ export type MarketTransportCorridor = {
   id: string;
   marketId: string;
   ownerCountryId: string;
-  provinceIds: string[];
-  routePoints?: { provinceId: string; lng: number; lat: number }[];
+  hexIds: string[];
+  routePoints?: { hexId: string; lng: number; lat: number }[];
   transportMode: TransportMode;
   level: number;
   status: "building" | "active" | "closed";
@@ -899,7 +899,7 @@ export type MarketTransportCorridor = {
   lastCapacityByMode?: Record<string, number>;
   lastLoadHistoryByMode?: Record<string, number[]>;
   foreignConstructionRights?: Array<{
-    provinceId: string;
+    hexId: string;
     grantorCountryId: string;
     agreementId: string;
     expirationPolicy: "disable_without_transit" | "nationalize_to_territory_owner";
@@ -918,7 +918,7 @@ export type MarketDetails = {
   logoUrl: string | null;
   ownerCountryId: string;
   ownerCountryName: string;
-  capitalProvinceId?: string | null;
+  capitalHexId?: string | null;
   memberCountryIds: string[];
   visibility: "public" | "private";
   createdAt: string;
@@ -948,7 +948,7 @@ export type MarketCatalogItem = {
   id: string;
   name: string;
   logoUrl: string | null;
-  capitalProvinceId?: string | null;
+  capitalHexId?: string | null;
   ownerCountryId: string;
   ownerCountryName: string;
   ownerCountryFlagUrl: string | null;
@@ -1100,8 +1100,8 @@ export async function createMarketTransportCorridor(
   token: string,
   marketId: string,
   payload: {
-    provinceIds: string[];
-    routePoints?: { provinceId: string; lng: number; lat: number }[];
+    hexIds: string[];
+    routePoints?: { hexId: string; lng: number; lat: number }[];
     transportMode: TransportMode;
   },
 ): Promise<{ corridor: MarketTransportCorridor; corridors: MarketTransportCorridor[] }> {
@@ -1943,7 +1943,7 @@ export type GameSettings = {
     recolorDucats: number;
     flagDucats: number;
     crestDucats: number;
-    provinceRenameDucats: number;
+    hexRenameDucats: number;
   };
   registration: {
     requireAdminApproval: boolean;
@@ -1992,14 +1992,14 @@ export async function fetchPublicCustomizationPrices(): Promise<CustomizationPri
   return data.customization;
 }
 
-export type ProvinceIndexItem = {
+export type HexIndexItem = {
   id: string;
   name: string;
   regionId?: string | null;
-  provinceColor: string;
+  hexColor: string;
   regionColor: string;
   areaKm2: number;
-  provinceType?: string | null;
+  hexType?: string | null;
   centerX?: number | null;
   centerY?: number | null;
   sourceCenterX?: number | null;
@@ -2015,13 +2015,13 @@ export type ProvinceIndexItem = {
   fertility?: number | null;
 };
 
-export async function fetchProvinceIndex(): Promise<ProvinceIndexItem[]> {
-  const response = await fetch(`${API}/provinces/index`);
+export async function fetchHexIndex(): Promise<HexIndexItem[]> {
+  const response = await fetch(`${API}/hexes/index`);
   if (!response.ok) {
-    throw new Error("PROVINCE_INDEX_FAILED");
+    throw new Error("HEX_INDEX_FAILED");
   }
-  const data = (await response.json()) as { provinces: ProvinceIndexItem[] };
-  return data.provinces;
+  const data = (await response.json()) as { hexes: HexIndexItem[] };
+  return data.hexes;
 }
 
 export async function fetchPublicGameUiSettings(): Promise<Pick<GameSettings, "economy" | "colonization" | "customization" | "eventLog" | "turnTimer" | "map">> {
@@ -2189,7 +2189,7 @@ export async function updateGameSettings(
       settlementEnabled?: boolean;
       settlementPopulationOnCapture?: number;
     };
-    customization?: { renameDucats?: number; recolorDucats?: number; flagDucats?: number; crestDucats?: number; provinceRenameDucats?: number };
+    customization?: { renameDucats?: number; recolorDucats?: number; flagDucats?: number; crestDucats?: number; hexRenameDucats?: number };
     registration?: { requireAdminApproval?: boolean };
     eventLog?: { retentionTurns?: number };
     turnTimer?: { enabled?: boolean; secondsPerTurn?: number; pauseWhenNoPlayersOnline?: boolean };
@@ -2228,7 +2228,7 @@ export type ScenarioDescriptor = {
     root: string;
     hasVectorTiles: boolean;
     hasRasterTiles: boolean;
-    hasProvinces: boolean;
+    hasHexes: boolean;
   };
   contentFiles: string[];
   setupFiles: string[];
@@ -2577,14 +2577,14 @@ export async function updateOwnCountryCustomization(
   };
 }
 
-export type AdminProvinceItem = {
+export type AdminHexItem = {
   id: string;
   name: string;
   regionId?: string;
-  provinceColor?: string;
+  hexColor?: string;
   regionColor?: string;
   areaKm2: number;
-  provinceType?: string | null;
+  hexType?: string | null;
   climate?: string | null;
   landscape?: string | null;
   ownerCountryId: string | null;
@@ -2668,11 +2668,11 @@ export async function cancelCountryBuild(
   return (await response.json()) as { canceledQueuedProject: boolean; canceledPendingOrder: boolean };
 }
 
-export async function renameOwnedProvince(
+export async function renameOwnedHex(
   token: string,
-  payload: { provinceId: string; provinceName: string },
-): Promise<{ provinceId: string; provinceName: string; chargedDucats: number; resources: { ducats: number } }> {
-  const response = await fetch(`${API}/country/province-rename`, {
+  payload: { hexId: string; hexName: string },
+): Promise<{ hexId: string; hexName: string; chargedDucats: number; resources: { ducats: number } }> {
+  const response = await fetch(`${API}/country/hex-rename`, {
     method: "PATCH",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -2682,21 +2682,21 @@ export async function renameOwnedProvince(
   });
   if (!response.ok) {
     const err = await response.json();
-    throw new Error(err.error ?? "PROVINCE_RENAME_FAILED");
+    throw new Error(err.error ?? "HEX_RENAME_FAILED");
   }
-  return (await response.json()) as { provinceId: string; provinceName: string; chargedDucats: number; resources: { ducats: number } };
+  return (await response.json()) as { hexId: string; hexName: string; chargedDucats: number; resources: { ducats: number } };
 }
 
-export async function fetchAdminProvinces(token: string): Promise<AdminProvinceItem[]> {
-  const response = await fetch(`${API}/admin/provinces`, {
+export async function fetchAdminHexes(token: string): Promise<AdminHexItem[]> {
+  const response = await fetch(`${API}/admin/hexes`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) {
     const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_PROVINCES_FAILED");
+    throw new Error(err.error ?? "ADMIN_HEXES_FAILED");
   }
-  const data = (await response.json()) as { provinces: AdminProvinceItem[] };
-  return data.provinces;
+  const data = (await response.json()) as { hexes: AdminHexItem[] };
+  return data.hexes;
 }
 
 export async function fetchAdminRegions(token: string): Promise<AdminRegionItem[]> {

@@ -39,7 +39,7 @@
     "recolorDucats": 10,
     "flagDucats": 15,
     "crestDucats": 15,
-    "provinceRenameDucats": 25
+    "hexRenameDucats": 25
   },
   "military": {
     "militaryFormationSpeed": 10

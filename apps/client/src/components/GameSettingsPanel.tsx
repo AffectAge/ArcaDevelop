@@ -91,7 +91,7 @@ export function GameSettingsPanel({ open, token, onClose, onSettingsUpdated }: P
   const [recolorDucats, setRecolorDucats] = useState(10);
   const [flagDucats, setFlagDucats] = useState(15);
   const [crestDucats, setCrestDucats] = useState(15);
-  const [provinceRenameDucats, setProvinceRenameDucats] = useState(25);
+  const [hexRenameDucats, setHexRenameDucats] = useState(25);
   const [eventLogRetentionTurns, setEventLogRetentionTurns] = useState(3);
   const [requireAdminApprovalForRegistration, setRequireAdminApprovalForRegistration] = useState(false);
   const [turnTimerEnabled, setTurnTimerEnabled] = useState(false);
@@ -141,7 +141,7 @@ export function GameSettingsPanel({ open, token, onClose, onSettingsUpdated }: P
         setRecolorDucats(settings.customization.recolorDucats);
         setFlagDucats(settings.customization.flagDucats);
         setCrestDucats(settings.customization.crestDucats);
-        setProvinceRenameDucats(settings.customization.provinceRenameDucats ?? 25);
+        setHexRenameDucats(settings.customization.hexRenameDucats ?? 25);
         setEventLogRetentionTurns(settings.eventLog.retentionTurns);
         setRequireAdminApprovalForRegistration(settings.registration?.requireAdminApproval ?? false);
         setTurnTimerEnabled(settings.turnTimer?.enabled ?? false);
@@ -258,7 +258,7 @@ export function GameSettingsPanel({ open, token, onClose, onSettingsUpdated }: P
     }
   };
 
-  const recalculateAutoProvinceCosts = async () => {
+  const recalculateAutoHexCosts = async () => {
     setSaving(true);
     try {
       const result = await adminRecalculateAutoRegionCosts(token);
@@ -279,14 +279,14 @@ export function GameSettingsPanel({ open, token, onClose, onSettingsUpdated }: P
           recolorDucats: Math.max(0, Math.floor(recolorDucats)),
           flagDucats: Math.max(0, Math.floor(flagDucats)),
           crestDucats: Math.max(0, Math.floor(crestDucats)),
-          provinceRenameDucats: Math.max(0, Math.floor(provinceRenameDucats)),
+          hexRenameDucats: Math.max(0, Math.floor(hexRenameDucats)),
         },
       });
       setRenameDucats(updated.customization.renameDucats);
       setRecolorDucats(updated.customization.recolorDucats);
       setFlagDucats(updated.customization.flagDucats);
       setCrestDucats(updated.customization.crestDucats);
-      setProvinceRenameDucats(updated.customization.provinceRenameDucats ?? 25);
+      setHexRenameDucats(updated.customization.hexRenameDucats ?? 25);
       onSettingsUpdated?.(updated);
       toast.success(t("gameSettings.customizationSaved"));
     } catch {
@@ -462,7 +462,7 @@ export function GameSettingsPanel({ open, token, onClose, onSettingsUpdated }: P
                         <div className="space-y-3">
                           {scenarios.map((scenario) => {
                             const isActive = scenario.id === activeScenarioId || scenario.active;
-                            const canApply = scenario.map.hasVectorTiles && scenario.map.hasProvinces && !isActive;
+                            const canApply = scenario.map.hasVectorTiles && scenario.map.hasHexes && !isActive;
                             return (
                               <div key={scenario.id} className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-4">
                                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -776,7 +776,7 @@ export function GameSettingsPanel({ open, token, onClose, onSettingsUpdated }: P
                         </AppButton>
                         <AppButton
                           type="button"
-                          onClick={recalculateAutoProvinceCosts}
+                          onClick={recalculateAutoHexCosts}
                           disabled={saving}
                           variant="secondary"
                           icon={<RefreshCcw size={14} />}
@@ -798,7 +798,7 @@ export function GameSettingsPanel({ open, token, onClose, onSettingsUpdated }: P
                         <div><label className={labelClass}>{t("gameSettings.customization.recolor")}</label><input type="number" min={0} value={recolorDucats} onChange={(e) => setRecolorDucats(Math.max(0, Number(e.target.value) || 0))} className={inputClass} /></div>
                         <div><label className={labelClass}>{t("gameSettings.customization.flag")}</label><input type="number" min={0} value={flagDucats} onChange={(e) => setFlagDucats(Math.max(0, Number(e.target.value) || 0))} className={inputClass} /></div>
                         <div><label className={labelClass}>{t("gameSettings.customization.crest")}</label><input type="number" min={0} value={crestDucats} onChange={(e) => setCrestDucats(Math.max(0, Number(e.target.value) || 0))} className={inputClass} /></div>
-                        <div><label className={labelClass}>{t("gameSettings.customization.renameProvince")}</label><input type="number" min={0} value={provinceRenameDucats} onChange={(e) => setProvinceRenameDucats(Math.max(0, Number(e.target.value) || 0))} className={inputClass} /></div>
+                        <div><label className={labelClass}>{t("gameSettings.customization.renameHex")}</label><input type="number" min={0} value={hexRenameDucats} onChange={(e) => setHexRenameDucats(Math.max(0, Number(e.target.value) || 0))} className={inputClass} /></div>
                       </div>
                       <AppButton onClick={() => void saveCustomization()} disabled={saving} variant="primary" icon={<Save size={14} />}>
                         {t("common.save")}

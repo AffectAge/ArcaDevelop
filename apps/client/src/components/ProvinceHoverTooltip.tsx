@@ -14,7 +14,7 @@ type Props = {
   open: boolean;
   x: number;
   y: number;
-  provinceName: string;
+  hexName: string;
   areaKm2: number | null;
   ownerName: string;
   colonizers: ColonizerRow[];
@@ -34,7 +34,7 @@ const modeTone: Record<NonNullable<Props["modeRows"]>[number]["tone"] & string, 
   bad: "negative",
 };
 
-export function ProvinceHoverTooltip({ open, x, y, provinceName, areaKm2, ownerName, colonizers, modeLabel, modeRows = [] }: Props) {
+export function HexHoverTooltip({ open, x, y, hexName, areaKm2, ownerName, colonizers, modeLabel, modeRows = [] }: Props) {
   const { locale, t } = useUiText();
   const formattedArea = formatKm2(areaKm2, locale);
   if (!open) {
@@ -62,7 +62,7 @@ export function ProvinceHoverTooltip({ open, x, y, provinceName, areaKm2, ownerN
       <TooltipPanel variant="rich">
         <TooltipContent
           content={{
-            title: provinceName,
+            title: hexName,
             rows,
           }}
         />

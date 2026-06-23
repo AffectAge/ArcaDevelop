@@ -6,8 +6,8 @@ Scenario data follows a Victoria-inspired one-entity-per-file layout. Authored f
 
 - Use stable readable IDs, for example `country:bohemia`, `region:bohemia`, `good:grain`.
 - Treat each JSON `id` as authoritative. File names are human-readable only and must not become stable IDs.
-- Use stable IDs for all cross-references, for example `country:bohemia`, `region:bohemia`, `province:praha`, `good:grain`.
-- Keep province map/movement data in `history/provinces/*.json`.
+- Use stable IDs for all cross-references, for example `country:bohemia`, `region:bohemia`, `hex:10:20`, `good:grain`.
+- Keep deterministic hex map settings in `map/hex-settings.json`.
 - Keep region composition and heavy starting state in `history/regions/*.json`.
 - Keep starting state in `history/`.
 - Keep reusable definitions in one-file-per-entry `common/*/*.json` folders.
@@ -25,7 +25,6 @@ Recommended scenario folders:
 scenarios/<scenario_id>/
   scenario.json
   history/
-    provinces/*.json
     regions/*.json
     countries/*.json
     diplomacy/
@@ -58,7 +57,7 @@ scenarios/<scenario_id>/
   .generated/
 ```
 
-`map/provinces.json`, `apps/server/data/content-library.json`, and monolithic content libraries are not authored or runtime source in the target format. If runtime needs aggregate views, scenario tooling must generate them under `.generated/`.
+`history/provinces/*.json`, `map/provinces.json`, `.generated/provinces.json`, `apps/server/data/content-library.json`, and monolithic content libraries are not authored or runtime source in the target format. If runtime needs aggregate views, scenario tooling must generate hex artifacts under `.generated/`.
 
 Scenario-owned uploaded assets live under `assets/uploads/` inside the scenario folder. Server-managed URLs use `/scenario-assets/<scenario_id>/assets/uploads/<relative_path>`; global upload roots and `/uploads/...` URLs are not valid authored or runtime targets.
 
@@ -113,7 +112,7 @@ Currently supported runtime defines:
     "recolorDucats": 10,
     "flagDucats": 15,
     "crestDucats": 15,
-    "provinceRenameDucats": 25
+    "hexRenameDucats": 25
   },
   "military": {
     "militaryFormationSpeed": 10

@@ -6,9 +6,9 @@ import type {
   RegionResourceExplorationProject,
 } from "@arcanorum/shared";
 
-export type ProvinceStateNormalizerParams = {
+export type HexStateNormalizerParams = {
   input: unknown;
-  provinceIds: string[];
+  hexIds: string[];
   fallbackCountryId: string;
   turnId: number;
   createId: () => string;
@@ -19,12 +19,12 @@ function round3(value: number): number {
   return Number((Number.isFinite(value) ? value : 0).toFixed(3));
 }
 
-export function normalizeRegionBuildingsMap(params: ProvinceStateNormalizerParams): Record<string, BuildingInstance[]> {
+export function normalizeRegionBuildingsMap(params: HexStateNormalizerParams): Record<string, BuildingInstance[]> {
   const input = params.input;
   const fallbackCountryId = params.fallbackCountryId;
   const normalized: Record<string, BuildingInstance[]> = {};
   if (input && typeof input === "object") {
-    for (const [provinceId, raw] of Object.entries(input as Record<string, unknown>)) {
+    for (const [hexId, raw] of Object.entries(input as Record<string, unknown>)) {
       const instances: BuildingInstance[] = [];
       if (Array.isArray(raw)) {
         for (const item of raw) {
@@ -258,39 +258,39 @@ export function normalizeRegionBuildingsMap(params: ProvinceStateNormalizerParam
           });
         }
       }
-      normalized[provinceId] = instances;
+      normalized[hexId] = instances;
     }
   }
-  for (const provinceId of params.provinceIds) {
-    if (!normalized[provinceId]) {
-      normalized[provinceId] = [];
+  for (const hexId of params.hexIds) {
+    if (!normalized[hexId]) {
+      normalized[hexId] = [];
     }
   }
   return normalized;
 }
 
-export function normalizeRegionPopulationTreasuryMap(params: ProvinceStateNormalizerParams): Record<string, number> {
+export function normalizeRegionPopulationTreasuryMap(params: HexStateNormalizerParams): Record<string, number> {
   const input = params.input;
   const normalized: Record<string, number> = {};
   if (input && typeof input === "object") {
-    for (const [provinceId, raw] of Object.entries(input as Record<string, unknown>)) {
+    for (const [hexId, raw] of Object.entries(input as Record<string, unknown>)) {
       const value = typeof raw === "number" && Number.isFinite(raw) ? Math.max(0, raw) : 0;
-      normalized[provinceId] = Number(value.toFixed(3));
+      normalized[hexId] = Number(value.toFixed(3));
     }
   }
-  for (const provinceId of params.provinceIds) {
-    if (normalized[provinceId] == null) {
-      normalized[provinceId] = 0;
+  for (const hexId of params.hexIds) {
+    if (normalized[hexId] == null) {
+      normalized[hexId] = 0;
     }
   }
   return normalized;
 }
 
-export function normalizeRegionBuildingDucatsMap(params: ProvinceStateNormalizerParams): Record<string, Record<string, number>> {
+export function normalizeRegionBuildingDucatsMap(params: HexStateNormalizerParams): Record<string, Record<string, number>> {
   const input = params.input;
   const normalized: Record<string, Record<string, number>> = {};
   if (input && typeof input === "object") {
-    for (const [provinceId, raw] of Object.entries(input as Record<string, unknown>)) {
+    for (const [hexId, raw] of Object.entries(input as Record<string, unknown>)) {
       if (!raw || typeof raw !== "object") continue;
       const byBuilding: Record<string, number> = {};
       for (const [buildingId, valueRaw] of Object.entries(raw as Record<string, unknown>)) {
@@ -298,12 +298,12 @@ export function normalizeRegionBuildingDucatsMap(params: ProvinceStateNormalizer
         if (!buildingId) continue;
         byBuilding[buildingId] = Number(value.toFixed(3));
       }
-      normalized[provinceId] = byBuilding;
+      normalized[hexId] = byBuilding;
     }
   }
-  for (const provinceId of params.provinceIds) {
-    if (!normalized[provinceId]) {
-      normalized[provinceId] = {};
+  for (const hexId of params.hexIds) {
+    if (!normalized[hexId]) {
+      normalized[hexId] = {};
     }
   }
   return normalized;
@@ -320,12 +320,12 @@ export function normalizeBuildingOwner(input: unknown, fallbackCountryId: string
   return { type: "state", countryId: fallbackCountryId };
 }
 
-export function normalizeRegionConstructionQueueMap(params: ProvinceStateNormalizerParams): Record<string, RegionConstructionProject[]> {
+export function normalizeRegionConstructionQueueMap(params: HexStateNormalizerParams): Record<string, RegionConstructionProject[]> {
   const input = params.input;
   const fallbackCountryId = params.fallbackCountryId;
   const normalized: Record<string, RegionConstructionProject[]> = {};
   if (input && typeof input === "object") {
-    for (const [provinceId, raw] of Object.entries(input as Record<string, unknown>)) {
+    for (const [hexId, raw] of Object.entries(input as Record<string, unknown>)) {
       const rows = Array.isArray(raw) ? raw : [];
       const projects: RegionConstructionProject[] = [];
       for (const row of rows) {
@@ -372,24 +372,24 @@ export function normalizeRegionConstructionQueueMap(params: ProvinceStateNormali
           createdTurnId,
         });
       }
-      normalized[provinceId] = projects;
+      normalized[hexId] = projects;
     }
   }
-  for (const provinceId of params.provinceIds) {
-    if (!normalized[provinceId]) {
-      normalized[provinceId] = [];
+  for (const hexId of params.hexIds) {
+    if (!normalized[hexId]) {
+      normalized[hexId] = [];
     }
   }
   return normalized;
 }
 
-export function normalizeRegionResourceDepositsMap(params: ProvinceStateNormalizerParams): Record<string, RegionResourceDeposit[]> {
+export function normalizeRegionResourceDepositsMap(params: HexStateNormalizerParams): Record<string, RegionResourceDeposit[]> {
   const input = params.input;
   const normalized: Record<string, RegionResourceDeposit[]> = {};
   if (input && typeof input === "object") {
     const source = input as Record<string, unknown>;
-    for (const [provinceId, rawRows] of Object.entries(source)) {
-      if (!provinceId || !Array.isArray(rawRows)) continue;
+    for (const [hexId, rawRows] of Object.entries(source)) {
+      if (!hexId || !Array.isArray(rawRows)) continue;
       const rows: RegionResourceDeposit[] = [];
       for (const rawRow of rawRows) {
         if (!rawRow || typeof rawRow !== "object") continue;
@@ -414,22 +414,22 @@ export function normalizeRegionResourceDepositsMap(params: ProvinceStateNormaliz
         }
         rows.push({ goodId, amount, discoveredTurnId, veinSize });
       }
-      normalized[provinceId] = rows.sort((a, b) => a.goodId.localeCompare(b.goodId));
+      normalized[hexId] = rows.sort((a, b) => a.goodId.localeCompare(b.goodId));
     }
   }
-  for (const provinceId of params.provinceIds) {
-    if (!normalized[provinceId]) normalized[provinceId] = [];
+  for (const hexId of params.hexIds) {
+    if (!normalized[hexId]) normalized[hexId] = [];
   }
   return normalized;
 }
 
-export function normalizeRegionResourceExplorationQueueMap(params: ProvinceStateNormalizerParams): Record<string, RegionResourceExplorationProject[]> {
+export function normalizeRegionResourceExplorationQueueMap(params: HexStateNormalizerParams): Record<string, RegionResourceExplorationProject[]> {
   const input = params.input;
   const normalized: Record<string, RegionResourceExplorationProject[]> = {};
   if (input && typeof input === "object") {
     const source = input as Record<string, unknown>;
-    for (const [provinceId, rawRows] of Object.entries(source)) {
-      if (!provinceId || !Array.isArray(rawRows)) continue;
+    for (const [hexId, rawRows] of Object.entries(source)) {
+      if (!hexId || !Array.isArray(rawRows)) continue;
       const rows: RegionResourceExplorationProject[] = [];
       for (const rawRow of rawRows) {
         if (!rawRow || typeof rawRow !== "object") continue;
@@ -450,29 +450,29 @@ export function normalizeRegionResourceExplorationQueueMap(params: ProvinceState
             : 0;
         rows.push({ queueId, requestedByCountryId, startedTurnId, turnsRemaining });
       }
-      normalized[provinceId] = rows;
+      normalized[hexId] = rows;
     }
   }
-  for (const provinceId of params.provinceIds) {
-    if (!normalized[provinceId]) normalized[provinceId] = [];
+  for (const hexId of params.hexIds) {
+    if (!normalized[hexId]) normalized[hexId] = [];
   }
   return normalized;
 }
 
-export function normalizeRegionResourceExplorationCountMap(params: ProvinceStateNormalizerParams): Record<string, number> {
+export function normalizeRegionResourceExplorationCountMap(params: HexStateNormalizerParams): Record<string, number> {
   const input = params.input;
   const normalized: Record<string, number> = {};
   if (input && typeof input === "object") {
     const source = input as Record<string, unknown>;
-    for (const [provinceId, rawValue] of Object.entries(source)) {
-      if (!provinceId) continue;
+    for (const [hexId, rawValue] of Object.entries(source)) {
+      if (!hexId) continue;
       const value =
         typeof rawValue === "number" && Number.isFinite(rawValue) ? Math.max(0, Math.floor(rawValue)) : 0;
-      normalized[provinceId] = value;
+      normalized[hexId] = value;
     }
   }
-  for (const provinceId of params.provinceIds) {
-    if (normalized[provinceId] == null) normalized[provinceId] = 0;
+  for (const hexId of params.hexIds) {
+    if (normalized[hexId] == null) normalized[hexId] = 0;
   }
   return normalized;
 }

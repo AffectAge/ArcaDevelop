@@ -40,7 +40,7 @@
     "mapOrMovement": [
       "apps/client/AGENTS.md",
       "apps/server/AGENTS.md",
-      "docs/regions-and-provinces.md",
+      "docs/hexes-and-regions.md",
       "docs/performance-budgets.md",
       "docs/folder-structure.md"
     ],
@@ -234,7 +234,6 @@
     "generatedIsAuthoredSource": false,
     "authoredPaths": {
       "defines": "scenarios/<scenarioId>/common/defines.json",
-      "provinces": "scenarios/<scenarioId>/history/provinces/*.json",
       "regions": "scenarios/<scenarioId>/history/regions/*.json",
       "countries": "scenarios/<scenarioId>/history/countries/*.json",
       "diplomacyRelations": "scenarios/<scenarioId>/history/diplomacy/relations/*.json",
@@ -246,11 +245,6 @@
       "lawGroups": "scenarios/<scenarioId>/common/lawGroups/*.json",
       "cultures": "scenarios/<scenarioId>/common/cultures/*.json",
       "resourceCategories": "scenarios/<scenarioId>/common/resourceCategories/*.json",
-      "provinceTypes": "scenarios/<scenarioId>/common/provinceTypes/*.json",
-      "provinceClimates": "scenarios/<scenarioId>/common/provinceClimates/*.json",
-      "provinceLandscapes": "scenarios/<scenarioId>/common/provinceLandscapes/*.json",
-      "provinceContinents": "scenarios/<scenarioId>/common/provinceContinents/*.json",
-      "provinceStrategicRegions": "scenarios/<scenarioId>/common/provinceStrategicRegions/*.json",
       "religions": "scenarios/<scenarioId>/common/religions/*.json",
       "ideologies": "scenarios/<scenarioId>/common/ideologies/*.json",
       "professions": "scenarios/<scenarioId>/common/professions/*.json",
@@ -321,7 +315,7 @@
           "recolorDucats": { "type": "integer", "min": 0, "max": 1000000000000 },
           "flagDucats": { "type": "integer", "min": 0, "max": 1000000000000 },
           "crestDucats": { "type": "integer", "min": 0, "max": 1000000000000 },
-          "provinceRenameDucats": { "type": "integer", "min": 0, "max": 1000000000000 }
+          "hexRenameDucats": { "type": "integer", "min": 0, "max": 1000000000000 }
         },
         "military": {
           "militaryFormationSpeed": { "type": "number", "min": 1, "max": 1000000000000 }
@@ -361,7 +355,7 @@
       },
       "legacyExtractionFields": ["extractionGoodId", "extractionAmountPerTurn", "extractionRequiresDeposit"]
     },
-    "provinceAllowedData": [
+    "hexAllowedData": [
       "id",
       "nameKey",
       "color",
@@ -371,7 +365,7 @@
       "passable",
       "passability",
       "movementCost",
-      "adjacentProvinceIds",
+      "adjacentHexIds",
       "adjacency",
       "center",
       "areaKm2",
@@ -383,7 +377,7 @@
       "fertility",
       "specialSites"
     ],
-    "provinceForbiddenHeavyData": [
+    "legacyProvinceForbiddenHeavyData": [
       "pops",
       "population",
       "buildings",

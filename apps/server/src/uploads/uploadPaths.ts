@@ -37,11 +37,11 @@ export function resolveScenarioUploadPublicPrefix(scenarioId = activeUploadScena
 const contentUploadKinds = [
   "cultures",
   "resourceCategories",
-  "provinceTypes",
-  "provinceClimates",
-  "provinceLandscapes",
-  "provinceContinents",
-  "provinceStrategicRegions",
+  "hexTypes",
+  "hexClimates",
+  "hexLandscapes",
+  "hexContinents",
+  "hexStrategicRegions",
   "religions",
   "professions",
   "ideologies",
@@ -88,11 +88,11 @@ export function resolveContentUploadDir(kind?: string): string {
 export function resolveContentUploadUrlSegment(kind?: string): string {
   if (!kind) return "cultures";
   if (kind === "resourceCategories") return "resource-categories";
-  if (kind === "provinceTypes") return "province-types";
-  if (kind === "provinceClimates") return "province-climates";
-  if (kind === "provinceLandscapes") return "province-landscapes";
-  if (kind === "provinceContinents") return "province-continents";
-  if (kind === "provinceStrategicRegions") return "province-strategic-regions";
+  if (kind === "hexTypes") return "province-types";
+  if (kind === "hexClimates") return "province-climates";
+  if (kind === "hexLandscapes") return "province-landscapes";
+  if (kind === "hexContinents") return "province-continents";
+  if (kind === "hexStrategicRegions") return "province-strategic-regions";
   if (kind === "interestGroups") return "interest-groups";
   if (kind === "lawGroups") return "law-groups";
   if (kind === "shipTypes") return "ship-types";

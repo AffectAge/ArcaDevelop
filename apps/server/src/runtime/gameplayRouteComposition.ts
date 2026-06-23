@@ -7,23 +7,23 @@ import type { BuildingContentEntry, GameSettings } from "./gameSettingsTypes";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
 import type { ResourceLedgerRuntime } from "./resourceLedgerRuntime";
 import { registerCountryActionRouteRuntime } from "./countryActionRouteRuntime";
-import { registerProvinceRouteRuntime } from "./provinceRouteRuntime";
+import { registerHexRouteRuntime } from "./hexRouteRuntime";
 
 type CountryActionDeps = Parameters<typeof registerCountryActionRouteRuntime>[0];
-type ProvinceDeps = Parameters<typeof registerProvinceRouteRuntime>[0];
+type HexDeps = Parameters<typeof registerHexRouteRuntime>[0];
 
 type GameplayRouteCompositionParams = {
   app: express.Express;
   routeAuth: RouteAuth;
   prisma: PrismaClient;
-  masks: CountryActionDeps["masks"] & ProvinceDeps["masks"];
+  masks: CountryActionDeps["masks"] & HexDeps["masks"];
   getTurnId: () => number;
   getWorldBase: CountryActionDeps["getWorldBase"];
   getGameSettings: () => GameSettings;
   getOrdersByTurn: (turnId: number) => Map<string, Order[]> | undefined;
   deleteOrdersForTurn: (turnId: number) => void;
   mapRuntime: {
-    getProvinceIndex: ProvinceDeps["getProvinceIndex"];
+    getHexIndex: HexDeps["getHexIndex"];
   };
   turnOrderRuntime: {
     removeOrderFromTurnIndexes: (order: Order) => void;
@@ -31,12 +31,12 @@ type GameplayRouteCompositionParams = {
   };
   colonizationRuntime: {
     getRegionColonizationConfig: CountryActionDeps["getRegionColonizationConfig"];
-    getRegionDerivedColonizationCosts: ProvinceDeps["getRegionDerivedColonizationCosts"];
+    getRegionDerivedColonizationCosts: HexDeps["getRegionDerivedColonizationCosts"];
     addActiveColonizationTarget: CountryActionDeps["addActiveColonizationTarget"];
     removeActiveColonizationTarget: CountryActionDeps["removeActiveColonizationTarget"];
     removeRegionFromActiveColonizationIndex: CountryActionDeps["removeRegionFromActiveColonizationIndex"];
-    cleanupRegionColonizationProgress: ProvinceDeps["cleanupRegionColonizationProgress"];
-    recalculateAllRegionColonizationCosts: ProvinceDeps["recalculateAllRegionColonizationCosts"];
+    cleanupRegionColonizationProgress: HexDeps["cleanupRegionColonizationProgress"];
+    recalculateAllRegionColonizationCosts: HexDeps["recalculateAllRegionColonizationCosts"];
   };
   buildingRuntime: {
     getBuildingMaxLevel: (building: BuildingContentEntry | undefined) => number;
@@ -46,16 +46,16 @@ type GameplayRouteCompositionParams = {
   worldPopulationRuntime: {
     getPopulationDomainKeys: () => PopulationDomainKeys;
     buildRandomRegionPopulation: (
-      provinceId: string,
+      hexId: string,
       domains: PopulationDomainKeys,
       populationTotal?: number,
-    ) => ReturnType<ProvinceDeps["buildRandomRegionPopulation"]>;
+    ) => ReturnType<HexDeps["buildRandomRegionPopulation"]>;
     normalizePopulationPops: (
       rawPops: unknown,
-      provinceId: string,
+      hexId: string,
       domains: PopulationDomainKeys,
-    ) => ReturnType<ProvinceDeps["normalizePopulationPops"]>;
-    isEqualRegionPopulation: ProvinceDeps["isEqualRegionPopulation"];
+    ) => ReturnType<HexDeps["normalizePopulationPops"]>;
+    isEqualRegionPopulation: HexDeps["isEqualRegionPopulation"];
   };
   countryWorldRuntime: {
     ensureCountryInWorldBase: CountryActionDeps["ensureCountryInWorldBase"];
@@ -67,7 +67,7 @@ type GameplayRouteCompositionParams = {
   resourceLedgerRuntime: ResourceLedgerRuntime;
   getActiveColonizeRegionIds: CountryActionDeps["getActiveColonizeRegionIds"];
   getQueuedColonizeRegionIds: CountryActionDeps["getQueuedColonizeRegionIds"];
-  getProvinceRenameDucatsCost: ProvinceDeps["getProvinceRenameDucatsCost"];
+  getHexRenameDucatsCost: HexDeps["getHexRenameDucatsCost"];
   savePersistentState: () => void;
   makeOfficialNews: (input: {
     turn: number;
@@ -117,26 +117,26 @@ export function registerGameplayRouteComposition(params: GameplayRouteCompositio
     broadcast: params.broadcast,
   });
 
-  registerProvinceRouteRuntime({
+  registerHexRouteRuntime({
     app: params.app,
     routeAuth: params.routeAuth,
     prisma: params.prisma,
     masks: params.masks,
     getTurnId: params.getTurnId,
-    getProvinceIndex: params.mapRuntime.getProvinceIndex,
+    getHexIndex: params.mapRuntime.getHexIndex,
     getWorldBase: params.getWorldBase,
-    getProvinceRenameDucatsCost: params.getProvinceRenameDucatsCost,
+    getHexRenameDucatsCost: params.getHexRenameDucatsCost,
     getRegionColonizationConfig: params.colonizationRuntime.getRegionColonizationConfig,
     getRegionDerivedColonizationCosts: params.colonizationRuntime.getRegionDerivedColonizationCosts,
     getPopulationDomainKeys: () => params.worldPopulationRuntime.getPopulationDomainKeys(),
-    buildRandomRegionPopulation: (provinceId, domains, populationTotal) =>
+    buildRandomRegionPopulation: (hexId, domains, populationTotal) =>
       params.worldPopulationRuntime.buildRandomRegionPopulation(
-        provinceId,
+        hexId,
         domains as PopulationDomainKeys,
         populationTotal,
       ),
-    normalizePopulationPops: (rawPops, provinceId, domains) =>
-      params.worldPopulationRuntime.normalizePopulationPops(rawPops, provinceId, domains as PopulationDomainKeys),
+    normalizePopulationPops: (rawPops, hexId, domains) =>
+      params.worldPopulationRuntime.normalizePopulationPops(rawPops, hexId, domains as PopulationDomainKeys),
     isEqualRegionPopulation: params.worldPopulationRuntime.isEqualRegionPopulation,
     cleanupRegionColonizationProgress: params.colonizationRuntime.cleanupRegionColonizationProgress,
     recalculateAllRegionColonizationCosts: params.colonizationRuntime.recalculateAllRegionColonizationCosts,

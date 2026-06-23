@@ -47,7 +47,7 @@ import { round3 } from "./runtime/numberRuntime";
 import { makeOfficialNews } from "./runtime/officialNewsRuntime";
 import { buildAiControlledCountryIdsFromHistory, loadScenarioHistory } from "./scenarios/scenarioHistoryLoader";
 import {
-  buildRegionAdjacencyByIdFromProvinces,
+  buildRegionAdjacencyByIdFromHexes,
   selectAiColonizationCandidates,
 } from "./ai/aiColonizationCandidates";
 import { selectAiEconomyOrderCandidates } from "./ai/aiEconomyCandidates";
@@ -80,7 +80,7 @@ import {
   DEFAULT_BATTALIONS,
 } from "./content/contentNormalizers";
 import type { GameSettings } from "./runtime/gameSettingsTypes";
-import { normalizeProvinceIdList } from "./runtime/marketSettingsNormalizers";
+import { normalizeHexIdList } from "./runtime/marketSettingsNormalizers";
 import { createMarketSystemsRuntime } from "./runtime/marketSystemsRuntime";
 import { createMilitaryRuntimeFacade } from "./runtime/militaryRuntimeFacade";
 import { createMarketPriceRuntimeState } from "./runtime/marketPriceRuntimeState";
@@ -189,8 +189,8 @@ const colonizationRuntime = createColonizationRuntimeFacade({
   getWorldBase: () => worldBase,
   getTurnId: () => turnId,
   getColonizationRates: () => gameSettings.colonization,
-  getProvinceIndex: mapRuntime.getProvinceIndex,
-  getProvinceAreaById: mapRuntime.getProvinceAreaById,
+  getHexIndex: mapRuntime.getHexIndex,
+  getHexAreaById: mapRuntime.getHexAreaById,
   getActiveColonizeRegionsByCountry: () => turnStateRuntime.activeColonizeRegionsByCountry,
   getOrdersByTurn: () => turnStateRuntime.ordersByTurn,
   getTurnOrderIndexes: () => turnStateRuntime.turnOrderIndexes,
@@ -201,8 +201,8 @@ const { marketAccessRuntime, marketRuntimeFacade } = createMarketSystemsRuntime(
   getGameSettings: () => gameSettings,
   getWorldBase: () => worldBase,
   getTurnId: () => turnId,
-  getProvinceIndex: mapRuntime.getProvinceIndex,
-  getProvinceOwner: (provinceId) => worldBase.provinceOwner[provinceId] ?? null,
+  getHexIndex: mapRuntime.getHexIndex,
+  getHexOwner: (hexId) => worldBase.hexOwner[hexId] ?? null,
   corridorLoadHistoryLength: CORRIDOR_LOAD_HISTORY_LENGTH,
   removeUploadedByUrl,
   round3,
@@ -212,23 +212,23 @@ const { worldPopulationRuntime } = createPopulationSystemsRuntime({
   getGameSettings: () => gameSettings,
   getWorldBase: () => worldBase,
   getTurnId: () => turnId,
-  getProvinceIndex: mapRuntime.getProvinceIndex,
-  getProvinceAreaKm2: colonizationRuntime.getProvinceAreaKm2,
-  getProvinceOwner: (provinceId) => worldBase.provinceOwner[provinceId] ?? null,
+  getHexIndex: mapRuntime.getHexIndex,
+  getHexAreaKm2: colonizationRuntime.getHexAreaKm2,
+  getHexOwner: (hexId) => worldBase.hexOwner[hexId] ?? null,
   marketPriceRuntimeState,
   getActiveCountryModifierRows: modifierFacade.getActiveCountryModifierRows,
   ensureCountryParliament: (countryId) => progressionRuntime.ensureCountryParliament(countryId),
   ensureCountryInWorldBase: (countryId) => countryWorldRuntime.ensureCountryInWorldBase(countryId),
   createDefaultMarketRecord: marketRuntimeFacade.createDefaultMarketRecord,
   getBuildingMaxDurability: (building) => buildingRuntime.getBuildingMaxDurability(building),
-  getBuildingPollutionProductivityFactor: (building, provinceId) =>
-    buildingRuntime.getBuildingPollutionProductivityFactor(building, provinceId),
+  getBuildingPollutionProductivityFactor: (building, hexId) =>
+    buildingRuntime.getBuildingPollutionProductivityFactor(building, hexId),
   getCountryMarketId: marketRuntimeFacade.getCountryMarketId,
   getInfrastructureTransitAgreementAllowedCountries: marketAccessRuntime.getInfrastructureTransitAgreementAllowedCountries,
   getMarketById: marketRuntimeFacade.getMarketById,
-  getProvinceFertilityMultiplier: (provinceId) => buildingRuntime.getProvinceFertilityMultiplier(provinceId),
+  getHexFertilityMultiplier: (hexId) => buildingRuntime.getHexFertilityMultiplier(hexId),
   getTransportCorridorCapacity: marketAccessRuntime.getTransportCorridorCapacity,
-  normalizeProvinceIdList,
+  normalizeHexIdList,
   resolveModifiedValue: modifierFacade.resolveModifiedValue,
   round3,
   addResourceLedgerExpense: (input) => resourceLedgerRuntime.addExpense(input),
@@ -475,7 +475,7 @@ const { buildingRuntime } = createBuildingSystemsRuntime({
   getGameSettings: () => gameSettings,
   getTurnId: () => turnId,
   getOrdersByTurn: () => turnStateRuntime.ordersByTurn,
-  getProvinceById: mapRuntime.getProvinceById,
+  getHexById: mapRuntime.getHexById,
   ensureCountryInWorldBase: countryWorldRuntime.ensureCountryInWorldBase,
   addResourceLedgerExpense: resourceLedgerRuntime.addExpense,
 });
@@ -484,10 +484,10 @@ const turnMechanicsAdapterRuntime = createTurnMechanicsAdapterRuntime({
   getWorldBase: () => worldBase,
   getGameSettings: () => gameSettings,
   getTurnId: () => turnId,
-  getProvinceIndex: mapRuntime.getProvinceIndex,
-  getProvinceAreaKm2: colonizationRuntime.getProvinceAreaKm2,
+  getHexIndex: mapRuntime.getHexIndex,
+  getHexAreaKm2: colonizationRuntime.getHexAreaKm2,
   ensureMarketModelReady: marketRuntimeFacade.ensureMarketModelReady,
-  areProvinceIdsAdjacentOrSame: marketAccessRuntime.areProvinceIdsAdjacentOrSame,
+  areHexIdsAdjacentOrSame: marketAccessRuntime.areHexIdsAdjacentOrSame,
   addResourceLedgerExpense: resourceLedgerRuntime.addExpense,
 });
 const { diplomacyRuntimeRef, diplomacyFacade } = createServerDiplomacyFacadeRuntime();
@@ -513,7 +513,7 @@ const turnRuntime = createTurnRuntime({
   getOrdersByTurn: () => turnStateRuntime.ordersByTurn,
   getResolveReadyByTurn: () => turnStateRuntime.resolveReadyByTurn,
   getActiveColonizeRegionsByCountry: () => turnStateRuntime.activeColonizeRegionsByCountry,
-  getProvinceIndex: mapRuntime.getProvinceIndex,
+  getHexIndex: mapRuntime.getHexIndex,
   getEconomyTickCountryIds: () => economyTickCountryIds,
   fullSnapshotMask: TURN_RESOLVE_WORLD_DELTA_MASK,
   cloneWorldBaseSectionSnapshot: worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot,
@@ -583,7 +583,7 @@ const turnRuntime = createTurnRuntime({
         parseRequestedBuildingIdFromPayload: buildingRuntime.parseRequestedBuildingIdFromPayload,
         resolveBuildingOwnerFromPayload: buildingRuntime.resolveBuildingOwnerFromPayload,
         isCountryAllowedForBuildingWithEngine: buildingRuntime.isCountryAllowedForBuildingWithEngine,
-        getProvinceBuildRestriction: buildingRuntime.getProvinceBuildRestriction,
+        getHexBuildRestriction: buildingRuntime.getHexBuildRestriction,
         isBuildingUnlockedForCountry: progressionRuntime.isBuildingUnlockedForCountry,
         countBuildingOccurrences: buildingRuntime.countBuildingOccurrences,
         getCountryBuildLimit: buildingRuntime.getCountryBuildLimit,
@@ -597,14 +597,14 @@ const turnRuntime = createTurnRuntime({
   parseRequestedBuildingIdFromPayload: buildingRuntime.parseRequestedBuildingIdFromPayload,
   resolveBuildingOwnerFromPayload: buildingRuntime.resolveBuildingOwnerFromPayload,
   isCountryAllowedForBuildingSync: buildingRuntime.isCountryAllowedForBuildingSync,
-  getProvinceBuildRestriction: buildingRuntime.getProvinceBuildRestriction,
+  getHexBuildRestriction: buildingRuntime.getHexBuildRestriction,
   isBuildingUnlockedForCountry: progressionRuntime.isBuildingUnlockedForCountry,
   countBuildingOccurrences: buildingRuntime.countBuildingOccurrences,
   resolveModifiedValue: modifierFacade.resolveModifiedValue,
   getRegionColonizationConfig: colonizationRuntime.getRegionColonizationConfig,
   getRegionDerivedColonizationCosts: colonizationRuntime.getRegionDerivedColonizationCosts,
   buildColonizationSettlementPopulation: worldPopulationRuntime.buildColonizationSettlementPopulation,
-  areProvinceIdsAdjacentOrSame: marketAccessRuntime.areProvinceIdsAdjacentOrSame,
+  areHexIdsAdjacentOrSame: marketAccessRuntime.areHexIdsAdjacentOrSame,
   enqueueBuildingAutoUpgradesTurn: buildingRuntime.enqueueBuildingAutoUpgradesTurn,
   resolveBuildingConstructionQueuesTurn: buildingRuntime.resolveBuildingConstructionQueuesTurn,
   addResourceLedgerIncome: resourceLedgerRuntime.addIncome,
@@ -625,11 +625,11 @@ const turnRuntime = createTurnRuntime({
 });
 
 function createAiRuntimeCandidateProviders(): AiRuntimeCandidateProvider[] {
-  const provinceIndex = mapRuntime.getProvinceIndex();
+  const hexIndex = mapRuntime.getHexIndex();
   const regionIds = Array.from(
-    new Set(provinceIndex.map((province) => province.regionId).filter((regionId): regionId is string => Boolean(regionId))),
+    new Set(hexIndex.map((hex) => hex.regionId).filter((regionId): regionId is string => Boolean(regionId))),
   ).sort();
-  const regionAdjacencyById = buildRegionAdjacencyByIdFromProvinces(provinceIndex);
+  const regionAdjacencyById = buildRegionAdjacencyByIdFromHexes(hexIndex);
 
   return [
     {
@@ -658,7 +658,7 @@ function createAiRuntimeCandidateProviders(): AiRuntimeCandidateProvider[] {
           buildings: gameSettings.content.buildings,
           maxBuildCompletionTurns: aiSettings.maxBuildCompletionTurns,
           isBuildingUnlockedForCountry: progressionRuntime.isBuildingUnlockedForCountry,
-          getRegionBuildRestriction: buildingRuntime.getProvinceBuildRestriction,
+          getRegionBuildRestriction: buildingRuntime.getHexBuildRestriction,
         }),
     },
   ];
@@ -721,7 +721,7 @@ registerServerMainRouteRuntime({
   getActiveColonizeRegionIds: (countryId) => turnStateRuntime.activeColonizeRegionsByCountry.get(countryId) ?? [],
   getQueuedColonizeRegionIds: (currentTurnId, countryId) =>
     turnStateRuntime.queuedColonizeRegionsByCountryByTurn.get(currentTurnId)?.get(countryId) ?? [],
-  getProvinceRenameDucatsCost: () => Math.max(0, Math.floor(gameSettings.customization.provinceRenameDucats ?? 25)),
+  getHexRenameDucatsCost: () => Math.max(0, Math.floor(gameSettings.customization.hexRenameDucats ?? 25)),
   pushAdminAuditLog: (entry) => adminAuditLogStore.push(entry),
   savePersistentState: persistenceFacade.savePersistentState,
   flushPersistentStateNow: persistenceFacade.flushPersistentStateNow,

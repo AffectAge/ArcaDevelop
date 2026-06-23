@@ -449,7 +449,7 @@ function IndustryBuildingTooltip({
   );
 }
 
-export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, countryName, initialRegionId, constructionRequestId = 0, onQueueBuildOrder }: Props) {
+export function HexBuildingsModal({ open, onClose, worldBase, countryId, countryName, initialRegionId, constructionRequestId = 0, onQueueBuildOrder }: Props) {
   const { t } = useUiText();
   const [buildings, setBuildings] = useState<ContentEntry[]>([]);
   const [technologies, setTechnologies] = useState<ContentEntry[]>([]);
@@ -1360,8 +1360,8 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       reasons.push(tUi("buildings.countryLimitReached", { current: countBuiltAndQueuedByCountry + pendingByCountry, limit: countryLimit }));
     }
 
-    const dependencySource = Array.isArray(raw.requiredProvinceBuildingIds)
-      ? raw.requiredProvinceBuildingIds
+    const dependencySource = Array.isArray(raw.requiredHexBuildingIds)
+      ? raw.requiredHexBuildingIds
       : Array.isArray(raw.requiredBuildings)
         ? raw.requiredBuildings
         : Array.isArray(raw.dependencies)
@@ -1474,7 +1474,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
         toast.error(tUi("buildings.toastDemolishInsufficientConstruction"));
       } else if (message === "BUILDING_NOT_FOUND") {
         toast.error(tUi("buildings.toastDemolishNotFound"));
-      } else if (message === "NOT_PROVINCE_OWNER") {
+      } else if (message === "NOT_HEX_OWNER") {
         toast.error(tUi("buildings.ownRegionOnlyDemolish"));
       } else {
         toast.error(tUi("buildings.toastDemolishFailed"));
@@ -1507,7 +1507,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
         toast.error(tUi("buildings.toastUpgradeAlreadyQueued"));
       } else if (message === "BUILDING_MAX_LEVEL_REACHED") {
         toast.error(tUi("buildings.toastUpgradeMaxReached"));
-      } else if (message === "NOT_PROVINCE_OWNER") {
+      } else if (message === "NOT_HEX_OWNER") {
         toast.error(tUi("buildings.ownRegionOnlyUpgrade"));
       } else {
         toast.error(tUi("buildings.toastUpgradeFailed"));
@@ -1540,7 +1540,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "BUILD_AUTO_UPGRADE_STATE_FAILED";
-      if (message === "NOT_PROVINCE_OWNER") {
+      if (message === "NOT_HEX_OWNER") {
         toast.error(tUi("buildings.ownRegionOnlyToggle"));
       } else {
         toast.error(tUi("buildings.toastAutoUpgradeFailed"));
@@ -1573,7 +1573,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "BUILD_SUBSIDY_STATE_FAILED";
-      if (message === "NOT_PROVINCE_OWNER") {
+      if (message === "NOT_HEX_OWNER") {
         toast.error(tUi("buildings.ownRegionOnlyToggle"));
       } else {
         toast.error(tUi("buildings.toastSubsidiesFailed"));
@@ -1606,7 +1606,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "BUILD_MANUAL_WORK_STATE_FAILED";
-      if (message === "NOT_PROVINCE_OWNER") {
+      if (message === "NOT_HEX_OWNER") {
         toast.error(tUi("buildings.ownRegionOnlyToggle"));
       } else {
         toast.error(tUi("buildings.toastManualWorkFailed"));
@@ -1654,7 +1654,7 @@ export function ProvinceBuildingsModal({ open, onClose, worldBase, countryId, co
       setRenameModalValue("");
     } catch (error) {
       const message = error instanceof Error ? error.message : "BUILD_CUSTOM_NAME_FAILED";
-      if (message === "NOT_PROVINCE_OWNER") {
+      if (message === "NOT_HEX_OWNER") {
         toast.error(tUi("buildings.ownRegionOnlyRename"));
       } else if (message === "BUILDING_CUSTOM_NAME_ALREADY_USED") {
         toast.error(tUi("buildings.duplicateNameInRegion"));

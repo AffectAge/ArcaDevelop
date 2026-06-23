@@ -15,7 +15,7 @@ export type AuthRegistrationCountryRecord = AdminCountryDbRecord & {
 
 export type AuthRegistrationWorldState = {
   resourcesByCountry: Record<string, ResourceTotals>;
-  provinceOwner: Record<string, string>;
+  hexOwner: Record<string, string>;
   colonyProgressByRegion: Record<string, Record<string, number>>;
 };
 
@@ -49,7 +49,7 @@ export type AuthRegistrationRoutesDependencies = {
   crestImageRule: ImageDimensionRule;
   masks: {
     resourcesByCountry: number;
-    provinceOwner: number;
+    hexOwner: number;
     colonyProgressByRegion: number;
   };
   getTurnId: () => number;
@@ -316,7 +316,7 @@ export function registerAuthRegistrationRoutes(
     deps.removeUploadedByUrl(fullTarget.flagUrl);
     deps.removeUploadedByUrl(fullTarget.crestUrl);
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
-      deps.masks.resourcesByCountry | deps.masks.provinceOwner | deps.masks.colonyProgressByRegion,
+      deps.masks.resourcesByCountry | deps.masks.hexOwner | deps.masks.colonyProgressByRegion,
     );
     await deps.deleteCountry(targetId);
     deps.invalidateCountryQueryCache();
@@ -324,13 +324,13 @@ export function registerAuthRegistrationRoutes(
     const worldBase = deps.getWorldBase();
     delete worldBase.resourcesByCountry[targetId];
     deps.removeCountryFromEconomyTick(targetId);
-    for (const [provinceId, ownerId] of Object.entries(worldBase.provinceOwner)) {
-      if (ownerId === targetId) delete worldBase.provinceOwner[provinceId];
+    for (const [hexId, ownerId] of Object.entries(worldBase.hexOwner)) {
+      if (ownerId === targetId) delete worldBase.hexOwner[hexId];
     }
-    for (const [provinceId, progressByCountry] of Object.entries(worldBase.colonyProgressByRegion)) {
+    for (const [hexId, progressByCountry] of Object.entries(worldBase.colonyProgressByRegion)) {
       if (progressByCountry[targetId] != null) {
         delete progressByCountry[targetId];
-        if (Object.keys(progressByCountry).length === 0) delete worldBase.colonyProgressByRegion[provinceId];
+        if (Object.keys(progressByCountry).length === 0) delete worldBase.colonyProgressByRegion[hexId];
       }
     }
     deps.removeCountryFromActiveColonizationIndex(targetId);

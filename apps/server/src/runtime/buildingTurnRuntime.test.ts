@@ -1,6 +1,6 @@
 import type { BuildingInstance, RegionResourceDeposit, RegionPopulation, WorldBase } from "@arcanorum/shared";
 import { describe, expect, it } from "vitest";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { GameSettings } from "./gameSettingsTypes";
 import { resolveBuildingsTurnForRuntime } from "./buildingTurnRuntime";
 
@@ -94,9 +94,9 @@ describe("buildingTurnRuntime", () => {
 function makeDeps(worldBase: WorldBase): Parameters<typeof resolveBuildingsTurnForRuntime>[0] {
   const gameSettings = makeGameSettings();
   return {
-    adm1ProvinceIndex: [
-      makeProvince({ id: "province:a", regionId: "region:a", fertility: 100 }),
-      makeProvince({ id: "province:b", regionId: "region:a", fertility: 100 }),
+    hexHexIndex: [
+      makeHex({ id: "province:a", regionId: "region:a", fertility: 100 }),
+      makeHex({ id: "province:b", regionId: "region:a", fertility: 100 }),
     ],
     countryGoodPrices: {},
     createDefaultMarketRecord: (marketId, ownerCountryId) => ({
@@ -138,7 +138,7 @@ function makeDeps(worldBase: WorldBase): Parameters<typeof resolveBuildingsTurnF
       racePct: ["race:a"],
       professionPct: ["profession:workers"],
     }),
-    getProvinceFertilityMultiplier: () => 1,
+    getHexFertilityMultiplier: () => 1,
     getTransportCorridorCapacity: () => 0,
     globalGoodDemandHistoryByResourceId: {},
     globalGoodOfferHistoryByResourceId: {},
@@ -146,7 +146,7 @@ function makeDeps(worldBase: WorldBase): Parameters<typeof resolveBuildingsTurnF
     globalGoodPrices: {},
     globalGoodProductionFactHistoryByResourceId: {},
     globalGoodProductionMaxHistoryByResourceId: {},
-    normalizeProvinceIdList: (input) => (Array.isArray(input) ? input.map(String) : []),
+    normalizeHexIdList: (input) => (Array.isArray(input) ? input.map(String) : []),
     normalizeRegionPopulation: (input): RegionPopulation =>
       input && typeof input === "object" && "pops" in input ? (input as RegionPopulation) : { pops: [] },
     resolveModifiedValue: (_stat, base) => base,
@@ -170,8 +170,8 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     resourcesByCountry: {},
     regionOwner: {},
     regionController: {},
-    provinceOwner: { "province:a": "country:a", "province:b": "country:a" },
-    provinceNameById: {},
+    hexOwner: { "province:a": "country:a", "province:b": "country:a" },
+    hexNameById: {},
     colonyProgressByRegion: {},
     regionColonizationByRegion: {},
     regionPopulationByRegion: { "region:a": { pops: [] } },
@@ -222,11 +222,11 @@ function makeGameSettings(): GameSettings {
       religions: [],
       races: [],
       resourceCategories: [],
-      provinceTypes: [],
-      provinceClimates: [],
-      provinceLandscapes: [],
-      provinceContinents: [],
-      provinceStrategicRegions: [],
+      hexTypes: [],
+      hexClimates: [],
+      hexLandscapes: [],
+      hexContinents: [],
+      hexStrategicRegions: [],
       interestGroups: [],
       parties: [],
       lawGroups: [],
@@ -304,15 +304,15 @@ function makeDeposit(overrides?: Partial<RegionResourceDeposit>): RegionResource
   };
 }
 
-function makeProvince(overrides?: Partial<Adm1ProvinceIndexEntry>): Adm1ProvinceIndexEntry {
+function makeHex(overrides?: Partial<HexMapIndexEntry>): HexMapIndexEntry {
   return {
     id: "province:a",
-    name: "Province A",
+    name: "Hex A",
     regionId: "region:a",
-    provinceColor: "#8fb9a8",
+    hexColor: "#8fb9a8",
     regionColor: "#22d3ee",
     areaKm2: 100,
-    provinceType: "land",
+    hexType: "land",
     centerX: 0,
     centerY: 0,
     sourceCenterX: 0,

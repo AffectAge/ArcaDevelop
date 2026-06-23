@@ -1,27 +1,34 @@
 # World Model
 
-Arcanorum 2 uses a Victoria-inspired two-layer world model.
+Arcanorum 2 uses a hex-and-region world model.
 
 ## Layers
 
-### Provinces
+### Hexes
 
-Provinces are lightweight geographic units. They support:
+Hexes are lightweight geographic units. They support:
 
 - map rendering,
+- axial coordinates,
+- chunk membership,
 - adjacency graph,
 - unit movement,
-- terrain/landscape,
-- climate,
+- terrain,
+- biome,
+- feature overlays,
+- water kind,
+- elevation,
+- moisture,
+- temperature,
 - movement cost,
 - passability,
-- coordinates and map metadata.
+- river and coast edge metadata.
 
-Provinces are not the default place for heavy simulation.
+Hexes are not the place for heavy simulation.
 
-### State Regions
+### Regions
 
-State regions are the main gameplay units for heavy mechanics:
+Regions are stable gameplay entities composed from hexes. Regions are the main gameplay units for heavy mechanics:
 
 - population,
 - buildings,
@@ -33,7 +40,7 @@ State regions are the main gameplay units for heavy mechanics:
 - diplomacy territory transfer,
 - region-level modifiers.
 
-New heavy mechanics must use `regionId` unless the user explicitly approves province-level behavior.
+New heavy mechanics must use `regionId`. Do not add population, buildings, construction, resources, taxes, colonization progress, diplomacy-transfer state, or region modifiers to individual hexes.
 
 ## Ownership
 
@@ -48,8 +55,10 @@ The controller receives the economy of the region while controlling it.
 
 ## Design Consequences
 
-- Diplomacy transfers regions, not individual provinces.
+- Hexes are the only target map and movement units in the target runtime.
+- Diplomacy transfers regions, not individual hexes.
 - Colonization targets whole regions.
-- Province movement uses region owner/controller for access and supply.
+- Hex movement uses region owner/controller for access and supply.
 - Countries may start with no regions.
-- UI must make the distinction clear: provinces explain geography and movement; regions explain economy and politics.
+- UI must make the distinction clear: hexes explain geography and movement; regions explain economy and politics.
+- Legacy province maps, province movement, and province authored data are not part of the target model.

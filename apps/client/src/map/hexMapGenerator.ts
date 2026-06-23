@@ -98,7 +98,7 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
   return {
     version: 1,
     settings,
-    tiles: tiles.map((tile) => ({ ...tile, regionId: tile.regionId ?? "hex-region:land:0" })),
+    tiles: tiles.map((tile) => ({ ...tile, regionId: tile.regionId ?? "region:land:0" })),
     riverEdges,
     coastOverlays,
   };
@@ -246,7 +246,7 @@ function assignRegions(tiles: TileDraft[], tileById: Map<string, TileDraft>, set
     if (start.regionId) continue;
     const groupKind = start.waterKind ? "water" : "land";
     const targetSize = groupKind === "land" ? settings.targetLandRegionSize : settings.targetWaterRegionSize;
-    const regionId: HexRegionId = `hex-region:${groupKind}:${counters[groupKind]}`;
+    const regionId: HexRegionId = `region:${groupKind}:${counters[groupKind]}`;
     counters[groupKind] += 1;
     queue.length = 0;
     queue.push(start);

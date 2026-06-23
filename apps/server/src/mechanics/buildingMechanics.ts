@@ -11,7 +11,7 @@ import type {
   ResourceTotals,
   WorldBase,
 } from "@arcanorum/shared";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 
 export const DEFAULT_BUILDING_DURABILITY_MAX = 100;
 
@@ -33,8 +33,8 @@ export type BuildingMechanicsContentEntry = {
   upgradeCostConstruction?: number | null;
   allowedCountryIds?: string[];
   deniedCountryIds?: string[];
-  allowedProvinceTypes?: string[];
-  deniedProvinceTypes?: string[];
+  allowedHexTypes?: string[];
+  deniedHexTypes?: string[];
   allowedClimates?: string[];
   deniedClimates?: string[];
   allowedLandscapes?: string[];
@@ -366,39 +366,39 @@ export function isTextRuleAllowed(
   return hasTextRuleMatch(value, allowList);
 }
 
-export function getProvinceBuildRestriction(
+export function getHexBuildRestriction(
   building: BuildingMechanicsContentEntry,
-  province: Adm1ProvinceIndexEntry | undefined,
+  province: HexMapIndexEntry | undefined,
 ): string | null {
-  if (!province) return "Провинция не найдена в индексе карты";
-  if (!isTextRuleAllowed(province.provinceType, building.allowedProvinceTypes, building.deniedProvinceTypes)) {
-    return "Тип провинции не подходит для этого здания";
+  if (!province) return "Гекс не найдена в индексе карты";
+  if (!isTextRuleAllowed(province.hexType, building.allowedHexTypes, building.deniedHexTypes)) {
+    return "Тип гекса не подходит для этого здания";
   }
   if (!isTextRuleAllowed(province.climate, building.allowedClimates, building.deniedClimates)) {
-    return "Климат провинции не подходит для этого здания";
+    return "Климат гекса не подходит для этого здания";
   }
   if (!isTextRuleAllowed(province.landscape, building.allowedLandscapes, building.deniedLandscapes)) {
-    return "Ландшафт провинции не подходит для этого здания";
+    return "Ландшафт гекса не подходит для этого здания";
   }
   if (!isTextRuleAllowed(province.continent, building.allowedContinents, building.deniedContinents)) {
-    return "Континент провинции не подходит для этого здания";
+    return "Континент гекса не подходит для этого здания";
   }
   if (!isTextRuleAllowed(province.strategicRegion, building.allowedStrategicRegions, building.deniedStrategicRegions)) {
-    return "Стратегический регион провинции не подходит для этого здания";
+    return "Стратегический регион гекса не подходит для этого здания";
   }
   const radiation = Math.max(0, Number(province.radiation ?? 0));
   if (typeof building.minRadiation === "number" && Number.isFinite(building.minRadiation) && radiation < building.minRadiation) {
-    return "Радиация провинции ниже минимального требования";
+    return "Радиация гекса ниже минимального требования";
   }
   if (typeof building.maxRadiation === "number" && Number.isFinite(building.maxRadiation) && radiation > building.maxRadiation) {
-    return "Радиация провинции выше максимального требования";
+    return "Радиация гекса выше максимального требования";
   }
   return null;
 }
 
 export function getBuildingPollutionProductivityFactor(params: {
   building: BuildingMechanicsContentEntry;
-  province: Pick<Adm1ProvinceIndexEntry, "pollution"> | undefined;
+  province: Pick<HexMapIndexEntry, "pollution"> | undefined;
   pollutionProductivityEffectPer1000: number;
 }): number {
   const mode = normalizePollutionProductivityMode(params.building.pollutionProductivityMode);
@@ -481,7 +481,7 @@ export function prepareBuildingOperationEconomics(params: {
   };
   ownerCountryId: string;
   instanceLevel: number;
-  laborCoverageProvince: number;
+  laborCoverageHex: number;
   buildingThroughput: number;
   professionsById: Map<string, BuildingOperationEconomicsProfession>;
   wageMultiplierByProfession: Record<string, number>;
@@ -509,7 +509,7 @@ export function prepareBuildingOperationEconomics(params: {
       (wagesEstimateByProfession[requirement.professionId] ?? 0) + professionWages;
     workersDemand += workers;
   }
-  const laborCoverage = workersDemand > 0 ? params.laborCoverageProvince : 1;
+  const laborCoverage = workersDemand > 0 ? params.laborCoverageHex : 1;
   const infraCoverage = 1;
 
   let requiredInputValueEstimate = 0;
@@ -977,12 +977,12 @@ export function resolveBuildOrder<TBuilding extends BuildingMechanicsContentEntr
   parseRequestedBuildingId: (payload: Record<string, unknown>) => string;
   resolveBuildingOwner: (payload: Record<string, unknown>, requestedByCountryId: string) => BuildingOwner | null;
   isCountryAllowedForBuilding: (building: TBuilding, countryId: string) => boolean;
-  getProvinceBuildRestriction: (building: TBuilding, provinceId: string) => string | null;
+  getHexBuildRestriction: (building: TBuilding, hexId: string) => string | null;
   isBuildingUnlockedForCountry: (buildingId: string, countryId: string) => boolean;
   countBuildingOccurrences: (buildingId: string, countryId: string) => BuildLimitCounts;
   resolveConstructionCost: (building: TBuilding, context: {
     countryId: string;
-    provinceId: string;
+    hexId: string;
     buildingId: string;
   }) => number;
   createId: () => string;
@@ -1009,7 +1009,7 @@ export function resolveBuildOrder<TBuilding extends BuildingMechanicsContentEntr
   if (!params.isCountryAllowedForBuilding(building, params.order.countryId)) {
     return reject("BUILD_INVALID");
   }
-  if (params.getProvinceBuildRestriction(building, params.order.regionId)) {
+  if (params.getHexBuildRestriction(building, params.order.regionId)) {
     return reject("BUILD_INVALID");
   }
   if (!params.isBuildingUnlockedForCountry(building.id, params.order.countryId)) {
@@ -1035,7 +1035,7 @@ export function resolveBuildOrder<TBuilding extends BuildingMechanicsContentEntr
     turnId: params.turnId,
     costConstruction: params.resolveConstructionCost(building, {
       countryId: params.order.countryId,
-      provinceId: params.order.regionId,
+      hexId: params.order.regionId,
       buildingId: building.id,
     }),
   });

@@ -33,7 +33,7 @@ export function normalizeMarketVisibility(value: unknown): "public" | "private" 
 }
 
 
-export function normalizeProvinceIdList(input: unknown): string[] {
+export function normalizeHexIdList(input: unknown): string[] {
   if (!Array.isArray(input)) return [];
   return [
     ...new Set(
@@ -49,12 +49,12 @@ export function normalizeTransportCorridorRoutePoints(input: unknown): Transport
   return input.flatMap((raw) => {
     if (!raw || typeof raw !== "object") return [];
     const row = raw as Record<string, unknown>;
-    const provinceId = typeof row.provinceId === "string" ? row.provinceId.trim() : "";
+    const hexId = typeof row.hexId === "string" ? row.hexId.trim() : "";
     const lng = Number(row.lng);
     const lat = Number(row.lat);
-    if (!provinceId || !Number.isFinite(lng) || !Number.isFinite(lat)) return [];
+    if (!hexId || !Number.isFinite(lng) || !Number.isFinite(lat)) return [];
     if (lng < -180 || lng > 180 || lat < -90 || lat > 90) return [];
-    return [{ provinceId, lng, lat }];
+    return [{ hexId, lng, lat }];
   });
 }
 
@@ -334,12 +334,12 @@ export function normalizeCorridorForeignConstructionRights(input: unknown): NonN
   return input.flatMap((raw) => {
     if (!raw || typeof raw !== "object") return [];
     const row = raw as Record<string, unknown>;
-    const provinceId = typeof row.provinceId === "string" ? row.provinceId.trim() : "";
+    const hexId = typeof row.hexId === "string" ? row.hexId.trim() : "";
     const grantorCountryId = typeof row.grantorCountryId === "string" ? row.grantorCountryId.trim() : "";
     const agreementId = typeof row.agreementId === "string" ? row.agreementId.trim() : "";
-    if (!provinceId || !grantorCountryId || !agreementId) return [];
+    if (!hexId || !grantorCountryId || !agreementId) return [];
     return [{
-      provinceId,
+      hexId,
       grantorCountryId,
       agreementId,
       expirationPolicy: normalizeInfrastructureConstructionExpirationPolicy(row.expirationPolicy),

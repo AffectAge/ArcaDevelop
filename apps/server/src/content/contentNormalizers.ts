@@ -590,8 +590,8 @@ export function normalizeContentBuildings(input: unknown): GameSettings["content
       workforceRequirements?: unknown;
       allowedCountryIds?: unknown;
       deniedCountryIds?: unknown;
-      allowedProvinceTypes?: unknown;
-      deniedProvinceTypes?: unknown;
+      allowedHexTypes?: unknown;
+      deniedHexTypes?: unknown;
       allowedClimates?: unknown;
       deniedClimates?: unknown;
       allowedLandscapes?: unknown;
@@ -673,8 +673,8 @@ export function normalizeContentBuildings(input: unknown): GameSettings["content
       workforceRequirements: normalizeWorkforceRequirements(raw?.workforceRequirements),
       allowedCountryIds: normalizeCountryIdList(raw?.allowedCountryIds),
       deniedCountryIds: normalizeCountryIdList(raw?.deniedCountryIds),
-      allowedProvinceTypes: normalizeStringList(raw?.allowedProvinceTypes),
-      deniedProvinceTypes: normalizeStringList(raw?.deniedProvinceTypes),
+      allowedHexTypes: normalizeStringList(raw?.allowedHexTypes),
+      deniedHexTypes: normalizeStringList(raw?.deniedHexTypes),
       allowedClimates: normalizeStringList(raw?.allowedClimates),
       deniedClimates: normalizeStringList(raw?.deniedClimates),
       allowedLandscapes: normalizeStringList(raw?.allowedLandscapes),

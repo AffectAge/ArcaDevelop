@@ -4,16 +4,16 @@ import { describe, expect, it, vi } from "vitest";
 import type { RouteAuth } from "../security/routeAuth";
 import {
   adminPopulationGenerateSchema,
-  registerAdminProvinceMutationRoutes,
-  type AdminProvinceMutationRoutesDependencies,
-  type AdminProvinceMutationWorldState,
-} from "./adminProvinceMutationRoutes";
+  registerAdminHexMutationRoutes,
+  type AdminHexMutationRoutesDependencies,
+  type AdminHexMutationWorldState,
+} from "./adminHexMutationRoutes";
 
-describe("adminProvinceMutationRoutes", () => {
+describe("adminHexMutationRoutes", () => {
   it("validates admin population generation payloads", () => {
     expect(adminPopulationGenerateSchema.safeParse({ scope: "world", strategy: "random" }).success).toBe(true);
     expect(adminPopulationGenerateSchema.safeParse({ scope: "region", strategy: "unknown" }).success).toBe(false);
-    expect(adminPopulationGenerateSchema.safeParse({ scope: "province", provinceId: "province:a", strategy: "random" }).success).toBe(false);
+    expect(adminPopulationGenerateSchema.safeParse({ scope: "region", hexId: "province:a", strategy: "random" }).success).toBe(false);
   });
 
   it("generates custom population for regions controlled by a country", async () => {
@@ -180,19 +180,19 @@ describe("adminProvinceMutationRoutes", () => {
   });
 });
 
-function makeApp(deps: AdminProvinceMutationRoutesDependencies): express.Express {
+function makeApp(deps: AdminHexMutationRoutesDependencies): express.Express {
   const app = express();
   app.use(express.json());
-  registerAdminProvinceMutationRoutes(app, deps);
+  registerAdminHexMutationRoutes(app, deps);
   return app;
 }
 
 function makeDeps(
-  worldOverrides?: Partial<AdminProvinceMutationWorldState>,
+  worldOverrides?: Partial<AdminHexMutationWorldState>,
   options?: { existingCountryIds?: Set<string>; recalculateCount?: number },
-): AdminProvinceMutationRoutesDependencies & { world: AdminProvinceMutationWorldState } {
-  const world: AdminProvinceMutationWorldState = {
-    provinceOwner: { "province:a": "country:a" },
+): AdminHexMutationRoutesDependencies & { world: AdminHexMutationWorldState } {
+  const world: AdminHexMutationWorldState = {
+    hexOwner: { "province:a": "country:a" },
     regionOwner: { "region:a": "country:a", "region:b": "country:b" },
     regionController: { "region:a": "country:a", "region:b": "country:b" },
     colonyProgressByRegion: {},
@@ -205,7 +205,7 @@ function makeDeps(
     routeAuth: createRouteAuth(),
     masks: {
       resourcesByCountry: 1,
-      provinceOwner: 2,
+      hexOwner: 2,
       regionOwner: 32,
       regionController: 64,
       colonyProgressByRegion: 4,

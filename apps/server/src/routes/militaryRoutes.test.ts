@@ -111,7 +111,7 @@ function makeDeps(overrides?: {
     getCountryDivisionsById: () => divisions,
     getCountryMilitaryQueue: () => [],
     setCountryMilitaryQueue: vi.fn(),
-    getProvinceOwner: () => "country-a",
+    getHexOwner: () => "country-a",
     normalizeMilitaryTemplateComponents: (_input, _kind, fallbackBattalions) =>
       fallbackBattalions?.map((battalion) => ({
         id: battalion.id,
@@ -173,7 +173,7 @@ function makeDivision(overrides?: Partial<Division>): Division {
     countryId: "country-a",
     templateId: "template",
     name: "Division",
-    provinceId: "province-a",
+    hexId: "hex:0:0",
     strength: 1,
     organization: 10,
     stats,

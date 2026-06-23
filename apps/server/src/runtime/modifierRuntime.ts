@@ -14,7 +14,7 @@ import type { GameSettings } from "./gameSettingsTypes";
 
 export type ModifierContext = {
   countryId: string;
-  provinceId?: string | null;
+  hexId?: string | null;
   buildingId?: string | null;
   goodId?: string | null;
   professionId?: string | null;
@@ -49,8 +49,8 @@ export type ActiveCountryModifierRow = {
 export function createModifierRuntime(params: ModifierRuntimeParams): ModifierRuntime {
   const countryHasBuilding = (countryId: string, buildingId: string): boolean => {
     const worldBase = params.getWorldBase();
-    for (const [provinceId, instances] of Object.entries(worldBase.regionBuildingsByRegion ?? {})) {
-      if ((worldBase.provinceOwner[provinceId] ?? null) !== countryId) continue;
+    for (const [hexId, instances] of Object.entries(worldBase.regionBuildingsByRegion ?? {})) {
+      if ((worldBase.hexOwner[hexId] ?? null) !== countryId) continue;
       if ((instances ?? []).some((instance) => instance.buildingId === buildingId)) return true;
     }
     return false;

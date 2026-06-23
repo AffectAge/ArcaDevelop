@@ -25,8 +25,8 @@ export type BaselineWorldDeltaPayload = {
     explanationRecordsByTurn?: WorldDelta["xr"];
     regionOwner?: WorldDelta["a"];
     regionController?: WorldDelta["f"];
-    provinceOwner?: WorldDelta["o"];
-    provinceNameById?: WorldDelta["n"];
+    hexOwner?: WorldDelta["o"];
+    hexNameById?: WorldDelta["n"];
     colonyProgressByRegion?: WorldDelta["p"];
     regionColonizationByRegion?: WorldDelta["z"];
     regionPopulationByRegion?: WorldDelta["u"];
@@ -113,8 +113,8 @@ export function buildBaselineWorldDeltaPayload(params: {
       explanationRecordsByTurn: params.compact.xr,
       regionOwner: params.compact.a,
       regionController: params.compact.f,
-      provinceOwner: params.compact.o,
-      provinceNameById: params.compact.n,
+      hexOwner: params.compact.o,
+      hexNameById: params.compact.n,
       colonyProgressByRegion: params.compact.p,
       regionColonizationByRegion: params.compact.z,
       regionPopulationByRegion: params.compact.u,
@@ -150,8 +150,8 @@ export type WorldBaseSectionSnapshot = {
   explanationRecordsByTurn?: WorldBase["explanationRecordsByTurn"];
   regionOwner?: WorldBase["regionOwner"];
   regionController?: WorldBase["regionController"];
-  provinceOwner?: WorldBase["provinceOwner"];
-  provinceNameById?: WorldBase["provinceNameById"];
+  hexOwner?: WorldBase["hexOwner"];
+  hexNameById?: WorldBase["hexNameById"];
   colonyProgressByRegion?: WorldBase["colonyProgressByRegion"];
   regionColonizationByRegion?: WorldBase["regionColonizationByRegion"];
   regionPopulationByRegion?: WorldBase["regionPopulationByRegion"];
@@ -202,11 +202,11 @@ export function cloneWorldBaseSectionSnapshot(params: {
   if ((mask & WORLD_DELTA_MASK.regionController) !== 0) {
     snapshot.regionController = { ...worldBase.regionController };
   }
-  if ((mask & WORLD_DELTA_MASK.provinceOwner) !== 0) {
-    snapshot.provinceOwner = { ...worldBase.provinceOwner };
+  if ((mask & WORLD_DELTA_MASK.hexOwner) !== 0) {
+    snapshot.hexOwner = { ...worldBase.hexOwner };
   }
-  if ((mask & WORLD_DELTA_MASK.provinceNameById) !== 0) {
-    snapshot.provinceNameById = { ...worldBase.provinceNameById };
+  if ((mask & WORLD_DELTA_MASK.hexNameById) !== 0) {
+    snapshot.hexNameById = { ...worldBase.hexNameById };
   }
   if ((mask & WORLD_DELTA_MASK.colonyProgressByRegion) !== 0) {
     snapshot.colonyProgressByRegion = structuredClone(worldBase.colonyProgressByRegion);
@@ -339,8 +339,8 @@ export function buildCompactWorldDelta(params: {
   const explanationRecordsByTurn: WorldDelta["xr"] = {};
   const regionOwner: Record<string, string | null> = {};
   const regionController: Record<string, string | null> = {};
-  const provinceOwner: Record<string, string | null> = {};
-  const provinceNameById: Record<string, string | null> = {};
+  const hexOwner: Record<string, string | null> = {};
+  const hexNameById: Record<string, string | null> = {};
   const colonyProgressByRegion: Record<string, Record<string, number> | null> = {};
   const regionColonizationByRegion: Record<string, { cost: number; disabled: boolean; manualCost?: boolean } | null> = {};
   const regionPopulationByRegion: Record<string, RegionPopulation | null> = {};
@@ -435,27 +435,27 @@ export function buildCompactWorldDelta(params: {
     }
   }
 
-  for (const key of new Set([...Object.keys(prev.provinceOwner), ...Object.keys(next.provinceOwner)])) {
-    const prevValue = prev.provinceOwner[key];
-    const nextValue = next.provinceOwner[key];
+  for (const key of new Set([...Object.keys(prev.hexOwner), ...Object.keys(next.hexOwner)])) {
+    const prevValue = prev.hexOwner[key];
+    const nextValue = next.hexOwner[key];
     if (typeof nextValue !== "string") {
-      provinceOwner[key] = null;
+      hexOwner[key] = null;
       continue;
     }
     if (prevValue !== nextValue) {
-      provinceOwner[key] = nextValue;
+      hexOwner[key] = nextValue;
     }
   }
 
-  for (const key of new Set([...Object.keys(prev.provinceNameById), ...Object.keys(next.provinceNameById)])) {
-    const prevValue = prev.provinceNameById[key];
-    const nextValue = next.provinceNameById[key];
+  for (const key of new Set([...Object.keys(prev.hexNameById), ...Object.keys(next.hexNameById)])) {
+    const prevValue = prev.hexNameById[key];
+    const nextValue = next.hexNameById[key];
     if (typeof nextValue !== "string") {
-      provinceNameById[key] = null;
+      hexNameById[key] = null;
       continue;
     }
     if (prevValue !== nextValue) {
-      provinceNameById[key] = nextValue;
+      hexNameById[key] = nextValue;
     }
   }
 
@@ -758,13 +758,13 @@ export function buildCompactWorldDelta(params: {
     mask |= WORLD_DELTA_MASK.regionController;
     compact.f = regionController;
   }
-  if (Object.keys(provinceOwner).length > 0) {
-    mask |= WORLD_DELTA_MASK.provinceOwner;
-    compact.o = provinceOwner;
+  if (Object.keys(hexOwner).length > 0) {
+    mask |= WORLD_DELTA_MASK.hexOwner;
+    compact.o = hexOwner;
   }
-  if (Object.keys(provinceNameById).length > 0) {
-    mask |= WORLD_DELTA_MASK.provinceNameById;
-    compact.n = provinceNameById;
+  if (Object.keys(hexNameById).length > 0) {
+    mask |= WORLD_DELTA_MASK.hexNameById;
+    compact.n = hexNameById;
   }
   if (Object.keys(colonyProgressByRegion).length > 0) {
     mask |= WORLD_DELTA_MASK.colonyProgressByRegion;
@@ -881,14 +881,14 @@ export function toWorldBaseForDeltaDiff(previous: WorldBaseSectionSnapshot, next
       (previous.mask & WORLD_DELTA_MASK.regionController) !== 0 && previous.regionController
         ? previous.regionController
         : next.regionController,
-    provinceOwner:
-      (previous.mask & WORLD_DELTA_MASK.provinceOwner) !== 0 && previous.provinceOwner
-        ? previous.provinceOwner
-        : next.provinceOwner,
-    provinceNameById:
-      (previous.mask & WORLD_DELTA_MASK.provinceNameById) !== 0 && previous.provinceNameById
-        ? previous.provinceNameById
-        : next.provinceNameById,
+    hexOwner:
+      (previous.mask & WORLD_DELTA_MASK.hexOwner) !== 0 && previous.hexOwner
+        ? previous.hexOwner
+        : next.hexOwner,
+    hexNameById:
+      (previous.mask & WORLD_DELTA_MASK.hexNameById) !== 0 && previous.hexNameById
+        ? previous.hexNameById
+        : next.hexNameById,
     colonyProgressByRegion:
       (previous.mask & WORLD_DELTA_MASK.colonyProgressByRegion) !== 0 && previous.colonyProgressByRegion
         ? previous.colonyProgressByRegion

@@ -21,7 +21,7 @@ function createDivision(overrides: Partial<Division> = {}): Division {
     countryId: "country:alpha",
     templateId: "template:alpha:infantry",
     name: "Alpha Test Division",
-    provinceId: "province:alpha:capital",
+    hexId: "hex:0:0",
     strength: 100,
     organization: 50,
     stats: divisionStats,
@@ -33,12 +33,12 @@ function createDivision(overrides: Partial<Division> = {}): Division {
 }
 
 describe("selectAiDiplomacyMilitaryCandidates", () => {
-  it("returns deterministic diplomacy contact and own-province army move candidates", () => {
+  it("returns deterministic diplomacy contact and own-hex army move candidates", () => {
     const world = createAiFixtureWorld({
-      provinceOwner: {
-        "province:alpha:capital": "country:alpha",
-        "province:alpha:border": "country:alpha",
-        "province:beta:border": "country:beta",
+      hexOwner: {
+        "hex:0:0": "country:alpha",
+        "hex:1:0": "country:alpha",
+        "hex:2:0": "country:beta",
       },
       divisionsById: {
         "division:alpha:1": createDivision(),
@@ -54,8 +54,8 @@ describe("selectAiDiplomacyMilitaryCandidates", () => {
       context,
       world,
       knownCountryIds: ["country:gamma", "country:alpha", "country:beta"],
-      provinceAdjacencyById: {
-        "province:alpha:capital": ["province:beta:border", "province:alpha:border"],
+      hexAdjacencyById: {
+        "hex:0:0": ["hex:2:0", "hex:1:0"],
       },
       maxDiplomacyTargets: 2,
       maxMilitaryMoves: 1,
@@ -67,16 +67,16 @@ describe("selectAiDiplomacyMilitaryCandidates", () => {
         kind: "army-move",
         countryId: "country:alpha",
         divisionId: "division:alpha:1",
-        fromProvinceId: "province:alpha:capital",
-        targetProvinceId: "province:alpha:border",
+        fromHexId: "hex:0:0",
+        targetHexId: "hex:1:0",
         requiresValidatedPipeline: true,
         orderDraft: {
           type: "ARMY_MOVE",
           countryId: "country:alpha",
-          provinceId: "province:alpha:border",
+          targetHexId: "hex:1:0",
           payload: {
             divisionId: "division:alpha:1",
-            path: ["province:alpha:border"],
+            path: ["hex:1:0"],
           },
         },
       },
@@ -143,13 +143,13 @@ describe("selectAiDiplomacyMilitaryCandidates", () => {
 
   it("does not create military moves for non-idle divisions or foreign-only adjacency", () => {
     const world = createAiFixtureWorld({
-      provinceOwner: {
-        "province:alpha:capital": "country:alpha",
-        "province:beta:border": "country:beta",
+      hexOwner: {
+        "hex:0:0": "country:alpha",
+        "hex:2:0": "country:beta",
       },
       divisionsById: {
-        "division:alpha:1": createDivision({ status: "moving", path: ["province:beta:border"] }),
-        "division:alpha:2": createDivision({ id: "division:alpha:2", provinceId: "province:alpha:capital" }),
+        "division:alpha:1": createDivision({ status: "moving", path: ["hex:2:0"] }),
+        "division:alpha:2": createDivision({ id: "division:alpha:2", hexId: "hex:0:0" }),
       },
     });
     const context = buildAiCountryContext({
@@ -162,8 +162,8 @@ describe("selectAiDiplomacyMilitaryCandidates", () => {
       context,
       world,
       knownCountryIds: [],
-      provinceAdjacencyById: {
-        "province:alpha:capital": ["province:beta:border"],
+      hexAdjacencyById: {
+        "hex:0:0": ["hex:2:0"],
       },
     });
 
@@ -172,9 +172,9 @@ describe("selectAiDiplomacyMilitaryCandidates", () => {
 
   it("does not mutate the world snapshot", () => {
     const world = createAiFixtureWorld({
-      provinceOwner: {
-        "province:alpha:capital": "country:alpha",
-        "province:alpha:border": "country:alpha",
+      hexOwner: {
+        "hex:0:0": "country:alpha",
+        "hex:1:0": "country:alpha",
       },
       divisionsById: {
         "division:alpha:1": createDivision(),
@@ -191,8 +191,8 @@ describe("selectAiDiplomacyMilitaryCandidates", () => {
       context,
       world,
       knownCountryIds: ["country:beta"],
-      provinceAdjacencyById: {
-        "province:alpha:capital": ["province:alpha:border"],
+      hexAdjacencyById: {
+        "hex:0:0": ["hex:1:0"],
       },
     });
 

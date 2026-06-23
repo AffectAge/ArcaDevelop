@@ -2,27 +2,27 @@
 
 ## Status
 
-Accepted for prototype implementation.
+Accepted for hard replacement implementation.
 
 ## Context
 
-Arcanorum is moving from province polygon rendering toward a Civilization-like pointy-top hex world. Heavy mechanics remain on state regions. Hexes are map and movement units for terrain, rivers, coasts, features, passability, and pathfinding.
+Arcanorum is replacing province polygon rendering, province map data, and province movement with a Civilization-like pointy-top hex world. Heavy mechanics remain on stable gameplay regions composed from hexes. Hexes are map and movement units for terrain, rivers, coasts, features, passability, and pathfinding.
 
 The existing player-facing map is built on MapLibre, deck.gl, and authored province GeoJSON. That stack is strong for geospatial polygons, but it makes deterministic hex generation, edge rivers, painted coasts, wraparound rendering, and high-volume sprite batching harder than a game renderer.
 
 ## Decision
 
-Use a PixiJS 2D renderer for the main client map entrypoint. The first implementation is a deterministic generated hex artifact rendered in the existing React app:
+Use a PixiJS 2D renderer for the main client map entrypoint and perform a hard cutover to deterministic hex map artifacts. There is no target fallback to province polygons, authored province files, generated province indexes, or province movement graphs. The implementation renders a deterministic generated hex artifact in the existing React app:
 
 - pointy-top axial hexes;
 - X wrapping;
 - terrain, biome, feature, water kind, movement cost metadata;
 - edge-based rivers;
 - painted coast overlays;
-- generated region membership;
+- stable gameplay region membership for each hex;
 - hover, select, and path preview overlays.
 
-The shared boundary introduces `HexMapArtifact` and related hex contracts. It does not introduce province-level population, buildings, resources, taxes, or other heavy mechanics.
+The shared boundary introduces `HexMapArtifact` and related hex contracts. It does not introduce hex-level population, buildings, resources, taxes, or other heavy mechanics. Regions remain the heavy gameplay boundary.
 
 ## Dependency Rationale
 
@@ -36,13 +36,15 @@ No external terrain asset pack is committed in this ADR. Procedural colors and m
 
 ## Consequences
 
-- MapLibre/deck code paths are no longer the intended player-facing map surface.
-- Current region actions are bridged from selected hex to generated `regionId`.
-- Scenario-owned saved map artifacts and generator CLI remain follow-up work.
-- Existing province contracts still exist while gameplay screens complete their transition from authored province polygons to hex-driven map selection.
+- MapLibre/deck province code paths are obsolete and should be removed rather than preserved as fallback.
+- Region actions are resolved from selected hex to stable authored `regionId`.
+- Scenario-owned saved map artifacts and generator CLI are required parts of the cutover.
+- Existing province contracts are migration debt and should be removed from shared, server, client, scenario, AI, and test code as part of the replacement.
+- Old saves and scenarios that depend on province maps are incompatible unless an explicit one-way migration tool converts them before validation.
 
 ## Verification Expectations
 
 - Typecheck client/server/workspaces.
-- Add generator tests for deterministic output, X-wrap neighbors, land/water region separation, and river edge validity.
+- Add generator tests for deterministic output, X-wrap neighbors, region membership, and river edge validity.
+- Add validation tests that reject legacy authored province directories and generated province indexes.
 - Manually test pan/zoom, hover/select, wrap boundary picking, and selection-to-region UI behavior.

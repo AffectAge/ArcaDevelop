@@ -20,7 +20,7 @@ type MarketRouteCompositionParams = {
   createId: () => string;
   getTurnId: () => number;
   getGameSettings: () => GameSettings;
-  getWorldBase: () => { provinceOwner: Record<string, string | undefined> };
+  getWorldBase: () => { hexOwner: Record<string, string | undefined> };
   countryWorldRuntime: ReturnType<typeof createCountryWorldRuntime>;
   marketRuntimeFacade: ReturnType<typeof createMarketRuntimeFacade>;
   marketAccessRuntime: ReturnType<typeof createMarketAccessRuntime>;
@@ -34,7 +34,7 @@ type MarketRouteCompositionParams = {
   getLatestMarketOverview: () => MarketOverviewState;
   normalizeMarketVisibility: MarketRuntimeDeps["normalizeMarketVisibility"];
   normalizeTransportCorridorRoutePoints: MarketRuntimeDeps["normalizeTransportCorridorRoutePoints"];
-  normalizeProvinceIdList: MarketRuntimeDeps["normalizeProvinceIdList"];
+  normalizeHexIdList: MarketRuntimeDeps["normalizeHexIdList"];
   getTransportCorridorBuildCost: MarketRuntimeDeps["getTransportCorridorBuildCost"];
   refreshExpiredDiplomacyProposals: () => void;
   validateImageDimensions: MarketRuntimeDeps["validateImageDimensions"];
@@ -67,14 +67,14 @@ export function registerMarketRouteComposition(params: MarketRouteCompositionPar
     getGlobalGoodProductionFactHistoryByResourceId: params.getGlobalGoodProductionFactHistoryByResourceId,
     getGlobalGoodProductionMaxHistoryByResourceId: params.getGlobalGoodProductionMaxHistoryByResourceId,
     getLatestMarketOverview: params.getLatestMarketOverview,
-    getProvinceOwner: (provinceId) => params.getWorldBase().provinceOwner[provinceId] ?? null,
+    getHexOwner: (hexId) => params.getWorldBase().hexOwner[hexId] ?? null,
     getMarketDisplayName: params.marketRuntimeFacade.getMarketDisplayName,
     normalizeMarketVisibility: params.normalizeMarketVisibility,
     normalizeTransportCorridorRoutePoints: params.normalizeTransportCorridorRoutePoints,
-    normalizeProvinceIdList: params.normalizeProvinceIdList,
-    isProvinceAllowedForCorridorOwner: params.marketAccessRuntime.isProvinceAllowedForCorridorOwner,
+    normalizeHexIdList: params.normalizeHexIdList,
+    isHexAllowedForCorridorOwner: params.marketAccessRuntime.isHexAllowedForCorridorOwner,
     isContiguousTransportCorridorRoute: params.marketAccessRuntime.isContiguousTransportCorridorRoute,
-    getInfrastructureConstructionRightForProvince: params.marketAccessRuntime.getInfrastructureConstructionRightForProvince,
+    getInfrastructureConstructionRightForHex: params.marketAccessRuntime.getInfrastructureConstructionRightForHex,
     getTransportCorridorBuildCost: params.getTransportCorridorBuildCost,
     refreshExpiredDiplomacyProposals: params.refreshExpiredDiplomacyProposals,
     upsertMarketMembership: params.marketRuntimeFacade.upsertMarketMembership,

@@ -57,7 +57,7 @@ describe("marketMutationRoutes", () => {
     const response = await request(app, "/markets/market:a", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: " New Name ", visibility: "public", capitalProvinceId: "province:a" }),
+      body: JSON.stringify({ name: " New Name ", visibility: "public", capitalHexId: "province:a" }),
     });
 
     expect(response.status).toBe(200);
@@ -65,7 +65,7 @@ describe("marketMutationRoutes", () => {
       id: "market:a",
       name: "New Name",
       visibility: "public",
-      capitalProvinceId: "province:a",
+      capitalHexId: "province:a",
       logoUrl: "/scenario-assets/demo/assets/uploads/markets/new.png?v=1",
     });
     expect(deps.removeUploadedByUrl).toHaveBeenCalledWith("/scenario-assets/demo/assets/uploads/old.png");
@@ -75,13 +75,13 @@ describe("marketMutationRoutes", () => {
 
   it("rejects market capital outside owner provinces and cleans upload", async () => {
     const uploadedFile = makeFile();
-    const deps = makeDeps({ uploadedFile, provinceOwner: "country:b" });
+    const deps = makeDeps({ uploadedFile, hexOwner: "country:b" });
     const app = makeApp(deps);
 
     const response = await request(app, "/markets/market:a", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ capitalProvinceId: "province:b" }),
+      body: JSON.stringify({ capitalHexId: "province:b" }),
     });
 
     expect(response.status).toBe(400);
@@ -103,7 +103,7 @@ function makeDeps(options?: {
   market?: MarketMutationMarket;
   uploadedFile?: Express.Multer.File;
   imageValid?: boolean;
-  provinceOwner?: string | null;
+  hexOwner?: string | null;
 }): MarketMutationRoutesDependencies {
   return {
     routeAuth: createRouteAuth(options?.actorCountryId ?? "country:a"),
@@ -115,7 +115,7 @@ function makeDeps(options?: {
     },
     getMarketById: (marketId) => marketId === "market:a" ? (options?.market ?? makeMarket()) : null,
     normalizeMarketVisibility: (value) => value === "public" ? "public" : "private",
-    getProvinceOwner: () => options?.provinceOwner ?? "country:a",
+    getHexOwner: () => options?.hexOwner ?? "country:a",
     validateImageDimensions: vi.fn().mockReturnValue(options?.imageValid ?? true),
     removeUploadedFile: vi.fn(),
     removeUploadedByUrl: vi.fn(),
@@ -131,7 +131,7 @@ function makeMarket(overrides?: Partial<MarketMutationMarket>): MarketMutationMa
     name: "Market A",
     logoUrl: null,
     ownerCountryId: "country:a",
-    capitalProvinceId: null,
+    capitalHexId: null,
     visibility: "private",
     ...overrides,
   };

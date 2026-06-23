@@ -21,7 +21,7 @@ type Props = {
   open: boolean;
   token: string | null;
   onClose: () => void;
-  onQueueArmyMove: (divisionId: string, provinceId: string) => void;
+  onQueueArmyMove: (divisionId: string, targetHexId: string) => void;
 };
 
 const BRANCH_LABEL_KEY: Record<MilitaryBranch, UiTextKey> = {
@@ -131,7 +131,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
   const [templateName, setTemplateName] = useState("");
   const [components, setComponents] = useState<MilitaryTemplateComponent[]>([]);
   const [formationName, setFormationName] = useState("");
-  const [formationProvinceId, setFormationProvinceId] = useState("");
+  const [formationHexId, setFormationHexId] = useState("");
   const [iconError, setIconError] = useState<string | null>(null);
   const [moveTargetsByUnitId, setMoveTargetsByUnitId] = useState<Record<string, string>>({});
 
@@ -142,11 +142,11 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
     [overview?.templates, selectedTemplateId],
   );
   const draftStats = useMemo(() => calculateDraftStats(catalog, components), [catalog, components]);
-  const provinceById = useMemo(() => new Map((overview?.provinceOptions ?? []).map((province) => [province.id, province] as const)), [overview]);
+  const hexById = useMemo(() => new Map((overview?.hexOptions ?? []).map((hex) => [hex.id, hex] as const)), [overview]);
 
   const applyOverview = (data: MilitaryOverview) => {
     setOverview(data);
-    setFormationProvinceId((current) => current || data.provinceOptions[0]?.id || "");
+    setFormationHexId((current) => current || data.hexOptions[0]?.id || "");
   };
 
   const selectTemplate = (template: DivisionTemplate) => {
@@ -265,12 +265,12 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
   };
 
   const handleCreateFormation = async () => {
-    if (!token || !selectedTemplateId || !formationProvinceId) return;
+    if (!token || !selectedTemplateId || !formationHexId) return;
     setPending(true);
     try {
       const data = await createMilitaryFormation(token, {
         templateId: selectedTemplateId,
-        provinceId: formationProvinceId,
+        hexId: formationHexId,
         name: formationName.trim() || undefined,
       });
       applyOverview(data);
@@ -338,13 +338,13 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                 {overview.queue.length === 0 && <AppEmptyState title={t("army.emptyQueue")}>{t("army.emptyQueueDescription")}</AppEmptyState>}
                 {overview.queue.map((item) => {
                   const template = overview.templates.find((entry) => entry.id === item.templateId);
-                  const provinceName = provinceById.get(item.provinceId)?.name ?? item.provinceId;
+                  const hexName = hexById.get(item.hexId)?.name ?? item.hexId;
                   return (
                     <AppCard key={item.id} className="arc-pop-card">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <div className="text-sm font-semibold text-[var(--arc-color-atlas-ink)]">{item.name}</div>
-                          <div className="arc-pop-muted text-xs">{t(BRANCH_LABEL_KEY[item.kind])} · {template?.name ?? t("army.templateDeleted")} · {provinceName}</div>
+                          <div className="arc-pop-muted text-xs">{t(BRANCH_LABEL_KEY[item.kind])} · {template?.name ?? t("army.templateDeleted")} · {hexName}</div>
                         </div>
                         <div className="min-w-[180px]">
                           <div className="arc-pop-muted mb-1 flex justify-between text-[11px]">
@@ -498,19 +498,19 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                       />
                     </label>
                     <label className="arc-pop-muted text-xs">
-                      {t("army.baseProvince")}
+                      {t("army.baseHex")}
                       <select
-                        value={formationProvinceId}
-                        onChange={(event) => setFormationProvinceId(event.target.value)}
+                        value={formationHexId}
+                        onChange={(event) => setFormationHexId(event.target.value)}
                         className="mt-1 h-9 w-full rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
                       >
-                        {overview.provinceOptions.map((province) => <option key={province.id} value={province.id}>{province.name}</option>)}
+                        {overview.hexOptions.map((hex) => <option key={hex.id} value={hex.id}>{hex.name}</option>)}
                       </select>
                     </label>
                     <div className="arc-pop-card p-2 text-xs">
                       {t("army.formationSpeed", { speed: formatNumber(overview.formationSpeed, 1) })}
                     </div>
-                    <AppButton type="button" disabled={pending || !selectedTemplateId || !formationProvinceId} onClick={() => void handleCreateFormation()}>
+                    <AppButton type="button" disabled={pending || !selectedTemplateId || !formationHexId} onClick={() => void handleCreateFormation()}>
                       {t("army.createFormation")}
                     </AppButton>
                   </div>
@@ -525,7 +525,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <div className="text-sm font-semibold text-[var(--arc-color-atlas-ink)]">{unit.name}</div>
-                            <div className="arc-pop-muted text-xs">{provinceById.get(unit.provinceId)?.name ?? unit.provinceId}</div>
+                            <div className="arc-pop-muted text-xs">{hexById.get(unit.hexId)?.name ?? unit.hexId}</div>
                             <div className="arc-pop-muted mt-1 text-[11px]">
                               {t("army.strengthShort")} {formatNumber(unit.strength * 100)}% · {t("army.organizationShort")} {formatNumber(unit.organization, 1)}
                             </div>
@@ -533,15 +533,15 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                           {activeKind === "land" && (
                             <div className="flex gap-2">
                               <select
-                                value={moveTargetsByUnitId[unit.id] ?? unit.provinceId}
+                                value={moveTargetsByUnitId[unit.id] ?? unit.hexId}
                                 onChange={(event) => setMoveTargetsByUnitId((current) => ({ ...current, [unit.id]: event.target.value }))}
                                 className="h-8 max-w-[170px] rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-xs text-[var(--arc-color-atlas-ink)]"
                               >
-                                {(provinceById.get(unit.provinceId)?.neighbors ?? []).map((provinceId) => (
-                                  <option key={provinceId} value={provinceId}>{provinceById.get(provinceId)?.name ?? provinceId}</option>
+                                {(hexById.get(unit.hexId)?.neighbors ?? []).map((hexId) => (
+                                  <option key={hexId} value={hexId}>{hexById.get(hexId)?.name ?? hexId}</option>
                                 ))}
                               </select>
-                              <AppButton type="button" size="sm" variant="secondary" onClick={() => onQueueArmyMove(unit.id, moveTargetsByUnitId[unit.id] ?? unit.provinceId)}>
+                              <AppButton type="button" size="sm" variant="secondary" onClick={() => onQueueArmyMove(unit.id, moveTargetsByUnitId[unit.id] ?? unit.hexId)}>
                                 {t("army.march")}
                               </AppButton>
                             </div>

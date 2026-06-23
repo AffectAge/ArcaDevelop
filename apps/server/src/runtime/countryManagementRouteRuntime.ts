@@ -19,7 +19,7 @@ type CountryManagementUploadMiddleware = {
 
 type CountryManagementMasks = {
   resourcesByCountry: number;
-  provinceOwner: number;
+  hexOwner: number;
   colonyProgressByRegion: number;
   regionConstructionQueueByRegion: number;
   parliamentByCountry: number;
@@ -65,7 +65,7 @@ type CountryManagementRouteRuntimeParams = {
   ensureCountryInWorldBase: (countryId: string) => void;
   removeCountryFromEconomyTick: (countryId: string) => void;
   removeCountryFromActiveColonizationIndex: (countryId: string) => void;
-  removeRegionFromActiveColonizationIndex: (provinceId: string) => void;
+  removeRegionFromActiveColonizationIndex: (hexId: string) => void;
   removeOrderFromTurnIndexes: (order: Order) => void;
   dropTurnOrderIndexes: (turnId: number) => void;
   cleanupMarketsAfterCountryRemoval: (countryId: string) => void;

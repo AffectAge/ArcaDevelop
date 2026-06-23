@@ -301,7 +301,7 @@ export function TopBar({
                   <div className="arc-hud-content mb-2 text-[11px] text-[var(--arc-color-atlas-muted)]">{t("topBar.countryDetails")}</div>
                   <div className="arc-hud-content space-y-1 text-[var(--arc-color-atlas-muted)]">
                     <div className="flex items-center justify-between gap-3">
-                      <span>{t("topBar.controlledProvinces")}</span>
+                      <span>{t("topBar.controlledHexes")}</span>
                       <span className="text-[var(--arc-color-atlas-ink)]">{countryDetails?.provinceCount ?? 0}</span>
                     </div>
                     <div className="flex items-center justify-between gap-3">

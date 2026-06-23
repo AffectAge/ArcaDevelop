@@ -44,7 +44,7 @@ type CoreRouteCompositionParams = {
   culturePayloadSchema: ZodTypeAny;
   getServerStatus: () => ServerStatus;
   getTurnId: () => number;
-  getAdm1TileRoot: () => string;
+  getHexTileRoot: () => string;
   getRasterTileRoot: () => string;
   getWsDeltaSizeMetrics: () => WsDeltaSizeMetricsSnapshot;
   getWorldDeltaLogDbStatus: () => Promise<WorldDeltaLogDbStatus>;
@@ -93,7 +93,7 @@ export function registerCoreRouteComposition(params: CoreRouteCompositionParams)
   registerSystemRoutes(params.app, {
     getServerStatus: params.getServerStatus,
     getTurnId: params.getTurnId,
-    getAdm1TileRoot: params.getAdm1TileRoot,
+    getHexTileRoot: params.getHexTileRoot,
     getRasterTileRoot: params.getRasterTileRoot,
   });
 

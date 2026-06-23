@@ -42,15 +42,15 @@ type MarketRouteRuntimeParams = {
   getGlobalGoodProductionFactHistoryByResourceId: () => Record<string, number[]>;
   getGlobalGoodProductionMaxHistoryByResourceId: () => Record<string, number[]>;
   getLatestMarketOverview: () => unknown;
-  getProvinceOwner: (provinceId: string) => string | null;
+  getHexOwner: (hexId: string) => string | null;
   getMarketDisplayName: (params: { marketId: string; marketName: string; ownerCountryName?: string | null }) => string;
   normalizeMarketVisibility: (value: unknown) => "public" | "private";
   normalizeTransportCorridorRoutePoints: (input: unknown) => NonNullable<TransportCorridorEntry["routePoints"]>;
-  normalizeProvinceIdList: (input: unknown) => string[];
-  isProvinceAllowedForCorridorOwner: (provinceId: string, ownerCountryId: string, transportMode: GoodTransportMode) => boolean;
-  isContiguousTransportCorridorRoute: (provinceIds: string[], routePoints?: TransportCorridorEntry["routePoints"]) => boolean;
-  getInfrastructureConstructionRightForProvince: (
-    provinceId: string,
+  normalizeHexIdList: (input: unknown) => string[];
+  isHexAllowedForCorridorOwner: (hexId: string, ownerCountryId: string, transportMode: GoodTransportMode) => boolean;
+  isContiguousTransportCorridorRoute: (hexIds: string[], routePoints?: TransportCorridorEntry["routePoints"]) => boolean;
+  getInfrastructureConstructionRightForHex: (
+    hexId: string,
     ownerCountryId: string,
     transportMode: GoodTransportMode,
   ) => {
@@ -82,7 +82,7 @@ export function registerMarketRuntimeRoutes(params: MarketRouteRuntimeParams): v
       logoUrl: string | null;
       ownerCountryId: string;
       ownerCountryName: string;
-      capitalProvinceId: string | null;
+      capitalHexId: string | null;
       memberCountryIds: string[];
       visibility: "public" | "private";
       createdAt: string;
@@ -116,7 +116,7 @@ export function registerMarketRuntimeRoutes(params: MarketRouteRuntimeParams): v
         logoUrl: market.logoUrl,
         ownerCountryId: market.ownerCountryId,
         ownerCountryName: byId.get(market.ownerCountryId)?.name ?? market.ownerCountryId,
-        capitalProvinceId: market.capitalProvinceId ?? null,
+        capitalHexId: market.capitalHexId ?? null,
         memberCountryIds: [...market.memberCountryIds],
         visibility: market.visibility,
         createdAt: market.createdAt,
@@ -220,7 +220,7 @@ export function registerMarketRuntimeRoutes(params: MarketRouteRuntimeParams): v
     getGlobalGoodOfferHistoryByResourceId: params.getGlobalGoodOfferHistoryByResourceId,
     getGlobalGoodProductionFactHistoryByResourceId: params.getGlobalGoodProductionFactHistoryByResourceId,
     getGlobalGoodProductionMaxHistoryByResourceId: params.getGlobalGoodProductionMaxHistoryByResourceId,
-    getProvinceOwner: params.getProvinceOwner,
+    getHexOwner: params.getHexOwner,
     getMarketTransportCorridors: params.getMarketTransportCorridors,
     getTransportCorridorCapacity: params.getTransportCorridorCapacity,
     getTransportModes: () => GOOD_TRANSPORT_MODES,
@@ -238,7 +238,7 @@ export function registerMarketRuntimeRoutes(params: MarketRouteRuntimeParams): v
     upload: params.upload,
     getMarketById: params.getMarketById,
     normalizeMarketVisibility: params.normalizeMarketVisibility,
-    getProvinceOwner: params.getProvinceOwner,
+    getHexOwner: params.getHexOwner,
     validateImageDimensions: params.validateImageDimensions,
     removeUploadedFile: params.removeUploadedFile,
     removeUploadedByUrl: params.removeUploadedByUrl,
@@ -255,11 +255,11 @@ export function registerMarketRuntimeRoutes(params: MarketRouteRuntimeParams): v
     getCorridorsById: () => params.getGameSettings().markets.transportCorridorsById,
     getMarketTransportCorridors: params.getMarketTransportCorridors,
     normalizeTransportCorridorRoutePoints: params.normalizeTransportCorridorRoutePoints,
-    normalizeProvinceIdList: params.normalizeProvinceIdList,
-    isProvinceAllowedForCorridorOwner: params.isProvinceAllowedForCorridorOwner,
+    normalizeHexIdList: params.normalizeHexIdList,
+    isHexAllowedForCorridorOwner: params.isHexAllowedForCorridorOwner,
     isContiguousTransportCorridorRoute: params.isContiguousTransportCorridorRoute,
-    getProvinceOwner: params.getProvinceOwner,
-    getInfrastructureConstructionRightForProvince: params.getInfrastructureConstructionRightForProvince,
+    getHexOwner: params.getHexOwner,
+    getInfrastructureConstructionRightForHex: params.getInfrastructureConstructionRightForHex,
     getTransportCorridorBuildCost: params.getTransportCorridorBuildCost,
     savePersistentState: params.savePersistentState,
   });

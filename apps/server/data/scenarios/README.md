@@ -2,14 +2,13 @@
 
 Each scenario lives in its own folder under `apps/server/data/scenarios`.
 
-Minimal structure:
+Minimal hex cutover structure:
 
 ```text
 apps/server/data/scenarios/example/
   scenario.json
   history/
     countries/*.json
-    provinces/*.json
     regions/*.json
   common/
     buildings/*.json
@@ -26,12 +25,15 @@ apps/server/data/scenarios/example/
     en.json
     ru.json
   map/
-    tiles/adm1/{z}/{x}/{y}.mvt
+    hex-settings.json
+    hexes.json
+    tiles/hex/{z}/{x}/{y}.mvt
     tiles/raster/{z}/{x}/{y}.webp
   .generated/
     index-manifest.json
     entity-counts.json
-    provinces.json
+    hex-map-settings.json
+    hexes.json
 ```
 
 `scenario.json`:
@@ -46,12 +48,13 @@ apps/server/data/scenarios/example/
 }
 ```
 
-Region-first rules:
+Hex/region rules:
 
-- `history/regions/*.json` owns population, buildings, construction, economy, resources, taxes, colonization, diplomacy transfer state, and region modifiers.
-- `history/provinces/*.json` is lightweight map and movement authoring: terrain, climate, passability, movement cost, and authored `color`. Resource deposits are region-owned and belong in `history/regions/*.json`.
-- `history/regions/*.json` and `history/provinces/*.json` must include authored `color` values in `#RRGGBB` format.
-- Old aggregate setup sources such as `setup/region_population.json`, `setup/region_buildings.json`, `setup/region_construction_queue.json`, `setup/province_colonization.json`, and `setup/province_resources.json` are forbidden.
+- `map/hex-settings.json` is required and defines deterministic generated hex map settings.
+- `map/hexes.json` or `.generated/hexes.json` is the runtime hex index used for lightweight map metadata.
+- `history/regions/*.json` owns population, buildings, construction, economy, resources, taxes, colonization, diplomacy transfer state, and region modifiers. Region geography uses `hexIds`.
+- `history/provinces/*.json`, `map/provinces.json`, and `.generated/provinces.json` are legacy province artifacts and are rejected by validation.
+- Legacy province content folders such as `common/provinceTypes` are rejected. Use hex content folders such as `common/hexTypes` when lightweight map metadata content is needed.
 - Generated indexes belong only under the scenario root `.generated/` directory and must be rebuilt with `scenario:build-indexes`.
 
-Applying a scenario through admin settings starts a new game from the scenario-owned history, content, localization, map assets, and generated indexes.
+Applying a scenario through admin settings starts a new game from scenario-owned history, content, localization, map assets, and generated indexes.

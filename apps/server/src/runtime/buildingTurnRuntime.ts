@@ -5,7 +5,7 @@ import type {
   RegionPopulation,
   WorldBase,
 } from "@arcanorum/shared";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type {
   BuildingContentEntry,
   GameSettings,
@@ -73,7 +73,7 @@ import type { WorkforceRequirement } from "../mechanics/contentFieldNormalizers"
 import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
 export type ResolveBuildingsTurnRuntimeDeps = {
-  adm1ProvinceIndex: Adm1ProvinceIndexEntry[];
+  hexHexIndex: HexMapIndexEntry[];
   countryGoodPrices: Record<string, Record<string, number>>;
   createDefaultMarketRecord: (marketId: string, ownerCountryId: string) => GameSettings["markets"]["marketById"][string];
   buildingBaseThroughput: number;
@@ -86,12 +86,12 @@ export type ResolveBuildingsTurnRuntimeDeps = {
   gameSettings: GameSettings;
   getActiveCultureNeeds: (cultureId: string, standardOfLiving: number) => CultureNeed[];
   getBuildingMaxDurability: (building: BuildingContentEntry | undefined) => number;
-  getBuildingPollutionProductivityFactor: (building: BuildingContentEntry, provinceId: string) => number;
+  getBuildingPollutionProductivityFactor: (building: BuildingContentEntry, hexId: string) => number;
   getCountryMarketId: (countryId: string) => string;
   getInfrastructureTransitAgreementAllowedCountries: (baseCountryIds: Set<string>, transportMode: GoodTransportMode | null) => Set<string>;
   getMarketById: (marketId: string) => GameSettings["markets"]["marketById"][string] | null;
   getPopulationDomainKeys: () => PopulationDomainKeys;
-  getProvinceFertilityMultiplier: (provinceId: string) => number;
+  getHexFertilityMultiplier: (hexId: string) => number;
   getTransportCorridorCapacity: (corridor: TransportCorridorEntry, categoryId: string | null) => number;
   globalGoodDemandHistoryByResourceId: Record<string, number[]>;
   globalGoodOfferHistoryByResourceId: Record<string, number[]>;
@@ -99,9 +99,9 @@ export type ResolveBuildingsTurnRuntimeDeps = {
   globalGoodPrices: Record<string, number>;
   globalGoodProductionFactHistoryByResourceId: Record<string, number[]>;
   globalGoodProductionMaxHistoryByResourceId: Record<string, number[]>;
-  normalizeProvinceIdList: (input: unknown) => string[];
-  normalizeRegionPopulation: (input: unknown, provinceId: string, domains: PopulationDomainKeys) => RegionPopulation;
-  resolveModifiedValue: (stat: ModifierStat, base: number, context: { countryId: string; provinceId?: string; buildingId?: string; goodId?: string; resourceCategoryId?: string | null; professionId?: string }) => number;
+  normalizeHexIdList: (input: unknown) => string[];
+  normalizeRegionPopulation: (input: unknown, hexId: string, domains: PopulationDomainKeys) => RegionPopulation;
+  resolveModifiedValue: (stat: ModifierStat, base: number, context: { countryId: string; hexId?: string; buildingId?: string; goodId?: string; resourceCategoryId?: string | null; professionId?: string }) => number;
   resolvePopulationFallbackKeys: (domains: PopulationDomainKeys) => Record<PopulationDimensionKey, string>;
   round3: (value: number) => number;
   addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
@@ -113,19 +113,19 @@ export type ResolveBuildingsTurnRuntimeDeps = {
 
 export type ResolveBuildingsTurnRuntimeResult = {
   latestMarketOverview: MarketOverviewState;
-  nextProfessionsByPopIdByProvince: Record<string, Record<string, Record<string, PopulationProfessionState>>>;
+  nextProfessionsByPopIdByHex: Record<string, Record<string, Record<string, PopulationProfessionState>>>;
 };
 
 type RegionTurnContext = {
   regionId: string;
   ownerCountryId: string;
-  primaryProvinceId: string;
-  provinceIds: string[];
+  primaryHexId: string;
+  hexIds: string[];
 };
 
 export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntimeDeps): ResolveBuildingsTurnRuntimeResult {
   const {
-    adm1ProvinceIndex,
+    hexHexIndex,
     buildingBaseThroughput,
     buildingBaseWagePerWorkerGold,
     buildingDurabilityDecayPerTurnFallback,
@@ -143,7 +143,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     getInfrastructureTransitAgreementAllowedCountries,
     getMarketById,
     getPopulationDomainKeys,
-    getProvinceFertilityMultiplier,
+    getHexFertilityMultiplier,
     getTransportCorridorCapacity,
     globalGoodDemandHistoryByResourceId,
     globalGoodOfferHistoryByResourceId,
@@ -151,7 +151,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     globalGoodPrices,
     globalGoodProductionFactHistoryByResourceId,
     globalGoodProductionMaxHistoryByResourceId,
-    normalizeProvinceIdList,
+    normalizeHexIdList,
     normalizeRegionPopulation,
     resolveModifiedValue,
     resolvePopulationFallbackKeys,
@@ -165,7 +165,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   const buildingById = new Map(gameSettings.content.buildings.map((entry) => [entry.id, entry] as const));
   const goodById = new Map(gameSettings.content.goods.map((entry) => [entry.id, entry] as const));
   const professionById = new Map(gameSettings.content.professions.map((entry) => [entry.id, entry] as const));
-  const nextProfessionsByPopIdByProvince: Record<string, Record<string, Record<string, PopulationProfessionState>>> = {};
+  const nextProfessionsByPopIdByHex: Record<string, Record<string, Record<string, PopulationProfessionState>>> = {};
   const smoothing = Number(
     Math.max(0, Math.min(1, gameSettings.economy.marketPriceSmoothing ?? defaultMarketPriceSmoothing)).toFixed(3),
   );
@@ -186,7 +186,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   const exportsByCountryByCountryAndGood: Record<string, Record<string, Record<string, number>>> = {};
   const importsByMarketByMarketAndGood: Record<string, Record<string, Record<string, number>>> = {};
   const exportsByMarketByMarketAndGood: Record<string, Record<string, Record<string, number>>> = {};
-  const logisticsFailuresByProvince: Record<string, LogisticsFailure[]> = {};
+  const logisticsFailuresByHex: Record<string, LogisticsFailure[]> = {};
   const logisticsFailureIndex = new Map<string, LogisticsFailure>();
   let alertSeq = 0;
   const pushCountryAlert = (countryId: string, alert: Omit<MarketOverviewAlert, "id">): void => {
@@ -195,7 +195,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   };
   const pushLogisticsFailure = (failure: LogisticsFailure): void => {
     pushLogisticsFailureInMarketTurn({
-      failuresByProvince: logisticsFailuresByProvince,
+      failuresByHex: logisticsFailuresByHex,
       failureIndex: logisticsFailureIndex,
       failure,
     });
@@ -215,7 +215,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
 
   type SellerSlot = {
     regionId: string;
-    provinceId: string;
+    hexId: string;
     countryId: string;
     marketId: string;
     instanceId: string;
@@ -264,19 +264,19 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   type MarketCorridorTransferRoute = CorridorTransferRoute<GoodTransportMode, TransportCorridorEntry>;
   const corridorRoutePlanner = createCorridorRoutePlanner<GoodTransportMode, TransportCorridorEntry>({
     corridorsById: gameSettings.markets.transportCorridorsById,
-    provinceOwnerById: worldBase.provinceOwner,
+    hexOwnerById: worldBase.hexOwner,
     getCorridorCapacity: (corridor) => getTransportCorridorCapacity(corridor, null),
     getCorridorLoad,
     getMarketMemberCountryIds: (marketId) => getMarketById(marketId)?.memberCountryIds ?? [],
     getTransitAllowedCountries: getInfrastructureTransitAgreementAllowedCountries,
-    normalizeProvinceIds: normalizeProvinceIdList,
+    normalizeHexIds: normalizeHexIdList,
   });
   const getCorridorRoutesForTransfer = (params: {
     buyerMarketId: string;
-    buyerProvinceId: string;
+    buyerHexId: string;
     buyerCountryId: string;
     sellerMarketId: string;
-    sellerProvinceId: string;
+    sellerHexId: string;
     sellerCountryId: string;
     transportModes: GoodTransportMode[];
     isExternalTrade: boolean;
@@ -348,12 +348,12 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   ): void => {
     addScopeGoodPartnerAmountInMarketTurn(map, scopeId, goodId, partnerId, value);
   };
-  const regionTurnContexts = buildRegionTurnContexts({ adm1ProvinceIndex, worldBase });
+  const regionTurnContexts = buildRegionTurnContexts({ hexHexIndex, worldBase });
   // Pass 1: normalize instances and index all sellers before any purchases.
   // This lets buildings buy from the full market scope (province/country/market/global)
   // instead of only regions that were processed earlier in the same turn.
   for (const context of regionTurnContexts) {
-    const { regionId, ownerCountryId, primaryProvinceId } = context;
+    const { regionId, ownerCountryId, primaryHexId } = context;
     const marketId = getMarketIdByCountry(ownerCountryId);
     const buildingInstances = [...(worldBase.regionBuildingsByRegion[regionId] ?? [])].sort((a, b) =>
       a.instanceId.localeCompare(b.instanceId),
@@ -372,7 +372,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         indexes: sellerIndexes,
         slot: {
           regionId,
-          provinceId: primaryProvinceId,
+          hexId: primaryHexId,
           countryId: ownerCountryId,
           marketId,
           instanceId: instance.instanceId,
@@ -385,7 +385,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   }
 
   for (const context of regionTurnContexts) {
-    const { regionId, ownerCountryId, primaryProvinceId } = context;
+    const { regionId, ownerCountryId, primaryHexId } = context;
     if (!alertsByCountry[ownerCountryId]) alertsByCountry[ownerCountryId] = [];
 
     const population = normalizeRegionPopulation(worldBase.regionPopulationByRegion[regionId], regionId, domains);
@@ -405,7 +405,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     const { demandByProfession, totalWorkforceDemand } = calculateWorkforceDemand(workforceDemandSources);
 
     const populationTotal = getPopulationTotal(population);
-    const laborCoverageProvince = calculateLaborCoverage(populationTotal, totalWorkforceDemand);
+    const laborCoverageHex = calculateLaborCoverage(populationTotal, totalWorkforceDemand);
     const availableByProfession = calculateAvailableProfessionPopulation(population);
     const wageMultiplierByProfession = calculateWageMultipliers({ demandByProfession, availableByProfession });
     let regionWages = 0;
@@ -466,7 +466,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
       instance.currentDurability = currentDurability;
       const buildingThroughput = Math.max(0, resolveModifiedValue("building_throughput", buildingBaseThroughput, {
         countryId: ownerCountryId,
-        provinceId: primaryProvinceId,
+        hexId: primaryHexId,
         buildingId: building.id,
       }));
       const warehouse = instance.warehouseByGoodId ?? {};
@@ -475,20 +475,20 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         building,
         ownerCountryId,
         instanceLevel,
-        laborCoverageProvince,
+        laborCoverageHex,
         buildingThroughput,
         professionsById: professionById,
         wageMultiplierByProfession,
         getBaseWageFallback: () => buildingBaseWagePerWorkerGold,
         resolveWage: (professionId, baseWage) => resolveModifiedValue("building_wage", baseWage, {
           countryId: ownerCountryId,
-          provinceId: primaryProvinceId,
+          hexId: primaryHexId,
           buildingId: building.id,
           professionId,
         }),
         resolveInputAmount: (input) => resolveModifiedValue("building_input", input.amount, {
           countryId: ownerCountryId,
-          provinceId: primaryProvinceId,
+          hexId: primaryHexId,
           buildingId: building.id,
           goodId: input.goodId,
           resourceCategoryId: getResourceCategoryId(input.goodId),
@@ -535,7 +535,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
       const purchase = purchaseBuildingInputs({
         buyerInstance: instance,
         inputNeeds,
-        buyerProvinceId: primaryProvinceId,
+        buyerHexId: primaryHexId,
         buyerCountryId: ownerCountryId,
         buyerMarketId: marketId,
         getDistributionType: getGoodDistributionType,
@@ -581,7 +581,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
       instance.lastPurchaseCostByGoodId = purchasedCostByGood;
       instance.lastInputCostDucats = round3(purchaseCost);
 
-      const pollutionProductivityFactor = getBuildingPollutionProductivityFactor(building, primaryProvinceId);
+      const pollutionProductivityFactor = getBuildingPollutionProductivityFactor(building, primaryHexId);
       const production = resolveBuildingProductionTurn({
         building,
         instanceLevel,
@@ -593,18 +593,18 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         currentDurability,
         maxDurability,
         buildingThroughput,
-        fertilityMultiplier: getProvinceFertilityMultiplier(primaryProvinceId),
+        fertilityMultiplier: getHexFertilityMultiplier(primaryHexId),
         pollutionProductivityFactor,
         resolveInputAmount: (input) => resolveModifiedValue("building_input", input.amount, {
           countryId: ownerCountryId,
-          provinceId: primaryProvinceId,
+          hexId: primaryHexId,
           buildingId: building.id,
           goodId: input.goodId,
           resourceCategoryId: getResourceCategoryId(input.goodId),
         }),
         resolveOutputAmount: (goodId, baseAmount) => resolveModifiedValue("building_output", baseAmount, {
           countryId: ownerCountryId,
-          provinceId: primaryProvinceId,
+          hexId: primaryHexId,
           buildingId: building.id,
           goodId,
           resourceCategoryId: getResourceCategoryId(goodId),
@@ -678,7 +678,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
           severity: "critical",
           kind: "building-inactive",
           message: settlement.inactiveAlert.message,
-          provinceId: primaryProvinceId,
+          hexId: primaryHexId,
           buildingId: instance.buildingId,
           instanceId: instance.instanceId,
         });
@@ -711,7 +711,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         getAvailableGoodAmount,
         purchaseGood: purchasePopulationGood,
       });
-      nextProfessionsByPopIdByProvince[regionId] = provinceNeeds.nextProfessionsByPopId;
+      nextProfessionsByPopIdByHex[regionId] = provinceNeeds.nextProfessionsByPopId;
       for (const [goodId, amount] of Object.entries(provinceNeeds.demandRequestedByGood)) {
         addCountryGood(demandRequestedByCountry, marketId, goodId, amount);
         addGlobalGood(demandRequestedGlobal, goodId, amount);
@@ -752,7 +752,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     exportsByCountryByCountryAndGood,
     importsByMarketByMarketAndGood,
     exportsByMarketByMarketAndGood,
-    logisticsFailuresByProvince,
+    logisticsFailuresByHex,
     alertsByCountry,
     corridors: Object.values(gameSettings.markets.transportCorridorsById ?? {}),
     corridorLoadByModeByCorridorId,
@@ -772,25 +772,25 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     getTransportCorridorCapacity: (corridor) => getTransportCorridorCapacity(corridor, null),
     pushCountryAlert,
   });
-  return { latestMarketOverview, nextProfessionsByPopIdByProvince };
+  return { latestMarketOverview, nextProfessionsByPopIdByHex };
 }
 
 function buildRegionTurnContexts(params: {
-  adm1ProvinceIndex: Adm1ProvinceIndexEntry[];
+  hexHexIndex: HexMapIndexEntry[];
   worldBase: Pick<
     WorldBase,
     "regionOwner" | "regionController" | "regionPopulationByRegion" | "regionBuildingsByRegion" | "regionConstructionQueueByRegion"
   >;
 }): RegionTurnContext[] {
-  const provinceIdsByRegion = new Map<string, string[]>();
-  for (const province of params.adm1ProvinceIndex) {
+  const hexIdsByRegion = new Map<string, string[]>();
+  for (const province of params.hexHexIndex) {
     if (!province.regionId) continue;
-    const current = provinceIdsByRegion.get(province.regionId) ?? [];
+    const current = hexIdsByRegion.get(province.regionId) ?? [];
     current.push(province.id);
-    provinceIdsByRegion.set(province.regionId, current);
+    hexIdsByRegion.set(province.regionId, current);
   }
   const regionIds = new Set<string>([
-    ...provinceIdsByRegion.keys(),
+    ...hexIdsByRegion.keys(),
     ...Object.keys(params.worldBase.regionOwner),
     ...Object.keys(params.worldBase.regionController),
     ...Object.keys(params.worldBase.regionPopulationByRegion),
@@ -802,12 +802,12 @@ function buildRegionTurnContexts(params: {
     .flatMap((regionId): RegionTurnContext[] => {
       const ownerCountryId = params.worldBase.regionController[regionId] ?? params.worldBase.regionOwner[regionId] ?? null;
       if (!ownerCountryId) return [];
-      const provinceIds = [...(provinceIdsByRegion.get(regionId) ?? [])].sort((left, right) => left.localeCompare(right, "en"));
+      const hexIds = [...(hexIdsByRegion.get(regionId) ?? [])].sort((left, right) => left.localeCompare(right, "en"));
       return [{
         regionId,
         ownerCountryId,
-        primaryProvinceId: provinceIds[0] ?? regionId,
-        provinceIds,
+        primaryHexId: hexIds[0] ?? regionId,
+        hexIds,
       }];
     });
 }

@@ -9,14 +9,14 @@ import {
   getBuildingPollutionProductivityFactor,
   getBuildingUpgradeCosts,
   getCountryBuildLimit,
-  getProvinceBuildRestriction,
+  getHexBuildRestriction,
   isCountryAllowedForBuildingSync,
   isCountryAllowedForBuildingWithEngine,
   parseRequestedBuildingIdFromPayload,
   resolveBuildingConstructionQueuesTurn as resolveBuildingConstructionQueuesTurnInState,
   resolveBuildingOwnerFromPayload,
 } from "../mechanics/buildingMechanics";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { BuildingContentEntry, GameSettings } from "./gameSettingsTypes";
 import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
@@ -25,7 +25,7 @@ type BuildingRuntimeParams = {
   getGameSettings: () => GameSettings;
   getTurnId: () => number;
   getOrdersByTurn: () => Map<number, Map<string, Order[]>>;
-  getProvinceById: () => Map<string, Adm1ProvinceIndexEntry>;
+  getHexById: () => Map<string, HexMapIndexEntry>;
   ensureCountryInWorldBase: (countryId: string) => void;
   addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
 };
@@ -36,37 +36,37 @@ export function createBuildingRuntime(params: BuildingRuntimeParams) {
   const parseRequestedBuildingIdFromPayloadForRuntime = (payload: Record<string, unknown>): string =>
     parseRequestedBuildingIdFromPayload(payload, params.getGameSettings().content.buildings[0]?.id || "");
 
-  const getProvinceBuildRestrictionForRuntime = (building: BuildingContentEntry, provinceOrRegionId: string): string | null => {
-    const provinceById = params.getProvinceById();
-    const exactProvince = provinceById.get(provinceOrRegionId);
-    if (exactProvince) {
-      return getProvinceBuildRestriction(building, exactProvince);
+  const getHexBuildRestrictionForRuntime = (building: BuildingContentEntry, provinceOrRegionId: string): string | null => {
+    const hexById = params.getHexById();
+    const exactHex = hexById.get(provinceOrRegionId);
+    if (exactHex) {
+      return getHexBuildRestriction(building, exactHex);
     }
 
-    const regionProvinces = [...provinceById.values()].filter((province) => province.regionId === provinceOrRegionId);
-    if (regionProvinces.length === 0) {
+    const regionHexes = [...hexById.values()].filter((province) => province.regionId === provinceOrRegionId);
+    if (regionHexes.length === 0) {
       return "Регион не найден в индексе карты";
     }
 
     let firstRestriction: string | null = null;
-    for (const province of regionProvinces) {
-      const restriction = getProvinceBuildRestriction(building, province);
+    for (const province of regionHexes) {
+      const restriction = getHexBuildRestriction(building, province);
       if (!restriction) return null;
       firstRestriction ??= restriction;
     }
     return firstRestriction;
   };
 
-  const getProvinceFertilityMultiplier = (provinceId: string): number => {
-    const fertility = Number(params.getProvinceById().get(provinceId)?.fertility ?? 100);
+  const getHexFertilityMultiplier = (hexId: string): number => {
+    const fertility = Number(params.getHexById().get(hexId)?.fertility ?? 100);
     if (!Number.isFinite(fertility)) return 1;
     return Math.max(0, fertility / 100);
   };
 
-  const getBuildingPollutionProductivityFactorForRuntime = (building: BuildingContentEntry, provinceId: string): number =>
+  const getBuildingPollutionProductivityFactorForRuntime = (building: BuildingContentEntry, hexId: string): number =>
     getBuildingPollutionProductivityFactor({
       building,
-      province: params.getProvinceById().get(provinceId),
+      province: params.getHexById().get(hexId),
       pollutionProductivityEffectPer1000: Number(params.getGameSettings().economy.pollutionProductivityEffectPer1000 ?? 0),
     });
 
@@ -121,8 +121,8 @@ export function createBuildingRuntime(params: BuildingRuntimeParams) {
   return {
     parseRequestedBuildingIdFromPayload: parseRequestedBuildingIdFromPayloadForRuntime,
     isCountryAllowedForBuildingSync,
-    getProvinceBuildRestriction: getProvinceBuildRestrictionForRuntime,
-    getProvinceFertilityMultiplier,
+    getHexBuildRestriction: getHexBuildRestrictionForRuntime,
+    getHexFertilityMultiplier,
     getBuildingPollutionProductivityFactor: getBuildingPollutionProductivityFactorForRuntime,
     isCountryAllowedForBuildingWithEngine,
     countBuildingOccurrences: countBuildingOccurrencesForRuntime,

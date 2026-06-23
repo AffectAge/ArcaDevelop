@@ -3,6 +3,7 @@ import type {
   DivisionStats,
   DivisionTemplate,
   DivisionTemplateBattalion,
+  HexId,
   MilitaryBranch,
   MilitaryFormationQueueItem,
   MilitaryTemplateComponent,
@@ -246,8 +247,9 @@ export function normalizeDivisionForRuntime(params: {
   const id = typeof row.id === "string" && row.id.trim() ? row.id.trim().slice(0, 120) : params.createId();
   const countryId = typeof row.countryId === "string" && row.countryId.trim() ? row.countryId.trim().slice(0, 120) : "";
   const templateId = typeof row.templateId === "string" && row.templateId.trim() ? row.templateId.trim().slice(0, 120) : "";
-  const provinceId = typeof row.provinceId === "string" && row.provinceId.trim() ? row.provinceId.trim().slice(0, 120) : "";
-  if (!countryId || !templateId || !provinceId) return null;
+  const rawHexId = typeof row.hexId === "string" && row.hexId.trim() ? row.hexId.trim().slice(0, 120) : "";
+  const hexId = /^hex:-?\d+:-?\d+$/.test(rawHexId) ? (rawHexId as HexId) : null;
+  if (!countryId || !templateId || !hexId) return null;
   const template = (params.worldBase.divisionTemplatesByCountry?.[countryId] ?? []).find((entry) => entry.id === templateId);
   const stats = template?.stats ?? {
     manpower: Math.max(0, Math.floor(Number(row.stats?.manpower ?? 1000) || 1000)),
@@ -266,12 +268,14 @@ export function normalizeDivisionForRuntime(params: {
     templateId,
     name: typeof row.name === "string" && row.name.trim() ? row.name.trim().slice(0, 80) : template?.name ?? "Дивизия",
     kind: isMilitaryBranch(row.kind) ? row.kind : template?.kind ?? "land",
-    provinceId,
+    hexId,
     strength: round3(Math.max(0, Math.min(1, Number(row.strength ?? 1) || 1))),
     organization: round3(Math.max(0, Math.min(stats.organization, Number(row.organization ?? stats.organization) || stats.organization))),
     stats,
     status,
-    path: Array.isArray(row.path) ? row.path.filter((value): value is string => typeof value === "string").slice(0, 64) : [],
+    path: Array.isArray(row.path)
+      ? row.path.filter((value): value is HexId => typeof value === "string" && /^hex:-?\d+:-?\d+$/.test(value)).slice(0, 64)
+      : [],
     createdTurnId: Math.max(1, Math.floor(Number(row.createdTurnId ?? params.turnId) || params.turnId)),
     lastMovedTurnId:
       typeof row.lastMovedTurnId === "number" && Number.isFinite(row.lastMovedTurnId)
@@ -311,8 +315,9 @@ export function normalizeMilitaryFormationQueueByCountryForRuntime(params: {
         const id = typeof row.id === "string" && row.id.trim() ? row.id.trim().slice(0, 120) : params.createId();
         const kind = isMilitaryBranch(row.kind) ? row.kind : "land";
         const templateId = typeof row.templateId === "string" && row.templateId.trim() ? row.templateId.trim().slice(0, 120) : "";
-        const provinceId = typeof row.provinceId === "string" && row.provinceId.trim() ? row.provinceId.trim().slice(0, 120) : "";
-        if (!templateId || !provinceId) return null;
+        const rawHexId = typeof row.hexId === "string" && row.hexId.trim() ? row.hexId.trim().slice(0, 120) : "";
+        const hexId = /^hex:-?\d+:-?\d+$/.test(rawHexId) ? (rawHexId as HexId) : null;
+        if (!templateId || !hexId) return null;
         const costRaw = row.cost && typeof row.cost === "object" ? row.cost : {};
         const turnsTotal = Math.max(1, Math.floor(Number(row.turnsTotal) || 1));
         const turnsRemaining = Math.max(0, Math.min(turnsTotal, Math.floor(Number(row.turnsRemaining) || turnsTotal)));
@@ -322,7 +327,7 @@ export function normalizeMilitaryFormationQueueByCountryForRuntime(params: {
           kind,
           templateId,
           name: typeof row.name === "string" && row.name.trim() ? row.name.trim().slice(0, 80) : "Формирование",
-          provinceId,
+          hexId,
           progress: round3(Math.max(0, Math.min(1, Number(row.progress ?? (turnsTotal - turnsRemaining) / turnsTotal) || 0))),
           turnsTotal,
           turnsRemaining,

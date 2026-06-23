@@ -525,8 +525,8 @@ function selectOwnedBuildingInstance(
   buildingId: string,
   instanceId: string | undefined,
 ): BuildingInstanceSelection {
-  const provinceOwnerId = (worldBase.regionController[regionId] ?? worldBase.regionOwner[regionId]) ?? null;
-  if (!provinceOwnerId || provinceOwnerId !== countryId) {
+  const hexOwnerId = (worldBase.regionController[regionId] ?? worldBase.regionOwner[regionId]) ?? null;
+  if (!hexOwnerId || hexOwnerId !== countryId) {
     return { ok: false, status: 403, error: "NOT_REGION_CONTROLLER" };
   }
 

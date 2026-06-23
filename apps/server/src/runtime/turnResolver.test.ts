@@ -7,7 +7,7 @@ import { resolveTurnWithPipeline, type ColonizationCaptureResult } from "./turnR
 describe("turnResolver", () => {
   it("snapshots every turn-mutated section including region ownership", () => {
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.resourcesByCountry).toBeTruthy();
-    expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.provinceOwner).toBeTruthy();
+    expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.hexOwner).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.regionOwner).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.regionController).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.colonyProgressByRegion).toBeTruthy();
@@ -222,7 +222,7 @@ function makeOrder(type: Order["type"], targetId: string): Order {
     payload: {},
     createdAt: "2026-01-01T00:00:00.000Z",
   };
-  if (type === "ARMY_MOVE") return { ...base, type, provinceId: targetId };
+  if (type === "ARMY_MOVE") return { ...base, type, targetHexId: targetId as `hex:${number}:${number}` };
   if (type === "BUILD") return { ...base, type, regionId: targetId };
   if (type === "COLONIZE") return { ...base, type, regionId: targetId };
   return { ...base, type };

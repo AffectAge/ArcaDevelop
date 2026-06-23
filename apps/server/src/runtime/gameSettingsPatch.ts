@@ -37,7 +37,7 @@ export type PatchableGameSettings = {
     recolorDucats: number;
     flagDucats: number;
     crestDucats: number;
-    provinceRenameDucats: number;
+    hexRenameDucats: number;
   };
   registration: {
     requireAdminApproval: boolean;
@@ -185,7 +185,7 @@ function applyCustomizationPatch(settings: PatchableGameSettings, customization:
   assignNumberIfPresent(customization, "recolorDucats", settings.customization);
   assignNumberIfPresent(customization, "flagDucats", settings.customization);
   assignNumberIfPresent(customization, "crestDucats", settings.customization);
-  assignNumberIfPresent(customization, "provinceRenameDucats", settings.customization);
+  assignNumberIfPresent(customization, "hexRenameDucats", settings.customization);
 }
 
 function applyRegistrationPatch(settings: PatchableGameSettings, registration: GameSettingsPatchInput["registration"]): void {

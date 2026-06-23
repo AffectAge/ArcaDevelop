@@ -61,9 +61,9 @@ export const adminPopulationGenerateSchema = z.object({
   strategy: z.enum(["random", "custom"]),
   populationTotal: z.coerce.number().int().min(0).max(SETTINGS_MAX_NUMBER).optional(),
   pops: z.array(populationPopSchema).max(200).optional(),
-});
+}).strict();
 
-export const adminPopulationUpdateProvinceSchema = z.object({
+export const adminPopulationUpdateHexSchema = z.object({
   pops: z.array(populationPopSchema).max(200),
 });
 
@@ -73,8 +73,8 @@ export const adminPopulationClearSchema = z.object({
   countryId: z.string().min(1).optional(),
 });
 
-export type AdminProvinceMutationWorldState = {
-  provinceOwner: Record<string, string>;
+export type AdminHexMutationWorldState = {
+  hexOwner: Record<string, string>;
   regionOwner: Record<string, string>;
   regionController: Record<string, string>;
   colonyProgressByRegion: Record<string, Record<string, number>>;
@@ -82,9 +82,9 @@ export type AdminProvinceMutationWorldState = {
   regionPopulationByRegion: Record<string, RegionPopulation>;
 };
 
-export type AdminProvinceMutationMasks = {
+export type AdminHexMutationMasks = {
   resourcesByCountry: number;
-  provinceOwner: number;
+  hexOwner: number;
   regionOwner: number;
   regionController: number;
   colonyProgressByRegion: number;
@@ -98,11 +98,11 @@ export type RegionColonizationConfig = {
   manualCost: boolean;
 };
 
-export type AdminProvinceMutationRoutesDependencies = {
+export type AdminHexMutationRoutesDependencies = {
   routeAuth: RouteAuth;
-  masks: AdminProvinceMutationMasks;
+  masks: AdminHexMutationMasks;
   getTurnId: () => number;
-  getWorldBase: () => AdminProvinceMutationWorldState;
+  getWorldBase: () => AdminHexMutationWorldState;
   getRegionColonizationConfig: (regionId: string) => RegionColonizationConfig;
   getRegionDerivedColonizationCosts: (regionId: string) => { pointsCost: number; ducatsCost: number };
   getPopulationDomainKeys: () => unknown;
@@ -135,9 +135,9 @@ export type AdminProvinceMutationRoutesDependencies = {
   broadcast: (message: WsOutMessage) => void;
 };
 
-export function registerAdminProvinceMutationRoutes(
+export function registerAdminHexMutationRoutes(
   app: express.Express,
-  deps: AdminProvinceMutationRoutesDependencies,
+  deps: AdminHexMutationRoutesDependencies,
 ): void {
   app.get("/admin/regions", async (req, res) => {
     if (!(await deps.routeAuth.requireAdmin(req, res))) return;
@@ -234,7 +234,7 @@ export function registerAdminProvinceMutationRoutes(
       return res.status(404).json({ error: "REGION_NOT_FOUND" });
     }
 
-    const parsed = adminPopulationUpdateProvinceSchema.safeParse(req.body);
+    const parsed = adminPopulationUpdateHexSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
     }
@@ -368,7 +368,7 @@ export function registerAdminProvinceMutationRoutes(
 }
 
 function resolvePopulationTargetRegionIds(
-  deps: AdminProvinceMutationRoutesDependencies,
+  deps: AdminHexMutationRoutesDependencies,
   scope: z.infer<typeof populationScopeSchema>,
   params: { regionId?: string; countryId?: string },
 ): string[] {
@@ -399,7 +399,7 @@ function resolvePopulationTargetRegionIds(
   return ownedRegionIds;
 }
 
-function getKnownRegionIds(worldBase: AdminProvinceMutationWorldState): string[] {
+function getKnownRegionIds(worldBase: AdminHexMutationWorldState): string[] {
   return [
     ...new Set([
       ...Object.keys(worldBase.regionOwner),
@@ -411,12 +411,12 @@ function getKnownRegionIds(worldBase: AdminProvinceMutationWorldState): string[]
   ].sort();
 }
 
-function regionExists(worldBase: AdminProvinceMutationWorldState, regionId: string): boolean {
+function regionExists(worldBase: AdminHexMutationWorldState, regionId: string): boolean {
   return getKnownRegionIds(worldBase).includes(regionId);
 }
 
 function summarizeRegion(
-  worldBase: AdminProvinceMutationWorldState,
+  worldBase: AdminHexMutationWorldState,
   regionId: string,
   cfg: RegionColonizationConfig,
 ): {

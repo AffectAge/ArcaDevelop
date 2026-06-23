@@ -8,7 +8,7 @@ describe("uiText", () => {
   });
 
   it("formats keyed text with parameters", () => {
-    expect(tUi("corridorBuild.summary", { points: 2, provinces: 3 }, "en")).toContain("Route points: 2");
-    expect(tUi("corridorBuild.summary", { points: 2, provinces: 3 }, "ru")).toContain("Точек маршрута: 2");
+    expect(tUi("corridorBuild.summary", { points: 2, hexes: 3 }, "en")).toContain("Route points: 2");
+    expect(tUi("corridorBuild.summary", { points: 2, hexes: 3 }, "ru")).toContain("Точек маршрута: 2");
   });
 });

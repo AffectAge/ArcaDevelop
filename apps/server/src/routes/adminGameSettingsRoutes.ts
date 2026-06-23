@@ -54,7 +54,7 @@ export function createGameSettingsPatchSchema(maxSettingNumber: number) {
         recolorDucats: z.coerce.number().int().min(0).max(maxSettingNumber).optional(),
         flagDucats: z.coerce.number().int().min(0).max(maxSettingNumber).optional(),
         crestDucats: z.coerce.number().int().min(0).max(maxSettingNumber).optional(),
-        provinceRenameDucats: z.coerce.number().int().min(0).max(maxSettingNumber).optional(),
+        hexRenameDucats: z.coerce.number().int().min(0).max(maxSettingNumber).optional(),
       })
       .optional(),
     registration: z.object({ requireAdminApproval: z.boolean().optional() }).optional(),

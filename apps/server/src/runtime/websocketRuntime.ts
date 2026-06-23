@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { WebSocketServer, WebSocket } from "ws";
 import type { AuthHeaderPayload } from "../security/authHeader";
 import type {
+  HexId,
   Order,
   OrderDelta,
   ResourceTotals,
@@ -62,11 +63,11 @@ type WebSocketRuntimeParams = {
   getReadySetForTurn: (turnId: number) => Set<string>;
   savePersistentState: () => void;
   addOrderToTurnIndexes: (order: Order) => void;
-  getRegionColonizationConfig: (provinceId: string) => RegionColonizationConfig;
+  getRegionColonizationConfig: (hexId: string) => RegionColonizationConfig;
   parseRequestedBuildingIdFromPayload: (payload: Record<string, unknown>) => string;
   resolveBuildingOwnerFromPayload: (payload: Record<string, unknown>, requestedByCountryId: string) => unknown;
   isCountryAllowedForBuildingWithEngine: (building: GameContentEntry, countryId: string) => Promise<boolean>;
-  getProvinceBuildRestriction: (building: GameContentEntry, provinceId: string) => string | null;
+  getHexBuildRestriction: (building: GameContentEntry, hexId: string) => string | null;
   isBuildingUnlockedForCountry: (buildingId: string, countryId: string) => boolean;
   countBuildingOccurrences: (
     buildingId: string,
@@ -77,10 +78,10 @@ type WebSocketRuntimeParams = {
   getGlobalBuildLimit: (building: GameContentEntry) => number | null;
   normalizeArmyMoveRoute: (
     payload: Record<string, unknown> | undefined,
-    fallbackProvinceId: string,
-    currentProvinceId: string,
-  ) => string[];
-  isContiguousArmyRoute: (fromProvinceId: string, route: string[]) => boolean;
+    fallbackHexId: HexId,
+    currentHexId: HexId,
+  ) => HexId[];
+  isContiguousArmyRoute: (fromHexId: HexId, route: HexId[]) => boolean;
 };
 
 export function registerWebSocketRuntime(params: WebSocketRuntimeParams): void {
@@ -439,7 +440,7 @@ async function validateBuildOrder(input: {
     send({ type: "ERROR", code: "BUILD_RESTRICTED", message: "Ваша страна не может строить это здание" });
     return false;
   }
-  const provinceRestriction = params.getProvinceBuildRestriction(building, delta.order.regionId);
+  const provinceRestriction = params.getHexBuildRestriction(building, delta.order.regionId);
   if (provinceRestriction) {
     send({ type: "ERROR", code: "BUILD_RESTRICTED", message: provinceRestriction });
     return false;
@@ -486,9 +487,9 @@ function validateArmyMoveOrder(input: {
     send({ type: "ERROR", code: "DIVISION_NOT_FOUND", message: "Дивизия не найдена" });
     return false;
   }
-  const route = params.normalizeArmyMoveRoute(delta.order.payload, delta.order.provinceId, division.provinceId);
-  if (route.length === 0 || !params.isContiguousArmyRoute(division.provinceId, route)) {
-    send({ type: "ERROR", code: "DIVISION_TARGET_NOT_ADJACENT", message: "Маршрут дивизии должен идти по соседним провинциям" });
+  const route = params.normalizeArmyMoveRoute(delta.order.payload, delta.order.targetHexId, division.hexId);
+  if (route.length === 0 || !params.isContiguousArmyRoute(division.hexId, route)) {
+    send({ type: "ERROR", code: "DIVISION_TARGET_NOT_ADJACENT", message: "Маршрут дивизии должен идти по соседним hex-клеткам" });
     return false;
   }
   if (

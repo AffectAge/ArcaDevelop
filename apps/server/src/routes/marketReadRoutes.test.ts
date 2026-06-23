@@ -29,7 +29,7 @@ describe("marketReadRoutes", () => {
         globalCoveragePct: 50,
       }],
       logisticsSnapshot: {
-        failuresByProvince: { "province:a": { reason: "missing" } },
+        failuresByHex: { "province:a": { reason: "missing" } },
       },
     });
   });
@@ -109,12 +109,12 @@ function makeDeps(options?: {
     getGlobalGoodOfferHistoryByResourceId: () => ({ "good:grain": [10] }),
     getGlobalGoodProductionFactHistoryByResourceId: () => ({ "good:grain": [8] }),
     getGlobalGoodProductionMaxHistoryByResourceId: () => ({ "good:grain": [12] }),
-    getProvinceOwner: (provinceId) => provinceId === "province:a" ? "country:a" : "country:b",
+    getHexOwner: (hexId) => hexId === "province:a" ? "country:a" : "country:b",
     getMarketTransportCorridors: () => [{
       id: "corridor:a",
       marketId: "market:a",
       ownerCountryId: "country:a",
-      provinceIds: ["province:a"],
+      hexIds: ["province:a"],
       transportMode: "land",
       level: 1,
       status: "active",
@@ -146,7 +146,7 @@ function makeMarket(overrides?: Partial<MarketReadMarket>): MarketReadMarket {
     name: "Market A",
     logoUrl: null,
     ownerCountryId: "country:a",
-    capitalProvinceId: "province:a",
+    capitalHexId: "province:a",
     memberCountryIds: ["country:a"],
     visibility: "private",
     createdAt: "2026-01-01",
@@ -169,7 +169,7 @@ function makeOverview(): MarketOverviewState {
     exportsByCountryByCountryAndGood: {},
     importsByMarketByMarketAndGood: {},
     exportsByMarketByMarketAndGood: {},
-    logisticsFailuresByProvince: {
+    logisticsFailuresByHex: {
       "province:a": { reason: "missing" },
       "province:b": { reason: "foreign" },
     },

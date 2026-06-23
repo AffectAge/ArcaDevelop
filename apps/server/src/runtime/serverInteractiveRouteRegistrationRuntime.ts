@@ -82,7 +82,7 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
     crestImageRule: CREST_IMAGE_RULE,
     masks: {
       resourcesByCountry: WORLD_DELTA_MASK.resourcesByCountry,
-      provinceOwner: WORLD_DELTA_MASK.provinceOwner,
+      hexOwner: WORLD_DELTA_MASK.hexOwner,
       colonyProgressByRegion: WORLD_DELTA_MASK.colonyProgressByRegion,
       regionConstructionQueueByRegion: WORLD_DELTA_MASK.regionConstructionQueueByRegion,
       parliamentByCountry: WORLD_DELTA_MASK.parliamentByCountry,

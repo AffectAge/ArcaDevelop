@@ -31,8 +31,8 @@ type Props = {
   onClose: () => void;
   onStart: () => void;
   onCancel: () => void;
-  canOpenAdminProvinceEditor?: boolean;
-  onOpenAdminProvinceEditor?: () => void;
+  canOpenAdminHexEditor?: boolean;
+  onOpenAdminHexEditor?: () => void;
 };
 
 export function ColonizationModal({
@@ -59,8 +59,8 @@ export function ColonizationModal({
   onClose,
   onStart,
   onCancel,
-  canOpenAdminProvinceEditor,
-  onOpenAdminProvinceEditor,
+  canOpenAdminHexEditor,
+  onOpenAdminHexEditor,
 }: Props) {
   const { locale, t } = useUiText();
   const numberLocale = locale === "en" ? "en-US" : "ru-RU";
@@ -253,10 +253,10 @@ export function ColonizationModal({
           </AppSection>
 
           <div className="mt-4 flex flex-wrap justify-end gap-2">
-            {canOpenAdminProvinceEditor && onOpenAdminProvinceEditor && (
+            {canOpenAdminHexEditor && onOpenAdminHexEditor && (
               <Tooltip content={t("colonization.openAdminEditor")} placement="top">
                 <AppButton
-                  onClick={onOpenAdminProvinceEditor}
+                  onClick={onOpenAdminHexEditor}
                   aria-label={t("colonization.openAdminEditorAria")}
                   variant="danger"
                   size="icon"

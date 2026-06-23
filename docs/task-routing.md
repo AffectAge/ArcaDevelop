@@ -5,7 +5,7 @@ Use this document to decide which guides to read before working. If a task spans
 | Task type | Required guides |
 | --- | --- |
 | UI, modals, HUD, Arcawiki | `apps/client/AGENTS.md`, `docs/programming-standards.md`, `docs/accessibility.md`, `docs/localization.md`, `docs/theme-system.md` |
-| Map or movement | `apps/client/AGENTS.md`, `apps/server/AGENTS.md`, `docs/regions-and-provinces.md`, `docs/performance-budgets.md`, `docs/folder-structure.md` |
+| Map or movement | `apps/client/AGENTS.md`, `apps/server/AGENTS.md`, `docs/hexes-and-regions.md`, `docs/performance-budgets.md`, `docs/folder-structure.md` |
 | Game mechanic | `apps/server/AGENTS.md`, `apps/server/src/mechanics/AGENTS.md`, `packages/shared/AGENTS.md`, `docs/world-model.md`, `docs/programming-standards.md`, `docs/testing-strategy.md`, `docs/definition-of-done.md` |
 | Region/scenario data | `apps/server/data/AGENTS.md`, `docs/scenario-region-history.md`, `docs/modding-authoring.md`, `docs/data-deletion-lifecycle.md`, `docs/entity-ownership.md` |
 | API/WS/shared contract | `packages/shared/AGENTS.md`, `apps/server/AGENTS.md`, `apps/client/AGENTS.md`, `docs/api-ws-versioning.md`, `docs/error-codes.md`, `docs/concurrency.md` |

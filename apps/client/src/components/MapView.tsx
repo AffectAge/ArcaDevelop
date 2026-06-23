@@ -27,20 +27,20 @@ import {
 import { MAP_NAVIGATION_SETTINGS_EVENT, readMapNavigationSettings, writeMapNavigationSettings } from "../map/mapNavigationSettings";
 import { useUiText } from "../i18n/useUiText";
 import { Tooltip } from "./Tooltip";
-import { ProvinceHoverTooltip } from "./ProvinceHoverTooltip";
+import { HexHoverTooltip } from "./HexHoverTooltip";
 import { MapControlsHud } from "./map-hud/MapControlsHud";
 
 export type MapModeId = "hexTerrain";
 
-export type AuthoredProvinceColorState = {
+export type AuthoredHexColorState = {
   provinceMapColor: string;
   provinceMapBorderColor: string;
   regionMapColor: string;
   regionMapBorderColor: string;
 };
 
-export function resolveAuthoredProvinceColorState(input: { provinceColor?: string | null; regionColor?: string | null; regionId?: string | null }): AuthoredProvinceColorState {
-  const provinceMapColor = normalizeHexColor(input.provinceColor, "#7f8f55");
+export function resolveAuthoredHexColorState(input: { hexColor?: string | null; regionColor?: string | null; regionId?: string | null }): AuthoredHexColorState {
+  const provinceMapColor = normalizeHexColor(input.hexColor, "#7f8f55");
   const regionMapColor = normalizeHexColor(input.regionColor ?? input.regionId, "#5f874c");
   return {
     provinceMapColor,
@@ -52,18 +52,18 @@ export function resolveAuthoredProvinceColorState(input: { provinceColor?: strin
 
 type Props = {
   apiBase: string;
-  onQueueBuildOrder: (provinceId: string) => void;
-  onQueueColonizeOrder: (provinceId: string) => void;
-  onQueueArmyMoveOrder?: (divisionId: string, provinceId: string, path?: string[]) => void;
-  onOpenAdminProvinceEditor?: (provinceId: string) => void;
-  onOpenProvinceKnowledge?: (provinceId: string, provinceName: string) => void;
-  onCreateProvinceKnowledge?: (provinceId: string, provinceName: string) => void;
-  onProvinceRenameCharged?: (chargedDucats: number) => void;
+  onQueueBuildOrder: (hexId: string) => void;
+  onQueueColonizeOrder: (hexId: string) => void;
+  onQueueArmyMoveOrder?: (divisionId: string, hexId: string, path?: string[]) => void;
+  onOpenAdminHexEditor?: (hexId: string) => void;
+  onOpenHexKnowledge?: (hexId: string, hexName: string) => void;
+  onCreateHexKnowledge?: (hexId: string, hexName: string) => void;
+  onHexRenameCharged?: (chargedDucats: number) => void;
   colonizationIconUrl?: string | null;
   ducatsIconUrl?: string | null;
   maxActiveColonizations?: number;
   colonizationCostPer1000Km2?: { points: number; ducats: number };
-  provinceRenameDucatsCost?: number;
+  hexRenameDucatsCost?: number;
   showMapControls?: boolean;
   showAntarctica?: boolean;
 };
@@ -173,22 +173,22 @@ export function MapView({
   onQueueBuildOrder,
   onQueueColonizeOrder,
   onQueueArmyMoveOrder: _onQueueArmyMoveOrder,
-  onOpenAdminProvinceEditor,
-  onOpenProvinceKnowledge,
-  onCreateProvinceKnowledge,
-  onProvinceRenameCharged: _onProvinceRenameCharged,
+  onOpenAdminHexEditor,
+  onOpenHexKnowledge,
+  onCreateHexKnowledge,
+  onHexRenameCharged: _onHexRenameCharged,
   colonizationIconUrl: _colonizationIconUrl,
   ducatsIconUrl: _ducatsIconUrl,
   maxActiveColonizations: _maxActiveColonizations,
   colonizationCostPer1000Km2: _colonizationCostPer1000Km2,
-  provinceRenameDucatsCost: _provinceRenameDucatsCost,
+  hexRenameDucatsCost: _hexRenameDucatsCost,
   showMapControls = false,
   showAntarctica: _showAntarctica = false,
 }: Props) {
   const { t } = useUiText();
   const authCountryId = useGameStore((state) => state.auth?.countryId ?? null);
   const worldBase = useGameStore((state) => state.worldBase);
-  const setSelectedProvince = useGameStore((state) => state.setSelectedProvince);
+  const setSelectedHex = useGameStore((state) => state.setSelectedHex);
   const mapSettings = useMemo(() => resolveMapSettingsOverride(), []);
   const mapArtifact = useMemo(() => generateHexMap(mapSettings), [mapSettings]);
   const initialCamera = useMemo(() => buildInitialHexCamera(mapArtifact.settings), [mapArtifact.settings]);
@@ -239,16 +239,16 @@ export function MapView({
   }, [hoverState?.tile, mapArtifact, selectedTile]);
 
   const resolveHexName = useCallback(
-    (tile: HexTile) => worldBase?.provinceNameById[tile.id] ?? t("hexMap.hexTitle", { id: tile.id.replace("hex:", "") }),
-    [t, worldBase?.provinceNameById],
+    (tile: HexTile) => worldBase?.hexNameById[tile.id] ?? t("hexMap.hexTitle", { id: tile.id.replace("hex:", "") }),
+    [t, worldBase?.hexNameById],
   );
 
   const resolveOwnerName = useCallback(
     (tile: HexTile) => {
-      const ownerId = worldBase?.regionOwner[tile.regionId] ?? worldBase?.provinceOwner[tile.id];
+      const ownerId = worldBase?.regionOwner[tile.regionId] ?? worldBase?.hexOwner[tile.id];
       return ownerId ? t("hexMap.ownerCountry", { country: ownerId }) : t("hexMap.ownerNone");
     },
-    [t, worldBase?.provinceOwner, worldBase?.regionOwner],
+    [t, worldBase?.hexOwner, worldBase?.regionOwner],
   );
 
   const setCameraTarget = useCallback(
@@ -380,7 +380,7 @@ export function MapView({
     };
     const selectTile = (tile: HexTile | null) => {
       setSelectedTileId(tile?.id ?? null);
-      setSelectedProvince(tile?.regionId ?? null);
+      setSelectedHex(tile?.regionId ?? null);
     };
     const updatePointerTracking = (event: PointerEvent) => {
       const rect = container.getBoundingClientRect();
@@ -525,7 +525,7 @@ export function MapView({
       pointerGestureRef.current = null;
       activePointersRef.current.clear();
     };
-  }, [cameraBounds, centerOnTile, interactionLocked, mapArtifact, setCameraTarget, setSelectedProvince, tileById]);
+  }, [cameraBounds, centerOnTile, interactionLocked, mapArtifact, setCameraTarget, setSelectedHex, tileById]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -747,25 +747,25 @@ export function MapView({
                   <span>{t("hexMap.colonize")}</span>
                 </button>
               </Tooltip>
-              {onOpenAdminProvinceEditor ? (
+              {onOpenAdminHexEditor ? (
                 <Tooltip content={t("hexMap.adminTooltip")}>
-                  <button type="button" className="map-btn" onClick={() => onOpenAdminProvinceEditor(selectedTile.regionId)}>
+                  <button type="button" className="map-btn" onClick={() => onOpenAdminHexEditor(selectedTile.regionId)}>
                     <Info size={15} />
                     <span>{t("hexMap.admin")}</span>
                   </button>
                 </Tooltip>
               ) : null}
-              {onOpenProvinceKnowledge ? (
+              {onOpenHexKnowledge ? (
                 <Tooltip content={t("hexMap.arcawikiTooltip")}>
-                  <button type="button" className="map-btn" onClick={() => onOpenProvinceKnowledge(selectedTile.regionId, selectedName ?? selectedTile.regionId)}>
+                  <button type="button" className="map-btn" onClick={() => onOpenHexKnowledge(selectedTile.regionId, selectedName ?? selectedTile.regionId)}>
                     <BookOpen size={15} />
                     <span>{t("hexMap.arcawiki")}</span>
                   </button>
                 </Tooltip>
               ) : null}
-              {onCreateProvinceKnowledge ? (
+              {onCreateHexKnowledge ? (
                 <Tooltip content={t("hexMap.createArcawikiTooltip")}>
-                  <button type="button" className="map-btn" onClick={() => onCreateProvinceKnowledge(selectedTile.regionId, selectedName ?? selectedTile.regionId)}>
+                  <button type="button" className="map-btn" onClick={() => onCreateHexKnowledge(selectedTile.regionId, selectedName ?? selectedTile.regionId)}>
                     <BookOpen size={15} />
                     <span>{t("hexMap.createArcawiki")}</span>
                   </button>
@@ -776,11 +776,11 @@ export function MapView({
         </section>
       ) : null}
       {hoverState ? (
-        <ProvinceHoverTooltip
+        <HexHoverTooltip
           open
           x={hoverState.x}
           y={hoverState.y}
-          provinceName={resolveHexName(hoverState.tile)}
+          hexName={resolveHexName(hoverState.tile)}
           areaKm2={null}
           ownerName={resolveOwnerName(hoverState.tile)}
           colonizers={[]}

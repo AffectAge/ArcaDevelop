@@ -22,7 +22,7 @@ const resources: ResourceTotals = {
 describe("countryExpansionRoutes", () => {
   it("validates colonization action payloads", () => {
     expect(colonizationActionSchema.safeParse({ regionId: "region:a" }).success).toBe(true);
-    expect(colonizationActionSchema.safeParse({ provinceId: "" }).success).toBe(false);
+    expect(colonizationActionSchema.safeParse({ hexId: "" }).success).toBe(false);
   });
 
   it("starts colonization for neutral enabled provinces", async () => {
@@ -43,7 +43,7 @@ describe("countryExpansionRoutes", () => {
   });
 
   it("rejects colonization above active target limit", async () => {
-    const deps = makeDeps({ activeColonizeProvinceIds: ["province:x"], maxActiveColonizations: 1 });
+    const deps = makeDeps({ activeColonizeHexIds: ["province:x"], maxActiveColonizations: 1 });
     const app = makeApp(deps);
 
     const response = await request(app, "/country/colonization/start", {
@@ -128,8 +128,8 @@ function makeDeps(options?: {
   regionOwner?: Record<string, string>;
   regionController?: Record<string, string>;
   colonyProgressByRegion?: Record<string, Record<string, number>>;
-  activeColonizeProvinceIds?: string[];
-  queuedColonizeProvinceIds?: string[];
+  activeColonizeHexIds?: string[];
+  queuedColonizeHexIds?: string[];
   maxActiveColonizations?: number;
   orders?: Map<string, Order[]>;
 }): CountryExpansionRoutesDependencies & { world: CountryExpansionWorldState } {
@@ -158,8 +158,8 @@ function makeDeps(options?: {
     addActiveColonizationTarget: vi.fn(),
     removeActiveColonizationTarget: vi.fn(),
     removeRegionFromActiveColonizationIndex: vi.fn(),
-    getActiveColonizeRegionIds: () => options?.activeColonizeProvinceIds ?? [],
-    getQueuedColonizeRegionIds: () => options?.queuedColonizeProvinceIds ?? [],
+    getActiveColonizeRegionIds: () => options?.activeColonizeHexIds ?? [],
+    getQueuedColonizeRegionIds: () => options?.queuedColonizeHexIds ?? [],
     getOrdersByTurn: () => options?.orders,
     deleteOrdersForTurn: vi.fn((turnId: number) => {
       if (turnId === 4) options?.orders?.clear();

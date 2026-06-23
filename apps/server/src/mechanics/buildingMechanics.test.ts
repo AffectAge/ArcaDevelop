@@ -1,6 +1,6 @@
 import type { BuildingInstance, Order, ResourceTotals } from "@arcanorum/shared";
 import { describe, expect, it } from "vitest";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import {
   countBuildingOccurrences,
   createBuildingConstructionProject,
@@ -13,7 +13,7 @@ import {
   getBuildingUpgradeCosts,
   getCountryBuildLimit,
   getGlobalBuildLimit,
-  getProvinceBuildRestriction,
+  getHexBuildRestriction,
   isCountryAllowedForBuildingSync,
   normalizeBuildingCountryLimits,
   parseRequestedBuildingIdFromPayload,
@@ -78,8 +78,8 @@ describe("buildingMechanics", () => {
   });
 
   it("applies country allow/deny rules and province restrictions", () => {
-    const province = makeProvince({
-      provinceType: "coast",
+    const province = makeHex({
+      hexType: "coast",
       climate: "temperate",
       landscape: "plain",
       continent: "europe",
@@ -100,10 +100,10 @@ describe("buildingMechanics", () => {
       ),
     ).toBe(false);
     expect(
-      getProvinceBuildRestriction(
+      getHexBuildRestriction(
         {
           id: "building:port",
-          allowedProvinceTypes: ["coast"],
+          allowedHexTypes: ["coast"],
           deniedClimates: ["arctic"],
           minRadiation: 10,
           maxRadiation: 20,
@@ -111,13 +111,13 @@ describe("buildingMechanics", () => {
         province,
       ),
     ).toBeNull();
-    expect(getProvinceBuildRestriction({ id: "building:mine", allowedLandscapes: ["mountain"] }, province)).toBe(
-      "Ландшафт провинции не подходит для этого здания",
+    expect(getHexBuildRestriction({ id: "building:mine", allowedLandscapes: ["mountain"] }, province)).toBe(
+      "Ландшафт гекса не подходит для этого здания",
     );
   });
 
   it("calculates pollution productivity factors by mode", () => {
-    const province = makeProvince({ pollution: 500 });
+    const province = makeHex({ pollution: 500 });
 
     expect(
       getBuildingPollutionProductivityFactor({
@@ -213,7 +213,7 @@ describe("buildingMechanics", () => {
           countryIds: new Set(["country:a"]),
         }),
       isCountryAllowedForBuilding: () => true,
-      getProvinceBuildRestriction: () => null,
+      getHexBuildRestriction: () => null,
       isBuildingUnlockedForCountry: () => true,
       countBuildingOccurrences: () => ({ byCountry: 0, global: 0 }),
       resolveConstructionCost: () => 42,
@@ -246,7 +246,7 @@ describe("buildingMechanics", () => {
       parseRequestedBuildingId: (payload: Record<string, unknown>) => parseRequestedBuildingIdFromPayload(payload, ""),
       resolveBuildingOwner: () => ({ type: "state" as const, countryId: "country:a" }),
       isCountryAllowedForBuilding: () => true,
-      getProvinceBuildRestriction: () => null,
+      getHexBuildRestriction: () => null,
       resolveConstructionCost: () => 100,
       createId: () => "queue:a",
     };
@@ -361,7 +361,7 @@ describe("buildingMechanics", () => {
       },
       ownerCountryId: "country:a",
       instanceLevel: 2,
-      laborCoverageProvince: 0.5,
+      laborCoverageHex: 0.5,
       buildingThroughput: 1,
       professionsById: new Map([["profession:farmers", { professionId: "profession:farmers", baseWage: 2 }]]),
       wageMultiplierByProfession: { "profession:farmers": 1.5 },
@@ -578,7 +578,7 @@ describe("buildingMechanics", () => {
       building: { id: "building:legacy", inputs: [{ goodId: "good:grain", amount: 2 }] },
       ownerCountryId: "country:a",
       instanceLevel: 5,
-      laborCoverageProvince: 1,
+      laborCoverageHex: 1,
       buildingThroughput: 1,
       professionsById: new Map(),
       wageMultiplierByProfession: {},
@@ -749,15 +749,15 @@ describe("buildingMechanics", () => {
   });
 });
 
-function makeProvince(overrides?: Partial<Adm1ProvinceIndexEntry>): Adm1ProvinceIndexEntry {
+function makeHex(overrides?: Partial<HexMapIndexEntry>): HexMapIndexEntry {
   return {
     id: "region:a",
-    name: "Province A",
+    name: "Hex A",
     regionId: null,
-    provinceColor: "#8fb9a8",
+    hexColor: "#8fb9a8",
     regionColor: "#22d3ee",
     areaKm2: 1000,
-    provinceType: null,
+    hexType: null,
     centerX: null,
     centerY: null,
     sourceCenterX: null,

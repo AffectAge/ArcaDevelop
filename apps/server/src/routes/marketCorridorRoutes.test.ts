@@ -12,11 +12,11 @@ import {
 describe("marketCorridorRoutes", () => {
   it("validates corridor create payloads", () => {
     expect(marketTransportCorridorCreateSchema.safeParse({
-      provinceIds: ["province:a", "province:b"],
+      hexIds: ["province:a", "province:b"],
       transportMode: "land",
     }).success).toBe(true);
     expect(marketTransportCorridorCreateSchema.safeParse({
-      provinceIds: ["province:a"],
+      hexIds: ["province:a"],
       transportMode: "land",
     }).success).toBe(false);
   });
@@ -31,7 +31,7 @@ describe("marketCorridorRoutes", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
       marketId: "market:a",
-      capitalProvinceId: "province:capital",
+      capitalHexId: "province:capital",
       corridors: [{ id: "corridor:a" }],
     });
   });
@@ -45,7 +45,7 @@ describe("marketCorridorRoutes", () => {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        provinceIds: ["province:a", "province:b", "province:c"],
+        hexIds: ["province:a", "province:b", "province:c"],
         transportMode: "land",
       }),
     });
@@ -55,7 +55,7 @@ describe("marketCorridorRoutes", () => {
       id: "corridor-1",
       marketId: "market:a",
       ownerCountryId: "country:a",
-      provinceIds: ["province:a", "province:b", "province:c"],
+      hexIds: ["province:a", "province:b", "province:c"],
       transportMode: "land",
       status: "building",
       costConstruction: 20,
@@ -72,7 +72,7 @@ describe("marketCorridorRoutes", () => {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        provinceIds: ["province:a", "province:b"],
+        hexIds: ["province:a", "province:b"],
         transportMode: "land",
       }),
     });
@@ -135,11 +135,11 @@ function makeDeps(options?: {
     getMarketTransportCorridors: (marketId) =>
       Object.values(corridors).filter((corridor) => corridor.marketId === marketId),
     normalizeTransportCorridorRoutePoints: (input) => Array.isArray(input) ? input : [],
-    normalizeProvinceIdList: (input) => Array.isArray(input) ? [...new Set(input.map(String))] : [],
-    isProvinceAllowedForCorridorOwner: () => true,
+    normalizeHexIdList: (input) => Array.isArray(input) ? [...new Set(input.map(String))] : [],
+    isHexAllowedForCorridorOwner: () => true,
     isContiguousTransportCorridorRoute: () => options?.contiguous ?? true,
-    getProvinceOwner: () => "country:a",
-    getInfrastructureConstructionRightForProvince: () => null,
+    getHexOwner: () => "country:a",
+    getInfrastructureConstructionRightForHex: () => null,
     getTransportCorridorBuildCost: (_mode, segments) => segments * 10,
     savePersistentState: vi.fn(),
   };
@@ -150,7 +150,7 @@ function makeMarket(overrides?: Partial<MarketCorridorMarket>): MarketCorridorMa
     id: "market:a",
     ownerCountryId: "country:a",
     memberCountryIds: ["country:a", "country:b"],
-    capitalProvinceId: "province:capital",
+    capitalHexId: "province:capital",
     ...overrides,
   };
 }
@@ -160,7 +160,7 @@ function makeCorridor(overrides?: Partial<MarketCorridorEntry>): MarketCorridorE
     id: "corridor",
     marketId: "market:a",
     ownerCountryId: "country:a",
-    provinceIds: ["province:a", "province:b"],
+    hexIds: ["province:a", "province:b"],
     transportMode: "land",
     level: 1,
     status: "building",

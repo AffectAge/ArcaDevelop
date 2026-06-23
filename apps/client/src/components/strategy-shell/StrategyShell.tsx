@@ -1131,8 +1131,8 @@ function getResourceLedgerSourceLabel(
       return t("resourceLedger.source.construction.demolition");
     case "resourceLedger.source.customization.country":
       return t("resourceLedger.source.customization.country");
-    case "resourceLedger.source.customization.provinceRename":
-      return t("resourceLedger.source.customization.provinceRename");
+    case "resourceLedger.source.customization.hexRename":
+      return t("resourceLedger.source.customization.hexRename");
     case "resourceLedger.source.diplomacy.transfer":
       return t("resourceLedger.source.diplomacy.transfer");
     case "resourceLedger.source.technology.research":

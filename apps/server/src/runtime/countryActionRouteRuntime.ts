@@ -32,11 +32,11 @@ type CountryActionRouteRuntimeParams = {
   dropTurnOrderIndexes: (turnId: number) => void;
   getActiveColonizeRegionIds: (countryId: string) => Iterable<string>;
   getQueuedColonizeRegionIds: (turnId: number, countryId: string) => Iterable<string>;
-  getRegionColonizationConfig: (provinceId: string) => RegionColonizationConfig;
+  getRegionColonizationConfig: (hexId: string) => RegionColonizationConfig;
   ensureCountryInWorldBase: (countryId: string) => void;
-  addActiveColonizationTarget: (countryId: string, provinceId: string) => void;
-  removeActiveColonizationTarget: (countryId: string, provinceId: string) => void;
-  removeRegionFromActiveColonizationIndex: (provinceId: string) => void;
+  addActiveColonizationTarget: (countryId: string, hexId: string) => void;
+  removeActiveColonizationTarget: (countryId: string, hexId: string) => void;
+  removeRegionFromActiveColonizationIndex: (hexId: string) => void;
   getBuildingMaxLevel: (building: CountryBuildContentEntry | undefined) => number;
   getBuildingUpgradeCosts: (
     building: CountryBuildContentEntry | undefined,

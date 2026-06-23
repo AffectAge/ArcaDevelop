@@ -13,7 +13,7 @@ import type { UiLocale, UiTextKey } from "../i18n/uiText";
 
 type DucatExpenses = {
   customization: number;
-  provinceRename: number;
+  hexRename: number;
   colonizationSupport: number;
   construction: number;
   subsidies: number;
@@ -128,14 +128,14 @@ export function StateBudgetModal({
       { key: "subsidies", labelKey: "budget.category.subsidies", value: Math.max(0, Math.floor(ducatExpenses.subsidies ?? 0)) },
       { key: "construction", labelKey: "budget.category.construction", value: Math.max(0, Math.floor(ducatExpenses.construction ?? 0)) },
       { key: "colonization", labelKey: "budget.category.colonization", value: Math.max(0, Math.floor(ducatExpenses.colonizationSupport ?? 0)) },
-      { key: "province-rename", labelKey: "budget.category.provinceRename", value: Math.max(0, Math.floor(ducatExpenses.provinceRename ?? 0)) },
+      { key: "province-rename", labelKey: "budget.category.hexRename", value: Math.max(0, Math.floor(ducatExpenses.hexRename ?? 0)) },
       { key: "customization", labelKey: "budget.category.customization", value: Math.max(0, Math.floor(ducatExpenses.customization ?? 0)) },
     ],
     [
       ducatExpenses.colonizationSupport,
       ducatExpenses.construction,
       ducatExpenses.customization,
-      ducatExpenses.provinceRename,
+      ducatExpenses.hexRename,
       ducatExpenses.subsidies,
     ],
   );
@@ -343,7 +343,7 @@ export function StateBudgetModal({
     { key: "subsidies", labelKey: "budget.category.subsidies" as const, value: ducatExpenses.subsidies },
     { key: "construction", labelKey: "budget.category.construction" as const, value: ducatExpenses.construction },
     { key: "colonization", labelKey: "budget.category.colonization" as const, value: ducatExpenses.colonizationSupport },
-    { key: "rename", labelKey: "budget.category.provinceRename" as const, value: ducatExpenses.provinceRename },
+    { key: "rename", labelKey: "budget.category.hexRename" as const, value: ducatExpenses.hexRename },
     { key: "customization", labelKey: "budget.category.customization" as const, value: ducatExpenses.customization },
   ];
 

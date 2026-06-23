@@ -163,7 +163,7 @@ describe("populationMechanics", () => {
         { id: "pop:a", size: 6, cultureId: "bad", religionId: "religion:sun", raceId: "race:human", ideologies: { "ideology:liberal": 6 }, professions: { "profession:workers": 6 } },
         { id: "pop:a", size: 4, cultureId: "culture:elves", religionId: "bad", raceId: "bad", ideologies: {}, professions: {} },
       ],
-      provinceId: "province:a",
+      hexId: "province:a",
       domains,
       fallbackByDimension,
     });
@@ -176,7 +176,7 @@ describe("populationMechanics", () => {
 
   it("builds province populations from authored breakdowns", () => {
     const population = buildRegionPopulationFromBreakdowns({
-      provinceId: "province:a",
+      hexId: "province:a",
       total: 100,
       fallbackByDimension,
       maps: {
@@ -194,18 +194,18 @@ describe("populationMechanics", () => {
   });
 
   it("normalizes province population from pops, populationTotal, or area-based default", () => {
-    const getProvinceAreaKm2 = (provinceId: string) => (provinceId === "province:a" ? 2 : 1);
+    const getHexAreaKm2 = (hexId: string) => (hexId === "province:a" ? 2 : 1);
     expect(
       normalizeRegionPopulation({
         input: { populationTotal: 12 },
-        provinceId: "province:a",
+        hexId: "province:a",
         domains,
         fallbackByDimension,
-        getProvinceAreaKm2,
+        getHexAreaKm2,
       }).pops[0]?.size,
     ).toBe(100);
 
-    const fallback = buildDefaultRegionPopulation({ provinceId: "province:a", domains, fallbackByDimension, getProvinceAreaKm2 });
+    const fallback = buildDefaultRegionPopulation({ hexId: "province:a", domains, fallbackByDimension, getHexAreaKm2 });
     expect(getPopulationTotal(fallback)).toBeGreaterThan(10000);
     expect(
       normalizeRegionPopulationMap({
@@ -213,21 +213,21 @@ describe("populationMechanics", () => {
         regionIds: ["province:a", "province:b"],
         domains,
         fallbackByDimension,
-        getProvinceAreaKm2,
+        getHexAreaKm2,
       }),
     ).toMatchObject({ "province:a": { pops: [] }, "province:b": expect.objectContaining({ pops: expect.any(Array) }) });
   });
 
   it("builds random province population with injectable random source and equality checks", () => {
     const population = buildRandomRegionPopulation({
-      provinceId: "province:a",
+      hexId: "province:a",
       domains,
       fallbackByDimension,
-      getProvinceAreaKm2: () => 1,
+      getHexAreaKm2: () => 1,
       populationTotalOverride: 20,
       random: () => 0.5,
     });
-    const single = buildSinglePopRegionPopulation({ provinceId: "province:a", total: 20, fallbackByDimension });
+    const single = buildSinglePopRegionPopulation({ hexId: "province:a", total: 20, fallbackByDimension });
 
     expect(getPopulationTotal(population)).toBe(20);
     expect(isEqualRegionPopulation(population, structuredClone(population))).toBe(true);
@@ -535,7 +535,7 @@ describe("populationMechanics", () => {
 
   it("resolves population turns for provinces with profession updates and ideology attraction", () => {
     const currentPopulation = buildSinglePopRegionPopulation({
-      provinceId: "province:a",
+      hexId: "province:a",
       total: 100,
       fallbackByDimension,
     });
@@ -568,7 +568,7 @@ describe("populationMechanics", () => {
         },
         { id: "ideology:default", ideologyAttractionRules: [] },
       ],
-      getProvinceAreaKm2: () => 1,
+      getHexAreaKm2: () => 1,
       getIdeologyContext: () => ({
         countryId: "country:a",
         activeLawIds: new Set(),

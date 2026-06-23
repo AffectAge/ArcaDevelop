@@ -35,7 +35,7 @@ describe("scenario runtime loader", () => {
 
     expect(worldBase.regionOwner["region:bohemia"]).toBe("country:bohemia");
     expect(worldBase.regionController["region:bohemia"]).toBe("country:bohemia");
-    expect(worldBase.provinceOwner.praha).toBe("country:bohemia");
+    expect(worldBase.hexOwner["hex:0:0"]).toBe("country:bohemia");
     expect(worldBase.regionPopulationByRegion["region:bohemia"]?.pops[0]?.id).toBe("pop:bohemia:farmers");
     expect(worldBase.regionBuildingsByRegion["region:bohemia"]?.[0]?.buildingId).toBe("building:farm");
     expect(worldBase.regionConstructionQueueByRegion["region:bohemia"]?.[0]?.queueId).toBe("queue:bohemia:farm");
@@ -49,12 +49,9 @@ describe("scenario runtime loader", () => {
 async function createScenarioFixture(): Promise<string> {
   const scenarioDir = await mkdtemp(join(tmpdir(), "arcanorum-runtime-scenario-"));
   tempDirs.push(scenarioDir);
-  await writeJson(join(scenarioDir, "history/provinces/praha.json"), {
-    id: "province:praha",
-  });
   await writeJson(join(scenarioDir, "history/regions/bohemia.json"), {
     id: "region:bohemia",
-    provinceIds: ["province:praha"],
+    hexIds: ["hex:0:0"],
     ownerCountryId: "country:bohemia",
     controllerCountryId: "country:bohemia",
     pops: [
@@ -113,8 +110,8 @@ function makeWorldBase(currentTurnId: number): WorldBase {
     explanationRecordsByTurn: {},
     regionOwner: {},
     regionController: {},
-    provinceOwner: {},
-    provinceNameById: {},
+    hexOwner: {},
+    hexNameById: {},
     colonyProgressByRegion: {},
     regionColonizationByRegion: {},
     regionPopulationByRegion: {},

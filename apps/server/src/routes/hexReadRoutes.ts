@@ -1,25 +1,25 @@
 import type express from "express";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { RouteAuth } from "../security/routeAuth";
 
-export type ProvinceReadWorldState = {
-  provinceOwner: Record<string, string>;
+export type HexReadWorldState = {
+  hexOwner: Record<string, string>;
 };
 
-export type ProvinceReadRoutesDependencies = {
+export type HexReadRoutesDependencies = {
   routeAuth: RouteAuth;
-  getProvinceIndex: () => Adm1ProvinceIndexEntry[];
-  getWorldBase: () => ProvinceReadWorldState;
+  getHexIndex: () => HexMapIndexEntry[];
+  getWorldBase: () => HexReadWorldState;
 };
 
-export function registerProvinceReadRoutes(
+export function registerHexReadRoutes(
   app: express.Express,
-  deps: ProvinceReadRoutesDependencies,
+  deps: HexReadRoutesDependencies,
 ): void {
-  app.get("/admin/provinces", async (req, res) => {
+  app.get("/admin/hexes", async (req, res) => {
     if (!(await deps.routeAuth.requireAdmin(req, res))) return;
 
-    const provinceIndex = deps.getProvinceIndex();
+    const hexIndex = deps.getHexIndex();
     const worldBase = deps.getWorldBase();
     const searchQuery = typeof req.query.q === "string" ? req.query.q.trim().toLowerCase() : "";
     const requestedLimit =
@@ -33,50 +33,50 @@ export function registerProvinceReadRoutes(
     const limit = requestedLimit == null ? null : Math.max(1, Math.min(5000, requestedLimit));
     const offset = Math.max(0, requestedOffset);
     const source = searchQuery
-      ? provinceIndex.filter(
+      ? hexIndex.filter(
           (province) =>
             province.name.toLowerCase().includes(searchQuery) ||
             province.id.toLowerCase().includes(searchQuery),
         )
-      : provinceIndex;
+      : hexIndex;
     const total = source.length;
     const selected = limit == null ? source : source.slice(offset, offset + limit);
 
-    const provinces = selected.map((province) => {
+    const hexes = selected.map((province) => {
       const provinceId = province.id;
       return {
         id: provinceId,
         name: province.name,
         regionId: province.regionId,
-        provinceColor: province.provinceColor,
+        hexColor: province.hexColor,
         regionColor: province.regionColor,
         areaKm2: province.areaKm2,
-        provinceType: province.provinceType,
+        hexType: province.hexType,
         climate: province.climate,
         landscape: province.landscape,
-        ownerCountryId: worldBase.provinceOwner[provinceId] ?? null,
+        ownerCountryId: worldBase.hexOwner[provinceId] ?? null,
       };
     });
 
     return res.json({
-      provinces,
+      hexes,
       total,
       offset,
       limit,
     });
   });
 
-  app.get("/provinces/index", (_req, res) => {
+  app.get("/hexes/index", (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
     return res.json({
-      provinces: deps.getProvinceIndex().map((province) => ({
+      hexes: deps.getHexIndex().map((province) => ({
         id: province.id,
         name: province.name,
         regionId: province.regionId,
-        provinceColor: province.provinceColor,
+        hexColor: province.hexColor,
         regionColor: province.regionColor,
         areaKm2: province.areaKm2,
-        provinceType: province.provinceType,
+        hexType: province.hexType,
         centerX: province.centerX,
         centerY: province.centerY,
         sourceCenterX: province.sourceCenterX,

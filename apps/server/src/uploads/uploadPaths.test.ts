@@ -28,7 +28,7 @@ describe("uploadPaths", () => {
   it("resolves public URL segments for camel-case content kinds", () => {
     expect(resolveContentUploadUrlSegment()).toBe("cultures");
     expect(resolveContentUploadUrlSegment("resourceCategories")).toBe("resource-categories");
-    expect(resolveContentUploadUrlSegment("provinceStrategicRegions")).toBe("province-strategic-regions");
+    expect(resolveContentUploadUrlSegment("hexStrategicRegions")).toBe("province-strategic-regions");
     expect(resolveContentUploadUrlSegment("shipTypes")).toBe("ship-types");
   });
 

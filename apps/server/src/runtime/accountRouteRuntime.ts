@@ -26,7 +26,7 @@ type AccountRouteRuntimeParams = {
   crestImageRule: ImageDimensionRule;
   masks: {
     resourcesByCountry: number;
-    provinceOwner: number;
+    hexOwner: number;
     colonyProgressByRegion: number;
   };
   getTurnId: () => number;

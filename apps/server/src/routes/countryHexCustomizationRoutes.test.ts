@@ -3,11 +3,11 @@ import type { EventLogEntry, ResourceTotals } from "@arcanorum/shared";
 import { describe, expect, it, vi } from "vitest";
 import type { RouteAuth } from "../security/routeAuth";
 import {
-  provinceRenameSchema,
-  registerCountryProvinceCustomizationRoutes,
-  type CountryProvinceCustomizationRoutesDependencies,
-  type CountryProvinceCustomizationWorldState,
-} from "./countryProvinceCustomizationRoutes";
+  hexRenameSchema,
+  registerCountryHexCustomizationRoutes,
+  type CountryHexCustomizationRoutesDependencies,
+  type CountryHexCustomizationWorldState,
+} from "./countryHexCustomizationRoutes";
 
 const resources: ResourceTotals = {
   ducats: 50,
@@ -19,30 +19,30 @@ const resources: ResourceTotals = {
   colonization: 0,
 };
 
-describe("countryProvinceCustomizationRoutes", () => {
+describe("countryHexCustomizationRoutes", () => {
   it("validates province rename payloads", () => {
-    expect(provinceRenameSchema.safeParse({ provinceId: "province:a", provinceName: "Name" }).success).toBe(true);
-    expect(provinceRenameSchema.safeParse({ provinceId: "province:a", provinceName: "" }).success).toBe(false);
+    expect(hexRenameSchema.safeParse({ hexId: "province:a", hexName: "Name" }).success).toBe(true);
+    expect(hexRenameSchema.safeParse({ hexId: "province:a", hexName: "" }).success).toBe(false);
   });
 
   it("renames an owned province, charges ducats, and broadcasts news", async () => {
     const deps = makeDeps();
     const app = makeApp(deps);
 
-    const response = await request(app, "/country/province-rename", {
+    const response = await request(app, "/country/hex-rename", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ provinceId: "province:a", provinceName: "New Name" }),
+      body: JSON.stringify({ hexId: "province:a", hexName: "New Name" }),
     });
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      provinceId: "province:a",
-      provinceName: "New Name",
+      hexId: "province:a",
+      hexName: "New Name",
       chargedDucats: 25,
       resources: { ducats: 25 },
     });
-    expect(deps.world.provinceNameById["province:a"]).toBe("New Name");
+    expect(deps.world.hexNameById["province:a"]).toBe("New Name");
     expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({ mask: 3 });
     expect(deps.broadcast).toHaveBeenCalledWith(expect.objectContaining({ type: "NEWS_EVENT" }));
   });
@@ -53,15 +53,15 @@ describe("countryProvinceCustomizationRoutes", () => {
     });
     const app = makeApp(deps);
 
-    const response = await request(app, "/country/province-rename", {
+    const response = await request(app, "/country/hex-rename", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ provinceId: "province:a", provinceName: "New Name" }),
+      body: JSON.stringify({ hexId: "province:a", hexName: "New Name" }),
     });
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "INSUFFICIENT_DUCATS", required: 25, available: 10 });
-    expect(deps.world.provinceNameById["province:a"]).toBeUndefined();
+    expect(deps.world.hexNameById["province:a"]).toBeUndefined();
     expect(deps.savePersistentState).not.toHaveBeenCalled();
   });
 
@@ -69,32 +69,32 @@ describe("countryProvinceCustomizationRoutes", () => {
     const deps = makeDeps(undefined, false);
     const app = makeApp(deps);
 
-    const response = await request(app, "/country/province-rename", {
+    const response = await request(app, "/country/hex-rename", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ provinceId: "province:a", provinceName: "New Name" }),
+      body: JSON.stringify({ hexId: "province:a", hexName: "New Name" }),
     });
 
     expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({ error: "PROVINCE_NOT_FOUND" });
+    expect(await response.json()).toEqual({ error: "HEX_NOT_FOUND" });
   });
 });
 
-function makeApp(deps: CountryProvinceCustomizationRoutesDependencies): express.Express {
+function makeApp(deps: CountryHexCustomizationRoutesDependencies): express.Express {
   const app = express();
   app.use(express.json());
-  registerCountryProvinceCustomizationRoutes(app, deps);
+  registerCountryHexCustomizationRoutes(app, deps);
   return app;
 }
 
 function makeDeps(
-  worldOverrides?: Partial<CountryProvinceCustomizationWorldState>,
-  provinceExists = true,
-): CountryProvinceCustomizationRoutesDependencies & { world: CountryProvinceCustomizationWorldState } {
-  const world: CountryProvinceCustomizationWorldState = {
-    provinceOwner: { "province:a": "country:a" },
+  worldOverrides?: Partial<CountryHexCustomizationWorldState>,
+  hexExists = true,
+): CountryHexCustomizationRoutesDependencies & { world: CountryHexCustomizationWorldState } {
+  const world: CountryHexCustomizationWorldState = {
+    hexOwner: { "province:a": "country:a" },
     resourcesByCountry: { "country:a": { ...resources } },
-    provinceNameById: {},
+    hexNameById: {},
     ...worldOverrides,
   };
   return {
@@ -102,12 +102,12 @@ function makeDeps(
     routeAuth: createRouteAuth(),
     masks: {
       resourcesByCountry: 1,
-      provinceNameById: 2,
+      hexNameById: 2,
     },
     getTurnId: () => 6,
     getWorldBase: () => world,
-    getProvinceRenameDucatsCost: () => 25,
-    provinceExists: () => provinceExists,
+    getHexRenameDucatsCost: () => 25,
+    hexExists: () => hexExists,
     ensureCountryInWorldBase: vi.fn(),
     cloneWorldBaseSectionSnapshot: (mask) => ({ mask }),
     savePersistentState: vi.fn(),

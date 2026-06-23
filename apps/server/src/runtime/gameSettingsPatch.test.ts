@@ -125,7 +125,7 @@ function makeSettings(): PatchableGameSettings {
       recolorDucats: 1,
       flagDucats: 1,
       crestDucats: 1,
-      provinceRenameDucats: 1,
+      hexRenameDucats: 1,
     },
     registration: {
       requireAdminApproval: true,

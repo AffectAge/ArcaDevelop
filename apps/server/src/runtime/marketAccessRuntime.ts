@@ -1,4 +1,4 @@
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { GoodTransportMode } from "../mechanics/marketTurnMechanics";
 import type {
   GameSettings,
@@ -8,30 +8,30 @@ import type {
 } from "./gameSettingsTypes";
 
 type MarketAccessRuntimeParams = {
-  getProvinceIndex: () => Adm1ProvinceIndexEntry[];
+  getHexIndex: () => HexMapIndexEntry[];
   getGameSettings: () => GameSettings;
   getTurnId: () => number;
-  getProvinceOwner: (provinceId: string) => string | null;
+  getHexOwner: (hexId: string) => string | null;
   round3: (value: number) => number;
 };
 
 export function createMarketAccessRuntime(params: MarketAccessRuntimeParams) {
-  function areProvinceIdsAdjacentOrSame(fromProvinceId: string, toProvinceId: string): boolean {
-    if (!fromProvinceId || !toProvinceId) return false;
-    if (fromProvinceId === toProvinceId) return true;
-    const provinceIndex = params.getProvinceIndex();
-    const fromProvince = provinceIndex.find((entry) => entry.id === fromProvinceId);
-    const toProvince = provinceIndex.find((entry) => entry.id === toProvinceId);
-    return Boolean(fromProvince?.neighbors.includes(toProvinceId) || toProvince?.neighbors.includes(fromProvinceId));
+  function areHexIdsAdjacentOrSame(fromHexId: string, toHexId: string): boolean {
+    if (!fromHexId || !toHexId) return false;
+    if (fromHexId === toHexId) return true;
+    const hexIndex = params.getHexIndex();
+    const fromHex = hexIndex.find((entry) => entry.id === fromHexId);
+    const toHex = hexIndex.find((entry) => entry.id === toHexId);
+    return Boolean(fromHex?.neighbors.includes(toHexId) || toHex?.neighbors.includes(fromHexId));
   }
 
   function isContiguousTransportCorridorRoute(
-    provinceIds: string[],
+    hexIds: string[],
     routePoints?: TransportCorridorRoutePoint[],
   ): boolean {
-    const routeProvinceIds = routePoints && routePoints.length >= 2 ? routePoints.map((point) => point.provinceId) : provinceIds;
-    for (let index = 1; index < routeProvinceIds.length; index += 1) {
-      if (!areProvinceIdsAdjacentOrSame(routeProvinceIds[index - 1], routeProvinceIds[index])) {
+    const routeHexIds = routePoints && routePoints.length >= 2 ? routePoints.map((point) => point.hexId) : hexIds;
+    for (let index = 1; index < routeHexIds.length; index += 1) {
+      if (!areHexIdsAdjacentOrSame(routeHexIds[index - 1], routeHexIds[index])) {
         return false;
       }
     }
@@ -51,30 +51,30 @@ export function createMarketAccessRuntime(params: MarketAccessRuntimeParams) {
     return agreement.bilateral && agreement.fromCountryId === builderCountryId && agreement.toCountryId === grantorCountryId;
   }
 
-  function getInfrastructureConstructionRightForProvince(
-    provinceId: string,
+  function getInfrastructureConstructionRightForHex(
+    hexId: string,
     builderCountryId: string,
     transportMode: GoodTransportMode,
   ): InfrastructureConstructionRightsEntry | null {
-    const provinceOwnerId = params.getProvinceOwner(provinceId);
-    if (!provinceOwnerId || provinceOwnerId === builderCountryId) return null;
+    const hexOwnerId = params.getHexOwner(hexId);
+    if (!hexOwnerId || hexOwnerId === builderCountryId) return null;
     return (
       Object.values(params.getGameSettings().markets.infrastructureConstructionRightsById ?? {}).find((agreement) =>
-        isInfrastructureConstructionRightActive(agreement, provinceOwnerId, builderCountryId, transportMode),
+        isInfrastructureConstructionRightActive(agreement, hexOwnerId, builderCountryId, transportMode),
       ) ?? null
     );
   }
 
-  function isProvinceAllowedForCorridorOwner(
-    provinceId: string,
+  function isHexAllowedForCorridorOwner(
+    hexId: string,
     ownerCountryId: string,
     transportMode: GoodTransportMode,
   ): boolean {
-    const provinceOwnerId = params.getProvinceOwner(provinceId);
+    const hexOwnerId = params.getHexOwner(hexId);
     return (
-      !provinceOwnerId ||
-      provinceOwnerId === ownerCountryId ||
-      Boolean(getInfrastructureConstructionRightForProvince(provinceId, ownerCountryId, transportMode))
+      !hexOwnerId ||
+      hexOwnerId === ownerCountryId ||
+      Boolean(getInfrastructureConstructionRightForHex(hexId, ownerCountryId, transportMode))
     );
   }
 
@@ -130,11 +130,11 @@ export function createMarketAccessRuntime(params: MarketAccessRuntimeParams) {
   }
 
   return {
-    areProvinceIdsAdjacentOrSame,
-    getInfrastructureConstructionRightForProvince,
+    areHexIdsAdjacentOrSame,
+    getInfrastructureConstructionRightForHex,
     getInfrastructureTransitAgreementAllowedCountries,
     getTransportCorridorCapacity,
     isContiguousTransportCorridorRoute,
-    isProvinceAllowedForCorridorOwner,
+    isHexAllowedForCorridorOwner,
   };
 }

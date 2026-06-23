@@ -16,7 +16,7 @@ import { ClientSettingsModal } from "./components/ClientSettingsModal";
 import { CivilopediaModal } from "./components/CivilopediaModal";
 import { ContentPanel } from "./components/ContentPanel";
 import { PopulationStatsModal } from "./components/PopulationStatsModal";
-import { ProvinceBuildingsModal } from "./components/ProvinceBuildingsModal";
+import { HexBuildingsModal } from "./components/HexBuildingsModal";
 import { StateBudgetModal } from "./components/StateBudgetModal";
 import { MarketModal } from "./components/MarketModal";
 import { PoliticsModal } from "./components/PoliticsModal";
@@ -41,7 +41,7 @@ import {
   fetchCurrentTurnOrders,
   fetchMarketOverview,
   fetchPendingUiNotifications,
-  fetchProvinceIndex,
+  fetchHexIndex,
   fetchPublicGameUiSettings,
   fetchWorldSnapshot,
   markUiNotificationViewed,
@@ -216,9 +216,9 @@ export default function App() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [contentPanelOpen, setContentPanelOpen] = useState(false);
   const [populationStatsOpen, setPopulationStatsOpen] = useState(false);
-  const [provinceBuildingsOpen, setProvinceBuildingsOpen] = useState(false);
-  const [provinceBuildingsInitialProvinceId, setProvinceBuildingsInitialProvinceId] = useState<string | null>(null);
-  const [provinceBuildingsConstructionRequestId, setProvinceBuildingsConstructionRequestId] = useState(0);
+  const [provinceBuildingsOpen, setHexBuildingsOpen] = useState(false);
+  const [provinceBuildingsInitialHexId, setHexBuildingsInitialHexId] = useState<string | null>(null);
+  const [provinceBuildingsConstructionRequestId, setHexBuildingsConstructionRequestId] = useState(0);
   const [stateBudgetOpen, setStateBudgetOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
   const [globalMarketOpen, setGlobalMarketOpen] = useState(false);
@@ -237,7 +237,7 @@ export default function App() {
   const [focusedEventPendingId, setFocusedEventPendingId] = useState<string | null>(null);
   const [diplomacyOpen, setDiplomacyOpen] = useState(false);
   const [armyOpen, setArmyOpen] = useState(false);
-  const [adminInitialProvinceId, setAdminInitialProvinceId] = useState<string | null>(null);
+  const [adminInitialHexId, setAdminInitialHexId] = useState<string | null>(null);
   const [turnStatusOpen, setTurnStatusOpen] = useState(false);
   const [gameSettingsOpen, setGameSettingsOpen] = useState(false);
   const [countryCustomizationOpen, setCountryCustomizationOpen] = useState(false);
@@ -245,7 +245,7 @@ export default function App() {
   const [civilopediaOpen, setCivilopediaOpen] = useState(false);
   const [civilopediaIntent, setCivilopediaIntent] = useState<
     | { type: "open-entry"; entryId: string }
-    | { type: "province"; provinceId: string; provinceName: string; createIfMissing: boolean }
+    | { type: "region"; hexId: string; hexName: string; createIfMissing: boolean }
     | null
   >(null);
   const [uiBackgroundImageUrl, setUiBackgroundImageUrl] = useState<string | null>(null);
@@ -270,20 +270,20 @@ export default function App() {
     turnId: 0,
     amount: 0,
   });
-  const [provinceRenameDucatSpend, setProvinceRenameDucatSpend] = useState<{ turnId: number; amount: number }>({
+  const [hexRenameDucatSpend, setHexRenameDucatSpend] = useState<{ turnId: number; amount: number }>({
     turnId: 0,
     amount: 0,
   });
   const [maxActiveColonizations, setMaxActiveColonizations] = useState(3);
   const [colonizationCostPer1000Km2, setColonizationCostPer1000Km2] = useState({ points: 5, ducats: 5 });
-  const [provinceRenameDucatsCost, setProvinceRenameDucatsCost] = useState(25);
-  const [provinceAreaKm2ById, setProvinceAreaKm2ById] = useState<Record<string, number>>({});
+  const [hexRenameDucatsCost, setHexRenameDucatsCost] = useState(25);
+  const [provinceAreaKm2ById, setHexAreaKm2ById] = useState<Record<string, number>>({});
   const [showAntarctica, setShowAntarctica] = useState(false);
   const [showMapControls, setShowMapControls] = useState(false);
   const [edgeScrollEnabled, setEdgeScrollEnabled] = useState(true);
   const [mapTextureQuality, setMapTextureQuality] = useState<MapTextureQuality>("high");
   const [sortNotifications, setSortNotifications] = useState(true);
-  const [provinceIndexLoaded, setProvinceIndexLoaded] = useState(false);
+  const [hexIndexLoaded, setHexIndexLoaded] = useState(false);
   const [publicUiLoaded, setPublicUiLoaded] = useState(false);
   const [buildingEntries, setBuildingEntries] = useState<ContentEntry[]>([]);
   const [technologyEntries, setTechnologyEntries] = useState<ContentEntry[]>([]);
@@ -298,7 +298,7 @@ export default function App() {
   const turnId = useGameStore((s) => s.turnId);
   const worldBase = useGameStore((s) => s.worldBase);
   const ordersByTurn = useGameStore((s) => s.ordersByTurn);
-  const selectedProvinceId = useGameStore((s) => s.selectedProvinceId);
+  const selectedHexId = useGameStore((s) => s.selectedHexId);
   const setAuth = useGameStore((s) => s.setAuth);
   const setWorldBase = useGameStore((s) => s.setWorldBase);
   const applyWorldDelta = useGameStore((s) => s.applyWorldDelta);
@@ -441,7 +441,7 @@ export default function App() {
         addOrder(msg.order);
         const targetId =
           msg.order.type === "ARMY_MOVE"
-            ? msg.order.provinceId
+            ? msg.order.hexId
             : msg.order.type === "BUILD" || msg.order.type === "COLONIZE"
               ? msg.order.regionId
               : "";
@@ -649,18 +649,18 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchProvinceIndex()
+    fetchHexIndex()
       .then((items) => {
         if (cancelled) return;
         const next: Record<string, number> = {};
         for (const item of items) next[item.id] = item.areaKm2;
-        setProvinceAreaKm2ById(next);
-        setProvinceIndexLoaded(true);
+        setHexAreaKm2ById(next);
+        setHexIndexLoaded(true);
       })
       .catch(() => {
         if (!cancelled) {
-          setProvinceAreaKm2ById({});
-          setProvinceIndexLoaded(true);
+          setHexAreaKm2ById({});
+          setHexIndexLoaded(true);
         }
       });
     return () => {
@@ -689,7 +689,7 @@ export default function App() {
           });
           setShowAntarctica(ui.map?.showAntarctica ?? true);
           setUiBackgroundImageUrl(ui.map?.backgroundImageUrl ?? null);
-          setProvinceRenameDucatsCost(ui.customization?.provinceRenameDucats ?? 25);
+          setHexRenameDucatsCost(ui.customization?.hexRenameDucats ?? 25);
           setTurnTimerUi({
             enabled: ui.turnTimer?.enabled ?? false,
             secondsPerTurn: ui.turnTimer?.secondsPerTurn ?? 300,
@@ -832,10 +832,10 @@ export default function App() {
     }
     let provinceCount = 0;
     let totalAreaKm2 = 0;
-    for (const [provinceId, ownerCountryId] of Object.entries(worldBase.provinceOwner ?? {})) {
+    for (const [hexId, ownerCountryId] of Object.entries(worldBase.hexOwner ?? {})) {
       if (ownerCountryId !== auth.countryId) continue;
       provinceCount += 1;
-      totalAreaKm2 += Math.max(0, Number(provinceAreaKm2ById[provinceId] ?? 0));
+      totalAreaKm2 += Math.max(0, Number(provinceAreaKm2ById[hexId] ?? 0));
     }
     return { provinceCount, totalAreaKm2: Math.round(totalAreaKm2) };
   }, [auth, provinceAreaKm2ById, worldBase]);
@@ -1046,13 +1046,13 @@ export default function App() {
           buildingName: getBuildingDisplayName(buildingById.get(project.buildingId), project.buildingId, t),
           progressPct: Math.max(0, Math.min(100, (progress / cost) * 100)),
           remainingConstruction,
-          selected: selectedProvinceId === regionId,
+          selected: selectedHexId === regionId,
         });
       }
     }
     rows.sort((a, b) => Number(b.selected) - Number(a.selected) || b.remainingConstruction - a.remainingConstruction || a.regionId.localeCompare(b.regionId));
     return rows.slice(0, 5).map(({ selected: _selected, ...row }) => row);
-  }, [auth, buildingEntries, selectedProvinceId, t, worldBase]);
+  }, [auth, buildingEntries, selectedHexId, t, worldBase]);
   const myTechnologyProjection = useMemo(() => {
     if (!auth || !worldBase) {
       return { activeCount: 0, predictedPointsSpend: 0 };
@@ -1244,7 +1244,7 @@ export default function App() {
 
   const ducatExpenseBreakdown = useMemo(() => {
     const customization = customizationDucatSpend.turnId === turnId ? Math.max(0, Math.floor(customizationDucatSpend.amount)) : 0;
-    const provinceRename = provinceRenameDucatSpend.turnId === turnId ? Math.max(0, Math.floor(provinceRenameDucatSpend.amount)) : 0;
+    const hexRename = hexRenameDucatSpend.turnId === turnId ? Math.max(0, Math.floor(hexRenameDucatSpend.amount)) : 0;
     const colonizationSupport =
       myColonizationProjection.predictedPointsSpend > 0
         ? Math.min(
@@ -1256,11 +1256,11 @@ export default function App() {
     const subsidies = Math.max(0, Math.floor(subsidyBudgetBreakdown.total));
     return {
       customization,
-      provinceRename,
+      hexRename,
       colonizationSupport,
       construction,
       subsidies,
-      total: customization + provinceRename + colonizationSupport + construction + subsidies,
+      total: customization + hexRename + colonizationSupport + construction + subsidies,
     };
   }, [
     currentResources.ducats,
@@ -1270,8 +1270,8 @@ export default function App() {
     myColonizationProjection.predictedSupportDucatSpend,
     myConstructionProjection.predictedDucatSpend,
     myConstructionProjection.predictedPointsSpend,
-    provinceRenameDucatSpend.amount,
-    provinceRenameDucatSpend.turnId,
+    hexRenameDucatSpend.amount,
+    hexRenameDucatSpend.turnId,
     subsidyBudgetBreakdown.total,
     turnId,
   ]);
@@ -1285,7 +1285,7 @@ export default function App() {
     const totals = { ...empty };
 
     totals.ducats += ducatExpenseBreakdown.customization;
-    totals.ducats += ducatExpenseBreakdown.provinceRename;
+    totals.ducats += ducatExpenseBreakdown.hexRename;
 
     if (myColonizationProjection.predictedPointsSpend > 0) {
       totals.colonization += myColonizationProjection.predictedPointsSpend;
@@ -1306,7 +1306,7 @@ export default function App() {
     ducatExpenseBreakdown.colonizationSupport,
     ducatExpenseBreakdown.construction,
     ducatExpenseBreakdown.customization,
-    ducatExpenseBreakdown.provinceRename,
+    ducatExpenseBreakdown.hexRename,
     ducatExpenseBreakdown.subsidies,
     myColonizationProjection.predictedPointsSpend,
     myConstructionProjection.predictedPointsSpend,
@@ -1357,7 +1357,7 @@ export default function App() {
   }, [marketShellCountries, marketShellOverview]);
   useEffect(() => {
     setCustomizationDucatSpend((prev) => (prev.turnId === turnId ? prev : { turnId, amount: 0 }));
-    setProvinceRenameDucatSpend((prev) => (prev.turnId === turnId ? prev : { turnId, amount: 0 }));
+    setHexRenameDucatSpend((prev) => (prev.turnId === turnId ? prev : { turnId, amount: 0 }));
   }, [turnId]);
 
   const logoutToAuth = () => {
@@ -1407,18 +1407,18 @@ export default function App() {
         turnId,
         playerId: auth.playerId,
         countryId: auth.countryId,
-        regionId: regionId ?? selectedProvinceId ?? "ARG-1309",
+        regionId: regionId ?? selectedHexId ?? "ARG-1309",
         type: "COLONIZE",
         payload: {},
       },
     };
 
     send(delta);
-    toast(t("shell.orderSent"), { description: `COLONIZE -> ${regionId ?? selectedProvinceId ?? "ARG-1309"}` });
+    toast(t("shell.orderSent"), { description: `COLONIZE -> ${regionId ?? selectedHexId ?? "ARG-1309"}` });
     addEvent({
       category: "colonization",
       title: t("shell.orderSent"),
-      message: `COLONIZE -> ${regionId ?? selectedProvinceId ?? "ARG-1309"}`,
+      message: `COLONIZE -> ${regionId ?? selectedHexId ?? "ARG-1309"}`,
       countryId: auth.countryId,
       priority: "medium",
       visibility: "private",
@@ -1431,7 +1431,7 @@ export default function App() {
       return;
     }
 
-    const targetRegionId = regionId ?? selectedProvinceId ?? "ARG-1309";
+    const targetRegionId = regionId ?? selectedHexId ?? "ARG-1309";
     const normalizedPayload = (payload ?? {}) as Record<string, unknown>;
     const payloadBuildingId =
       typeof normalizedPayload.buildingId === "string"
@@ -1469,8 +1469,8 @@ export default function App() {
     });
   };
 
-  const queueArmyMoveOrder = (divisionId: string, provinceId: string, path?: string[]) => {
-    if (!auth || !divisionId || !provinceId) {
+  const queueArmyMoveOrder = (divisionId: string, hexId: string, path?: string[]) => {
+    if (!auth || !divisionId || !hexId) {
       return;
     }
     const routePath = Array.isArray(path) ? path.filter((value) => typeof value === "string" && value.trim().length > 0) : [];
@@ -1481,18 +1481,18 @@ export default function App() {
         turnId,
         playerId: auth.playerId,
         countryId: auth.countryId,
-        provinceId,
+        hexId,
         type: "ARMY_MOVE",
         payload: routePath.length > 0 ? { divisionId, path: routePath } : { divisionId },
       },
     };
 
     send(delta);
-    toast(t("shell.orderSent"), { description: routePath.length > 1 ? `ARMY_MOVE: ${routePath.length}` : `ARMY_MOVE -> ${provinceId}` });
+    toast(t("shell.orderSent"), { description: routePath.length > 1 ? `ARMY_MOVE: ${routePath.length}` : `ARMY_MOVE -> ${hexId}` });
     addEvent({
       category: "military",
       title: t("shell.orderSent"),
-      message: t("shell.orderArmyMoveMessage", { division: divisionId, province: provinceId }),
+      message: t("shell.orderArmyMoveMessage", { division: divisionId, province: hexId }),
       countryId: auth.countryId,
       priority: "medium",
       visibility: "private",
@@ -1500,10 +1500,10 @@ export default function App() {
     });
   };
 
-  const openProvinceBuildingsForProvince = (provinceId: string) => {
-    setProvinceBuildingsInitialProvinceId(provinceId);
-    setProvinceBuildingsConstructionRequestId((value) => value + 1);
-    setProvinceBuildingsOpen(true);
+  const openHexBuildingsForHex = (hexId: string) => {
+    setHexBuildingsInitialHexId(hexId);
+    setHexBuildingsConstructionRequestId((value) => value + 1);
+    setHexBuildingsOpen(true);
   };
 
   useEffect(() => {
@@ -1519,13 +1519,13 @@ export default function App() {
       setEntryLoadingGate("hidden");
       return;
     }
-    const ready = Boolean(worldBase) && Boolean(country) && provinceIndexLoaded && publicUiLoaded;
+    const ready = Boolean(worldBase) && Boolean(country) && hexIndexLoaded && publicUiLoaded;
     setEntryLoadingGate((prev) => {
       if (prev === "hidden") return prev;
       if (prev === "loading" && ready) return "ready";
       return prev;
     });
-  }, [auth, country, provinceIndexLoaded, publicUiLoaded, worldBase]);
+  }, [auth, country, hexIndexLoaded, publicUiLoaded, worldBase]);
 
   useEffect(() => {
     if (!auth?.token) return;
@@ -1753,41 +1753,41 @@ export default function App() {
     <div className="relative h-screen overflow-hidden bg-arc-bg text-[var(--arc-color-text)]">
       <MapView
         apiBase={apiBase}
-        onQueueBuildOrder={openProvinceBuildingsForProvince}
+        onQueueBuildOrder={openHexBuildingsForHex}
         onQueueColonizeOrder={queueColonizeOrder}
         onQueueArmyMoveOrder={queueArmyMoveOrder}
         colonizationIconUrl={BASE_RESOURCE_ICON_URLS.colonization}
         ducatsIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
         maxActiveColonizations={maxActiveColonizations}
         colonizationCostPer1000Km2={colonizationCostPer1000Km2}
-        provinceRenameDucatsCost={provinceRenameDucatsCost}
+        hexRenameDucatsCost={hexRenameDucatsCost}
         showMapControls={showMapControls}
         showAntarctica={showAntarctica}
-        onOpenAdminProvinceEditor={(provinceId) => {
-          setAdminInitialProvinceId(provinceId);
+        onOpenAdminHexEditor={(hexId) => {
+          setAdminInitialHexId(hexId);
           setAdminOpen(true);
         }}
-        onOpenProvinceKnowledge={(provinceId, provinceName) => {
+        onOpenHexKnowledge={(hexId, hexName) => {
           setCivilopediaIntent({
-            type: "province",
-            provinceId,
-            provinceName,
+            type: "region",
+            hexId,
+            hexName,
             createIfMissing: false,
           });
           setCivilopediaOpen(true);
         }}
-        onCreateProvinceKnowledge={(provinceId, provinceName) => {
+        onCreateHexKnowledge={(hexId, hexName) => {
           setCivilopediaIntent({
-            type: "province",
-            provinceId,
-            provinceName,
+            type: "region",
+            hexId,
+            hexName,
             createIfMissing: true,
           });
           setCivilopediaOpen(true);
         }}
-        onProvinceRenameCharged={(chargedDucats) => {
+        onHexRenameCharged={(chargedDucats) => {
           if (chargedDucats <= 0) return;
-          setProvinceRenameDucatSpend((prev) =>
+          setHexRenameDucatSpend((prev) =>
             prev.turnId === turnId ? { turnId, amount: prev.amount + chargedDucats } : { turnId, amount: chargedDucats },
           );
         }}
@@ -1867,8 +1867,8 @@ export default function App() {
                     <div className={`rounded-lg border px-3 py-2 ${worldBase ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
                       {t("shell.entryWorldState")} {worldBase ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
                     </div>
-                    <div className={`rounded-lg border px-3 py-2 ${provinceIndexLoaded ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
-                      {t("shell.entryProvinceIndex")} {provinceIndexLoaded ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
+                    <div className={`rounded-lg border px-3 py-2 ${hexIndexLoaded ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
+                      {t("shell.entryHexIndex")} {hexIndexLoaded ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
                     </div>
                     <div className={`rounded-lg border px-3 py-2 ${publicUiLoaded ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
                       {t("shell.entryPublicUi")} {publicUiLoaded ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
@@ -1952,8 +1952,8 @@ export default function App() {
             onOpenNotifications={() => setNotificationHistoryOpen(true)}
             onOpenBudget={() => setStateBudgetOpen(true)}
             onOpenBuildings={() => {
-              setProvinceBuildingsInitialProvinceId(null);
-              setProvinceBuildingsOpen(true);
+              setHexBuildingsInitialHexId(null);
+              setHexBuildingsOpen(true);
             }}
             onOpenPopulation={() => setPopulationStatsOpen(true)}
             onOpenMarket={() => setMarketOpen(true)}
@@ -2008,13 +2008,13 @@ export default function App() {
       )}
 
       {auth && (
-        <ProvinceBuildingsModal
+        <HexBuildingsModal
           open={provinceBuildingsOpen}
-          onClose={() => setProvinceBuildingsOpen(false)}
+          onClose={() => setHexBuildingsOpen(false)}
           worldBase={worldBase}
           countryId={auth.countryId}
           countryName={country?.name ?? auth.countryId}
-          initialRegionId={provinceBuildingsInitialProvinceId}
+          initialRegionId={provinceBuildingsInitialHexId}
           constructionRequestId={provinceBuildingsConstructionRequestId}
           onQueueBuildOrder={queueBuildOrder}
         />
@@ -2155,10 +2155,10 @@ export default function App() {
           currentCountryId={auth.countryId}
           onClose={() => {
             setAdminOpen(false);
-            setAdminInitialProvinceId(null);
+            setAdminInitialHexId(null);
           }}
           onSessionCountryUpdated={handleSessionCountryUpdated}
-          initialProvinceId={adminInitialProvinceId}
+          initialHexId={adminInitialHexId}
         />
       )}
 
@@ -2211,7 +2211,7 @@ export default function App() {
             }));
             setEventLogRetentionTurns(updated.eventLog.retentionTurns);
             setShowAntarctica(updated.map?.showAntarctica ?? true);
-            setProvinceRenameDucatsCost(updated.customization?.provinceRenameDucats ?? 25);
+            setHexRenameDucatsCost(updated.customization?.hexRenameDucats ?? 25);
             setTurnTimerUi((prev) => ({
               enabled: updated.turnTimer?.enabled ?? prev.enabled,
               secondsPerTurn: updated.turnTimer?.secondsPerTurn ?? prev.secondsPerTurn,

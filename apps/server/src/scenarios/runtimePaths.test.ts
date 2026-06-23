@@ -17,20 +17,20 @@ describe("scenario runtime paths", () => {
     expect(normalizeScenarioId("")).toBeNull();
   });
 
-  it("prefers generated province index while keeping mapRoot for tiles", async () => {
+  it("prefers generated hex index while keeping mapRoot for tiles", async () => {
     const dataRoot = await mkdtemp(join(tmpdir(), "arcanorum-data-"));
     tempDirs.push(dataRoot);
     const scenarioDir = join(dataRoot, "scenarios/demo");
-    await mkdir(join(scenarioDir, "map/tiles/adm1"), { recursive: true });
+    await mkdir(join(scenarioDir, "map/tiles/hex"), { recursive: true });
     await mkdir(join(scenarioDir, ".generated"), { recursive: true });
     await writeFile(join(scenarioDir, "scenario.json"), JSON.stringify({ id: "demo", mapRoot: "map" }), "utf8");
-    await writeFile(join(scenarioDir, ".generated/provinces.json"), "[]", "utf8");
+    await writeFile(join(scenarioDir, ".generated/hexes.json"), "[]", "utf8");
 
     const manifest = readScenarioManifest(scenarioDir, "fallback");
     const paths = getScenarioRuntimePaths({ scenarioDir, manifest: manifest?.manifest ?? {}, dataRoot });
 
     expect(manifest?.id).toBe("demo");
     expect(paths.mapRoot.endsWith("map")).toBe(true);
-    expect(paths.provinceIndexPath.replaceAll("\\", "/").endsWith(".generated/provinces.json")).toBe(true);
+    expect(paths.hexIndexPath.replaceAll("\\", "/").endsWith(".generated/hexes.json")).toBe(true);
   });
 });

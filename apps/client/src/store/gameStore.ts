@@ -15,7 +15,7 @@ type GameState = {
   turnId: number;
   worldStateVersion: number;
   onlinePlayerIds: string[];
-  selectedProvinceId: string | null;
+  selectedHexId: string | null;
   worldBase: WorldBase | null;
   ordersByTurn: OrdersByTurn;
   eventLog: EventLogEntry[];
@@ -27,7 +27,7 @@ type GameState = {
   setTurnOrders: (turnId: number, orders: Order[]) => void;
   removeOrder: (turnId: number, orderId: string) => void;
   setPresence: (ids: string[]) => void;
-  setSelectedProvince: (id: string | null) => void;
+  setSelectedHex: (id: string | null) => void;
   resetOverlay: (turnId: number) => void;
   updateCountryResources: (countryId: string, patch: Partial<ResourceTotals>) => void;
   updateCountryTechnology: (countryId: string, technology: CountryTechnologyState) => void;
@@ -45,7 +45,7 @@ export const useGameStore = create<GameState>((set) => ({
   turnId: 1,
   worldStateVersion: 1,
   onlinePlayerIds: [],
-  selectedProvinceId: null,
+  selectedHexId: null,
   worldBase: null,
   ordersByTurn: new Map(),
   eventLog: [],
@@ -105,14 +105,14 @@ export const useGameStore = create<GameState>((set) => ({
         }
       }
 
-      if ((delta.mask & WORLD_DELTA_MASK.provinceOwner) !== 0 && delta.o) {
-        nextWorldBase.provinceOwner = { ...nextWorldBase.provinceOwner };
-        for (const [provinceId, value] of Object.entries(delta.o)) {
+      if ((delta.mask & WORLD_DELTA_MASK.hexOwner) !== 0 && delta.o) {
+        nextWorldBase.hexOwner = { ...nextWorldBase.hexOwner };
+        for (const [hexId, value] of Object.entries(delta.o)) {
           if (value == null) {
-            delete nextWorldBase.provinceOwner[provinceId];
+            delete nextWorldBase.hexOwner[hexId];
             continue;
           }
-          nextWorldBase.provinceOwner[provinceId] = value;
+          nextWorldBase.hexOwner[hexId] = value;
         }
       }
 
@@ -138,14 +138,14 @@ export const useGameStore = create<GameState>((set) => ({
         }
       }
 
-      if ((delta.mask & WORLD_DELTA_MASK.provinceNameById) !== 0 && delta.n) {
-        nextWorldBase.provinceNameById = { ...nextWorldBase.provinceNameById };
-        for (const [provinceId, value] of Object.entries(delta.n)) {
+      if ((delta.mask & WORLD_DELTA_MASK.hexNameById) !== 0 && delta.n) {
+        nextWorldBase.hexNameById = { ...nextWorldBase.hexNameById };
+        for (const [hexId, value] of Object.entries(delta.n)) {
           if (value == null) {
-            delete nextWorldBase.provinceNameById[provinceId];
+            delete nextWorldBase.hexNameById[hexId];
             continue;
           }
-          nextWorldBase.provinceNameById[provinceId] = value;
+          nextWorldBase.hexNameById[hexId] = value;
         }
       }
 
@@ -439,7 +439,7 @@ export const useGameStore = create<GameState>((set) => ({
       return { ordersByTurn: turnMap };
     }),
   setPresence: (ids) => set({ onlinePlayerIds: ids }),
-  setSelectedProvince: (id) => set({ selectedProvinceId: id }),
+  setSelectedHex: (id) => set({ selectedHexId: id }),
   resetOverlay: (nextTurnId) =>
     set((state) => {
       const map = new Map(state.ordersByTurn);
@@ -521,7 +521,7 @@ export const useGameStore = create<GameState>((set) => ({
     }),
 }));
 
-export const selectOrdersForProvince = (provinceId: string, turnId: number) => (state: GameState): Order[] => {
+export const selectOrdersForHex = (hexId: string, turnId: number) => (state: GameState): Order[] => {
   const byPlayer = state.ordersByTurn.get(turnId);
   if (!byPlayer) {
     return [];
@@ -530,7 +530,7 @@ export const selectOrdersForProvince = (provinceId: string, turnId: number) => (
   const orders: Order[] = [];
   for (const list of byPlayer.values()) {
     for (const order of list) {
-      if (order.type === "ARMY_MOVE" && order.provinceId === provinceId) {
+      if (order.type === "ARMY_MOVE" && order.hexId === hexId) {
         orders.push(order);
       }
     }

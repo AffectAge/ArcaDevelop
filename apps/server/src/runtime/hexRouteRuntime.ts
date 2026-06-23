@@ -1,33 +1,33 @@
 import type express from "express";
 import type { EventLogEntry, PopulationPop, RegionPopulation, WorldBase, WsOutMessage } from "@arcanorum/shared";
 import type { PrismaClient } from "@prisma/client";
-import { registerAdminProvinceMutationRoutes } from "../routes/adminProvinceMutationRoutes";
-import { registerCountryProvinceCustomizationRoutes } from "../routes/countryProvinceCustomizationRoutes";
-import { registerProvinceReadRoutes } from "../routes/provinceReadRoutes";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import { registerAdminHexMutationRoutes } from "../routes/adminHexMutationRoutes";
+import { registerCountryHexCustomizationRoutes } from "../routes/countryHexCustomizationRoutes";
+import { registerHexReadRoutes } from "../routes/hexReadRoutes";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { RouteAuth } from "../security/routeAuth";
 import type { RegionColonizationConfig } from "../mechanics/colonizationMechanics";
 import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
 
-type ProvinceRouteRuntimeParams = {
+type HexRouteRuntimeParams = {
   app: express.Express;
   routeAuth: RouteAuth;
   prisma: PrismaClient;
   masks: {
     resourcesByCountry: number;
-    provinceOwner: number;
+    hexOwner: number;
     regionOwner: number;
     regionController: number;
     colonyProgressByRegion: number;
     regionColonizationByRegion: number;
     regionPopulationByRegion: number;
-    provinceNameById: number;
+    hexNameById: number;
   };
   getTurnId: () => number;
-  getProvinceIndex: () => Adm1ProvinceIndexEntry[];
+  getHexIndex: () => HexMapIndexEntry[];
   getWorldBase: () => WorldBase;
-  getProvinceRenameDucatsCost: () => number;
+  getHexRenameDucatsCost: () => number;
   getRegionColonizationConfig: (regionId: string) => RegionColonizationConfig;
   getRegionDerivedColonizationCosts: (regionId: string) => { pointsCost: number; ducatsCost: number };
   getPopulationDomainKeys: () => unknown;
@@ -61,17 +61,17 @@ type ProvinceRouteRuntimeParams = {
   broadcast: (message: WsOutMessage) => void;
 };
 
-export function registerProvinceRouteRuntime(params: ProvinceRouteRuntimeParams): void {
-  registerCountryProvinceCustomizationRoutes(params.app, {
+export function registerHexRouteRuntime(params: HexRouteRuntimeParams): void {
+  registerCountryHexCustomizationRoutes(params.app, {
     routeAuth: params.routeAuth,
     masks: {
       resourcesByCountry: params.masks.resourcesByCountry,
-      provinceNameById: params.masks.provinceNameById,
+      hexNameById: params.masks.hexNameById,
     },
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,
-    getProvinceRenameDucatsCost: params.getProvinceRenameDucatsCost,
-    provinceExists: (provinceId) => params.getProvinceIndex().some((province) => province.id === provinceId),
+    getHexRenameDucatsCost: params.getHexRenameDucatsCost,
+    hexExists: (hexId) => params.getHexIndex().some((province) => province.id === hexId),
     ensureCountryInWorldBase: params.ensureCountryInWorldBase,
     cloneWorldBaseSectionSnapshot: params.cloneWorldBaseSectionSnapshot,
     savePersistentState: params.savePersistentState,
@@ -83,17 +83,17 @@ export function registerProvinceRouteRuntime(params: ProvinceRouteRuntimeParams)
     broadcast: params.broadcast,
   });
 
-  registerProvinceReadRoutes(params.app, {
+  registerHexReadRoutes(params.app, {
     routeAuth: params.routeAuth,
-    getProvinceIndex: params.getProvinceIndex,
+    getHexIndex: params.getHexIndex,
     getWorldBase: params.getWorldBase,
   });
 
-  registerAdminProvinceMutationRoutes(params.app, {
+  registerAdminHexMutationRoutes(params.app, {
     routeAuth: params.routeAuth,
     masks: {
       resourcesByCountry: params.masks.resourcesByCountry,
-      provinceOwner: params.masks.provinceOwner,
+      hexOwner: params.masks.hexOwner,
       regionOwner: params.masks.regionOwner,
       regionController: params.masks.regionController,
       colonyProgressByRegion: params.masks.colonyProgressByRegion,

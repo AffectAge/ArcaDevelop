@@ -44,7 +44,7 @@ const MODIFIER_STATS = new Set<ModifierStat>([
   "building_wage",
 ]);
 const MODIFIER_MODES = new Set<ModifierMode>(["add", "add_pct", "mult"]);
-const MODIFIER_SCOPES = new Set<ModifierScope>(["country", "province", "building", "pop", "market"]);
+const MODIFIER_SCOPES = new Set<ModifierScope>(["country", "region", "building", "pop", "market"]);
 const MODIFIER_CONDITION_TYPES = new Set<ModifierConditionType>([
   "always",
   "law_active",
@@ -133,7 +133,7 @@ const IDEOLOGY_ATTRACTION_CONDITION_TYPES = new Set<IdeologyAttractionConditionT
   "law_active",
   "has_building",
   "country_modifier_active",
-  "province_modifier_active",
+  "region_modifier_active",
 ]);
 
 export function normalizeModifierConditions(input: unknown): ModifierCondition[] {

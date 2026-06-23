@@ -18,8 +18,8 @@ export function createAiFixtureWorld(overrides: AiFixtureWorldOverrides = {}): W
       "region:alpha-core": "country:alpha",
       "region:beta-core": "country:beta",
     },
-    provinceOwner: {},
-    provinceNameById: {},
+    hexOwner: {},
+    hexNameById: {},
     colonyProgressByRegion: {},
     regionColonizationByRegion: {},
     regionPopulationByRegion: {

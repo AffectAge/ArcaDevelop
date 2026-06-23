@@ -25,8 +25,9 @@ This is the entrypoint for project documentation.
 
 ## World And Mechanics
 
-- `docs/world-model.md` - province/region model.
-- `docs/regions-and-provinces.md` - responsibilities of provinces vs state regions.
+- `docs/world-model.md` - hex/region world model.
+- `docs/hexes-and-regions.md` - responsibilities of hexes vs gameplay regions.
+- `docs/regions-and-provinces.md` - legacy province/state-region notes kept only for cleanup context.
 - `docs/scenario-region-history.md` - scenario region geography and starting state files.
 - `docs/data-deletion-lifecycle.md` - ownership and cleanup rules.
 - `docs/entity-ownership.md` - practical ownership map by entity.

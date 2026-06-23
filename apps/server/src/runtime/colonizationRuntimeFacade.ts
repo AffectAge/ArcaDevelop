@@ -2,7 +2,7 @@ import type { Order, WorldBase } from "@arcanorum/shared";
 import {
   addActiveColonizationTarget as addActiveColonizationTargetToIndex,
   cleanupRegionColonizationProgress as cleanupRegionColonizationProgressFromState,
-  getProvinceAreaKm2 as getProvinceAreaKm2FromIndex,
+  getHexAreaKm2 as getHexAreaKm2FromIndex,
   getRegionColonizationConfig as getRegionColonizationConfigFromState,
   getRegionDerivedColonizationCosts as getRegionDerivedColonizationCostsFromArea,
   normalizeRegionColonizationCosts as normalizeRegionColonizationCostsInState,
@@ -11,32 +11,32 @@ import {
   recalculateAllRegionColonizationCosts as recalculateAllRegionColonizationCostsInState,
   removeActiveColonizationTarget as removeActiveColonizationTargetFromIndex,
   removeCountryFromActiveColonizationIndex as removeCountryFromActiveColonizationIndexByCountry,
-  removeRegionFromActiveColonizationIndex as removeRegionFromActiveColonizationIndexByProvince,
+  removeRegionFromActiveColonizationIndex as removeRegionFromActiveColonizationIndexByHex,
   type ColonizationRates,
   type RegionColonizationConfig,
 } from "../mechanics/colonizationMechanics";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { TurnOrderIndexes } from "../mechanics/turnOrderIndexMechanics";
 
 type ColonizationRuntimeFacadeParams = {
   getWorldBase: () => WorldBase;
   getTurnId: () => number;
   getColonizationRates: () => ColonizationRates;
-  getProvinceIndex: () => Adm1ProvinceIndexEntry[];
+  getHexIndex: () => HexMapIndexEntry[];
   getRegionIds?: () => string[];
-  getProvinceAreaById: () => Map<string, number>;
+  getHexAreaById: () => Map<string, number>;
   getActiveColonizeRegionsByCountry: () => Map<string, Set<string>>;
   getOrdersByTurn: () => Map<number, Map<string, Order[]>>;
   getTurnOrderIndexes: () => TurnOrderIndexes;
 };
 
 export function createColonizationRuntimeFacade(params: ColonizationRuntimeFacadeParams) {
-  function getProvinceAreaKm2(provinceId: string): number {
-    return getProvinceAreaKm2FromIndex(provinceId, params.getProvinceAreaById());
+  function getHexAreaKm2(hexId: string): number {
+    return getHexAreaKm2FromIndex(hexId, params.getHexAreaById());
   }
 
   function getRegionAreaKm2(regionId: string): number {
-    return getProvinceAreaKm2FromIndex(regionId, params.getProvinceAreaById());
+    return getHexAreaKm2FromIndex(regionId, params.getHexAreaById());
   }
 
   function getRegionDerivedColonizationCosts(
@@ -91,7 +91,7 @@ export function createColonizationRuntimeFacade(params: ColonizationRuntimeFacad
   }
 
   function removeRegionFromActiveColonizationIndex(regionId: string): void {
-    removeRegionFromActiveColonizationIndexByProvince(params.getActiveColonizeRegionsByCountry(), regionId);
+    removeRegionFromActiveColonizationIndexByHex(params.getActiveColonizeRegionsByCountry(), regionId);
   }
 
   function removeCountryFromActiveColonizationIndex(countryId: string): void {
@@ -117,7 +117,7 @@ export function createColonizationRuntimeFacade(params: ColonizationRuntimeFacad
   }
 
   return {
-    getProvinceAreaKm2,
+    getHexAreaKm2,
     getRegionAreaKm2,
     getRegionDerivedColonizationCosts,
     getRegionColonizationConfig,

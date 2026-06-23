@@ -17,7 +17,7 @@ describe("systemRoutes", () => {
     registerSystemRoutes(app, {
       getServerStatus: () => "online",
       getTurnId: () => 7,
-      getAdm1TileRoot: () => "",
+      getHexTileRoot: () => "",
       getRasterTileRoot: () => "",
     });
 
@@ -27,7 +27,7 @@ describe("systemRoutes", () => {
     expect(await response.json()).toMatchObject({ status: "online", turnId: 7 });
   });
 
-  it("serves existing adm1 tiles and misses unknown tiles without cache", async () => {
+  it("serves existing hex tiles and misses unknown tiles without cache", async () => {
     const root = await makeTempDir();
     await mkdir(join(root, "0", "0"), { recursive: true });
     await writeFile(join(root, "0", "0", "0.mvt"), "tile");
@@ -35,12 +35,12 @@ describe("systemRoutes", () => {
     registerSystemRoutes(app, {
       getServerStatus: () => "online",
       getTurnId: () => 1,
-      getAdm1TileRoot: () => root,
+      getHexTileRoot: () => root,
       getRasterTileRoot: () => "",
     });
 
-    const found = await request(app, "/tiles/adm1/0/0/0.mvt");
-    const missing = await request(app, "/tiles/adm1/0/0/1.mvt");
+    const found = await request(app, "/tiles/hex/0/0/0.mvt");
+    const missing = await request(app, "/tiles/hex/0/0/1.mvt");
 
     expect(found.status).toBe(200);
     expect(found.headers.get("content-type")).toBe("application/x-protobuf");
@@ -57,7 +57,7 @@ describe("systemRoutes", () => {
     registerSystemRoutes(app, {
       getServerStatus: () => "online",
       getTurnId: () => 1,
-      getAdm1TileRoot: () => "",
+      getHexTileRoot: () => "",
       getRasterTileRoot: () => root,
     });
 

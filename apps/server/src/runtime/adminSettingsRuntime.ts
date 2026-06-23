@@ -110,7 +110,7 @@ function applyGameSettingsUpdate(
         title: "Настройки игры изменены",
         message:
           `Администратор обновил разделы: ${patchResult.changedSections.join(", ")}` +
-          (regionColonizationCostsRecalculated > 0 ? `; пересчитаны цены провинций: ${regionColonizationCostsRecalculated}` : ""),
+          (regionColonizationCostsRecalculated > 0 ? `; пересчитаны цены гексов: ${regionColonizationCostsRecalculated}` : ""),
         countryId: actorCountryId,
         priority: "medium",
         visibility: "public",

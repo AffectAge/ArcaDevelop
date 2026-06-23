@@ -189,49 +189,49 @@ describe("militaryMechanics", () => {
   });
 
   it("normalizes and validates army movement routes", () => {
-    expect(normalizeArmyMoveRoute({ path: [" province:b ", "", 1, "province:c"] }, "province:x", "province:a")).toEqual([
-      "province:b",
-      "province:c",
+    expect(normalizeArmyMoveRoute({ path: [" hex:1:0 ", "", 1, "hex:2:0"] }, "hex:9:0", "hex:0:0")).toEqual([
+      "hex:1:0",
+      "hex:2:0",
     ]);
-    expect(normalizeArmyMoveRoute({}, "province:a", "province:a")).toEqual([]);
+    expect(normalizeArmyMoveRoute({}, "hex:0:0", "hex:0:0")).toEqual([]);
     expect(
       isContiguousArmyRoute({
-        fromProvinceId: "province:a",
-        route: ["province:b", "province:c"],
-        areProvinceIdsAdjacentOrSame: (from, to) =>
-          from === to || (from === "province:a" && to === "province:b") || (from === "province:b" && to === "province:c"),
+        fromHexId: "hex:0:0",
+        route: ["hex:1:0", "hex:2:0"],
+        areHexIdsAdjacentOrSame: (from, to) =>
+          from === to || (from === "hex:0:0" && to === "hex:1:0") || (from === "hex:1:0" && to === "hex:2:0"),
       }),
     ).toBe(true);
   });
 
-  it("captures empty enemy provinces and emits no battle event", () => {
+  it("captures empty enemy hexes and emits no battle event", () => {
     const worldBase = makeWorld({
-      provinceOwner: { "province:a": "country:a", "province:b": "country:b" },
-      divisionsById: { "division:a": makeDivision({ id: "division:a", countryId: "country:a", provinceId: "province:a" }) },
+      hexOwner: { "hex:0:0": "country:a", "hex:1:0": "country:b" },
+      divisionsById: { "division:a": makeDivision({ id: "division:a", countryId: "country:a", hexId: "hex:0:0" }) },
     });
     const events: MilitaryRuntimeEvent[] = [];
     const attacker = worldBase.divisionsById["division:a"]!;
 
-    expect(resolveDivisionBattle({ attacker, targetProvinceId: "province:b", worldBase, provinces: makeProvinces(), events })).toBe(true);
-    expect(attacker.provinceId).toBe("province:b");
-    expect(worldBase.provinceOwner["province:b"]).toBe("country:a");
+    expect(resolveDivisionBattle({ attacker, targetHexId: "hex:1:0", worldBase, hexes: makeHexes(), events })).toBe(true);
+    expect(attacker.hexId).toBe("hex:1:0");
+    expect(worldBase.hexOwner["hex:1:0"]).toBe("country:a");
     expect(events).toEqual([]);
   });
 
   it("resolves battles and removes broken defenders without retreat paths", () => {
     const worldBase = makeWorld({
-      provinceOwner: { "province:a": "country:a", "province:b": "country:b" },
+      hexOwner: { "hex:0:0": "country:a", "hex:1:0": "country:b" },
       divisionsById: {
         "division:a": makeDivision({
           id: "division:a",
           countryId: "country:a",
-          provinceId: "province:a",
+          hexId: "hex:0:0",
           stats: { ...makeStats(), attack: 1000, breakthrough: 1000, hp: 100 },
         }),
         "division:b": makeDivision({
           id: "division:b",
           countryId: "country:b",
-          provinceId: "province:b",
+          hexId: "hex:1:0",
           organization: 0.01,
           stats: { ...makeStats(), defense: 1, hp: 1 },
         }),
@@ -239,20 +239,20 @@ describe("militaryMechanics", () => {
     });
     const events: MilitaryRuntimeEvent[] = [];
 
-    expect(resolveDivisionBattle({ attacker: worldBase.divisionsById["division:a"]!, targetProvinceId: "province:b", worldBase, provinces: makeProvinces(), events })).toBe(true);
+    expect(resolveDivisionBattle({ attacker: worldBase.divisionsById["division:a"]!, targetHexId: "hex:1:0", worldBase, hexes: makeHexes(), events })).toBe(true);
     expect(worldBase.divisionsById["division:b"]).toBeUndefined();
-    expect(worldBase.divisionsById["division:a"]?.provinceId).toBe("province:b");
-    expect(events.at(-1)).toMatchObject({ title: "Провинция захвачена", visibility: "public" });
+    expect(worldBase.divisionsById["division:a"]?.hexId).toBe("hex:1:0");
+    expect(events.at(-1)).toMatchObject({ title: "Hex захвачен", visibility: "public" });
   });
 
   it("advances divisions along peaceful routes and stores remaining path", () => {
     const worldBase = makeWorld({
-      provinceOwner: { "province:a": "country:a", "province:b": "country:a", "province:c": "country:a" },
+      hexOwner: { "hex:0:0": "country:a", "hex:1:0": "country:a", "hex:2:0": "country:a" },
       divisionsById: {
         "division:a": makeDivision({
           id: "division:a",
           countryId: "country:a",
-          provinceId: "province:a",
+          hexId: "hex:0:0",
           stats: { ...makeStats(), speed: 1 },
         }),
       },
@@ -260,19 +260,19 @@ describe("militaryMechanics", () => {
     const events: MilitaryRuntimeEvent[] = [];
     const division = worldBase.divisionsById["division:a"]!;
 
-    expect(advanceDivisionAlongRoute({ division, route: ["province:b", "province:c"], worldBase, provinces: makeProvinces(), turnId: 7, events })).toBe(true);
-    expect(division).toMatchObject({ provinceId: "province:b", path: ["province:c"], status: "moving", lastMovedTurnId: 7 });
+    expect(advanceDivisionAlongRoute({ division, route: ["hex:1:0", "hex:2:0"], worldBase, hexes: makeHexes(), turnId: 7, events })).toBe(true);
+    expect(division).toMatchObject({ hexId: "hex:1:0", path: ["hex:2:0"], status: "moving", lastMovedTurnId: 7 });
     expect(events.at(-1)).toMatchObject({ title: "Дивизия продолжает марш" });
   });
 
   it("resolves army move orders with validation, movement, and duplicate move protection", () => {
     const worldBase = makeWorld({
-      provinceOwner: { "province:a": "country:a", "province:b": "country:a", "province:c": "country:a" },
+      hexOwner: { "hex:0:0": "country:a", "hex:1:0": "country:a", "hex:2:0": "country:a" },
       divisionsById: {
         "division:a": makeDivision({
           id: "division:a",
           countryId: "country:a",
-          provinceId: "province:a",
+          hexId: "hex:0:0",
           stats: { ...makeStats(), speed: 1 },
         }),
       },
@@ -284,23 +284,23 @@ describe("militaryMechanics", () => {
       order: makeOrder({
         id: "order:a",
         countryId: "country:a",
-        provinceId: "province:b",
-        payload: { divisionId: "division:a", path: ["province:b", "province:c"] },
+        targetHexId: "hex:1:0",
+        payload: { divisionId: "division:a", path: ["hex:1:0", "hex:2:0"] },
       }),
       playerId: "player:a",
       worldBase,
-      provinces: makeProvinces(),
+      hexes: makeHexes(),
       turnId: 7,
       movedDivisionIds,
       events,
-      areProvinceIdsAdjacentOrSame,
+      areHexIdsAdjacentOrSame,
     });
 
     expect(result).toEqual({ rejectedOrder: null, moved: true });
     expect(movedDivisionIds.has("division:a")).toBe(true);
     expect(worldBase.divisionsById["division:a"]).toMatchObject({
-      provinceId: "province:b",
-      path: ["province:c"],
+      hexId: "hex:1:0",
+      path: ["hex:2:0"],
       lastMovedTurnId: 7,
     });
     expect(events.at(-1)).toMatchObject({ title: "Дивизия продолжает марш" });
@@ -310,36 +310,36 @@ describe("militaryMechanics", () => {
         order: makeOrder({
           id: "order:b",
           countryId: "country:a",
-          provinceId: "province:c",
-          payload: { divisionId: "division:a", path: ["province:c"] },
+          targetHexId: "hex:2:0",
+          payload: { divisionId: "division:a", path: ["hex:2:0"] },
         }),
         playerId: "player:a",
         worldBase,
-        provinces: makeProvinces(),
+        hexes: makeHexes(),
         turnId: 7,
         movedDivisionIds,
         events: [],
-        areProvinceIdsAdjacentOrSame,
+        areHexIdsAdjacentOrSame,
       }).rejectedOrder,
     ).toEqual({ playerId: "player:a", reason: "DIVISION_ALREADY_MOVED", tempOrderId: "order:b" });
   });
 
   it("advances stored army routes after orders and clears invalid stored paths", () => {
     const worldBase = makeWorld({
-      provinceOwner: { "province:a": "country:a", "province:b": "country:a", "province:c": "country:a" },
+      hexOwner: { "hex:0:0": "country:a", "hex:1:0": "country:a", "hex:2:0": "country:a" },
       divisionsById: {
         "division:a": makeDivision({
           id: "division:a",
           countryId: "country:a",
-          provinceId: "province:a",
-          path: ["province:b", "province:c"],
+          hexId: "hex:0:0",
+          path: ["hex:1:0", "hex:2:0"],
           stats: { ...makeStats(), speed: 1 },
         }),
         "division:bad": makeDivision({
           id: "division:bad",
           countryId: "country:a",
-          provinceId: "province:a",
-          path: ["province:c"],
+          hexId: "hex:0:0",
+          path: ["hex:2:0"],
           stats: { ...makeStats(), speed: 1 },
         }),
       },
@@ -348,21 +348,21 @@ describe("militaryMechanics", () => {
 
     advanceStoredArmyRoutesTurn({
       worldBase,
-      provinces: makeProvinces(),
+      hexes: makeHexes(),
       turnId: 8,
       movedDivisionIds: new Set(),
       events,
-      areProvinceIdsAdjacentOrSame,
+      areHexIdsAdjacentOrSame,
     });
 
     expect(worldBase.divisionsById["division:a"]).toMatchObject({
-      provinceId: "province:b",
-      path: ["province:c"],
+      hexId: "hex:1:0",
+      path: ["hex:2:0"],
       status: "moving",
       lastMovedTurnId: 8,
     });
     expect(worldBase.divisionsById["division:bad"]).toMatchObject({
-      provinceId: "province:a",
+      hexId: "hex:0:0",
       path: [],
       status: "idle",
     });
@@ -394,7 +394,7 @@ describe("militaryMechanics", () => {
             kind: "land",
             templateId: "template:a",
             name: "",
-            provinceId: "province:a",
+            hexId: "hex:0:0",
             progress: 0,
             turnsTotal: 1,
             turnsRemaining: 1,
@@ -411,7 +411,7 @@ describe("militaryMechanics", () => {
     expect(worldBase.divisionsById["division:created"]).toMatchObject({
       countryId: "country:a",
       name: "First Division",
-      provinceId: "province:a",
+      hexId: "hex:0:0",
       status: "idle",
     });
     expect(worldBase.militaryFormationQueueByCountry["country:a"]).toBeUndefined();
@@ -468,7 +468,7 @@ function makeDivision(overrides?: Partial<MilitaryWorldState["divisionsById"][st
     templateId: "template:a",
     name: "First Division",
     kind: "land",
-    provinceId: "province:a",
+    hexId: "hex:0:0",
     strength: 1,
     organization: 10,
     stats: makeStats(),
@@ -488,7 +488,7 @@ function makeOrder(
     turnId: 1,
     playerId: "player:a",
     countryId: "country:a",
-    provinceId: "province:a",
+    targetHexId: "hex:0:0",
     type: "ARMY_MOVE",
     payload: {},
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -498,7 +498,7 @@ function makeOrder(
 
 function makeWorld(overrides?: Partial<MilitaryWorldState>): MilitaryWorldState {
   return {
-    provinceOwner: {},
+    hexOwner: {},
     divisionsById: {},
     divisionTemplatesByCountry: {},
     militaryFormationQueueByCountry: {},
@@ -507,14 +507,14 @@ function makeWorld(overrides?: Partial<MilitaryWorldState>): MilitaryWorldState 
   };
 }
 
-function makeProvinces() {
+function makeHexes() {
   return [
-    { id: "province:a", neighbors: ["province:b"] },
-    { id: "province:b", neighbors: ["province:a", "province:c"] },
-    { id: "province:c", neighbors: ["province:b"] },
+    { id: "hex:0:0", neighbors: ["hex:1:0"] },
+    { id: "hex:1:0", neighbors: ["hex:0:0", "hex:2:0"] },
+    { id: "hex:2:0", neighbors: ["hex:1:0"] },
   ];
 }
 
-function areProvinceIdsAdjacentOrSame(from: string, to: string): boolean {
-  return from === to || makeProvinces().some((province) => province.id === from && province.neighbors.includes(to));
+function areHexIdsAdjacentOrSame(from: string, to: string): boolean {
+  return from === to || makeHexes().some((hex) => hex.id === from && hex.neighbors.includes(to));
 }

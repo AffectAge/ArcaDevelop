@@ -135,7 +135,7 @@ describe("authRegistrationRoutes", () => {
       reviewCountry: makeCountryRecord({ isRegistrationApproved: false }),
       world: {
         resourcesByCountry: { "country:a": makeResources() },
-        provinceOwner: { "province:a": "country:a", "province:b": "country:b" },
+        hexOwner: { "province:a": "country:a", "province:b": "country:b" },
         colonyProgressByRegion: { "province:a": { "country:a": 10 }, "province:b": { "country:a": 5, "country:b": 8 } },
       },
     });
@@ -153,7 +153,7 @@ describe("authRegistrationRoutes", () => {
     expect(deps.removeUploadedByUrl).toHaveBeenCalledWith("/scenario-assets/demo/assets/uploads/crest.png?v=1");
     expect(deps.deleteCountry).toHaveBeenCalledWith("country:a");
     expect(deps.world.resourcesByCountry["country:a"]).toBeUndefined();
-    expect(deps.world.provinceOwner).toEqual({ "province:b": "country:b" });
+    expect(deps.world.hexOwner).toEqual({ "province:b": "country:b" });
     expect(deps.world.colonyProgressByRegion).toEqual({ "province:b": { "country:b": 8 } });
     expect(deps.removeCountryFromActiveColonizationIndex).toHaveBeenCalledWith("country:a");
     expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({ mask: 7 });
@@ -178,7 +178,7 @@ function makeDeps(options?: {
 }): AuthRegistrationRoutesDependencies & { world: AuthRegistrationWorldState } {
   const world: AuthRegistrationWorldState = {
     resourcesByCountry: {},
-    provinceOwner: {},
+    hexOwner: {},
     colonyProgressByRegion: {},
     ...options?.world,
   };
@@ -195,7 +195,7 @@ function makeDeps(options?: {
     },
     flagImageRule: { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 },
     crestImageRule: { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 },
-    masks: { resourcesByCountry: 1, provinceOwner: 2, colonyProgressByRegion: 4 },
+    masks: { resourcesByCountry: 1, hexOwner: 2, colonyProgressByRegion: 4 },
     getTurnId: () => 4,
     getWorldBase: () => world as WorldBase & AuthRegistrationWorldState,
     getRegistrationRequiresAdminApproval: () => options?.requireApproval ?? false,

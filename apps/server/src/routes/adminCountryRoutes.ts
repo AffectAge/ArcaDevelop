@@ -73,7 +73,7 @@ export type AdminCountryRoutesDependencies = {
   crestImageRule: ImageDimensionRule;
   masks: {
     resourcesByCountry: number;
-    provinceOwner: number;
+    hexOwner: number;
     colonyProgressByRegion: number;
     regionConstructionQueueByRegion: number;
     parliamentByCountry: number;
@@ -258,7 +258,7 @@ export function registerAdminCountryRoutes(app: express.Express, deps: AdminCoun
 
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
       deps.masks.resourcesByCountry |
-        deps.masks.provinceOwner |
+        deps.masks.hexOwner |
         deps.masks.colonyProgressByRegion |
         deps.masks.regionConstructionQueueByRegion |
         deps.masks.parliamentByCountry |

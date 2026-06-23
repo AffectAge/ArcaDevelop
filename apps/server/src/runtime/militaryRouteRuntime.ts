@@ -5,11 +5,11 @@ import type {
   DivisionTemplate,
   MilitaryFormationQueueItem,
   WorldBase,
+  HexId,
 } from "@arcanorum/shared";
 import { calculateFormationTurns, spendMilitaryFormationCost } from "../mechanics/militaryMechanics";
 import type { GoodFlow } from "../mechanics/contentFieldNormalizers";
 import { registerMilitaryRoutes } from "../routes/militaryRoutes";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
 import type { RouteAuth } from "../security/routeAuth";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
 import type { GameSettings } from "./gameSettingsTypes";
@@ -39,7 +39,6 @@ type MilitaryRuntimeParams = {
   getTurnId: () => number;
   getWorldBase: () => WorldBase;
   getGameSettings: () => GameSettings;
-  getProvinceIndex: () => Adm1ProvinceIndexEntry[];
   ensureCountryInWorldBase: (countryId: string) => void;
   getCountryMarketRecord: (countryId: string) => GameSettings["markets"]["marketById"][string];
   normalizeMilitaryTemplateComponents: (
@@ -85,22 +84,28 @@ export function registerMilitaryRuntimeRoutes(params: MilitaryRuntimeParams): vo
       (a, b) => a.createdTurnId - b.createdTurnId || a.name.localeCompare(b.name, "ru") || a.id.localeCompare(b.id),
     );
 
-  const getCountryOwnedProvinceOptions = (countryId: string): Array<{ id: string; name: string; neighbors: string[] }> =>
-    params
-      .getProvinceIndex()
-      .filter((province) => params.getWorldBase().provinceOwner[province.id] === countryId)
-      .map((province) => ({
-        id: province.id,
-        name: params.getWorldBase().provinceNameById[province.id] ?? province.name,
-        neighbors: province.neighbors,
+  const getCountryOwnedHexOptions = (countryId: string): Array<{ id: string; name: string; neighbors: string[] }> => {
+    const world = params.getWorldBase();
+    const ownedHexIds = Object.entries(world.hexOwner)
+      .filter(([, ownerCountryId]) => ownerCountryId === countryId)
+      .map(([hexId]) => hexId)
+      .filter(isHexId)
+      .sort((a, b) => a.localeCompare(b, "en"));
+    const ownedHexIdSet = new Set(ownedHexIds);
+    return ownedHexIds
+      .map((hexId) => ({
+        id: hexId,
+        name: world.hexNameById[hexId] ?? hexId,
+        neighbors: getAdjacentHexIds(hexId).filter((neighborHexId) => ownedHexIdSet.has(neighborHexId)),
       }))
-      .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+      .sort((a, b) => a.name.localeCompare(b.name, "ru") || a.id.localeCompare(b.id, "en"));
+  };
 
   const buildArmyOverview = (countryId: string) => ({
     battalionCatalog: getArmyBattalionCatalog(),
     templates: getCountryDivisionTemplates(countryId),
     divisions: getCountryDivisions(countryId),
-    provinceOptions: getCountryOwnedProvinceOptions(countryId),
+    hexOptions: getCountryOwnedHexOptions(countryId),
   });
 
   const buildMilitaryOverview = (countryId: string) => {
@@ -113,7 +118,7 @@ export function registerMilitaryRuntimeRoutes(params: MilitaryRuntimeParams): vo
       units: getCountryDivisions(countryId),
       divisions: getCountryDivisions(countryId),
       queue: getCountryMilitaryQueue(countryId),
-      provinceOptions: getCountryOwnedProvinceOptions(countryId),
+      hexOptions: getCountryOwnedHexOptions(countryId),
       formationSpeed: Math.max(1, Number(gameSettings.military.militaryFormationSpeed || 10)),
     };
   };
@@ -161,7 +166,7 @@ export function registerMilitaryRuntimeRoutes(params: MilitaryRuntimeParams): vo
     setCountryMilitaryQueue: (countryId, queue) => {
       params.getWorldBase().militaryFormationQueueByCountry[countryId] = queue;
     },
-    getProvinceOwner: (provinceId) => params.getWorldBase().provinceOwner[provinceId] ?? null,
+    getHexOwner: (hexId) => params.getWorldBase().hexOwner[hexId] ?? null,
     normalizeMilitaryTemplateComponents: params.normalizeMilitaryTemplateComponents,
     componentsToDivisionBattalions: params.componentsToDivisionBattalions,
     getMilitaryContentById: params.getMilitaryContentById,
@@ -194,4 +199,24 @@ function validateTemplateIcon(file: Express.Multer.File): "ok" | "IMAGE_MUST_BE_
   } catch {
     return "IMAGE_INVALID";
   }
+}
+
+function isHexId(value: string): value is `hex:${number}:${number}` {
+  return /^hex:-?\d+:-?\d+$/.test(value);
+}
+
+function getAdjacentHexIds(hexId: HexId): HexId[] {
+  const match = /^hex:(-?\d+):(-?\d+)$/.exec(hexId);
+  if (!match) return [];
+  const q = Number(match[1]);
+  const r = Number(match[2]);
+  const offsets = [
+    [1, 0],
+    [1, -1],
+    [0, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, 1],
+  ] as const;
+  return offsets.map(([dq, dr]) => `hex:${q + dq}:${r + dr}` as HexId);
 }

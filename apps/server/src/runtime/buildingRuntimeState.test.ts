@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Order, WorldBase } from "@arcanorum/shared";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import { createBuildingRuntime } from "./buildingRuntimeState";
 import type { BuildingContentEntry, GameSettings } from "./gameSettingsTypes";
 
@@ -11,30 +11,30 @@ describe("buildingRuntimeState", () => {
       getGameSettings: () => makeGameSettings(),
       getTurnId: () => 1,
       getOrdersByTurn: () => new Map<number, Map<string, Order[]>>(),
-      getProvinceById: () =>
+      getHexById: () =>
         new Map([
-          ["province:plain", makeProvince({ id: "province:plain", regionId: "region:a", landscape: "plain" })],
-          ["province:mountain", makeProvince({ id: "province:mountain", regionId: "region:a", landscape: "mountain" })],
+          ["province:plain", makeHex({ id: "province:plain", regionId: "region:a", landscape: "plain" })],
+          ["province:mountain", makeHex({ id: "province:mountain", regionId: "region:a", landscape: "mountain" })],
         ]),
       ensureCountryInWorldBase: () => undefined,
     });
 
-    expect(runtime.getProvinceBuildRestriction(makeBuilding({ id: "building:mine", allowedLandscapes: ["mountain"] }), "region:a")).toBeNull();
-    expect(runtime.getProvinceBuildRestriction(makeBuilding({ id: "building:port", allowedLandscapes: ["coast"] }), "region:a")).toBe(
-      "Ландшафт провинции не подходит для этого здания",
+    expect(runtime.getHexBuildRestriction(makeBuilding({ id: "building:mine", allowedLandscapes: ["mountain"] }), "region:a")).toBeNull();
+    expect(runtime.getHexBuildRestriction(makeBuilding({ id: "building:port", allowedLandscapes: ["coast"] }), "region:a")).toBe(
+      "Ландшафт гекса не подходит для этого здания",
     );
   });
 });
 
-function makeProvince(overrides: Partial<Adm1ProvinceIndexEntry>): Adm1ProvinceIndexEntry {
+function makeHex(overrides: Partial<HexMapIndexEntry>): HexMapIndexEntry {
   return {
     id: "province:a",
-    name: "Province A",
+    name: "Hex A",
     regionId: "region:a",
-    provinceColor: "#ffffff",
+    hexColor: "#ffffff",
     regionColor: "#000000",
     areaKm2: 1,
-    provinceType: null,
+    hexType: null,
     centerX: null,
     centerY: null,
     sourceCenterX: null,
@@ -73,8 +73,8 @@ function makeWorld(): WorldBase {
     explanationRecordsByTurn: {},
     regionOwner: {},
     regionController: {},
-    provinceOwner: {},
-    provinceNameById: {},
+    hexOwner: {},
+    hexNameById: {},
     colonyProgressByRegion: {},
     regionColonizationByRegion: {},
     regionPopulationByRegion: {},

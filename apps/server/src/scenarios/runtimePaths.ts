@@ -12,7 +12,7 @@ export type ScenarioManifest = {
 
 export type ScenarioRuntimePaths = {
   mapRoot: string;
-  provinceIndexPath: string;
+  hexIndexPath: string;
 };
 
 export function normalizeScenarioId(input: unknown): string | null {
@@ -38,10 +38,10 @@ export function getScenarioRuntimePaths(params: {
 }): ScenarioRuntimePaths {
   const { scenarioDir, manifest, dataRoot } = params;
   const mapRoot = getScenarioMapRoot(scenarioDir, manifest, dataRoot);
-  const generatedProvinceIndexPath = resolve(scenarioDir, ".generated/provinces.json");
+  const generatedHexIndexPath = resolve(scenarioDir, ".generated/hexes.json");
   return {
     mapRoot,
-    provinceIndexPath: existsSync(generatedProvinceIndexPath) ? generatedProvinceIndexPath : resolve(mapRoot, "provinces.json"),
+    hexIndexPath: existsSync(generatedHexIndexPath) ? generatedHexIndexPath : resolve(mapRoot, "hexes.json"),
   };
 }
 

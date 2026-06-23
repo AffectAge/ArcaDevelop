@@ -514,7 +514,7 @@ export function buildRedistributedProfessionStateMap(
 
 export function normalizePopulationPop(params: {
   raw: unknown;
-  provinceId: string;
+  hexId: string;
   domains: PopulationDomainKeys;
   fallbackByDimension: Record<PopulationDimensionKey, string>;
   index: number;
@@ -527,7 +527,7 @@ export function normalizePopulationPop(params: {
     const id = typeof value === "string" ? value.trim() : "";
     return id && keys.includes(id) ? id : fallback;
   };
-  const id = typeof row.id === "string" && row.id.trim() ? row.id.trim().slice(0, 120) : `pop:${params.provinceId}:${params.index}`;
+  const id = typeof row.id === "string" && row.id.trim() ? row.id.trim().slice(0, 120) : `pop:${params.hexId}:${params.index}`;
   return {
     id,
     size,
@@ -541,7 +541,7 @@ export function normalizePopulationPop(params: {
 
 export function normalizePopulationPops(params: {
   rawPops: unknown;
-  provinceId: string;
+  hexId: string;
   domains: PopulationDomainKeys;
   fallbackByDimension: Record<PopulationDimensionKey, string>;
 }): PopulationPop[] {
@@ -551,7 +551,7 @@ export function normalizePopulationPops(params: {
   for (const [index, raw] of params.rawPops.entries()) {
     const pop = normalizePopulationPop({
       raw,
-      provinceId: params.provinceId,
+      hexId: params.hexId,
       domains: params.domains,
       fallbackByDimension: params.fallbackByDimension,
       index,
@@ -592,7 +592,7 @@ export function isEqualRegionPopulation(prevValue: RegionPopulation | undefined,
 }
 
 export function buildSinglePopRegionPopulation(params: {
-  provinceId: string;
+  hexId: string;
   total: number;
   fallbackByDimension: Record<PopulationDimensionKey, string>;
   popId?: string;
@@ -603,7 +603,7 @@ export function buildSinglePopRegionPopulation(params: {
       size > 0
         ? [
             {
-              id: params.popId ?? `pop:${params.provinceId}:default`,
+              id: params.popId ?? `pop:${params.hexId}:default`,
               size,
               cultureId: params.fallbackByDimension.culturePct,
               religionId: params.fallbackByDimension.religionPct,
@@ -617,7 +617,7 @@ export function buildSinglePopRegionPopulation(params: {
 }
 
 export function buildRegionPopulationFromBreakdowns(params: {
-  provinceId: string;
+  hexId: string;
   total: number;
   fallbackByDimension: Record<PopulationDimensionKey, string>;
   maps: PopulationBreakdownMaps;
@@ -640,7 +640,7 @@ export function buildRegionPopulationFromBreakdowns(params: {
         if (size <= 0) continue;
         allocated += size;
         pops.push({
-          id: `pop:${params.provinceId}:${pops.length}`,
+          id: `pop:${params.hexId}:${pops.length}`,
           size,
           cultureId,
           religionId,
@@ -657,7 +657,7 @@ export function buildRegionPopulationFromBreakdowns(params: {
   }
   if (pops.length === 0) {
     return buildSinglePopRegionPopulation({
-      provinceId: params.provinceId,
+      hexId: params.hexId,
       total: populationTotal,
       fallbackByDimension: params.fallbackByDimension,
     });
@@ -670,17 +670,17 @@ export function buildRegionPopulationFromBreakdowns(params: {
 }
 
 export function buildDefaultRegionPopulation(params: {
-  provinceId: string;
+  hexId: string;
   domains: PopulationDomainKeys;
   fallbackByDimension: Record<PopulationDimensionKey, string>;
-  getProvinceAreaKm2: (provinceId: string) => number;
+  getHexAreaKm2: (hexId: string) => number;
 }): RegionPopulation {
-  const areaKm2 = Math.max(1, params.getProvinceAreaKm2(params.provinceId) ?? 1_000);
-  const seed = hashStringToUInt32(params.provinceId);
+  const areaKm2 = Math.max(1, params.getHexAreaKm2(params.hexId) ?? 1_000);
+  const seed = hashStringToUInt32(params.hexId);
   const areaBasedPopulation = Math.floor(areaKm2 * 120);
   const populationTotal = Math.max(POPULATION_MIN_TOTAL, areaBasedPopulation + POPULATION_DEFAULT_BASE_TOTAL + (seed % 5000));
   return buildSinglePopRegionPopulation({
-    provinceId: params.provinceId,
+    hexId: params.hexId,
     total: populationTotal,
     fallbackByDimension: params.fallbackByDimension,
   });
@@ -688,10 +688,10 @@ export function buildDefaultRegionPopulation(params: {
 
 export function normalizeRegionPopulation(params: {
   input: unknown;
-  provinceId: string;
+  hexId: string;
   domains: PopulationDomainKeys;
   fallbackByDimension: Record<PopulationDimensionKey, string>;
-  getProvinceAreaKm2: (provinceId: string) => number;
+  getHexAreaKm2: (hexId: string) => number;
 }): RegionPopulation {
   const fallback = buildDefaultRegionPopulation(params);
   if (!params.input || typeof params.input !== "object") {
@@ -700,14 +700,14 @@ export function normalizeRegionPopulation(params: {
   const row = params.input as Partial<RegionPopulation> & Partial<{ populationTotal: unknown }>;
   const pops = normalizePopulationPops({
     rawPops: row.pops,
-    provinceId: params.provinceId,
+    hexId: params.hexId,
     domains: params.domains,
     fallbackByDimension: params.fallbackByDimension,
   });
   if (pops.length > 0) return { pops };
   if (typeof row.populationTotal === "number" && Number.isFinite(row.populationTotal)) {
     return buildSinglePopRegionPopulation({
-      provinceId: params.provinceId,
+      hexId: params.hexId,
       total: row.populationTotal <= 0 ? 0 : Math.max(POPULATION_MIN_TOTAL, Math.floor(row.populationTotal)),
       fallbackByDimension: params.fallbackByDimension,
     });
@@ -716,10 +716,10 @@ export function normalizeRegionPopulation(params: {
 }
 
 export function buildRandomRegionPopulation(params: {
-  provinceId: string;
+  hexId: string;
   domains: PopulationDomainKeys;
   fallbackByDimension: Record<PopulationDimensionKey, string>;
-  getProvinceAreaKm2: (provinceId: string) => number;
+  getHexAreaKm2: (hexId: string) => number;
   populationTotalOverride?: number;
   random?: () => number;
 }): RegionPopulation {
@@ -729,7 +729,7 @@ export function buildRandomRegionPopulation(params: {
       ? Math.max(0, Math.floor(params.populationTotalOverride))
       : getPopulationTotal(fallback);
   return buildRegionPopulationFromBreakdowns({
-    provinceId: params.provinceId,
+    hexId: params.hexId,
     total,
     fallbackByDimension: params.fallbackByDimension,
     maps: {
@@ -747,27 +747,27 @@ export function normalizeRegionPopulationMap(params: {
   regionIds: string[];
   domains: PopulationDomainKeys;
   fallbackByDimension: Record<PopulationDimensionKey, string>;
-  getProvinceAreaKm2: (regionId: string) => number;
+  getHexAreaKm2: (regionId: string) => number;
 }): Record<string, RegionPopulation> {
   const normalized: Record<string, RegionPopulation> = {};
   if (params.input && typeof params.input === "object") {
     for (const [regionId, raw] of Object.entries(params.input as Record<string, unknown>)) {
       normalized[regionId] = normalizeRegionPopulation({
         input: raw,
-        provinceId: regionId,
+        hexId: regionId,
         domains: params.domains,
         fallbackByDimension: params.fallbackByDimension,
-        getProvinceAreaKm2: params.getProvinceAreaKm2,
+        getHexAreaKm2: params.getHexAreaKm2,
       });
     }
   }
   for (const regionId of params.regionIds) {
     if (!normalized[regionId]) {
       normalized[regionId] = buildDefaultRegionPopulation({
-        provinceId: regionId,
+        hexId: regionId,
         domains: params.domains,
         fallbackByDimension: params.fallbackByDimension,
-        getProvinceAreaKm2: params.getProvinceAreaKm2,
+        getHexAreaKm2: params.getHexAreaKm2,
       });
     }
   }
@@ -817,7 +817,7 @@ export function resolvePopulationTurnForRegions(params: {
   domains: PopulationDomainKeys;
   fallbackByDimension: Record<PopulationDimensionKey, string>;
   ideologies: PopulationIdeologyContentEntry[];
-  getProvinceAreaKm2: (regionId: string) => number;
+  getHexAreaKm2: (regionId: string) => number;
   getIdeologyContext: (regionId: string) => RegionPopulationIdeologyContext;
 }): ResolvePopulationTurnResult {
   const nextPopulationByRegion: Record<string, RegionPopulation> = {};
@@ -826,10 +826,10 @@ export function resolvePopulationTurnForRegions(params: {
   for (const regionId of params.regionIds) {
     const currentPopulation = normalizeRegionPopulation({
       input: params.currentPopulationByRegion[regionId],
-      provinceId: regionId,
+      hexId: regionId,
       domains: params.domains,
       fallbackByDimension: params.fallbackByDimension,
-      getProvinceAreaKm2: params.getProvinceAreaKm2,
+      getHexAreaKm2: params.getHexAreaKm2,
     });
     const nextPopulation = resolvePopulationTurnForRegion({
       currentPopulation,
@@ -998,7 +998,7 @@ export function evaluateIdeologyAttractionRule(params: {
     match = rule.targetId && activeLawIds.has(rule.targetId) ? 1 : 0;
   } else if (rule.type === "has_building") {
     match = rule.targetId && provinceBuildingIds.has(rule.targetId) ? 1 : 0;
-  } else if (rule.type === "country_modifier_active" || rule.type === "province_modifier_active") {
+  } else if (rule.type === "country_modifier_active" || rule.type === "region_modifier_active") {
     match = rule.targetId && activeModifierIds.has(rule.targetId) ? 1 : 0;
   }
   if (rule.invert) match = match > 0 ? 0 : 1;

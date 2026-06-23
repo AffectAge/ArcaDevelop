@@ -62,14 +62,14 @@ describe("worldDeltaDiff", () => {
   it("builds compact world delta with stable mask bits and compact payload keys", () => {
     const prev = makeWorldBase({
       resourcesByCountry: { "country:a": makeResources({ ducats: 5 }) },
-      provinceOwner: { "province:a": "country:a", "province:removed": "country:b" },
-      provinceNameById: { "province:a": "Old" },
+      hexOwner: { "province:a": "country:a", "province:removed": "country:b" },
+      hexNameById: { "province:a": "Old" },
       diplomacyProposals: [makeDiplomacyProposal({ id: "proposal:old" })],
     });
     const next = makeWorldBase({
       resourcesByCountry: { "country:a": makeResources({ ducats: 7 }) },
-      provinceOwner: { "province:a": "country:a" },
-      provinceNameById: { "province:a": "New" },
+      hexOwner: { "province:a": "country:a" },
+      hexNameById: { "province:a": "New" },
       diplomacyProposals: [makeDiplomacyProposal({ id: "proposal:new" })],
     });
 
@@ -81,8 +81,8 @@ describe("worldDeltaDiff", () => {
 
     expect(compact.mask).toBe(
       WORLD_DELTA_MASK.resourcesByCountry |
-        WORLD_DELTA_MASK.provinceOwner |
-        WORLD_DELTA_MASK.provinceNameById |
+        WORLD_DELTA_MASK.hexOwner |
+        WORLD_DELTA_MASK.hexNameById |
         WORLD_DELTA_MASK.diplomacyProposals,
     );
     expect(compact.c).toEqual({ "country:a": makeResources({ ducats: 7 }) });
@@ -261,45 +261,45 @@ describe("worldDeltaDiff", () => {
   it("materializes previous world diff base from selected snapshot sections", () => {
     const next = makeWorldBase({
       resourcesByCountry: { "country:a": makeResources({ ducats: 10 }) },
-      provinceOwner: { "province:a": "country:a" },
-      provinceNameById: { "province:a": "Current" },
+      hexOwner: { "province:a": "country:a" },
+      hexNameById: { "province:a": "Current" },
     });
     const previous = toWorldBaseForDeltaDiff(
       {
         turnId: 5,
-        mask: WORLD_DELTA_MASK.resourcesByCountry | WORLD_DELTA_MASK.provinceNameById,
+        mask: WORLD_DELTA_MASK.resourcesByCountry | WORLD_DELTA_MASK.hexNameById,
         resourcesByCountry: { "country:a": makeResources({ ducats: 1 }) },
-        provinceNameById: { "province:a": "Previous" },
+        hexNameById: { "province:a": "Previous" },
       },
       next,
     );
 
     expect(previous.turnId).toBe(5);
     expect(previous.resourcesByCountry).toEqual({ "country:a": makeResources({ ducats: 1 }) });
-    expect(previous.provinceNameById).toEqual({ "province:a": "Previous" });
-    expect(previous.provinceOwner).toBe(next.provinceOwner);
+    expect(previous.hexNameById).toEqual({ "province:a": "Previous" });
+    expect(previous.hexOwner).toBe(next.hexOwner);
   });
 
   it("clones only selected world sections for later delta comparison", () => {
     const worldBase = makeWorldBase({
       resourcesByCountry: { "country:a": makeResources({ ducats: 3 }) },
-      provinceOwner: { "province:a": "country:a" },
-      provinceNameById: { "province:a": "Praha" },
+      hexOwner: { "province:a": "country:a" },
+      hexNameById: { "province:a": "Praha" },
     });
 
     const snapshot = cloneWorldBaseSectionSnapshot({
       worldBase,
       turnId: 4,
-      mask: WORLD_DELTA_MASK.resourcesByCountry | WORLD_DELTA_MASK.provinceOwner,
+      mask: WORLD_DELTA_MASK.resourcesByCountry | WORLD_DELTA_MASK.hexOwner,
     });
 
     worldBase.resourcesByCountry["country:a"]!.ducats = 99;
-    worldBase.provinceOwner["province:a"] = "country:b";
+    worldBase.hexOwner["province:a"] = "country:b";
 
     expect(snapshot.turnId).toBe(4);
     expect(snapshot.resourcesByCountry).toEqual({ "country:a": makeResources({ ducats: 3 }) });
-    expect(snapshot.provinceOwner).toEqual({ "province:a": "country:a" });
-    expect(snapshot.provinceNameById).toBeUndefined();
+    expect(snapshot.hexOwner).toEqual({ "province:a": "country:a" });
+    expect(snapshot.hexNameById).toBeUndefined();
   });
 
   it("builds websocket compact and baseline delta payloads from compact diff", () => {
@@ -464,8 +464,8 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     resourcesByCountry: {},
     regionOwner: {},
     regionController: {},
-    provinceOwner: {},
-    provinceNameById: {},
+    hexOwner: {},
+    hexNameById: {},
     colonyProgressByRegion: {},
     regionColonizationByRegion: {},
     regionPopulationByRegion: {},

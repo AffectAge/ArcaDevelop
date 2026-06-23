@@ -6,13 +6,13 @@ import type { RouteAuth } from "../security/routeAuth";
 export type MarketCorridorTransportMode = "land" | "sea" | "air" | "pipeline" | "powerGrid";
 
 export type MarketCorridorRoutePoint = {
-  provinceId: string;
+  hexId: string;
   lng: number;
   lat: number;
 };
 
 export type MarketCorridorForeignConstructionRight = {
-  provinceId: string;
+  hexId: string;
   grantorCountryId: string;
   agreementId: string;
   expirationPolicy: TreatyConstructionExpirationPolicy;
@@ -24,7 +24,7 @@ export type MarketCorridorEntry = {
   id: string;
   marketId: string;
   ownerCountryId: string;
-  provinceIds: string[];
+  hexIds: string[];
   routePoints?: MarketCorridorRoutePoint[];
   transportMode: MarketCorridorTransportMode;
   level: number;
@@ -45,7 +45,7 @@ export type MarketCorridorMarket = {
   id: string;
   ownerCountryId: string;
   memberCountryIds: string[];
-  capitalProvinceId?: string | null;
+  capitalHexId?: string | null;
 };
 
 export type MarketCorridorConstructionAgreement = {
@@ -56,9 +56,9 @@ export type MarketCorridorConstructionAgreement = {
 };
 
 export const marketTransportCorridorCreateSchema = z.object({
-  provinceIds: z.array(z.string().trim().min(1).max(120)).min(2).max(128),
+  hexIds: z.array(z.string().trim().min(1).max(120)).min(2).max(128),
   routePoints: z.array(z.object({
-    provinceId: z.string().trim().min(1).max(120),
+    hexId: z.string().trim().min(1).max(120),
     lng: z.coerce.number().min(-180).max(180),
     lat: z.coerce.number().min(-90).max(90),
   })).min(2).max(256).optional(),
@@ -77,19 +77,19 @@ export type MarketCorridorRoutesDependencies = {
   getCorridorsById: () => Record<string, MarketCorridorEntry>;
   getMarketTransportCorridors: (marketId: string, options?: { includeDisabled?: boolean }) => MarketCorridorEntry[];
   normalizeTransportCorridorRoutePoints: (input: unknown) => MarketCorridorRoutePoint[];
-  normalizeProvinceIdList: (input: unknown) => string[];
-  isProvinceAllowedForCorridorOwner: (
-    provinceId: string,
+  normalizeHexIdList: (input: unknown) => string[];
+  isHexAllowedForCorridorOwner: (
+    hexId: string,
     ownerCountryId: string,
     transportMode: MarketCorridorTransportMode,
   ) => boolean;
   isContiguousTransportCorridorRoute: (
-    provinceIds: string[],
+    hexIds: string[],
     routePoints?: MarketCorridorRoutePoint[],
   ) => boolean;
-  getProvinceOwner: (provinceId: string) => string | null;
-  getInfrastructureConstructionRightForProvince: (
-    provinceId: string,
+  getHexOwner: (hexId: string) => string | null;
+  getInfrastructureConstructionRightForHex: (
+    hexId: string,
     ownerCountryId: string,
     transportMode: MarketCorridorTransportMode,
   ) => MarketCorridorConstructionAgreement | null;
@@ -114,7 +114,7 @@ export function registerMarketCorridorRoutes(
     }
     return res.json({
       marketId,
-      capitalProvinceId: market.capitalProvinceId ?? null,
+      capitalHexId: market.capitalHexId ?? null,
       corridors: deps.getMarketTransportCorridors(marketId, { includeDisabled: true }),
     });
   });
@@ -136,33 +136,33 @@ export function registerMarketCorridorRoutes(
       return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
     }
     const routePoints = deps.normalizeTransportCorridorRoutePoints(parsed.data.routePoints);
-    const provinceIds = deps.normalizeProvinceIdList(
-      routePoints.length >= 2 ? routePoints.map((point) => point.provinceId) : parsed.data.provinceIds,
+    const hexIds = deps.normalizeHexIdList(
+      routePoints.length >= 2 ? routePoints.map((point) => point.hexId) : parsed.data.hexIds,
     );
-    if (provinceIds.length < 2) return res.status(400).json({ error: "CORRIDOR_ROUTE_TOO_SHORT" });
+    if (hexIds.length < 2) return res.status(400).json({ error: "CORRIDOR_ROUTE_TOO_SHORT" });
     const transportMode = parsed.data.transportMode;
-    if (provinceIds.some((provinceId) => !deps.isProvinceAllowedForCorridorOwner(provinceId, auth.countryId, transportMode))) {
+    if (hexIds.some((hexId) => !deps.isHexAllowedForCorridorOwner(hexId, auth.countryId, transportMode))) {
       return res.status(400).json({ error: "CORRIDOR_CONSTRUCTION_RIGHT_REQUIRED" });
     }
-    if (routePoints.length >= 2 && routePoints.some((point) => !deps.isProvinceAllowedForCorridorOwner(point.provinceId, auth.countryId, transportMode))) {
+    if (routePoints.length >= 2 && routePoints.some((point) => !deps.isHexAllowedForCorridorOwner(point.hexId, auth.countryId, transportMode))) {
       return res.status(400).json({ error: "CORRIDOR_CONSTRUCTION_RIGHT_REQUIRED" });
     }
-    if (!deps.isContiguousTransportCorridorRoute(provinceIds, routePoints)) {
+    if (!deps.isContiguousTransportCorridorRoute(hexIds, routePoints)) {
       return res.status(400).json({ error: "CORRIDOR_ROUTE_MUST_BE_CONTIGUOUS" });
     }
     const foreignConstructionRights = getForeignConstructionRights({
-      provinceIds,
+      hexIds,
       ownerCountryId: auth.countryId,
       transportMode,
       deps,
     });
-    const costConstruction = deps.getTransportCorridorBuildCost(transportMode, provinceIds.length - 1);
+    const costConstruction = deps.getTransportCorridorBuildCost(transportMode, hexIds.length - 1);
     const corridorId = deps.createId();
     const corridor: MarketCorridorEntry = {
       id: corridorId,
       marketId,
       ownerCountryId: auth.countryId,
-      provinceIds,
+      hexIds,
       routePoints: routePoints.length >= 2 ? routePoints : undefined,
       transportMode,
       level: 1,
@@ -218,11 +218,11 @@ export function registerMarketCorridorRoutes(
       corridor.status = "active";
     }
     if (action === "upgrade" && corridor.status !== "building") {
-      if (corridor.provinceIds.some((provinceId) => !deps.isProvinceAllowedForCorridorOwner(provinceId, auth.countryId, corridor.transportMode))) {
+      if (corridor.hexIds.some((hexId) => !deps.isHexAllowedForCorridorOwner(hexId, auth.countryId, corridor.transportMode))) {
         return res.status(400).json({ error: "CORRIDOR_CONSTRUCTION_RIGHT_REQUIRED" });
       }
       corridor.foreignConstructionRights = getForeignConstructionRights({
-        provinceIds: corridor.provinceIds,
+        hexIds: corridor.hexIds,
         ownerCountryId: auth.countryId,
         transportMode: corridor.transportMode,
         deps,
@@ -230,7 +230,7 @@ export function registerMarketCorridorRoutes(
       corridor.level = Math.max(1, Math.floor(corridor.level ?? 1)) + 1;
       corridor.status = "building";
       corridor.progressConstruction = 0;
-      corridor.costConstruction = deps.getTransportCorridorBuildCost(corridor.transportMode, corridor.provinceIds.length - 1) * corridor.level;
+      corridor.costConstruction = deps.getTransportCorridorBuildCost(corridor.transportMode, corridor.hexIds.length - 1) * corridor.level;
       corridor.completedAt = null;
     }
     if (action === "demolish") {
@@ -274,23 +274,23 @@ export function registerMarketCorridorRoutes(
 }
 
 function getForeignConstructionRights(params: {
-  provinceIds: string[];
+  hexIds: string[];
   ownerCountryId: string;
   transportMode: MarketCorridorTransportMode;
-  deps: Pick<MarketCorridorRoutesDependencies, "getProvinceOwner" | "getInfrastructureConstructionRightForProvince">;
+  deps: Pick<MarketCorridorRoutesDependencies, "getHexOwner" | "getInfrastructureConstructionRightForHex">;
 }): MarketCorridorForeignConstructionRight[] {
-  return params.provinceIds.flatMap((provinceId) => {
-    const provinceOwnerId = params.deps.getProvinceOwner(provinceId);
-    if (!provinceOwnerId || provinceOwnerId === params.ownerCountryId) return [];
-    const agreement = params.deps.getInfrastructureConstructionRightForProvince(
-      provinceId,
+  return params.hexIds.flatMap((hexId) => {
+    const hexOwnerId = params.deps.getHexOwner(hexId);
+    if (!hexOwnerId || hexOwnerId === params.ownerCountryId) return [];
+    const agreement = params.deps.getInfrastructureConstructionRightForHex(
+      hexId,
       params.ownerCountryId,
       params.transportMode,
     );
     if (!agreement) return [];
     return [{
-      provinceId,
-      grantorCountryId: provinceOwnerId,
+      hexId,
+      grantorCountryId: hexOwnerId,
       agreementId: agreement.id,
       expirationPolicy: agreement.expirationPolicy,
       sourceProposalId: agreement.sourceProposalId ?? null,

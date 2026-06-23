@@ -149,7 +149,7 @@ function makeDeps(options?: {
     crestImageRule: { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 },
     masks: {
       resourcesByCountry: 1,
-      provinceOwner: 2,
+      hexOwner: 2,
       colonyProgressByRegion: 4,
       regionConstructionQueueByRegion: 8,
       parliamentByCountry: 16,
@@ -221,10 +221,10 @@ function makeDeletionPlan(): CountryDeletionPlan {
   return {
     countryId: "country:b",
     resourcesEntry: true,
-    ownedProvinceIds: ["province:a"],
-    colonizationProvinceIds: [],
-    emptyColonizationProvinceIds: [],
-    constructionQueueProvinceIds: [],
+    ownedHexIds: ["province:a"],
+    colonizationHexIds: [],
+    emptyColonizationHexIds: [],
+    constructionQueueHexIds: [],
     constructionProjectIds: [],
     diplomacyProposalIds: [],
     divisionIds: [],

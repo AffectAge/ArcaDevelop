@@ -16,11 +16,11 @@ import {
   adminUpdateRegionPopulation,
   adminUpdateRegion,
   fetchAdminRegions,
-  fetchAdminProvinces,
+  fetchAdminHexes,
   fetchCountries,
   type AdminPopulationScope,
   type AdminPopulationStrategy,
-  type AdminProvinceItem,
+  type AdminHexItem,
   type AdminRegionItem,
 } from "../lib/api";
 import { AppButton } from "./ui/AppButton";
@@ -33,7 +33,7 @@ type Props = {
   currentCountryId: string;
   onClose: () => void;
   onSessionCountryUpdated: (country: Country) => void;
-  initialProvinceId?: string | null;
+  initialHexId?: string | null;
 };
 
 const categories = [
@@ -102,12 +102,12 @@ function getPopulationTotal(population: RegionPopulation | null | undefined): nu
   return Math.max(0, Math.floor((population?.pops ?? []).reduce((sum, pop) => sum + Math.max(0, Number(pop.size)), 0)));
 }
 
-export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCountryUpdated, initialProvinceId }: Props) {
+export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCountryUpdated, initialHexId }: Props) {
   const { t, locale } = useUiText();
   const [activeCategory, setActiveCategory] = useState<(typeof categories)[number]["id"]>("countries");
   const [countrySection, setCountrySection] = useState<"general" | "punishments">("general");
   const [countries, setCountries] = useState<Country[]>([]);
-  const [provinces, setProvinces] = useState<AdminProvinceItem[]>([]);
+  const [hexes, setHexes] = useState<AdminHexItem[]>([]);
   const [regions, setRegions] = useState<AdminRegionItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -125,12 +125,12 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
   const [punishmentReasonText, setPunishmentReasonText] = useState("");
   const [ignoreUntilTurn, setIgnoreUntilTurn] = useState(0);
   const [marketId, setMarketId] = useState<string>("");
-  const [selectedProvinceId, setSelectedProvinceId] = useState<string>("");
+  const [selectedHexId, setSelectedHexId] = useState<string>("");
   const [selectedRegionId, setSelectedRegionId] = useState<string>("");
-  const [provinceOwnerCountryId, setProvinceOwnerCountryId] = useState<string>("");
+  const [hexOwnerCountryId, setHexOwnerCountryId] = useState<string>("");
   const [regionColonizationCost, setRegionColonizationCost] = useState(100);
   const [regionColonizationDisabled, setRegionColonizationDisabled] = useState(false);
-  const [provinceSearch, setProvinceSearch] = useState("");
+  const [provinceSearch, setHexSearch] = useState("");
   const [populationScope, setPopulationScope] = useState<AdminPopulationScope>("region");
   const [populationStrategy, setPopulationStrategy] = useState<AdminPopulationStrategy>("random");
   const [populationTargetCountryId, setPopulationTargetCountryId] = useState<string>("");
@@ -142,10 +142,10 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
   const [broadcastMessage, setBroadcastMessage] = useState("");
 
   const selectedCountry = useMemo(() => countries.find((c) => c.id === selectedCountryId) ?? null, [countries, selectedCountryId]);
-  const selectedProvince = useMemo(() => provinces.find((p) => p.id === selectedProvinceId) ?? null, [provinces, selectedProvinceId]);
+  const selectedHex = useMemo(() => provinces.find((p) => p.id === selectedHexId) ?? null, [hexes, selectedHexId]);
   const selectedRegion = useMemo(() => regions.find((region) => region.id === selectedRegionId) ?? null, [regions, selectedRegionId]);
-  const selectedProvinceOwner = useMemo(() => countries.find((c) => c.id === provinceOwnerCountryId) ?? null, [countries, provinceOwnerCountryId]);
-  const filteredProvinces = useMemo(() => {
+  const selectedHexOwner = useMemo(() => countries.find((c) => c.id === hexOwnerCountryId) ?? null, [countries, hexOwnerCountryId]);
+  const filteredHexes = useMemo(() => {
     const q = provinceSearch.trim().toLowerCase();
     if (!q) return provinces;
     return provinces.filter((p) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
@@ -184,13 +184,13 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     let cancelled = false;
     setLoading(true);
 
-    Promise.all([fetchCountries(), fetchAdminProvinces(token), fetchAdminRegions(token)])
+    Promise.all([fetchCountries(), fetchAdminHexes(token), fetchAdminRegions(token)])
       .then(([countryList, provinceList, regionList]) => {
         if (cancelled) {
           return;
         }
         setCountries(countryList);
-        setProvinces(provinceList);
+        setHexes(provinceList);
         setRegions(regionList);
         if (!selectedCountryId && countryList.length > 0) {
           setSelectedCountryId(countryList[0].id);
@@ -198,14 +198,14 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
         if (!populationTargetCountryId && countryList.length > 0) {
           setPopulationTargetCountryId(countryList[0].id);
         }
-        if (!selectedProvinceId && provinceList.length > 0) {
-          setSelectedProvinceId(provinceList[0].id);
+        if (!selectedHexId && provinceList.length > 0) {
+          setSelectedHexId(provinceList[0].id);
         }
         if (!selectedRegionId && regionList.length > 0) {
-          const regionIdFromInitialProvince = initialProvinceId
-            ? provinceList.find((province) => province.id === initialProvinceId)?.regionId
+          const regionIdFromInitialHex = initialHexId
+            ? provinceList.find((province) => province.id === initialHexId)?.regionId
             : null;
-          setSelectedRegionId(regionIdFromInitialProvince ?? regionList[0].id);
+          setSelectedRegionId(regionIdFromInitialHex ?? regionList[0].id);
         }
       })
       .finally(() => {
@@ -217,7 +217,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     return () => {
       cancelled = true;
     };
-  }, [initialProvinceId, open, token]);
+  }, [initialHexId, open, token]);
 
   useEffect(() => {
     if (!selectedCountry) {
@@ -239,7 +239,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     if (!selectedRegion) {
       return;
     }
-    setProvinceOwnerCountryId(selectedRegion.ownerCountryId ?? "");
+    setHexOwnerCountryId(selectedRegion.ownerCountryId ?? "");
     setRegionColonizationCost(selectedRegion.colonizationCost);
     setRegionColonizationDisabled(selectedRegion.colonizationDisabled);
     const population = selectedRegion.population ?? null;
@@ -247,16 +247,16 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
   }, [selectedRegion]);
 
   useEffect(() => {
-    if (!open || !initialProvinceId) {
+    if (!open || !initialHexId) {
       return;
     }
     setActiveCategory("provinces");
-    setSelectedProvinceId(initialProvinceId);
-    const regionId = provinces.find((province) => province.id === initialProvinceId)?.regionId;
+    setSelectedHexId(initialHexId);
+    const regionId = provinces.find((province) => province.id === initialHexId)?.regionId;
     if (regionId) {
       setSelectedRegionId(regionId);
     }
-  }, [initialProvinceId, open, provinces]);
+  }, [initialHexId, open, provinces]);
 
   useEffect(() => {
     if (!flagFile) {
@@ -383,7 +383,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     }
   };
 
-  const saveProvince = async () => {
+  const saveHex = async () => {
     if (!selectedRegion) {
       return;
     }
@@ -392,7 +392,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
       const updated = await adminUpdateRegion(token, selectedRegion.id, {
         colonizationCost: Math.max(1, Math.floor(regionColonizationCost)),
         colonizationDisabled: regionColonizationDisabled,
-        ownerCountryId: provinceOwnerCountryId.trim() === "" ? null : provinceOwnerCountryId,
+        ownerCountryId: hexOwnerCountryId.trim() === "" ? null : hexOwnerCountryId,
       });
       setRegions((prev) => prev.map((region) => (region.id === updated.id ? { ...region, ...updated } : region)));
       toast.success(t("adminPanel.regionUpdated"));
@@ -403,7 +403,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     }
   };
 
-  const resetProvinceCostToAuto = async () => {
+  const resetHexCostToAuto = async () => {
     if (!selectedRegion) return;
     setSaving(true);
     try {
@@ -688,15 +688,15 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
                         <label className={labelClass}>{t("modifiers.scope.province")}</label>
                         <input
                           value={provinceSearch}
-                          onChange={(e) => setProvinceSearch(e.target.value)}
+                          onChange={(e) => setHexSearch(e.target.value)}
                           placeholder={t("adminPanel.provinceSearchPlaceholder")}
                           className={`mb-2 ${inputClass}`}
                         />
                         <Listbox
-                          value={selectedProvinceId}
-                          onChange={(provinceId) => {
-                            setSelectedProvinceId(provinceId);
-                            const regionId = provinces.find((province) => province.id === provinceId)?.regionId;
+                          value={selectedHexId}
+                          onChange={(hexId) => {
+                            setSelectedHexId(hexId);
+                            const regionId = provinces.find((province) => province.id === hexId)?.regionId;
                             if (regionId) {
                               setSelectedRegionId(regionId);
                             }
@@ -704,11 +704,11 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
                         >
                           <div className="relative">
                             <Listbox.Button className={listboxButtonClass}>
-                              {selectedProvince ? `${selectedProvince.name} (${selectedProvince.id})` : t("adminPanel.selectProvince")}
+                              {selectedHex ? `${selectedHex.name} (${selectedHex.id})` : t("adminPanel.selectHex")}
                               <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-text-muted))]" />
                             </Listbox.Button>
                             <Listbox.Options className={listboxOptionsClass}>
-                              {filteredProvinces.map((province) => (
+                              {filteredHexes.map((province) => (
                                 <Listbox.Option
                                   key={province.id}
                                   value={province.id}
@@ -723,7 +723,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
                                   )}
                                 </Listbox.Option>
                               ))}
-                              {filteredProvinces.length === 0 && (
+                              {filteredHexes.length === 0 && (
                                 <div className="px-3 py-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("civilopedia.noResults")}</div>
                               )}
                             </Listbox.Options>
@@ -732,13 +732,13 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
                         <div className="mt-2 text-xs text-[rgb(var(--theme-text-muted))]">{t("adminPanel.autoCostHint")}</div>
                       </div>
 
-                      {selectedProvince && (
+                      {selectedHex && (
                         <div className="space-y-4 rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                           <div className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2 text-xs text-[rgb(var(--theme-text-secondary))]">
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                              <span>{t("adminPanel.idLabel")} <span className="text-[rgb(var(--theme-text-primary))]">{selectedProvince.id}</span></span>
+                              <span>{t("adminPanel.idLabel")} <span className="text-[rgb(var(--theme-text-primary))]">{selectedHex.id}</span></span>
                               <span>
-                                {t("provinceTooltip.area")}: <span className="text-[rgb(var(--theme-text-primary))]">{new Intl.NumberFormat(locale === "ru" ? "ru-RU" : "en-US").format(Math.round(selectedProvince.areaKm2 ?? 0))} km2</span>
+                                {t("provinceTooltip.area")}: <span className="text-[rgb(var(--theme-text-primary))]">{new Intl.NumberFormat(locale === "ru" ? "ru-RU" : "en-US").format(Math.round(selectedHex.areaKm2 ?? 0))} km2</span>
                               </span>
                             </div>
                           </div>
@@ -766,10 +766,10 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
                             </div>
                             <div>
                               <label className={labelClass}>{t("provinceTooltip.owner")}</label>
-                              <Listbox value={provinceOwnerCountryId} onChange={setProvinceOwnerCountryId}>
+                              <Listbox value={hexOwnerCountryId} onChange={setHexOwnerCountryId}>
                                 <div className="relative">
                                   <Listbox.Button className={listboxButtonClass}>
-                                    {provinceOwnerCountryId ? (selectedProvinceOwner?.name ?? provinceOwnerCountryId) : t("adminPanel.neutralProvince")}
+                                    {hexOwnerCountryId ? (selectedHexOwner?.name ?? hexOwnerCountryId) : t("adminPanel.neutralHex")}
                                     <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-text-muted))]" />
                                   </Listbox.Button>
                                   <Listbox.Options className={listboxOptionsClass}>
@@ -779,7 +779,7 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
                                     >
                                       {({ selected }) => (
                                         <>
-                                          <span className={selected ? "text-[rgb(var(--theme-accent))]" : ""}>{t("adminPanel.neutralProvince")}</span>
+                                          <span className={selected ? "text-[rgb(var(--theme-accent))]" : ""}>{t("adminPanel.neutralHex")}</span>
                                           {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-accent))]" />}
                                         </>
                                       )}
@@ -834,15 +834,15 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
                           <div className="flex flex-wrap gap-2">
                             <button
                               type="button"
-                              onClick={resetProvinceCostToAuto}
+                              onClick={resetHexCostToAuto}
                               disabled={saving || !selectedRegion}
                               className="inline-flex items-center gap-2 rounded-lg border border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] px-3 py-2 text-sm text-[rgb(var(--theme-success))] transition hover:brightness-110 disabled:opacity-60"
                             >
                               <RotateCcw size={14} />
                               {t("adminPanel.resetCostToAuto")}
                             </button>
-                            <button onClick={saveProvince} disabled={saving || !selectedRegion} className="rounded-lg bg-[rgb(var(--theme-accent))] px-4 py-2 text-sm font-semibold text-[rgb(var(--theme-accent-contrast))] disabled:opacity-60">
-                              {t("adminPanel.saveProvince")}
+                            <button onClick={saveHex} disabled={saving || !selectedRegion} className="rounded-lg bg-[rgb(var(--theme-accent))] px-4 py-2 text-sm font-semibold text-[rgb(var(--theme-accent-contrast))] disabled:opacity-60">
+                              {t("adminPanel.saveHex")}
                             </button>
                           </div>
                         </div>

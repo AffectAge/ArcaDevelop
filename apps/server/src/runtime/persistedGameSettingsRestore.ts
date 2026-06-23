@@ -24,7 +24,7 @@ import {
   normalizeMarketVisibility,
   normalizeNumberHistoryMap,
   normalizeNumberMap,
-  normalizeProvinceIdList,
+  normalizeHexIdList,
   normalizeTransportCorridorRoutePoints,
   normalizeTransportCorridorStatus,
 } from "./marketSettingsNormalizers";
@@ -55,12 +55,12 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
         ...entry,
         logoUrl: normalizeContentLogoUrl("resourceCategories", entry.logoUrl),
       })),
-      provinceTypes: normalizeContentCultures((next as Partial<{ content?: { provinceTypes?: unknown } }>).content?.provinceTypes),
-      provinceClimates: normalizeContentCultures((next as Partial<{ content?: { provinceClimates?: unknown } }>).content?.provinceClimates),
-      provinceLandscapes: normalizeContentCultures((next as Partial<{ content?: { provinceLandscapes?: unknown } }>).content?.provinceLandscapes),
-      provinceContinents: normalizeContentCultures((next as Partial<{ content?: { provinceContinents?: unknown } }>).content?.provinceContinents),
-      provinceStrategicRegions: normalizeContentCultures(
-        (next as Partial<{ content?: { provinceStrategicRegions?: unknown } }>).content?.provinceStrategicRegions,
+      hexTypes: normalizeContentCultures((next as Partial<{ content?: { hexTypes?: unknown } }>).content?.hexTypes),
+      hexClimates: normalizeContentCultures((next as Partial<{ content?: { hexClimates?: unknown } }>).content?.hexClimates),
+      hexLandscapes: normalizeContentCultures((next as Partial<{ content?: { hexLandscapes?: unknown } }>).content?.hexLandscapes),
+      hexContinents: normalizeContentCultures((next as Partial<{ content?: { hexContinents?: unknown } }>).content?.hexContinents),
+      hexStrategicRegions: normalizeContentCultures(
+        (next as Partial<{ content?: { hexStrategicRegions?: unknown } }>).content?.hexStrategicRegions,
       ),
       professions: normalizeContentCultures((next as Partial<{ content?: { professions?: unknown } }>).content?.professions),
       ideologies: normalizeContentCultures((next as Partial<{ content?: { ideologies?: unknown } }>).content?.ideologies),
@@ -127,9 +127,9 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
       recolorDucats: numberOrDefault(next.customization?.recolorDucats, defaults.customization.recolorDucats),
       flagDucats: numberOrDefault(next.customization?.flagDucats, defaults.customization.flagDucats),
       crestDucats: numberOrDefault(next.customization?.crestDucats, defaults.customization.crestDucats),
-      provinceRenameDucats: numberOrDefault(
-        next.customization?.provinceRenameDucats,
-        defaults.customization.provinceRenameDucats,
+      hexRenameDucats: numberOrDefault(
+        next.customization?.hexRenameDucats,
+        defaults.customization.hexRenameDucats,
       ),
     },
     military: {
@@ -297,9 +297,9 @@ function restoreMarketsById(next: Partial<GameSettings>, defaults: GameSettings)
           name: typeof value.name === "string" && value.name.trim() ? value.name.trim() : `Рынок ${marketId}`,
           logoUrl: typeof value.logoUrl === "string" || value.logoUrl === null ? (value.logoUrl ?? null) : null,
           ownerCountryId,
-          capitalProvinceId:
-            typeof value.capitalProvinceId === "string" && value.capitalProvinceId.trim().length > 0
-              ? value.capitalProvinceId.trim()
+          capitalHexId:
+            typeof value.capitalHexId === "string" && value.capitalHexId.trim().length > 0
+              ? value.capitalHexId.trim()
               : null,
           memberCountryIds: Array.isArray(value.memberCountryIds)
             ? [...new Set(value.memberCountryIds.filter((row): row is string => typeof row === "string" && row.trim().length > 0).map((row) => row.trim()))]
@@ -338,12 +338,12 @@ function restoreTransportCorridorsById(
     Object.entries(next.markets.transportCorridorsById as Record<string, unknown>).flatMap(([corridorId, raw]) => {
       const value = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
       const marketId = typeof value.marketId === "string" ? value.marketId.trim() : "";
-      const provinceIds = normalizeProvinceIdList(value.provinceIds);
-      if (!marketId || provinceIds.length < 2) return [];
+      const hexIds = normalizeHexIdList(value.hexIds);
+      if (!marketId || hexIds.length < 2) return [];
       const transportMode = normalizeTransportMode(value.transportMode);
       const costConstruction = Math.max(
         1,
-        Math.floor(Number(value.costConstruction ?? getTransportCorridorBuildCost(transportMode, provinceIds.length - 1)) || 1),
+        Math.floor(Number(value.costConstruction ?? getTransportCorridorBuildCost(transportMode, hexIds.length - 1)) || 1),
       );
       return [[
         corridorId,
@@ -351,8 +351,8 @@ function restoreTransportCorridorsById(
           id: corridorId,
           marketId,
           ownerCountryId: typeof value.ownerCountryId === "string" ? value.ownerCountryId.trim() : "",
-          provinceIds,
-          routePoints: normalizeTransportCorridorRoutePoints(value.routePoints).filter((point) => provinceIds.includes(point.provinceId)),
+          hexIds,
+          routePoints: normalizeTransportCorridorRoutePoints(value.routePoints).filter((point) => hexIds.includes(point.hexId)),
           transportMode,
           level: Math.max(1, Math.floor(Number(value.level ?? 1) || 1)),
           status: normalizeTransportCorridorStatus(value.status),
@@ -369,7 +369,7 @@ function restoreTransportCorridorsById(
             ),
           ),
           foreignConstructionRights: normalizeCorridorForeignConstructionRights(value.foreignConstructionRights).filter((entry) =>
-            provinceIds.includes(entry.provinceId),
+            hexIds.includes(entry.hexId),
           ),
           nationalizedAt:
             typeof value.nationalizedAt === "string" && value.nationalizedAt.trim().length > 0 ? value.nationalizedAt.trim() : null,

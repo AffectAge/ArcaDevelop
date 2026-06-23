@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { resolveAuthoredProvinceColorState } from "./MapView";
+import { resolveAuthoredHexColorState } from "./MapView";
 
-describe("resolveAuthoredProvinceColorState", () => {
+describe("resolveAuthoredHexColorState", () => {
   it("derives separate province and region map colors from authored data", () => {
-    const first = resolveAuthoredProvinceColorState({
-      provinceColor: "#8fb9a8",
+    const first = resolveAuthoredHexColorState({
+      hexColor: "#8fb9a8",
       regionColor: "#22d3ee",
       regionId: "region:world",
     });
-    const second = resolveAuthoredProvinceColorState({
-      provinceColor: "#b7a6d9",
+    const second = resolveAuthoredHexColorState({
+      hexColor: "#b7a6d9",
       regionColor: "#22d3ee",
       regionId: "region:world",
     });
-    const third = resolveAuthoredProvinceColorState({
-      provinceColor: "#8fb9a8",
+    const third = resolveAuthoredHexColorState({
+      hexColor: "#8fb9a8",
       regionColor: "#f59e0b",
       regionId: "region:other",
     });

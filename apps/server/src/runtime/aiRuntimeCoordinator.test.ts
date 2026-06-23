@@ -226,7 +226,7 @@ function createRuntimeParamsWithoutResources(): AiOrderDeltaRuntimeParams {
     parseRequestedBuildingIdFromPayload: () => "",
     resolveBuildingOwnerFromPayload: () => null,
     isCountryAllowedForBuildingWithEngine: async () => false,
-    getProvinceBuildRestriction: () => null,
+    getHexBuildRestriction: () => null,
     isBuildingUnlockedForCountry: () => false,
     countBuildingOccurrences: () => ({ byCountry: 0, global: 0 }),
     getCountryBuildLimit: () => null,

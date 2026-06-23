@@ -65,14 +65,14 @@ const militaryCandidate: AiDiplomacyMilitaryCandidate = {
   kind: "army-move",
   countryId: "country:alpha",
   divisionId: "division:alpha:1",
-  fromProvinceId: "province:alpha:capital",
-  targetProvinceId: "province:alpha:border",
+  fromHexId: "hex:0:0",
+  targetHexId: "hex:1:0",
   requiresValidatedPipeline: true,
   orderDraft: {
     type: "ARMY_MOVE",
     countryId: "country:alpha",
-    provinceId: "province:alpha:border",
-    payload: { divisionId: "division:alpha:1", path: ["province:alpha:border"] },
+    targetHexId: "hex:1:0",
+    payload: { divisionId: "division:alpha:1", path: ["hex:1:0"] },
   },
 };
 

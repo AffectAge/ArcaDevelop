@@ -68,7 +68,7 @@ const baseCustomization: CustomizationSettings = {
   recolorDucats: 10,
   flagDucats: 15,
   crestDucats: 15,
-  provinceRenameDucats: 25,
+  hexRenameDucats: 25,
 };
 const baseMilitary: MilitarySettings = {
   militaryFormationSpeed: 10,
@@ -264,11 +264,11 @@ describe("scenarioDefinesLoader", () => {
 
     expect(
       normalizeScenarioCustomizationDefines(
-        { renameDucats: 1, recolorDucats: 2, flagDucats: 3, crestDucats: 4, provinceRenameDucats: 5 },
+        { renameDucats: 1, recolorDucats: 2, flagDucats: 3, crestDucats: 4, hexRenameDucats: 5 },
         baseCustomization,
         options,
       ),
-    ).toEqual({ renameDucats: 1, recolorDucats: 2, flagDucats: 3, crestDucats: 4, provinceRenameDucats: 5 });
+    ).toEqual({ renameDucats: 1, recolorDucats: 2, flagDucats: 3, crestDucats: 4, hexRenameDucats: 5 });
   });
 
   it("rejects invalid colonization and customization defines", () => {

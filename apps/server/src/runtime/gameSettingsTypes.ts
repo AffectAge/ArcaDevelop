@@ -94,8 +94,8 @@ export type BuildingContentEntry = GameContentEntry & {
   workforceRequirements?: WorkforceRequirement[];
   allowedCountryIds?: string[];
   deniedCountryIds?: string[];
-  allowedProvinceTypes?: string[];
-  deniedProvinceTypes?: string[];
+  allowedHexTypes?: string[];
+  deniedHexTypes?: string[];
   allowedClimates?: string[];
   deniedClimates?: string[];
   allowedLandscapes?: string[];
@@ -192,7 +192,7 @@ export type InfrastructureConstructionRightsEntry = {
 export type TransportCorridorStatus = "building" | "active" | "closed";
 
 export type TransportCorridorRoutePoint = {
-  provinceId: string;
+  hexId: string;
   lng: number;
   lat: number;
 };
@@ -201,7 +201,7 @@ export type TransportCorridorEntry = {
   id: string;
   marketId: string;
   ownerCountryId: string;
-  provinceIds: string[];
+  hexIds: string[];
   routePoints?: TransportCorridorRoutePoint[];
   transportMode: GoodTransportMode;
   level: number;
@@ -212,7 +212,7 @@ export type TransportCorridorEntry = {
   lastCapacityByMode?: Record<string, number>;
   lastLoadHistoryByMode?: Record<string, number[]>;
   foreignConstructionRights?: Array<{
-    provinceId: string;
+    hexId: string;
     grantorCountryId: string;
     agreementId: string;
     expirationPolicy: TreatyConstructionExpirationPolicy;
@@ -229,11 +229,11 @@ export type GameSettings = {
   content: {
     races: GameContentEntry[];
     resourceCategories: GameContentEntry[];
-    provinceTypes: GameContentEntry[];
-    provinceClimates: GameContentEntry[];
-    provinceLandscapes: GameContentEntry[];
-    provinceContinents: GameContentEntry[];
-    provinceStrategicRegions: GameContentEntry[];
+    hexTypes: GameContentEntry[];
+    hexClimates: GameContentEntry[];
+    hexLandscapes: GameContentEntry[];
+    hexContinents: GameContentEntry[];
+    hexStrategicRegions: GameContentEntry[];
     professions: GameContentEntry[];
     ideologies: GameContentEntry[];
     interestGroups: GameContentEntry[];
@@ -302,7 +302,7 @@ export type GameSettings = {
         name: string;
         logoUrl: string | null;
         ownerCountryId: string;
-        capitalProvinceId?: string | null;
+        capitalHexId?: string | null;
         memberCountryIds: string[];
         visibility: "public" | "private";
         createdAt: string;
@@ -349,7 +349,7 @@ export type GameSettings = {
     recolorDucats: number;
     flagDucats: number;
     crestDucats: number;
-    provinceRenameDucats: number;
+    hexRenameDucats: number;
   };
   military: {
     militaryFormationSpeed: number;

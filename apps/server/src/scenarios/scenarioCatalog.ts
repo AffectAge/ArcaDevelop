@@ -18,7 +18,7 @@ export type ScenarioDescriptor = {
     root: string;
     hasVectorTiles: boolean;
     hasRasterTiles: boolean;
-    hasProvinces: boolean;
+    hasHexes: boolean;
   };
   contentFiles: string[];
   setupFiles: string[];
@@ -29,7 +29,7 @@ export type FoundScenario = {
   scenarioDir: string;
   manifest: ScenarioManifest;
   mapRoot: string;
-  provinceIndexPath: string;
+  hexIndexPath: string;
 };
 
 export type ScenarioCatalogParams = {
@@ -90,7 +90,7 @@ function describeScenario(
   if (!result) return null;
   const { id, manifest } = result;
   const { dataRoot, activeScenarioId } = params;
-  const { mapRoot, provinceIndexPath } = getScenarioRuntimePaths({ scenarioDir, manifest, dataRoot });
+  const { mapRoot, hexIndexPath } = getScenarioRuntimePaths({ scenarioDir, manifest, dataRoot });
   const startTurn =
     typeof manifest.startTurn === "number" && Number.isFinite(manifest.startTurn)
       ? Math.max(1, Math.floor(manifest.startTurn))
@@ -106,9 +106,9 @@ function describeScenario(
     active: id === activeScenarioId,
     map: {
       root: relative(dataRoot, mapRoot).replace(/\\/g, "/") || ".",
-      hasVectorTiles: existsSync(resolve(mapRoot, "tiles/adm1")),
+      hasVectorTiles: existsSync(resolve(mapRoot, "tiles/hex")),
       hasRasterTiles: existsSync(resolve(mapRoot, "tiles/raster")),
-      hasProvinces: existsSync(provinceIndexPath),
+      hasHexes: existsSync(hexIndexPath),
     },
     contentFiles: listJsonFileNames(resolve(scenarioDir, "content")),
     setupFiles: listJsonFileNames(resolve(scenarioDir, "setup")),

@@ -13,7 +13,7 @@ export type MarketReadMarket = {
   name: string;
   logoUrl: string | null;
   ownerCountryId: string;
-  capitalProvinceId?: string | null;
+  capitalHexId?: string | null;
   memberCountryIds: string[];
   visibility: "public" | "private";
   createdAt: string;
@@ -46,7 +46,7 @@ export type MarketOverviewState = {
   exportsByCountryByCountryAndGood: Record<string, Record<string, Record<string, number>>>;
   importsByMarketByMarketAndGood: Record<string, Record<string, Record<string, number>>>;
   exportsByMarketByMarketAndGood: Record<string, Record<string, Record<string, number>>>;
-  logisticsFailuresByProvince?: Record<string, unknown>;
+  logisticsFailuresByHex?: Record<string, unknown>;
   alertsByCountry: Record<string, unknown[]>;
 };
 
@@ -65,7 +65,7 @@ export type MarketReadRoutesDependencies = {
   getGlobalGoodOfferHistoryByResourceId: () => Record<string, number[]>;
   getGlobalGoodProductionFactHistoryByResourceId: () => Record<string, number[]>;
   getGlobalGoodProductionMaxHistoryByResourceId: () => Record<string, number[]>;
-  getProvinceOwner: (provinceId: string) => string | null;
+  getHexOwner: (hexId: string) => string | null;
   getMarketTransportCorridors: (marketId: string, options?: { includeDisabled?: boolean }) => MarketCorridorEntry[];
   getTransportCorridorCapacity: (corridor: MarketCorridorEntry, categoryId: string | null) => number;
   getTransportModes: () => MarketCorridorTransportMode[];
@@ -141,7 +141,7 @@ export function registerMarketReadRoutes(app: express.Express, deps: MarketReadR
             ownerCountryName: owner?.name ?? market.ownerCountryId,
           }),
           logoUrl: market.logoUrl,
-          capitalProvinceId: market.capitalProvinceId ?? null,
+          capitalHexId: market.capitalHexId ?? null,
           ownerCountryId: market.ownerCountryId,
           ownerCountryName: owner?.name ?? market.ownerCountryId,
           ownerCountryFlagUrl: owner?.flagUrl ?? null,
@@ -214,9 +214,9 @@ export function buildMarketOverviewResponse(countryId: string, deps: MarketReadR
       },
     ]),
   );
-  const logisticsFailuresByProvince = Object.fromEntries(
-    Object.entries(overview.logisticsFailuresByProvince ?? {}).filter(
-      ([provinceId]) => deps.getProvinceOwner(provinceId) === countryId,
+  const logisticsFailuresByHex = Object.fromEntries(
+    Object.entries(overview.logisticsFailuresByHex ?? {}).filter(
+      ([hexId]) => deps.getHexOwner(hexId) === countryId,
     ),
   );
   const corridorServiceAreas = deps.getMarketTransportCorridors(marketId, { includeDisabled: true }).map((corridor) => {
@@ -227,39 +227,39 @@ export function buildMarketOverviewResponse(countryId: string, deps: MarketReadR
       marketId: corridor.marketId,
       ownerCountryId: corridor.ownerCountryId,
       transportMode: corridor.transportMode,
-      provinceIds: corridor.provinceIds,
+      hexIds: corridor.hexIds,
       capacity: round3(capacity),
       load: round3(load),
       utilization: capacity > 0 ? round3(Math.max(0, Math.min(1, load / capacity))) : 0,
       status: corridor.status,
     };
   });
-  const coverageByModeByProvince = Object.fromEntries(
+  const coverageByModeByHex = Object.fromEntries(
     deps.getTransportModes().map((mode) => [mode, {} as Record<string, { capacity: number; load: number; utilization: number; corridorIds: string[] }>]),
   ) as Record<MarketCorridorTransportMode, Record<string, { capacity: number; load: number; utilization: number; corridorIds: string[] }>>;
   for (const area of corridorServiceAreas) {
     if (area.status !== "active") continue;
-    for (const provinceId of area.provinceIds) {
-      const byProvince = coverageByModeByProvince[area.transportMode];
-      const current = byProvince[provinceId] ?? { capacity: 0, load: 0, utilization: 0, corridorIds: [] };
+    for (const hexId of area.hexIds) {
+      const byHex = coverageByModeByHex[area.transportMode];
+      const current = byHex[hexId] ?? { capacity: 0, load: 0, utilization: 0, corridorIds: [] };
       current.capacity = round3(current.capacity + area.capacity);
       current.load = round3(current.load + area.load);
       current.utilization = current.capacity > 0 ? round3(Math.max(0, Math.min(1, current.load / current.capacity))) : 0;
       if (!current.corridorIds.includes(area.corridorId)) current.corridorIds.push(area.corridorId);
-      byProvince[provinceId] = current;
+      byHex[hexId] = current;
     }
   }
   return {
     turnId,
     countryId,
     marketId,
-    marketCapitalProvinceId: marketRecord?.capitalProvinceId ?? null,
+    marketCapitalHexId: marketRecord?.capitalHexId ?? null,
     transportCorridors: deps.getMarketTransportCorridors(marketId, { includeDisabled: true }),
     logisticsSnapshot: {
       turnId,
       corridorServiceAreas,
-      coverageByModeByProvince,
-      failuresByProvince: logisticsFailuresByProvince,
+      coverageByModeByHex,
+      failuresByHex: logisticsFailuresByHex,
     },
     goods,
     tradeByGood,

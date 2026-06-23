@@ -28,7 +28,7 @@ import type { MarketPriceRuntimeState } from "./marketPriceRuntimeState";
 import { getTransportCorridorBuildCost } from "./marketSettingsNormalizers";
 import {
   normalizeMarketVisibility,
-  normalizeProvinceIdList,
+  normalizeHexIdList,
   normalizeTransportCorridorRoutePoints,
 } from "./marketSettingsNormalizers";
 import { round3 } from "./numberRuntime";
@@ -94,7 +94,7 @@ type ServerMainRouteRegistrationRuntimeParams = {
   deleteOrdersForTurn: (turnId: number) => boolean;
   getActiveColonizeRegionIds: (countryId: string) => Iterable<string>;
   getQueuedColonizeRegionIds: (turnId: number, countryId: string) => Iterable<string>;
-  getProvinceRenameDucatsCost: () => number;
+  getHexRenameDucatsCost: () => number;
   pushAdminAuditLog: Parameters<typeof registerScenarioRouteComposition>[0]["pushAdminAuditLog"];
   savePersistentState: () => void;
   flushPersistentStateNow: () => Promise<void>;
@@ -173,7 +173,7 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
     getLatestMarketOverview: params.marketPriceRuntimeState.getLatestMarketOverview,
     normalizeMarketVisibility,
     normalizeTransportCorridorRoutePoints,
-    normalizeProvinceIdList,
+    normalizeHexIdList,
     getTransportCorridorBuildCost,
     refreshExpiredDiplomacyProposals: params.refreshExpiredDiplomacyProposals,
     validateImageDimensions: params.validateImageDimensions,
@@ -303,12 +303,12 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
       resourcesByCountry: WORLD_DELTA_MASK.resourcesByCountry,
       regionBuildingsByRegion: WORLD_DELTA_MASK.regionBuildingsByRegion,
       regionBuildingDucatsByRegion: WORLD_DELTA_MASK.regionBuildingDucatsByRegion,
-      provinceOwner: WORLD_DELTA_MASK.provinceOwner,
+      hexOwner: WORLD_DELTA_MASK.hexOwner,
       regionOwner: WORLD_DELTA_MASK.regionOwner,
       regionController: WORLD_DELTA_MASK.regionController,
       regionColonizationByRegion: WORLD_DELTA_MASK.regionColonizationByRegion,
       regionPopulationByRegion: WORLD_DELTA_MASK.regionPopulationByRegion,
-      provinceNameById: WORLD_DELTA_MASK.provinceNameById,
+      hexNameById: WORLD_DELTA_MASK.hexNameById,
     },
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,
@@ -325,7 +325,7 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
     resourceLedgerRuntime: params.resourceLedgerRuntime,
     getActiveColonizeRegionIds: params.getActiveColonizeRegionIds,
     getQueuedColonizeRegionIds: params.getQueuedColonizeRegionIds,
-    getProvinceRenameDucatsCost: params.getProvinceRenameDucatsCost,
+    getHexRenameDucatsCost: params.getHexRenameDucatsCost,
     savePersistentState: params.savePersistentState,
     makeOfficialNews: params.makeOfficialNews,
     broadcast: params.broadcast,

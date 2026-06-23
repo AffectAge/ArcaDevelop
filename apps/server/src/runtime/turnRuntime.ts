@@ -24,7 +24,7 @@ import {
   resolveColonizeOrder,
   type RegionColonizationConfig,
 } from "../mechanics/colonizationMechanics";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import { resolveTurnWithPipeline, type TurnResolverResult } from "./turnResolver";
 import type { GameContentEntry, GameSettings } from "./gameSettingsTypes";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
@@ -37,7 +37,7 @@ type CountryEventUiNotification = {
 
 export const TURN_RESOLVE_WORLD_DELTA_MASK =
   WORLD_DELTA_MASK.resourcesByCountry |
-  WORLD_DELTA_MASK.provinceOwner |
+  WORLD_DELTA_MASK.hexOwner |
   WORLD_DELTA_MASK.regionOwner |
   WORLD_DELTA_MASK.regionController |
   WORLD_DELTA_MASK.colonyProgressByRegion |
@@ -77,7 +77,7 @@ type TurnRuntimeParams = {
   getOrdersByTurn: () => Map<number, Map<string, Order[]>>;
   getResolveReadyByTurn: () => Map<number, Set<string>>;
   getActiveColonizeRegionsByCountry: () => Map<string, Set<string>>;
-  getProvinceIndex: () => Adm1ProvinceIndexEntry[];
+  getHexIndex: () => HexMapIndexEntry[];
   getEconomyTickCountryIds: () => Set<string>;
   fullSnapshotMask: number;
   cloneWorldBaseSectionSnapshot: (mask: number) => WorldBaseSectionSnapshot;
@@ -97,7 +97,7 @@ type TurnRuntimeParams = {
   parseRequestedBuildingIdFromPayload: (payload: Record<string, unknown>) => string;
   resolveBuildingOwnerFromPayload: (payload: Record<string, unknown>, requestedByCountryId: string) => BuildingOwner | null;
   isCountryAllowedForBuildingSync: (building: GameContentEntry, countryId: string) => boolean;
-  getProvinceBuildRestriction: (building: GameContentEntry, provinceId: string) => string | null;
+  getHexBuildRestriction: (building: GameContentEntry, hexId: string) => string | null;
   isBuildingUnlockedForCountry: (buildingId: string, countryId: string) => boolean;
   countBuildingOccurrences: (
     buildingId: string,
@@ -107,12 +107,12 @@ type TurnRuntimeParams = {
   resolveModifiedValue: (
     stat: EconomyTickResourceStat | "building_construction_cost" | "technology_cost",
     base: number,
-    context: { countryId: string; provinceId?: string | null; buildingId?: string | null },
+    context: { countryId: string; hexId?: string | null; buildingId?: string | null },
   ) => number;
-  getRegionColonizationConfig: (provinceId: string) => RegionColonizationConfig;
-  getRegionDerivedColonizationCosts: (provinceId: string) => { pointsCost: number; ducatsCost: number };
+  getRegionColonizationConfig: (hexId: string) => RegionColonizationConfig;
+  getRegionDerivedColonizationCosts: (hexId: string) => { pointsCost: number; ducatsCost: number };
   buildColonizationSettlementPopulation: (regionId: string, countryId: string, total: number) => RegionPopulation;
-  areProvinceIdsAdjacentOrSame: (fromProvinceId: string, toProvinceId: string) => boolean;
+  areHexIdsAdjacentOrSame: (fromHexId: string, toHexId: string) => boolean;
   enqueueBuildingAutoUpgradesTurn: () => void;
   resolveBuildingConstructionQueuesTurn: () => void;
   addResourceLedgerIncome: (input: ResourceLedgerEntryInput) => void;
@@ -199,11 +199,11 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           order,
           playerId,
           worldBase: params.getWorldBase(),
-          provinces: params.getProvinceIndex(),
+          hexes: params.getHexIndex(),
           turnId: params.getTurnId(),
           movedDivisionIds,
           events,
-          areProvinceIdsAdjacentOrSame: params.areProvinceIdsAdjacentOrSame,
+          areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
         });
         if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
         pushMilitaryRuntimeEvents(news, events);
@@ -219,14 +219,14 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           parseRequestedBuildingId: params.parseRequestedBuildingIdFromPayload,
           resolveBuildingOwner: params.resolveBuildingOwnerFromPayload,
           isCountryAllowedForBuilding: params.isCountryAllowedForBuildingSync,
-          getProvinceBuildRestriction: params.getProvinceBuildRestriction,
+          getHexBuildRestriction: params.getHexBuildRestriction,
           isBuildingUnlockedForCountry: params.isBuildingUnlockedForCountry,
           countBuildingOccurrences: (buildingId, countryId) =>
             params.countBuildingOccurrences(buildingId, countryId, { includePendingOrders: false }),
           resolveConstructionCost: (building) =>
             params.resolveModifiedValue("building_construction_cost", Number(building.costConstruction ?? 100), {
               countryId: order.countryId,
-              provinceId: order.type === "BUILD" ? order.regionId : "",
+              hexId: order.type === "BUILD" ? order.regionId : "",
               buildingId: building.id,
             }),
           createId: randomUUID,
@@ -248,11 +248,11 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
         const storedRouteEvents: MilitaryRuntimeEvent[] = [];
         advanceStoredArmyRoutesTurn({
           worldBase: params.getWorldBase(),
-          provinces: params.getProvinceIndex(),
+          hexes: params.getHexIndex(),
           turnId: params.getTurnId(),
           movedDivisionIds,
           events: storedRouteEvents,
-          areProvinceIdsAdjacentOrSame: params.areProvinceIdsAdjacentOrSame,
+          areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
         });
         pushMilitaryRuntimeEvents(news, storedRouteEvents);
       },

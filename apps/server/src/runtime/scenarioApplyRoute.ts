@@ -11,7 +11,7 @@ type ScenarioApplyRouteParams = {
   app: express.Express;
   routeAuth: RouteAuth;
   findScenario: (scenarioId: string) => FoundScenario | null;
-  applyMapRuntime: (mapRoot: string, provinceIndexPath: string) => void;
+  applyMapRuntime: (mapRoot: string, hexIndexPath: string) => void;
   loadScenarioHistory: (scenarioDir: string) => ScenarioHistory | null;
   applyScenarioCountryMetadata: (scenarioDir: string, history: ScenarioHistory | null) => Promise<void>;
   loadScenarioContent: (scenarioDir: string) => GameSettings["content"] | null;
@@ -74,7 +74,7 @@ export function registerScenarioApplyRoute(params: ScenarioApplyRouteParams): vo
     }
 
     try {
-      params.applyMapRuntime(scenario.mapRoot, scenario.provinceIndexPath);
+      params.applyMapRuntime(scenario.mapRoot, scenario.hexIndexPath);
       const scenarioHistory = params.loadScenarioHistory(scenario.scenarioDir);
       await params.applyScenarioCountryMetadata(scenario.scenarioDir, scenarioHistory);
       const scenarioContent = params.loadScenarioContent(scenario.scenarioDir);
@@ -113,7 +113,7 @@ export function registerScenarioApplyRoute(params: ScenarioApplyRouteParams): vo
           scenarioName: scenario.descriptor.name,
           startTurn,
           countryCount: Object.keys(worldBase.resourcesByCountry).length,
-          provinceOwnerCount: Object.keys(worldBase.provinceOwner).length,
+          hexOwnerCount: Object.keys(worldBase.hexOwner).length,
         },
       });
       const worldStateVersion = params.incrementWorldStateVersion();

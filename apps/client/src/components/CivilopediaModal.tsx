@@ -37,7 +37,7 @@ type Props = {
   adminToken?: string | null;
   initialIntent?:
     | { type: "open-entry"; entryId: string }
-    | { type: "province"; provinceId: string; provinceName: string; createIfMissing: boolean }
+    | { type: "region"; hexId: string; hexName: string; createIfMissing: boolean }
     | null;
   onIntentHandled?: () => void;
 };
@@ -301,7 +301,7 @@ export function CivilopediaModal({
 
   useEffect(() => {
     if (!open || loading || !initialIntent) return;
-    if (entries.length === 0 && !(initialIntent.type === "province" && initialIntent.createIfMissing && isAdmin)) return;
+    if (entries.length === 0 && !(initialIntent.type === "region" && initialIntent.createIfMissing && isAdmin)) return;
 
     const handle = async () => {
       if (initialIntent.type === "open-entry") {
@@ -314,7 +314,7 @@ export function CivilopediaModal({
         return;
       }
 
-      const provinceArticleId = `province:${initialIntent.provinceId}`;
+      const provinceArticleId = `province:${initialIntent.hexId}`;
       const existing = entries.find((e) => e.id === provinceArticleId);
       if (existing) {
         setActiveCategory(existing.category);
@@ -333,17 +333,17 @@ export function CivilopediaModal({
       const nextEntry: CivilopediaEntry = {
         id: provinceArticleId,
         category,
-        title: t("civilopedia.admin.provinceDefaultTitle", { province: initialIntent.provinceName }),
-        summary: t("civilopedia.admin.provinceDefaultSummary", { province: initialIntent.provinceName }),
-        keywords: [t("modifiers.scope.province").toLowerCase(), initialIntent.provinceName, initialIntent.provinceId],
+        title: t("civilopedia.admin.provinceDefaultTitle", { province: initialIntent.hexName }),
+        summary: t("civilopedia.admin.provinceDefaultSummary", { province: initialIntent.hexName }),
+        keywords: [t("modifiers.scope.province").toLowerCase(), initialIntent.hexName, initialIntent.hexId],
         imageUrl: null,
         relatedEntryIds: ["map-modes", "colonization-race"],
         sections: [
           {
             title: t("civilopedia.admin.defaultSectionTitle"),
             paragraphs: [
-              `${t("modifiers.scope.province")}: [color:#67e8f9]${initialIntent.provinceName}[/color]`,
-              t("civilopedia.admin.provinceIdLine", { provinceId: initialIntent.provinceId }),
+              `${t("modifiers.scope.province")}: [color:#67e8f9]${initialIntent.hexName}[/color]`,
+              t("civilopedia.admin.hexIdLine", { hexId: initialIntent.hexId }),
               t("civilopedia.admin.provinceDefaultBody"),
             ],
           },

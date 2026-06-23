@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildAiCountryContext, buildAiWorldIndexes } from "./aiContext";
 import {
-  buildRegionAdjacencyByIdFromProvinces,
+  buildRegionAdjacencyByIdFromHexes,
   selectAiColonizationCandidates,
 } from "./aiColonizationCandidates";
 import { createAiFixtureWorld } from "./aiFixtureHarness";
@@ -129,7 +129,7 @@ describe("AI colonization candidates", () => {
 
   it("builds deterministic region adjacency from province neighbors", () => {
     expect(
-      buildRegionAdjacencyByIdFromProvinces([
+      buildRegionAdjacencyByIdFromHexes([
         { id: "a1", regionId: "region:a", neighbors: ["a2", "b1"] },
         { id: "a2", regionId: "region:a", neighbors: ["a1"] },
         { id: "b1", regionId: "region:b", neighbors: ["a1", "c1"] },

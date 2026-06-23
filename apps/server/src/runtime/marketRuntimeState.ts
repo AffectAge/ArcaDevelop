@@ -8,19 +8,19 @@ import {
   normalizeMarketId,
   normalizeMarketVisibility,
   normalizeNumberHistoryMap,
-  normalizeProvinceIdList,
+  normalizeHexIdList,
   normalizeTransportCorridorRoutePoints,
   normalizeTransportCorridorStatus,
 } from "./marketSettingsNormalizers";
 
-export type MarketRuntimeProvince = {
+export type MarketRuntimeHex = {
   id: string;
 };
 
 export type MarketRuntimeContext = {
   gameSettings: GameSettings;
-  worldBase: Pick<WorldBase, "resourcesByCountry" | "provinceOwner">;
-  provinceIndex: MarketRuntimeProvince[];
+  worldBase: Pick<WorldBase, "resourcesByCountry" | "hexOwner">;
+  hexIndex: MarketRuntimeHex[];
   corridorLoadHistoryLength: number;
 };
 
@@ -69,7 +69,7 @@ export function createDefaultMarketRecord(
     name: `Рынок ${marketId}`,
     logoUrl: null,
     ownerCountryId,
-    capitalProvinceId: null,
+    capitalHexId: null,
     memberCountryIds: [ownerCountryId],
     visibility: "public",
     createdAt: new Date().toISOString(),
@@ -129,9 +129,9 @@ export function upsertMarketMembership(params: MarketRuntimeContext & {
   return targetMarketId;
 }
 
-export function getOwnedProvinceIds(params: MarketRuntimeContext & { countryId: string }): string[] {
-  return params.provinceIndex
-    .filter((province) => params.worldBase.provinceOwner[province.id] === params.countryId)
+export function getOwnedHexIds(params: MarketRuntimeContext & { countryId: string }): string[] {
+  return params.hexIndex
+    .filter((province) => params.worldBase.hexOwner[province.id] === params.countryId)
     .map((province) => province.id);
 }
 
@@ -151,9 +151,9 @@ export function rebuildCountryMarketIndexFromMembers(params: MarketRuntimeContex
     if (!market.ownerCountryId || !market.memberCountryIds.includes(market.ownerCountryId)) {
       market.ownerCountryId = market.memberCountryIds[0] ?? market.ownerCountryId ?? marketId;
     }
-    const ownerProvinceIds = getOwnedProvinceIds({ ...params, countryId: market.ownerCountryId });
-    if (typeof market.capitalProvinceId !== "string" || !ownerProvinceIds.includes(market.capitalProvinceId)) {
-      market.capitalProvinceId = ownerProvinceIds[0] ?? null;
+    const ownerHexIds = getOwnedHexIds({ ...params, countryId: market.ownerCountryId });
+    if (typeof market.capitalHexId !== "string" || !ownerHexIds.includes(market.capitalHexId)) {
+      market.capitalHexId = ownerHexIds[0] ?? null;
     }
     for (const countryId of market.memberCountryIds) {
       if (!assignment[countryId]) {
@@ -177,7 +177,7 @@ export function ensureMarketModelReady(params: MarketRuntimeContext): void {
   rebuildCountryMarketIndexFromMembers(params);
   const marketsById = params.gameSettings.markets.marketById;
   const corridorsById = params.gameSettings.markets.transportCorridorsById;
-  const validProvinceIds = new Set<string>(params.provinceIndex.map((province) => province.id));
+  const validHexIds = new Set<string>(params.hexIndex.map((hex) => hex.id));
   for (const [corridorId, corridor] of Object.entries(corridorsById)) {
     corridor.ownerCountryId = corridor.ownerCountryId || marketsById[corridor.marketId]?.ownerCountryId || "";
     if (!corridor.ownerCountryId) {
@@ -201,20 +201,20 @@ export function ensureMarketModelReady(params: MarketRuntimeContext): void {
       delete corridorsById[corridorId];
       continue;
     }
-    corridor.provinceIds = normalizeProvinceIdList(corridor.provinceIds).filter((provinceId) => validProvinceIds.has(provinceId));
-    if (corridor.provinceIds.length < 2) {
+    corridor.hexIds = normalizeHexIdList(corridor.hexIds).filter((hexId) => validHexIds.has(hexId));
+    if (corridor.hexIds.length < 2) {
       delete corridorsById[corridorId];
       continue;
     }
     corridor.routePoints = normalizeTransportCorridorRoutePoints(corridor.routePoints).filter((point) =>
-      corridor.provinceIds.includes(point.provinceId),
+      corridor.hexIds.includes(point.hexId),
     );
     corridor.transportMode = normalizeTransportMode(corridor.transportMode);
     corridor.level = Math.max(1, Math.floor(Number(corridor.level ?? 1) || 1));
     corridor.status = normalizeTransportCorridorStatus(corridor.status);
     corridor.costConstruction = Math.max(
       1,
-      Math.floor(Number(corridor.costConstruction ?? getTransportCorridorBuildCost(corridor.transportMode, corridor.provinceIds.length - 1)) || 1),
+      Math.floor(Number(corridor.costConstruction ?? getTransportCorridorBuildCost(corridor.transportMode, corridor.hexIds.length - 1)) || 1),
     );
     corridor.progressConstruction = Math.max(0, Math.min(corridor.costConstruction, Number(corridor.progressConstruction ?? 0) || 0));
     corridor.lastLoadByMode = normalizeCategoryAmountMap((corridor as { lastLoadByMode?: unknown }).lastLoadByMode ?? {});
@@ -229,7 +229,7 @@ export function ensureMarketModelReady(params: MarketRuntimeContext): void {
     );
     corridor.foreignConstructionRights = normalizeCorridorForeignConstructionRights(
       (corridor as { foreignConstructionRights?: unknown }).foreignConstructionRights,
-    ).filter((entry) => corridor.provinceIds.includes(entry.provinceId));
+    ).filter((entry) => corridor.hexIds.includes(entry.hexId));
     corridor.nationalizedAt =
       typeof (corridor as { nationalizedAt?: unknown }).nationalizedAt === "string" &&
       ((corridor as { nationalizedAt?: unknown }).nationalizedAt as string).trim().length > 0
@@ -295,7 +295,7 @@ export function cleanupMarketsAfterCountryRemoval(params: MarketRuntimeContext &
 }): void {
   ensureMarketsStateShape(params.gameSettings);
   const validCountryIds = new Set<string>(Object.keys(params.worldBase.resourcesByCountry ?? {}));
-  const validProvinceIds = new Set<string>(params.provinceIndex.map((province) => province.id));
+  const validHexIds = new Set<string>(params.hexIndex.map((hex) => hex.id));
   const marketById = params.gameSettings.markets.marketById;
   for (const [marketId, market] of Object.entries(marketById)) {
     const members = [...new Set((market.memberCountryIds ?? []).filter((countryId) => validCountryIds.has(countryId)))];
@@ -308,11 +308,11 @@ export function cleanupMarketsAfterCountryRemoval(params: MarketRuntimeContext &
       delete marketById[marketId];
       continue;
     }
-    const ownerProvinces = params.provinceIndex
-      .filter((province) => params.worldBase.provinceOwner[province.id] === market.ownerCountryId)
+    const ownerHexes = params.hexIndex
+      .filter((province) => params.worldBase.hexOwner[province.id] === market.ownerCountryId)
       .map((province) => province.id);
-    if (market.capitalProvinceId && !ownerProvinces.includes(market.capitalProvinceId)) {
-      market.capitalProvinceId = ownerProvinces[0] ?? null;
+    if (market.capitalHexId && !ownerHexes.includes(market.capitalHexId)) {
+      market.capitalHexId = ownerHexes[0] ?? null;
     }
   }
 
@@ -325,8 +325,8 @@ export function cleanupMarketsAfterCountryRemoval(params: MarketRuntimeContext &
         continue;
       }
     }
-    const provinceIds = normalizeProvinceIdList(corridor.provinceIds);
-    if (provinceIds.length < 2 || provinceIds.some((provinceId) => !validProvinceIds.has(provinceId))) {
+    const hexIds = normalizeHexIdList(corridor.hexIds);
+    if (hexIds.length < 2 || hexIds.some((hexId) => !validHexIds.has(hexId))) {
       delete params.gameSettings.markets.transportCorridorsById[corridorId];
       continue;
     }

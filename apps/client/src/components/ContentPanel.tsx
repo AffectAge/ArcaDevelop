@@ -101,8 +101,8 @@ const CONTENT_UI_SCHEMA = {
       ] as const,
     },
     {
-      id: "provinceTypes",
-      labelKey: "contentPanel.category.provinceTypes",
+      id: "hexTypes",
+      labelKey: "contentPanel.category.hexTypes",
       icon: Landmark,
       enabled: true,
       sections: [
@@ -111,8 +111,8 @@ const CONTENT_UI_SCHEMA = {
       ] as const,
     },
     {
-      id: "provinceClimates",
-      labelKey: "contentPanel.category.provinceClimates",
+      id: "hexClimates",
+      labelKey: "contentPanel.category.hexClimates",
       icon: Flame,
       enabled: true,
       sections: [
@@ -121,8 +121,8 @@ const CONTENT_UI_SCHEMA = {
       ] as const,
     },
     {
-      id: "provinceLandscapes",
-      labelKey: "contentPanel.category.provinceLandscapes",
+      id: "hexLandscapes",
+      labelKey: "contentPanel.category.hexLandscapes",
       icon: Network,
       enabled: true,
       sections: [
@@ -131,8 +131,8 @@ const CONTENT_UI_SCHEMA = {
       ] as const,
     },
     {
-      id: "provinceContinents",
-      labelKey: "contentPanel.category.provinceContinents",
+      id: "hexContinents",
+      labelKey: "contentPanel.category.hexContinents",
       icon: Landmark,
       enabled: true,
       sections: [
@@ -141,8 +141,8 @@ const CONTENT_UI_SCHEMA = {
       ] as const,
     },
     {
-      id: "provinceStrategicRegions",
-      labelKey: "contentPanel.category.provinceStrategicRegions",
+      id: "hexStrategicRegions",
+      labelKey: "contentPanel.category.hexStrategicRegions",
       icon: Network,
       enabled: true,
       sections: [
@@ -462,7 +462,7 @@ const IDEOLOGY_ATTRACTION_RULE_OPTIONS: Array<{ value: IdeologyAttractionConditi
   { value: "law_active", labelKey: "contentPanel.option.ideologyRule.lawActive", targetKey: "contentPanel.select.law", thresholdKey: "contentPanel.notRequired" },
   { value: "has_building", labelKey: "contentPanel.option.ideologyRule.hasBuilding", targetKey: "contentPanel.select.building", thresholdKey: "contentPanel.notRequired" },
   { value: "country_modifier_active", labelKey: "contentPanel.option.ideologyRule.countryModifierActive", targetKey: "contentPanel.placeholder.modifierId", thresholdKey: "contentPanel.notRequired" },
-  { value: "province_modifier_active", labelKey: "contentPanel.option.ideologyRule.provinceModifierActive", targetKey: "contentPanel.placeholder.modifierId", thresholdKey: "contentPanel.notRequired" },
+  { value: "region_modifier_active", labelKey: "contentPanel.option.ideologyRule.regionModifierActive", targetKey: "contentPanel.placeholder.modifierId", thresholdKey: "contentPanel.notRequired" },
 ];
 
 const MODIFIER_MODE_OPTIONS: Array<{ value: ModifierMode; labelKey: UiTextKey }> = [
@@ -473,7 +473,7 @@ const MODIFIER_MODE_OPTIONS: Array<{ value: ModifierMode; labelKey: UiTextKey }>
 
 const MODIFIER_SCOPE_OPTIONS: Array<{ value: ModifierScope; labelKey: UiTextKey }> = [
   { value: "country", labelKey: "contentPanel.option.modifierScope.country" },
-  { value: "province", labelKey: "contentPanel.option.modifierScope.province" },
+  { value: "region", labelKey: "contentPanel.option.modifierScope.region" },
   { value: "building", labelKey: "contentPanel.option.modifierScope.building" },
   { value: "pop", labelKey: "contentPanel.option.modifierScope.pop" },
   { value: "market", labelKey: "contentPanel.option.modifierScope.market" },
@@ -705,45 +705,45 @@ const CATEGORY_META: Record<PanelCategory, CategoryMeta> = {
     descriptionPlaceholderKey: "contentPanel.meta.resourceCategories.descriptionPlaceholder",
     sectionTitleKey: "contentPanel.meta.resourceCategories.sectionTitle",
   },
-  provinceTypes: {
-    singularKey: "contentPanel.meta.provinceTypes.singular",
-    createBaseNameKey: "contentPanel.meta.provinceTypes.createBaseName",
-    createLabelKey: "contentPanel.meta.provinceTypes.createLabel",
-    namePlaceholderKey: "contentPanel.meta.provinceTypes.namePlaceholder",
-    descriptionPlaceholderKey: "contentPanel.meta.provinceTypes.descriptionPlaceholder",
-    sectionTitleKey: "contentPanel.meta.provinceTypes.sectionTitle",
+  hexTypes: {
+    singularKey: "contentPanel.meta.hexTypes.singular",
+    createBaseNameKey: "contentPanel.meta.hexTypes.createBaseName",
+    createLabelKey: "contentPanel.meta.hexTypes.createLabel",
+    namePlaceholderKey: "contentPanel.meta.hexTypes.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.hexTypes.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.hexTypes.sectionTitle",
   },
-  provinceClimates: {
-    singularKey: "contentPanel.meta.provinceClimates.singular",
-    createBaseNameKey: "contentPanel.meta.provinceClimates.createBaseName",
-    createLabelKey: "contentPanel.meta.provinceClimates.createLabel",
-    namePlaceholderKey: "contentPanel.meta.provinceClimates.namePlaceholder",
-    descriptionPlaceholderKey: "contentPanel.meta.provinceClimates.descriptionPlaceholder",
-    sectionTitleKey: "contentPanel.meta.provinceClimates.sectionTitle",
+  hexClimates: {
+    singularKey: "contentPanel.meta.hexClimates.singular",
+    createBaseNameKey: "contentPanel.meta.hexClimates.createBaseName",
+    createLabelKey: "contentPanel.meta.hexClimates.createLabel",
+    namePlaceholderKey: "contentPanel.meta.hexClimates.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.hexClimates.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.hexClimates.sectionTitle",
   },
-  provinceLandscapes: {
-    singularKey: "contentPanel.meta.provinceLandscapes.singular",
-    createBaseNameKey: "contentPanel.meta.provinceLandscapes.createBaseName",
-    createLabelKey: "contentPanel.meta.provinceLandscapes.createLabel",
-    namePlaceholderKey: "contentPanel.meta.provinceLandscapes.namePlaceholder",
-    descriptionPlaceholderKey: "contentPanel.meta.provinceLandscapes.descriptionPlaceholder",
-    sectionTitleKey: "contentPanel.meta.provinceLandscapes.sectionTitle",
+  hexLandscapes: {
+    singularKey: "contentPanel.meta.hexLandscapes.singular",
+    createBaseNameKey: "contentPanel.meta.hexLandscapes.createBaseName",
+    createLabelKey: "contentPanel.meta.hexLandscapes.createLabel",
+    namePlaceholderKey: "contentPanel.meta.hexLandscapes.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.hexLandscapes.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.hexLandscapes.sectionTitle",
   },
-  provinceContinents: {
-    singularKey: "contentPanel.meta.provinceContinents.singular",
-    createBaseNameKey: "contentPanel.meta.provinceContinents.createBaseName",
-    createLabelKey: "contentPanel.meta.provinceContinents.createLabel",
-    namePlaceholderKey: "contentPanel.meta.provinceContinents.namePlaceholder",
-    descriptionPlaceholderKey: "contentPanel.meta.provinceContinents.descriptionPlaceholder",
-    sectionTitleKey: "contentPanel.meta.provinceContinents.sectionTitle",
+  hexContinents: {
+    singularKey: "contentPanel.meta.hexContinents.singular",
+    createBaseNameKey: "contentPanel.meta.hexContinents.createBaseName",
+    createLabelKey: "contentPanel.meta.hexContinents.createLabel",
+    namePlaceholderKey: "contentPanel.meta.hexContinents.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.hexContinents.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.hexContinents.sectionTitle",
   },
-  provinceStrategicRegions: {
-    singularKey: "contentPanel.meta.provinceStrategicRegions.singular",
-    createBaseNameKey: "contentPanel.meta.provinceStrategicRegions.createBaseName",
-    createLabelKey: "contentPanel.meta.provinceStrategicRegions.createLabel",
-    namePlaceholderKey: "contentPanel.meta.provinceStrategicRegions.namePlaceholder",
-    descriptionPlaceholderKey: "contentPanel.meta.provinceStrategicRegions.descriptionPlaceholder",
-    sectionTitleKey: "contentPanel.meta.provinceStrategicRegions.sectionTitle",
+  hexStrategicRegions: {
+    singularKey: "contentPanel.meta.hexStrategicRegions.singular",
+    createBaseNameKey: "contentPanel.meta.hexStrategicRegions.createBaseName",
+    createLabelKey: "contentPanel.meta.hexStrategicRegions.createLabel",
+    namePlaceholderKey: "contentPanel.meta.hexStrategicRegions.namePlaceholder",
+    descriptionPlaceholderKey: "contentPanel.meta.hexStrategicRegions.descriptionPlaceholder",
+    sectionTitleKey: "contentPanel.meta.hexStrategicRegions.sectionTitle",
   },
   religions: {
     singularKey: "contentPanel.meta.religions.singular",
@@ -1362,8 +1362,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
   const [draftNeedsProfile, setDraftNeedsProfile] = useState<CultureNeedTierDraft[]>([]);
   const [draftAllowedCountryIds, setDraftAllowedCountryIds] = useState<string[]>([]);
   const [draftDeniedCountryIds, setDraftDeniedCountryIds] = useState<string[]>([]);
-  const [draftAllowedProvinceTypes, setDraftAllowedProvinceTypes] = useState<string[]>([]);
-  const [draftDeniedProvinceTypes, setDraftDeniedProvinceTypes] = useState<string[]>([]);
+  const [draftAllowedHexTypes, setDraftAllowedHexTypes] = useState<string[]>([]);
+  const [draftDeniedHexTypes, setDraftDeniedHexTypes] = useState<string[]>([]);
   const [draftAllowedClimates, setDraftAllowedClimates] = useState<string[]>([]);
   const [draftDeniedClimates, setDraftDeniedClimates] = useState<string[]>([]);
   const [draftAllowedLandscapes, setDraftAllowedLandscapes] = useState<string[]>([]);
@@ -1423,7 +1423,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
   const [allowCountrySearch, setAllowCountrySearch] = useState("");
   const [denyCountrySearch, setDenyCountrySearch] = useState("");
   const [criteriaCountriesOpen, setCriteriaCountriesOpen] = useState(false);
-  const [criteriaProvinceOpen, setCriteriaProvinceOpen] = useState(false);
+  const [criteriaHexOpen, setCriteriaHexOpen] = useState(false);
   const [criteriaLimitsOpen, setCriteriaLimitsOpen] = useState(false);
   const [goodsEconomyOpen, setGoodsEconomyOpen] = useState(false);
   const [goodsExplorationOpen, setGoodsExplorationOpen] = useState(false);
@@ -1436,11 +1436,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
   const [goodsOptions, setGoodsOptions] = useState<ContentEntry[]>([]);
   const [cultureOptions, setCultureOptions] = useState<ContentEntry[]>([]);
   const [resourceCategoryOptions, setResourceCategoryOptions] = useState<ContentEntry[]>([]);
-  const [provinceTypeOptions, setProvinceTypeOptions] = useState<ContentEntry[]>([]);
-  const [provinceClimateOptions, setProvinceClimateOptions] = useState<ContentEntry[]>([]);
-  const [provinceLandscapeOptions, setProvinceLandscapeOptions] = useState<ContentEntry[]>([]);
-  const [provinceContinentOptions, setProvinceContinentOptions] = useState<ContentEntry[]>([]);
-  const [provinceStrategicRegionOptions, setProvinceStrategicRegionOptions] = useState<ContentEntry[]>([]);
+  const [hexTypeOptions, setHexTypeOptions] = useState<ContentEntry[]>([]);
+  const [provinceClimateOptions, setHexClimateOptions] = useState<ContentEntry[]>([]);
+  const [provinceLandscapeOptions, setHexLandscapeOptions] = useState<ContentEntry[]>([]);
+  const [provinceContinentOptions, setHexContinentOptions] = useState<ContentEntry[]>([]);
+  const [provinceStrategicRegionOptions, setHexStrategicRegionOptions] = useState<ContentEntry[]>([]);
   const [professionOptions, setProfessionOptions] = useState<ContentEntry[]>([]);
   const [industryOptions, setIndustryOptions] = useState<ContentEntry[]>([]);
   const [sectorOptions, setSectorOptions] = useState<ContentEntry[]>([]);
@@ -1548,8 +1548,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
       })),
       allowedCountryIds: normalizeCountryIdsDraft(entry.allowedCountryIds ?? []),
       deniedCountryIds: normalizeCountryIdsDraft(entry.deniedCountryIds ?? []),
-      allowedProvinceTypes: normalizeCountryIdsDraft(entry.allowedProvinceTypes ?? []),
-      deniedProvinceTypes: normalizeCountryIdsDraft(entry.deniedProvinceTypes ?? []),
+      allowedHexTypes: normalizeCountryIdsDraft(entry.allowedHexTypes ?? []),
+      deniedHexTypes: normalizeCountryIdsDraft(entry.deniedHexTypes ?? []),
       allowedClimates: normalizeCountryIdsDraft(entry.allowedClimates ?? []),
       deniedClimates: normalizeCountryIdsDraft(entry.deniedClimates ?? []),
       allowedLandscapes: normalizeCountryIdsDraft(entry.allowedLandscapes ?? []),
@@ -1849,8 +1849,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
       workforceRequirements: activeCategory === "buildings" ? normalizeWorkforceDraft(draftWorkforceRequirements) : [],
       allowedCountryIds: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftAllowedCountryIds) : [],
       deniedCountryIds: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftDeniedCountryIds) : [],
-      allowedProvinceTypes: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftAllowedProvinceTypes) : [],
-      deniedProvinceTypes: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftDeniedProvinceTypes) : [],
+      allowedHexTypes: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftAllowedHexTypes) : [],
+      deniedHexTypes: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftDeniedHexTypes) : [],
       allowedClimates: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftAllowedClimates) : [],
       deniedClimates: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftDeniedClimates) : [],
       allowedLandscapes: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftAllowedLandscapes) : [],
@@ -1946,7 +1946,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
         country.name.toLowerCase().includes(q) || country.id.toLowerCase().includes(q),
     );
   }, [countryOptions, denyCountrySearch]);
-  const renderProvinceContentPicker = (
+  const renderHexContentPicker = (
     label: string,
     options: ContentEntry[],
     selected: string[],
@@ -2051,11 +2051,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
       adminFetchContentEntries(token, "cultures"),
       adminFetchContentEntries(token, "goods"),
       adminFetchContentEntries(token, "resourceCategories"),
-      adminFetchContentEntries(token, "provinceTypes"),
-      adminFetchContentEntries(token, "provinceClimates"),
-      adminFetchContentEntries(token, "provinceLandscapes"),
-      adminFetchContentEntries(token, "provinceContinents"),
-      adminFetchContentEntries(token, "provinceStrategicRegions"),
+      adminFetchContentEntries(token, "hexTypes"),
+      adminFetchContentEntries(token, "hexClimates"),
+      adminFetchContentEntries(token, "hexLandscapes"),
+      adminFetchContentEntries(token, "hexContinents"),
+      adminFetchContentEntries(token, "hexStrategicRegions"),
       adminFetchContentEntries(token, "professions"),
       adminFetchContentEntries(token, "industries"),
       adminFetchContentEntries(token, "sectors"),
@@ -2069,16 +2069,16 @@ export function ContentPanel({ open, token, onClose }: Props) {
       adminFetchContentEntries(token, "buildings"),
       fetchCountries(),
     ])
-      .then(([cultures, goods, resourceCategories, provinceTypes, provinceClimates, provinceLandscapes, provinceContinents, provinceStrategicRegions, professions, industries, sectors, ideologies, interestGroups, parties, lawGroups, laws, technologies, religions, buildings, countries]) => {
+      .then(([cultures, goods, resourceCategories, hexTypes, hexClimates, hexLandscapes, hexContinents, hexStrategicRegions, professions, industries, sectors, ideologies, interestGroups, parties, lawGroups, laws, technologies, religions, buildings, countries]) => {
         if (cancelled) return;
         setCultureOptions(cultures);
         setGoodsOptions(goods);
         setResourceCategoryOptions(resourceCategories);
-        setProvinceTypeOptions(provinceTypes);
-        setProvinceClimateOptions(provinceClimates);
-        setProvinceLandscapeOptions(provinceLandscapes);
-        setProvinceContinentOptions(provinceContinents);
-        setProvinceStrategicRegionOptions(provinceStrategicRegions);
+        setHexTypeOptions(hexTypes);
+        setHexClimateOptions(hexClimates);
+        setHexLandscapeOptions(hexLandscapes);
+        setHexContinentOptions(hexContinents);
+        setHexStrategicRegionOptions(hexStrategicRegions);
         setProfessionOptions(professions);
         setIndustryOptions(industries);
         setSectorOptions(sectors);
@@ -2097,11 +2097,11 @@ export function ContentPanel({ open, token, onClose }: Props) {
         setCultureOptions([]);
         setGoodsOptions([]);
         setResourceCategoryOptions([]);
-        setProvinceTypeOptions([]);
-        setProvinceClimateOptions([]);
-        setProvinceLandscapeOptions([]);
-        setProvinceContinentOptions([]);
-        setProvinceStrategicRegionOptions([]);
+        setHexTypeOptions([]);
+        setHexClimateOptions([]);
+        setHexLandscapeOptions([]);
+        setHexContinentOptions([]);
+        setHexStrategicRegionOptions([]);
         setProfessionOptions([]);
         setIndustryOptions([]);
         setSectorOptions([]);
@@ -2224,8 +2224,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
       setDraftNeedsProfile([]);
       setDraftAllowedCountryIds([]);
       setDraftDeniedCountryIds([]);
-      setDraftAllowedProvinceTypes([]);
-      setDraftDeniedProvinceTypes([]);
+      setDraftAllowedHexTypes([]);
+      setDraftDeniedHexTypes([]);
       setDraftAllowedClimates([]);
       setDraftDeniedClimates([]);
       setDraftAllowedLandscapes([]);
@@ -2500,8 +2500,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
     setDraftNeedsProfile(needsProfileToDraft(selectedEntry.needsProfile ?? null));
     setDraftAllowedCountryIds(normalizeCountryIdsDraft(selectedEntry.allowedCountryIds ?? []));
     setDraftDeniedCountryIds(normalizeCountryIdsDraft(selectedEntry.deniedCountryIds ?? []));
-    setDraftAllowedProvinceTypes(normalizeCountryIdsDraft(selectedEntry.allowedProvinceTypes ?? []));
-    setDraftDeniedProvinceTypes(normalizeCountryIdsDraft(selectedEntry.deniedProvinceTypes ?? []));
+    setDraftAllowedHexTypes(normalizeCountryIdsDraft(selectedEntry.allowedHexTypes ?? []));
+    setDraftDeniedHexTypes(normalizeCountryIdsDraft(selectedEntry.deniedHexTypes ?? []));
     setDraftAllowedClimates(normalizeCountryIdsDraft(selectedEntry.allowedClimates ?? []));
     setDraftDeniedClimates(normalizeCountryIdsDraft(selectedEntry.deniedClimates ?? []));
     setDraftAllowedLandscapes(normalizeCountryIdsDraft(selectedEntry.allowedLandscapes ?? []));
@@ -2654,7 +2654,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
         })),
     })));
     setCriteriaCountriesOpen(false);
-    setCriteriaProvinceOpen(false);
+    setCriteriaHexOpen(false);
     setCriteriaLimitsOpen(false);
     setGoodsEconomyOpen(false);
     setBuildingCostOpen(false);
@@ -2725,8 +2725,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
     draftWorkforceRequirements,
     draftAllowedCountryIds,
     draftDeniedCountryIds,
-    draftAllowedProvinceTypes,
-    draftDeniedProvinceTypes,
+    draftAllowedHexTypes,
+    draftDeniedHexTypes,
     draftAllowedClimates,
     draftDeniedClimates,
     draftAllowedLandscapes,
@@ -2856,8 +2856,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
         workforceRequirements: activeCategory === "buildings" ? [] : undefined,
         allowedCountryIds: activeCategory === "buildings" ? [] : undefined,
         deniedCountryIds: activeCategory === "buildings" ? [] : undefined,
-        allowedProvinceTypes: activeCategory === "buildings" ? [] : undefined,
-        deniedProvinceTypes: activeCategory === "buildings" ? [] : undefined,
+        allowedHexTypes: activeCategory === "buildings" ? [] : undefined,
+        deniedHexTypes: activeCategory === "buildings" ? [] : undefined,
         allowedClimates: activeCategory === "buildings" ? [] : undefined,
         deniedClimates: activeCategory === "buildings" ? [] : undefined,
         allowedLandscapes: activeCategory === "buildings" ? [] : undefined,
@@ -3132,8 +3132,8 @@ export function ContentPanel({ open, token, onClose }: Props) {
       workforceRequirements: activeCategory === "buildings" ? normalizeWorkforceDraft(draftWorkforceRequirements) : undefined,
       allowedCountryIds: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftAllowedCountryIds) : undefined,
       deniedCountryIds: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftDeniedCountryIds) : undefined,
-      allowedProvinceTypes: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftAllowedProvinceTypes) : undefined,
-      deniedProvinceTypes: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftDeniedProvinceTypes) : undefined,
+      allowedHexTypes: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftAllowedHexTypes) : undefined,
+      deniedHexTypes: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftDeniedHexTypes) : undefined,
       allowedClimates: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftAllowedClimates) : undefined,
       deniedClimates: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftDeniedClimates) : undefined,
       allowedLandscapes: activeCategory === "buildings" ? normalizeCountryIdsDraft(draftAllowedLandscapes) : undefined,
@@ -3504,7 +3504,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
   const ideologyRuleNeedsTargetSelect = (type: IdeologyAttractionConditionType) =>
     ["profession_is", "religion_is", "culture_is", "law_active", "has_building"].includes(type);
   const ideologyRuleNeedsTargetInput = (type: IdeologyAttractionConditionType) =>
-    type === "country_modifier_active" || type === "province_modifier_active";
+    type === "country_modifier_active" || type === "region_modifier_active";
 
   const renderIdeologyAttractionRulesEditor = () => (
     <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
@@ -5881,20 +5881,20 @@ export function ContentPanel({ open, token, onClose }: Props) {
                           <div className="rounded-xl border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-1))] p-3">
                             <button
                               type="button"
-                              onClick={() => setCriteriaProvinceOpen((v) => !v)}
+                              onClick={() => setCriteriaHexOpen((v) => !v)}
                               className="mb-2 flex w-full items-center justify-between rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-2 py-1.5 text-left"
                             >
                               <Tooltip content={t("contentPanel.provinceCriteriaTooltip")}>
                                 <div className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--theme-text-muted))]">{t("contentPanel.provinceCriteria")}</div>
                               </Tooltip>
-                              {criteriaProvinceOpen ? (
+                              {criteriaHexOpen ? (
                                 <ChevronDown size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                               ) : (
                                 <ChevronRight size={14} className="text-[rgb(var(--theme-text-secondary))]" />
                               )}
                             </button>
                             <AnimatePresence initial={false}>
-                            {criteriaProvinceOpen ? (
+                            {criteriaHexOpen ? (
                             <motion.div
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: "auto", opacity: 1 }}
@@ -5903,16 +5903,16 @@ export function ContentPanel({ open, token, onClose }: Props) {
                               className="overflow-visible"
                             >
                               <div className="grid gap-3 md:grid-cols-2">
-                                {renderProvinceContentPicker(t("contentPanel.allowedProvinceTypes"), provinceTypeOptions, draftAllowedProvinceTypes, setDraftAllowedProvinceTypes)}
-                                {renderProvinceContentPicker(t("contentPanel.deniedProvinceTypes"), provinceTypeOptions, draftDeniedProvinceTypes, setDraftDeniedProvinceTypes)}
-                                {renderProvinceContentPicker(t("contentPanel.allowedClimate"), provinceClimateOptions, draftAllowedClimates, setDraftAllowedClimates)}
-                                {renderProvinceContentPicker(t("contentPanel.deniedClimate"), provinceClimateOptions, draftDeniedClimates, setDraftDeniedClimates)}
-                                {renderProvinceContentPicker(t("contentPanel.allowedLandscape"), provinceLandscapeOptions, draftAllowedLandscapes, setDraftAllowedLandscapes)}
-                                {renderProvinceContentPicker(t("contentPanel.deniedLandscape"), provinceLandscapeOptions, draftDeniedLandscapes, setDraftDeniedLandscapes)}
-                                {renderProvinceContentPicker(t("contentPanel.allowedContinents"), provinceContinentOptions, draftAllowedContinents, setDraftAllowedContinents)}
-                                {renderProvinceContentPicker(t("contentPanel.deniedContinents"), provinceContinentOptions, draftDeniedContinents, setDraftDeniedContinents)}
-                                {renderProvinceContentPicker(t("contentPanel.allowedStrategicRegions"), provinceStrategicRegionOptions, draftAllowedStrategicRegions, setDraftAllowedStrategicRegions)}
-                                {renderProvinceContentPicker(t("contentPanel.deniedStrategicRegions"), provinceStrategicRegionOptions, draftDeniedStrategicRegions, setDraftDeniedStrategicRegions)}
+                                {renderHexContentPicker(t("contentPanel.allowedHexTypes"), hexTypeOptions, draftAllowedHexTypes, setDraftAllowedHexTypes)}
+                                {renderHexContentPicker(t("contentPanel.deniedHexTypes"), hexTypeOptions, draftDeniedHexTypes, setDraftDeniedHexTypes)}
+                                {renderHexContentPicker(t("contentPanel.allowedClimate"), provinceClimateOptions, draftAllowedClimates, setDraftAllowedClimates)}
+                                {renderHexContentPicker(t("contentPanel.deniedClimate"), provinceClimateOptions, draftDeniedClimates, setDraftDeniedClimates)}
+                                {renderHexContentPicker(t("contentPanel.allowedLandscape"), provinceLandscapeOptions, draftAllowedLandscapes, setDraftAllowedLandscapes)}
+                                {renderHexContentPicker(t("contentPanel.deniedLandscape"), provinceLandscapeOptions, draftDeniedLandscapes, setDraftDeniedLandscapes)}
+                                {renderHexContentPicker(t("contentPanel.allowedContinents"), provinceContinentOptions, draftAllowedContinents, setDraftAllowedContinents)}
+                                {renderHexContentPicker(t("contentPanel.deniedContinents"), provinceContinentOptions, draftDeniedContinents, setDraftDeniedContinents)}
+                                {renderHexContentPicker(t("contentPanel.allowedStrategicRegions"), provinceStrategicRegionOptions, draftAllowedStrategicRegions, setDraftAllowedStrategicRegions)}
+                                {renderHexContentPicker(t("contentPanel.deniedStrategicRegions"), provinceStrategicRegionOptions, draftDeniedStrategicRegions, setDraftDeniedStrategicRegions)}
                                 <label className="block">
                                   <span className="mb-1 block text-xs text-[rgb(var(--theme-text-secondary))]">{t("contentPanel.field.minRadiation")}</span>
                                   <AppInput value={draftMinRadiation} onChange={(e) => setDraftMinRadiation(e.target.value)} inputMode="decimal" placeholder={t("contentPanel.noMinimumPlaceholder")} />

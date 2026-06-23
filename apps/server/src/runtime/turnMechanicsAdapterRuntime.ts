@@ -1,5 +1,5 @@
-import type { WorldBase } from "@arcanorum/shared";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexId, WorldBase } from "@arcanorum/shared";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import {
   resolveResourceExplorationTurn as resolveResourceExplorationTurnInState,
   type ResourceExplorationConfig,
@@ -16,10 +16,10 @@ type TurnMechanicsAdapterRuntimeParams = {
   getWorldBase: () => WorldBase;
   getGameSettings: () => GameSettings;
   getTurnId: () => number;
-  getProvinceIndex: () => Adm1ProvinceIndexEntry[];
-  getProvinceAreaKm2: (provinceId: string) => number;
+  getHexIndex: () => HexMapIndexEntry[];
+  getHexAreaKm2: (hexId: string) => number;
   ensureMarketModelReady: () => void;
-  areProvinceIdsAdjacentOrSame: (leftProvinceId: string, rightProvinceId: string) => boolean;
+  areHexIdsAdjacentOrSame: (leftHexId: string, rightHexId: string) => boolean;
   addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
 };
 
@@ -28,10 +28,10 @@ export function createTurnMechanicsAdapterRuntime(params: TurnMechanicsAdapterRu
   resolveTransportCorridorConstructionTurn: () => void;
   normalizeArmyMoveRoute: (
     payload: Record<string, unknown> | undefined,
-    fallbackProvinceId: string,
-    currentProvinceId: string,
-  ) => string[];
-  isContiguousArmyRoute: (fromProvinceId: string, route: string[]) => boolean;
+    fallbackHexId: HexId,
+    currentHexId: HexId,
+  ) => HexId[];
+  isContiguousArmyRoute: (fromHexId: HexId, route: HexId[]) => boolean;
 } {
   function getResourceExplorationConfig(): ResourceExplorationConfig {
     const economy = params.getGameSettings().economy;
@@ -45,9 +45,9 @@ export function createTurnMechanicsAdapterRuntime(params: TurnMechanicsAdapterRu
   function resolveResourceExplorationTurn(): void {
     const gameSettings = params.getGameSettings();
     const areaByRegion = new Map<string, number>();
-    for (const province of params.getProvinceIndex()) {
+    for (const province of params.getHexIndex()) {
       if (!province.regionId) continue;
-      areaByRegion.set(province.regionId, (areaByRegion.get(province.regionId) ?? 0) + params.getProvinceAreaKm2(province.id));
+      areaByRegion.set(province.regionId, (areaByRegion.get(province.regionId) ?? 0) + params.getHexAreaKm2(province.id));
     }
     resolveResourceExplorationTurnInState({
       worldBase: params.getWorldBase(),
@@ -72,17 +72,17 @@ export function createTurnMechanicsAdapterRuntime(params: TurnMechanicsAdapterRu
 
   function normalizeArmyMoveRoute(
     payload: Record<string, unknown> | undefined,
-    fallbackProvinceId: string,
-    currentProvinceId: string,
-  ): string[] {
-    return normalizeArmyMoveRouteFromPayload(payload, fallbackProvinceId, currentProvinceId);
+    fallbackHexId: HexId,
+    currentHexId: HexId,
+  ): HexId[] {
+    return normalizeArmyMoveRouteFromPayload(payload, fallbackHexId, currentHexId);
   }
 
-  function isContiguousArmyRoute(fromProvinceId: string, route: string[]): boolean {
+  function isContiguousArmyRoute(fromHexId: HexId, route: HexId[]): boolean {
     return isContiguousArmyRouteInState({
-      fromProvinceId,
+      fromHexId,
       route,
-      areProvinceIdsAdjacentOrSame: params.areProvinceIdsAdjacentOrSame,
+      areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
     });
   }
 

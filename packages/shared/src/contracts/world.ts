@@ -12,8 +12,8 @@ export type WorldBase = {
   explanationRecordsByTurn: Record<number, ExplanationRecord[]>;
   regionOwner: Record<string, string>;
   regionController: Record<string, string>;
-  provinceOwner: Record<string, string>;
-  provinceNameById: Record<string, string>;
+  hexOwner: Record<string, string>;
+  hexNameById: Record<string, string>;
   colonyProgressByRegion: Record<string, Record<string, number>>;
   regionColonizationByRegion: Record<string, { cost: number; disabled: boolean; manualCost?: boolean }>;
   regionPopulationByRegion: Record<string, RegionPopulation>;
@@ -40,8 +40,8 @@ export type WorldBase = {
 
 export const WORLD_DELTA_MASK = {
   resourcesByCountry: 1 << 0,
-  provinceOwner: 1 << 1,
-  provinceNameById: 1 << 2,
+  hexOwner: 1 << 1,
+  hexNameById: 1 << 2,
   colonyProgressByRegion: 1 << 3,
   regionColonizationByRegion: 1 << 4,
   regionPopulationByRegion: 1 << 5,

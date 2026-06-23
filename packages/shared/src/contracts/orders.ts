@@ -1,3 +1,5 @@
+import type { HexId } from "./hex-map";
+
 export type OrderType = "BUILD" | "BUDGET" | "ARMY_MOVE" | "COLONIZE";
 
 export type OrderBase = {
@@ -21,7 +23,7 @@ export type BudgetOrder = OrderBase & {
 
 export type ArmyMoveOrder = OrderBase & {
   type: "ARMY_MOVE";
-  provinceId: string;
+  targetHexId: HexId;
 };
 
 export type ColonizeOrder = OrderBase & {

@@ -7,7 +7,7 @@ export type MarketMutationMarket = {
   name: string;
   logoUrl: string | null;
   ownerCountryId: string;
-  capitalProvinceId?: string | null;
+  capitalHexId?: string | null;
   visibility: "public" | "private";
 };
 
@@ -18,7 +18,7 @@ export type MarketMutationUploadMiddleware = {
 export const marketPatchSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   visibility: z.enum(["public", "private"]).optional(),
-  capitalProvinceId: z.string().trim().min(1).max(120).nullable().optional(),
+  capitalHexId: z.string().trim().min(1).max(120).nullable().optional(),
 });
 
 export type MarketMutationRoutesDependencies = {
@@ -26,7 +26,7 @@ export type MarketMutationRoutesDependencies = {
   upload: MarketMutationUploadMiddleware;
   getMarketById: (marketId: string) => MarketMutationMarket | null | undefined;
   normalizeMarketVisibility: (value: unknown) => "public" | "private";
-  getProvinceOwner: (provinceId: string) => string | null;
+  getHexOwner: (hexId: string) => string | null;
   validateImageDimensions: (file: Express.Multer.File) => boolean;
   removeUploadedFile: (file: Express.Multer.File | undefined) => void;
   removeUploadedByUrl: (url: string) => void;
@@ -71,20 +71,20 @@ export function registerMarketMutationRoutes(
     if (typeof parsed.data.visibility === "string") {
       market.visibility = deps.normalizeMarketVisibility(parsed.data.visibility);
     }
-    if (parsed.data.capitalProvinceId !== undefined) {
+    if (parsed.data.capitalHexId !== undefined) {
       const nextCapital =
-        typeof parsed.data.capitalProvinceId === "string" && parsed.data.capitalProvinceId.trim().length > 0
-          ? parsed.data.capitalProvinceId.trim()
+        typeof parsed.data.capitalHexId === "string" && parsed.data.capitalHexId.trim().length > 0
+          ? parsed.data.capitalHexId.trim()
           : null;
       if (nextCapital == null) {
-        market.capitalProvinceId = null;
+        market.capitalHexId = null;
       } else {
-        const provinceOwnerId = deps.getProvinceOwner(nextCapital);
-        if (!provinceOwnerId || provinceOwnerId !== market.ownerCountryId) {
+        const hexOwnerId = deps.getHexOwner(nextCapital);
+        if (!hexOwnerId || hexOwnerId !== market.ownerCountryId) {
           deps.removeUploadedFile(logoFile);
           return res.status(400).json({ error: "INVALID_MARKET_CAPITAL_PROVINCE" });
         }
-        market.capitalProvinceId = nextCapital;
+        market.capitalHexId = nextCapital;
       }
     }
     if (logoFile) {

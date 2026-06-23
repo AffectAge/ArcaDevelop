@@ -1,4 +1,4 @@
-import type { DiplomacyProposal, Division, WorldBase } from "@arcanorum/shared";
+import type { DiplomacyProposal, Division, HexId, WorldBase } from "@arcanorum/shared";
 import type { AiCountryContext } from "./aiContext";
 
 export type AiDiplomacyContactCandidate = {
@@ -23,16 +23,16 @@ export type AiMilitaryMoveCandidate = {
   kind: "army-move";
   countryId: string;
   divisionId: string;
-  fromProvinceId: string;
-  targetProvinceId: string;
+  fromHexId: HexId;
+  targetHexId: HexId;
   requiresValidatedPipeline: true;
   orderDraft: {
     type: "ARMY_MOVE";
     countryId: string;
-    provinceId: string;
+    targetHexId: HexId;
     payload: {
       divisionId: string;
-      path: string[];
+      path: HexId[];
     };
   };
 };
@@ -41,9 +41,9 @@ export type AiDiplomacyMilitaryCandidate = AiDiplomacyContactCandidate | AiMilit
 
 export type AiDiplomacyMilitaryCandidateParams = {
   context: AiCountryContext;
-  world: Pick<WorldBase, "diplomacyProposals" | "divisionsById" | "provinceOwner">;
+  world: Pick<WorldBase, "diplomacyProposals" | "divisionsById" | "hexOwner">;
   knownCountryIds: string[];
-  provinceAdjacencyById?: Record<string, string[]>;
+  hexAdjacencyById?: Record<string, HexId[]>;
   maxDiplomacyTargets?: number;
   maxMilitaryMoves?: number;
   expiresInTurns?: number;
@@ -115,27 +115,27 @@ function selectAiMilitaryMoveCandidates(
     .sort(compareDivisions);
 
   for (const division of divisions) {
-    const targetProvinceId = selectRepositionTargetProvince({
+    const targetHexId = selectRepositionTargetHex({
       countryId: params.context.countryId,
       division,
-      provinceOwner: params.world.provinceOwner,
-      provinceAdjacencyById: params.provinceAdjacencyById ?? {},
+      hexOwner: params.world.hexOwner,
+      hexAdjacencyById: params.hexAdjacencyById ?? {},
     });
-    if (!targetProvinceId) continue;
+    if (!targetHexId) continue;
     candidates.push({
       kind: "army-move",
       countryId: params.context.countryId,
       divisionId: division.id,
-      fromProvinceId: division.provinceId,
-      targetProvinceId,
+      fromHexId: division.hexId,
+      targetHexId,
       requiresValidatedPipeline: true,
       orderDraft: {
         type: "ARMY_MOVE",
         countryId: params.context.countryId,
-        provinceId: targetProvinceId,
+        targetHexId,
         payload: {
           divisionId: division.id,
-          path: [targetProvinceId],
+          path: [targetHexId],
         },
       },
     });
@@ -161,21 +161,21 @@ function isMovableDivisionForCountry(division: Division, countryId: string): boo
     division.status === "idle" &&
     division.strength > 0 &&
     division.organization > 0 &&
-    division.provinceId.length > 0
+    division.hexId.length > 0
   );
 }
 
-function selectRepositionTargetProvince(params: {
+function selectRepositionTargetHex(params: {
   countryId: string;
   division: Division;
-  provinceOwner: Record<string, string>;
-  provinceAdjacencyById: Record<string, string[]>;
-}): string | null {
-  const adjacentProvinceIds = [...(params.provinceAdjacencyById[params.division.provinceId] ?? [])]
-    .filter((provinceId) => provinceId !== params.division.provinceId)
-    .filter((provinceId) => params.provinceOwner[provinceId] === params.countryId)
+  hexOwner: Record<string, string>;
+  hexAdjacencyById: Record<string, HexId[]>;
+}): HexId | null {
+  const adjacentHexIds = [...(params.hexAdjacencyById[params.division.hexId] ?? [])]
+    .filter((hexId) => hexId !== params.division.hexId)
+    .filter((hexId) => params.hexOwner[hexId] === params.countryId)
     .sort();
-  return adjacentProvinceIds[0] ?? null;
+  return adjacentHexIds[0] ?? null;
 }
 
 function normalizeLimit(value: number | undefined, fallback: number): number {
@@ -203,5 +203,5 @@ function getCandidateSortKey(candidate: AiDiplomacyMilitaryCandidate): string {
   if (candidate.kind === "diplomacy-contact") {
     return `${candidate.kind}:${candidate.countryId}:${candidate.targetCountryId}`;
   }
-  return `${candidate.kind}:${candidate.countryId}:${candidate.divisionId}:${candidate.targetProvinceId}`;
+  return `${candidate.kind}:${candidate.countryId}:${candidate.divisionId}:${candidate.targetHexId}`;
 }

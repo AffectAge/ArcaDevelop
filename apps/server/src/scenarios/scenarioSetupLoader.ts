@@ -3,8 +3,8 @@ import { resolve } from "node:path";
 
 export type ScenarioSetupFiles = {
   countryResources: unknown | null;
-  provinceOwners: unknown | null;
-  provinceNames: unknown | null;
+  hexOwners: unknown | null;
+  hexNames: unknown | null;
   countryTechnologies: unknown | null;
   diplomacy: unknown | null;
 };
@@ -12,8 +12,8 @@ export type ScenarioSetupFiles = {
 export function loadScenarioSetupFiles(scenarioDir: string | null): ScenarioSetupFiles {
   return {
     countryResources: readScenarioSetupFile(scenarioDir, "country_resources.json"),
-    provinceOwners: readScenarioSetupFile(scenarioDir, "province_owners.json"),
-    provinceNames: readScenarioSetupFile(scenarioDir, "province_names.json"),
+    hexOwners: readScenarioSetupFile(scenarioDir, "hex_owners.json"),
+    hexNames: readScenarioSetupFile(scenarioDir, "hex_names.json"),
     countryTechnologies: readScenarioSetupFile(scenarioDir, "country_technologies.json"),
     diplomacy: readScenarioSetupFile(scenarioDir, "diplomacy.json"),
   };

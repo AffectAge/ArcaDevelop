@@ -4,28 +4,28 @@ import { useUiText } from "../../i18n/useUiText";
 type Props = {
   x: number;
   y: number;
-  provinceName: string;
-  canOpenProvinceKnowledge: boolean;
-  canCreateProvinceKnowledge: boolean;
-  canOpenAdminProvinceEditor: boolean;
+  hexName: string;
+  canOpenHexKnowledge: boolean;
+  canCreateHexKnowledge: boolean;
+  canOpenAdminHexEditor: boolean;
   onOpenColonization: () => void;
-  onOpenProvinceKnowledge: () => void;
-  onCreateProvinceKnowledge: () => void;
-  onOpenAdminProvinceEditor: () => void;
+  onOpenHexKnowledge: () => void;
+  onCreateHexKnowledge: () => void;
+  onOpenAdminHexEditor: () => void;
   onClose: () => void;
 };
 
-export function ProvinceContextMenuHud({
+export function HexContextMenuHud({
   x,
   y,
-  provinceName,
-  canOpenProvinceKnowledge,
-  canCreateProvinceKnowledge,
-  canOpenAdminProvinceEditor,
+  hexName,
+  canOpenHexKnowledge,
+  canCreateHexKnowledge,
+  canOpenAdminHexEditor,
   onOpenColonization,
-  onOpenProvinceKnowledge,
-  onCreateProvinceKnowledge,
-  onOpenAdminProvinceEditor,
+  onOpenHexKnowledge,
+  onCreateHexKnowledge,
+  onOpenAdminHexEditor,
   onClose,
 }: Props) {
   const { t } = useUiText();
@@ -36,27 +36,27 @@ export function ProvinceContextMenuHud({
       style={{ left: x, top: y }}
       onMouseLeave={onClose}
     >
-      <div className="arc-hud-content px-2 pb-2 text-xs font-semibold text-[var(--arc-color-text)]">{provinceName}</div>
+      <div className="arc-hud-content px-2 pb-2 text-xs font-semibold text-[var(--arc-color-text)]">{hexName}</div>
 
       <div className="arc-hud-content space-y-2">
         <AppButton type="button" variant="primary" size="sm" className="w-full justify-center" onClick={onOpenColonization}>
           {t("provinceContext.openColonization")}
         </AppButton>
 
-        {canOpenProvinceKnowledge && (
-          <AppButton type="button" variant="secondary" size="sm" className="w-full justify-center" onClick={onOpenProvinceKnowledge}>
-            {t("provinceContext.openProvinceKnowledge")}
+        {canOpenHexKnowledge && (
+          <AppButton type="button" variant="secondary" size="sm" className="w-full justify-center" onClick={onOpenHexKnowledge}>
+            {t("provinceContext.openHexKnowledge")}
           </AppButton>
         )}
 
-        {canCreateProvinceKnowledge && (
-          <AppButton type="button" variant="danger" size="sm" className="w-full justify-center" onClick={onCreateProvinceKnowledge}>
-            {t("provinceContext.createProvinceKnowledge")}
+        {canCreateHexKnowledge && (
+          <AppButton type="button" variant="danger" size="sm" className="w-full justify-center" onClick={onCreateHexKnowledge}>
+            {t("provinceContext.createHexKnowledge")}
           </AppButton>
         )}
 
-        {canOpenAdminProvinceEditor && (
-          <AppButton type="button" variant="danger" size="sm" className="w-full justify-center" onClick={onOpenAdminProvinceEditor}>
+        {canOpenAdminHexEditor && (
+          <AppButton type="button" variant="danger" size="sm" className="w-full justify-center" onClick={onOpenAdminHexEditor}>
             {t("provinceContext.openAdminEditor")}
           </AppButton>
         )}

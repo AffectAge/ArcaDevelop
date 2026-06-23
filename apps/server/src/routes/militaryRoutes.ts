@@ -2,6 +2,7 @@ import type express from "express";
 import type {
   Division,
   DivisionStats,
+  HexId,
   DivisionTemplate,
   DivisionTemplateBattalion,
   MilitaryBranch,
@@ -51,7 +52,7 @@ export type MilitaryRoutesDependencies = {
   getCountryDivisionsById: () => Record<string, Division>;
   getCountryMilitaryQueue: (countryId: string) => MilitaryFormationQueueItem[];
   setCountryMilitaryQueue: (countryId: string, queue: MilitaryFormationQueueItem[]) => void;
-  getProvinceOwner: (provinceId: string) => string | null;
+  getHexOwner: (hexId: string) => string | null;
   normalizeMilitaryTemplateComponents: (
     input: unknown,
     kind: MilitaryBranch,
@@ -100,7 +101,7 @@ const divisionTemplateInputSchema = z.object({
 
 const createDivisionInputSchema = z.object({
   templateId: z.string().trim().min(1).max(120),
-  provinceId: z.string().trim().min(1).max(120),
+  hexId: z.string().trim().regex(/^hex:-?\d+:-?\d+$/).max(120),
   name: z.string().trim().min(1).max(80).optional(),
 });
 
@@ -124,7 +125,7 @@ const militaryTemplateInputSchema = z.object({
 
 const createMilitaryFormationInputSchema = z.object({
   templateId: z.string().trim().min(1).max(120),
-  provinceId: z.string().trim().min(1).max(120),
+  hexId: z.string().trim().regex(/^hex:-?\d+:-?\d+$/).max(120),
   name: z.string().trim().min(1).max(80).optional(),
 });
 
@@ -239,8 +240,8 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
       return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
     }
     deps.ensureCountryInWorldBase(auth.countryId);
-    if (deps.getProvinceOwner(parsed.data.provinceId) !== auth.countryId) {
-      return res.status(403).json({ error: "PROVINCE_NOT_OWNED" });
+    if (deps.getHexOwner(parsed.data.hexId) !== auth.countryId) {
+      return res.status(403).json({ error: "HEX_NOT_OWNED" });
     }
     const template = deps.getCountryDivisionTemplates(auth.countryId).find((entry) => entry.id === parsed.data.templateId);
     if (!template) {
@@ -263,7 +264,7 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
       kind,
       templateId: template.id,
       name: parsed.data.name ?? template.name,
-      provinceId: parsed.data.provinceId,
+      hexId: parsed.data.hexId as HexId,
       progress: 0,
       turnsTotal,
       turnsRemaining: turnsTotal,
@@ -382,8 +383,8 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
       return res.status(400).json({ error: "INVALID_PAYLOAD" });
     }
     deps.ensureCountryInWorldBase(auth.countryId);
-    if (deps.getProvinceOwner(parsed.data.provinceId) !== auth.countryId) {
-      return res.status(403).json({ error: "PROVINCE_NOT_OWNED" });
+    if (deps.getHexOwner(parsed.data.hexId) !== auth.countryId) {
+      return res.status(403).json({ error: "HEX_NOT_OWNED" });
     }
     const template = deps.getCountryDivisionTemplates(auth.countryId).find((entry) => entry.id === parsed.data.templateId);
     if (!template) {
@@ -402,7 +403,7 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
       countryId: auth.countryId,
       templateId: template.id,
       name: parsed.data.name ?? template.name,
-      provinceId: parsed.data.provinceId,
+      hexId: parsed.data.hexId as HexId,
       strength: 1,
       organization: template.stats.organization,
       stats: template.stats,

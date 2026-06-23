@@ -4,6 +4,7 @@ import type {
   DivisionTemplateBattalion,
   EventPriority,
   EventVisibility,
+  HexId,
   MilitaryFormationQueueItem,
   MilitaryBranch,
   MilitaryTemplateComponent,
@@ -48,10 +49,10 @@ export type MilitaryIdFactory = () => string;
 
 export type MilitaryWorldState = Pick<
   WorldBase,
-  "provinceOwner" | "divisionsById" | "divisionTemplatesByCountry" | "militaryFormationQueueByCountry" | "resourcesByCountry"
+  "hexOwner" | "divisionsById" | "divisionTemplatesByCountry" | "militaryFormationQueueByCountry" | "resourcesByCountry"
 >;
 
-export type MilitaryProvinceNode = {
+export type MilitaryHexNode = {
   id: string;
   neighbors?: string[];
 };
@@ -244,45 +245,49 @@ export function calculateMilitaryFormationCost(params: {
 
 export function normalizeArmyMoveRoute(
   payload: Record<string, unknown> | undefined,
-  fallbackProvinceId: string,
-  currentProvinceId: string,
-): string[] {
+  fallbackHexId: string,
+  currentHexId: string,
+): HexId[] {
   const requestedPath = Array.isArray(payload?.path)
-    ? payload.path.filter((value): value is string => typeof value === "string" && value.trim().length > 0).map((value) => value.trim())
+    ? payload.path
+        .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+        .map((value) => value.trim())
+        .filter((value): value is HexId => /^hex:-?\d+:-?\d+$/.test(value))
     : [];
-  const route = (requestedPath.length > 0 ? requestedPath : [fallbackProvinceId]).filter((provinceId) => provinceId !== currentProvinceId);
+  const fallbackRoute = /^hex:-?\d+:-?\d+$/.test(fallbackHexId) ? [fallbackHexId as HexId] : [];
+  const route = (requestedPath.length > 0 ? requestedPath : fallbackRoute).filter((hexId) => hexId !== currentHexId);
   return route.slice(0, 64);
 }
 
 export function isContiguousArmyRoute(params: {
-  fromProvinceId: string;
-  route: string[];
-  areProvinceIdsAdjacentOrSame: (fromProvinceId: string, toProvinceId: string) => boolean;
+  fromHexId: HexId;
+  route: HexId[];
+  areHexIdsAdjacentOrSame: (fromHexId: HexId, toHexId: HexId) => boolean;
 }): boolean {
   if (params.route.length === 0) return false;
-  let cursorProvinceId = params.fromProvinceId;
-  for (const provinceId of params.route) {
-    if (!params.areProvinceIdsAdjacentOrSame(cursorProvinceId, provinceId)) {
+  let cursorHexId = params.fromHexId;
+  for (const hexId of params.route) {
+    if (!params.areHexIdsAdjacentOrSame(cursorHexId, hexId)) {
       return false;
     }
-    cursorProvinceId = provinceId;
+    cursorHexId = hexId;
   }
   return true;
 }
 
-export function findRetreatProvince(params: {
+export function findRetreatHex(params: {
   division: Division;
-  blockedProvinceId: string;
-  provinces: MilitaryProvinceNode[];
-  provinceOwner: Record<string, string | null | undefined>;
-}): string | null {
-  const province = params.provinces.find((entry) => entry.id === params.division.provinceId);
-  const neighbors = province?.neighbors ?? [];
+  blockedHexId: string;
+  hexes: MilitaryHexNode[];
+  hexOwner: Record<string, string | null | undefined>;
+}): HexId | null {
+  const hex = params.hexes.find((entry) => entry.id === params.division.hexId);
+  const neighbors = hex?.neighbors ?? [];
   return (
-    neighbors.find(
-      (provinceId) =>
-        provinceId !== params.blockedProvinceId && (params.provinceOwner[provinceId] ?? null) === params.division.countryId,
-    ) ?? null
+    (neighbors.find(
+      (hexId) =>
+        hexId !== params.blockedHexId && /^hex:-?\d+:-?\d+$/.test(hexId) && (params.hexOwner[hexId] ?? null) === params.division.countryId,
+    ) as HexId | undefined) ?? null
   );
 }
 
@@ -293,24 +298,24 @@ export function applyDivisionDamage(division: Division, orgDamage: number, stren
 
 export function resolveDivisionBattle(params: {
   attacker: Division;
-  targetProvinceId: string;
+  targetHexId: HexId;
   worldBase: MilitaryWorldState;
-  provinces: MilitaryProvinceNode[];
+  hexes: MilitaryHexNode[];
   events: MilitaryRuntimeEvent[];
 }): boolean {
   const defenders = Object.values(params.worldBase.divisionsById).filter(
     (division) =>
       (division.kind ?? "land") === "land" &&
-      division.provinceId === params.targetProvinceId &&
+      division.hexId === params.targetHexId &&
       division.countryId !== params.attacker.countryId &&
       division.strength > 0,
   );
-  const targetOwnerId = params.worldBase.provinceOwner[params.targetProvinceId] ?? null;
+  const targetOwnerId = params.worldBase.hexOwner[params.targetHexId] ?? null;
   if (defenders.length === 0) {
-    params.attacker.provinceId = params.targetProvinceId;
+    params.attacker.hexId = params.targetHexId;
     params.attacker.status = "idle";
     if (targetOwnerId !== params.attacker.countryId) {
-      params.worldBase.provinceOwner[params.targetProvinceId] = params.attacker.countryId;
+      params.worldBase.hexOwner[params.targetHexId] = params.attacker.countryId;
     }
     return true;
   }
@@ -338,14 +343,14 @@ export function resolveDivisionBattle(params: {
       delete params.worldBase.divisionsById[defender.id];
       continue;
     }
-    const retreatProvinceId = findRetreatProvince({
+    const retreatHexId = findRetreatHex({
       division: defender,
-      blockedProvinceId: params.targetProvinceId,
-      provinces: params.provinces,
-      provinceOwner: params.worldBase.provinceOwner,
+      blockedHexId: params.targetHexId,
+      hexes: params.hexes,
+      hexOwner: params.worldBase.hexOwner,
     });
-    if (retreatProvinceId) {
-      defender.provinceId = retreatProvinceId;
+    if (retreatHexId) {
+      defender.hexId = retreatHexId;
       defender.organization = round3(Math.max(0.1, defender.stats.organization * 0.25));
       defender.status = "retreating";
       defender.path = [];
@@ -360,7 +365,7 @@ export function resolveDivisionBattle(params: {
     params.events.push({
       category: "military",
       title: "Атака отбита",
-      message: `${params.attacker.name} не смогла взять провинцию ${params.targetProvinceId}`,
+      message: `${params.attacker.name} не смогла взять hex ${params.targetHexId}`,
       countryId: params.attacker.countryId,
       priority: "medium",
       visibility: "private",
@@ -371,19 +376,19 @@ export function resolveDivisionBattle(params: {
   const remainingDefenders = Object.values(params.worldBase.divisionsById).filter(
     (division) =>
       (division.kind ?? "land") === "land" &&
-      division.provinceId === params.targetProvinceId &&
+      division.hexId === params.targetHexId &&
       division.countryId !== params.attacker.countryId &&
       division.strength > 0.05,
   );
   if (remainingDefenders.length === 0) {
-    params.attacker.provinceId = params.targetProvinceId;
+    params.attacker.hexId = params.targetHexId;
     params.attacker.status = "idle";
     params.attacker.path = [];
-    params.worldBase.provinceOwner[params.targetProvinceId] = params.attacker.countryId;
+    params.worldBase.hexOwner[params.targetHexId] = params.attacker.countryId;
     params.events.push({
       category: "military",
-      title: "Провинция захвачена",
-      message: `${params.attacker.name} взяла под контроль провинцию ${params.targetProvinceId}`,
+      title: "Hex захвачен",
+      message: `${params.attacker.name} взяла под контроль hex ${params.targetHexId}`,
       countryId: params.attacker.countryId,
       priority: "medium",
       visibility: "public",
@@ -394,7 +399,7 @@ export function resolveDivisionBattle(params: {
   params.events.push({
     category: "military",
     title: "Бой продолжается",
-    message: `${params.attacker.name} вступила в бой за провинцию ${params.targetProvinceId}`,
+    message: `${params.attacker.name} вступила в бой за hex ${params.targetHexId}`,
     countryId: params.attacker.countryId,
     priority: "medium",
     visibility: "private",
@@ -404,32 +409,32 @@ export function resolveDivisionBattle(params: {
 
 export function advanceDivisionAlongRoute(params: {
   division: Division;
-  route: string[];
+  route: HexId[];
   worldBase: MilitaryWorldState;
-  provinces: MilitaryProvinceNode[];
+  hexes: MilitaryHexNode[];
   turnId: number;
   events: MilitaryRuntimeEvent[];
 }): boolean {
   const maxSteps = Math.max(1, Math.floor(Number(params.division.stats.speed) || 1));
-  let remainingRoute = params.route.filter((provinceId) => provinceId !== params.division.provinceId).slice(0, 64);
+  let remainingRoute = params.route.filter((hexId) => hexId !== params.division.hexId).slice(0, 64);
   let moved = false;
 
   for (let step = 0; step < maxSteps && remainingRoute.length > 0; step += 1) {
-    const nextProvinceId = remainingRoute[0];
+    const nextHexId = remainingRoute[0];
     const hasEnemyDivision = Object.values(params.worldBase.divisionsById).some(
       (other) =>
         (other.kind ?? "land") === "land" &&
         other.id !== params.division.id &&
-        other.provinceId === nextProvinceId &&
+        other.hexId === nextHexId &&
         other.countryId !== params.division.countryId,
     );
-    const targetOwnerId = params.worldBase.provinceOwner[nextProvinceId] ?? null;
+    const targetOwnerId = params.worldBase.hexOwner[nextHexId] ?? null;
     if (hasEnemyDivision || (targetOwnerId && targetOwnerId !== params.division.countryId)) {
       resolveDivisionBattle({
         attacker: params.division,
-        targetProvinceId: nextProvinceId,
+        targetHexId: nextHexId,
         worldBase: params.worldBase,
-        provinces: params.provinces,
+        hexes: params.hexes,
         events: params.events,
       });
       remainingRoute = [];
@@ -437,7 +442,7 @@ export function advanceDivisionAlongRoute(params: {
       break;
     }
 
-    params.division.provinceId = nextProvinceId;
+    params.division.hexId = nextHexId;
     remainingRoute = remainingRoute.slice(1);
     moved = true;
   }
@@ -457,8 +462,8 @@ export function advanceDivisionAlongRoute(params: {
     title: remainingRoute.length > 0 ? "Дивизия продолжает марш" : "Передислокация дивизии",
     message:
       remainingRoute.length > 0
-        ? `${params.division.name} прибыла в провинцию ${params.division.provinceId}; осталось ${remainingRoute.length} шагов`
-        : `${params.division.name} завершила приказ движения в провинции ${params.division.provinceId}`,
+        ? `${params.division.name} прибыла в hex ${params.division.hexId}; осталось ${remainingRoute.length} шагов`
+        : `${params.division.name} завершила приказ движения в hex ${params.division.hexId}`,
     countryId: params.division.countryId,
     priority: "low",
     visibility: "private",
@@ -470,11 +475,11 @@ export function resolveArmyMoveOrder(params: {
   order: Order;
   playerId: string;
   worldBase: MilitaryWorldState;
-  provinces: MilitaryProvinceNode[];
+  hexes: MilitaryHexNode[];
   turnId: number;
   movedDivisionIds: Set<string>;
   events: MilitaryRuntimeEvent[];
-  areProvinceIdsAdjacentOrSame: (fromProvinceId: string, toProvinceId: string) => boolean;
+  areHexIdsAdjacentOrSame: (fromHexId: HexId, toHexId: HexId) => boolean;
 }): ArmyMoveOrderResolution {
   const divisionId = typeof params.order.payload?.divisionId === "string" ? params.order.payload.divisionId.trim() : "";
   const division = divisionId ? params.worldBase.divisionsById[divisionId] : null;
@@ -492,15 +497,15 @@ export function resolveArmyMoveOrder(params: {
   if (params.movedDivisionIds.has(division.id) || division.lastMovedTurnId === params.turnId) {
     return reject("DIVISION_ALREADY_MOVED");
   }
-  const route = normalizeArmyMoveRoute(params.order.payload, params.order.provinceId, division.provinceId);
+  const route = normalizeArmyMoveRoute(params.order.payload, params.order.targetHexId, division.hexId);
   if (route.length === 0) {
     return reject("DIVISION_TARGET_INVALID");
   }
   if (
     !isContiguousArmyRoute({
-      fromProvinceId: division.provinceId,
+      fromHexId: division.hexId,
       route,
-      areProvinceIdsAdjacentOrSame: params.areProvinceIdsAdjacentOrSame,
+      areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
     })
   ) {
     return reject("DIVISION_TARGET_NOT_ADJACENT");
@@ -511,7 +516,7 @@ export function resolveArmyMoveOrder(params: {
     division,
     route,
     worldBase: params.worldBase,
-    provinces: params.provinces,
+    hexes: params.hexes,
     turnId: params.turnId,
     events: params.events,
   });
@@ -523,21 +528,21 @@ export function resolveArmyMoveOrder(params: {
 
 export function advanceStoredArmyRoutesTurn(params: {
   worldBase: MilitaryWorldState;
-  provinces: MilitaryProvinceNode[];
+  hexes: MilitaryHexNode[];
   turnId: number;
   movedDivisionIds: Set<string>;
   events: MilitaryRuntimeEvent[];
-  areProvinceIdsAdjacentOrSame: (fromProvinceId: string, toProvinceId: string) => boolean;
+  areHexIdsAdjacentOrSame: (fromHexId: HexId, toHexId: HexId) => boolean;
 }): void {
   for (const division of Object.values(params.worldBase.divisionsById)) {
     if ((division.kind ?? "land") !== "land") continue;
     if (params.movedDivisionIds.has(division.id) || division.lastMovedTurnId === params.turnId || division.path.length === 0) continue;
-    const route = division.path.filter((provinceId) => provinceId !== division.provinceId).slice(0, 64);
+    const route = division.path.filter((hexId) => hexId !== division.hexId).slice(0, 64);
     if (
       !isContiguousArmyRoute({
-        fromProvinceId: division.provinceId,
+        fromHexId: division.hexId,
         route,
-        areProvinceIdsAdjacentOrSame: params.areProvinceIdsAdjacentOrSame,
+        areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
       })
     ) {
       division.path = [];
@@ -550,7 +555,7 @@ export function advanceStoredArmyRoutesTurn(params: {
         division,
         route,
         worldBase: params.worldBase,
-        provinces: params.provinces,
+        hexes: params.hexes,
         turnId: params.turnId,
         events: params.events,
       })
@@ -591,7 +596,7 @@ export function advanceMilitaryFormationQueue(params: {
         templateId: template.id,
         name: item.name || template.name,
         kind: item.kind ?? template.kind ?? "land",
-        provinceId: item.provinceId,
+        hexId: item.hexId,
         strength: 1,
         organization: template.stats.organization,
         stats: template.stats,
@@ -604,7 +609,7 @@ export function advanceMilitaryFormationQueue(params: {
       params.events.push({
         category: "military",
         title: "Формирование завершено",
-        message: `${unit.name} готова и базируется в провинции ${unit.provinceId}`,
+        message: `${unit.name} готова и базируется в hex ${unit.hexId}`,
         countryId,
         priority: "medium",
         visibility: "private",

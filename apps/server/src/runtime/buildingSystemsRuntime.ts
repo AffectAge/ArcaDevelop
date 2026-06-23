@@ -1,5 +1,5 @@
 import type { Order, WorldBase } from "@arcanorum/shared";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { GameSettings } from "./gameSettingsTypes";
 import { createBuildingRuntime } from "./buildingRuntimeState";
 import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
@@ -9,7 +9,7 @@ type BuildingSystemsRuntimeParams = {
   getGameSettings: () => GameSettings;
   getTurnId: () => number;
   getOrdersByTurn: () => Map<number, Map<string, Order[]>>;
-  getProvinceById: () => Map<string, Adm1ProvinceIndexEntry>;
+  getHexById: () => Map<string, HexMapIndexEntry>;
   ensureCountryInWorldBase: (countryId: string) => void;
   addResourceLedgerExpense?: (input: ResourceLedgerEntryInput) => void;
 };
@@ -23,7 +23,7 @@ export function createBuildingSystemsRuntime(params: BuildingSystemsRuntimeParam
       getGameSettings: params.getGameSettings,
       getTurnId: params.getTurnId,
       getOrdersByTurn: params.getOrdersByTurn,
-      getProvinceById: params.getProvinceById,
+      getHexById: params.getHexById,
       ensureCountryInWorldBase: params.ensureCountryInWorldBase,
       addResourceLedgerExpense: params.addResourceLedgerExpense,
     }),

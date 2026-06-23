@@ -44,7 +44,7 @@ export type ScenarioDefines = {
     recolorDucats?: unknown;
     flagDucats?: unknown;
     crestDucats?: unknown;
-    provinceRenameDucats?: unknown;
+    hexRenameDucats?: unknown;
   };
   military?: {
     militaryFormationSpeed?: unknown;
@@ -121,7 +121,7 @@ export const SCENARIO_DEFINES_SUPPORTED_SECTIONS = {
     recolorDucats: { type: "integer", min: 0, max: 1_000_000_000_000 },
     flagDucats: { type: "integer", min: 0, max: 1_000_000_000_000 },
     crestDucats: { type: "integer", min: 0, max: 1_000_000_000_000 },
-    provinceRenameDucats: { type: "integer", min: 0, max: 1_000_000_000_000 },
+    hexRenameDucats: { type: "integer", min: 0, max: 1_000_000_000_000 },
   },
   military: {
     militaryFormationSpeed: { type: "number", min: 1, max: 1_000_000_000_000 },
@@ -201,7 +201,7 @@ export type CustomizationSettings = {
   recolorDucats: number;
   flagDucats: number;
   crestDucats: number;
-  provinceRenameDucats: number;
+  hexRenameDucats: number;
 };
 
 export type MilitarySettings = {
@@ -283,7 +283,7 @@ const scenarioDefinesShapeSchema = z
         recolorDucats: z.unknown().optional(),
         flagDucats: z.unknown().optional(),
         crestDucats: z.unknown().optional(),
-        provinceRenameDucats: z.unknown().optional(),
+        hexRenameDucats: z.unknown().optional(),
       })
       .strict()
       .optional(),
@@ -668,12 +668,12 @@ export function normalizeScenarioCustomizationDefines(
       options.maxSettingNumber,
       "INVALID_SCENARIO_CUSTOMIZATION_CREST_DUCATS",
     ),
-    provinceRenameDucats: normalizeIntegerInRange(
-      customizationDefines.provinceRenameDucats,
-      defaults.provinceRenameDucats,
+    hexRenameDucats: normalizeIntegerInRange(
+      customizationDefines.hexRenameDucats,
+      defaults.hexRenameDucats,
       0,
       options.maxSettingNumber,
-      "INVALID_SCENARIO_CUSTOMIZATION_PROVINCE_RENAME_DUCATS",
+      "INVALID_SCENARIO_CUSTOMIZATION_HEX_RENAME_DUCATS",
     ),
   };
 }

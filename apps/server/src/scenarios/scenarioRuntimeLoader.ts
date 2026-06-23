@@ -17,7 +17,7 @@ import type { GameSettings } from "../runtime/gameSettingsTypes";
 import { normalizeContentLogoUrl } from "../uploads/uploadPaths";
 import { loadRawScenarioContent } from "./scenarioContentLoader";
 import {
-  buildProvinceOwnerFromRegionHistory,
+  buildHexOwnerFromRegionHistory,
   buildRegionControllerFromRegionHistory,
   buildRegionOwnerFromRegionHistory,
   buildResourcesByCountryFromHistory,
@@ -50,11 +50,11 @@ export function normalizeScenarioContentForRuntime(source: unknown): GameSetting
       ...entry,
       logoUrl: normalizeContentLogoUrl("resourceCategories", entry.logoUrl),
     })),
-    provinceTypes: normalizeContentCultures(contentSource.provinceTypes ?? contentSource.province_types),
-    provinceClimates: normalizeContentCultures(contentSource.provinceClimates ?? contentSource.province_climates),
-    provinceLandscapes: normalizeContentCultures(contentSource.provinceLandscapes ?? contentSource.province_landscapes),
-    provinceContinents: normalizeContentCultures(contentSource.provinceContinents ?? contentSource.province_continents),
-    provinceStrategicRegions: normalizeContentCultures(contentSource.provinceStrategicRegions ?? contentSource.province_strategic_regions),
+    hexTypes: normalizeContentCultures(contentSource.hexTypes ?? contentSource.hex_types),
+    hexClimates: normalizeContentCultures(contentSource.hexClimates ?? contentSource.hex_climates),
+    hexLandscapes: normalizeContentCultures(contentSource.hexLandscapes ?? contentSource.hex_landscapes),
+    hexContinents: normalizeContentCultures(contentSource.hexContinents ?? contentSource.hex_continents),
+    hexStrategicRegions: normalizeContentCultures(contentSource.hexStrategicRegions ?? contentSource.hex_strategic_regions),
     professions: ensureDefaultUnemployedProfession(normalizeContentCultures(contentSource.professions)),
     ideologies: ensureDefaultIdeology(normalizeContentCultures(contentSource.ideologies)),
     interestGroups: normalizeContentCultures(contentSource.interestGroups ?? contentSource.interest_groups),
@@ -100,9 +100,9 @@ export function loadScenarioHistoryOrNull(scenarioDir: string | null): ScenarioH
   return scenarioDir ? loadScenarioHistory(scenarioDir) : null;
 }
 
-export function loadProvinceOwnerFromRegionHistory(history: ScenarioHistory | null): Record<string, string> {
+export function loadHexOwnerFromRegionHistory(history: ScenarioHistory | null): Record<string, string> {
   if (!history) return {};
-  return buildProvinceOwnerFromRegionHistory(history);
+  return buildHexOwnerFromRegionHistory(history);
 }
 
 export function loadRegionOwnerFromRegionHistory(history: ScenarioHistory | null): Record<string, string> {
@@ -131,11 +131,11 @@ export function buildWorldBaseFromScenarioRuntime(params: {
   base.resourcesByCountry = loadResourcesByCountryFromHistory(history);
   base.regionOwner = loadRegionOwnerFromRegionHistory(history);
   base.regionController = loadRegionControllerFromRegionHistory(history);
-  base.provinceOwner = loadProvinceOwnerFromRegionHistory(history);
+  base.hexOwner = loadHexOwnerFromRegionHistory(history);
   applyAuthoredStateFromHistory(base, history, params);
   if (setup.countryResources) base.resourcesByCountry = params.normalizeResourcesByCountryMap(setup.countryResources);
-  if (setup.provinceOwners) base.provinceOwner = normalizeScenarioStringMap(setup.provinceOwners);
-  if (setup.provinceNames) base.provinceNameById = normalizeScenarioStringMap(setup.provinceNames);
+  if (setup.hexOwners) base.hexOwner = normalizeScenarioStringMap(setup.hexOwners);
+  if (setup.hexNames) base.hexNameById = normalizeScenarioStringMap(setup.hexNames);
   if (setup.countryTechnologies) base.technologyByCountry = params.normalizeTechnologyByCountryMap(setup.countryTechnologies);
   if (setup.diplomacy) {
     base.diplomacyProposals = params.normalizeDiplomacyProposals(

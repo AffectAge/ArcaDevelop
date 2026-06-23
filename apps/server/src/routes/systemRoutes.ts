@@ -5,7 +5,7 @@ import type express from "express";
 export type SystemRoutesDependencies = {
   getServerStatus: () => string;
   getTurnId: () => number;
-  getAdm1TileRoot: () => string;
+  getHexTileRoot: () => string;
   getRasterTileRoot: () => string;
 };
 
@@ -14,8 +14,8 @@ export function registerSystemRoutes(app: express.Express, deps: SystemRoutesDep
     res.json({ status: deps.getServerStatus(), turnId: deps.getTurnId(), serverTime: new Date().toISOString() });
   });
 
-  app.get("/tiles/adm1/:z/:x/:y.mvt", (req, res) => {
-    const tilePath = resolveTilePath(deps.getAdm1TileRoot(), req.params.z, req.params.x, `${req.params.y}.mvt`);
+  app.get("/tiles/hex/:z/:x/:y.mvt", (req, res) => {
+    const tilePath = resolveTilePath(deps.getHexTileRoot(), req.params.z, req.params.x, `${req.params.y}.mvt`);
     if (!tilePath) {
       return res.status(204).end();
     }

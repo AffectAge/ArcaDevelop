@@ -43,8 +43,8 @@ export type ActiveTradeSanction<T extends MarketSanctionLike = MarketSanctionLik
 };
 
 export type LogisticsFailureLike = {
-  provinceId: string;
-  sourceProvinceId?: string | null;
+  hexId: string;
+  sourceHexId?: string | null;
   goodId: string;
   reason: string;
   amount: number;
@@ -133,7 +133,7 @@ export type MarketTurnOverview<TAlert, TLogisticsFailure> = {
   exportsByCountryByCountryAndGood: ScopeGoodPartnerMap;
   importsByMarketByMarketAndGood: ScopeGoodPartnerMap;
   exportsByMarketByMarketAndGood: ScopeGoodPartnerMap;
-  logisticsFailuresByProvince: Record<string, TLogisticsFailure[]>;
+  logisticsFailuresByHex: Record<string, TLogisticsFailure[]>;
 };
 
 export type WarehouseSellerInstanceLike = {
@@ -145,7 +145,7 @@ export type WarehouseSellerInstanceLike = {
 
 export type SellerSlotLike<TInstance extends WarehouseSellerInstanceLike = WarehouseSellerInstanceLike> = {
   regionId: string;
-  provinceId: string;
+  hexId: string;
   countryId: string;
   marketId: string;
   instanceId: string;
@@ -171,7 +171,7 @@ export type MarketOverviewAlert = {
   severity: "warning" | "critical";
   kind: "critical-deficit" | "infra-overload" | "building-inactive";
   message: string;
-  provinceId?: string;
+  hexId?: string;
   buildingId?: string;
   instanceId?: string;
   goodId?: string;
@@ -180,8 +180,8 @@ export type MarketOverviewAlert = {
 export type LogisticsFailureReason = "no-corridor" | "no-capacity" | "no-transit";
 
 export type LogisticsFailure = {
-  provinceId: string;
-  sourceProvinceId?: string | null;
+  hexId: string;
+  sourceHexId?: string | null;
   sourceCountryId?: string | null;
   sourceMarketId?: string | null;
   goodId: string;
@@ -201,7 +201,7 @@ export type MarketOverviewState = {
   exportsByCountryByCountryAndGood: ScopeGoodPartnerMap;
   importsByMarketByMarketAndGood: ScopeGoodPartnerMap;
   exportsByMarketByMarketAndGood: ScopeGoodPartnerMap;
-  logisticsFailuresByProvince: Record<string, LogisticsFailure[]>;
+  logisticsFailuresByHex: Record<string, LogisticsFailure[]>;
 };
 
 export function createEmptyMarketOverviewState(nextTurnId: number): MarketOverviewState {
@@ -216,7 +216,7 @@ export function createEmptyMarketOverviewState(nextTurnId: number): MarketOvervi
     exportsByCountryByCountryAndGood: {},
     importsByMarketByMarketAndGood: {},
     exportsByMarketByMarketAndGood: {},
-    logisticsFailuresByProvince: {},
+    logisticsFailuresByHex: {},
   };
 }
 
@@ -244,7 +244,7 @@ export function normalizeMarketOverviewState(params: {
     exportsByCountryByCountryAndGood: normalizeNumberMapL3(row.exportsByCountryByCountryAndGood),
     importsByMarketByMarketAndGood: normalizeNumberMapL3(row.importsByMarketByMarketAndGood),
     exportsByMarketByMarketAndGood: normalizeNumberMapL3(row.exportsByMarketByMarketAndGood),
-    logisticsFailuresByProvince: normalizeLogisticsFailuresByProvince(row.logisticsFailuresByProvince),
+    logisticsFailuresByHex: normalizeLogisticsFailuresByHex(row.logisticsFailuresByHex),
   };
 }
 
@@ -318,7 +318,7 @@ function normalizeMarketOverviewAlertsMap(params: {
         severity,
         kind,
         message,
-        provinceId: typeof row.provinceId === "string" ? row.provinceId : undefined,
+        hexId: typeof row.hexId === "string" ? row.hexId : undefined,
         buildingId: typeof row.buildingId === "string" ? row.buildingId : undefined,
         instanceId: typeof row.instanceId === "string" ? row.instanceId : undefined,
         goodId: typeof row.goodId === "string" ? row.goodId : undefined,
@@ -329,12 +329,12 @@ function normalizeMarketOverviewAlertsMap(params: {
   return normalized;
 }
 
-function normalizeLogisticsFailuresByProvince(input: unknown): Record<string, LogisticsFailure[]> {
+function normalizeLogisticsFailuresByHex(input: unknown): Record<string, LogisticsFailure[]> {
   if (!input || typeof input !== "object") return {};
   const source = input as Record<string, unknown>;
   const normalized: Record<string, LogisticsFailure[]> = {};
-  for (const [provinceId, rawFailures] of Object.entries(source)) {
-    const key = provinceId.trim();
+  for (const [hexId, rawFailures] of Object.entries(source)) {
+    const key = hexId.trim();
     if (!key || !Array.isArray(rawFailures)) continue;
     const failures: LogisticsFailure[] = [];
     for (const rawFailure of rawFailures) {
@@ -347,8 +347,8 @@ function normalizeLogisticsFailuresByProvince(input: unknown): Record<string, Lo
       const amount = typeof row.amount === "number" && Number.isFinite(row.amount) ? round3(Math.max(0, row.amount)) : 0;
       if (amount <= 0) continue;
       failures.push({
-        provinceId: key,
-        sourceProvinceId: typeof row.sourceProvinceId === "string" && row.sourceProvinceId.trim() ? row.sourceProvinceId.trim() : null,
+        hexId: key,
+        sourceHexId: typeof row.sourceHexId === "string" && row.sourceHexId.trim() ? row.sourceHexId.trim() : null,
         sourceCountryId: typeof row.sourceCountryId === "string" && row.sourceCountryId.trim() ? row.sourceCountryId.trim() : null,
         sourceMarketId: typeof row.sourceMarketId === "string" && row.sourceMarketId.trim() ? row.sourceMarketId.trim() : null,
         goodId,
@@ -499,12 +499,12 @@ export function collectTradeSanctions<T extends MarketSanctionLike>(params: {
 
 export function getLogisticsFailureKey(failure: LogisticsFailureLike): string {
   const modeKey = [...new Set(failure.transportModes)].sort().join("|");
-  const sourceKey = failure.sourceProvinceId ?? "";
-  return `${failure.provinceId}:${sourceKey}:${failure.goodId}:${failure.reason}:${modeKey}`;
+  const sourceKey = failure.sourceHexId ?? "";
+  return `${failure.hexId}:${sourceKey}:${failure.goodId}:${failure.reason}:${modeKey}`;
 }
 
 export function pushLogisticsFailure<T extends LogisticsFailureLike>(params: {
-  failuresByProvince: Record<string, T[]>;
+  failuresByHex: Record<string, T[]>;
   failureIndex: Map<string, T>;
   failure: T;
 }): void {
@@ -520,8 +520,8 @@ export function pushLogisticsFailure<T extends LogisticsFailureLike>(params: {
     amount: round3(Math.max(0, params.failure.amount)),
     transportModes: [...new Set(params.failure.transportModes)],
   };
-  if (!params.failuresByProvince[next.provinceId]) params.failuresByProvince[next.provinceId] = [];
-  params.failuresByProvince[next.provinceId].push(next);
+  if (!params.failuresByHex[next.hexId]) params.failuresByHex[next.hexId] = [];
+  params.failuresByHex[next.hexId].push(next);
   params.failureIndex.set(key, next);
 }
 
@@ -672,7 +672,7 @@ export function purchaseBuildingInputs<
 >(params: {
   buyerInstance: BuildingInputPurchaseBuyerInstance;
   inputNeeds: BuildingInputNeed[];
-  buyerProvinceId: string;
+  buyerHexId: string;
   buyerCountryId: string;
   buyerMarketId: string;
   getDistributionType: (goodId: string) => GoodDistributionType;
@@ -712,10 +712,10 @@ export function purchaseBuildingInputs<
   getTransportModes: (goodId: string) => TMode[];
   getCorridorRoutesForTransfer: (params: {
     buyerMarketId: string;
-    buyerProvinceId: string;
+    buyerHexId: string;
     buyerCountryId: string;
     sellerMarketId: string;
-    sellerProvinceId: string;
+    sellerHexId: string;
     sellerCountryId: string;
     transportModes: TMode[];
     isExternalTrade: boolean;
@@ -724,23 +724,23 @@ export function purchaseBuildingInputs<
   }) => TRoute[];
   hasReachableCorridorRouteIgnoringCapacity: (params: {
     buyerMarketId: string;
-    buyerProvinceId: string;
+    buyerHexId: string;
     buyerCountryId: string;
     sellerMarketId: string;
-    sellerProvinceId: string;
+    sellerHexId: string;
     sellerCountryId: string;
     transportModes: TMode[];
   }) => boolean;
   hasPhysicalCorridorRouteIgnoringTransit: (params: {
-    buyerProvinceId: string;
-    sellerProvinceId: string;
+    buyerHexId: string;
+    sellerHexId: string;
     transportModes: TMode[];
   }) => boolean;
   getRoutesCapacityInGoods: (routes: TRoute[]) => number;
   consumeCorridorRoutesCapacity: (routes: TRoute[], goodsAmount: number, infraPerUnit: number) => void;
   pushLogisticsFailure: (failure: {
-    provinceId: string;
-    sourceProvinceId: string;
+    hexId: string;
+    sourceHexId: string;
     sourceCountryId: string;
     sourceMarketId: string;
     goodId: string;
@@ -880,14 +880,14 @@ export function purchaseBuildingInputs<
         const infraPerUnit = params.getInfraPerUnit(input.goodId);
         const transportModes = params.getTransportModes(input.goodId);
         if (transportModes.length > 0) {
-          if (params.buyerProvinceId !== seller.provinceId) {
+          if (params.buyerHexId !== seller.hexId) {
             const requestedByCorridor = Math.min(remainingNeed, transferCap, maxAffordableNow, maxByPolicy, maxBySanctions);
             routesForTransfer = params.getCorridorRoutesForTransfer({
               buyerMarketId: params.buyerMarketId,
-              buyerProvinceId: params.buyerProvinceId,
+              buyerHexId: params.buyerHexId,
               buyerCountryId: params.buyerCountryId,
               sellerMarketId: seller.marketId,
-              sellerProvinceId: seller.provinceId,
+              sellerHexId: seller.hexId,
               sellerCountryId: seller.countryId,
               transportModes,
               isExternalTrade,
@@ -897,21 +897,21 @@ export function purchaseBuildingInputs<
             if (routesForTransfer.length === 0) {
               const hasReachableRoute = params.hasReachableCorridorRouteIgnoringCapacity({
                 buyerMarketId: params.buyerMarketId,
-                buyerProvinceId: params.buyerProvinceId,
+                buyerHexId: params.buyerHexId,
                 buyerCountryId: params.buyerCountryId,
                 sellerMarketId: seller.marketId,
-                sellerProvinceId: seller.provinceId,
+                sellerHexId: seller.hexId,
                 sellerCountryId: seller.countryId,
                 transportModes,
               });
               const hasPhysicalRoute = hasReachableRoute || params.hasPhysicalCorridorRouteIgnoringTransit({
-                buyerProvinceId: params.buyerProvinceId,
-                sellerProvinceId: seller.provinceId,
+                buyerHexId: params.buyerHexId,
+                sellerHexId: seller.hexId,
                 transportModes,
               });
               params.pushLogisticsFailure({
-                provinceId: params.buyerProvinceId,
-                sourceProvinceId: seller.provinceId,
+                hexId: params.buyerHexId,
+                sourceHexId: seller.hexId,
                 sourceCountryId: seller.countryId,
                 sourceMarketId: seller.marketId,
                 goodId: input.goodId,
@@ -928,8 +928,8 @@ export function purchaseBuildingInputs<
             maxByCorridorCapacity = params.getRoutesCapacityInGoods(routesForTransfer);
             if (maxByCorridorCapacity <= 0) {
               params.pushLogisticsFailure({
-                provinceId: params.buyerProvinceId,
-                sourceProvinceId: seller.provinceId,
+                hexId: params.buyerHexId,
+                sourceHexId: seller.hexId,
                 sourceCountryId: seller.countryId,
                 sourceMarketId: seller.marketId,
                 goodId: input.goodId,
@@ -1054,7 +1054,7 @@ export function finalizeMarketTurn<
   exportsByCountryByCountryAndGood: ScopeGoodPartnerMap;
   importsByMarketByMarketAndGood: ScopeGoodPartnerMap;
   exportsByMarketByMarketAndGood: ScopeGoodPartnerMap;
-  logisticsFailuresByProvince: Record<string, TLogisticsFailure[]>;
+  logisticsFailuresByHex: Record<string, TLogisticsFailure[]>;
   alertsByCountry: Record<string, TAlert[]>;
   corridors: TCorridor[];
   corridorLoadByModeByCorridorId: Record<string, Record<string, number>>;
@@ -1213,7 +1213,7 @@ export function finalizeMarketTurn<
     exportsByCountryByCountryAndGood: params.exportsByCountryByCountryAndGood,
     importsByMarketByMarketAndGood: params.importsByMarketByMarketAndGood,
     exportsByMarketByMarketAndGood: params.exportsByMarketByMarketAndGood,
-    logisticsFailuresByProvince: params.logisticsFailuresByProvince,
+    logisticsFailuresByHex: params.logisticsFailuresByHex,
   };
 }
 

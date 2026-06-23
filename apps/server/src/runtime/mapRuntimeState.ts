@@ -1,50 +1,46 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import {
-  loadProvinceIndexFromFile,
-  type Adm1ProvinceIndexEntry,
-} from "../map/provinceIndex";
+  loadHexIndexFromFile,
+  type HexMapIndexEntry,
+} from "../map/hexIndex";
 
 type MapRuntimeState = {
   prebuiltTileRoot: string;
   rasterTileRoot: string;
-  provincesJsonPath: string;
-  provinceIndex: Adm1ProvinceIndexEntry[];
-  provinceAreaById: Map<string, number>;
-  provinceById: Map<string, Adm1ProvinceIndexEntry>;
+  hexIndexJsonPath: string;
+  hexIndex: HexMapIndexEntry[];
+  hexAreaById: Map<string, number>;
+  hexById: Map<string, HexMapIndexEntry>;
 };
 
-function buildMapRuntimeState(mapRoot: string, provinceIndexPath = resolve(mapRoot, "provinces.json")): MapRuntimeState {
-  const prebuiltTileRoot = resolve(mapRoot, "tiles/adm1");
-  if (!existsSync(prebuiltTileRoot)) {
-    throw new Error(`[map] MVT root not found: ${prebuiltTileRoot}. Expected tiles at {z}/{x}/{y}.mvt`);
-  }
-
-  const provinceIndex = loadProvinceIndexFromFile(provinceIndexPath);
+function buildMapRuntimeState(mapRoot: string, hexIndexPath = resolve(mapRoot, "hexes.json")): MapRuntimeState {
+  const prebuiltTileRoot = resolve(mapRoot, "tiles/hex");
+  const hexIndex = loadHexIndexFromFile(hexIndexPath);
   return {
     prebuiltTileRoot,
     rasterTileRoot: resolve(mapRoot, "tiles/raster"),
-    provincesJsonPath: provinceIndexPath,
-    provinceIndex,
-    provinceAreaById: new Map(provinceIndex.map((province) => [province.id, province.areaKm2] as const)),
-    provinceById: new Map(provinceIndex.map((province) => [province.id, province] as const)),
+    hexIndexJsonPath: hexIndexPath,
+    hexIndex,
+    hexAreaById: new Map(hexIndex.map((hex) => [hex.id, hex.areaKm2] as const)),
+    hexById: new Map(hexIndex.map((hex) => [hex.id, hex] as const)),
   };
 }
 
 export function createMapRuntimeState(dataRoot: string) {
   let state = buildMapRuntimeState(dataRoot);
 
-  function applyMapRuntime(mapRoot: string, provinceIndexPath = resolve(mapRoot, "provinces.json")): void {
-    state = buildMapRuntimeState(mapRoot, provinceIndexPath);
+  function applyMapRuntime(mapRoot: string, hexIndexPath = resolve(mapRoot, "hexes.json")): void {
+    state = buildMapRuntimeState(mapRoot, hexIndexPath);
   }
 
   return {
     applyMapRuntime,
-    getAdm1TileRoot: () => state.prebuiltTileRoot,
+    getHexTileRoot: () => state.prebuiltTileRoot,
     getRasterTileRoot: () => state.rasterTileRoot,
-    getProvinceAreaById: () => state.provinceAreaById,
-    getProvinceById: () => state.provinceById,
-    getProvinceIndex: () => state.provinceIndex,
-    getProvincesJsonPath: () => state.provincesJsonPath,
+    getHexAreaById: () => state.hexAreaById,
+    getHexById: () => state.hexById,
+    getHexIndex: () => state.hexIndex,
+    getHexIndexJsonPath: () => state.hexIndexJsonPath,
   };
 }

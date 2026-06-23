@@ -45,18 +45,18 @@ describe("country deletion cleanup", () => {
     const worldBase = createWorldBase();
     const removedEconomyCountries: string[] = [];
     const removedColonizationCountries: string[] = [];
-    const removedColonizationProvinces: string[] = [];
+    const removedColonizationHexes: string[] = [];
 
     cleanupWorldBaseAfterCountryRemovalFromState({
       countryId: "country:a",
       worldBase,
       removeCountryFromEconomyTick: (countryId) => removedEconomyCountries.push(countryId),
       removeCountryFromActiveColonizationIndex: (countryId) => removedColonizationCountries.push(countryId),
-      removeRegionFromActiveColonizationIndex: (provinceId) => removedColonizationProvinces.push(provinceId),
+      removeRegionFromActiveColonizationIndex: (hexId) => removedColonizationHexes.push(hexId),
     });
 
     expect(worldBase.resourcesByCountry["country:a"]).toBeUndefined();
-    expect(worldBase.provinceOwner).toEqual({ "2": "country:b" });
+    expect(worldBase.hexOwner).toEqual({ "2": "country:b" });
     expect(worldBase.colonyProgressByRegion).toEqual({ "4": { "country:b": 5 } });
     expect(worldBase.regionConstructionQueueByRegion["6"]).toHaveLength(1);
     expect(worldBase.diplomacyProposals).toEqual([]);
@@ -69,7 +69,7 @@ describe("country deletion cleanup", () => {
     expect(worldBase.militaryFormationQueueByCountry["country:a"]).toBeUndefined();
     expect(removedEconomyCountries).toEqual(["country:a"]);
     expect(removedColonizationCountries).toEqual(["country:a"]);
-    expect(removedColonizationProvinces).toEqual(["5"]);
+    expect(removedColonizationHexes).toEqual(["5"]);
   });
 });
 
@@ -84,8 +84,8 @@ function createWorldBase(): WorldBase {
     explanationRecordsByTurn: {},
     regionOwner: { "6": "country:a" },
     regionController: { "6": "country:a" },
-    provinceOwner: { "1": "country:a", "2": "country:b" },
-    provinceNameById: {},
+    hexOwner: { "1": "country:a", "2": "country:b" },
+    hexNameById: {},
     colonyProgressByRegion: { "4": { "country:a": 3, "country:b": 5 }, "5": { "country:a": 2 } },
     regionColonizationByRegion: {},
     regionPopulationByRegion: {},
@@ -146,7 +146,7 @@ function createWorldBase(): WorldBase {
         countryId: "country:a",
         templateId: "template:a",
         name: "Division A",
-        provinceId: "1",
+        hexId: "hex:0:0",
         strength: 1,
         organization: 1,
         stats: { manpower: 1, attack: 1, defense: 1, breakthrough: 1, organization: 1, hp: 1, speed: 1, supplyUse: 1 },

@@ -268,15 +268,15 @@ describe("marketTurnMechanics", () => {
   });
 
   it("deduplicates logistics failures by sorted transport modes and source", () => {
-    const failuresByProvince: Record<string, Array<{ provinceId: string; sourceProvinceId?: string | null; goodId: string; reason: string; amount: number; transportModes: string[] }>> = {};
-    const failureIndex = new Map<string, { provinceId: string; sourceProvinceId?: string | null; goodId: string; reason: string; amount: number; transportModes: string[] }>();
+    const failuresByHex: Record<string, Array<{ hexId: string; sourceHexId?: string | null; goodId: string; reason: string; amount: number; transportModes: string[] }>> = {};
+    const failureIndex = new Map<string, { hexId: string; sourceHexId?: string | null; goodId: string; reason: string; amount: number; transportModes: string[] }>();
 
     pushLogisticsFailure({
-      failuresByProvince,
+      failuresByHex,
       failureIndex,
       failure: {
-        provinceId: "province:a",
-        sourceProvinceId: "province:b",
+        hexId: "province:a",
+        sourceHexId: "province:b",
         goodId: "good:grain",
         reason: "capacity",
         amount: 1.2345,
@@ -284,11 +284,11 @@ describe("marketTurnMechanics", () => {
       },
     });
     pushLogisticsFailure({
-      failuresByProvince,
+      failuresByHex,
       failureIndex,
       failure: {
-        provinceId: "province:a",
-        sourceProvinceId: "province:b",
+        hexId: "province:a",
+        sourceHexId: "province:b",
         goodId: "good:grain",
         reason: "capacity",
         amount: 2.3456,
@@ -296,10 +296,10 @@ describe("marketTurnMechanics", () => {
       },
     });
     pushLogisticsFailure({
-      failuresByProvince,
+      failuresByHex,
       failureIndex,
       failure: {
-        provinceId: "province:a",
+        hexId: "province:a",
         goodId: "good:grain",
         reason: "capacity",
         amount: 0,
@@ -307,10 +307,10 @@ describe("marketTurnMechanics", () => {
       },
     });
 
-    expect(failuresByProvince["province:a"]).toEqual([
+    expect(failuresByHex["province:a"]).toEqual([
       {
-        provinceId: "province:a",
-        sourceProvinceId: "province:b",
+        hexId: "province:a",
+        sourceHexId: "province:b",
         goodId: "good:grain",
         reason: "capacity",
         amount: 3.581,
@@ -330,7 +330,7 @@ describe("marketTurnMechanics", () => {
     const globalVolume: Record<string, number> = {};
     const localSeller: TestSeller = {
       regionId: "region:a",
-      provinceId: "province:a",
+      hexId: "province:a",
       countryId: "country:a",
       marketId: "market:a",
       instanceId: "building:a",
@@ -338,7 +338,7 @@ describe("marketTurnMechanics", () => {
     };
     const marketSeller: TestSeller = {
       regionId: "region:b",
-      provinceId: "province:b",
+      hexId: "province:b",
       countryId: "country:b",
       marketId: "market:a",
       instanceId: "building:b",
@@ -346,7 +346,7 @@ describe("marketTurnMechanics", () => {
     };
     const worldSeller: TestSeller = {
       regionId: "region:c",
-      provinceId: "province:c",
+      hexId: "province:c",
       countryId: "country:c",
       marketId: "market:c",
       instanceId: "building:c",
@@ -403,7 +403,7 @@ describe("marketTurnMechanics", () => {
     }>;
     const localSeller: TestSeller = {
       regionId: "region:a",
-      provinceId: "province:a",
+      hexId: "province:a",
       countryId: "country:a",
       marketId: "market:a",
       instanceId: "building:a",
@@ -411,7 +411,7 @@ describe("marketTurnMechanics", () => {
     };
     const globalSeller: TestSeller = {
       regionId: "region:b",
-      provinceId: "province:b",
+      hexId: "province:b",
       countryId: "country:b",
       marketId: "market:b",
       instanceId: "building:b",
@@ -456,7 +456,7 @@ describe("marketTurnMechanics", () => {
     }>;
     const seller: TestSeller = {
       regionId: "region:b",
-      provinceId: "province:b",
+      hexId: "province:b",
       countryId: "country:b",
       marketId: "market:b",
       instanceId: "building:seller",
@@ -479,7 +479,7 @@ describe("marketTurnMechanics", () => {
     const purchase = purchaseBuildingInputs({
       buyerInstance: buyer,
       inputNeeds: [{ goodId: "good:iron", required: 9, available: 1 }],
-      buyerProvinceId: "province:a",
+      buyerHexId: "province:a",
       buyerCountryId: "country:a",
       buyerMarketId: "market:a",
       getDistributionType: () => "tradeable",
@@ -588,7 +588,7 @@ describe("marketTurnMechanics", () => {
       exportsByCountryByCountryAndGood: {},
       importsByMarketByMarketAndGood: { "market:a": { "good:grain": { "market:b": 1 } } },
       exportsByMarketByMarketAndGood: { "market:a": { "good:grain": { "market:c": 3 } } },
-      logisticsFailuresByProvince: {},
+      logisticsFailuresByHex: {},
       alertsByCountry: alerts,
       corridors: [corridor],
       corridorLoadByModeByCorridorId: { "corridor:a": { land: 5 } },

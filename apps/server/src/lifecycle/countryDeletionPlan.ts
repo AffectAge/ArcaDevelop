@@ -8,10 +8,10 @@ export type CountryDeletionAssetRef = {
 export type CountryDeletionPlan = {
   countryId: string;
   resourcesEntry: boolean;
-  ownedProvinceIds: string[];
-  colonizationProvinceIds: string[];
-  emptyColonizationProvinceIds: string[];
-  constructionQueueProvinceIds: string[];
+  ownedHexIds: string[];
+  colonizationHexIds: string[];
+  emptyColonizationHexIds: string[];
+  constructionQueueHexIds: string[];
   constructionProjectIds: string[];
   diplomacyProposalIds: string[];
   divisionIds: string[];
@@ -40,36 +40,36 @@ export function planCountryDeletion(params: {
   crestUrl?: string | null;
 }): CountryDeletionPlan {
   const { countryId, worldBase } = params;
-  const colonizationProvinceIds: string[] = [];
-  const emptyColonizationProvinceIds: string[] = [];
-  for (const [provinceId, progress] of Object.entries(worldBase.colonyProgressByRegion)) {
+  const colonizationHexIds: string[] = [];
+  const emptyColonizationHexIds: string[] = [];
+  for (const [hexId, progress] of Object.entries(worldBase.colonyProgressByRegion)) {
     if (!(countryId in progress)) continue;
-    colonizationProvinceIds.push(provinceId);
-    if (Object.keys(progress).length === 1) emptyColonizationProvinceIds.push(provinceId);
+    colonizationHexIds.push(hexId);
+    if (Object.keys(progress).length === 1) emptyColonizationHexIds.push(hexId);
   }
 
-  const constructionQueueProvinceIds: string[] = [];
+  const constructionQueueHexIds: string[] = [];
   const constructionProjectIds: string[] = [];
-  for (const [provinceId, queue] of Object.entries(worldBase.regionConstructionQueueByRegion)) {
+  for (const [hexId, queue] of Object.entries(worldBase.regionConstructionQueueByRegion)) {
     const matchingProjects = queue.filter((project) => {
       if (project.requestedByCountryId === countryId) return true;
       return project.owner.type === "state" && project.owner.countryId === countryId;
     });
     if (matchingProjects.length === 0) continue;
-    constructionQueueProvinceIds.push(provinceId);
+    constructionQueueHexIds.push(hexId);
     constructionProjectIds.push(...matchingProjects.map((project) => project.queueId));
   }
 
   return {
     countryId,
     resourcesEntry: countryId in worldBase.resourcesByCountry,
-    ownedProvinceIds: Object.entries(worldBase.provinceOwner)
+    ownedHexIds: Object.entries(worldBase.hexOwner)
       .filter(([, ownerId]) => ownerId === countryId)
-      .map(([provinceId]) => provinceId)
+      .map(([hexId]) => hexId)
       .sort((a, b) => a.localeCompare(b, "en")),
-    colonizationProvinceIds: colonizationProvinceIds.sort((a, b) => a.localeCompare(b, "en")),
-    emptyColonizationProvinceIds: emptyColonizationProvinceIds.sort((a, b) => a.localeCompare(b, "en")),
-    constructionQueueProvinceIds: constructionQueueProvinceIds.sort((a, b) => a.localeCompare(b, "en")),
+    colonizationHexIds: colonizationHexIds.sort((a, b) => a.localeCompare(b, "en")),
+    emptyColonizationHexIds: emptyColonizationHexIds.sort((a, b) => a.localeCompare(b, "en")),
+    constructionQueueHexIds: constructionQueueHexIds.sort((a, b) => a.localeCompare(b, "en")),
     constructionProjectIds: constructionProjectIds.sort((a, b) => a.localeCompare(b, "en")),
     diplomacyProposalIds: worldBase.diplomacyProposals
       .filter((proposal) => proposal.fromCountryId === countryId || proposal.toCountryId === countryId)

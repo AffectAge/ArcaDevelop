@@ -16,12 +16,12 @@ function createWorldBase(): WorldBase {
     regionController: {
       "6": "country:a",
     },
-    provinceOwner: {
+    hexOwner: {
       "1": "country:a",
       "2": "country:b",
       "3": "country:a",
     },
-    provinceNameById: {},
+    hexNameById: {},
     colonyProgressByRegion: {
       "4": { "country:a": 3, "country:b": 5 },
       "5": { "country:a": 2 },
@@ -96,7 +96,7 @@ function createWorldBase(): WorldBase {
         countryId: "country:a",
         templateId: "template:a",
         name: "Division A",
-        provinceId: "1",
+        hexId: "hex:0:0",
         strength: 1,
         organization: 1,
         stats: { manpower: 1, attack: 1, defense: 1, breakthrough: 1, organization: 1, hp: 1, speed: 1, supplyUse: 1 },
@@ -113,7 +113,7 @@ function createWorldBase(): WorldBase {
           kind: "land",
           templateId: "template:a",
           name: "Formation A",
-          provinceId: "1",
+          hexId: "hex:0:0",
           progress: 0,
           turnsTotal: 2,
           turnsRemaining: 2,
@@ -156,10 +156,10 @@ describe("country deletion plan", () => {
     expect(plan).toMatchObject({
       countryId: "country:a",
       resourcesEntry: true,
-      ownedProvinceIds: ["1", "3"],
-      colonizationProvinceIds: ["4", "5"],
-      emptyColonizationProvinceIds: ["5"],
-      constructionQueueProvinceIds: ["6"],
+      ownedHexIds: ["1", "3"],
+      colonizationHexIds: ["4", "5"],
+      emptyColonizationHexIds: ["5"],
+      constructionQueueHexIds: ["6"],
       constructionProjectIds: ["project:owned", "project:requested"],
       diplomacyProposalIds: ["proposal:a"],
       divisionIds: ["division:a"],
@@ -182,7 +182,7 @@ describe("country deletion plan", () => {
       ],
     });
     expect(worldBase.resourcesByCountry["country:a"]).toBeDefined();
-    expect(worldBase.provinceOwner["1"]).toBe("country:a");
+    expect(worldBase.hexOwner["1"]).toBe("country:a");
   });
 
   it("returns an empty plan for an unknown country", () => {
@@ -190,8 +190,8 @@ describe("country deletion plan", () => {
 
     expect(plan).toMatchObject({
       resourcesEntry: false,
-      ownedProvinceIds: [],
-      colonizationProvinceIds: [],
+      ownedHexIds: [],
+      colonizationHexIds: [],
       constructionProjectIds: [],
       diplomacyProposalIds: [],
       divisionIds: [],

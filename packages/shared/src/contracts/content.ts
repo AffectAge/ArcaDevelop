@@ -1,6 +1,6 @@
 import type { ResourceTotals } from "./core";
 
-export type ModifierScope = "country" | "province" | "building" | "pop" | "market";
+export type ModifierScope = "country" | "region" | "building" | "pop" | "market";
 export type ModifierMode = "add" | "add_pct" | "mult";
 export type ModifierStat =
   | "culture_gain"
@@ -561,7 +561,7 @@ export type IdeologyAttractionConditionType =
   | "law_active"
   | "has_building"
   | "country_modifier_active"
-  | "province_modifier_active";
+  | "region_modifier_active";
 
 export type IdeologyAttractionRule = {
   id: string;

@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import type { Adm1ProvinceIndexEntry } from "../map/provinceIndex";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { GameSettings } from "./gameSettingsTypes";
 import type { WorldBase } from "@arcanorum/shared";
 import { createMarketAccessRuntime } from "./marketAccessRuntime";
@@ -10,8 +10,8 @@ type MarketSystemsRuntimeParams = {
   getGameSettings: () => GameSettings;
   getWorldBase: () => WorldBase;
   getTurnId: () => number;
-  getProvinceIndex: () => Adm1ProvinceIndexEntry[];
-  getProvinceOwner: (provinceId: string) => string | null;
+  getHexIndex: () => HexMapIndexEntry[];
+  getHexOwner: (hexId: string) => string | null;
   corridorLoadHistoryLength: number;
   removeUploadedByUrl: (url: string) => void;
   round3: (value: number) => number;
@@ -22,10 +22,10 @@ export function createMarketSystemsRuntime(params: MarketSystemsRuntimeParams): 
   marketRuntimeFacade: ReturnType<typeof createMarketRuntimeFacade>;
 } {
   const marketAccessRuntime = createMarketAccessRuntime({
-    getProvinceIndex: params.getProvinceIndex,
+    getHexIndex: params.getHexIndex,
     getGameSettings: params.getGameSettings,
     getTurnId: params.getTurnId,
-    getProvinceOwner: params.getProvinceOwner,
+    getHexOwner: params.getHexOwner,
     round3: params.round3,
   });
 
@@ -33,7 +33,7 @@ export function createMarketSystemsRuntime(params: MarketSystemsRuntimeParams): 
     getContext: () => ({
       gameSettings: params.getGameSettings(),
       worldBase: params.getWorldBase(),
-      provinceIndex: params.getProvinceIndex(),
+      hexIndex: params.getHexIndex(),
       corridorLoadHistoryLength: params.corridorLoadHistoryLength,
     }),
     removeUploadedByUrl: params.removeUploadedByUrl,

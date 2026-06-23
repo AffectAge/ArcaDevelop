@@ -192,5 +192,5 @@ function getAiCandidateIdentity(candidate: AiCandidate): string {
   if (candidate.kind === "colonize-region") {
     return `${candidate.kind}:${candidate.countryId}:${candidate.regionId}`;
   }
-  return `${candidate.kind}:${candidate.countryId}:${candidate.divisionId}:${candidate.targetProvinceId}`;
+  return `${candidate.kind}:${candidate.countryId}:${candidate.divisionId}:${candidate.targetHexId}`;
 }

@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readFlatScenarioLocalizationFile, resolveLocalizedValue } from "./scenarioLocalization";
 
-export type ScenarioHistoryEntityKind = "province" | "region" | "country";
+export type ScenarioHistoryEntityKind = "region" | "country";
 
 export type ScenarioHistoryEntity = {
   id: string;
@@ -12,11 +12,10 @@ export type ScenarioHistoryEntity = {
 };
 
 export type ScenarioHistory = {
-  provinces: ScenarioHistoryEntity[];
   regions: ScenarioHistoryEntity[];
   countries: ScenarioHistoryEntity[];
-  regionIdByProvinceId: Map<string, string>;
-  provinceIdsByRegionId: Map<string, string[]>;
+  regionIdByHexId: Map<string, string>;
+  hexIdsByRegionId: Map<string, string[]>;
 };
 
 export type ScenarioCountryMetadata = {
@@ -89,20 +88,20 @@ export function buildAiControlledCountryIdsFromHistory(history: ScenarioHistory 
     .sort((left, right) => left.localeCompare(right));
 }
 
-export function buildProvinceOwnerFromRegionHistory(history: ScenarioHistory): Record<string, string> {
-  const provinceOwner: Record<string, string> = {};
+export function buildHexOwnerFromRegionHistory(history: ScenarioHistory): Record<string, string> {
+  const hexOwner: Record<string, string> = {};
   for (const region of history.regions) {
     const ownerCountryId =
       typeof region.data.ownerCountryId === "string" && region.data.ownerCountryId.trim()
         ? region.data.ownerCountryId.trim()
         : null;
     if (!ownerCountryId) continue;
-    const provinceIds = history.provinceIdsByRegionId.get(region.id) ?? [];
-    for (const provinceId of provinceIds) {
-      provinceOwner[toRuntimeProvinceId(provinceId)] = ownerCountryId;
+    const hexIds = history.hexIdsByRegionId.get(region.id) ?? [];
+    for (const hexId of hexIds) {
+      hexOwner[hexId] = ownerCountryId;
     }
   }
-  return provinceOwner;
+  return hexOwner;
 }
 
 export function buildRegionOwnerFromRegionHistory(history: ScenarioHistory): Record<string, string> {
@@ -163,23 +162,17 @@ function normalizeNullableString(value: unknown): string | null {
 }
 
 export function loadScenarioHistory(scenarioDir: string): ScenarioHistory {
-  const provinces = loadHistoryEntities(scenarioDir, "province", "history/provinces");
   const regions = loadHistoryEntities(scenarioDir, "region", "history/regions");
   const countries = loadHistoryEntities(scenarioDir, "country", "history/countries");
-  assertUniqueEntityIds([...provinces, ...regions, ...countries]);
-  const { regionIdByProvinceId, provinceIdsByRegionId } = buildRegionMembershipIndexes(regions);
+  assertUniqueEntityIds([...regions, ...countries]);
+  const { regionIdByHexId, hexIdsByRegionId } = buildRegionMembershipIndexes(regions);
 
   return {
-    provinces,
     regions,
     countries,
-    regionIdByProvinceId,
-    provinceIdsByRegionId,
+    regionIdByHexId,
+    hexIdsByRegionId,
   };
-}
-
-function toRuntimeProvinceId(provinceId: string): string {
-  return provinceId.startsWith("province:") ? provinceId.slice("province:".length) : provinceId;
 }
 
 function loadHistoryEntities(
@@ -200,27 +193,27 @@ function loadHistoryEntities(
 }
 
 function buildRegionMembershipIndexes(regions: ScenarioHistoryEntity[]): {
-  regionIdByProvinceId: Map<string, string>;
-  provinceIdsByRegionId: Map<string, string[]>;
+  regionIdByHexId: Map<string, string>;
+  hexIdsByRegionId: Map<string, string[]>;
 } {
-  const regionIdByProvinceId = new Map<string, string>();
-  const provinceIdsByRegionId = new Map<string, string[]>();
+  const regionIdByHexId = new Map<string, string>();
+  const hexIdsByRegionId = new Map<string, string[]>();
 
   for (const region of regions) {
-    const provinceIds = Array.isArray(region.data.provinceIds)
-      ? region.data.provinceIds.filter((provinceId): provinceId is string => typeof provinceId === "string")
+    const hexIds = Array.isArray(region.data.hexIds)
+      ? region.data.hexIds.filter((hexId): hexId is string => typeof hexId === "string")
       : [];
-    provinceIdsByRegionId.set(region.id, provinceIds);
-    for (const provinceId of provinceIds) {
-      const previousRegionId = regionIdByProvinceId.get(provinceId);
+    hexIdsByRegionId.set(region.id, hexIds);
+    for (const hexId of hexIds) {
+      const previousRegionId = regionIdByHexId.get(hexId);
       if (previousRegionId) {
-        throw new Error(`SCENARIO_HISTORY_DUPLICATE_REGION_MEMBERSHIP:${provinceId}:${previousRegionId}:${region.id}`);
+        throw new Error(`SCENARIO_HISTORY_DUPLICATE_REGION_MEMBERSHIP:${hexId}:${previousRegionId}:${region.id}`);
       }
-      regionIdByProvinceId.set(provinceId, region.id);
+      regionIdByHexId.set(hexId, region.id);
     }
   }
 
-  return { regionIdByProvinceId, provinceIdsByRegionId };
+  return { regionIdByHexId, hexIdsByRegionId };
 }
 
 function assertUniqueEntityIds(entities: ScenarioHistoryEntity[]): void {

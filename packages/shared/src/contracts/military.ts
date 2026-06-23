@@ -1,3 +1,5 @@
+import type { HexId } from "./hex-map";
+
 export type DivisionTemplateBattalion = {
   id: string;
   battalionTypeId: string;
@@ -45,12 +47,12 @@ export type Division = {
   templateId: string;
   name: string;
   kind?: MilitaryBranch;
-  provinceId: string;
+  hexId: HexId;
   strength: number;
   organization: number;
   stats: DivisionStats;
   status: DivisionStatus;
-  path: string[];
+  path: HexId[];
   createdTurnId: number;
   lastMovedTurnId?: number | null;
 };
@@ -61,7 +63,7 @@ export type MilitaryFormationQueueItem = {
   kind: MilitaryBranch;
   templateId: string;
   name: string;
-  provinceId: string;
+  hexId: HexId;
   progress: number;
   turnsTotal: number;
   turnsRemaining: number;

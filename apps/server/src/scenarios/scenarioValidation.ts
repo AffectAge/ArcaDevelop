@@ -30,6 +30,7 @@ export type ScenarioValidationIssueCode =
   | "INVALID_COUNTRY_COLOR"
   | "INVALID_ENTITY_COLOR"
   | "INVALID_DEFINES"
+  | "INVALID_HEX_MAP_SETTINGS"
   | "INVALID_DECISION_DEFINITION"
   | "INVALID_EVENT_DEFINITION"
   | "INVALID_JOURNAL_DEFINITION"
@@ -49,7 +50,7 @@ export type ScenarioValidationResult = {
   ok: boolean;
   issues: ScenarioValidationIssue[];
   summary: {
-    provinces: number;
+    hexes: number;
     regions: number;
     countries: number;
     contentEntries: number;
@@ -80,13 +81,12 @@ export type ScenarioGeneratedManifest = {
   counts: ScenarioValidationResult["summary"];
 };
 
-const REQUIRED_DIRECTORIES = ["history/provinces", "history/regions", "history/countries"] as const;
+const REQUIRED_DIRECTORIES = ["map", "history/regions", "history/countries"] as const;
 const LOCALIZATION_FILES = ["localisation/en.json", "localisation/ru.json"] as const;
 const GENERATED_DIR = ".generated";
 const GENERATED_MANIFEST = "index-manifest.json";
 
 export const SCENARIO_ENTITY_DIRECTORIES = [
-  { kind: "province", path: "history/provinces" },
   { kind: "region", path: "history/regions" },
   { kind: "country", path: "history/countries" },
   { kind: "diplomacyRelation", path: "history/diplomacy/relations" },
@@ -98,11 +98,6 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "lawGroup", path: "common/lawGroups" },
   { kind: "culture", path: "common/cultures" },
   { kind: "resourceCategory", path: "common/resourceCategories" },
-  { kind: "provinceType", path: "common/provinceTypes" },
-  { kind: "provinceClimate", path: "common/provinceClimates" },
-  { kind: "provinceLandscape", path: "common/provinceLandscapes" },
-  { kind: "provinceContinent", path: "common/provinceContinents" },
-  { kind: "provinceStrategicRegion", path: "common/provinceStrategicRegions" },
   { kind: "religion", path: "common/religions" },
   { kind: "ideology", path: "common/ideologies" },
   { kind: "profession", path: "common/professions" },
@@ -129,9 +124,19 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
 
 const ENTITY_DIRECTORIES: Array<{ kind: string; path: string }> = [...SCENARIO_ENTITY_DIRECTORIES];
 
-const FORBIDDEN_AGGREGATE_FILES = ["map/provinces.json", "content-library.json"];
+const FORBIDDEN_AGGREGATE_FILES = ["map/provinces.json", "content-library.json", ".generated/provinces.json"];
+const FORBIDDEN_LEGACY_PROVINCE_PATHS = [
+  "history/provinces",
+  "common/provinceTypes",
+  "common/provinceClimates",
+  "common/provinceLandscapes",
+  "common/provinceContinents",
+  "common/provinceStrategicRegions",
+] as const;
 const FORBIDDEN_SETUP_SOURCE_FILES = [
   "setup/province_colonization.json",
+  "setup/province_owners.json",
+  "setup/province_names.json",
   "setup/region_population.json",
   "setup/region_buildings.json",
   "setup/region_building_ducats.json",
@@ -176,7 +181,7 @@ const VALIDATION_CUSTOMIZATION_DEFAULTS = {
   recolorDucats: 10,
   flagDucats: 15,
   crestDucats: 15,
-  provinceRenameDucats: 25,
+  hexRenameDucats: 25,
 };
 const VALIDATION_MILITARY_DEFAULTS = {
   militaryFormationSpeed: 10,
@@ -256,13 +261,13 @@ export const SCENARIO_PROVINCE_FORBIDDEN_HEAVY_FIELDS = [
   "market",
   "colonizationProgress",
   "diplomacyTransferState",
-  "provincePopulationByProvince",
-  "provinceBuildingsByProvince",
-  "provincePopulationTreasuryByProvince",
-  "provinceConstructionQueueByProvince",
-  "provinceBuildingDucatsByProvince",
-  "provinceColonizationByProvince",
-  "colonyProgressByProvince",
+  "provincePopulationByHex",
+  "provinceBuildingsByHex",
+  "provincePopulationTreasuryByHex",
+  "provinceConstructionQueueByHex",
+  "provinceBuildingDucatsByHex",
+  "provinceColonizationByHex",
+  "colonyProgressByHex",
   "resources",
   "resourceDeposits",
   "localResources",
@@ -282,6 +287,7 @@ export async function validateScenarioDirectory(
 
   await validateRequiredPaths(root, issues);
   await validateForbiddenAggregateFiles(root, issues);
+  await validateForbiddenLegacyHexPaths(root, issues);
   await validateForbiddenRemovedFormatDirectories(root, issues);
   await validateForbiddenGeneratedIndexLocations(root, issues);
 
@@ -293,7 +299,8 @@ export async function validateScenarioDirectory(
   validateCountryAuthoringFields(root, loadedEntities, issues);
   validateMapEntityColors(root, loadedEntities, issues);
   await validateDefines(root, issues);
-  validateProvinceHeavyFields(root, loadedEntities, issues);
+  await validateHexMapSettings(root, issues);
+  validateHexHeavyFields(root, loadedEntities, issues);
   validateRegionMembership(root, loadedEntities, issues);
   validateEntityReferences(root, loadedEntities, issues);
   validateDecisionDefinitions(root, loadedEntities, issues);
@@ -333,7 +340,7 @@ export async function buildScenarioGeneratedIndexes(scenarioDir: string): Promis
   await mkdir(generatedDir, { recursive: true });
   await writeJson(join(generatedDir, GENERATED_MANIFEST), manifest);
   await writeJson(join(generatedDir, "entity-counts.json"), validation.summary);
-  await writeJson(join(generatedDir, "provinces.json"), await buildGeneratedProvinceIndex(root));
+  await writeJson(join(generatedDir, "hex-map-settings.json"), await loadHexMapSettings(root));
 
   return manifest;
 }
@@ -372,104 +379,6 @@ async function validateRequiredPaths(root: string, issues: ScenarioValidationIss
   }
 }
 
-async function buildGeneratedProvinceIndex(root: string): Promise<JsonObject[]> {
-  const issues: ScenarioValidationIssue[] = [];
-  const entities = await loadScenarioEntities(root, issues);
-  const localizationKeys = await loadLocalizationValues(root, issues);
-  if (issues.length > 0) {
-    throw new Error(formatScenarioValidationIssues(issues));
-  }
-  const regionIdByProvinceId = buildRegionIdByProvinceId(entities);
-  const regionColorByProvinceId = buildRegionColorByProvinceId(entities);
-
-  return entities
-    .filter((entity) => entity.kind === "province")
-    .map((entity) => {
-      const center = isObject(entity.data.center) ? entity.data.center : {};
-      const provinceId = stripStablePrefix(entity.id, "province");
-      const nameKey = typeof entity.data.nameKey === "string" ? entity.data.nameKey : null;
-      return removeUndefined({
-        id: provinceId,
-        stableId: entity.id,
-        regionId: regionIdByProvinceId.get(entity.id) ?? regionIdByProvinceId.get(provinceId),
-        provinceColor: entity.data.color,
-        regionColor: regionColorByProvinceId.get(entity.id) ?? regionColorByProvinceId.get(provinceId),
-        name: nameKey ? localizationKeys.get(nameKey) ?? provinceId : provinceId,
-        nameKey,
-        areaKm2: entity.data.areaKm2,
-        province_type: entity.data.terrain,
-        center_x: center.x,
-        center_y: center.y,
-        sourceCenterX: center.x,
-        sourceCenterY: center.y,
-        neighbors: Array.isArray(entity.data.adjacentProvinceIds)
-          ? entity.data.adjacentProvinceIds.map((id) => stripStablePrefix(String(id), "province"))
-          : [],
-        climate: entity.data.climate,
-        pollution: entity.data.pollution,
-        radiation: entity.data.radiation,
-        landscape: entity.data.landscape,
-        continent: entity.data.continent,
-        strategicRegion: entity.data.strategicArea,
-        fertileLandKm2: entity.data.fertileLandKm2,
-        fertility: entity.data.fertility,
-      });
-    })
-    .sort((left, right) => String(left.id).localeCompare(String(right.id), "ru"));
-}
-
-function buildRegionIdByProvinceId(entities: LoadedEntity[]): Map<string, string> {
-  const regionIdByProvinceId = new Map<string, string>();
-  for (const region of entities.filter((entity) => entity.kind === "region")) {
-    const provinceIds = Array.isArray(region.data.provinceIds)
-      ? region.data.provinceIds.filter((provinceId): provinceId is string => typeof provinceId === "string")
-      : [];
-    for (const provinceId of provinceIds) {
-      regionIdByProvinceId.set(provinceId, region.id);
-      regionIdByProvinceId.set(stripStablePrefix(provinceId, "province"), region.id);
-    }
-  }
-  return regionIdByProvinceId;
-}
-
-function buildRegionColorByProvinceId(entities: LoadedEntity[]): Map<string, string> {
-  const regionColorByProvinceId = new Map<string, string>();
-  for (const region of entities.filter((entity) => entity.kind === "region")) {
-    const color = typeof region.data.color === "string" ? region.data.color : null;
-    const provinceIds = Array.isArray(region.data.provinceIds)
-      ? region.data.provinceIds.filter((provinceId): provinceId is string => typeof provinceId === "string")
-      : [];
-    if (!color) continue;
-    for (const provinceId of provinceIds) {
-      regionColorByProvinceId.set(provinceId, color);
-      regionColorByProvinceId.set(stripStablePrefix(provinceId, "province"), color);
-    }
-  }
-  return regionColorByProvinceId;
-}
-
-async function loadLocalizationValues(root: string, issues: ScenarioValidationIssue[]): Promise<Map<string, string>> {
-  const values = new Map<string, string>();
-  for (const file of LOCALIZATION_FILES) {
-    const loaded = await readJsonIfExists(join(root, file), root, issues);
-    if (!loaded || !isObject(loaded.data)) continue;
-    collectLocalizationValues("", loaded.data, values);
-  }
-  return values;
-}
-
-function collectLocalizationValues(prefix: string, value: unknown, values: Map<string, string>): void {
-  if (!isObject(value)) return;
-  for (const [key, child] of Object.entries(value)) {
-    const nextKey = prefix ? `${prefix}.${key}` : key;
-    if (typeof child === "string") {
-      values.set(nextKey, child);
-      continue;
-    }
-    collectLocalizationValues(nextKey, child, values);
-  }
-}
-
 async function validateForbiddenAggregateFiles(root: string, issues: ScenarioValidationIssue[]): Promise<void> {
   for (const file of [...FORBIDDEN_AGGREGATE_FILES, ...FORBIDDEN_SETUP_SOURCE_FILES]) {
     if (existsSync(join(root, file))) {
@@ -479,6 +388,17 @@ async function validateForbiddenAggregateFiles(root: string, issues: ScenarioVal
         message: "Aggregate authored scenario files are forbidden in the per-entity format.",
       });
     }
+  }
+}
+
+async function validateForbiddenLegacyHexPaths(root: string, issues: ScenarioValidationIssue[]): Promise<void> {
+  for (const legacyPath of FORBIDDEN_LEGACY_PROVINCE_PATHS) {
+    if (!existsSync(join(root, legacyPath))) continue;
+    issues.push({
+      code: "FORBIDDEN_REMOVED_FORMAT_DIRECTORY",
+      path: legacyPath,
+      message: "Legacy province authored paths are forbidden after the hex map hard cutover.",
+    });
   }
 }
 
@@ -565,7 +485,7 @@ async function loadScenarioEntities(root: string, issues: ScenarioValidationIssu
 
 function summarizeEntities(entities: LoadedEntity[]): ScenarioValidationResult["summary"] {
   return {
-    provinces: entities.filter((entity) => entity.kind === "province").length,
+    hexes: entities.filter((entity) => entity.kind === "province").length,
     regions: entities.filter((entity) => entity.kind === "region").length,
     countries: entities.filter((entity) => entity.kind === "country").length,
     contentEntries: entities.filter((entity) => entity.kind !== "province" && entity.kind !== "region" && entity.kind !== "country" && entity.kind !== "arcawikiEntry").length,
@@ -616,7 +536,76 @@ function validateMapEntityColors(root: string, entities: LoadedEntity[], issues:
     issues.push({
       code: "INVALID_ENTITY_COLOR",
       path: normalizePath(relative(root, entity.path)),
-      message: `${entity.kind === "province" ? "Province" : "Region"} file must define color as #RRGGBB.`,
+      message: `${entity.kind === "province" ? "Hex" : "Region"} file must define color as #RRGGBB.`,
+    });
+  }
+}
+
+async function loadHexMapSettings(root: string): Promise<JsonObject> {
+  const issues: ScenarioValidationIssue[] = [];
+  const loaded = await readJsonIfExists(join(root, "map/hex-settings.json"), root, issues);
+  if (!loaded || !isObject(loaded.data) || issues.length > 0) {
+    throw new Error(formatScenarioValidationIssues(issues));
+  }
+  return loaded.data;
+}
+
+async function validateHexMapSettings(root: string, issues: ScenarioValidationIssue[]): Promise<void> {
+  const loaded = await readJsonIfExists(join(root, "map/hex-settings.json"), root, issues);
+  if (!loaded) {
+    issues.push({
+      code: "MISSING_REQUIRED_FILE",
+      path: "map/hex-settings.json",
+      message: "Hex map settings are required for the hex map hard cutover.",
+    });
+    return;
+  }
+  if (!isObject(loaded.data)) {
+    issues.push({
+      code: "INVALID_HEX_MAP_SETTINGS",
+      path: "map/hex-settings.json",
+      message: "Hex map settings must be a JSON object.",
+    });
+    return;
+  }
+
+  const requiredStringFields = ["seed"] as const;
+  for (const field of requiredStringFields) {
+    if (typeof loaded.data[field] === "string" && loaded.data[field].trim() !== "") continue;
+    issues.push({
+      code: "INVALID_HEX_MAP_SETTINGS",
+      path: "map/hex-settings.json",
+      message: `Hex map setting ${field} must be a non-empty string.`,
+    });
+  }
+
+  const requiredPositiveIntegerFields = ["width", "height", "hexSize", "targetLandRegionSize", "targetWaterRegionSize", "chunkSize"] as const;
+  for (const field of requiredPositiveIntegerFields) {
+    const value = loaded.data[field];
+    if (Number.isInteger(value) && Number(value) > 0) continue;
+    issues.push({
+      code: "INVALID_HEX_MAP_SETTINGS",
+      path: "map/hex-settings.json",
+      message: `Hex map setting ${field} must be a positive integer.`,
+    });
+  }
+
+  const requiredUnitNumberFields = ["seaLevel", "temperature", "moisture", "mountains", "rivers", "forests"] as const;
+  for (const field of requiredUnitNumberFields) {
+    const value = loaded.data[field];
+    if (typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1) continue;
+    issues.push({
+      code: "INVALID_HEX_MAP_SETTINGS",
+      path: "map/hex-settings.json",
+      message: `Hex map setting ${field} must be a finite number between 0 and 1.`,
+    });
+  }
+
+  if (typeof loaded.data.wrapX !== "boolean") {
+    issues.push({
+      code: "INVALID_HEX_MAP_SETTINGS",
+      path: "map/hex-settings.json",
+      message: "Hex map setting wrapX must be a boolean.",
     });
   }
 }
@@ -686,65 +675,57 @@ async function validateDefines(root: string, issues: ScenarioValidationIssue[]):
   }
 }
 
-function validateProvinceHeavyFields(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
+function validateHexHeavyFields(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
   for (const province of entities.filter((entity) => entity.kind === "province")) {
     for (const key of Object.keys(province.data)) {
       if (!PROVINCE_HEAVY_FIELDS.has(key)) continue;
       issues.push({
         code: "FORBIDDEN_PROVINCE_HEAVY_FIELD",
         path: normalizePath(relative(root, province.path)),
-        message: `Province file must not contain region-heavy field "${key}".`,
+        message: `Hex file must not contain region-heavy field "${key}".`,
       });
     }
   }
 }
 
 function validateRegionMembership(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
-  const provinces = new Set(entities.filter((entity) => entity.kind === "province").map((entity) => entity.id));
   const assigned = new Map<string, LoadedEntity>();
 
   for (const region of entities.filter((entity) => entity.kind === "region")) {
-    const provinceIds = region.data.provinceIds;
-    if (!Array.isArray(provinceIds) || provinceIds.length === 0) {
+    const hexIds = region.data.hexIds;
+    if (!Array.isArray(hexIds) || hexIds.length === 0) {
       issues.push({
         code: "MISSING_REGION_MEMBERSHIP",
         path: normalizePath(relative(root, region.path)),
-        message: "Region must define at least one provinceId.",
+        message: "Region must define at least one hexId.",
       });
       continue;
     }
 
-    for (const provinceId of provinceIds) {
-      if (typeof provinceId !== "string" || !provinces.has(provinceId)) {
+    for (const hexId of hexIds) {
+      if (typeof hexId !== "string" || !/^hex:-?\d+:-?\d+$/.test(hexId)) {
         issues.push({
           code: "BROKEN_REFERENCE",
           path: normalizePath(relative(root, region.path)),
-          message: `Region references missing province ${String(provinceId)}.`,
+          message: `Region references invalid hex ${String(hexId)}.`,
         });
         continue;
       }
 
-      const previousRegion = assigned.get(provinceId);
+      const previousRegion = assigned.get(hexId);
       if (previousRegion) {
         issues.push({
           code: "DUPLICATE_REGION_MEMBERSHIP",
           path: normalizePath(relative(root, region.path)),
-          message: `Province ${provinceId} is already assigned to ${previousRegion.id}.`,
+          message: `Hex ${hexId} is already assigned to ${previousRegion.id}.`,
         });
         continue;
       }
-      assigned.set(provinceId, region);
+      assigned.set(hexId, region);
     }
   }
-
-  for (const provinceId of provinces) {
-    if (assigned.has(provinceId)) continue;
-    issues.push({
-      code: "MISSING_REGION_MEMBERSHIP",
-      message: `Province ${provinceId} is not assigned to any region.`,
-    });
-  }
 }
+
 
 function validateEntityReferences(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
   const ids = new Set(entities.map((entity) => entity.id));
@@ -1827,7 +1808,7 @@ async function validateGeneratedManifest(
   }
 
   const manifestCounts = manifest.counts;
-  if (!isObject(manifestCounts) || manifestCounts.provinces !== counts.provinces || manifestCounts.regions !== counts.regions) {
+  if (!isObject(manifestCounts) || manifestCounts.hexes !== counts.hexes || manifestCounts.regions !== counts.regions) {
     issues.push({
       code: "INVALID_GENERATED_INDEX",
       path: normalizePath(relative(root, manifestPath)),
@@ -1925,11 +1906,6 @@ function isObject(value: unknown): value is JsonObject {
 
 function removeUndefined(value: JsonObject): JsonObject {
   return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined));
-}
-
-function stripStablePrefix(id: string, prefix: string): string {
-  const stablePrefix = `${prefix}:`;
-  return id.startsWith(stablePrefix) ? id.slice(stablePrefix.length) : id;
 }
 
 function normalizePath(path: string): string {
