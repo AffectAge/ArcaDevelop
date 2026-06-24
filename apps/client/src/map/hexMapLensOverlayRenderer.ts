@@ -1,6 +1,6 @@
 import { Container, Graphics, Text } from "pixi.js";
 import type { HexChunkId, HexDirection, HexMapArtifact } from "@arcanorum/shared";
-import { axialToPixel, getNeighborAxial, hexCorner, hexEdgeCorners, makeHexId, worldPixelWidth } from "./hexGeometry";
+import { axialToPixel, getNeighborAxial, hexCorner, hexEdgeCorners, makeHexId } from "./hexGeometry";
 import type { HexCamera } from "./hexCamera";
 import type { MapLensRenderCell } from "./mapLensTypes";
 
@@ -11,14 +11,14 @@ type LensChunk = {
   bounds: { left: number; right: number; top: number; bottom: number };
   cells: MapLensRenderCell[];
   primary: Container;
-  wrapped: Container;
   primaryBase: Graphics;
-  wrappedBase: Graphics;
+  primaryFill: Graphics;
 };
 
 type DrawnChunk = {
   container: Container;
   base: Graphics;
+  fill: Graphics;
 };
 
 export type LensBoundaryEdge = {
@@ -27,6 +27,7 @@ export type LensBoundaryEdge = {
   color: number;
   alpha: number;
   tone: MapLensRenderCell["borderTone"];
+  side: "single" | "inside";
 };
 
 export type CountryLabelSpec = {
@@ -47,33 +48,30 @@ export type HexMapLensOverlayRenderer = {
 export function createHexMapLensOverlayRenderer(map: HexMapArtifact): HexMapLensOverlayRenderer {
   const container = new Container();
   const labelLayer = new Container();
-  const wrappedLabelLayer = new Container();
-  const wrapWidth = worldPixelWidth(map.settings);
-  wrappedLabelLayer.position.x = wrapWidth;
-  container.addChild(labelLayer, wrappedLabelLayer);
+  container.addChild(labelLayer);
   let chunks: LensChunk[] = [];
   let destroyed = false;
 
   function updateLens(cells: MapLensRenderCell[]): void {
     for (const chunk of chunks) {
       container.removeChild(chunk.primary);
-      container.removeChild(chunk.wrapped);
       safeDestroyContainer(chunk.primary);
-      safeDestroyContainer(chunk.wrapped);
     }
     clearLabels(labelLayer);
-    clearLabels(wrappedLabelLayer);
     const cellById = new Map(cells.map((cell) => [cell.tile.id, cell]));
     chunks = buildLensChunks(map, cells).map((chunk) => {
       const primary = drawChunk(chunk.cells, cellById, map);
-      const wrapped = drawChunk(chunk.cells, cellById, map);
-      wrapped.container.position.x = wrapWidth;
-      container.addChild(primary.container, wrapped.container);
-      return { ...chunk, primary: primary.container, wrapped: wrapped.container, primaryBase: primary.base, wrappedBase: wrapped.base };
+      container.addChild(primary.container);
+      return {
+        ...chunk,
+        primary: primary.container,
+        primaryBase: primary.base,
+        primaryFill: primary.fill,
+      };
     });
-    drawCountryLabels(labelLayer, buildCountryLabelSpecs(cells, map), map);
-    drawCountryLabels(wrappedLabelLayer, buildCountryLabelSpecs(cells, map), map);
-    container.addChild(labelLayer, wrappedLabelLayer);
+    const labels = buildCountryLabelSpecs(cells, map);
+    drawCountryLabels(labelLayer, labels, map);
+    container.addChild(labelLayer);
   }
 
   function updateVisibility(camera: HexCamera, viewport: { width: number; height: number }): number {
@@ -87,24 +85,15 @@ export function createHexMapLensOverlayRenderer(map: HexMapArtifact): HexMapLens
       bottom: camera.y + halfHeight,
     };
     const terrainBaseAlpha = resolveLensTerrainBaseAlpha(camera.scale);
+    const territoryFillAlpha = resolveLensTerritoryFillAlpha(camera.scale);
     const labelAlpha = resolveLensLabelAlpha(camera.scale);
     labelLayer.alpha = labelAlpha;
-    wrappedLabelLayer.alpha = labelAlpha;
     for (const chunk of chunks) {
       const primaryVisible = intersects(chunk.bounds, view);
-      const wrappedBounds = {
-        left: chunk.bounds.left + wrapWidth,
-        right: chunk.bounds.right + wrapWidth,
-        top: chunk.bounds.top,
-        bottom: chunk.bounds.bottom,
-      };
-      const wrappedVisible = intersects(wrappedBounds, view);
       chunk.primary.visible = primaryVisible;
-      chunk.wrapped.visible = wrappedVisible;
       chunk.primaryBase.alpha = terrainBaseAlpha;
-      chunk.wrappedBase.alpha = terrainBaseAlpha;
+      chunk.primaryFill.alpha = territoryFillAlpha;
       visible += primaryVisible ? 1 : 0;
-      visible += wrappedVisible ? 1 : 0;
     }
     return visible;
   }
@@ -114,11 +103,9 @@ export function createHexMapLensOverlayRenderer(map: HexMapArtifact): HexMapLens
     destroyed = true;
     for (const chunk of chunks) {
       safeDestroyContainer(chunk.primary);
-      safeDestroyContainer(chunk.wrapped);
     }
     chunks = [];
     safeDestroyContainer(labelLayer);
-    safeDestroyContainer(wrappedLabelLayer);
     container.destroy({ children: false });
   }
 
@@ -132,13 +119,20 @@ export function resolveLensTerrainBaseAlpha(scale: number): number {
   return 1 - t * 0.78;
 }
 
+export function resolveLensTerritoryFillAlpha(scale: number): number {
+  if (scale <= 0.46) return 1;
+  if (scale >= 1.18) return 0;
+  const t = (scale - 0.46) / (1.18 - 0.46);
+  return 1 - t;
+}
+
 function resolveLensLabelAlpha(scale: number): number {
   if (scale <= 0.24) return 0;
   if (scale >= 0.42) return 0.88;
   return ((scale - 0.24) / (0.42 - 0.24)) * 0.88;
 }
 
-function buildLensChunks(map: HexMapArtifact, cells: MapLensRenderCell[]): Array<Omit<LensChunk, "primary" | "wrapped" | "primaryBase" | "wrappedBase">> {
+function buildLensChunks(map: HexMapArtifact, cells: MapLensRenderCell[]): Array<Omit<LensChunk, "primary" | "primaryBase" | "primaryFill">> {
   const drafts = new Map<HexChunkId, { cells: MapLensRenderCell[]; bounds: LensChunk["bounds"] }>();
   for (const cell of cells) {
     const draft = drafts.get(cell.tile.chunkId) ?? {
@@ -158,7 +152,8 @@ function buildLensChunks(map: HexMapArtifact, cells: MapLensRenderCell[]): Array
 function drawChunk(cells: MapLensRenderCell[], cellById: Map<string, MapLensRenderCell>, map: HexMapArtifact): DrawnChunk {
   const chunk = new Container();
   const base = new Graphics();
-  const detail = new Graphics();
+  const fill = new Graphics();
+  const border = new Graphics();
   const size = map.settings.hexSize;
   for (const cell of cells) {
     const center = axialToPixel(cell.tile, size);
@@ -169,19 +164,19 @@ function drawChunk(cells: MapLensRenderCell[], cellById: Map<string, MapLensRend
     if (cell.surfaceAlpha > 0) {
       base.poly(points, true).fill({ color: cell.tile.waterKind ? 0x315d6c : 0xf1dfb8, alpha: cell.surfaceAlpha });
     }
-    detail.poly(points, true).fill({ color: cell.color, alpha: cell.alpha });
+    fill.poly(points, true).fill({ color: cell.color, alpha: cell.alpha });
     if (cell.pattern === "hatch" || cell.hatch) {
-      drawHatch(detail, center.x, center.y, size, 0x2a2430, 0.28);
+      drawHatch(fill, center.x, center.y, size, 0x2a2430, 0.28);
     } else if (cell.pattern === "stripe") {
-      drawHatch(detail, center.x, center.y, size, cell.borderColor ?? 0xf4e2a7, 0.34);
+      drawHatch(fill, center.x, center.y, size, cell.borderColor ?? 0xf4e2a7, 0.34);
     }
     if (cell.pulse) {
-      detail.circle(center.x, center.y, size * 0.28).stroke({ color: 0xf5e38d, alpha: 0.42, width: 1.4 });
+      border.circle(center.x, center.y, size * 0.28).stroke({ color: 0xf5e38d, alpha: 0.42, width: 1.4 });
     }
   }
-  drawBoundaries(detail, cells, cellById, map);
-  chunk.addChild(base, detail);
-  return { container: chunk, base };
+  drawBoundaries(border, cells, cellById, map);
+  chunk.addChild(base, fill, border);
+  return { container: chunk, base, fill };
 }
 
 function drawCountryLabels(layer: Container, labels: CountryLabelSpec[], map: HexMapArtifact): void {
@@ -288,13 +283,17 @@ function drawBoundaries(graphics: Graphics, cells: MapLensRenderCell[], cellById
     if (!cell) continue;
     const center = axialToPixel(cell.tile, map.settings.hexSize);
     const [start, end] = hexEdgeCorners(center, map.settings.hexSize + 0.8, edge.direction);
+    const [lineStart, lineEnd] = edge.side === "inside" ? offsetEdgeTowardCenter(start, end, center, 2.15) : [start, end];
     if (edge.tone === "dotted") {
-      drawDottedEdge(graphics, start, end, edge.color, edge.alpha, 1.35);
+      drawDottedEdge(graphics, lineStart, lineEnd, edge.color, edge.alpha, 1.7);
     } else {
-      graphics.moveTo(start.x, start.y).lineTo(end.x, end.y).stroke({ color: edge.color, alpha: edge.alpha, width: edge.tone === "strong" ? 2.8 : 1.8 });
       if (edge.tone === "strong") {
-        graphics.moveTo(start.x, start.y).lineTo(end.x, end.y).stroke({ color: 0x1b1820, alpha: Math.min(0.28, edge.alpha), width: 4.6 });
-        graphics.moveTo(start.x, start.y).lineTo(end.x, end.y).stroke({ color: edge.color, alpha: edge.alpha, width: 2.3 });
+        graphics.moveTo(lineStart.x, lineStart.y).lineTo(lineEnd.x, lineEnd.y).stroke({ color: 0x151822, alpha: 0.86, width: 7.2 });
+        graphics.moveTo(lineStart.x, lineStart.y).lineTo(lineEnd.x, lineEnd.y).stroke({ color: edge.color, alpha: Math.min(0.99, edge.alpha + 0.12), width: 4.1 });
+        graphics.moveTo(lineStart.x, lineStart.y).lineTo(lineEnd.x, lineEnd.y).stroke({ color: 0xf9f0c9, alpha: 0.58, width: 1.25 });
+      } else {
+        graphics.moveTo(lineStart.x, lineStart.y).lineTo(lineEnd.x, lineEnd.y).stroke({ color: 0x1b1820, alpha: Math.min(0.36, edge.alpha), width: 3.2 });
+        graphics.moveTo(lineStart.x, lineStart.y).lineTo(lineEnd.x, lineEnd.y).stroke({ color: edge.color, alpha: Math.min(0.96, edge.alpha + 0.12), width: 2.1 });
       }
     }
   }
@@ -306,18 +305,35 @@ export function collectLensBoundaryEdges(cells: MapLensRenderCell[], cellById: M
     for (let direction = 0 as HexDirection; direction < 6; direction = (direction + 1) as HexDirection) {
       const neighborAxial = getNeighborAxial(cell.tile, direction, map.settings);
       const neighbor = neighborAxial ? cellById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
-      if (neighbor && direction > 2) continue;
       if (neighbor && neighbor.borderGroupId === cell.borderGroupId) continue;
       edges.push({
         hexId: cell.tile.id,
         direction,
         color: cell.borderColor ?? 0xe6d7b8,
-        alpha: cell.borderAlpha ?? 0.58,
+        alpha: Math.max(cell.borderAlpha ?? 0.58, cell.borderTone === "strong" ? 0.94 : 0.72),
         tone: cell.borderTone ?? "soft",
+        side: neighbor ? "inside" : "single",
       });
     }
   }
   return edges;
+}
+
+function offsetEdgeTowardCenter(
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+  center: { x: number; y: number },
+  amount: number,
+): [{ x: number; y: number }, { x: number; y: number }] {
+  const midpoint = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+  const dx = center.x - midpoint.x;
+  const dy = center.y - midpoint.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const offset = { x: (dx / length) * amount, y: (dy / length) * amount };
+  return [
+    { x: start.x + offset.x, y: start.y + offset.y },
+    { x: end.x + offset.x, y: end.y + offset.y },
+  ];
 }
 
 function drawDottedEdge(graphics: Graphics, start: { x: number; y: number }, end: { x: number; y: number }, color: number, alpha: number, width: number): void {

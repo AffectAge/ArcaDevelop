@@ -1,6 +1,5 @@
 import { Container, Geometry, GlProgram, Mesh, Shader, UniformGroup } from "pixi.js";
 import type { HexMapArtifact } from "@arcanorum/shared";
-import { worldPixelWidth } from "./hexGeometry";
 import { buildHexTerrainMeshData, type HexChunkRenderData, type HexTerrainMeshBuildResult } from "./hexTerrainMesh";
 import { generatedHexMaterialPack, resolveShaderQualityFeatures, type HexTerrainShaderQuality } from "./hexTerrainMaterials";
 import { loadHexMaterialTextures, type LoadedHexMaterialTextures } from "./hexTerrainMaterialTextures";
@@ -18,7 +17,6 @@ export type HexTerrainMeshRenderer = {
 type ChunkMeshPair = {
   chunk: HexChunkRenderData;
   primary: Mesh<Geometry, Shader>;
-  wrapped: Mesh<Geometry, Shader>;
 };
 
 export async function createHexTerrainMeshRenderer(map: HexMapArtifact): Promise<HexTerrainMeshRenderer> {
@@ -26,21 +24,18 @@ export async function createHexTerrainMeshRenderer(map: HexMapArtifact): Promise
   const shader = createHexTerrainShader(materialTextures);
   const container = new Container();
   const meshData = buildHexTerrainMeshData(map, generatedHexMaterialPack);
-  const wrapWidth = worldPixelWidth(map.settings);
   const chunkMeshes = meshData.chunks.map((chunk) => {
     const geometry = createChunkGeometry(chunk);
     const primary = new Mesh({ geometry, shader });
-    const wrapped = new Mesh({ geometry, shader });
-    wrapped.position.x = wrapWidth;
-    container.addChild(primary, wrapped);
-    return { chunk, primary, wrapped };
+    container.addChild(primary);
+    return { chunk, primary };
   });
   let destroyed = false;
 
   return {
     container,
     meshData,
-    meshCount: chunkMeshes.length * 2,
+    meshCount: chunkMeshes.length,
     setQuality: (quality, reducedMotion) => updateShaderQuality(shader, quality, reducedMotion),
     updateVisibility: (camera, viewport) => updateChunkVisibility(chunkMeshes, camera, viewport, map.settings.hexSize),
     destroy: () => {
@@ -48,7 +43,6 @@ export async function createHexTerrainMeshRenderer(map: HexMapArtifact): Promise
       destroyed = true;
       for (const pair of chunkMeshes) {
         safeDestroyMesh(pair.primary);
-        safeDestroyMesh(pair.wrapped);
       }
       safeDestroyShader(shader);
       safeDestroyContainer(container);
@@ -106,11 +100,8 @@ function updateChunkVisibility(chunkMeshes: ChunkMeshPair[], camera: HexCamera, 
   let visible = 0;
   for (const pair of chunkMeshes) {
     const primaryVisible = intersects(pair.chunk.bounds, visibleRect, 0);
-    const wrappedVisible = intersects(pair.chunk.bounds, visibleRect, pair.wrapped.position.x);
     pair.primary.visible = primaryVisible;
-    pair.wrapped.visible = wrappedVisible;
     if (primaryVisible) visible += 1;
-    if (wrappedVisible) visible += 1;
   }
   return visible;
 }

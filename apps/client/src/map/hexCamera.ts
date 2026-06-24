@@ -8,6 +8,8 @@ export type HexCamera = {
 
 export type HexCameraBounds = {
   wrapWidth: number;
+  minX: number;
+  maxX: number;
   minY: number;
   maxY: number;
   minScale: number;
@@ -35,10 +37,13 @@ export const HEX_CAMERA_EDGE_MARGIN_PX = 44;
 export const HEX_CAMERA_EDGE_MAX_SPEED_PX_PER_SECOND = 720;
 
 export function buildHexCameraBounds(settings: Pick<HexMapSettings, "height" | "hexSize">, wrapWidth: number): HexCameraBounds {
+  const overscroll = Math.max(360, settings.hexSize * 10);
   return {
     wrapWidth,
-    minY: -600,
-    maxY: settings.height * settings.hexSize * 1.9,
+    minX: -overscroll,
+    maxX: wrapWidth + overscroll,
+    minY: -overscroll,
+    maxY: settings.height * settings.hexSize * 1.9 + overscroll,
     minScale: HEX_CAMERA_MIN_SCALE,
     maxScale: HEX_CAMERA_MAX_SCALE,
   };
@@ -51,7 +56,7 @@ export function clampScale(scale: number, bounds: Pick<HexCameraBounds, "minScal
 export function normalizeHexCamera(camera: HexCamera, bounds: HexCameraBounds): HexCamera {
   return {
     ...camera,
-    x: ((camera.x % bounds.wrapWidth) + bounds.wrapWidth) % bounds.wrapWidth,
+    x: Math.max(bounds.minX, Math.min(camera.x, bounds.maxX)),
     y: Math.max(bounds.minY, Math.min(camera.y, bounds.maxY)),
     scale: clampScale(camera.scale, bounds),
   };
@@ -105,13 +110,9 @@ export function calculateEdgeScrollVelocity(
 
 export function smoothCameraToward(current: HexCamera, target: HexCamera, bounds: HexCameraBounds, deltaSeconds: number, stiffness = 12): HexCamera {
   const alpha = 1 - Math.exp(-stiffness * Math.max(0, deltaSeconds));
-  let dx = target.x - current.x;
-  if (Math.abs(dx) > bounds.wrapWidth / 2) {
-    dx = dx > 0 ? dx - bounds.wrapWidth : dx + bounds.wrapWidth;
-  }
   return normalizeHexCamera(
     {
-      x: current.x + dx * alpha,
+      x: current.x + (target.x - current.x) * alpha,
       y: current.y + (target.y - current.y) * alpha,
       scale: current.scale + (target.scale - current.scale) * alpha,
     },

@@ -554,7 +554,7 @@ export function MapView({
     const readTileFromClientPoint = (clientX: number, clientY: number): HexTile | null => {
       const rect = container.getBoundingClientRect();
       const world = screenToWorld({ x: clientX - rect.left, y: clientY - rect.top }, rect, cameraRef.current);
-      const axial = pixelToAxial(world.x, world.y, mapArtifact.settings.hexSize, mapArtifact.settings);
+      const axial = pixelToAxial(world.x, world.y, mapArtifact.settings.hexSize, { ...mapArtifact.settings, wrapX: false });
       return axial ? tileById.get(makeHexId(axial.q, axial.r)) ?? null : null;
     };
     const updatePointerTracking = (event: PointerEvent) => {
@@ -852,16 +852,16 @@ export function MapView({
     if (!pixiReady || !overlayLayer || !app || !app.renderer) return;
     overlayLayer.clear();
     if (hoverState?.tile) {
-      drawHexOutline(overlayLayer, hoverState.tile, mapArtifact.settings.hexSize, 0xd7c38b, 1.4, wrapWidth);
+      drawHexOutline(overlayLayer, hoverState.tile, mapArtifact.settings.hexSize, 0xd7c38b, 1.4);
     }
     if (selectedTile) {
-      drawHexOutline(overlayLayer, selectedTile, mapArtifact.settings.hexSize, 0xf5d56b, 2.6, wrapWidth);
+      drawHexOutline(overlayLayer, selectedTile, mapArtifact.settings.hexSize, 0xf5d56b, 2.6);
     }
     if (hoverPath.length > 1) {
-      drawPathOverlay(overlayLayer, hoverPath, tileById, mapArtifact.settings.hexSize, wrapWidth);
+      drawPathOverlay(overlayLayer, hoverPath, tileById, mapArtifact.settings.hexSize);
     }
     app.render();
-  }, [hoverPath, hoverState, mapArtifact.settings.hexSize, pixiReady, selectedTile, tileById, wrapWidth]);
+  }, [hoverPath, hoverState, mapArtifact.settings.hexSize, pixiReady, selectedTile, tileById]);
 
   const selectedName = selectedTile ? resolveHexName(selectedTile) : null;
 
@@ -1112,30 +1112,24 @@ function safeDestroyPixiApp(app: Application): void {
   }
 }
 
-function drawHexOutline(graphics: Graphics, tile: HexTile, size: number, color: number, width: number, wrapWidth: number): void {
-  for (const offset of [0, wrapWidth]) {
-    const center = axialToPixel(tile, size);
-    center.x += offset;
-    const points = Array.from({ length: 6 }, (_, index) => hexCorner(center, size - 0.4, index)).flatMap((point) => [point.x, point.y]);
-    graphics.poly(points, true).stroke({ color, width, alpha: 0.95 });
-  }
+function drawHexOutline(graphics: Graphics, tile: HexTile, size: number, color: number, width: number): void {
+  const center = axialToPixel(tile, size);
+  const points = Array.from({ length: 6 }, (_, index) => hexCorner(center, size - 0.4, index)).flatMap((point) => [point.x, point.y]);
+  graphics.poly(points, true).stroke({ color, width, alpha: 0.95 });
 }
 
-function drawPathOverlay(graphics: Graphics, path: HexId[], tileById: Map<HexId, HexTile>, size: number, wrapWidth: number): void {
-  for (const offset of [0, wrapWidth]) {
-    let first = true;
-    for (const hexId of path) {
-      const tile = tileById.get(hexId);
-      if (!tile) continue;
-      const center = axialToPixel(tile, size);
-      center.x += offset;
-      if (first) {
-        graphics.moveTo(center.x, center.y);
-        first = false;
-      } else {
-        graphics.lineTo(center.x, center.y);
-      }
+function drawPathOverlay(graphics: Graphics, path: HexId[], tileById: Map<HexId, HexTile>, size: number): void {
+  let first = true;
+  for (const hexId of path) {
+    const tile = tileById.get(hexId);
+    if (!tile) continue;
+    const center = axialToPixel(tile, size);
+    if (first) {
+      graphics.moveTo(center.x, center.y);
+      first = false;
+    } else {
+      graphics.lineTo(center.x, center.y);
     }
-    graphics.stroke({ color: 0xf1df8b, width: 2.5, alpha: 0.74 });
   }
+  graphics.stroke({ color: 0xf1df8b, width: 2.5, alpha: 0.74 });
 }

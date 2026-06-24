@@ -11,6 +11,8 @@ import {
 
 const bounds: HexCameraBounds = {
   wrapWidth: 1_000,
+  minX: -120,
+  maxX: 1_120,
   minY: -100,
   maxY: 800,
   minScale: 0.1,
@@ -30,9 +32,9 @@ describe("hex camera helpers", () => {
     expect(after.y).toBeCloseTo(before.y, 5);
   });
 
-  it("normalizes X wrap after camera movement", () => {
-    expect(normalizeHexCamera({ x: -25, y: 0, scale: 1 }, bounds).x).toBe(975);
-    expect(normalizeHexCamera({ x: 1_050, y: 0, scale: 1 }, bounds).x).toBe(50);
+  it("clamps X camera movement with limited edge overscroll", () => {
+    expect(normalizeHexCamera({ x: -250, y: 0, scale: 1 }, bounds).x).toBe(-120);
+    expect(normalizeHexCamera({ x: 1_250, y: 0, scale: 1 }, bounds).x).toBe(1_120);
   });
 
   it("does not edge-scroll when blocked by UI", () => {
@@ -44,7 +46,7 @@ describe("hex camera helpers", () => {
   it("centers the camera target on selected world point", () => {
     const centered = centerCameraOnWorldPoint({ x: 10, y: 20, scale: 1.2 }, { x: 1400, y: 220 }, bounds);
 
-    expect(centered.x).toBe(400);
+    expect(centered.x).toBe(1_120);
     expect(centered.y).toBe(220);
     expect(centered.scale).toBe(1.2);
   });

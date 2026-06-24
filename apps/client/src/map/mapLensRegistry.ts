@@ -179,8 +179,8 @@ function selectTileCell(
       alpha: owner ? 0.7 : 0.26,
       surfaceAlpha: tile.waterKind ? 0.16 : 0.28,
       terrainMute: tile.waterKind ? 0.28 : 0.42,
-      borderColor: controller && controller !== owner ? controllerColor : 0xe6d7b8,
-      borderAlpha: controller && controller !== owner ? 0.78 : 0.62,
+      borderColor: controller && controller !== owner ? controllerColor : owner ? lightenColor(ownerColor, 0.46) : 0xe6d7b8,
+      borderAlpha: controller && controller !== owner ? 0.96 : owner ? 0.94 : 0.78,
       borderTone: "strong",
       pattern: controller && controller !== owner ? "hatch" : "none",
     };

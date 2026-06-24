@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { HexMapArtifact, HexTile, WorldBase } from "@arcanorum/shared";
 import { axialToPixel } from "./hexGeometry";
-import { buildCountryLabelSpecs, collectLensBoundaryEdges, resolveLensTerrainBaseAlpha } from "./hexMapLensOverlayRenderer";
+import { buildCountryLabelSpecs, collectLensBoundaryEdges, resolveLensTerrainBaseAlpha, resolveLensTerritoryFillAlpha } from "./hexMapLensOverlayRenderer";
 import { MAP_LENS_DESCRIPTORS, MAP_MODE_DESCRIPTORS, selectMapLensCells } from "./mapLensRegistry";
 import type { MapInteractionMode, MapLensId } from "./mapLensTypes";
 
@@ -182,6 +182,12 @@ describe("map lens registry", () => {
   it("makes analytical terrain suppression fade as the camera zooms in", () => {
     expect(resolveLensTerrainBaseAlpha(0.25)).toBeGreaterThan(resolveLensTerrainBaseAlpha(0.9));
     expect(resolveLensTerrainBaseAlpha(1.4)).toBeLessThan(0.3);
+  });
+
+  it("fades analytical territory fill out completely at close zoom", () => {
+    expect(resolveLensTerritoryFillAlpha(0.25)).toBe(1);
+    expect(resolveLensTerritoryFillAlpha(0.9)).toBeLessThan(resolveLensTerritoryFillAlpha(0.5));
+    expect(resolveLensTerritoryFillAlpha(1.4)).toBe(0);
   });
 
   it("places country labels on the largest connected homeland instead of remote holdings", () => {

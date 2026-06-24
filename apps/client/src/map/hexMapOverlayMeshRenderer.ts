@@ -16,7 +16,6 @@ type OverlayChunkRenderData = {
 type OverlayMeshPair = {
   chunk: OverlayChunkRenderData;
   primary: Mesh<Geometry, Shader>;
-  wrapped: Mesh<Geometry, Shader>;
 };
 
 export type HexMapOverlayMeshRenderer = {
@@ -39,21 +38,18 @@ const FEATURE_COLORS: Record<Exclude<HexFeature, "none">, [number, number, numbe
 export function createHexMapOverlayMeshRenderer(map: HexMapArtifact): HexMapOverlayMeshRenderer {
   const shader = createOverlayShader();
   const container = new Container();
-  const wrapWidth = worldPixelWidth(map.settings);
   const chunks = buildOverlayChunks(map);
   const chunkMeshes = chunks.map((chunk) => {
     const geometry = createOverlayGeometry(chunk);
     const primary = new Mesh({ geometry, shader });
-    const wrapped = new Mesh({ geometry, shader });
-    wrapped.position.x = wrapWidth;
-    container.addChild(primary, wrapped);
-    return { chunk, primary, wrapped };
+    container.addChild(primary);
+    return { chunk, primary };
   });
   let destroyed = false;
 
   return {
     container,
-    meshCount: chunkMeshes.length * 2,
+    meshCount: chunkMeshes.length,
     setQuality: (quality, reducedMotion) => updateOverlayShaderQuality(shader, quality, reducedMotion),
     updateVisibility: (camera, viewport) => updateOverlayVisibility(chunkMeshes, camera, viewport, map.settings.hexSize),
     destroy: () => {
@@ -61,7 +57,6 @@ export function createHexMapOverlayMeshRenderer(map: HexMapArtifact): HexMapOver
       destroyed = true;
       for (const pair of chunkMeshes) {
         safeDestroyMesh(pair.primary);
-        safeDestroyMesh(pair.wrapped);
       }
       safeDestroyShader(shader);
       safeDestroyContainer(container);
@@ -336,11 +331,8 @@ function updateOverlayVisibility(chunkMeshes: OverlayMeshPair[], camera: HexCame
   let visible = 0;
   for (const pair of chunkMeshes) {
     const primaryVisible = intersects(pair.chunk.bounds, visibleRect, 0);
-    const wrappedVisible = intersects(pair.chunk.bounds, visibleRect, pair.wrapped.position.x);
     pair.primary.visible = primaryVisible;
-    pair.wrapped.visible = wrappedVisible;
     if (primaryVisible) visible += 1;
-    if (wrappedVisible) visible += 1;
   }
   return visible;
 }

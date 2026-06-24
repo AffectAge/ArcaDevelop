@@ -32,11 +32,11 @@ describe("hex terrain mesh renderer data", () => {
     expect(resolveHexNeighborMaterialIds(tile!, smallMap, tileById)).toHaveLength(6);
   });
 
-  it("provides chunk data for primary and wrapped mesh instances", () => {
+  it("provides chunk data for single-world primary mesh instances", () => {
     const meshData = buildHexTerrainMeshData(smallMap);
 
     expect(meshData.chunks.length).toBeGreaterThan(0);
-    expect(meshData.chunks.length * 2).toBeGreaterThan(meshData.chunks.length);
+    expect(meshData.chunks.every((chunk) => chunk.bounds.left < chunk.bounds.right && chunk.bounds.top < chunk.bounds.bottom)).toBe(true);
   });
 
   it("emits material atlas indices for shader texture sampling", () => {
