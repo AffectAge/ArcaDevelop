@@ -87,6 +87,7 @@ export function createChunkGeometry(chunk: HexChunkRenderData): Geometry {
       aEdgeColor: chunk.edgeColors,
       aMaterialIndices: chunk.materialIndices,
       aMaterialWeights: chunk.materialWeights,
+      aCoastParams: chunk.coastParams,
     },
     indexBuffer: chunk.indices,
   });
@@ -115,6 +116,7 @@ function intersects(bounds: HexChunkRenderData["bounds"], rect: { left: number; 
 
 function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Shader {
   const atlas = materialTextures.pack.atlas;
+  const coastMasks = materialTextures.pack.coastMasks;
   return new Shader({
     glProgram: GlProgram.from({
       name: "arcanorum-hex-terrain-mesh",
@@ -125,6 +127,7 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
         in vec3 aEdgeColor;
         in vec2 aMaterialIndices;
         in vec4 aMaterialWeights;
+        in vec4 aCoastParams;
 
         out vec2 vWorld;
         out vec2 vLocal;
@@ -132,6 +135,7 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
         out vec3 vEdgeColor;
         out vec2 vMaterialIndices;
         out vec4 vMaterialWeights;
+        out vec4 vCoastParams;
         out vec4 vColor;
 
         uniform mat3 uProjectionMatrix;
@@ -148,6 +152,7 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
           vEdgeColor = aEdgeColor;
           vMaterialIndices = aMaterialIndices;
           vMaterialWeights = aMaterialWeights;
+          vCoastParams = aCoastParams;
           vColor = uColor * uWorldColorAlpha;
           mat3 modelViewProjectionMatrix = uProjectionMatrix * uWorldTransformMatrix * uTransformMatrix;
           gl_Position = vec4((modelViewProjectionMatrix * vec3(aPosition, 1.0)).xy, 0.0, 1.0);
@@ -156,6 +161,7 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
       fragment: `
         uniform sampler2D uAlbedoTexture;
         uniform sampler2D uDetailTexture;
+        uniform sampler2D uCoastMaskTexture;
 
         in vec2 vWorld;
         in vec2 vLocal;
@@ -163,16 +169,20 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
         in vec3 vEdgeColor;
         in vec2 vMaterialIndices;
         in vec4 vMaterialWeights;
+        in vec4 vCoastParams;
         in vec4 vColor;
 
         out vec4 finalColor;
 
         uniform vec4 uAtlasGrid;
+        uniform vec4 uCoastMaskGrid;
         uniform float uDetailStrength;
         uniform float uNormalStrength;
         uniform float uMaterialStrength;
         uniform float uWaterAnimation;
         uniform float uPainterlyStrength;
+        uniform float uCoastMaskStrength;
+        uniform float uCoastFoamStrength;
         uniform float uZoomDetail;
         uniform float uTime;
 
@@ -208,6 +218,14 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
           return mix(tint, textured, uMaterialStrength);
         }
 
+        vec2 coastMaskUv(float maskIndex, vec2 localUv) {
+          float column = mod(maskIndex, uCoastMaskGrid.x);
+          float row = floor(maskIndex / uCoastMaskGrid.x);
+          vec2 tileUv = clamp(localUv, vec2(0.0), vec2(1.0));
+          tileUv = tileUv * 0.98 + vec2(0.01);
+          return (vec2(column, row) + tileUv) * uCoastMaskGrid.zw;
+        }
+
         void main(void) {
           float waterMask = step(0.08, vBaseColor.b - vBaseColor.r) * step(vBaseColor.r, 0.32);
           float edgeWaterMask = step(0.08, vEdgeColor.b - vEdgeColor.r) * step(vEdgeColor.r, 0.32);
@@ -216,30 +234,39 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
           vec3 baseColor = sampleMaterial(vMaterialIndices.x, worldUv, vBaseColor, waterMask);
           vec3 edgeColor = sampleMaterial(vMaterialIndices.y, worldUv + vLocal * 0.07, vEdgeColor, waterMask);
           float borderNoise = valueNoise(vWorld * mix(0.052, 0.031, coastTransition) + vLocal * mix(8.0, 3.4, coastTransition) + vec2(vMaterialWeights.z * 5.0, vMaterialWeights.w * 3.0)) - 0.5;
-          float coastNoise = valueNoise(vWorld * 0.118 + vec2(vMaterialWeights.w * 8.0, vMaterialWeights.z * 6.0)) - 0.5;
           float edgeDistance = length(vLocal);
           float landBlend = smoothstep(0.81 + borderNoise * 0.08, 0.99 + borderNoise * 0.035, edgeDistance);
-          float coastBlend = smoothstep(0.58 + borderNoise * 0.16 + coastNoise * 0.06, 0.99 + borderNoise * 0.04, edgeDistance);
-          float terrainBlend = mix(landBlend, coastBlend, coastTransition) * vMaterialWeights.x;
-          vec3 coastTint = mix(vec3(0.76, 0.67, 0.42), vec3(0.22, 0.58, 0.62), waterMask);
-          vec3 blendedEdge = mix(edgeColor, coastTint, coastTransition * 0.26);
+          float terrainBlend = landBlend * vMaterialWeights.x * mix(1.0, 0.12, coastTransition);
+          vec3 blendedEdge = edgeColor;
           vec3 color = mix(baseColor, blendedEdge, terrainBlend * mix(0.22, 0.42, uPainterlyStrength));
-          float grainScale = mix(30.0, 18.0, waterMask);
+          float coastEnabled = step(0.5, vCoastParams.w) * uCoastMaskStrength;
+          vec2 maskUv = coastMaskUv(vCoastParams.x, vLocal * 0.5 + vec2(0.5));
+          float coastWaterAmount = texture(uCoastMaskTexture, maskUv).r;
+          coastWaterAmount = pow(coastWaterAmount, mix(1.45, 0.78, clamp(vCoastParams.y, 0.0, 1.0)));
+          coastWaterAmount = clamp(coastWaterAmount, 0.0, 1.0);
+          vec3 coastLandColor = sampleMaterial(vMaterialIndices.x, worldUv, vBaseColor, 0.0);
+          vec3 coastWaterColor = sampleMaterial(vCoastParams.z, worldUv * 1.14 + vec2(0.07, 0.03), vec3(0.18, 0.48, 0.52), 1.0);
+          vec3 coastMaskedColor = mix(coastLandColor, coastWaterColor, coastWaterAmount);
+          float shorelineBand = smoothstep(0.38, 0.5, coastWaterAmount) - smoothstep(0.54, 0.7, coastWaterAmount);
+          coastMaskedColor += shorelineBand * vec3(0.045, 0.055, 0.04) * uCoastFoamStrength;
+          color = mix(color, coastMaskedColor, coastEnabled);
+          float effectiveWaterMask = max(waterMask, coastWaterAmount * coastEnabled);
+          float grainScale = mix(30.0, 18.0, effectiveWaterMask);
           float grain = hash(floor((vLocal + vec2(vMaterialWeights.y, vMaterialWeights.z)) * grainScale));
           float paper = valueNoise(vWorld * 0.028 + vec2(vMaterialWeights.w * 9.0, vMaterialWeights.z * 5.0));
           float paperFine = valueNoise(vWorld * 0.085 + vec2(vMaterialWeights.z * 4.0, vMaterialWeights.w * 7.0));
-          float detail = ((grain - 0.5) * 0.16 + (paper - 0.5) * 0.16 + (paperFine - 0.5) * 0.08) * uDetailStrength * uZoomDetail * mix(1.0, 0.42, waterMask);
-          float elevationShade = (vMaterialWeights.y - 0.5) * 0.17 * uNormalStrength * (1.0 - waterMask);
+          float detail = ((grain - 0.5) * 0.16 + (paper - 0.5) * 0.16 + (paperFine - 0.5) * 0.08) * uDetailStrength * uZoomDetail * mix(1.0, 0.42, effectiveWaterMask);
+          float elevationShade = (vMaterialWeights.y - 0.5) * 0.17 * uNormalStrength * (1.0 - effectiveWaterMask);
           float waterPulse =
             (sin(uTime * 0.72 + vWorld.x * 0.024) + sin(uTime * 0.56 + vWorld.y * 0.031 + vWorld.x * 0.01)) *
             0.018 *
             uWaterAnimation *
-            waterMask;
+            effectiveWaterMask;
           vec3 warmLand = vec3(color.r * 1.09 + 0.025, color.g * 1.04 + 0.016, color.b * 0.88);
           vec3 deepWater = vec3(color.r * 0.62, color.g * 1.04 + 0.025, color.b * 1.2 + 0.055);
-          color = mix(mix(color, warmLand, uPainterlyStrength * 0.54), deepWater, waterMask * 0.78);
+          color = mix(mix(color, warmLand, uPainterlyStrength * 0.54), deepWater, effectiveWaterMask * 0.78);
           color += detail + elevationShade + waterPulse;
-          color = mix(color, vec3(color.r * 0.82, color.g * 1.06, color.b * 1.18), waterMask * 0.36);
+          color = mix(color, vec3(color.r * 0.82, color.g * 1.06, color.b * 1.18), effectiveWaterMask * 0.36);
           finalColor = vec4(clamp(color, 0.0, 1.0), 1.0) * vColor;
         }
       `,
@@ -247,11 +274,14 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
     resources: {
       terrainUniforms: new UniformGroup({
         uAtlasGrid: { value: new Float32Array([atlas.columns, atlas.rows, 1 / atlas.columns, 1 / atlas.rows]), type: "vec4<f32>" },
+        uCoastMaskGrid: { value: new Float32Array([coastMasks.columns, coastMasks.rows, 1 / coastMasks.columns, 1 / coastMasks.rows]), type: "vec4<f32>" },
         uDetailStrength: { value: 0.08, type: "f32" },
         uNormalStrength: { value: 0.06, type: "f32" },
         uMaterialStrength: { value: 1, type: "f32" },
         uWaterAnimation: { value: 1, type: "f32" },
         uPainterlyStrength: { value: 1, type: "f32" },
+        uCoastMaskStrength: { value: 1, type: "f32" },
+        uCoastFoamStrength: { value: 1, type: "f32" },
         uZoomDetail: { value: 1, type: "f32" },
         uTime: { value: 0, type: "f32" },
       }),
@@ -259,12 +289,14 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
       uAlbedoSampler: materialTextures.albedoSource.style,
       uDetailTexture: materialTextures.detailSource,
       uDetailSampler: materialTextures.detailSource.style,
+      uCoastMaskTexture: materialTextures.coastMaskSource,
+      uCoastMaskSampler: materialTextures.coastMaskSource.style,
     },
   });
 }
 
 function updateShaderQuality(shader: Shader, quality: HexTerrainShaderQuality, reducedMotion: boolean): void {
-  const resource = shader.resources.terrainUniforms as { uniforms?: { uDetailStrength: number; uNormalStrength: number; uMaterialStrength: number; uWaterAnimation: number; uPainterlyStrength: number; uTime: number } } | undefined;
+  const resource = shader.resources.terrainUniforms as { uniforms?: { uDetailStrength: number; uNormalStrength: number; uMaterialStrength: number; uWaterAnimation: number; uPainterlyStrength: number; uCoastMaskStrength: number; uCoastFoamStrength: number; uTime: number } } | undefined;
   if (!resource?.uniforms) return;
   const features = resolveShaderQualityFeatures(quality);
   resource.uniforms.uDetailStrength = features.detail ? 0.22 : 0;
@@ -272,6 +304,8 @@ function updateShaderQuality(shader: Shader, quality: HexTerrainShaderQuality, r
   resource.uniforms.uMaterialStrength = quality === "low" ? 0.44 : 1;
   resource.uniforms.uWaterAnimation = features.animatedWater && !reducedMotion ? 1 : 0;
   resource.uniforms.uPainterlyStrength = quality === "low" ? 0.62 : 1;
+  resource.uniforms.uCoastMaskStrength = features.coastMasks ? 1 : 0;
+  resource.uniforms.uCoastFoamStrength = features.coastFoam ? 1 : 0;
   resource.uniforms.uTime = performance.now() / 1000;
 }
 

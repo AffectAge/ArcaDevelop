@@ -9,6 +9,7 @@ export type HexTerrainVertexAttributes = {
   edgeColor: [number, number, number];
   materialIndices: [number, number];
   materialWeights: [number, number, number, number];
+  coastParams: [number, number, number, number];
 };
 
 export type HexChunkRenderData = {
@@ -24,6 +25,7 @@ export type HexChunkRenderData = {
   edgeColors: Float32Array;
   materialIndices: Float32Array;
   materialWeights: Float32Array;
+  coastParams: Float32Array;
   indices: Uint32Array;
   tileIds: HexId[];
 };
@@ -56,6 +58,19 @@ export function resolveHexNeighborMaterialIds(tile: HexTile, map: HexMapArtifact
   });
 }
 
+export function resolveHexCoastMaskParams(map: HexMapArtifact, materialPack: HexMaterialPackManifest = generatedHexMaterialPack): Map<HexId, [number, number, number, number]> {
+  const coastParamsByHexId = new Map<HexId, [number, number, number, number]>();
+  const waterMaterialIndex = resolveTerrainMaterialAtlasIndex("coastal_water", materialPack);
+  for (const coast of map.coastOverlays) {
+    const current = coastParamsByHexId.get(coast.hexId) ?? [0, 0, waterMaterialIndex, 0];
+    current[0] = current[0] | (1 << coast.direction);
+    current[1] = Math.max(current[1], coast.strength);
+    current[3] = 1;
+    coastParamsByHexId.set(coast.hexId, current);
+  }
+  return coastParamsByHexId;
+}
+
 function buildChunkRenderData(
   chunkId: HexChunkId,
   tiles: HexTile[],
@@ -69,6 +84,7 @@ function buildChunkRenderData(
   const edgeColors: number[] = [];
   const materialIndices: number[] = [];
   const materialWeights: number[] = [];
+  const coastParams: number[] = [];
   const indices: number[] = [];
   const tileIds: HexId[] = [];
   let qMin = Number.POSITIVE_INFINITY;
@@ -81,12 +97,15 @@ function buildChunkRenderData(
   let bottom = Number.NEGATIVE_INFINITY;
 
   const sortedTiles = [...tiles].sort((a, b) => (a.r === b.r ? a.q - b.q : a.r - b.r));
+  const coastParamsByHexId = resolveHexCoastMaskParams(map, materialPack);
+  const defaultCoastParams: [number, number, number, number] = [0, 0, resolveTerrainMaterialAtlasIndex("coastal_water", materialPack), 0];
   for (const tile of sortedTiles) {
     const center = axialToPixel(tile, map.settings.hexSize);
     const baseMaterial = resolveTerrainMaterialId(tile);
     const baseColor = resolveTerrainMaterialColor(baseMaterial, materialPack);
     const baseMaterialIndex = resolveTerrainMaterialAtlasIndex(baseMaterial, materialPack);
     const neighborMaterials = resolveHexNeighborMaterialIds(tile, map, tileById);
+    const tileCoastParams = coastParamsByHexId.get(tile.id) ?? defaultCoastParams;
     qMin = Math.min(qMin, tile.q);
     qMax = Math.max(qMax, tile.q);
     rMin = Math.min(rMin, tile.r);
@@ -99,7 +118,7 @@ function buildChunkRenderData(
       const edgeColor = resolveTerrainMaterialColor(edgeMaterial, materialPack);
       const edgeMaterialIndex = resolveTerrainMaterialAtlasIndex(edgeMaterial, materialPack);
       const vertexStart = positions.length / 2;
-      pushVertex(positions, locals, baseColors, edgeColors, materialIndices, materialWeights, center.x, center.y, 0, 0, baseColor, edgeColor, baseMaterialIndex, edgeMaterialIndex, tile, 0);
+      pushVertex(positions, locals, baseColors, edgeColors, materialIndices, materialWeights, coastParams, center.x, center.y, 0, 0, baseColor, edgeColor, baseMaterialIndex, edgeMaterialIndex, tileCoastParams, tile, 0);
       pushVertex(
         positions,
         locals,
@@ -107,6 +126,7 @@ function buildChunkRenderData(
         edgeColors,
         materialIndices,
         materialWeights,
+        coastParams,
         cornerA.x,
         cornerA.y,
         (cornerA.x - center.x) / map.settings.hexSize,
@@ -115,6 +135,7 @@ function buildChunkRenderData(
         edgeColor,
         baseMaterialIndex,
         edgeMaterialIndex,
+        tileCoastParams,
         tile,
         1,
       );
@@ -125,6 +146,7 @@ function buildChunkRenderData(
         edgeColors,
         materialIndices,
         materialWeights,
+        coastParams,
         cornerB.x,
         cornerB.y,
         (cornerB.x - center.x) / map.settings.hexSize,
@@ -133,6 +155,7 @@ function buildChunkRenderData(
         edgeColor,
         baseMaterialIndex,
         edgeMaterialIndex,
+        tileCoastParams,
         tile,
         1,
       );
@@ -157,6 +180,7 @@ function buildChunkRenderData(
     edgeColors: new Float32Array(edgeColors),
     materialIndices: new Float32Array(materialIndices),
     materialWeights: new Float32Array(materialWeights),
+    coastParams: new Float32Array(coastParams),
     indices: new Uint32Array(indices),
     tileIds,
   };
@@ -169,6 +193,7 @@ function pushVertex(
   edgeColors: number[],
   materialIndices: number[],
   materialWeights: number[],
+  coastParams: number[],
   x: number,
   y: number,
   localX: number,
@@ -177,6 +202,7 @@ function pushVertex(
   edgeColor: [number, number, number],
   baseMaterialIndex: number,
   edgeMaterialIndex: number,
+  coastParam: [number, number, number, number],
   tile: HexTile,
   edgeWeight: number,
 ): void {
@@ -186,4 +212,5 @@ function pushVertex(
   edgeColors.push(...edgeColor);
   materialIndices.push(baseMaterialIndex, edgeMaterialIndex);
   materialWeights.push(edgeWeight, tile.elevation, tile.moisture, tile.temperature);
+  coastParams.push(...coastParam);
 }

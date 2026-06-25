@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_HEX_MAP_SETTINGS, generateHexMap } from "./hexMapGenerator";
-import { buildHexTerrainMeshData, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
+import { buildHexTerrainMeshData, resolveHexCoastMaskParams, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
 import { generatedHexMaterialPack, resolveShaderQualityFeatures, resolveTerrainMaterialId, TERRAIN_MATERIAL_IDS } from "./hexTerrainMaterials";
 import { validateHexMaterialPack } from "./hexTerrainMaterialTextures";
 import { axialToPixel, HEX_DIRECTIONS, makeHexId } from "./hexGeometry";
@@ -74,12 +74,52 @@ describe("hex terrain mesh renderer data", () => {
     expect(Object.keys(generatedHexMaterialPack.materials).sort()).toEqual([...TERRAIN_MATERIAL_IDS].sort());
     expect(generatedHexMaterialPack.atlas.albedoUrl).toBe("/game-assets/hex-materials/hex-terrain-albedo.png");
     expect(generatedHexMaterialPack.atlas.detailUrl).toBe("/game-assets/hex-materials/hex-terrain-detail.png");
+    expect(generatedHexMaterialPack.coastMasks).toMatchObject({
+      url: "/game-assets/hex-materials/hex-coast-masks.png",
+      columns: 8,
+      rows: 8,
+      tileSize: 128,
+    });
   });
 
   it("keeps all quality levels on the shader mesh path", () => {
-    expect(resolveShaderQualityFeatures("low")).toMatchObject({ detail: false, normal: false });
-    expect(resolveShaderQualityFeatures("medium")).toMatchObject({ detail: true, normal: false });
-    expect(resolveShaderQualityFeatures("high")).toMatchObject({ detail: true, normal: true });
+    expect(resolveShaderQualityFeatures("low")).toMatchObject({ detail: false, normal: false, coastMasks: false, coastFoam: false });
+    expect(resolveShaderQualityFeatures("medium")).toMatchObject({ detail: true, normal: false, coastMasks: true, coastFoam: false });
+    expect(resolveShaderQualityFeatures("high")).toMatchObject({ detail: true, normal: true, coastMasks: true, coastFoam: true });
   });
 
+  it("derives deterministic coast mask bits from coast overlays", () => {
+    const tile = smallMap.tiles.find((candidate) => candidate.q > 2 && candidate.r > 2)!;
+    const map = {
+      ...smallMap,
+      coastOverlays: [
+        { hexId: tile.id, direction: 0 as const, strength: 0.4 },
+        { hexId: tile.id, direction: 2 as const, strength: 0.8 },
+      ],
+    };
+
+    const coastParams = resolveHexCoastMaskParams(map).get(tile.id);
+
+    expect(coastParams).toEqual([(1 << 0) | (1 << 2), 0.8, generatedHexMaterialPack.materials.coastal_water.atlasIndex, 1]);
+  });
+
+  it("emits coast params for coastal and non-coastal hexes", () => {
+    const coastTile = smallMap.tiles.find((candidate) => candidate.q > 2 && candidate.r > 2)!;
+    const nonCoastTile = smallMap.tiles.find((candidate) => candidate.id !== coastTile.id)!;
+    const map = {
+      ...smallMap,
+      coastOverlays: [{ hexId: coastTile.id, direction: 1 as const, strength: 0.75 }],
+    };
+    const meshData = buildHexTerrainMeshData(map);
+    const coastChunk = meshData.chunks.find((chunk) => chunk.tileIds.includes(coastTile.id))!;
+    const nonCoastChunk = meshData.chunks.find((chunk) => chunk.tileIds.includes(nonCoastTile.id))!;
+    const coastTileIndex = coastChunk.tileIds.indexOf(coastTile.id);
+    const nonCoastTileIndex = nonCoastChunk.tileIds.indexOf(nonCoastTile.id);
+    const coastParamOffset = coastTileIndex * 18 * 4;
+    const nonCoastParamOffset = nonCoastTileIndex * 18 * 4;
+
+    expect(Array.from(coastChunk.coastParams.slice(coastParamOffset, coastParamOffset + 4))).toEqual([1 << 1, 0.75, generatedHexMaterialPack.materials.coastal_water.atlasIndex, 1]);
+    expect(Array.from(nonCoastChunk.coastParams.slice(nonCoastParamOffset, nonCoastParamOffset + 4))).toEqual([0, 0, generatedHexMaterialPack.materials.coastal_water.atlasIndex, 0]);
+    expect(coastChunk.coastParams.length).toBe((coastChunk.positions.length / 2) * 4);
+  });
 });

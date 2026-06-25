@@ -1,6 +1,6 @@
 import { Assets, Container, Geometry, GlProgram, Mesh, Rectangle, Shader, Sprite, Texture, UniformGroup } from "pixi.js";
-import type { HexChunkId, HexDirection, HexFeature, HexMapArtifact, HexTile } from "@arcanorum/shared";
-import { axialToPixel, hexEdgeCorners } from "./hexGeometry";
+import type { HexChunkId, HexFeature, HexMapArtifact, HexTile } from "@arcanorum/shared";
+import { axialToPixel } from "./hexGeometry";
 import type { HexCamera } from "./hexCamera";
 import type { HexTerrainShaderQuality } from "./hexTerrainMaterials";
 import {
@@ -111,7 +111,6 @@ function safeDestroyContainer(container: Container): void {
 }
 
 function buildOverlayChunks(map: HexMapArtifact): OverlayChunkRenderData[] {
-  const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
   const drafts = new Map<
     HexChunkId,
     {
@@ -141,12 +140,6 @@ function buildOverlayChunks(map: HexMapArtifact): OverlayChunkRenderData[] {
     const draft = ensureDraft(tile.chunkId);
     addFeatureGeometry(draft, tile, map.settings.hexSize);
   }
-  for (const coast of map.coastOverlays) {
-    const tile = tileById.get(coast.hexId);
-    if (!tile) continue;
-    const draft = ensureDraft(tile.chunkId);
-    addCoastGeometry(draft, tile, coast.direction, coast.strength, map.settings.hexSize);
-  }
   return Array.from(drafts.entries())
     .filter(([, draft]) => draft.indices.length > 0)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -170,40 +163,6 @@ function addFeatureGeometry(draft: ReturnType<typeof createDraftShape>, tile: He
     const radius = size * (0.045 + stableOffset(`${tile.id}:feature-r:${index}`) * 0.03);
     addDisc(draft, x, y, radius, color, 0.16, 2);
   }
-}
-
-function addCoastGeometry(draft: ReturnType<typeof createDraftShape>, tile: HexTile, direction: number, strength: number, size: number): void {
-  void draft;
-  void tile;
-  void direction;
-  void strength;
-  void size;
-}
-
-function addRibbon(
-  draft: ReturnType<typeof createDraftShape>,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  halfWidth: number,
-  color: [number, number, number],
-  alpha: number,
-  kind: number,
-): void {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const length = Math.hypot(dx, dy) || 1;
-  const nx = (-dy / length) * halfWidth;
-  const ny = (dx / length) * halfWidth;
-  const start = draft.positions.length / 2;
-  pushOverlayVertex(draft, x1 - nx, y1 - ny, color, alpha, kind);
-  pushOverlayVertex(draft, x1 + nx, y1 + ny, color, alpha, kind);
-  pushOverlayVertex(draft, x2 + nx, y2 + ny, color, alpha, kind);
-  pushOverlayVertex(draft, x2 - nx, y2 - ny, color, alpha, kind);
-  draft.indices.push(start, start + 1, start + 2, start, start + 2, start + 3);
-  expandBounds(draft.bounds, x1, y1, halfWidth * 2);
-  expandBounds(draft.bounds, x2, y2, halfWidth * 2);
 }
 
 function addDisc(draft: ReturnType<typeof createDraftShape>, x: number, y: number, radius: number, color: [number, number, number], alpha: number, kind: number): void {

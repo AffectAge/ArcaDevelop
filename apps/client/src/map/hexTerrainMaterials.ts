@@ -30,6 +30,12 @@ export type HexMaterialPackManifest = {
     albedoUrl: string;
     detailUrl: string;
   };
+  coastMasks: {
+    url: string;
+    columns: number;
+    rows: number;
+    tileSize: number;
+  };
   materials: Record<TerrainMaterialId, HexMaterialDefinition>;
 };
 
@@ -41,6 +47,12 @@ export const generatedHexMaterialPack: HexMaterialPackManifest = {
     tileSize: 128,
     albedoUrl: "/game-assets/hex-materials/hex-terrain-albedo.png",
     detailUrl: "/game-assets/hex-materials/hex-terrain-detail.png",
+  },
+  coastMasks: {
+    url: "/game-assets/hex-materials/hex-coast-masks.png",
+    columns: 8,
+    rows: 8,
+    tileSize: 128,
   },
   materials: {
     deep_water: material("deep_water", [0.09, 0.27, 0.36], 0.22, 0.72),
@@ -81,10 +93,10 @@ export function resolveTerrainMaterialAtlasIndex(materialId: TerrainMaterialId, 
   return pack.materials[materialId]?.atlasIndex ?? pack.materials.grass.atlasIndex;
 }
 
-export function resolveShaderQualityFeatures(quality: HexTerrainShaderQuality): { detail: boolean; normal: boolean; animatedWater: boolean } {
-  if (quality === "low") return { detail: false, normal: false, animatedWater: false };
-  if (quality === "medium") return { detail: true, normal: false, animatedWater: false };
-  return { detail: true, normal: true, animatedWater: true };
+export function resolveShaderQualityFeatures(quality: HexTerrainShaderQuality): { detail: boolean; normal: boolean; animatedWater: boolean; coastMasks: boolean; coastFoam: boolean } {
+  if (quality === "low") return { detail: false, normal: false, animatedWater: false, coastMasks: false, coastFoam: false };
+  if (quality === "medium") return { detail: true, normal: false, animatedWater: false, coastMasks: true, coastFoam: false };
+  return { detail: true, normal: true, animatedWater: true, coastMasks: true, coastFoam: true };
 }
 
 export function isWaterMaterial(materialId: TerrainMaterialId): boolean {

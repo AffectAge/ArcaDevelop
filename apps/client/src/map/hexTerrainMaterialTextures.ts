@@ -5,22 +5,26 @@ export type LoadedHexMaterialTextures = {
   pack: HexMaterialPackManifest;
   albedoTexture: Texture;
   detailTexture: Texture;
+  coastMaskTexture: Texture;
   albedoSource: TextureSource;
   detailSource: TextureSource;
+  coastMaskSource: TextureSource;
 };
 
 export async function loadHexMaterialTextures(pack: HexMaterialPackManifest = generatedHexMaterialPack): Promise<LoadedHexMaterialTextures> {
   validateHexMaterialPack(pack);
-  const [albedoTexture, detailTexture] = await Promise.all([Assets.load<Texture>(pack.atlas.albedoUrl), Assets.load<Texture>(pack.atlas.detailUrl)]);
-  if (!albedoTexture?.source || !detailTexture?.source) {
+  const [albedoTexture, detailTexture, coastMaskTexture] = await Promise.all([Assets.load<Texture>(pack.atlas.albedoUrl), Assets.load<Texture>(pack.atlas.detailUrl), Assets.load<Texture>(pack.coastMasks.url)]);
+  if (!albedoTexture?.source || !detailTexture?.source || !coastMaskTexture?.source) {
     throw new Error("hex-material-texture-load-failed");
   }
   return {
     pack,
     albedoTexture,
     detailTexture,
+    coastMaskTexture,
     albedoSource: albedoTexture.source,
     detailSource: detailTexture.source,
+    coastMaskSource: coastMaskTexture.source,
   };
 }
 
@@ -42,6 +46,9 @@ export function validateHexMaterialPack(pack: HexMaterialPackManifest = generate
   }
   if (pack.atlas.columns * pack.atlas.rows < TERRAIN_MATERIAL_IDS.length || pack.atlas.tileSize <= 0 || !pack.atlas.albedoUrl || !pack.atlas.detailUrl) {
     throw new Error("hex-material-pack-invalid-atlas");
+  }
+  if (!pack.coastMasks.url || pack.coastMasks.columns <= 0 || pack.coastMasks.rows <= 0 || pack.coastMasks.tileSize <= 0 || pack.coastMasks.columns * pack.coastMasks.rows < 64) {
+    throw new Error("hex-material-pack-invalid-coast-masks");
   }
 }
 
