@@ -115,7 +115,9 @@ export function resolveHexBiomeTransitionParams(
   edgeMaterial: TerrainMaterialId,
   materialPack: HexMaterialPackManifest = generatedHexMaterialPack,
 ): [number, number, number, number] {
-  if (!neighborHexId || hexId.localeCompare(neighborHexId) > 0 || baseMaterial === edgeMaterial || isWaterMaterial(baseMaterial) || isWaterMaterial(edgeMaterial)) {
+  const baseIsWater = isWaterMaterial(baseMaterial);
+  const edgeIsWater = isWaterMaterial(edgeMaterial);
+  if (!neighborHexId || hexId.localeCompare(neighborHexId) > 0 || baseMaterial === edgeMaterial || baseIsWater !== edgeIsWater) {
     return [0, 0, 0, 0];
   }
   return [resolveHexBiomeTransitionAtlasIndex(hexId, direction, baseMaterial, edgeMaterial, materialPack), 1, 1, 0];

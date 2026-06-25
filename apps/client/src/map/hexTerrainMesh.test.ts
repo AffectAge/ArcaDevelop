@@ -205,13 +205,28 @@ describe("hex terrain mesh renderer data", () => {
     expect(params[0]).toBeLessThan((edge.direction + 1) * variants);
   });
 
-  it("disables biome transition params for same material and water edges", () => {
+  it("disables biome transition params for same material and land-water edges", () => {
     const sameEdge = findMaterialEdge((base, neighbor) => base === neighbor && !isWaterMaterial(base));
-    const waterEdge = findMaterialEdge((base, neighbor) => isWaterMaterial(base) || isWaterMaterial(neighbor));
+    const landWaterEdge = findMaterialEdge((base, neighbor) => isWaterMaterial(base) !== isWaterMaterial(neighbor));
     const meshData = buildHexTerrainMeshData(smallMap);
 
     expect(readTransitionParams(meshData, sameEdge.tile.id, sameEdge.direction)).toEqual([0, 0, 0, 0]);
-    expect(readTransitionParams(meshData, waterEdge.tile.id, waterEdge.direction)).toEqual([0, 0, 0, 0]);
+    expect(readTransitionParams(meshData, landWaterEdge.tile.id, landWaterEdge.direction)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("emits biome transition params for different water material edges", () => {
+    const ocean = makeTestTile(1, 1, { terrain: "ocean", biome: "deep_ocean", waterKind: "ocean" });
+    const sea = makeTestTile(2, 1, { terrain: "sea", biome: "coastal_water", waterKind: "sea" });
+    const map: HexMapArtifact = {
+      ...smallMap,
+      settings: { ...smallMap.settings, width: 4, height: 4, wrapX: false },
+      tiles: [ocean, sea],
+      coastOverlays: [],
+      riverEdges: [],
+    };
+    const meshData = buildHexTerrainMeshData(map);
+
+    expect(readTransitionParams(meshData, ocean.id, 0)[1]).toBe(1);
   });
 
   it("emits biome transition on only one side of a shared edge", () => {
