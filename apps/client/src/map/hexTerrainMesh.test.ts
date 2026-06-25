@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_HEX_MAP_SETTINGS, generateHexMap } from "./hexMapGenerator";
-import { buildHexTerrainMeshData, resolveHexCoastMaskParams, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
+import { buildHexTerrainMeshData, resolveHexCoastMaskAtlasIndex, resolveHexCoastMaskParams, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
 import { generatedHexMaterialPack, resolveShaderQualityFeatures, resolveTerrainMaterialId, TERRAIN_MATERIAL_IDS } from "./hexTerrainMaterials";
 import { validateHexMaterialPack } from "./hexTerrainMaterialTextures";
 import { axialToPixel, HEX_DIRECTIONS, makeHexId } from "./hexGeometry";
@@ -76,9 +76,10 @@ describe("hex terrain mesh renderer data", () => {
     expect(generatedHexMaterialPack.atlas.detailUrl).toBe("/game-assets/hex-materials/hex-terrain-detail.png");
     expect(generatedHexMaterialPack.coastMasks).toMatchObject({
       url: "/game-assets/hex-materials/hex-coast-masks.png",
-      columns: 8,
-      rows: 8,
+      columns: 16,
+      rows: 16,
       tileSize: 128,
+      variants: 4,
     });
   });
 
@@ -99,8 +100,25 @@ describe("hex terrain mesh renderer data", () => {
     };
 
     const coastParams = resolveHexCoastMaskParams(map).get(tile.id);
+    const rawMask = (1 << 0) | (1 << 2);
 
-    expect(coastParams).toEqual([(1 << 0) | (1 << 2), 0.8, generatedHexMaterialPack.materials.coastal_water.atlasIndex, 1]);
+    expect(coastParams).toEqual([resolveHexCoastMaskAtlasIndex(tile.id, rawMask), 0.8, generatedHexMaterialPack.materials.coastal_water.atlasIndex, 1]);
+    expect(coastParams![0]).toBeGreaterThanOrEqual(rawMask * generatedHexMaterialPack.coastMasks.variants);
+    expect(coastParams![0]).toBeLessThan((rawMask + 1) * generatedHexMaterialPack.coastMasks.variants);
+  });
+
+  it("selects stable coast mask variants by hex id and raw mask", () => {
+    const rawMask = (1 << 1) | (1 << 4);
+    const first = resolveHexCoastMaskAtlasIndex(makeHexId(4, 4), rawMask);
+    const second = resolveHexCoastMaskAtlasIndex(makeHexId(4, 4), rawMask);
+    const other = resolveHexCoastMaskAtlasIndex(makeHexId(5, 4), rawMask);
+    const variants = generatedHexMaterialPack.coastMasks.variants;
+
+    expect(first).toBe(second);
+    expect(first).toBeGreaterThanOrEqual(rawMask * variants);
+    expect(first).toBeLessThan((rawMask + 1) * variants);
+    expect(other).toBeGreaterThanOrEqual(rawMask * variants);
+    expect(other).toBeLessThan((rawMask + 1) * variants);
   });
 
   it("emits coast params for coastal and non-coastal hexes", () => {
@@ -118,7 +136,7 @@ describe("hex terrain mesh renderer data", () => {
     const coastParamOffset = coastTileIndex * 18 * 4;
     const nonCoastParamOffset = nonCoastTileIndex * 18 * 4;
 
-    expect(Array.from(coastChunk.coastParams.slice(coastParamOffset, coastParamOffset + 4))).toEqual([1 << 1, 0.75, generatedHexMaterialPack.materials.coastal_water.atlasIndex, 1]);
+    expect(Array.from(coastChunk.coastParams.slice(coastParamOffset, coastParamOffset + 4))).toEqual([resolveHexCoastMaskAtlasIndex(coastTile.id, 1 << 1), 0.75, generatedHexMaterialPack.materials.coastal_water.atlasIndex, 1]);
     expect(Array.from(nonCoastChunk.coastParams.slice(nonCoastParamOffset, nonCoastParamOffset + 4))).toEqual([0, 0, generatedHexMaterialPack.materials.coastal_water.atlasIndex, 0]);
     expect(coastChunk.coastParams.length).toBe((coastChunk.positions.length / 2) * 4);
   });

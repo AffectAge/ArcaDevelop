@@ -60,15 +60,32 @@ export function resolveHexNeighborMaterialIds(tile: HexTile, map: HexMapArtifact
 
 export function resolveHexCoastMaskParams(map: HexMapArtifact, materialPack: HexMaterialPackManifest = generatedHexMaterialPack): Map<HexId, [number, number, number, number]> {
   const coastParamsByHexId = new Map<HexId, [number, number, number, number]>();
+  const rawCoastParamsByHexId = new Map<HexId, [number, number]>();
   const waterMaterialIndex = resolveTerrainMaterialAtlasIndex("coastal_water", materialPack);
   for (const coast of map.coastOverlays) {
-    const current = coastParamsByHexId.get(coast.hexId) ?? [0, 0, waterMaterialIndex, 0];
+    const current = rawCoastParamsByHexId.get(coast.hexId) ?? [0, 0];
     current[0] = current[0] | (1 << coast.direction);
     current[1] = Math.max(current[1], coast.strength);
-    current[3] = 1;
-    coastParamsByHexId.set(coast.hexId, current);
+    rawCoastParamsByHexId.set(coast.hexId, current);
+  }
+  for (const [hexId, [rawMask, strength]] of rawCoastParamsByHexId) {
+    coastParamsByHexId.set(hexId, [resolveHexCoastMaskAtlasIndex(hexId, rawMask, materialPack), strength, waterMaterialIndex, 1]);
   }
   return coastParamsByHexId;
+}
+
+export function resolveHexCoastMaskAtlasIndex(hexId: HexId, rawMask: number, materialPack: HexMaterialPackManifest = generatedHexMaterialPack): number {
+  const variants = Math.max(1, materialPack.coastMasks.variants);
+  return rawMask * variants + stableVariantIndex(`${hexId}:${rawMask}`, variants);
+}
+
+function stableVariantIndex(seed: string, variants: number): number {
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % variants;
 }
 
 function buildChunkRenderData(

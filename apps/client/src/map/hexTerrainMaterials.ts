@@ -35,6 +35,7 @@ export type HexMaterialPackManifest = {
     columns: number;
     rows: number;
     tileSize: number;
+    variants: number;
   };
   materials: Record<TerrainMaterialId, HexMaterialDefinition>;
 };
@@ -50,9 +51,10 @@ export const generatedHexMaterialPack: HexMaterialPackManifest = {
   },
   coastMasks: {
     url: "/game-assets/hex-materials/hex-coast-masks.png",
-    columns: 8,
-    rows: 8,
+    columns: 16,
+    rows: 16,
     tileSize: 128,
+    variants: 4,
   },
   materials: {
     deep_water: material("deep_water", [0.09, 0.27, 0.36], 0.22, 0.72),

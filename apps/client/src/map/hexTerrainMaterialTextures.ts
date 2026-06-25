@@ -47,7 +47,14 @@ export function validateHexMaterialPack(pack: HexMaterialPackManifest = generate
   if (pack.atlas.columns * pack.atlas.rows < TERRAIN_MATERIAL_IDS.length || pack.atlas.tileSize <= 0 || !pack.atlas.albedoUrl || !pack.atlas.detailUrl) {
     throw new Error("hex-material-pack-invalid-atlas");
   }
-  if (!pack.coastMasks.url || pack.coastMasks.columns <= 0 || pack.coastMasks.rows <= 0 || pack.coastMasks.tileSize <= 0 || pack.coastMasks.columns * pack.coastMasks.rows < 64) {
+  if (
+    !pack.coastMasks.url ||
+    pack.coastMasks.columns <= 0 ||
+    pack.coastMasks.rows <= 0 ||
+    pack.coastMasks.tileSize <= 0 ||
+    pack.coastMasks.variants <= 0 ||
+    pack.coastMasks.columns * pack.coastMasks.rows < 64 * pack.coastMasks.variants
+  ) {
     throw new Error("hex-material-pack-invalid-coast-masks");
   }
 }
