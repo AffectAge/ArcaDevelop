@@ -1,10 +1,6 @@
 import { Assets, Container, Geometry, GlProgram, Mesh, Rectangle, Shader, Sprite, Texture, UniformGroup } from "pixi.js";
 import type { HexChunkId, HexDirection, HexFeature, HexMapArtifact, HexTile } from "@arcanorum/shared";
-<<<<<<< Updated upstream
 import { axialToPixel, hexEdgeCorners } from "./hexGeometry";
-=======
-import { axialToPixel, getNeighborAxial, worldPixelWidth } from "./hexGeometry";
->>>>>>> Stashed changes
 import type { HexCamera } from "./hexCamera";
 import type { HexTerrainShaderQuality } from "./hexTerrainMaterials";
 import {
@@ -184,36 +180,6 @@ function addCoastGeometry(draft: ReturnType<typeof createDraftShape>, tile: HexT
   void size;
 }
 
-<<<<<<< Updated upstream
-function resolveCoastColor(tile: HexTile): [number, number, number] {
-  if (tile.biome === "cold" || tile.terrain === "snow" || tile.terrain === "tundra") return [0.78, 0.82, 0.74];
-  if (tile.biome === "marsh" || tile.terrain === "wetland") return [0.38, 0.48, 0.32];
-  if (tile.terrain === "mountains" || tile.terrain === "hills") return [0.48, 0.43, 0.31];
-  if (tile.biome === "arid" || tile.terrain === "desert") return [0.76, 0.65, 0.38];
-  return [0.66, 0.6, 0.34];
-=======
-function addRiverGeometry(draft: ReturnType<typeof createDraftShape>, tile: HexTile, direction: number, width: number, map: HexMapArtifact): void {
-  const size = map.settings.hexSize;
-  const center = axialToPixel(tile, size);
-  const neighborAxial = getNeighborAxial(tile, direction as HexDirection, map.settings);
-  if (!neighborAxial) return;
-  const neighborCenter = axialToPixel(neighborAxial, size);
-  if (map.settings.wrapX) {
-    const wrapWidth = worldPixelWidth(map.settings);
-    const dx = neighborCenter.x - center.x;
-    if (dx > wrapWidth / 2) neighborCenter.x -= wrapWidth;
-    if (dx < -wrapWidth / 2) neighborCenter.x += wrapWidth;
-  }
-  const startBias = 0.18;
-  const endBias = 0.82;
-  const x1 = center.x + (neighborCenter.x - center.x) * startBias;
-  const y1 = center.y + (neighborCenter.y - center.y) * startBias;
-  const x2 = center.x + (neighborCenter.x - center.x) * endBias;
-  const y2 = center.y + (neighborCenter.y - center.y) * endBias;
-  addRibbon(draft, x1, y1, x2, y2, Math.max(size * 0.028, width * 1.05), [0.26, 0.63, 0.72], 0.62, 1);
->>>>>>> Stashed changes
-}
-
 function addRibbon(
   draft: ReturnType<typeof createDraftShape>,
   x1: number,
@@ -388,16 +354,8 @@ function createOverlayShader(): Shader {
         }
 
         void main(void) {
-<<<<<<< Updated upstream
           float grain = (hash(vParams.z * 71.0 + floor(uTime * 8.0)) - 0.5) * uDetailStrength;
           vec3 color = clamp(vColor + grain, 0.0, 1.0);
-=======
-          float kind = vParams.y;
-          float grain = (hash(vParams.z * 71.0 + floor(uTime * 6.0)) - 0.5) * uDetailStrength;
-          float flow = kind < 1.5 && kind > 0.5 ? sin(uTime * 2.4 + vParams.z * 13.0) * 0.075 * uFlowStrength : 0.0;
-          vec3 painterlyWarmth = kind < 0.5 ? vec3(0.06, 0.035, -0.02) : vec3(-0.02, 0.03, 0.045);
-          vec3 color = clamp(vColor + painterlyWarmth + grain + flow, 0.0, 1.0);
->>>>>>> Stashed changes
           finalColor = vec4(color, vParams.x) * vDisplayColor;
         }
       `,
