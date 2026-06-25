@@ -181,12 +181,18 @@ function buildCoastOverlays(tiles: TileDraft[], tileById: Map<string, TileDraft>
     for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
       const neighborAxial = getNeighborAxial(tile, direction as HexDirection, settings);
       const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
-      if (neighbor?.waterKind === "sea" || neighbor?.waterKind === "ocean") {
-        overlays.push({ hexId: tile.id, direction: direction as HexDirection, strength: neighbor.waterKind === "ocean" ? 0.82 : 0.58 });
+      if (neighbor?.waterKind === "sea" || neighbor?.waterKind === "ocean" || neighbor?.waterKind === "lake") {
+        overlays.push({ hexId: tile.id, direction: direction as HexDirection, strength: resolveCoastOverlayStrength(neighbor.waterKind) });
       }
     }
   }
   return overlays;
+}
+
+function resolveCoastOverlayStrength(waterKind: Exclude<HexWaterKind, null>): number {
+  if (waterKind === "ocean") return 0.82;
+  if (waterKind === "lake") return 0.5;
+  return 0.58;
 }
 
 function buildRiverEdges(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): HexEdgeRecord[] {

@@ -52,4 +52,17 @@ describe("generateHexMap", () => {
       expect(neighbor ? tileIds.has(makeHexId(neighbor.q, neighbor.r)) : false).toBe(true);
     }
   });
+
+  it("adds coast overlays around lake neighbors", () => {
+    const map = generateHexMap(TEST_SETTINGS);
+    const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
+    const lakeCoast = map.coastOverlays.find((overlay) => {
+      const tile = tileById.get(overlay.hexId);
+      const neighborAxial = tile ? getNeighborAxial(tile, overlay.direction as HexDirection, map.settings) : null;
+      const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+      return tile && !tile.waterKind && neighbor?.waterKind === "lake";
+    });
+
+    expect(lakeCoast).toBeTruthy();
+  });
 });
