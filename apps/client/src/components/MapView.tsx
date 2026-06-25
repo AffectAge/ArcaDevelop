@@ -484,7 +484,7 @@ export function MapView({
       container.appendChild(app.canvas);
       try {
         terrainMeshRendererRef.current = await createHexTerrainMeshRenderer(mapArtifact);
-        overlayMeshRendererRef.current = createHexMapOverlayMeshRenderer(mapArtifact);
+        overlayMeshRendererRef.current = await createHexMapOverlayMeshRenderer(mapArtifact);
         lensOverlayRendererRef.current = createHexMapLensOverlayRenderer(mapArtifact);
       } catch {
         setMapRenderError(true);
