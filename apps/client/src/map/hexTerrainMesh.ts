@@ -62,25 +62,62 @@ export function resolveHexNeighborMaterialIds(tile: HexTile, map: HexMapArtifact
 
 export function resolveHexCoastMaskParams(map: HexMapArtifact, materialPack: HexMaterialPackManifest = generatedHexMaterialPack): Map<HexId, [number, number, number, number]> {
   const coastParamsByHexId = new Map<HexId, [number, number, number, number]>();
-  const rawCoastParamsByHexId = new Map<HexId, [number, number, TerrainMaterialId]>();
+  const rawCoastParamsByHexId = resolveRawCoastParams(map);
+  for (const [hexId, rawParams] of rawCoastParamsByHexId) {
+    const dominant = resolveDominantCoastWaterMaterial(rawParams);
+    const waterMaterialIndex = resolveTerrainMaterialAtlasIndex(dominant.waterMaterial, materialPack);
+    coastParamsByHexId.set(hexId, [resolveHexCoastMaskAtlasIndex(hexId, rawParams.rawMask, materialPack), dominant.strength, waterMaterialIndex, 1]);
+  }
+  return coastParamsByHexId;
+}
+
+function resolveHexCoastMaskParamsByDirection(map: HexMapArtifact, materialPack: HexMaterialPackManifest = generatedHexMaterialPack): Map<HexId, [number, number, number, number][]> {
+  const coastParamsByHexId = new Map<HexId, [number, number, number, number][]>();
+  const rawCoastParamsByHexId = resolveRawCoastParams(map);
+  for (const [hexId, rawParams] of rawCoastParamsByHexId) {
+    const dominant = resolveDominantCoastWaterMaterial(rawParams);
+    const atlasIndex = resolveHexCoastMaskAtlasIndex(hexId, rawParams.rawMask, materialPack);
+    coastParamsByHexId.set(
+      hexId,
+      Array.from({ length: 6 }, (_, direction): [number, number, number, number] => {
+        const edge = rawParams.edges[direction];
+        const waterMaterial = edge?.waterMaterial ?? dominant.waterMaterial;
+        const strength = edge?.strength ?? dominant.strength;
+        return [atlasIndex, strength, resolveTerrainMaterialAtlasIndex(waterMaterial, materialPack), 1];
+      }),
+    );
+  }
+  return coastParamsByHexId;
+}
+
+type RawCoastParams = {
+  rawMask: number;
+  edges: Array<{ strength: number; waterMaterial: TerrainMaterialId } | null>;
+};
+
+function resolveRawCoastParams(map: HexMapArtifact): Map<HexId, RawCoastParams> {
+  const rawCoastParamsByHexId = new Map<HexId, RawCoastParams>();
   const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
   for (const coast of map.coastOverlays) {
     const tile = tileById.get(coast.hexId);
     const waterMaterial = resolveCoastWaterMaterial(tile, coast.direction, map, tileById);
     const strength = resolveCoastRenderStrength(coast.strength, waterMaterial);
-    const current = rawCoastParamsByHexId.get(coast.hexId) ?? [0, 0, waterMaterial];
-    current[0] = current[0] | (1 << coast.direction);
-    if (strength >= current[1]) {
-      current[1] = strength;
-      current[2] = waterMaterial;
-    }
+    const current = rawCoastParamsByHexId.get(coast.hexId) ?? { rawMask: 0, edges: Array.from({ length: 6 }, () => null) };
+    current.rawMask = current.rawMask | (1 << coast.direction);
+    current.edges[coast.direction] = { strength, waterMaterial };
     rawCoastParamsByHexId.set(coast.hexId, current);
   }
-  for (const [hexId, [rawMask, strength, waterMaterial]] of rawCoastParamsByHexId) {
-    const waterMaterialIndex = resolveTerrainMaterialAtlasIndex(waterMaterial, materialPack);
-    coastParamsByHexId.set(hexId, [resolveHexCoastMaskAtlasIndex(hexId, rawMask, materialPack), strength, waterMaterialIndex, 1]);
-  }
-  return coastParamsByHexId;
+  return rawCoastParamsByHexId;
+}
+
+function resolveDominantCoastWaterMaterial(rawParams: RawCoastParams): { strength: number; waterMaterial: TerrainMaterialId } {
+  return rawParams.edges.reduce(
+    (dominant, edge) => {
+      if (!edge || edge.strength < dominant.strength) return dominant;
+      return edge;
+    },
+    { strength: 0, waterMaterial: "coastal_water" as TerrainMaterialId },
+  );
 }
 
 function resolveCoastRenderStrength(strength: number, waterMaterial: TerrainMaterialId): number {
@@ -117,7 +154,7 @@ export function resolveHexBiomeTransitionParams(
 ): [number, number, number, number] {
   const baseIsWater = isWaterMaterial(baseMaterial);
   const edgeIsWater = isWaterMaterial(edgeMaterial);
-  if (!neighborHexId || hexId.localeCompare(neighborHexId) > 0 || baseMaterial === edgeMaterial || baseIsWater !== edgeIsWater) {
+  if (!neighborHexId || baseMaterial === edgeMaterial || (baseIsWater === edgeIsWater && hexId.localeCompare(neighborHexId) > 0) || (baseIsWater && !edgeIsWater)) {
     return [0, 0, 0, 0];
   }
   return [resolveHexBiomeTransitionAtlasIndex(hexId, direction, baseMaterial, edgeMaterial, materialPack), 1, 1, 0];
@@ -170,7 +207,7 @@ function buildChunkRenderData(
   let bottom = Number.NEGATIVE_INFINITY;
 
   const sortedTiles = [...tiles].sort((a, b) => (a.r === b.r ? a.q - b.q : a.r - b.r));
-  const coastParamsByHexId = resolveHexCoastMaskParams(map, materialPack);
+  const coastParamsByHexId = resolveHexCoastMaskParamsByDirection(map, materialPack);
   const defaultCoastParams: [number, number, number, number] = [0, 0, resolveTerrainMaterialAtlasIndex("coastal_water", materialPack), 0];
   for (const tile of sortedTiles) {
     const center = axialToPixel(tile, map.settings.hexSize);
@@ -178,7 +215,7 @@ function buildChunkRenderData(
     const baseColor = resolveTerrainMaterialColor(baseMaterial, materialPack);
     const baseMaterialIndex = resolveTerrainMaterialAtlasIndex(baseMaterial, materialPack);
     const neighborMaterials = resolveHexNeighborMaterialIds(tile, map, tileById);
-    const tileCoastParams = coastParamsByHexId.get(tile.id) ?? defaultCoastParams;
+    const tileCoastParams = coastParamsByHexId.get(tile.id);
     qMin = Math.min(qMin, tile.q);
     qMax = Math.max(qMax, tile.q);
     rMin = Math.min(rMin, tile.r);
@@ -193,8 +230,9 @@ function buildChunkRenderData(
       const edgeColor = resolveTerrainMaterialColor(edgeMaterial, materialPack);
       const edgeMaterialIndex = resolveTerrainMaterialAtlasIndex(edgeMaterial, materialPack);
       const transitionParam = resolveHexBiomeTransitionParams(tile.id, neighborTile?.id ?? null, direction as HexDirection, baseMaterial, edgeMaterial, materialPack);
+      const coastParam = tileCoastParams?.[direction] ?? defaultCoastParams;
       const vertexStart = positions.length / 2;
-      pushVertex(positions, locals, baseColors, edgeColors, materialIndices, materialWeights, coastParams, transitionParams, center.x, center.y, 0, 0, baseColor, edgeColor, baseMaterialIndex, edgeMaterialIndex, tileCoastParams, transitionParam, tile, 0);
+      pushVertex(positions, locals, baseColors, edgeColors, materialIndices, materialWeights, coastParams, transitionParams, center.x, center.y, 0, 0, baseColor, edgeColor, baseMaterialIndex, edgeMaterialIndex, coastParam, transitionParam, tile, 0);
       pushVertex(
         positions,
         locals,
@@ -212,7 +250,7 @@ function buildChunkRenderData(
         edgeColor,
         baseMaterialIndex,
         edgeMaterialIndex,
-        tileCoastParams,
+        coastParam,
         transitionParam,
         tile,
         1,
@@ -234,7 +272,7 @@ function buildChunkRenderData(
         edgeColor,
         baseMaterialIndex,
         edgeMaterialIndex,
-        tileCoastParams,
+        coastParam,
         transitionParam,
         tile,
         1,

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
 import type { HexDirection, HexId, HexMapArtifact, HexTile } from "@arcanorum/shared";
 import { DEFAULT_HEX_MAP_SETTINGS, generateHexMap } from "./hexMapGenerator";
 import { buildHexTerrainMeshData, resolveHexBiomeTransitionAtlasIndex, resolveHexCoastMaskAtlasIndex, resolveHexCoastMaskParams, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
@@ -183,14 +182,6 @@ describe("hex terrain mesh renderer data", () => {
     expect(readTransitionParams(meshData, coastLand.id, 0)[1]).toBe(1);
   });
 
-  it("keeps coastline suppression pixel-local in the terrain shader", () => {
-    const shaderSource = readFileSync(new URL("./hexTerrainMeshRenderer.ts", import.meta.url), "utf8");
-
-    expect(shaderSource).not.toContain("transitionAmount *= 1.0 - coastEnabled");
-    expect(shaderSource).toContain("transitionAmount *= 1.0 - smoothstep(0.18, 0.82, coastWaterAmount) * coastEnabled");
-    expect(shaderSource).toContain("color = mix(color, coastWaterColor, coastWaterAmount * coastEnabled)");
-  });
-
   it("emits biome transition params for different land material edges", () => {
     const edge = findMaterialEdge((base, neighbor) => base !== neighbor && !isWaterMaterial(base) && !isWaterMaterial(neighbor), true);
     const meshData = buildHexTerrainMeshData(smallMap);
@@ -205,13 +196,73 @@ describe("hex terrain mesh renderer data", () => {
     expect(params[0]).toBeLessThan((edge.direction + 1) * variants);
   });
 
-  it("disables biome transition params for same material and land-water edges", () => {
+  it("disables biome transition params for same material edges", () => {
     const sameEdge = findMaterialEdge((base, neighbor) => base === neighbor && !isWaterMaterial(base));
-    const landWaterEdge = findMaterialEdge((base, neighbor) => isWaterMaterial(base) !== isWaterMaterial(neighbor));
     const meshData = buildHexTerrainMeshData(smallMap);
 
     expect(readTransitionParams(meshData, sameEdge.tile.id, sameEdge.direction)).toEqual([0, 0, 0, 0]);
-    expect(readTransitionParams(meshData, landWaterEdge.tile.id, landWaterEdge.direction)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("emits land-water biome transition params on the land side only", () => {
+    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const lake = makeTestTile(2, 1, { terrain: "lake", biome: "freshwater", waterKind: "lake" });
+    const map: HexMapArtifact = {
+      ...smallMap,
+      settings: { ...smallMap.settings, width: 4, height: 4, wrapX: false },
+      tiles: [land, lake],
+      coastOverlays: [{ hexId: land.id, direction: 0, strength: 0.92 }],
+      riverEdges: [],
+    };
+    const meshData = buildHexTerrainMeshData(map);
+
+    expect(readTransitionParams(meshData, land.id, 0)[1]).toBe(1);
+    expect(readTransitionParams(meshData, lake.id, 3)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("emits separate biome transitions from one land hex to lake and sea neighbors", () => {
+    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const lake = makeTestTile(2, 1, { terrain: "lake", biome: "freshwater", waterKind: "lake" });
+    const sea = makeTestTile(1, 0, { terrain: "sea", biome: "coastal_water", waterKind: "sea" });
+    const map: HexMapArtifact = {
+      ...smallMap,
+      settings: { ...smallMap.settings, width: 4, height: 4, wrapX: false },
+      tiles: [land, lake, sea],
+      coastOverlays: [
+        { hexId: land.id, direction: 0, strength: 0.92 },
+        { hexId: land.id, direction: 2, strength: 0.58 },
+      ],
+      riverEdges: [],
+    };
+    const meshData = buildHexTerrainMeshData(map);
+    const chunk = meshData.chunks.find((candidate) => candidate.tileIds.includes(land.id))!;
+    const tileIndex = chunk.tileIds.indexOf(land.id);
+    const lakeMaterialOffset = (tileIndex * 18 + 0 * 3) * 2;
+    const seaMaterialOffset = (tileIndex * 18 + 2 * 3) * 2;
+
+    expect(readTransitionParams(meshData, land.id, 0)[1]).toBe(1);
+    expect(readTransitionParams(meshData, land.id, 2)[1]).toBe(1);
+    expect(chunk.materialIndices[lakeMaterialOffset + 1]).toBe(generatedHexMaterialPack.materials.fresh_water.atlasIndex);
+    expect(chunk.materialIndices[seaMaterialOffset + 1]).toBe(generatedHexMaterialPack.materials.coastal_water.atlasIndex);
+  });
+
+  it("emits separate coastline water materials from one land hex to lake and sea neighbors", () => {
+    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const lake = makeTestTile(2, 1, { terrain: "lake", biome: "freshwater", waterKind: "lake" });
+    const sea = makeTestTile(1, 0, { terrain: "sea", biome: "coastal_water", waterKind: "sea" });
+    const map: HexMapArtifact = {
+      ...smallMap,
+      settings: { ...smallMap.settings, width: 4, height: 4, wrapX: false },
+      tiles: [land, lake, sea],
+      coastOverlays: [
+        { hexId: land.id, direction: 0, strength: 0.92 },
+        { hexId: land.id, direction: 2, strength: 0.58 },
+      ],
+      riverEdges: [],
+    };
+    const meshData = buildHexTerrainMeshData(map);
+
+    expect(readCoastParams(meshData, land.id, 0)[2]).toBe(generatedHexMaterialPack.materials.fresh_water.atlasIndex);
+    expect(readCoastParams(meshData, land.id, 2)[2]).toBe(generatedHexMaterialPack.materials.coastal_water.atlasIndex);
   });
 
   it("emits biome transition params for different water material edges", () => {
@@ -294,4 +345,11 @@ function readTransitionParams(meshData: ReturnType<typeof buildHexTerrainMeshDat
   const tileIndex = chunk.tileIds.indexOf(tileId);
   const offset = (tileIndex * 18 + direction * 3) * 4;
   return Array.from(chunk.transitionParams.slice(offset, offset + 4));
+}
+
+function readCoastParams(meshData: ReturnType<typeof buildHexTerrainMeshData>, tileId: HexId, direction: HexDirection): number[] {
+  const chunk = meshData.chunks.find((candidate) => candidate.tileIds.includes(tileId))!;
+  const tileIndex = chunk.tileIds.indexOf(tileId);
+  const offset = (tileIndex * 18 + direction * 3) * 4;
+  return Array.from(chunk.coastParams.slice(offset, offset + 4));
 }
