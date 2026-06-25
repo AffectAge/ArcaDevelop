@@ -6,15 +6,22 @@ export type LoadedHexMaterialTextures = {
   albedoTexture: Texture;
   detailTexture: Texture;
   coastMaskTexture: Texture;
+  biomeTransitionTexture: Texture;
   albedoSource: TextureSource;
   detailSource: TextureSource;
   coastMaskSource: TextureSource;
+  biomeTransitionSource: TextureSource;
 };
 
 export async function loadHexMaterialTextures(pack: HexMaterialPackManifest = generatedHexMaterialPack): Promise<LoadedHexMaterialTextures> {
   validateHexMaterialPack(pack);
-  const [albedoTexture, detailTexture, coastMaskTexture] = await Promise.all([Assets.load<Texture>(pack.atlas.albedoUrl), Assets.load<Texture>(pack.atlas.detailUrl), Assets.load<Texture>(pack.coastMasks.url)]);
-  if (!albedoTexture?.source || !detailTexture?.source || !coastMaskTexture?.source) {
+  const [albedoTexture, detailTexture, coastMaskTexture, biomeTransitionTexture] = await Promise.all([
+    Assets.load<Texture>(pack.atlas.albedoUrl),
+    Assets.load<Texture>(pack.atlas.detailUrl),
+    Assets.load<Texture>(pack.coastMasks.url),
+    Assets.load<Texture>(pack.biomeTransitions.url),
+  ]);
+  if (!albedoTexture?.source || !detailTexture?.source || !coastMaskTexture?.source || !biomeTransitionTexture?.source) {
     throw new Error("hex-material-texture-load-failed");
   }
   return {
@@ -22,9 +29,11 @@ export async function loadHexMaterialTextures(pack: HexMaterialPackManifest = ge
     albedoTexture,
     detailTexture,
     coastMaskTexture,
+    biomeTransitionTexture,
     albedoSource: albedoTexture.source,
     detailSource: detailTexture.source,
     coastMaskSource: coastMaskTexture.source,
+    biomeTransitionSource: biomeTransitionTexture.source,
   };
 }
 
@@ -56,6 +65,16 @@ export function validateHexMaterialPack(pack: HexMaterialPackManifest = generate
     pack.coastMasks.columns * pack.coastMasks.rows < 64 * pack.coastMasks.variants
   ) {
     throw new Error("hex-material-pack-invalid-coast-masks");
+  }
+  if (
+    !pack.biomeTransitions.url ||
+    pack.biomeTransitions.columns <= 0 ||
+    pack.biomeTransitions.rows <= 0 ||
+    pack.biomeTransitions.tileSize <= 0 ||
+    pack.biomeTransitions.variants <= 0 ||
+    pack.biomeTransitions.columns * pack.biomeTransitions.rows < 6 * pack.biomeTransitions.variants
+  ) {
+    throw new Error("hex-material-pack-invalid-biome-transitions");
   }
 }
 

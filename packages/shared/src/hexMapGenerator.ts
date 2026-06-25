@@ -191,7 +191,7 @@ function buildCoastOverlays(tiles: TileDraft[], tileById: Map<string, TileDraft>
 
 function resolveCoastOverlayStrength(waterKind: Exclude<HexWaterKind, null>): number {
   if (waterKind === "ocean") return 0.82;
-  if (waterKind === "lake") return 0.5;
+  if (waterKind === "lake") return 0.92;
   return 0.58;
 }
 

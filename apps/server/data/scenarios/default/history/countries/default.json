@@ -11,5 +11,5 @@
     "ducats": 12,
     "gold": 150
   },
-  "controlMode": "ai"
+  "controlMode": "open"
 }

@@ -1,7 +1,0 @@
-{
-  "id": "2025",
-  "name": "2025",
-  "description": "Server-generated default Arcanorum scenario.",
-  "startTurn": 1,
-  "mapRoot": "map"
-}

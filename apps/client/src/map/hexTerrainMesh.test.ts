@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import type { HexDirection, HexId, HexMapArtifact, HexTile } from "@arcanorum/shared";
 import { DEFAULT_HEX_MAP_SETTINGS, generateHexMap } from "./hexMapGenerator";
-import { buildHexTerrainMeshData, resolveHexCoastMaskAtlasIndex, resolveHexCoastMaskParams, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
-import { generatedHexMaterialPack, resolveShaderQualityFeatures, resolveTerrainMaterialId, TERRAIN_MATERIAL_IDS } from "./hexTerrainMaterials";
+import { buildHexTerrainMeshData, resolveHexBiomeTransitionAtlasIndex, resolveHexCoastMaskAtlasIndex, resolveHexCoastMaskParams, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
+import { generatedHexMaterialPack, isWaterMaterial, resolveShaderQualityFeatures, resolveTerrainMaterialId, TERRAIN_MATERIAL_IDS } from "./hexTerrainMaterials";
 import { validateHexMaterialPack } from "./hexTerrainMaterialTextures";
-import { axialToPixel, HEX_DIRECTIONS, makeHexId } from "./hexGeometry";
+import { axialToPixel, getNeighborAxial, HEX_DIRECTIONS, makeHexId } from "./hexGeometry";
 
 const smallMap = generateHexMap({ ...DEFAULT_HEX_MAP_SETTINGS, width: 24, height: 16, chunkSize: 8, seed: "mesh-test" });
 
@@ -81,12 +82,19 @@ describe("hex terrain mesh renderer data", () => {
       tileSize: 128,
       variants: 4,
     });
+    expect(generatedHexMaterialPack.biomeTransitions).toMatchObject({
+      url: "/game-assets/hex-materials/hex-biome-transition-masks.png",
+      columns: 8,
+      rows: 6,
+      tileSize: 128,
+      variants: 8,
+    });
   });
 
   it("keeps all quality levels on the shader mesh path", () => {
-    expect(resolveShaderQualityFeatures("low")).toMatchObject({ detail: false, normal: false, coastMasks: false, coastFoam: false });
-    expect(resolveShaderQualityFeatures("medium")).toMatchObject({ detail: true, normal: false, coastMasks: true, coastFoam: false });
-    expect(resolveShaderQualityFeatures("high")).toMatchObject({ detail: true, normal: true, coastMasks: true, coastFoam: true });
+    expect(resolveShaderQualityFeatures("low")).toMatchObject({ detail: false, normal: false, coastMasks: false, coastFoam: false, biomeTransitions: false });
+    expect(resolveShaderQualityFeatures("medium")).toMatchObject({ detail: true, normal: false, coastMasks: true, coastFoam: false, biomeTransitions: true });
+    expect(resolveShaderQualityFeatures("high")).toMatchObject({ detail: true, normal: true, coastMasks: true, coastFoam: true, biomeTransitions: true });
   });
 
   it("derives deterministic coast mask bits from coast overlays", () => {
@@ -140,4 +148,110 @@ describe("hex terrain mesh renderer data", () => {
     expect(Array.from(nonCoastChunk.coastParams.slice(nonCoastParamOffset, nonCoastParamOffset + 4))).toEqual([0, 0, generatedHexMaterialPack.materials.coastal_water.atlasIndex, 0]);
     expect(coastChunk.coastParams.length).toBe((coastChunk.positions.length / 2) * 4);
   });
+
+  it("uses fresh water material for lake coastline masks on neighboring land hexes", () => {
+    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const lake = makeTestTile(2, 1, { terrain: "lake", biome: "freshwater", waterKind: "lake" });
+    const map: HexMapArtifact = {
+      ...smallMap,
+      settings: { ...smallMap.settings, width: 4, height: 4, wrapX: false },
+      tiles: [land, lake],
+      coastOverlays: [{ hexId: land.id, direction: 0, strength: 0.5 }],
+      riverEdges: [],
+    };
+    const coastParams = resolveHexCoastMaskParams(map).get(land.id);
+
+    expect(coastParams?.[2]).toBe(generatedHexMaterialPack.materials.fresh_water.atlasIndex);
+    expect(coastParams?.[1]).toBe(0.92);
+    expect(coastParams?.[3]).toBe(1);
+  });
+
+  it("emits biome transition params for different land material edges", () => {
+    const edge = findMaterialEdge((base, neighbor) => base !== neighbor && !isWaterMaterial(base) && !isWaterMaterial(neighbor), true);
+    const meshData = buildHexTerrainMeshData(smallMap);
+    const chunk = meshData.chunks.find((candidate) => candidate.tileIds.includes(edge.tile.id))!;
+    const tileIndex = chunk.tileIds.indexOf(edge.tile.id);
+    const offset = (tileIndex * 18 + edge.direction * 3) * 4;
+    const params = Array.from(chunk.transitionParams.slice(offset, offset + 4));
+    const variants = generatedHexMaterialPack.biomeTransitions.variants;
+
+    expect(params).toEqual([resolveHexBiomeTransitionAtlasIndex(edge.tile.id, edge.direction, edge.baseMaterial, edge.neighborMaterial), 1, 1, 0]);
+    expect(params[0]).toBeGreaterThanOrEqual(edge.direction * variants);
+    expect(params[0]).toBeLessThan((edge.direction + 1) * variants);
+  });
+
+  it("disables biome transition params for same material and water edges", () => {
+    const sameEdge = findMaterialEdge((base, neighbor) => base === neighbor && !isWaterMaterial(base));
+    const waterEdge = findMaterialEdge((base, neighbor) => isWaterMaterial(base) || isWaterMaterial(neighbor));
+    const meshData = buildHexTerrainMeshData(smallMap);
+
+    expect(readTransitionParams(meshData, sameEdge.tile.id, sameEdge.direction)).toEqual([0, 0, 0, 0]);
+    expect(readTransitionParams(meshData, waterEdge.tile.id, waterEdge.direction)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("emits biome transition on only one side of a shared edge", () => {
+    const edge = findMaterialEdge((base, neighbor) => base !== neighbor && !isWaterMaterial(base) && !isWaterMaterial(neighbor), true);
+    const meshData = buildHexTerrainMeshData(smallMap);
+    const oppositeDirection = ((edge.direction + 3) % 6) as HexDirection;
+
+    expect(readTransitionParams(meshData, edge.tile.id, edge.direction)[1]).toBe(1);
+    expect(readTransitionParams(meshData, edge.neighbor.id, oppositeDirection)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("selects stable biome transition variants by hex id, direction, and materials", () => {
+    const first = resolveHexBiomeTransitionAtlasIndex(makeHexId(4, 4), 2, "grass", "forest");
+    const second = resolveHexBiomeTransitionAtlasIndex(makeHexId(4, 4), 2, "grass", "forest");
+    const other = resolveHexBiomeTransitionAtlasIndex(makeHexId(5, 4), 2, "grass", "forest");
+    const variants = generatedHexMaterialPack.biomeTransitions.variants;
+
+    expect(first).toBe(second);
+    expect(first).toBeGreaterThanOrEqual(2 * variants);
+    expect(first).toBeLessThan(3 * variants);
+    expect(other).toBeGreaterThanOrEqual(2 * variants);
+    expect(other).toBeLessThan(3 * variants);
+  });
 });
+
+function findMaterialEdge(predicate: (base: ReturnType<typeof resolveTerrainMaterialId>, neighbor: ReturnType<typeof resolveTerrainMaterialId>) => boolean, requireTransitionOwner = false) {
+  const tileById = new Map(smallMap.tiles.map((tile) => [tile.id, tile]));
+  for (const tile of smallMap.tiles) {
+    const baseMaterial = resolveTerrainMaterialId(tile);
+    for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
+      const neighborAxial = getNeighborAxial(tile, direction as HexDirection, smallMap.settings);
+      const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+      if (!neighbor) continue;
+      if (requireTransitionOwner && tile.id.localeCompare(neighbor.id) > 0) continue;
+      const neighborMaterial = resolveTerrainMaterialId(neighbor);
+      if (predicate(baseMaterial, neighborMaterial)) {
+        return { tile, neighbor, direction: direction as HexDirection, baseMaterial, neighborMaterial };
+      }
+    }
+  }
+  throw new Error("missing-material-edge-fixture");
+}
+
+function makeTestTile(q: number, r: number, overrides: Pick<HexTile, "terrain" | "biome" | "waterKind">): HexTile {
+  return {
+    id: makeHexId(q, r),
+    q,
+    r,
+    chunkId: "hex-chunk:0:0",
+    regionId: overrides.waterKind ? "region:water:test" : "region:land:test",
+    terrain: overrides.terrain,
+    biome: overrides.biome,
+    feature: "none",
+    waterKind: overrides.waterKind,
+    elevation: overrides.waterKind ? 0.48 : 0.58,
+    moisture: 0.52,
+    temperature: 0.5,
+    movementCost: overrides.waterKind ? 3 : 1,
+    passable: true,
+  };
+}
+
+function readTransitionParams(meshData: ReturnType<typeof buildHexTerrainMeshData>, tileId: HexId, direction: HexDirection): number[] {
+  const chunk = meshData.chunks.find((candidate) => candidate.tileIds.includes(tileId))!;
+  const tileIndex = chunk.tileIds.indexOf(tileId);
+  const offset = (tileIndex * 18 + direction * 3) * 4;
+  return Array.from(chunk.transitionParams.slice(offset, offset + 4));
+}
