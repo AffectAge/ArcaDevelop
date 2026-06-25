@@ -1,8 +1,8 @@
 import { Container, Graphics, Text } from "pixi.js";
 import type { HexChunkId, HexDirection, HexMapArtifact } from "@arcanorum/shared";
-import { axialToPixel, getNeighborAxial, hexCorner, hexEdgeCorners, makeHexId } from "./hexGeometry";
+import { axialToPixel, getNeighborAxial, hexCorner, makeHexId } from "./hexGeometry";
 import type { HexCamera } from "./hexCamera";
-import type { MapLensRenderCell } from "./mapLensTypes";
+import type { MapLensId, MapLensRenderCell } from "./mapLensTypes";
 
 const MIN_LABEL_COMPONENT_CELLS = 3;
 
@@ -12,22 +12,15 @@ type LensChunk = {
   cells: MapLensRenderCell[];
   primary: Container;
   primaryBase: Graphics;
+  primaryVeil: Graphics;
   primaryFill: Graphics;
 };
 
 type DrawnChunk = {
   container: Container;
   base: Graphics;
+  veil: Graphics;
   fill: Graphics;
-};
-
-export type LensBoundaryEdge = {
-  hexId: string;
-  direction: HexDirection;
-  color: number;
-  alpha: number;
-  tone: MapLensRenderCell["borderTone"];
-  side: "single" | "inside";
 };
 
 export type CountryLabelSpec = {
@@ -40,7 +33,7 @@ export type CountryLabelSpec = {
 
 export type HexMapLensOverlayRenderer = {
   container: Container;
-  updateLens: (cells: MapLensRenderCell[]) => void;
+  updateLens: (lensId: MapLensId, cells: MapLensRenderCell[]) => void;
   updateVisibility: (camera: HexCamera, viewport: { width: number; height: number }) => number;
   destroy: () => void;
 };
@@ -50,22 +43,24 @@ export function createHexMapLensOverlayRenderer(map: HexMapArtifact): HexMapLens
   const labelLayer = new Container();
   container.addChild(labelLayer);
   let chunks: LensChunk[] = [];
+  let activeLensId: MapLensId = "terrain";
   let destroyed = false;
 
-  function updateLens(cells: MapLensRenderCell[]): void {
+  function updateLens(lensId: MapLensId, cells: MapLensRenderCell[]): void {
+    activeLensId = lensId;
     for (const chunk of chunks) {
       container.removeChild(chunk.primary);
       safeDestroyContainer(chunk.primary);
     }
     clearLabels(labelLayer);
-    const cellById = new Map(cells.map((cell) => [cell.tile.id, cell]));
     chunks = buildLensChunks(map, cells).map((chunk) => {
-      const primary = drawChunk(chunk.cells, cellById, map);
+      const primary = drawChunk(chunk.cells, map);
       container.addChild(primary.container);
       return {
         ...chunk,
         primary: primary.container,
         primaryBase: primary.base,
+        primaryVeil: primary.veil,
         primaryFill: primary.fill,
       };
     });
@@ -86,12 +81,14 @@ export function createHexMapLensOverlayRenderer(map: HexMapArtifact): HexMapLens
     };
     const terrainBaseAlpha = resolveLensTerrainBaseAlpha(camera.scale);
     const territoryFillAlpha = resolveLensTerritoryFillAlpha(camera.scale);
+    const veilAlpha = resolveLensVeilAlpha(activeLensId, camera.scale);
     const labelAlpha = resolveLensLabelAlpha(camera.scale);
     labelLayer.alpha = labelAlpha;
     for (const chunk of chunks) {
       const primaryVisible = intersects(chunk.bounds, view);
       chunk.primary.visible = primaryVisible;
       chunk.primaryBase.alpha = terrainBaseAlpha;
+      chunk.primaryVeil.alpha = veilAlpha;
       chunk.primaryFill.alpha = territoryFillAlpha;
       visible += primaryVisible ? 1 : 0;
     }
@@ -126,13 +123,20 @@ export function resolveLensTerritoryFillAlpha(scale: number): number {
   return 1 - t;
 }
 
+export function resolveLensVeilAlpha(lensId: MapLensId, scale: number): number {
+  if (lensId === "terrain") return 0;
+  if (scale <= 0.34) return 0.3;
+  if (scale >= 1.12) return 0.08;
+  return 0.3 - ((scale - 0.34) / (1.12 - 0.34)) * 0.22;
+}
+
 function resolveLensLabelAlpha(scale: number): number {
   if (scale <= 0.24) return 0;
   if (scale >= 0.42) return 0.88;
   return ((scale - 0.24) / (0.42 - 0.24)) * 0.88;
 }
 
-function buildLensChunks(map: HexMapArtifact, cells: MapLensRenderCell[]): Array<Omit<LensChunk, "primary" | "primaryBase" | "primaryFill">> {
+function buildLensChunks(map: HexMapArtifact, cells: MapLensRenderCell[]): Array<Omit<LensChunk, "primary" | "primaryBase" | "primaryVeil" | "primaryFill">> {
   const drafts = new Map<HexChunkId, { cells: MapLensRenderCell[]; bounds: LensChunk["bounds"] }>();
   for (const cell of cells) {
     const draft = drafts.get(cell.tile.chunkId) ?? {
@@ -149,11 +153,11 @@ function buildLensChunks(map: HexMapArtifact, cells: MapLensRenderCell[]): Array
     .map(([chunkId, draft]) => ({ chunkId, cells: draft.cells, bounds: draft.bounds }));
 }
 
-function drawChunk(cells: MapLensRenderCell[], cellById: Map<string, MapLensRenderCell>, map: HexMapArtifact): DrawnChunk {
+function drawChunk(cells: MapLensRenderCell[], map: HexMapArtifact): DrawnChunk {
   const chunk = new Container();
   const base = new Graphics();
+  const veil = new Graphics();
   const fill = new Graphics();
-  const border = new Graphics();
   const size = map.settings.hexSize;
   for (const cell of cells) {
     const center = axialToPixel(cell.tile, size);
@@ -164,6 +168,7 @@ function drawChunk(cells: MapLensRenderCell[], cellById: Map<string, MapLensRend
     if (cell.surfaceAlpha > 0) {
       base.poly(points, true).fill({ color: cell.tile.waterKind ? 0x315d6c : 0xf1dfb8, alpha: cell.surfaceAlpha });
     }
+    veil.poly(points, true).fill({ color: cell.tile.waterKind ? 0x071522 : 0x1d1b17, alpha: cell.tile.waterKind ? 0.76 : 0.86 });
     fill.poly(points, true).fill({ color: cell.color, alpha: cell.alpha });
     if (cell.pattern === "hatch" || cell.hatch) {
       drawHatch(fill, center.x, center.y, size, 0x2a2430, 0.28);
@@ -171,12 +176,11 @@ function drawChunk(cells: MapLensRenderCell[], cellById: Map<string, MapLensRend
       drawHatch(fill, center.x, center.y, size, cell.borderColor ?? 0xf4e2a7, 0.34);
     }
     if (cell.pulse) {
-      border.circle(center.x, center.y, size * 0.28).stroke({ color: 0xf5e38d, alpha: 0.42, width: 1.4 });
+      fill.circle(center.x, center.y, size * 0.28).stroke({ color: 0xf5e38d, alpha: 0.42, width: 1.4 });
     }
   }
-  drawBoundaries(border, cells, cellById, map);
-  chunk.addChild(base, fill, border);
-  return { container: chunk, base, fill };
+  chunk.addChild(base, veil, fill);
+  return { container: chunk, base, veil, fill };
 }
 
 function drawCountryLabels(layer: Container, labels: CountryLabelSpec[], map: HexMapArtifact): void {
@@ -275,77 +279,6 @@ function findLargestLabelComponent(
     }
   }
   return largest;
-}
-
-function drawBoundaries(graphics: Graphics, cells: MapLensRenderCell[], cellById: Map<string, MapLensRenderCell>, map: HexMapArtifact): void {
-  for (const edge of collectLensBoundaryEdges(cells, cellById, map)) {
-    const cell = cellById.get(edge.hexId);
-    if (!cell) continue;
-    const center = axialToPixel(cell.tile, map.settings.hexSize);
-    const [start, end] = hexEdgeCorners(center, map.settings.hexSize + 0.8, edge.direction);
-    const [lineStart, lineEnd] = edge.side === "inside" ? offsetEdgeTowardCenter(start, end, center, 2.15) : [start, end];
-    if (edge.tone === "dotted") {
-      drawDottedEdge(graphics, lineStart, lineEnd, edge.color, edge.alpha, 1.7);
-    } else {
-      if (edge.tone === "strong") {
-        graphics.moveTo(lineStart.x, lineStart.y).lineTo(lineEnd.x, lineEnd.y).stroke({ color: 0x151822, alpha: 0.86, width: 7.2 });
-        graphics.moveTo(lineStart.x, lineStart.y).lineTo(lineEnd.x, lineEnd.y).stroke({ color: edge.color, alpha: Math.min(0.99, edge.alpha + 0.12), width: 4.1 });
-        graphics.moveTo(lineStart.x, lineStart.y).lineTo(lineEnd.x, lineEnd.y).stroke({ color: 0xf9f0c9, alpha: 0.58, width: 1.25 });
-      } else {
-        graphics.moveTo(lineStart.x, lineStart.y).lineTo(lineEnd.x, lineEnd.y).stroke({ color: 0x1b1820, alpha: Math.min(0.36, edge.alpha), width: 3.2 });
-        graphics.moveTo(lineStart.x, lineStart.y).lineTo(lineEnd.x, lineEnd.y).stroke({ color: edge.color, alpha: Math.min(0.96, edge.alpha + 0.12), width: 2.1 });
-      }
-    }
-  }
-}
-
-export function collectLensBoundaryEdges(cells: MapLensRenderCell[], cellById: Map<string, MapLensRenderCell>, map: HexMapArtifact): LensBoundaryEdge[] {
-  const edges: LensBoundaryEdge[] = [];
-  for (const cell of cells) {
-    for (let direction = 0 as HexDirection; direction < 6; direction = (direction + 1) as HexDirection) {
-      const neighborAxial = getNeighborAxial(cell.tile, direction, map.settings);
-      const neighbor = neighborAxial ? cellById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
-      if (neighbor && neighbor.borderGroupId === cell.borderGroupId) continue;
-      edges.push({
-        hexId: cell.tile.id,
-        direction,
-        color: cell.borderColor ?? 0xe6d7b8,
-        alpha: Math.max(cell.borderAlpha ?? 0.58, cell.borderTone === "strong" ? 0.94 : 0.72),
-        tone: cell.borderTone ?? "soft",
-        side: neighbor ? "inside" : "single",
-      });
-    }
-  }
-  return edges;
-}
-
-function offsetEdgeTowardCenter(
-  start: { x: number; y: number },
-  end: { x: number; y: number },
-  center: { x: number; y: number },
-  amount: number,
-): [{ x: number; y: number }, { x: number; y: number }] {
-  const midpoint = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
-  const dx = center.x - midpoint.x;
-  const dy = center.y - midpoint.y;
-  const length = Math.hypot(dx, dy) || 1;
-  const offset = { x: (dx / length) * amount, y: (dy / length) * amount };
-  return [
-    { x: start.x + offset.x, y: start.y + offset.y },
-    { x: end.x + offset.x, y: end.y + offset.y },
-  ];
-}
-
-function drawDottedEdge(graphics: Graphics, start: { x: number; y: number }, end: { x: number; y: number }, color: number, alpha: number, width: number): void {
-  const segments = 6;
-  for (let index = 0; index < segments; index += 2) {
-    const a = index / segments;
-    const b = (index + 1) / segments;
-    graphics
-      .moveTo(start.x + (end.x - start.x) * a, start.y + (end.y - start.y) * a)
-      .lineTo(start.x + (end.x - start.x) * b, start.y + (end.y - start.y) * b)
-      .stroke({ color, alpha, width });
-  }
 }
 
 function drawHatch(graphics: Graphics, x: number, y: number, size: number, color: number, alpha: number): void {

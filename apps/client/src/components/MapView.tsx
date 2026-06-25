@@ -507,7 +507,7 @@ export function MapView({
         setMapRenderError(true);
         return;
       }
-      lensRenderer.updateLens(lensCells);
+      lensRenderer.updateLens(activeLens, lensCells);
       worldContainer.addChild(terrainRenderer.container, overlayRenderer.container, lensRenderer.container, overlayLayer);
       app.stage.addChild(worldContainer);
       const rect = container.getBoundingClientRect();
@@ -837,14 +837,14 @@ export function MapView({
     const lensRenderer = lensOverlayRendererRef.current;
     const app = appRef.current;
     if (!pixiReady || !lensRenderer || !app || !app.renderer) return;
-    lensRenderer.updateLens(lensCells);
+    lensRenderer.updateLens(activeLens, lensCells);
     const container = containerRef.current;
     if (container) {
       const rect = container.getBoundingClientRect();
       lensRenderer.updateVisibility(cameraRef.current, rect);
     }
     app.render();
-  }, [lensCells, pixiReady]);
+  }, [activeLens, lensCells, pixiReady]);
 
   useEffect(() => {
     const overlayLayer = overlayLayerRef.current;

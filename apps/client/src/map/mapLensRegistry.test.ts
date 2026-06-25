@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { HexMapArtifact, HexTile, WorldBase } from "@arcanorum/shared";
 import { axialToPixel } from "./hexGeometry";
-import { buildCountryLabelSpecs, collectLensBoundaryEdges, resolveLensTerrainBaseAlpha, resolveLensTerritoryFillAlpha } from "./hexMapLensOverlayRenderer";
+import { resolvePainterlyTerrainZoomDetail } from "./hexTerrainMeshRenderer";
+import { buildCountryLabelSpecs, resolveLensTerrainBaseAlpha, resolveLensTerritoryFillAlpha, resolveLensVeilAlpha } from "./hexMapLensOverlayRenderer";
 import { MAP_LENS_DESCRIPTORS, MAP_MODE_DESCRIPTORS, selectMapLensCells } from "./mapLensRegistry";
 import type { MapInteractionMode, MapLensId } from "./mapLensTypes";
 
@@ -190,6 +191,17 @@ describe("map lens registry", () => {
     expect(resolveLensTerritoryFillAlpha(1.4)).toBe(0);
   });
 
+  it("keeps painterly veil off terrain lens and fades analytical veil on close zoom", () => {
+    expect(resolveLensVeilAlpha("terrain", 0.25)).toBe(0);
+    expect(resolveLensVeilAlpha("political", 0.25)).toBeGreaterThan(resolveLensVeilAlpha("political", 1.2));
+    expect(resolveLensVeilAlpha("political", 1.2)).toBeGreaterThan(0);
+  });
+
+  it("reduces terrain texture noise at distant zoom and restores it close up", () => {
+    expect(resolvePainterlyTerrainZoomDetail(0.2)).toBeLessThan(resolvePainterlyTerrainZoomDetail(0.8));
+    expect(resolvePainterlyTerrainZoomDetail(1.2)).toBeGreaterThan(1);
+  });
+
   it("places country labels on the largest connected homeland instead of remote holdings", () => {
     const remoteTile: HexTile = {
       ...tile,
@@ -223,40 +235,6 @@ describe("map lens registry", () => {
     expect(labels).toHaveLength(1);
     expect(labels[0]?.text).toBe("Blue Realm");
     expect(labels[0]?.x).toBeLessThan(remoteCenter.x - countryMap.settings.hexSize * 2);
-  });
-
-  it("does not create internal borders between same-owner political cells", () => {
-    const cells = selectMapLensCells("political", {
-      map: adjacentMap,
-      worldBase: makeWorldBase({
-        regionOwner: {
-          [tile.regionId]: "country:blue",
-          [adjacentTile.regionId]: "country:blue",
-        },
-      }),
-      authCountryId: null,
-    });
-    const byId = new Map(cells.map((cell) => [cell.tile.id, cell]));
-    const edges = collectLensBoundaryEdges(cells, byId, adjacentMap);
-
-    expect(edges.some((edge) => edge.hexId === tile.id && edge.direction === 0)).toBe(false);
-  });
-
-  it("creates a boundary between different political owners", () => {
-    const cells = selectMapLensCells("political", {
-      map: adjacentMap,
-      worldBase: makeWorldBase({
-        regionOwner: {
-          [tile.regionId]: "country:blue",
-          [adjacentTile.regionId]: "country:red",
-        },
-      }),
-      authCountryId: null,
-    });
-    const byId = new Map(cells.map((cell) => [cell.tile.id, cell]));
-    const edges = collectLensBoundaryEdges(cells, byId, adjacentMap);
-
-    expect(edges.some((edge) => edge.hexId === tile.id && edge.direction === 0)).toBe(true);
   });
 
   it("marks blocked colonization cells with a hatch pattern", () => {
