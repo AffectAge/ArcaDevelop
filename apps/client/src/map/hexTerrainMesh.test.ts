@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import type { HexDirection, HexId, HexMapArtifact, HexTile } from "@arcanorum/shared";
 import { DEFAULT_HEX_MAP_SETTINGS, generateHexMap } from "./hexMapGenerator";
 import { buildHexTerrainMeshData, resolveHexBiomeTransitionAtlasIndex, resolveHexCoastMaskAtlasIndex, resolveHexCoastMaskParams, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
@@ -164,6 +165,30 @@ describe("hex terrain mesh renderer data", () => {
     expect(coastParams?.[2]).toBe(generatedHexMaterialPack.materials.fresh_water.atlasIndex);
     expect(coastParams?.[1]).toBe(0.92);
     expect(coastParams?.[3]).toBe(1);
+  });
+
+  it("keeps land-land biome transition params on coastal land hexes", () => {
+    const coastLand = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const neighborLand = makeTestTile(2, 1, { terrain: "plains", biome: "temperate", waterKind: null });
+    const lake = makeTestTile(1, 2, { terrain: "lake", biome: "freshwater", waterKind: "lake" });
+    const map: HexMapArtifact = {
+      ...smallMap,
+      settings: { ...smallMap.settings, width: 4, height: 4, wrapX: false },
+      tiles: [coastLand, neighborLand, lake],
+      coastOverlays: [{ hexId: coastLand.id, direction: 5, strength: 0.92 }],
+      riverEdges: [],
+    };
+    const meshData = buildHexTerrainMeshData(map);
+
+    expect(readTransitionParams(meshData, coastLand.id, 0)[1]).toBe(1);
+  });
+
+  it("keeps coastline suppression pixel-local in the terrain shader", () => {
+    const shaderSource = readFileSync(new URL("./hexTerrainMeshRenderer.ts", import.meta.url), "utf8");
+
+    expect(shaderSource).not.toContain("transitionAmount *= 1.0 - coastEnabled");
+    expect(shaderSource).toContain("transitionAmount *= 1.0 - smoothstep(0.18, 0.82, coastWaterAmount) * coastEnabled");
+    expect(shaderSource).toContain("color = mix(color, coastWaterColor, coastWaterAmount * coastEnabled)");
   });
 
   it("emits biome transition params for different land material edges", () => {
