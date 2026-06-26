@@ -1,6 +1,7 @@
 import type { HexChunkId, HexDirection, HexId, HexMapArtifact, HexTile } from "@arcanorum/shared";
 import { axialToPixel, getNeighborAxial, hexEdgeCorners, makeHexId } from "./hexGeometry";
 import { generatedHexMaterialPack, isWaterMaterial, resolveTerrainMaterialAtlasIndex, resolveTerrainMaterialColor, resolveTerrainMaterialId, type HexMaterialPackManifest, type TerrainMaterialId } from "./hexTerrainMaterials";
+import { collectHexRiverMaskParams } from "./hexRiverMasks";
 
 export type HexTerrainVertexAttributes = {
   position: [number, number];
@@ -11,6 +12,7 @@ export type HexTerrainVertexAttributes = {
   materialWeights: [number, number, number, number];
   coastParams: [number, number, number, number];
   transitionParams: [number, number, number, number];
+  riverParams: [number, number, number, number];
 };
 
 export type HexChunkRenderData = {
@@ -28,6 +30,7 @@ export type HexChunkRenderData = {
   materialWeights: Float32Array;
   coastParams: Float32Array;
   transitionParams: Float32Array;
+  riverParams: Float32Array;
   indices: Uint32Array;
   tileIds: HexId[];
 };
@@ -111,13 +114,13 @@ function resolveRawCoastParams(map: HexMapArtifact): Map<HexId, RawCoastParams> 
 }
 
 function resolveDominantCoastWaterMaterial(rawParams: RawCoastParams): { strength: number; waterMaterial: TerrainMaterialId } {
-  return rawParams.edges.reduce(
-    (dominant, edge) => {
-      if (!edge || edge.strength < dominant.strength) return dominant;
-      return edge;
-    },
-    { strength: 0, waterMaterial: "coastal_water" as TerrainMaterialId },
-  );
+  let dominant: { strength: number; waterMaterial: TerrainMaterialId } = { strength: 0, waterMaterial: "coastal_water" };
+  for (const edge of rawParams.edges) {
+    if (edge && edge.strength >= dominant.strength) {
+      dominant = edge;
+    }
+  }
+  return dominant;
 }
 
 function resolveCoastRenderStrength(strength: number, waterMaterial: TerrainMaterialId): number {
@@ -195,6 +198,7 @@ function buildChunkRenderData(
   const materialWeights: number[] = [];
   const coastParams: number[] = [];
   const transitionParams: number[] = [];
+  const riverParams: number[] = [];
   const indices: number[] = [];
   const tileIds: HexId[] = [];
   let qMin = Number.POSITIVE_INFINITY;
@@ -208,7 +212,9 @@ function buildChunkRenderData(
 
   const sortedTiles = [...tiles].sort((a, b) => (a.r === b.r ? a.q - b.q : a.r - b.r));
   const coastParamsByHexId = resolveHexCoastMaskParamsByDirection(map, materialPack);
+  const riverParamsByHexId = collectHexRiverMaskParams(map, materialPack);
   const defaultCoastParams: [number, number, number, number] = [0, 0, resolveTerrainMaterialAtlasIndex("coastal_water", materialPack), 0];
+  const defaultRiverParams: [number, number, number, number] = [0, 0, 0, 0];
   for (const tile of sortedTiles) {
     const center = axialToPixel(tile, map.settings.hexSize);
     const baseMaterial = resolveTerrainMaterialId(tile);
@@ -216,6 +222,7 @@ function buildChunkRenderData(
     const baseMaterialIndex = resolveTerrainMaterialAtlasIndex(baseMaterial, materialPack);
     const neighborMaterials = resolveHexNeighborMaterialIds(tile, map, tileById);
     const tileCoastParams = coastParamsByHexId.get(tile.id);
+    const riverParam = riverParamsByHexId.get(tile.id) ?? defaultRiverParams;
     qMin = Math.min(qMin, tile.q);
     qMax = Math.max(qMax, tile.q);
     rMin = Math.min(rMin, tile.r);
@@ -232,7 +239,7 @@ function buildChunkRenderData(
       const transitionParam = resolveHexBiomeTransitionParams(tile.id, neighborTile?.id ?? null, direction as HexDirection, baseMaterial, edgeMaterial, materialPack);
       const coastParam = tileCoastParams?.[direction] ?? defaultCoastParams;
       const vertexStart = positions.length / 2;
-      pushVertex(positions, locals, baseColors, edgeColors, materialIndices, materialWeights, coastParams, transitionParams, center.x, center.y, 0, 0, baseColor, edgeColor, baseMaterialIndex, edgeMaterialIndex, coastParam, transitionParam, tile, 0);
+      pushVertex(positions, locals, baseColors, edgeColors, materialIndices, materialWeights, coastParams, transitionParams, riverParams, center.x, center.y, 0, 0, baseColor, edgeColor, baseMaterialIndex, edgeMaterialIndex, coastParam, transitionParam, riverParam, tile, 0);
       pushVertex(
         positions,
         locals,
@@ -242,6 +249,7 @@ function buildChunkRenderData(
         materialWeights,
         coastParams,
         transitionParams,
+        riverParams,
         cornerA.x,
         cornerA.y,
         (cornerA.x - center.x) / map.settings.hexSize,
@@ -252,6 +260,7 @@ function buildChunkRenderData(
         edgeMaterialIndex,
         coastParam,
         transitionParam,
+        riverParam,
         tile,
         1,
       );
@@ -264,6 +273,7 @@ function buildChunkRenderData(
         materialWeights,
         coastParams,
         transitionParams,
+        riverParams,
         cornerB.x,
         cornerB.y,
         (cornerB.x - center.x) / map.settings.hexSize,
@@ -274,6 +284,7 @@ function buildChunkRenderData(
         edgeMaterialIndex,
         coastParam,
         transitionParam,
+        riverParam,
         tile,
         1,
       );
@@ -300,6 +311,7 @@ function buildChunkRenderData(
     materialWeights: new Float32Array(materialWeights),
     coastParams: new Float32Array(coastParams),
     transitionParams: new Float32Array(transitionParams),
+    riverParams: new Float32Array(riverParams),
     indices: new Uint32Array(indices),
     tileIds,
   };
@@ -314,6 +326,7 @@ function pushVertex(
   materialWeights: number[],
   coastParams: number[],
   transitionParams: number[],
+  riverParams: number[],
   x: number,
   y: number,
   localX: number,
@@ -324,6 +337,7 @@ function pushVertex(
   edgeMaterialIndex: number,
   coastParam: [number, number, number, number],
   transitionParam: [number, number, number, number],
+  riverParam: [number, number, number, number],
   tile: HexTile,
   edgeWeight: number,
 ): void {
@@ -335,4 +349,5 @@ function pushVertex(
   materialWeights.push(edgeWeight, tile.elevation, tile.moisture, tile.temperature);
   coastParams.push(...coastParam);
   transitionParams.push(...transitionParam);
+  riverParams.push(...riverParam);
 }

@@ -1,16 +1,8 @@
-import { Assets, Container, Geometry, GlProgram, Mesh, Rectangle, Shader, Sprite, Texture, UniformGroup } from "pixi.js";
+import { Container, Geometry, GlProgram, Mesh, Shader, UniformGroup } from "pixi.js";
 import type { HexChunkId, HexFeature, HexMapArtifact, HexTile } from "@arcanorum/shared";
 import { axialToPixel } from "./hexGeometry";
 import type { HexCamera } from "./hexCamera";
 import type { HexTerrainShaderQuality } from "./hexTerrainMaterials";
-import {
-  collectHexRiverShapes,
-  RIVER_SHAPE_ATLAS_URL,
-  RIVER_SHAPE_TILE_SIZE,
-  resolveRiverShapeAtlasColumn,
-  resolveRiverShapeSpriteRotation,
-  type HexRiverShape,
-} from "./hexRiverShapes";
 
 type OverlayChunkRenderData = {
   chunkId: HexChunkId;
@@ -24,12 +16,6 @@ type OverlayChunkRenderData = {
 type OverlayMeshPair = {
   chunk: OverlayChunkRenderData;
   primary: Mesh<Geometry, Shader>;
-};
-
-type RiverSpriteChunk = {
-  chunkId: HexChunkId;
-  bounds: OverlayChunkRenderData["bounds"];
-  container: Container;
 };
 
 export type HexMapOverlayMeshRenderer = {
@@ -50,7 +36,6 @@ const FEATURE_COLORS: Record<Exclude<HexFeature, "none">, [number, number, numbe
 };
 
 export async function createHexMapOverlayMeshRenderer(map: HexMapArtifact): Promise<HexMapOverlayMeshRenderer> {
-  const riverAtlasTexture = await loadRiverShapeTexture();
   const shader = createOverlayShader();
   const container = new Container();
   const chunks = buildOverlayChunks(map);
@@ -60,25 +45,18 @@ export async function createHexMapOverlayMeshRenderer(map: HexMapArtifact): Prom
     container.addChild(primary);
     return { chunk, primary };
   });
-  const riverChunks = buildRiverSpriteChunks(map, riverAtlasTexture);
-  for (const chunk of riverChunks) {
-    container.addChild(chunk.container);
-  }
   let destroyed = false;
 
   return {
     container,
-    meshCount: chunkMeshes.length + riverChunks.length,
+    meshCount: chunkMeshes.length,
     setQuality: (quality, reducedMotion) => updateOverlayShaderQuality(shader, quality, reducedMotion),
-    updateVisibility: (camera, viewport) => updateOverlayVisibility(chunkMeshes, riverChunks, camera, viewport, map.settings.hexSize),
+    updateVisibility: (camera, viewport) => updateOverlayVisibility(chunkMeshes, camera, viewport, map.settings.hexSize),
     destroy: () => {
       if (destroyed) return;
       destroyed = true;
       for (const pair of chunkMeshes) {
         safeDestroyMesh(pair.primary);
-      }
-      for (const chunk of riverChunks) {
-        safeDestroyContainer(chunk.container);
       }
       safeDestroyShader(shader);
       safeDestroyContainer(container);
@@ -206,69 +184,6 @@ function createOverlayGeometry(chunk: OverlayChunkRenderData): Geometry {
   });
 }
 
-function buildRiverSpriteChunks(map: HexMapArtifact, atlasTexture: Texture): RiverSpriteChunk[] {
-  const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
-  const textureByKey = new Map<string, Texture>();
-  const chunks = new Map<HexChunkId, RiverSpriteChunk>();
-
-  for (const shape of collectHexRiverShapes(map)) {
-    const tile = tileById.get(shape.hexId);
-    if (!tile) continue;
-    const chunk = ensureRiverSpriteChunk(chunks, tile.chunkId);
-    const sprite = new Sprite(getRiverShapeTexture(atlasTexture, textureByKey, shape));
-    const center = axialToPixel(tile, map.settings.hexSize);
-    const tileSize = map.settings.hexSize * 2.28;
-    sprite.anchor.set(0.5);
-    sprite.position.set(center.x, center.y);
-    sprite.width = tileSize;
-    sprite.height = tileSize;
-    sprite.rotation = resolveRiverShapeSpriteRotation(shape.rotation);
-    sprite.alpha = Math.min(0.95, 0.74 + shape.width * 0.035);
-    chunk.container.addChild(sprite);
-    expandBounds(chunk.bounds, center.x, center.y, tileSize * 0.58);
-  }
-
-  return Array.from(chunks.values()).sort((a, b) => a.chunkId.localeCompare(b.chunkId));
-}
-
-function ensureRiverSpriteChunk(chunks: Map<HexChunkId, RiverSpriteChunk>, chunkId: HexChunkId): RiverSpriteChunk {
-  const existing = chunks.get(chunkId);
-  if (existing) return existing;
-  const chunk = {
-    chunkId,
-    bounds: { left: Number.POSITIVE_INFINITY, right: Number.NEGATIVE_INFINITY, top: Number.POSITIVE_INFINITY, bottom: Number.NEGATIVE_INFINITY },
-    container: new Container(),
-  };
-  chunks.set(chunkId, chunk);
-  return chunk;
-}
-
-function getRiverShapeTexture(atlasTexture: Texture, cache: Map<string, Texture>, shape: HexRiverShape): Texture {
-  const atlasColumn = resolveRiverShapeAtlasColumn(shape.mask);
-  const key = String(atlasColumn);
-  const cached = cache.get(key);
-  if (cached) return cached;
-  const texture = new Texture({
-    source: atlasTexture.source,
-    frame: new Rectangle(
-      atlasColumn * RIVER_SHAPE_TILE_SIZE,
-      0,
-      RIVER_SHAPE_TILE_SIZE,
-      RIVER_SHAPE_TILE_SIZE,
-    ),
-  });
-  cache.set(key, texture);
-  return texture;
-}
-
-async function loadRiverShapeTexture(): Promise<Texture> {
-  const texture = await Assets.load<Texture>(RIVER_SHAPE_ATLAS_URL);
-  if (!texture?.source) {
-    throw new Error("hex-river-shape-texture-load-failed");
-  }
-  return texture;
-}
-
 function createOverlayShader(): Shader {
   return new Shader({
     glProgram: GlProgram.from({
@@ -337,7 +252,7 @@ function updateOverlayShaderQuality(shader: Shader, quality: HexTerrainShaderQua
   resource.uniforms.uTime = performance.now() / 1000;
 }
 
-function updateOverlayVisibility(chunkMeshes: OverlayMeshPair[], riverChunks: RiverSpriteChunk[], camera: HexCamera, viewport: { width: number; height: number }, hexSize: number): number {
+function updateOverlayVisibility(chunkMeshes: OverlayMeshPair[], camera: HexCamera, viewport: { width: number; height: number }, hexSize: number): number {
   const margin = hexSize * 5;
   const visibleRect = {
     left: camera.x - viewport.width / (2 * camera.scale) - margin,
@@ -350,11 +265,6 @@ function updateOverlayVisibility(chunkMeshes: OverlayMeshPair[], riverChunks: Ri
     const primaryVisible = intersects(pair.chunk.bounds, visibleRect, 0);
     pair.primary.visible = primaryVisible;
     if (primaryVisible) visible += 1;
-  }
-  for (const chunk of riverChunks) {
-    const chunkVisible = intersects(chunk.bounds, visibleRect, 0);
-    chunk.container.visible = chunkVisible;
-    if (chunkVisible) visible += 1;
   }
   return visible;
 }

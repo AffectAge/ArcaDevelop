@@ -4,6 +4,7 @@ import { DEFAULT_HEX_MAP_SETTINGS, generateHexMap } from "./hexMapGenerator";
 import { buildHexTerrainMeshData, resolveHexBiomeTransitionAtlasIndex, resolveHexCoastMaskAtlasIndex, resolveHexCoastMaskParams, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
 import { generatedHexMaterialPack, isWaterMaterial, resolveShaderQualityFeatures, resolveTerrainMaterialId, TERRAIN_MATERIAL_IDS } from "./hexTerrainMaterials";
 import { validateHexMaterialPack } from "./hexTerrainMaterialTextures";
+import { resolveHexRiverMaskAtlasIndex } from "./hexRiverMasks";
 import { axialToPixel, getNeighborAxial, HEX_DIRECTIONS, makeHexId } from "./hexGeometry";
 
 const smallMap = generateHexMap({ ...DEFAULT_HEX_MAP_SETTINGS, width: 24, height: 16, chunkSize: 8, seed: "mesh-test" });
@@ -89,12 +90,19 @@ describe("hex terrain mesh renderer data", () => {
       tileSize: 128,
       variants: 8,
     });
+    expect(generatedHexMaterialPack.riverMasks).toMatchObject({
+      url: "/game-assets/hex-materials/hex-river-shape-masks.png",
+      columns: 16,
+      rows: 16,
+      tileSize: 128,
+      variants: 4,
+    });
   });
 
   it("keeps all quality levels on the shader mesh path", () => {
-    expect(resolveShaderQualityFeatures("low")).toMatchObject({ detail: false, normal: false, coastMasks: false, coastFoam: false, biomeTransitions: false });
-    expect(resolveShaderQualityFeatures("medium")).toMatchObject({ detail: true, normal: false, coastMasks: true, coastFoam: false, biomeTransitions: true });
-    expect(resolveShaderQualityFeatures("high")).toMatchObject({ detail: true, normal: true, coastMasks: true, coastFoam: true, biomeTransitions: true });
+    expect(resolveShaderQualityFeatures("low")).toMatchObject({ detail: false, normal: false, coastMasks: false, coastFoam: false, biomeTransitions: false, riverMasks: true });
+    expect(resolveShaderQualityFeatures("medium")).toMatchObject({ detail: true, normal: false, coastMasks: true, coastFoam: false, biomeTransitions: true, riverMasks: true });
+    expect(resolveShaderQualityFeatures("high")).toMatchObject({ detail: true, normal: true, coastMasks: true, coastFoam: true, biomeTransitions: true, riverMasks: true });
   });
 
   it("derives deterministic coast mask bits from coast overlays", () => {
@@ -147,6 +155,34 @@ describe("hex terrain mesh renderer data", () => {
     expect(Array.from(coastChunk.coastParams.slice(coastParamOffset, coastParamOffset + 4))).toEqual([resolveHexCoastMaskAtlasIndex(coastTile.id, 1 << 1), 0.75, generatedHexMaterialPack.materials.coastal_water.atlasIndex, 1]);
     expect(Array.from(nonCoastChunk.coastParams.slice(nonCoastParamOffset, nonCoastParamOffset + 4))).toEqual([0, 0, generatedHexMaterialPack.materials.coastal_water.atlasIndex, 0]);
     expect(coastChunk.coastParams.length).toBe((coastChunk.positions.length / 2) * 4);
+  });
+
+  it("emits river params for connected and non-connected hexes", () => {
+    const source = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const target = makeTestTile(2, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const dry = makeTestTile(0, 0, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const map: HexMapArtifact = {
+      ...smallMap,
+      settings: { ...smallMap.settings, width: 4, height: 4, wrapX: false },
+      tiles: [source, target, dry],
+      coastOverlays: [],
+      riverEdges: [{ hexId: source.id, direction: 0, width: 1.7 }],
+    };
+    const meshData = buildHexTerrainMeshData(map);
+    const sourceMask = 1 << 0;
+    const targetMask = 1 << 3;
+    const variants = generatedHexMaterialPack.riverMasks.variants;
+    const sourceParams = readRiverParams(meshData, source.id, 0);
+    const targetParams = readRiverParams(meshData, target.id, 3);
+
+    expect(sourceParams[0]).toBe(resolveHexRiverMaskAtlasIndex(source.id, sourceMask));
+    expect(sourceParams[0]).toBeGreaterThanOrEqual(sourceMask * variants);
+    expect(sourceParams[0]).toBeLessThan((sourceMask + 1) * variants);
+    expect(sourceParams[1]).toBe(1);
+    expect(sourceParams[2]).toBeCloseTo(0.5);
+    expect(targetParams[0]).toBe(resolveHexRiverMaskAtlasIndex(target.id, targetMask));
+    expect(targetParams[1]).toBe(1);
+    expect(readRiverParams(meshData, dry.id, 0)).toEqual([0, 0, 0, 0]);
   });
 
   it("uses fresh water material for lake coastline masks on neighboring land hexes", () => {
@@ -352,4 +388,11 @@ function readCoastParams(meshData: ReturnType<typeof buildHexTerrainMeshData>, t
   const tileIndex = chunk.tileIds.indexOf(tileId);
   const offset = (tileIndex * 18 + direction * 3) * 4;
   return Array.from(chunk.coastParams.slice(offset, offset + 4));
+}
+
+function readRiverParams(meshData: ReturnType<typeof buildHexTerrainMeshData>, tileId: HexId, direction: HexDirection): number[] {
+  const chunk = meshData.chunks.find((candidate) => candidate.tileIds.includes(tileId))!;
+  const tileIndex = chunk.tileIds.indexOf(tileId);
+  const offset = (tileIndex * 18 + direction * 3) * 4;
+  return Array.from(chunk.riverParams.slice(offset, offset + 4));
 }

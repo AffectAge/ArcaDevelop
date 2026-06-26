@@ -44,6 +44,13 @@ export type HexMaterialPackManifest = {
     tileSize: number;
     variants: number;
   };
+  riverMasks: {
+    url: string;
+    columns: number;
+    rows: number;
+    tileSize: number;
+    variants: number;
+  };
   materials: Record<TerrainMaterialId, HexMaterialDefinition>;
 };
 
@@ -69,6 +76,13 @@ export const generatedHexMaterialPack: HexMaterialPackManifest = {
     rows: 6,
     tileSize: 128,
     variants: 8,
+  },
+  riverMasks: {
+    url: "/game-assets/hex-materials/hex-river-shape-masks.png",
+    columns: 16,
+    rows: 16,
+    tileSize: 128,
+    variants: 4,
   },
   materials: {
     deep_water: material("deep_water", [0.09, 0.27, 0.36], 0.22, 0.72),
@@ -109,10 +123,18 @@ export function resolveTerrainMaterialAtlasIndex(materialId: TerrainMaterialId, 
   return pack.materials[materialId]?.atlasIndex ?? pack.materials.grass.atlasIndex;
 }
 
-export function resolveShaderQualityFeatures(quality: HexTerrainShaderQuality): { detail: boolean; normal: boolean; animatedWater: boolean; coastMasks: boolean; coastFoam: boolean; biomeTransitions: boolean } {
-  if (quality === "low") return { detail: false, normal: false, animatedWater: false, coastMasks: false, coastFoam: false, biomeTransitions: false };
-  if (quality === "medium") return { detail: true, normal: false, animatedWater: false, coastMasks: true, coastFoam: false, biomeTransitions: true };
-  return { detail: true, normal: true, animatedWater: true, coastMasks: true, coastFoam: true, biomeTransitions: true };
+export function resolveShaderQualityFeatures(quality: HexTerrainShaderQuality): {
+  detail: boolean;
+  normal: boolean;
+  animatedWater: boolean;
+  coastMasks: boolean;
+  coastFoam: boolean;
+  biomeTransitions: boolean;
+  riverMasks: boolean;
+} {
+  if (quality === "low") return { detail: false, normal: false, animatedWater: false, coastMasks: false, coastFoam: false, biomeTransitions: false, riverMasks: true };
+  if (quality === "medium") return { detail: true, normal: false, animatedWater: false, coastMasks: true, coastFoam: false, biomeTransitions: true, riverMasks: true };
+  return { detail: true, normal: true, animatedWater: true, coastMasks: true, coastFoam: true, biomeTransitions: true, riverMasks: true };
 }
 
 export function isWaterMaterial(materialId: TerrainMaterialId): boolean {

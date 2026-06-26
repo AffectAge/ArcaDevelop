@@ -1,7 +1,7 @@
 import { Container, Geometry, GlProgram, Mesh, Shader, UniformGroup } from "pixi.js";
 import type { HexMapArtifact } from "@arcanorum/shared";
 import { buildHexTerrainMeshData, type HexChunkRenderData, type HexTerrainMeshBuildResult } from "./hexTerrainMesh";
-import { generatedHexMaterialPack, resolveShaderQualityFeatures, type HexTerrainShaderQuality } from "./hexTerrainMaterials";
+import { generatedHexMaterialPack, resolveShaderQualityFeatures, resolveTerrainMaterialAtlasIndex, type HexTerrainShaderQuality } from "./hexTerrainMaterials";
 import { loadHexMaterialTextures, type LoadedHexMaterialTextures } from "./hexTerrainMaterialTextures";
 import type { HexCamera } from "./hexCamera";
 
@@ -89,6 +89,7 @@ export function createChunkGeometry(chunk: HexChunkRenderData): Geometry {
       aMaterialWeights: chunk.materialWeights,
       aCoastParams: chunk.coastParams,
       aTransitionParams: chunk.transitionParams,
+      aRiverParams: chunk.riverParams,
     },
     indexBuffer: chunk.indices,
   });
@@ -119,6 +120,8 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
   const atlas = materialTextures.pack.atlas;
   const coastMasks = materialTextures.pack.coastMasks;
   const biomeTransitions = materialTextures.pack.biomeTransitions;
+  const riverMasks = materialTextures.pack.riverMasks;
+  const riverWaterMaterialIndex = resolveTerrainMaterialAtlasIndex("fresh_water", materialTextures.pack);
   return new Shader({
     glProgram: GlProgram.from({
       name: "arcanorum-hex-terrain-mesh",
@@ -131,6 +134,7 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
         in vec4 aMaterialWeights;
         in vec4 aCoastParams;
         in vec4 aTransitionParams;
+        in vec4 aRiverParams;
 
         out vec2 vWorld;
         out vec2 vLocal;
@@ -140,6 +144,7 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
         out vec4 vMaterialWeights;
         out vec4 vCoastParams;
         out vec4 vTransitionParams;
+        out vec4 vRiverParams;
         out vec4 vColor;
 
         uniform mat3 uProjectionMatrix;
@@ -158,6 +163,7 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
           vMaterialWeights = aMaterialWeights;
           vCoastParams = aCoastParams;
           vTransitionParams = aTransitionParams;
+          vRiverParams = aRiverParams;
           vColor = uColor * uWorldColorAlpha;
           mat3 modelViewProjectionMatrix = uProjectionMatrix * uWorldTransformMatrix * uTransformMatrix;
           gl_Position = vec4((modelViewProjectionMatrix * vec3(aPosition, 1.0)).xy, 0.0, 1.0);
@@ -168,6 +174,7 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
         uniform sampler2D uDetailTexture;
         uniform sampler2D uCoastMaskTexture;
         uniform sampler2D uBiomeTransitionMaskTexture;
+        uniform sampler2D uRiverMaskTexture;
 
         in vec2 vWorld;
         in vec2 vLocal;
@@ -177,6 +184,7 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
         in vec4 vMaterialWeights;
         in vec4 vCoastParams;
         in vec4 vTransitionParams;
+        in vec4 vRiverParams;
         in vec4 vColor;
 
         out vec4 finalColor;
@@ -184,6 +192,7 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
         uniform vec4 uAtlasGrid;
         uniform vec4 uCoastMaskGrid;
         uniform vec4 uBiomeTransitionMaskGrid;
+        uniform vec4 uRiverMaskGrid;
         uniform float uDetailStrength;
         uniform float uNormalStrength;
         uniform float uMaterialStrength;
@@ -192,6 +201,8 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
         uniform float uCoastMaskStrength;
         uniform float uCoastFoamStrength;
         uniform float uBiomeTransitionStrength;
+        uniform float uRiverMaskStrength;
+        uniform float uRiverWaterMaterialIndex;
         uniform float uZoomDetail;
         uniform float uTime;
 
@@ -243,6 +254,14 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
           return (vec2(column, row) + tileUv) * uBiomeTransitionMaskGrid.zw;
         }
 
+        vec2 riverMaskUv(float maskIndex, vec2 localUv) {
+          float column = mod(maskIndex, uRiverMaskGrid.x);
+          float row = floor(maskIndex / uRiverMaskGrid.x);
+          vec2 tileUv = clamp(localUv, vec2(0.0), vec2(1.0));
+          tileUv = tileUv * 0.98 + vec2(0.01);
+          return (vec2(column, row) + tileUv) * uRiverMaskGrid.zw;
+        }
+
         void main(void) {
           float waterMask = step(0.08, vBaseColor.b - vBaseColor.r) * step(vBaseColor.r, 0.32);
           float edgeWaterMask = step(0.08, vEdgeColor.b - vEdgeColor.r) * step(vEdgeColor.r, 0.32);
@@ -270,6 +289,15 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
           color = mix(color, coastWaterColor, coastWaterAmount * coastEnabled);
           color += shorelineBand * vec3(0.045, 0.055, 0.04) * uCoastFoamStrength * coastEnabled;
           float effectiveWaterMask = max(waterMask, coastWaterAmount * coastEnabled);
+          float riverEnabled = step(0.5, vRiverParams.y) * uRiverMaskStrength;
+          vec2 riverUv = riverMaskUv(vRiverParams.x, vLocal * 0.5 + vec2(0.5));
+          float riverAmount = texture(uRiverMaskTexture, riverUv).r * riverEnabled;
+          riverAmount = smoothstep(0.18, 0.72, riverAmount);
+          riverAmount = pow(riverAmount, mix(1.55, 0.78, clamp(vRiverParams.z, 0.0, 1.0)));
+          riverAmount *= 1.0 - smoothstep(0.12, 0.72, effectiveWaterMask);
+          vec3 riverWaterColor = sampleMaterial(uRiverWaterMaterialIndex, worldUv * 1.18 + vec2(0.03, 0.09), vec3(0.25, 0.54, 0.57), 1.0);
+          color = mix(color, riverWaterColor, riverAmount);
+          effectiveWaterMask = max(effectiveWaterMask, riverAmount);
           float grainScale = mix(30.0, 18.0, effectiveWaterMask);
           float grain = hash(floor((vLocal + vec2(vMaterialWeights.y, vMaterialWeights.z)) * grainScale));
           float paper = valueNoise(vWorld * 0.028 + vec2(vMaterialWeights.w * 9.0, vMaterialWeights.z * 5.0));
@@ -295,6 +323,7 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
         uAtlasGrid: { value: new Float32Array([atlas.columns, atlas.rows, 1 / atlas.columns, 1 / atlas.rows]), type: "vec4<f32>" },
         uCoastMaskGrid: { value: new Float32Array([coastMasks.columns, coastMasks.rows, 1 / coastMasks.columns, 1 / coastMasks.rows]), type: "vec4<f32>" },
         uBiomeTransitionMaskGrid: { value: new Float32Array([biomeTransitions.columns, biomeTransitions.rows, 1 / biomeTransitions.columns, 1 / biomeTransitions.rows]), type: "vec4<f32>" },
+        uRiverMaskGrid: { value: new Float32Array([riverMasks.columns, riverMasks.rows, 1 / riverMasks.columns, 1 / riverMasks.rows]), type: "vec4<f32>" },
         uDetailStrength: { value: 0.08, type: "f32" },
         uNormalStrength: { value: 0.06, type: "f32" },
         uMaterialStrength: { value: 1, type: "f32" },
@@ -303,6 +332,8 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
         uCoastMaskStrength: { value: 1, type: "f32" },
         uCoastFoamStrength: { value: 1, type: "f32" },
         uBiomeTransitionStrength: { value: 1, type: "f32" },
+        uRiverMaskStrength: { value: 1, type: "f32" },
+        uRiverWaterMaterialIndex: { value: riverWaterMaterialIndex, type: "f32" },
         uZoomDetail: { value: 1, type: "f32" },
         uTime: { value: 0, type: "f32" },
       }),
@@ -314,12 +345,14 @@ function createHexTerrainShader(materialTextures: LoadedHexMaterialTextures): Sh
       uCoastMaskSampler: materialTextures.coastMaskSource.style,
       uBiomeTransitionMaskTexture: materialTextures.biomeTransitionSource,
       uBiomeTransitionMaskSampler: materialTextures.biomeTransitionSource.style,
+      uRiverMaskTexture: materialTextures.riverMaskSource,
+      uRiverMaskSampler: materialTextures.riverMaskSource.style,
     },
   });
 }
 
 function updateShaderQuality(shader: Shader, quality: HexTerrainShaderQuality, reducedMotion: boolean): void {
-  const resource = shader.resources.terrainUniforms as { uniforms?: { uDetailStrength: number; uNormalStrength: number; uMaterialStrength: number; uWaterAnimation: number; uPainterlyStrength: number; uCoastMaskStrength: number; uCoastFoamStrength: number; uBiomeTransitionStrength: number; uTime: number } } | undefined;
+  const resource = shader.resources.terrainUniforms as { uniforms?: { uDetailStrength: number; uNormalStrength: number; uMaterialStrength: number; uWaterAnimation: number; uPainterlyStrength: number; uCoastMaskStrength: number; uCoastFoamStrength: number; uBiomeTransitionStrength: number; uRiverMaskStrength: number; uTime: number } } | undefined;
   if (!resource?.uniforms) return;
   const features = resolveShaderQualityFeatures(quality);
   resource.uniforms.uDetailStrength = features.detail ? 0.22 : 0;
@@ -330,6 +363,7 @@ function updateShaderQuality(shader: Shader, quality: HexTerrainShaderQuality, r
   resource.uniforms.uCoastMaskStrength = features.coastMasks ? 1 : 0;
   resource.uniforms.uCoastFoamStrength = features.coastFoam ? 1 : 0;
   resource.uniforms.uBiomeTransitionStrength = features.biomeTransitions ? 1 : 0;
+  resource.uniforms.uRiverMaskStrength = features.riverMasks ? 1 : 0;
   resource.uniforms.uTime = performance.now() / 1000;
 }
 

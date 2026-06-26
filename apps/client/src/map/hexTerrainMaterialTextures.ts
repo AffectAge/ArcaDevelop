@@ -7,21 +7,24 @@ export type LoadedHexMaterialTextures = {
   detailTexture: Texture;
   coastMaskTexture: Texture;
   biomeTransitionTexture: Texture;
+  riverMaskTexture: Texture;
   albedoSource: TextureSource;
   detailSource: TextureSource;
   coastMaskSource: TextureSource;
   biomeTransitionSource: TextureSource;
+  riverMaskSource: TextureSource;
 };
 
 export async function loadHexMaterialTextures(pack: HexMaterialPackManifest = generatedHexMaterialPack): Promise<LoadedHexMaterialTextures> {
   validateHexMaterialPack(pack);
-  const [albedoTexture, detailTexture, coastMaskTexture, biomeTransitionTexture] = await Promise.all([
+  const [albedoTexture, detailTexture, coastMaskTexture, biomeTransitionTexture, riverMaskTexture] = await Promise.all([
     Assets.load<Texture>(pack.atlas.albedoUrl),
     Assets.load<Texture>(pack.atlas.detailUrl),
     Assets.load<Texture>(pack.coastMasks.url),
     Assets.load<Texture>(pack.biomeTransitions.url),
+    Assets.load<Texture>(pack.riverMasks.url),
   ]);
-  if (!albedoTexture?.source || !detailTexture?.source || !coastMaskTexture?.source || !biomeTransitionTexture?.source) {
+  if (!albedoTexture?.source || !detailTexture?.source || !coastMaskTexture?.source || !biomeTransitionTexture?.source || !riverMaskTexture?.source) {
     throw new Error("hex-material-texture-load-failed");
   }
   return {
@@ -30,10 +33,12 @@ export async function loadHexMaterialTextures(pack: HexMaterialPackManifest = ge
     detailTexture,
     coastMaskTexture,
     biomeTransitionTexture,
+    riverMaskTexture,
     albedoSource: albedoTexture.source,
     detailSource: detailTexture.source,
     coastMaskSource: coastMaskTexture.source,
     biomeTransitionSource: biomeTransitionTexture.source,
+    riverMaskSource: riverMaskTexture.source,
   };
 }
 
@@ -75,6 +80,16 @@ export function validateHexMaterialPack(pack: HexMaterialPackManifest = generate
     pack.biomeTransitions.columns * pack.biomeTransitions.rows < 6 * pack.biomeTransitions.variants
   ) {
     throw new Error("hex-material-pack-invalid-biome-transitions");
+  }
+  if (
+    !pack.riverMasks.url ||
+    pack.riverMasks.columns <= 0 ||
+    pack.riverMasks.rows <= 0 ||
+    pack.riverMasks.tileSize <= 0 ||
+    pack.riverMasks.variants <= 0 ||
+    pack.riverMasks.columns * pack.riverMasks.rows < 64 * pack.riverMasks.variants
+  ) {
+    throw new Error("hex-material-pack-invalid-river-masks");
   }
 }
 

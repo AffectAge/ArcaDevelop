@@ -52,6 +52,12 @@ node scripts/generate-hex-material-textures.mjs
 
 Regenerates project-owned hex terrain albedo/detail PNG atlases under `apps/client/public/game-assets/hex-materials/`.
 
+```bash
+npm run hex-masks:generate
+```
+
+Regenerates project-owned grayscale coastline, biome transition, and river mask atlases under `apps/client/public/game-assets/hex-materials/`.
+
 ## Server Commands
 
 ```bash

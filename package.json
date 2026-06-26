@@ -14,6 +14,7 @@
     "lint:all": "eslint .",
     "format:check": "prettier --check .",
     "map:from-geojson": "node scripts/prepare-map-from-geojson.mjs",
+    "hex-masks:generate": "node scripts/generate-hex-mask-atlases.mjs",
     "typecheck": "npm run typecheck -ws",
     "test": "vitest run",
     "test:unit": "vitest run",
