@@ -3,6 +3,8 @@ import type {
   BuildingPlacementRules,
   DecisionDefinition,
   DivisionStats,
+  EquipmentClass,
+  EquipmentModule,
   GameEventDefinition,
   JournalEntryDefinition,
   IdeologyAttractionRule,
@@ -259,6 +261,8 @@ export type GameSettings = {
     battalions: BattalionContentEntry[];
     shipTypes: MilitaryContentEntry[];
     aircraftTypes: MilitaryContentEntry[];
+    equipmentClasses: EquipmentClass[];
+    equipmentModules: EquipmentModule[];
   };
   ai: {
     enabled: boolean;
@@ -347,6 +351,10 @@ export type GameSettings = {
     ducatsCostPer1000Km2: number;
     settlementEnabled: boolean;
     settlementPopulationOnCapture: number;
+    colonizerTurns: number;
+    colonizerCostColonization: number;
+    colonizerCostDucats: number;
+    colonizerMovementPoints: number;
   };
   customization: {
     renameDucats: number;

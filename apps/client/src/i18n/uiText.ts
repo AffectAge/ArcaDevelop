@@ -1326,7 +1326,9 @@ export type UiTextKey =
   | "army.branchTemplates"
   | "army.cancel"
   | "army.composition"
+  | "army.createEquipmentVariant"
   | "army.createFormation"
+  | "army.createProductionLine"
   | "army.defaultAir"
   | "army.defaultLand"
   | "army.defaultNaval"
@@ -1336,6 +1338,17 @@ export type UiTextKey =
   | "army.disbandDivision"
   | "army.emptyQueue"
   | "army.emptyQueueDescription"
+  | "army.equipment"
+  | "army.equipmentClass"
+  | "army.equipmentConstructor"
+  | "army.equipmentCoverage"
+  | "army.equipmentCost"
+  | "army.equipmentLines"
+  | "army.equipmentProduction"
+  | "army.equipmentRequirements"
+  | "army.equipmentStats"
+  | "army.equipmentVariant"
+  | "army.equipmentVariantName"
   | "army.form"
   | "army.formation"
   | "army.formationQueue"
@@ -1358,10 +1371,21 @@ export type UiTextKey =
   | "army.noDataDescription"
   | "army.noReadyUnits"
   | "army.noReadyUnitsDescription"
+  | "army.noEquipmentCost"
+  | "army.noEquipmentLines"
+  | "army.noEquipmentLinesDescription"
+  | "army.noEquipmentRequirements"
+  | "army.noEquipmentStats"
+  | "army.noAssignedEquipment"
   | "army.organizationShort"
+  | "army.productionCapacity"
+  | "army.productionCapacityValue"
   | "army.queue"
   | "army.readyUnits"
+  | "army.active"
+  | "army.inactive"
   | "army.saveTemplate"
+  | "army.addEquipmentRequirement"
   | "army.strengthShort"
   | "army.support"
   | "army.supplyShort"
@@ -1369,6 +1393,7 @@ export type UiTextKey =
   | "army.totalSoldiers"
   | "army.templateDeleted"
   | "army.templateName"
+  | "army.templateEquipmentCoverage"
   | "army.unknownBattalion"
   | "army.unknownTemplate"
   | "army.title"
@@ -1472,6 +1497,37 @@ export type UiTextKey =
   | "hexMap.buildingStatusInactive"
   | "hexMap.buildingStatusRuins"
   | "hexMap.buildingStatusWorking"
+  | "hexMap.civilianUnits"
+  | "hexMap.civilianQueue"
+  | "hexMap.civilianColonizer"
+  | "hexMap.civilianCaptured"
+  | "hexMap.civilianMove"
+  | "hexMap.civilianMoveTooltipCan"
+  | "hexMap.civilianMoveTooltipCannot"
+  | "hexMap.civilianMoveUnavailable"
+  | "hexMap.civilianMoveSelectTarget"
+  | "hexMap.civilianMovePreview"
+  | "hexMap.civilianMoveNoPath"
+  | "hexMap.civilianMoveTooFar"
+  | "hexMap.civilianMoveOrderSent"
+  | "hexMap.civilianMovement"
+  | "hexMap.civilianQueueProgress"
+  | "hexMap.queueColonizer"
+  | "hexMap.queueColonizerPending"
+  | "hexMap.queueColonizerTooltipCan"
+  | "hexMap.queueColonizerTooltipCannot"
+  | "hexMap.queueColonizerUnavailable"
+  | "hexMap.queueColonizerQueued"
+  | "hexMap.queueColonizerFailed"
+  | "hexMap.queueColonizerHexNotControlled"
+  | "hexMap.queueColonizerHexOccupied"
+  | "hexMap.queueColonizerInsufficientColonization"
+  | "hexMap.queueColonizerInsufficientDucats"
+  | "hexMap.foundCity"
+  | "hexMap.foundCityTooltipCan"
+  | "hexMap.foundCityTooltipCannot"
+  | "hexMap.foundCityNeutralRequired"
+  | "hexMap.foundCityOrderSent"
   | "hexMap.build"
   | "hexMap.colonize"
   | "hexMap.admin"
@@ -1487,6 +1543,7 @@ export type UiTextKey =
   | "hexMap.terrain.sea"
   | "hexMap.terrain.lake"
   | "hexMap.terrain.coast"
+  | "hexMap.terrain.city"
   | "hexMap.terrain.plains"
   | "hexMap.terrain.grassland"
   | "hexMap.terrain.forest"
@@ -2606,6 +2663,8 @@ export type UiTextKey =
   | "shell.action.buildingOverviewDescription"
   | "shell.action.colonization"
   | "shell.action.colonizationDescription"
+  | "shell.action.colonizationRecords"
+  | "shell.action.colonizationRecordsDescription"
   | "shell.action.customization"
   | "shell.action.customizationDescription"
   | "shell.action.decisions"
@@ -2622,6 +2681,8 @@ export type UiTextKey =
   | "shell.action.marketDescription"
   | "shell.action.modifiers"
   | "shell.action.modifiersDescription"
+  | "shell.action.openArmy"
+  | "shell.action.openArmyDescription"
   | "shell.action.politics"
   | "shell.action.politicsDescription"
   | "shell.action.population"
@@ -2636,6 +2697,15 @@ export type UiTextKey =
   | "shell.clientSettings"
   | "shell.closeWorkspace"
   | "shell.codex"
+  | "shell.colonization.colonizerQueue"
+  | "shell.colonization.focusHexTooltip"
+  | "shell.colonization.readyColonizers"
+  | "shell.colonization.settlementProject"
+  | "shell.colonization.settlementProjects"
+  | "shell.colonization.status.active"
+  | "shell.colonization.status.canceled"
+  | "shell.colonization.status.completed"
+  | "shell.colonization.status.stalled"
   | "shell.connectedMessage"
   | "shell.connectedTitle"
   | "shell.countryCustomizedMessage"
@@ -2913,7 +2983,10 @@ export type UiTextKey =
   | "resourceLedger.recentEntries"
   | "resourceLedger.source.army.formation"
   | "resourceLedger.source.building.stateSubsidy"
+  | "resourceLedger.source.colonization.progress"
   | "resourceLedger.source.colonization.support"
+  | "resourceLedger.source.unit.colonizer"
+  | "resourceLedger.source.settlement.progress"
   | "resourceLedger.source.construction.building"
   | "resourceLedger.source.construction.corridor"
   | "resourceLedger.source.construction.demolition"
@@ -4283,7 +4356,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.branchTemplates": "Templates: {branch}",
     "army.cancel": "Cancel",
     "army.composition": "Composition",
+    "army.createEquipmentVariant": "Create variant",
     "army.createFormation": "Form unit",
+    "army.createProductionLine": "Start line",
     "army.defaultAir": "New air wing",
     "army.defaultLand": "New division",
     "army.defaultNaval": "New fleet",
@@ -4293,6 +4368,17 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.disbandDivision": "Disband division",
     "army.emptyQueue": "Queue is empty",
     "army.emptyQueueDescription": "New units appear here after a formation command.",
+    "army.equipment": "Equipment",
+    "army.equipmentClass": "Class",
+    "army.equipmentConstructor": "Equipment constructor",
+    "army.equipmentCoverage": "Coverage {value}%",
+    "army.equipmentCost": "Goods cost",
+    "army.equipmentLines": "Production lines",
+    "army.equipmentProduction": "Equipment production",
+    "army.equipmentRequirements": "Equipment needs",
+    "army.equipmentStats": "Stats",
+    "army.equipmentVariant": "Variant",
+    "army.equipmentVariantName": "Variant name",
     "army.form": "Form",
     "army.formation": "Formation",
     "army.formationQueue": "Formation queue",
@@ -4313,18 +4399,30 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.newTemplate": "New",
     "army.noData": "No data",
     "army.noDataDescription": "Open this window after connecting to the server.",
+    "army.noEquipmentCost": "No goods cost.",
+    "army.noEquipmentLines": "No production lines",
+    "army.noEquipmentLinesDescription": "Create a variant, then start a production line.",
+    "army.noEquipmentRequirements": "This template does not require equipment yet.",
+    "army.noEquipmentStats": "No stats.",
+    "army.noAssignedEquipment": "No suitable equipment in stockpile",
     "army.noReadyUnits": "No ready units",
     "army.noReadyUnitsDescription": "Put a unit formation in the queue.",
     "army.organizationShort": "Org.",
+    "army.productionCapacity": "Capacity",
+    "army.productionCapacityValue": "Capacity {value}",
     "army.queue": "Queue ({count})",
     "army.readyUnits": "Ready units: {branch}",
+    "army.active": "Active",
+    "army.inactive": "Inactive",
     "army.saveTemplate": "Save template",
+    "army.addEquipmentRequirement": "Add need",
     "army.strengthShort": "Strength",
     "army.support": "Support",
     "army.supplyShort": "Supply",
     "army.totalBattalions": "{count} battalions",
     "army.totalSoldiers": "{count} soldiers",
     "army.templateDeleted": "Template deleted",
+    "army.templateEquipmentCoverage": "Template equipment coverage: {value}%",
     "army.templateName": "Template name",
     "army.unknownBattalion": "Battalion {number}",
     "army.unknownTemplate": "Unknown template",
@@ -4356,7 +4454,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.mode.overview": "Overview",
     "map.mode.overviewTooltip": "Select and inspect hexes and regions.",
     "map.mode.colonization": "Colonization",
-    "map.mode.colonizationTooltip": "Click a region to start the colonization flow.",
+    "map.mode.colonizationTooltip": "Inspect neutral regions and settlement opportunities for colonizer units.",
     "map.mode.construction": "Construction",
     "map.mode.constructionTooltip": "Click a region to open construction.",
     "map.mode.army": "Army",
@@ -4429,6 +4527,37 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.buildingStatusInactive": "Inactive",
     "hexMap.buildingStatusRuins": "Ruins",
     "hexMap.buildingStatusWorking": "Working",
+    "hexMap.civilianUnits": "Civilian units",
+    "hexMap.civilianQueue": "Civilian queue",
+    "hexMap.civilianColonizer": "Colonizer",
+    "hexMap.civilianCaptured": "Captured",
+    "hexMap.civilianMove": "Move",
+    "hexMap.civilianMoveTooltipCan": "Choose a target hex for this civilian unit.",
+    "hexMap.civilianMoveTooltipCannot": "This civilian unit cannot move now.",
+    "hexMap.civilianMoveUnavailable": "This civilian unit cannot move now.",
+    "hexMap.civilianMoveSelectTarget": "Select a target hex for the colonizer.",
+    "hexMap.civilianMovePreview": "Route cost {cost}/{points}",
+    "hexMap.civilianMoveNoPath": "No valid route to that hex.",
+    "hexMap.civilianMoveTooFar": "Route is too long: {cost}/{points} movement points.",
+    "hexMap.civilianMoveOrderSent": "Colonizer movement order sent",
+    "hexMap.civilianMovement": "Movement {current}/{max}",
+    "hexMap.civilianQueueProgress": "Ready in {current}/{total}",
+    "hexMap.queueColonizer": "Prepare colonizer",
+    "hexMap.queueColonizerPending": "Preparing...",
+    "hexMap.queueColonizerTooltipCan": "Queue a colonizer on this controlled hex. The unit appears here when preparation finishes.",
+    "hexMap.queueColonizerTooltipCannot": "A colonizer can be prepared only on your controlled hex without another civilian unit or civilian queue.",
+    "hexMap.queueColonizerUnavailable": "A colonizer cannot be prepared on this hex.",
+    "hexMap.queueColonizerQueued": "Colonizer queued",
+    "hexMap.queueColonizerFailed": "Colonizer queue failed",
+    "hexMap.queueColonizerHexNotControlled": "You do not control this hex.",
+    "hexMap.queueColonizerHexOccupied": "This hex already has a civilian unit or civilian queue.",
+    "hexMap.queueColonizerInsufficientColonization": "Not enough colonization points.",
+    "hexMap.queueColonizerInsufficientDucats": "Not enough ducats.",
+    "hexMap.foundCity": "Found city",
+    "hexMap.foundCityTooltipCan": "Consume this colonizer and start a settlement project on the current hex.",
+    "hexMap.foundCityTooltipCannot": "A city can be founded only by your colonizer on a neutral region.",
+    "hexMap.foundCityNeutralRequired": "City foundation requires a neutral region.",
+    "hexMap.foundCityOrderSent": "City foundation order sent",
     "hexMap.build": "Build",
     "hexMap.colonize": "Colonize",
     "hexMap.admin": "Admin",
@@ -4444,6 +4573,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.terrain.sea": "Sea",
     "hexMap.terrain.lake": "Lake",
     "hexMap.terrain.coast": "Coast",
+    "hexMap.terrain.city": "City",
     "hexMap.terrain.plains": "Plains",
     "hexMap.terrain.grassland": "Grassland",
     "hexMap.terrain.forest": "Forest",
@@ -5562,7 +5692,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.buildingOverview": "Building overview",
     "shell.action.buildingOverviewDescription": "Review and manage buildings and construction projects across the country.",
     "shell.action.colonization": "Colonization",
-    "shell.action.colonizationDescription": "Switch to the colonization lens, then select a neutral region on the map.",
+    "shell.action.colonizationDescription": "Prepare colonizers on controlled hexes, move them to neutral land, then found a city.",
+    "shell.action.colonizationRecords": "Projects and colonizers",
+    "shell.action.colonizationRecordsDescription": "Show ready colonizers, colonizer preparation, and active settlement projects.",
     "shell.action.customization": "Country identity",
     "shell.action.customizationDescription": "Edit name, colors, flag, and crest.",
     "shell.action.decisions": "Decisions",
@@ -5579,6 +5711,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.marketDescription": "Review goods, prices, shortages, and trade pressure.",
     "shell.action.modifiers": "Modifiers",
     "shell.action.modifiersDescription": "Inspect active country effects and their sources.",
+    "shell.action.openArmy": "Army board",
+    "shell.action.openArmyDescription": "Open units and movement tools for colonizers, divisions, fleets, and air wings.",
     "shell.action.politics": "Politics",
     "shell.action.politicsDescription": "Open parliament, laws, and governing structure.",
     "shell.action.population": "Society dashboard",
@@ -5593,6 +5727,15 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.clientSettings": "Client settings",
     "shell.closeWorkspace": "Close workspace",
     "shell.codex": "Arcawiki",
+    "shell.colonization.colonizerQueue": "Colonizer preparation",
+    "shell.colonization.focusHexTooltip": "Center the camera on this hex.",
+    "shell.colonization.readyColonizers": "Ready colonizers",
+    "shell.colonization.settlementProject": "Settlement project",
+    "shell.colonization.settlementProjects": "Settlement projects",
+    "shell.colonization.status.active": "Active",
+    "shell.colonization.status.canceled": "Canceled",
+    "shell.colonization.status.completed": "Completed",
+    "shell.colonization.status.stalled": "Stalled",
     "shell.connectedMessage": "Connection to the game server established",
     "shell.connectedTitle": "Connection",
     "shell.countryCustomizedMessage": "Customization applied to {country} (-ducats)",
@@ -5604,7 +5747,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.dashboard.armyIntro": "Use the map to read positions and open the army board for orders.",
     "shell.dashboard.availableConstruction": "Construction reserve",
     "shell.dashboard.colonization": "Colonial office",
-    "shell.dashboard.colonizationIntro": "Use the colonization lens to find neutral regions and start a validated colonization order from the selected region.",
+    "shell.dashboard.colonizationIntro": "Colonization now runs through map units: prepare colonizers, move them, and found city projects on neutral land.",
     "shell.dashboard.colonizationReserve": "Colonization reserve",
     "shell.dashboard.colonyCapacity": "Active colonies",
     "shell.dashboard.construction": "Regional works",
@@ -5706,7 +5849,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.governanceLedger": "Office ledger",
     "shell.preview.marketLedger": "Market ledger",
     "shell.preview.noArmy": "No field divisions or formations yet.",
-    "shell.preview.noColonization": "Select a neutral region on the map to inspect colonization cost and availability.",
+    "shell.preview.noColonization": "No ready colonizers, colonizer queue, or settlement projects yet. Select a controlled hex and prepare a colonizer.",
     "shell.preview.noConstruction": "No active construction projects for your controlled regions.",
     "shell.preview.noDiplomacy": "No visible diplomatic proposals involving your country.",
     "shell.preview.noGovernance": "No governance records are available yet.",
@@ -5755,7 +5898,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "resourceLedger.recentEntries": "Recent entries",
     "resourceLedger.source.army.formation": "Army formation",
     "resourceLedger.source.building.stateSubsidy": "State subsidy",
+    "resourceLedger.source.colonization.progress": "Colonization progress",
     "resourceLedger.source.colonization.support": "Colonization support",
+    "resourceLedger.source.unit.colonizer": "Colonizer preparation",
+    "resourceLedger.source.settlement.progress": "Settlement progress",
     "resourceLedger.source.construction.building": "Building construction",
     "resourceLedger.source.construction.corridor": "Transport corridor",
     "resourceLedger.source.construction.demolition": "Building demolition",
@@ -7239,7 +7385,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.branchTemplates": "Шаблоны: {branch}",
     "army.cancel": "Отменить",
     "army.composition": "Состав",
+    "army.createEquipmentVariant": "Создать вариант",
     "army.createFormation": "Сформировать",
+    "army.createProductionLine": "Запустить линию",
     "army.defaultAir": "Новое авиакрыло",
     "army.defaultLand": "Новая дивизия",
     "army.defaultNaval": "Новый флот",
@@ -7249,6 +7397,17 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.disbandDivision": "Расформировать дивизию",
     "army.emptyQueue": "Очередь пуста",
     "army.emptyQueueDescription": "Новые части появляются здесь после команды сформировать.",
+    "army.equipment": "Техника",
+    "army.equipmentClass": "Класс",
+    "army.equipmentConstructor": "Конструктор техники",
+    "army.equipmentCoverage": "Покрытие {value}%",
+    "army.equipmentCost": "Стоимость товарами",
+    "army.equipmentLines": "Производственные линии",
+    "army.equipmentProduction": "Производство техники",
+    "army.equipmentRequirements": "Потребность в технике",
+    "army.equipmentStats": "Показатели",
+    "army.equipmentVariant": "Вариант",
+    "army.equipmentVariantName": "Название варианта",
     "army.form": "Формирование",
     "army.formation": "Формирование",
     "army.formationQueue": "Очередь формирования",
@@ -7269,18 +7428,30 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.newTemplate": "Новый",
     "army.noData": "Нет данных",
     "army.noDataDescription": "Откройте окно после подключения к серверу.",
+    "army.noEquipmentCost": "Нет стоимости товарами.",
+    "army.noEquipmentLines": "Нет производственных линий",
+    "army.noEquipmentLinesDescription": "Создайте вариант техники, затем запустите линию.",
+    "army.noEquipmentRequirements": "Этот шаблон пока не требует технику.",
+    "army.noEquipmentStats": "Нет показателей.",
+    "army.noAssignedEquipment": "Нет подходящей техники на складе",
     "army.noReadyUnits": "Нет готовых частей",
     "army.noReadyUnitsDescription": "Поставьте формирование в очередь.",
     "army.organizationShort": "Орг.",
+    "army.productionCapacity": "Мощность",
+    "army.productionCapacityValue": "Мощность {value}",
     "army.queue": "Очередь ({count})",
     "army.readyUnits": "Готовые части: {branch}",
+    "army.active": "Активна",
+    "army.inactive": "Неактивна",
     "army.saveTemplate": "Сохранить шаблон",
+    "army.addEquipmentRequirement": "Добавить потребность",
     "army.strengthShort": "Сила",
     "army.support": "Поддержка",
     "army.supplyShort": "Снабж.",
     "army.totalBattalions": "{count} батальонов",
     "army.totalSoldiers": "{count} солдат",
     "army.templateDeleted": "Шаблон удалён",
+    "army.templateEquipmentCoverage": "Покрытие шаблона техникой: {value}%",
     "army.templateName": "Название шаблона",
     "army.unknownBattalion": "Батальон {number}",
     "army.unknownTemplate": "Неизвестный шаблон",
@@ -7312,7 +7483,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.mode.overview": "Обзор",
     "map.mode.overviewTooltip": "Выбирать и осматривать гексы и регионы.",
     "map.mode.colonization": "Колонизация",
-    "map.mode.colonizationTooltip": "Нажмите регион, чтобы начать колонизацию.",
+    "map.mode.colonizationTooltip": "Осматривайте нейтральные регионы и возможности поселения для юнитов-колонизаторов.",
     "map.mode.construction": "Строительство",
     "map.mode.constructionTooltip": "Нажмите регион, чтобы открыть строительство.",
     "map.mode.army": "Армия",
@@ -7385,6 +7556,37 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.buildingStatusInactive": "Неактивно",
     "hexMap.buildingStatusRuins": "Руины",
     "hexMap.buildingStatusWorking": "Работает",
+    "hexMap.civilianUnits": "Гражданские юниты",
+    "hexMap.civilianQueue": "Очередь гражданских юнитов",
+    "hexMap.civilianColonizer": "Колонизатор",
+    "hexMap.civilianCaptured": "Захвачен",
+    "hexMap.civilianMove": "Переместить",
+    "hexMap.civilianMoveTooltipCan": "Выбрать целевой гекс для этого гражданского юнита.",
+    "hexMap.civilianMoveTooltipCannot": "Этот гражданский юнит сейчас не может двигаться.",
+    "hexMap.civilianMoveUnavailable": "Этот гражданский юнит сейчас не может двигаться.",
+    "hexMap.civilianMoveSelectTarget": "Выберите целевой гекс для колонизатора.",
+    "hexMap.civilianMovePreview": "Стоимость пути {cost}/{points}",
+    "hexMap.civilianMoveNoPath": "Нет допустимого маршрута до этого гекса.",
+    "hexMap.civilianMoveTooFar": "Маршрут слишком длинный: {cost}/{points} очков хода.",
+    "hexMap.civilianMoveOrderSent": "Приказ перемещения колонизатора отправлен",
+    "hexMap.civilianMovement": "Ход {current}/{max}",
+    "hexMap.civilianQueueProgress": "Готовность {current}/{total}",
+    "hexMap.queueColonizer": "Подготовить колонизатора",
+    "hexMap.queueColonizerPending": "Подготовка...",
+    "hexMap.queueColonizerTooltipCan": "Поставить колонизатора в очередь на этом контролируемом гексе. Юнит появится здесь после подготовки.",
+    "hexMap.queueColonizerTooltipCannot": "Колонизатора можно подготовить только на вашем контролируемом гексе без другого гражданского юнита или очереди.",
+    "hexMap.queueColonizerUnavailable": "На этом гексе нельзя подготовить колонизатора.",
+    "hexMap.queueColonizerQueued": "Колонизатор поставлен в очередь",
+    "hexMap.queueColonizerFailed": "Не удалось поставить колонизатора в очередь",
+    "hexMap.queueColonizerHexNotControlled": "Вы не контролируете этот гекс.",
+    "hexMap.queueColonizerHexOccupied": "На этом гексе уже есть гражданский юнит или гражданская очередь.",
+    "hexMap.queueColonizerInsufficientColonization": "Не хватает очков колонизации.",
+    "hexMap.queueColonizerInsufficientDucats": "Не хватает дукатов.",
+    "hexMap.foundCity": "Основать город",
+    "hexMap.foundCityTooltipCan": "Потратить этого колонизатора и начать проект основания города на текущем гексе.",
+    "hexMap.foundCityTooltipCannot": "Город может основать только ваш колонизатор в нейтральном регионе.",
+    "hexMap.foundCityNeutralRequired": "Для основания города нужен нейтральный регион.",
+    "hexMap.foundCityOrderSent": "Приказ основания города отправлен",
     "hexMap.build": "Строить",
     "hexMap.colonize": "Колонизировать",
     "hexMap.admin": "Админ",
@@ -7400,6 +7602,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.terrain.sea": "Море",
     "hexMap.terrain.lake": "Озеро",
     "hexMap.terrain.coast": "Побережье",
+    "hexMap.terrain.city": "Город",
     "hexMap.terrain.plains": "Равнины",
     "hexMap.terrain.grassland": "Луга",
     "hexMap.terrain.forest": "Лес",
@@ -8518,7 +8721,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.buildingOverview": "Обзор зданий",
     "shell.action.buildingOverviewDescription": "Посмотреть и управлять зданиями и проектами строительства по стране.",
     "shell.action.colonization": "Колонизация",
-    "shell.action.colonizationDescription": "Переключиться на линзу колонизации, затем выбрать нейтральный регион на карте.",
+    "shell.action.colonizationDescription": "Готовьте колонизаторов на контролируемых гексах, ведите их к нейтральной земле и основывайте город.",
+    "shell.action.colonizationRecords": "Проекты и колонизаторы",
+    "shell.action.colonizationRecordsDescription": "Показать готовых колонизаторов, подготовку колонизаторов и активные проекты поселений.",
     "shell.action.customization": "Облик страны",
     "shell.action.customizationDescription": "Изменить название, цвета, флаг и герб.",
     "shell.action.decisions": "Решения",
@@ -8535,6 +8740,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.marketDescription": "Посмотреть товары, цены, дефициты и давление рынка.",
     "shell.action.modifiers": "Модификаторы",
     "shell.action.modifiersDescription": "Проверить активные эффекты страны и их источники.",
+    "shell.action.openArmy": "Армейская панель",
+    "shell.action.openArmyDescription": "Открыть юниты и инструменты перемещения для колонизаторов, дивизий, флотов и авиакрыльев.",
     "shell.action.politics": "Политика",
     "shell.action.politicsDescription": "Открыть парламент, законы и устройство власти.",
     "shell.action.population": "Общество",
@@ -8549,6 +8756,15 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.clientSettings": "Настройки клиента",
     "shell.closeWorkspace": "Закрыть рабочую область",
     "shell.codex": "Аркавики",
+    "shell.colonization.colonizerQueue": "Подготовка колонизаторов",
+    "shell.colonization.focusHexTooltip": "Центрировать камеру на этом гексе.",
+    "shell.colonization.readyColonizers": "Готовые колонизаторы",
+    "shell.colonization.settlementProject": "Проект поселения",
+    "shell.colonization.settlementProjects": "Проекты поселений",
+    "shell.colonization.status.active": "Активен",
+    "shell.colonization.status.canceled": "Отменён",
+    "shell.colonization.status.completed": "Завершён",
+    "shell.colonization.status.stalled": "Остановлен",
     "shell.connectedMessage": "Соединение с игровым сервером установлено",
     "shell.connectedTitle": "Подключение",
     "shell.countryCustomizedMessage": "Кастомизация применена для {country} (-дукаты)",
@@ -8560,7 +8776,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.dashboard.armyIntro": "Читайте позиции на карте и открывайте армейскую панель для приказов.",
     "shell.dashboard.availableConstruction": "Резерв строительства",
     "shell.dashboard.colonization": "Колониальная канцелярия",
-    "shell.dashboard.colonizationIntro": "Используйте линзу колонизации, чтобы найти нейтральный регион и начать проверенный приказ колонизации из выбранного региона.",
+    "shell.dashboard.colonizationIntro": "Колонизация теперь идёт через юнитов на карте: подготовьте колонизаторов, переместите их и основайте город в нейтральном регионе.",
     "shell.dashboard.colonizationReserve": "Резерв колонизации",
     "shell.dashboard.colonyCapacity": "Активные колонии",
     "shell.dashboard.construction": "Работы в регионах",
@@ -8662,7 +8878,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.governanceLedger": "Реестр канцелярии",
     "shell.preview.marketLedger": "Реестр рынка",
     "shell.preview.noArmy": "Полевых дивизий и формирований пока нет.",
-    "shell.preview.noColonization": "Выберите нейтральный регион на карте, чтобы проверить цену и доступность колонизации.",
+    "shell.preview.noColonization": "Пока нет готовых колонизаторов, очереди подготовки или проектов поселений. Выберите контролируемый гекс и подготовьте колонизатора.",
     "shell.preview.noConstruction": "Нет активных строительных проектов в контролируемых регионах.",
     "shell.preview.noDiplomacy": "Нет видимых дипломатических предложений с участием вашей страны.",
     "shell.preview.noGovernance": "Записи управления пока недоступны.",
@@ -8711,7 +8927,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "resourceLedger.recentEntries": "Последние записи",
     "resourceLedger.source.army.formation": "Формирование армии",
     "resourceLedger.source.building.stateSubsidy": "Госсубсидия",
+    "resourceLedger.source.colonization.progress": "Прогресс колонизации",
     "resourceLedger.source.colonization.support": "Поддержка колонизации",
+    "resourceLedger.source.unit.colonizer": "Подготовка колонизатора",
+    "resourceLedger.source.settlement.progress": "Основание города",
     "resourceLedger.source.construction.building": "Строительство здания",
     "resourceLedger.source.construction.corridor": "Транспортный коридор",
     "resourceLedger.source.construction.demolition": "Снос здания",

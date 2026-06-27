@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowDownUp,
@@ -99,6 +99,37 @@ type ConstructionCancelConfirmTarget = {
   targetHexId: HexId;
 };
 
+type ColonizationQueuePreviewItem = {
+  id: string;
+  type: "colonizer";
+  hexId: HexId;
+  progressPct: number;
+  turnsRemaining: number;
+  turnsTotal: number;
+  costColonization: number;
+  costDucats: number;
+};
+
+type ColonizationUnitPreviewItem = {
+  id: string;
+  type: "colonizer";
+  hexId: HexId;
+  movementPoints: number;
+  maxMovementPoints: number;
+  status: string;
+};
+
+type SettlementProjectPreviewItem = {
+  id: string;
+  regionId: string;
+  targetHexId: HexId;
+  progressPct: number;
+  progressColonization: number;
+  costColonization: number;
+  state: "active" | "stalled" | "completed" | "canceled";
+  stallReasonCode?: string | null;
+};
+
 type MarketTradePartner = {
   id: string;
   name: string;
@@ -172,6 +203,9 @@ type Props = {
     categoryKey: UiTextKey;
   }>;
   colonizationLimit?: { active: number; max: number } | null;
+  colonizerQueuePreview?: ColonizationQueuePreviewItem[];
+  colonizerUnitPreview?: ColonizationUnitPreviewItem[];
+  settlementProjectPreview?: SettlementProjectPreviewItem[];
   countryDetails?: { provinceCount: number; totalAreaKm2: number } | null;
   notificationCount: number;
   pendingDecisionCount: number;
@@ -193,6 +227,7 @@ type Props = {
   onOpenBuildingConstruction?: (buildingId: string) => void;
   onCancelConstructionProject?: (item: ConstructionCancelPayload) => void;
   onFocusConstructionHex?: (hexId: HexId) => void;
+  onFocusHex?: (hexId: HexId) => void;
   onOpenPopulation: () => void;
   onOpenMarket: () => void;
   onOpenGlobalMarket: () => void;
@@ -265,7 +300,7 @@ export function StrategyShell(props: Props) {
   const { t } = useUiText();
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTabKey>("actions");
   const activeMode = modeDescriptors.find((mode) => mode.key === props.activeMode) ?? modeDescriptors[0];
-  const activeActions = getModeActions(props.activeMode, props, () => setWorkspaceTab("buildings"));
+  const activeActions = getModeActions(props.activeMode, props, () => setWorkspaceTab("buildings"), () => setWorkspaceTab("records"));
   const availableWorkspaceTabs = workspaceTabDescriptors.filter((tab) => {
     if (tab.key === "summary") return props.activeMode === "overview";
     if (tab.key === "trade") return props.activeMode === "market";
@@ -528,16 +563,7 @@ function ModePreview({ mode, props }: { mode: StrategyMode; props: Props }) {
     );
   }
   if (mode === "colonization") {
-    return (
-      <section className="arc-strategy-preview">
-        <div className="arc-strategy-preview-header">
-          <span>{t("shell.preview.colonizationLedger")}</span>
-        </div>
-        <div className="mt-2 grid gap-2">
-          <EmptyPreview text={t("shell.preview.noColonization")} />
-        </div>
-      </section>
-    );
+    return <ColonizationPreview props={props} />;
   }
   if (mode === "population") {
     return (
@@ -762,6 +788,201 @@ function ConstructionPreviewRow({
 
 function EmptyPreview({ text }: { text: string }) {
   return <div className="arc-strategy-empty-preview">{text}</div>;
+}
+
+function ColonizationPreview({ props }: { props: Props }) {
+  const { t } = useUiText();
+  const queue = props.colonizerQueuePreview ?? [];
+  const units = props.colonizerUnitPreview ?? [];
+  const projects = props.settlementProjectPreview ?? [];
+  const hasItems = queue.length > 0 || units.length > 0 || projects.length > 0;
+  return (
+    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.preview.colonizationLedger")}>
+      {!hasItems ? <EmptyPreview text={t("shell.preview.noColonization")} /> : null}
+      {units.length > 0 ? (
+        <ColonizationGroup title={t("shell.colonization.readyColonizers")} count={units.length}>
+          {units.map((unit) => (
+            <ColonizationUnitRow key={unit.id} item={unit} onFocusHex={props.onFocusHex} />
+          ))}
+        </ColonizationGroup>
+      ) : null}
+      {queue.length > 0 ? (
+        <ColonizationGroup title={t("shell.colonization.colonizerQueue")} count={queue.length}>
+          {queue.map((item) => (
+            <ColonizationQueueRow key={item.id} item={item} onFocusHex={props.onFocusHex} />
+          ))}
+        </ColonizationGroup>
+      ) : null}
+      {projects.length > 0 ? (
+        <ColonizationGroup title={t("shell.colonization.settlementProjects")} count={projects.length}>
+          {projects.map((project) => (
+            <SettlementProjectRow key={project.id} item={project} onFocusHex={props.onFocusHex} />
+          ))}
+        </ColonizationGroup>
+      ) : null}
+    </section>
+  );
+}
+
+function ColonizationGroup(props: { title: string; count: number; children: ReactNode }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div className="arc-strategy-building-category">
+      <button
+        type="button"
+        className="arc-strategy-building-category-header"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span className="arc-strategy-building-category-title">
+          <Flag size={14} />
+          <span>{props.title}</span>
+        </span>
+        <span className="arc-strategy-building-category-count">{props.count}</span>
+        <ChevronDown size={15} className={`arc-strategy-building-category-chevron ${open ? "arc-strategy-building-category-chevron--open" : ""}`} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open ? (
+          <motion.div
+            className="arc-strategy-building-category-body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+          >
+            <div className="arc-strategy-building-category-rows">{props.children}</div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ColonizationUnitRow(props: { item: ColonizationUnitPreviewItem; onFocusHex?: (hexId: HexId) => void }) {
+  const { t } = useUiText();
+  return (
+    <ColonizationRowShell
+      title={t("hexMap.civilianColonizer")}
+      subtitle={props.item.hexId}
+      progressLabel={t("hexMap.civilianMovement", {
+        current: Math.max(0, Math.floor(props.item.movementPoints)),
+        max: Math.max(0, Math.floor(props.item.maxMovementPoints)),
+      })}
+      progressPct={(Math.max(0, props.item.movementPoints) / Math.max(1, props.item.maxMovementPoints)) * 100}
+      tone={props.item.status === "captured" ? "danger" : "ready"}
+      targetHexId={props.item.hexId}
+      onFocusHex={props.onFocusHex}
+    />
+  );
+}
+
+function ColonizationQueueRow(props: { item: ColonizationQueuePreviewItem; onFocusHex?: (hexId: HexId) => void }) {
+  const { t } = useUiText();
+  return (
+    <ColonizationRowShell
+      title={t("hexMap.civilianColonizer")}
+      subtitle={props.item.hexId}
+      progressLabel={t("hexMap.civilianQueueProgress", {
+        current: Math.max(0, props.item.turnsTotal - props.item.turnsRemaining),
+        total: Math.max(1, props.item.turnsTotal),
+      })}
+      progressPct={props.item.progressPct}
+      tone="queue"
+      targetHexId={props.item.hexId}
+      onFocusHex={props.onFocusHex}
+      meta={
+        <>
+          <span className="arc-strategy-building-list-cost">
+            <img src={BASE_RESOURCE_ICON_URLS.colonization} alt="" />
+            <span>{formatCompact(props.item.costColonization)}</span>
+          </span>
+          <span className="arc-strategy-building-list-cost">
+            <img src={BASE_RESOURCE_ICON_URLS.ducats} alt="" />
+            <span>{formatCompact(props.item.costDucats)}</span>
+          </span>
+        </>
+      }
+    />
+  );
+}
+
+function SettlementProjectRow(props: { item: SettlementProjectPreviewItem; onFocusHex?: (hexId: HexId) => void }) {
+  const { t } = useUiText();
+  const statusKey: UiTextKey =
+    props.item.state === "stalled"
+      ? "shell.colonization.status.stalled"
+      : props.item.state === "completed"
+        ? "shell.colonization.status.completed"
+        : props.item.state === "canceled"
+          ? "shell.colonization.status.canceled"
+          : "shell.colonization.status.active";
+  return (
+    <ColonizationRowShell
+      title={t("shell.colonization.settlementProject")}
+      subtitle={`${props.item.regionId} · ${props.item.targetHexId}`}
+      progressLabel={`${t(statusKey)} · ${formatCompact(props.item.progressColonization)} / ${formatCompact(props.item.costColonization)}`}
+      progressPct={props.item.progressPct}
+      tone={props.item.state === "stalled" ? "danger" : "project"}
+      targetHexId={props.item.targetHexId}
+      onFocusHex={props.onFocusHex}
+    />
+  );
+}
+
+function ColonizationRowShell(props: {
+  title: string;
+  subtitle: string;
+  progressLabel: string;
+  progressPct: number;
+  tone: "ready" | "queue" | "project" | "danger";
+  targetHexId: HexId;
+  onFocusHex?: (hexId: HexId) => void;
+  meta?: ReactNode;
+}) {
+  const { t } = useUiText();
+  return (
+    <motion.div
+      className={`arc-strategy-construction-row arc-strategy-colonization-row arc-strategy-colonization-row--${props.tone}`}
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.14 }}
+    >
+      <span className="arc-strategy-building-list-icon arc-strategy-colonization-icon">
+        <Flag size={22} />
+      </span>
+      <span className="arc-strategy-building-list-main">
+        <span className="arc-strategy-building-list-name">{props.title}</span>
+        <span className="arc-strategy-building-list-effects">{props.subtitle}</span>
+      </span>
+      {props.meta ? <span className="arc-strategy-building-list-meta">{props.meta}</span> : null}
+      <div className="arc-strategy-construction-row-progress">
+        <div className="flex justify-between text-[10px] text-[var(--arc-color-atlas-muted)]">
+          <span>{props.progressLabel}</span>
+          <span>{Math.round(Math.max(0, Math.min(100, props.progressPct)))}%</span>
+        </div>
+        <div className="mt-1 h-1.5 overflow-hidden bg-[var(--arc-color-atlas-paper-deep)]">
+          <div className="h-full bg-[var(--arc-color-atlas-primary)]" style={{ width: `${Math.max(0, Math.min(100, props.progressPct))}%` }} />
+        </div>
+      </div>
+      <div className="arc-strategy-construction-row-actions">
+        <Tooltip content={t("shell.colonization.focusHexTooltip")} placement="top">
+          <button
+            type="button"
+            className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary"
+            onClick={(event) => {
+              event.stopPropagation();
+              props.onFocusHex?.(props.targetHexId);
+            }}
+            disabled={!props.onFocusHex}
+            aria-label={t("shell.colonization.focusHexTooltip")}
+          >
+            <Crosshair size={13} aria-hidden="true" />
+          </button>
+        </Tooltip>
+      </div>
+    </motion.div>
+  );
 }
 
 function ConstructionBuildingList(props: {
@@ -1353,7 +1574,7 @@ function DashboardSection(props: {
   );
 }
 
-function getModeActions(mode: StrategyMode, props: Props, openBuildingsTab: () => void): ActionItem[] {
+function getModeActions(mode: StrategyMode, props: Props, openBuildingsTab: () => void, openRecordsTab: () => void): ActionItem[] {
   if (mode === "overview") {
     return [
       { key: "colonization", labelKey: "shell.action.colonization", descriptionKey: "shell.action.colonizationDescription", icon: Flag, onClick: () => props.onModeChange("colonization"), tone: "primary" },
@@ -1370,8 +1591,8 @@ function getModeActions(mode: StrategyMode, props: Props, openBuildingsTab: () =
   }
   if (mode === "colonization") {
     return [
-      { key: "colonization-map", labelKey: "shell.action.colonization", descriptionKey: "shell.action.colonizationDescription", icon: Flag, onClick: () => props.onModeChange("colonization"), tone: "primary" },
-      { key: "budget", labelKey: "shell.action.budget", descriptionKey: "shell.action.budgetDescription", icon: Wallet, onClick: props.onOpenBudget },
+      { key: "army", labelKey: "shell.action.openArmy", descriptionKey: "shell.action.openArmyDescription", icon: Shield, onClick: props.onOpenArmy, tone: "primary" },
+      { key: "colonization-records", labelKey: "shell.action.colonizationRecords", descriptionKey: "shell.action.colonizationRecordsDescription", icon: ClipboardList, onClick: openRecordsTab },
     ];
   }
   if (mode === "population") {

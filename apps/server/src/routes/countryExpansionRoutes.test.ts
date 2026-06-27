@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { RouteAuth } from "../security/routeAuth";
 import {
   colonizationActionSchema,
+  colonizerQueueSchema,
   registerCountryExpansionRoutes,
   type CountryExpansionRoutesDependencies,
   type CountryExpansionWorldState,
@@ -23,6 +24,8 @@ describe("countryExpansionRoutes", () => {
   it("validates colonization action payloads", () => {
     expect(colonizationActionSchema.safeParse({ regionId: "region:a" }).success).toBe(true);
     expect(colonizationActionSchema.safeParse({ hexId: "" }).success).toBe(false);
+    expect(colonizerQueueSchema.safeParse({ hexId: "hex:1:-2" }).success).toBe(true);
+    expect(colonizerQueueSchema.safeParse({ hexId: "bad" }).success).toBe(false);
   });
 
   it("starts colonization for neutral enabled provinces", async () => {
@@ -101,6 +104,36 @@ describe("countryExpansionRoutes", () => {
     expect(deps.savePersistentState).toHaveBeenCalledOnce();
   });
 
+  it("queues colonizer units on controlled hexes and spends through the ledger", async () => {
+    const deps = makeDeps({
+      regionOwner: { "region:a": "country:a" },
+      regionController: { "region:a": "country:a" },
+      resourcesByCountry: { "country:a": { ...resources, colonization: 50, ducats: 20 } },
+    });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/country/colonization/queue-colonizer", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ hexId: "hex:1:2" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(deps.world.civilianUnitQueueByCountry["country:a"]).toEqual([
+      expect.objectContaining({
+        id: "id-1",
+        type: "colonizer",
+        hexId: "hex:1:2",
+        turnsTotal: 2,
+        turnsRemaining: 2,
+        cost: { colonization: 20, ducats: 10 },
+      }),
+    ]);
+    expect(deps.addResourceLedgerExpense).toHaveBeenCalledTimes(2);
+    expect(deps.flushResourceLedger).toHaveBeenCalledOnce();
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({ mask: 28 });
+  });
+
   it("rejects exploration for uncontrolled regions", async () => {
     const deps = makeDeps({ regionOwner: { "region:a": "country:b" }, regionController: { "region:a": "country:b" } });
     const app = makeApp(deps);
@@ -132,13 +165,16 @@ function makeDeps(options?: {
   queuedColonizeHexIds?: string[];
   maxActiveColonizations?: number;
   orders?: Map<string, Order[]>;
+  resourcesByCountry?: Record<string, ResourceTotals>;
 }): CountryExpansionRoutesDependencies & { world: CountryExpansionWorldState } {
   const world: CountryExpansionWorldState = {
     regionOwner: options?.regionOwner ?? {},
     regionController: options?.regionController ?? {},
     colonyProgressByRegion: options?.colonyProgressByRegion ?? {},
-    resourcesByCountry: { "country:a": { ...resources } },
+    resourcesByCountry: options?.resourcesByCountry ?? { "country:a": { ...resources } },
     regionResourceExplorationQueueByRegion: {},
+    civilianUnitsById: {},
+    civilianUnitQueueByCountry: {},
   };
   return {
     world,
@@ -146,6 +182,9 @@ function makeDeps(options?: {
     masks: {
       colonyProgressByRegion: 1,
       regionResourceExplorationQueueByRegion: 2,
+      resourcesByCountry: 4,
+      resourceLedgerByTurn: 8,
+      unitEquipmentState: 16,
     },
     createId: () => "id-1",
     getTurnId: () => 4,
@@ -153,6 +192,13 @@ function makeDeps(options?: {
     getWorldState: () => world,
     getMaxActiveColonizations: () => options?.maxActiveColonizations ?? 2,
     getExplorationDurationTurns: () => 3,
+    getColonizerQueueConfig: () => ({
+      colonizerTurns: 2,
+      colonizerCostColonization: 20,
+      colonizerCostDucats: 10,
+      colonizerMovementPoints: 2,
+    }),
+    getHexRegionId: (hexId) => (hexId === "hex:1:2" ? "region:a" : null),
     getRegionColonizationConfig: () => ({ disabled: false }),
     ensureCountryInWorldBase: vi.fn(),
     addActiveColonizationTarget: vi.fn(),
@@ -169,6 +215,8 @@ function makeDeps(options?: {
     cloneWorldBaseSectionSnapshot: (mask) => ({ mask }),
     savePersistentState: vi.fn(),
     broadcastWorldDeltaFromSectionSnapshot: vi.fn(),
+    addResourceLedgerExpense: vi.fn(),
+    flushResourceLedger: vi.fn(),
     makeOfficialNews: (input) => makeNews(input.title),
     broadcast: vi.fn(),
   };

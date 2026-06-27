@@ -52,18 +52,21 @@ function createDiplomacyCandidate(countryId: string, targetCountryId: string): A
 
 function createColonizationCandidate(countryId: string, regionId = "region:frontier"): AiColonizationCandidate {
   return {
-    kind: "colonize-region",
+    kind: "found-city",
     countryId,
     regionId,
+    targetHexId: "hex:1:1",
+    civilianUnitId: "civilian:colonizer",
     pointCost: 5,
-    ducatCost: 2,
     isAdjacentToControlledRegion: true,
     requiresValidatedPipeline: true,
     orderDraft: {
-      type: "COLONIZE",
+      type: "FOUND_CITY",
       countryId,
+      civilianUnitId: "civilian:colonizer",
       regionId,
-      payload: {},
+      targetHexId: "hex:1:1",
+      payload: { cultureId: countryId },
     },
   };
 }
@@ -176,7 +179,7 @@ describe("planAiRuntimeTick", () => {
 
     expect(plan.actions[0]?.candidateCount).toBe(2);
     expect(plan.actions[0]?.selected?.candidate).toMatchObject({
-      kind: "colonize-region",
+      kind: "found-city",
       regionId: "region:frontier",
     });
   });

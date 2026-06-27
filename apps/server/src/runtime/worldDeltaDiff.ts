@@ -48,6 +48,13 @@ export type BaselineWorldDeltaPayload = {
     divisionTemplatesByCountry?: WorldDelta["g"];
     divisionsById?: WorldDelta["x"];
     militaryFormationQueueByCountry?: WorldDelta["w"];
+    civilianUnitsById?: WorldDelta["cu"];
+    civilianUnitQueueByCountry?: WorldDelta["cq"];
+    settlementProjectsById?: WorldDelta["sp"];
+    cityMarkersById?: WorldDelta["ci"];
+    equipmentVariantsById?: WorldDelta["ev"];
+    equipmentProductionLinesByCountry?: WorldDelta["el"];
+    equipmentStockpileByCountry?: WorldDelta["es"];
     diplomacyProposals?: WorldDelta["j"];
   };
   rejectedOrders: WorldDelta["rejectedOrders"];
@@ -92,6 +99,13 @@ export function buildWorldDeltaPayload(params: {
     g: params.compact.g,
     x: params.compact.x,
     w: params.compact.w,
+    cu: params.compact.cu,
+    cq: params.compact.cq,
+    sp: params.compact.sp,
+    ci: params.compact.ci,
+    ev: params.compact.ev,
+    el: params.compact.el,
+    es: params.compact.es,
     j: params.compact.j,
     rejectedOrders: params.rejectedOrders,
   };
@@ -136,6 +150,13 @@ export function buildBaselineWorldDeltaPayload(params: {
       divisionTemplatesByCountry: params.compact.g,
       divisionsById: params.compact.x,
       militaryFormationQueueByCountry: params.compact.w,
+      civilianUnitsById: params.compact.cu,
+      civilianUnitQueueByCountry: params.compact.cq,
+      settlementProjectsById: params.compact.sp,
+      cityMarkersById: params.compact.ci,
+      equipmentVariantsById: params.compact.ev,
+      equipmentProductionLinesByCountry: params.compact.el,
+      equipmentStockpileByCountry: params.compact.es,
       diplomacyProposals: params.compact.j,
     },
     rejectedOrders: params.rejectedOrders,
@@ -173,6 +194,13 @@ export type WorldBaseSectionSnapshot = {
   divisionTemplatesByCountry?: WorldBase["divisionTemplatesByCountry"];
   divisionsById?: WorldBase["divisionsById"];
   militaryFormationQueueByCountry?: WorldBase["militaryFormationQueueByCountry"];
+  civilianUnitsById?: WorldBase["civilianUnitsById"];
+  civilianUnitQueueByCountry?: WorldBase["civilianUnitQueueByCountry"];
+  settlementProjectsById?: WorldBase["settlementProjectsById"];
+  cityMarkersById?: WorldBase["cityMarkersById"];
+  equipmentVariantsById?: WorldBase["equipmentVariantsById"];
+  equipmentProductionLinesByCountry?: WorldBase["equipmentProductionLinesByCountry"];
+  equipmentStockpileByCountry?: WorldBase["equipmentStockpileByCountry"];
   diplomacyProposals?: WorldBase["diplomacyProposals"];
 };
 
@@ -275,6 +303,15 @@ export function cloneWorldBaseSectionSnapshot(params: {
   if ((mask & WORLD_DELTA_MASK.militaryFormationQueueByCountry) !== 0) {
     snapshot.militaryFormationQueueByCountry = structuredClone(worldBase.militaryFormationQueueByCountry);
   }
+  if ((mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0) {
+    snapshot.civilianUnitsById = structuredClone(worldBase.civilianUnitsById);
+    snapshot.civilianUnitQueueByCountry = structuredClone(worldBase.civilianUnitQueueByCountry);
+    snapshot.settlementProjectsById = structuredClone(worldBase.settlementProjectsById);
+    snapshot.cityMarkersById = structuredClone(worldBase.cityMarkersById);
+    snapshot.equipmentVariantsById = structuredClone(worldBase.equipmentVariantsById);
+    snapshot.equipmentProductionLinesByCountry = structuredClone(worldBase.equipmentProductionLinesByCountry);
+    snapshot.equipmentStockpileByCountry = structuredClone(worldBase.equipmentStockpileByCountry);
+  }
   if ((mask & WORLD_DELTA_MASK.diplomacyProposals) !== 0) {
     snapshot.diplomacyProposals = structuredClone(worldBase.diplomacyProposals);
   }
@@ -362,6 +399,13 @@ export function buildCompactWorldDelta(params: {
   const divisionTemplatesByCountry: Record<string, DivisionTemplate[] | null> = {};
   const divisionsById: Record<string, Division | null> = {};
   const militaryFormationQueueByCountry: Record<string, MilitaryFormationQueueItem[] | null> = {};
+  const civilianUnitsById: WorldDelta["cu"] = {};
+  const civilianUnitQueueByCountry: WorldDelta["cq"] = {};
+  const settlementProjectsById: WorldDelta["sp"] = {};
+  const cityMarkersById: WorldDelta["ci"] = {};
+  const equipmentVariantsById: WorldDelta["ev"] = {};
+  const equipmentProductionLinesByCountry: WorldDelta["el"] = {};
+  const equipmentStockpileByCountry: WorldDelta["es"] = {};
   const diplomacyProposalsChanged = JSON.stringify(prev.diplomacyProposals ?? []) !== JSON.stringify(next.diplomacyProposals ?? []);
 
   for (const key of new Set([...Object.keys(prev.resourcesByCountry), ...Object.keys(next.resourcesByCountry)])) {
@@ -735,6 +779,17 @@ export function buildCompactWorldDelta(params: {
       militaryFormationQueueByCountry[key] = nextValue;
     }
   }
+  collectRecordDiff(prev.civilianUnitsById, next.civilianUnitsById, civilianUnitsById);
+  collectRecordDiff(prev.civilianUnitQueueByCountry, next.civilianUnitQueueByCountry, civilianUnitQueueByCountry);
+  collectRecordDiff(prev.settlementProjectsById, next.settlementProjectsById, settlementProjectsById);
+  collectRecordDiff(prev.cityMarkersById, next.cityMarkersById, cityMarkersById);
+  collectRecordDiff(prev.equipmentVariantsById, next.equipmentVariantsById, equipmentVariantsById);
+  collectRecordDiff(
+    prev.equipmentProductionLinesByCountry,
+    next.equipmentProductionLinesByCountry,
+    equipmentProductionLinesByCountry,
+  );
+  collectRecordDiff(prev.equipmentStockpileByCountry, next.equipmentStockpileByCountry, equipmentStockpileByCountry);
 
   let mask = 0;
   const compact: CompactWorldDeltaPayload = { mask: 0 };
@@ -849,6 +904,34 @@ export function buildCompactWorldDelta(params: {
   if (Object.keys(militaryFormationQueueByCountry).length > 0) {
     mask |= WORLD_DELTA_MASK.militaryFormationQueueByCountry;
     compact.w = militaryFormationQueueByCountry;
+  }
+  if (Object.keys(civilianUnitsById).length > 0) {
+    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    compact.cu = civilianUnitsById;
+  }
+  if (Object.keys(civilianUnitQueueByCountry).length > 0) {
+    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    compact.cq = civilianUnitQueueByCountry;
+  }
+  if (Object.keys(settlementProjectsById).length > 0) {
+    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    compact.sp = settlementProjectsById;
+  }
+  if (Object.keys(cityMarkersById).length > 0) {
+    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    compact.ci = cityMarkersById;
+  }
+  if (Object.keys(equipmentVariantsById).length > 0) {
+    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    compact.ev = equipmentVariantsById;
+  }
+  if (Object.keys(equipmentProductionLinesByCountry).length > 0) {
+    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    compact.el = equipmentProductionLinesByCountry;
+  }
+  if (Object.keys(equipmentStockpileByCountry).length > 0) {
+    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    compact.es = equipmentStockpileByCountry;
   }
   if (diplomacyProposalsChanged) {
     mask |= WORLD_DELTA_MASK.diplomacyProposals;
@@ -976,11 +1059,57 @@ export function toWorldBaseForDeltaDiff(previous: WorldBaseSectionSnapshot, next
       (previous.mask & WORLD_DELTA_MASK.militaryFormationQueueByCountry) !== 0 && previous.militaryFormationQueueByCountry
         ? previous.militaryFormationQueueByCountry
         : next.militaryFormationQueueByCountry,
+    civilianUnitsById:
+      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.civilianUnitsById
+        ? previous.civilianUnitsById
+        : next.civilianUnitsById,
+    civilianUnitQueueByCountry:
+      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.civilianUnitQueueByCountry
+        ? previous.civilianUnitQueueByCountry
+        : next.civilianUnitQueueByCountry,
+    settlementProjectsById:
+      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.settlementProjectsById
+        ? previous.settlementProjectsById
+        : next.settlementProjectsById,
+    cityMarkersById:
+      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.cityMarkersById
+        ? previous.cityMarkersById
+        : next.cityMarkersById,
+    equipmentVariantsById:
+      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.equipmentVariantsById
+        ? previous.equipmentVariantsById
+        : next.equipmentVariantsById,
+    equipmentProductionLinesByCountry:
+      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.equipmentProductionLinesByCountry
+        ? previous.equipmentProductionLinesByCountry
+        : next.equipmentProductionLinesByCountry,
+    equipmentStockpileByCountry:
+      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.equipmentStockpileByCountry
+        ? previous.equipmentStockpileByCountry
+        : next.equipmentStockpileByCountry,
     diplomacyProposals:
       (previous.mask & WORLD_DELTA_MASK.diplomacyProposals) !== 0 && previous.diplomacyProposals
         ? previous.diplomacyProposals
         : next.diplomacyProposals,
   };
+}
+
+function collectRecordDiff<T>(
+  prev: Record<string, T>,
+  next: Record<string, T>,
+  output: Record<string, T | null>,
+): void {
+  for (const key of new Set([...Object.keys(prev), ...Object.keys(next)])) {
+    const prevValue = prev[key];
+    const nextValue = next[key];
+    if (!nextValue) {
+      output[key] = null;
+      continue;
+    }
+    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+      output[key] = nextValue;
+    }
+  }
 }
 
 export function isEqualCountryProgressMap(

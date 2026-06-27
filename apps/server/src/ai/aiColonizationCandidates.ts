@@ -1,83 +1,69 @@
-import type { WorldBase } from "@arcanorum/shared";
+import type { HexId, WorldBase } from "@arcanorum/shared";
 import type { RegionColonizationConfig } from "../mechanics/colonizationMechanics";
+import type { CivilianUnitQueueConfig } from "../mechanics/civilianUnitMechanics";
 import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { AiCountryContext } from "./aiContext";
 
-export type AiColonizationCandidate = {
-  kind: "colonize-region";
+export type AiFoundCityCandidate = {
+  kind: "found-city";
   countryId: string;
   regionId: string;
+  targetHexId: HexId;
+  civilianUnitId: string;
   pointCost: number;
-  ducatCost: number;
   isAdjacentToControlledRegion: boolean;
   requiresValidatedPipeline: true;
   orderDraft: {
-    type: "COLONIZE";
+    type: "FOUND_CITY";
     countryId: string;
+    civilianUnitId: string;
     regionId: string;
-    payload: Record<string, never>;
+    targetHexId: HexId;
+    payload: Record<string, string>;
   };
 };
+
+export type AiQueueColonizerCandidate = {
+  kind: "queue-colonizer";
+  countryId: string;
+  regionId: string;
+  targetHexId: HexId;
+  costColonization: number;
+  costDucats: number;
+  requiresValidatedPipeline: true;
+  actionDraft: {
+    type: "QUEUE_COLONIZER";
+    countryId: string;
+    hexId: HexId;
+  };
+};
+
+export type AiColonizationCandidate = AiFoundCityCandidate | AiQueueColonizerCandidate;
 
 export type AiColonizationCandidateParams = {
   context: AiCountryContext;
   world: Pick<
     WorldBase,
-    "regionOwner" | "regionController" | "regionColonizationByRegion" | "colonyProgressByRegion"
+    | "regionOwner"
+    | "regionController"
+    | "regionColonizationByRegion"
+    | "civilianUnitsById"
+    | "civilianUnitQueueByCountry"
+    | "settlementProjectsById"
+    | "resourcesByCountry"
   >;
+  hexes: Pick<HexMapIndexEntry, "id" | "regionId" | "neighbors">[];
   regionIds: string[];
   regionAdjacencyById: Record<string, string[]>;
-  maxActiveColonizations: number;
-  activeColonizeRegionIds?: Iterable<string>;
-  queuedColonizeRegionIds?: Iterable<string>;
+  colonizerQueueConfig: CivilianUnitQueueConfig;
   getRegionColonizationConfig: (regionId: string) => RegionColonizationConfig;
   getRegionDerivedColonizationCosts: (regionId: string) => { pointsCost: number; ducatsCost: number };
 };
 
 export function selectAiColonizationCandidates(params: AiColonizationCandidateParams): AiColonizationCandidate[] {
-  const countryId = params.context.countryId;
-  const activeRegionIds = new Set([
-    ...Array.from(params.activeColonizeRegionIds ?? []),
-    ...Array.from(params.queuedColonizeRegionIds ?? []),
-  ]);
-  if (activeRegionIds.size >= normalizeMaxActiveColonizations(params.maxActiveColonizations)) return [];
-  if (Math.max(0, params.context.resources.colonization ?? 0) <= 0) return [];
-
-  const ownedOrControlledRegionIds = new Set([
-    ...params.context.ownedRegionIds,
-    ...params.context.controlledRegionIds,
-  ]);
-  const isLandless = ownedOrControlledRegionIds.size === 0;
-  const adjacentRegionIds = buildAdjacentRegionIdSet(ownedOrControlledRegionIds, params.regionAdjacencyById);
-
-  return normalizeRegionIds(params.regionIds)
-    .flatMap((regionId): AiColonizationCandidate[] => {
-      if (!isCandidateRegionAllowed(params, regionId, countryId, isLandless, adjacentRegionIds, activeRegionIds)) {
-        return [];
-      }
-      const costs = params.getRegionDerivedColonizationCosts(regionId);
-      if (!hasResourcesToStartColonization(params.context.resources, params.getRegionColonizationConfig(regionId), costs)) {
-        return [];
-      }
-      return [
-        {
-          kind: "colonize-region",
-          countryId,
-          regionId,
-          pointCost: Math.max(1, Math.floor(costs.pointsCost)),
-          ducatCost: Math.max(0, Math.floor(costs.ducatsCost)),
-          isAdjacentToControlledRegion: adjacentRegionIds.has(regionId),
-          requiresValidatedPipeline: true,
-          orderDraft: {
-            type: "COLONIZE",
-            countryId,
-            regionId,
-            payload: {},
-          },
-        },
-      ];
-    })
-    .sort(compareAiColonizationCandidates);
+  const foundCityCandidates = selectFoundCityCandidates(params);
+  if (foundCityCandidates.length > 0) return foundCityCandidates;
+  return selectQueueColonizerCandidates(params);
 }
 
 export function buildRegionAdjacencyByIdFromHexes(
@@ -107,34 +93,108 @@ export function buildRegionAdjacencyByIdFromHexes(
   );
 }
 
-function isCandidateRegionAllowed(
+function selectFoundCityCandidates(params: AiColonizationCandidateParams): AiFoundCityCandidate[] {
+  const countryId = params.context.countryId;
+  const ownedOrControlledRegionIds = new Set([...params.context.ownedRegionIds, ...params.context.controlledRegionIds]);
+  const isLandless = ownedOrControlledRegionIds.size === 0;
+  const adjacentRegionIds = buildAdjacentRegionIdSet(ownedOrControlledRegionIds, params.regionAdjacencyById);
+  const hexById = new Map(params.hexes.map((hex) => [hex.id, hex] as const));
+  const activeSettlementRegionIds = new Set(
+    Object.values(params.world.settlementProjectsById ?? {})
+      .filter((project) => project.countryId === countryId && project.state !== "completed" && project.state !== "canceled")
+      .map((project) => project.regionId),
+  );
+
+  return Object.values(params.world.civilianUnitsById ?? {})
+    .filter((unit) => unit.countryId === countryId && unit.type === "colonizer" && unit.status !== "captured")
+    .flatMap((unit): AiFoundCityCandidate[] => {
+      const hex = hexById.get(unit.hexId);
+      const regionId = hex?.regionId ?? null;
+      if (!regionId) return [];
+      if (!isNeutralSettlementTarget(params, regionId, countryId, isLandless, adjacentRegionIds)) return [];
+      if (activeSettlementRegionIds.has(regionId)) return [];
+      const costs = params.getRegionDerivedColonizationCosts(regionId);
+      return [{
+        kind: "found-city",
+        countryId,
+        regionId,
+        targetHexId: unit.hexId,
+        civilianUnitId: unit.id,
+        pointCost: Math.max(1, Math.floor(costs.pointsCost)),
+        isAdjacentToControlledRegion: adjacentRegionIds.has(regionId),
+        requiresValidatedPipeline: true,
+        orderDraft: {
+          type: "FOUND_CITY",
+          countryId,
+          civilianUnitId: unit.id,
+          regionId,
+          targetHexId: unit.hexId,
+          payload: { cultureId: countryId },
+        },
+      }];
+    })
+    .sort(compareFoundCityCandidates);
+}
+
+function selectQueueColonizerCandidates(params: AiColonizationCandidateParams): AiQueueColonizerCandidate[] {
+  const countryId = params.context.countryId;
+  if (hasActiveColonizerOrQueue(params.world, countryId)) return [];
+  const costColonization = Math.max(0, Math.floor(params.colonizerQueueConfig.colonizerCostColonization || 0));
+  const costDucats = Math.max(0, Math.floor(params.colonizerQueueConfig.colonizerCostDucats || 0));
+  const resources = params.context.resources;
+  if (Math.max(0, resources.colonization ?? 0) < costColonization) return [];
+  if (Math.max(0, resources.ducats ?? 0) < costDucats) return [];
+  const occupiedHexIds = new Set(Object.values(params.world.civilianUnitsById ?? {}).map((unit) => unit.hexId));
+  for (const item of Object.values(params.world.civilianUnitQueueByCountry ?? {}).flat()) {
+    occupiedHexIds.add(item.hexId);
+  }
+  return params.hexes
+    .filter((hex): hex is Pick<HexMapIndexEntry, "id" | "regionId" | "neighbors"> & { id: HexId; regionId: string } =>
+      isHexId(hex.id) && Boolean(hex.regionId) && isControlledBy(params.world, hex.regionId ?? "", countryId) && !occupiedHexIds.has(hex.id),
+    )
+    .map((hex): AiQueueColonizerCandidate => ({
+      kind: "queue-colonizer",
+      countryId,
+      regionId: hex.regionId,
+      targetHexId: hex.id,
+      costColonization,
+      costDucats,
+      requiresValidatedPipeline: true,
+      actionDraft: {
+        type: "QUEUE_COLONIZER",
+        countryId,
+        hexId: hex.id,
+      },
+    }))
+    .sort(compareQueueColonizerCandidates);
+}
+
+function isNeutralSettlementTarget(
   params: AiColonizationCandidateParams,
   regionId: string,
   countryId: string,
   isLandless: boolean,
   adjacentRegionIds: Set<string>,
-  activeRegionIds: Set<string>,
 ): boolean {
+  if (!normalizeRegionIds(params.regionIds).includes(regionId)) return false;
   if (params.world.regionOwner[regionId]) return false;
+  if (params.world.regionController[regionId]) return false;
   if (params.getRegionColonizationConfig(regionId).disabled) return false;
-  if ((params.world.colonyProgressByRegion[regionId] ?? {})[countryId] != null) return false;
-  if (activeRegionIds.has(regionId)) return false;
   return isLandless || adjacentRegionIds.has(regionId);
 }
 
-function hasResourcesToStartColonization(
-  resources: AiCountryContext["resources"],
-  config: RegionColonizationConfig,
-  costs: { pointsCost: number; ducatsCost: number },
+function hasActiveColonizerOrQueue(
+  world: Pick<WorldBase, "civilianUnitsById" | "civilianUnitQueueByCountry">,
+  countryId: string,
 ): boolean {
-  const colonizationPoints = Math.max(0, resources.colonization ?? 0);
-  const ducats = Math.max(0, resources.ducats ?? 0);
-  if (colonizationPoints <= 0) return false;
-  const pointCost = Math.max(1, Math.floor(config.cost || costs.pointsCost));
-  const ducatCost = Math.max(0, costs.ducatsCost);
-  if (ducatCost <= 0) return true;
-  const ducatsForOneProgressPoint = ducatCost / pointCost;
-  return ducats + 1e-9 >= ducatsForOneProgressPoint;
+  if (Object.values(world.civilianUnitsById ?? {}).some((unit) => unit.countryId === countryId && unit.type === "colonizer" && unit.status !== "captured")) {
+    return true;
+  }
+  return (world.civilianUnitQueueByCountry[countryId] ?? []).some((item) => item.type === "colonizer");
+}
+
+function isControlledBy(world: Pick<WorldBase, "regionOwner" | "regionController">, regionId: string, countryId: string): boolean {
+  return (world.regionController[regionId] ?? world.regionOwner[regionId] ?? null) === countryId;
 }
 
 function buildAdjacentRegionIdSet(
@@ -154,19 +214,16 @@ function normalizeRegionIds(regionIds: string[]): string[] {
   return Array.from(new Set(regionIds.map((regionId) => regionId.trim()).filter(Boolean))).sort();
 }
 
-function normalizeMaxActiveColonizations(value: number): number {
-  return Number.isFinite(value) ? Math.max(1, Math.floor(value)) : 1;
+function isHexId(value: string): value is HexId {
+  return /^hex:-?\d+:-?\d+$/.test(value);
 }
 
-function compareAiColonizationCandidates(
-  left: AiColonizationCandidate,
-  right: AiColonizationCandidate,
-): number {
-  return (
-    left.pointCost - right.pointCost ||
-    left.ducatCost - right.ducatCost ||
-    left.regionId.localeCompare(right.regionId)
-  );
+function compareFoundCityCandidates(left: AiFoundCityCandidate, right: AiFoundCityCandidate): number {
+  return left.pointCost - right.pointCost || left.regionId.localeCompare(right.regionId) || left.targetHexId.localeCompare(right.targetHexId);
+}
+
+function compareQueueColonizerCandidates(left: AiQueueColonizerCandidate, right: AiQueueColonizerCandidate): number {
+  return left.costColonization - right.costColonization || left.costDucats - right.costDucats || left.targetHexId.localeCompare(right.targetHexId);
 }
 
 function addRegionNeighbor(adjacency: Map<string, Set<string>>, regionId: string, neighborRegionId: string): void {

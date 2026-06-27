@@ -21,6 +21,13 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
     rejectedOrders: WorldDelta["rejectedOrders"];
     news: EventLogEntry[];
   }) => void;
+  resolveUnitMoveOrder: (params: {
+    order: Order;
+    playerId: string;
+    movedCivilianUnitIds: Set<string>;
+    rejectedOrders: WorldDelta["rejectedOrders"];
+    news: EventLogEntry[];
+  }) => void;
   resolveBuildOrder: (params: {
     order: Order;
     playerId: string;
@@ -33,12 +40,21 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
     touchedRegionIds: Set<string>;
     rejectedOrders: WorldDelta["rejectedOrders"];
   }) => void;
+  resolveFoundCityOrder: (params: {
+    order: Order;
+    playerId: string;
+    rejectedOrders: WorldDelta["rejectedOrders"];
+  }) => void;
   advanceStoredArmyRoutesTurn: (params: { movedDivisionIds: Set<string>; news: EventLogEntry[] }) => void;
+  advanceStoredUnitRoutesTurn: (params: { movedCivilianUnitIds: Set<string>; news: EventLogEntry[] }) => void;
   advanceMilitaryFormationQueue: (news: EventLogEntry[]) => void;
+  advanceCivilianUnitQueue: () => void;
+  resolveEquipmentProductionLinesTurn: (news: EventLogEntry[]) => void;
   resolveColonizationSupportTurn: (params: {
     colonizeTargetsByCountry: Map<string, Set<string>>;
     touchedRegionIds: Set<string>;
   }) => void;
+  resolveSettlementProjectsTurn: (news: EventLogEntry[]) => void;
   flushResourceLedger: () => void;
   enqueueBuildingAutoUpgradesTurn: () => void;
   resolveBuildingConstructionQueuesTurn: () => void;
@@ -77,6 +93,7 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
   const news: EventLogEntry[] = [];
   const uiNotifications: TUiNotification[] = [];
   const movedDivisionIds = new Set<string>();
+  const movedCivilianUnitIds = new Set<string>();
 
   const colonizeTargetsByCountry = new Map<string, Set<string>>();
   const touchedRegionIds = new Set<string>();
@@ -92,18 +109,28 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
       if (order.type === "ARMY_MOVE") {
         deps.resolveArmyMoveOrder({ order, playerId, movedDivisionIds, rejectedOrders, news });
       }
+      if (order.type === "UNIT_MOVE") {
+        deps.resolveUnitMoveOrder({ order, playerId, movedCivilianUnitIds, rejectedOrders, news });
+      }
       if (order.type === "BUILD") {
         deps.resolveBuildOrder({ order, playerId, rejectedOrders });
       }
       if (order.type === "COLONIZE") {
         deps.resolveColonizeOrder({ order, playerId, colonizeTargetsByCountry, touchedRegionIds, rejectedOrders });
       }
+      if (order.type === "FOUND_CITY") {
+        deps.resolveFoundCityOrder({ order, playerId, rejectedOrders });
+      }
     }
   });
 
   deps.advanceStoredArmyRoutesTurn({ movedDivisionIds, news });
+  deps.advanceStoredUnitRoutesTurn({ movedCivilianUnitIds, news });
   deps.advanceMilitaryFormationQueue(news);
+  deps.advanceCivilianUnitQueue();
+  deps.resolveEquipmentProductionLinesTurn(news);
   deps.resolveColonizationSupportTurn({ colonizeTargetsByCountry, touchedRegionIds });
+  deps.resolveSettlementProjectsTurn(news);
   deps.flushResourceLedger();
   deps.enqueueBuildingAutoUpgradesTurn();
   deps.resolveBuildingConstructionQueuesTurn();

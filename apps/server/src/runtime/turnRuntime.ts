@@ -4,6 +4,7 @@ import {
   type BuildingOwner,
   type CountryParliament,
   type EventLogEntry,
+  type HexId,
   type Order,
   type RegionPopulation,
   type WorldBase,
@@ -24,6 +25,17 @@ import {
   resolveColonizeOrder,
   type RegionColonizationConfig,
 } from "../mechanics/colonizationMechanics";
+import {
+  makeSettlementCompletionNews,
+  resolveFoundCityOrder,
+  resolveSettlementProjectsTurn,
+} from "../mechanics/settlementMechanics";
+import {
+  advanceStoredCivilianUnitRoutesTurn,
+  resolveUnitMoveOrder,
+} from "../mechanics/unitMovementMechanics";
+import { advanceCivilianUnitQueueTurn } from "../mechanics/civilianUnitMechanics";
+import { resolveEquipmentProductionLinesTurn } from "../mechanics/equipmentMechanics";
 import type { HexMapIndexEntry } from "../map/hexIndex";
 import { resolveTurnWithPipeline, type TurnResolverResult } from "./turnResolver";
 import type { GameContentEntry, GameSettings } from "./gameSettingsTypes";
@@ -37,6 +49,7 @@ type CountryEventUiNotification = {
 
 export const TURN_RESOLVE_WORLD_DELTA_MASK =
   WORLD_DELTA_MASK.resourcesByCountry |
+  WORLD_DELTA_MASK.resourceLedgerByTurn |
   WORLD_DELTA_MASK.hexOwner |
   WORLD_DELTA_MASK.regionOwner |
   WORLD_DELTA_MASK.regionController |
@@ -59,7 +72,8 @@ export const TURN_RESOLVE_WORLD_DELTA_MASK =
   WORLD_DELTA_MASK.countryModifiersByCountryId |
   WORLD_DELTA_MASK.explanationRecordsByTurn |
   WORLD_DELTA_MASK.divisionsById |
-  WORLD_DELTA_MASK.militaryFormationQueueByCountry;
+  WORLD_DELTA_MASK.militaryFormationQueueByCountry |
+  WORLD_DELTA_MASK.unitEquipmentState;
 
 export type AiTurnBeforeResolveHookParams = {
   turnId: number;
@@ -113,6 +127,7 @@ type TurnRuntimeParams = {
   getRegionDerivedColonizationCosts: (hexId: string) => { pointsCost: number; ducatsCost: number };
   buildColonizationSettlementPopulation: (regionId: string, countryId: string, total: number) => RegionPopulation;
   areHexIdsAdjacentOrSame: (fromHexId: string, toHexId: string) => boolean;
+  getHexMovementCost: (hexId: string) => number;
   enqueueBuildingAutoUpgradesTurn: () => void;
   resolveBuildingConstructionQueuesTurn: () => void;
   addResourceLedgerIncome: (input: ResourceLedgerEntryInput) => void;
@@ -175,6 +190,15 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
     pushMilitaryRuntimeEvents(news, events);
   };
 
+  const advanceCivilianUnitQueue = (): void => {
+    advanceCivilianUnitQueueTurn({
+      worldBase: params.getWorldBase(),
+      createId: randomUUID,
+      turnId: params.getTurnId(),
+      colonizerMovementPoints: params.getGameSettings().colonization.colonizerMovementPoints,
+    });
+  };
+
   const resolveTurn = async (): Promise<TurnRuntimeResult> => {
     const gameSettings = params.getGameSettings();
     await runAiTurnBeforeResolveIfEnabled({
@@ -207,6 +231,19 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
         });
         if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
         pushMilitaryRuntimeEvents(news, events);
+      },
+      resolveUnitMoveOrder: ({ order, playerId, movedCivilianUnitIds, rejectedOrders, news }) => {
+        const result = resolveUnitMoveOrder({
+          order,
+          playerId,
+          worldBase: params.getWorldBase(),
+          turnId: params.getTurnId(),
+          movedCivilianUnitIds,
+          news,
+          areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
+          getHexMovementCost: params.getHexMovementCost as (hexId: HexId) => number,
+        });
+        if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
       },
       resolveBuildOrder: ({ order, playerId, rejectedOrders }) => {
         const buildingById = new Map(params.getGameSettings().content.buildings.map((entry) => [entry.id, entry] as const));
@@ -244,6 +281,19 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
         });
         if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
       },
+      resolveFoundCityOrder: ({ order, playerId, rejectedOrders }) => {
+        const hexRegionById = new Map(params.getHexIndex().map((hex) => [hex.id, hex.regionId ?? null] as const));
+        const result = resolveFoundCityOrder({
+          order,
+          playerId,
+          worldBase: params.getWorldBase(),
+          getHexRegionId: (hexId) => hexRegionById.get(hexId) ?? null,
+          getRegionColonizationConfig: params.getRegionColonizationConfig,
+          createId: randomUUID,
+          turnId: params.getTurnId(),
+        });
+        if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
+      },
       advanceStoredArmyRoutesTurn: ({ movedDivisionIds, news }) => {
         const storedRouteEvents: MilitaryRuntimeEvent[] = [];
         advanceStoredArmyRoutesTurn({
@@ -256,7 +306,39 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
         });
         pushMilitaryRuntimeEvents(news, storedRouteEvents);
       },
+      advanceStoredUnitRoutesTurn: ({ movedCivilianUnitIds, news }) => {
+        advanceStoredCivilianUnitRoutesTurn({
+          worldBase: params.getWorldBase(),
+          turnId: params.getTurnId(),
+          movedCivilianUnitIds,
+          news,
+          areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
+          getHexMovementCost: params.getHexMovementCost as (hexId: HexId) => number,
+        });
+      },
       advanceMilitaryFormationQueue,
+      advanceCivilianUnitQueue,
+      resolveEquipmentProductionLinesTurn: (news) => {
+        const result = resolveEquipmentProductionLinesTurn({
+          worldBase: params.getWorldBase(),
+          markets: params.getGameSettings().markets,
+        });
+        for (const [countryId, variants] of Object.entries(result.producedByCountry)) {
+          for (const [variantId, amount] of Object.entries(variants)) {
+            news.push(
+              params.makeOfficialNews({
+                turn: params.getTurnId(),
+                category: "military",
+                title: "Производство техники",
+                message: `${variantId}: +${amount}`,
+                countryId,
+                priority: "low",
+                visibility: "private",
+              }),
+            );
+          }
+        }
+      },
       resolveColonizationSupportTurn: ({ colonizeTargetsByCountry, touchedRegionIds }) => {
         resolveColonizationSupportTurn({
           colonizeTargetsByCountry,
@@ -268,6 +350,20 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           getRegionDerivedColonizationCosts: params.getRegionDerivedColonizationCosts,
           addExpense: params.addResourceLedgerExpense,
         });
+      },
+      resolveSettlementProjectsTurn: (news) => {
+        const result = resolveSettlementProjectsTurn({
+          worldBase: params.getWorldBase(),
+          turnId: params.getTurnId(),
+          defaultColonizationPointsPerTurn: params.getGameSettings().colonization.pointsPerTurn,
+          settlementPopulationOnCapture: params.getGameSettings().colonization.settlementPopulationOnCapture,
+          buildSettlementPopulation: params.buildColonizationSettlementPopulation,
+          createId: randomUUID,
+          addExpense: params.addResourceLedgerExpense,
+        });
+        for (const completion of result.completed) {
+          news.push(makeSettlementCompletionNews({ completion, turn: params.getTurnId(), makeId: randomUUID }));
+        }
       },
       enqueueBuildingAutoUpgradesTurn: params.enqueueBuildingAutoUpgradesTurn,
       resolveBuildingConstructionQueuesTurn: params.resolveBuildingConstructionQueuesTurn,

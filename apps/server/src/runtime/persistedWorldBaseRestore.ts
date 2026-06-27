@@ -131,6 +131,27 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     militaryFormationQueueByCountry: params.normalizeMilitaryFormationQueueByCountry(
       (candidate as Partial<WorldBase> & { militaryFormationQueueByCountry?: unknown }).militaryFormationQueueByCountry,
     ),
+    civilianUnitsById: normalizeRecord(
+      (candidate as Partial<WorldBase> & { civilianUnitsById?: unknown }).civilianUnitsById,
+    ) as WorldBase["civilianUnitsById"],
+    civilianUnitQueueByCountry: normalizeRecord(
+      (candidate as Partial<WorldBase> & { civilianUnitQueueByCountry?: unknown }).civilianUnitQueueByCountry,
+    ) as WorldBase["civilianUnitQueueByCountry"],
+    settlementProjectsById: normalizeRecord(
+      (candidate as Partial<WorldBase> & { settlementProjectsById?: unknown }).settlementProjectsById,
+    ) as WorldBase["settlementProjectsById"],
+    cityMarkersById: normalizeRecord(
+      (candidate as Partial<WorldBase> & { cityMarkersById?: unknown }).cityMarkersById,
+    ) as WorldBase["cityMarkersById"],
+    equipmentVariantsById: normalizeRecord(
+      (candidate as Partial<WorldBase> & { equipmentVariantsById?: unknown }).equipmentVariantsById,
+    ) as WorldBase["equipmentVariantsById"],
+    equipmentProductionLinesByCountry: normalizeRecord(
+      (candidate as Partial<WorldBase> & { equipmentProductionLinesByCountry?: unknown }).equipmentProductionLinesByCountry,
+    ) as WorldBase["equipmentProductionLinesByCountry"],
+    equipmentStockpileByCountry: normalizeRecord(
+      (candidate as Partial<WorldBase> & { equipmentStockpileByCountry?: unknown }).equipmentStockpileByCountry,
+    ) as WorldBase["equipmentStockpileByCountry"],
     diplomacyProposals: params.normalizeDiplomacyProposals(
       (candidate as Partial<WorldBase> & { diplomacyProposals?: unknown }).diplomacyProposals,
     ),
@@ -140,6 +161,10 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     restored,
   );
   return restored;
+}
+
+function normalizeRecord(input: unknown): Record<string, unknown> {
+  return input && typeof input === "object" && !Array.isArray(input) ? { ...(input as Record<string, unknown>) } : {};
 }
 
 function assertNoRemovedHexHeavyState(candidate: Record<string, unknown>): void {

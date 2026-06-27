@@ -1,6 +1,8 @@
 import { defaultCivilopediaCategories, defaultCivilopediaEntries } from "./civilopediaNormalizers";
 import {
   DEFAULT_AIRCRAFT_TYPES,
+  DEFAULT_EQUIPMENT_CLASSES,
+  DEFAULT_EQUIPMENT_MODULES,
   DEFAULT_SHIP_TYPES,
   ensureDefaultBattalions,
   ensureDefaultCulture,
@@ -55,6 +57,8 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
       battalions: ensureDefaultBattalions([]),
       shipTypes: ensureDefaultMilitaryContent([], DEFAULT_SHIP_TYPES),
       aircraftTypes: ensureDefaultMilitaryContent([], DEFAULT_AIRCRAFT_TYPES),
+      equipmentClasses: DEFAULT_EQUIPMENT_CLASSES,
+      equipmentModules: DEFAULT_EQUIPMENT_MODULES,
     },
     ai: {
       enabled: true,
@@ -100,6 +104,10 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
       ducatsCostPer1000Km2: 5,
       settlementEnabled: true,
       settlementPopulationOnCapture: 1_000,
+      colonizerTurns: 2,
+      colonizerCostColonization: 20,
+      colonizerCostDucats: 10,
+      colonizerMovementPoints: 2,
     },
     customization: {
       renameDucats: 20,

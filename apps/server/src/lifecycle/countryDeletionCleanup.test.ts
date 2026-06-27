@@ -159,6 +159,13 @@ function createWorldBase(): WorldBase {
       },
     },
     militaryFormationQueueByCountry: { "country:a": [] },
+    civilianUnitsById: {},
+    civilianUnitQueueByCountry: {},
+    settlementProjectsById: {},
+    cityMarkersById: {},
+    equipmentVariantsById: {},
+    equipmentProductionLinesByCountry: {},
+    equipmentStockpileByCountry: {},
     diplomacyProposals: [
       {
         id: "proposal:a",

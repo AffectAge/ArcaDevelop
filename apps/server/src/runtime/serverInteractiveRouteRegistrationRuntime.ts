@@ -19,6 +19,7 @@ import type { createUiNotificationRuntime } from "./uiNotificationRuntime";
 import type { createWorldDeltaBroadcastRuntime } from "./worldDeltaBroadcastRuntime";
 import type { ResourceLedgerRuntime } from "./resourceLedgerRuntime";
 import type { GameSettings } from "./gameSettingsTypes";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { createServerTurnStateRuntime } from "./serverTurnStateRuntime";
 import { getGlobalBuildLimit } from "../mechanics/buildingMechanics";
 import { registerAccountControlRouteComposition } from "./accountControlRouteComposition";
@@ -55,6 +56,8 @@ type ServerInteractiveRouteRegistrationRuntimeParams = {
   getWorldStateVersion: () => number;
   getWorldBase: () => WorldBase;
   getGameSettings: () => GameSettings;
+  getHexIndex: () => HexMapIndexEntry[];
+  getHexMovementCost: Parameters<typeof registerWebSocketRouteComposition>[0]["getHexMovementCost"];
   getAiControlledCountryIds: Parameters<typeof registerWebSocketRouteComposition>[0]["getAiControlledCountryIds"];
   pushAdminAuditLog: Parameters<typeof registerAccountControlRouteComposition>[0]["pushAdminAuditLog"];
   validateImageRule: Parameters<typeof registerAccountControlRouteComposition>[0]["validateImageRule"];
@@ -145,6 +148,7 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
     getOrdersByTurn: () => params.turnStateRuntime.ordersByTurn,
     getQueuedColonizeRegionsByCountryByTurn: () => params.turnStateRuntime.queuedColonizeRegionsByCountryByTurn,
     getActiveColonizeRegionsByCountry: () => params.turnStateRuntime.activeColonizeRegionsByCountry,
+    getHexIndex: params.getHexIndex,
     parseAuthToken: params.parseAuthToken,
     countryRuntimeHelpers: {
       ...params.countryRuntimeHelpers,
@@ -159,6 +163,7 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
     getGlobalBuildLimit,
     normalizeArmyMoveRoute: params.turnMechanicsAdapterRuntime.normalizeArmyMoveRoute,
     isContiguousArmyRoute: params.turnMechanicsAdapterRuntime.isContiguousArmyRoute,
+    getHexMovementCost: params.getHexMovementCost,
     broadcast: params.broadcast,
     broadcastTurnResolveStarted: params.broadcastTurnResolveStarted,
     resolveAndBroadcastCurrentTurn: params.resolveAndBroadcastCurrentTurn,

@@ -78,18 +78,21 @@ const militaryCandidate: AiDiplomacyMilitaryCandidate = {
 };
 
 const colonizationCandidate: AiColonizationCandidate = {
-  kind: "colonize-region",
+  kind: "found-city",
   countryId: "country:alpha",
   regionId: "region:frontier",
+  targetHexId: "hex:1:1",
+  civilianUnitId: "civilian:colonizer",
   pointCost: 5,
-  ducatCost: 2,
   isAdjacentToControlledRegion: true,
   requiresValidatedPipeline: true,
   orderDraft: {
-    type: "COLONIZE",
+    type: "FOUND_CITY",
     countryId: "country:alpha",
+    civilianUnitId: "civilian:colonizer",
     regionId: "region:frontier",
-    payload: {},
+    targetHexId: "hex:1:1",
+    payload: { cultureId: "country:alpha" },
   },
 };
 

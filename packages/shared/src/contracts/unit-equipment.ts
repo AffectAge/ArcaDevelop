@@ -1,0 +1,131 @@
+import type { HexId } from "./hex-map";
+
+export type CivilianUnitType = "colonizer";
+
+export type CivilianUnitStatus = "idle" | "moving" | "founding" | "captured";
+
+export type CivilianUnit = {
+  id: string;
+  countryId: string;
+  type: CivilianUnitType;
+  hexId: HexId;
+  status: CivilianUnitStatus;
+  movementPoints: number;
+  maxMovementPoints: number;
+  path: HexId[];
+  createdTurnId: number;
+  lastMovedTurnId?: number | null;
+  capturedByCountryId?: string | null;
+};
+
+export type CivilianUnitQueueItem = {
+  id: string;
+  countryId: string;
+  type: CivilianUnitType;
+  hexId: HexId;
+  progress: number;
+  turnsTotal: number;
+  turnsRemaining: number;
+  cost: {
+    colonization: number;
+    ducats: number;
+  };
+  createdTurnId: number;
+};
+
+export type SettlementVisualState = "underConstruction" | "working" | "burning" | "ruins";
+
+export type SettlementProjectState = "active" | "stalled" | "completed" | "canceled";
+
+export type SettlementProject = {
+  id: string;
+  countryId: string;
+  regionId: string;
+  targetHexId: HexId;
+  cultureId: string;
+  progressColonization: number;
+  costColonization: number;
+  state: SettlementProjectState;
+  visualState: SettlementVisualState;
+  createdTurnId: number;
+  completedTurnId?: number | null;
+  stallReasonCode?: string | null;
+};
+
+export type CityMarker = {
+  id: string;
+  countryId: string;
+  ownerCountryId: string;
+  regionId: string;
+  targetHexId: HexId;
+  cultureId: string;
+  visualState: SettlementVisualState;
+  createdTurnId: number;
+};
+
+export type EquipmentBranch = "land" | "air" | "naval";
+
+export type EquipmentStatKey =
+  | "attack"
+  | "defense"
+  | "breakthrough"
+  | "armor"
+  | "piercing"
+  | "speed"
+  | "range"
+  | "reliability"
+  | "supplyUse"
+  | "fuelUse";
+
+export type EquipmentStats = Partial<Record<EquipmentStatKey, number>>;
+
+export type EquipmentGoodsCost = Array<{ goodId: string; amount: number }>;
+
+export type EquipmentClassRole = "attack" | "defense" | "breakthrough" | "speed" | "range" | "support";
+
+export type EquipmentClass = {
+  id: string;
+  branch: EquipmentBranch;
+  slotIds: string[];
+  roles: EquipmentClassRole[];
+  baseStats?: EquipmentStats;
+};
+
+export type EquipmentModule = {
+  id: string;
+  classId?: string | null;
+  slotId: string;
+  stats: EquipmentStats;
+  goodsCost: EquipmentGoodsCost;
+};
+
+export type EquipmentVariant = {
+  id: string;
+  countryId?: string | null;
+  classId: string;
+  name: string;
+  moduleIdsBySlotId: Record<string, string>;
+  stats: EquipmentStats;
+  goodsCost: EquipmentGoodsCost;
+  createdTurnId: number;
+  scenarioAuthored?: boolean;
+};
+
+export type EquipmentProductionLine = {
+  id: string;
+  countryId: string;
+  equipmentVariantId: string;
+  assignedCapacity: number;
+  progress: number;
+  active: boolean;
+  createdTurnId: number;
+};
+
+export type EquipmentStockpileByCountry = Record<string, Record<string, number>>;
+
+export type MilitaryEquipmentRequirement = {
+  id: string;
+  equipmentClassId: string;
+  role: EquipmentClassRole;
+  count: number;
+};

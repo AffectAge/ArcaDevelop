@@ -7,6 +7,7 @@ import { resolveTurnWithPipeline, type ColonizationCaptureResult } from "./turnR
 describe("turnResolver", () => {
   it("snapshots every turn-mutated section including region ownership", () => {
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.resourcesByCountry).toBeTruthy();
+    expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.resourceLedgerByTurn).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.hexOwner).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.regionOwner).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.regionController).toBeTruthy();
@@ -18,6 +19,7 @@ describe("turnResolver", () => {
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.countryDecisionsByCountryId).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.journalEntriesByCountryId).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.divisionsById).toBeTruthy();
+    expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.unitEquipmentState).toBeTruthy();
   });
 
 
@@ -97,6 +99,9 @@ describe("turnResolver", () => {
         news.push(makeNews("army"));
         calls.push("order:army");
       },
+      resolveUnitMoveOrder: () => {
+        calls.push("order:unit-move");
+      },
       resolveBuildOrder: ({ rejectedOrders }) => {
         rejectedOrders.push({ playerId: "player:a", reason: "BUILD_REJECTED" });
         calls.push("order:build");
@@ -106,19 +111,29 @@ describe("turnResolver", () => {
         touchedRegionIds.add("region:c");
         calls.push("order:colonize");
       },
+      resolveFoundCityOrder: () => {
+        calls.push("order:found-city");
+      },
       advanceStoredArmyRoutesTurn: ({ movedDivisionIds, news }) => {
         expect([...movedDivisionIds]).toEqual(["division:a"]);
         news.push(makeNews("stored"));
         calls.push("stored-routes");
       },
+      advanceStoredUnitRoutesTurn: () => calls.push("stored-unit-routes"),
       advanceMilitaryFormationQueue: (news) => {
         news.push(makeNews("queue"));
         calls.push("military-queue");
+      },
+      advanceCivilianUnitQueue: () => calls.push("civilian-unit-queue"),
+      resolveEquipmentProductionLinesTurn: (news) => {
+        news.push(makeNews("equipment"));
+        calls.push("equipment-production");
       },
       resolveColonizationSupportTurn: ({ touchedRegionIds }) => {
         colonizeTouchedAtSupport = [...touchedRegionIds].sort();
         calls.push("colonization-support");
       },
+      resolveSettlementProjectsTurn: () => calls.push("settlement-projects"),
       flushResourceLedger: () => calls.push("ledger-flush"),
       enqueueBuildingAutoUpgradesTurn: () => calls.push("auto-upgrades"),
       resolveBuildingConstructionQueuesTurn: () => calls.push("construction"),
@@ -166,7 +181,7 @@ describe("turnResolver", () => {
 
     expect(result.previousWorldBase).toEqual({ id: "snapshot" });
     expect(result.rejectedOrders.map((order) => order.reason)).toEqual(["MOVE_REJECTED", "BUILD_REJECTED"]);
-    expect(result.news.map((event) => event.title)).toEqual(["army", "stored", "queue", "capture", "tech", "journal"]);
+    expect(result.news.map((event) => event.title)).toEqual(["army", "stored", "queue", "equipment", "capture", "tech", "journal"]);
     expect(result.uiNotifications.map((item) => item.notification)).toEqual(["event", "election"]);
     expect(colonizeTouchedAtSupport).toEqual(["region:active", "region:c"]);
     expect(turnId).toBe(4);
@@ -179,8 +194,12 @@ describe("turnResolver", () => {
       "order:build",
       "order:colonize",
       "stored-routes",
+      "stored-unit-routes",
       "military-queue",
+      "civilian-unit-queue",
+      "equipment-production",
       "colonization-support",
+      "settlement-projects",
       "ledger-flush",
       "auto-upgrades",
       "construction",
@@ -213,7 +232,7 @@ describe("turnResolver", () => {
   });
 });
 
-function makeOrder(type: Order["type"], targetId: string): Order {
+function makeOrder(type: "ARMY_MOVE" | "BUILD" | "COLONIZE", targetId: string): Order {
   const base = {
     id: `order:${type}`,
     turnId: 3,

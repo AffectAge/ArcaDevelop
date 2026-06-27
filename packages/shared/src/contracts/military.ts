@@ -1,4 +1,5 @@
 import type { HexId } from "./hex-map";
+import type { MilitaryEquipmentRequirement } from "./unit-equipment";
 
 export type DivisionTemplateBattalion = {
   id: string;
@@ -34,6 +35,7 @@ export type DivisionTemplate = {
   iconUrl?: string | null;
   battalions: DivisionTemplateBattalion[];
   components?: MilitaryTemplateComponent[];
+  equipmentRequirements?: MilitaryEquipmentRequirement[];
   stats: DivisionStats;
   createdTurnId: number;
   updatedTurnId: number;

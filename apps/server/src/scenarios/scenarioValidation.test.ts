@@ -79,6 +79,40 @@ describe("scenarioValidation", () => {
     );
   });
 
+  it("validates 256x64 PNG city atlases for cultures", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await addCulture(scenarioDir, "culture:lantian");
+    await writeBuildingAtlas(join(scenarioDir, "assets/cities/culture_lantian.png"), 256, 64);
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("fails when a city atlas is missing or has the wrong size", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await addCulture(scenarioDir, "culture:lantian");
+
+    const missing = await validateScenarioDirectory(scenarioDir);
+
+    expect(missing.ok).toBe(false);
+    expect(missing.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "MISSING_REQUIRED_FILE", path: "assets/cities/culture_lantian.png" }),
+      ]),
+    );
+
+    await writeBuildingAtlas(join(scenarioDir, "assets/cities/culture_lantian.png"), 64, 64);
+    const wrongSize = await validateScenarioDirectory(scenarioDir);
+
+    expect(wrongSize.ok).toBe(false);
+    expect(wrongSize.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "INVALID_CITY_ATLAS", path: "assets/cities/culture_lantian.png" }),
+      ]),
+    );
+  });
+
   it("fails on broken stable references", async () => {
     const scenarioDir = await createScenarioFixture();
     await writeJson(join(scenarioDir, "history/regions/bohemia.json"), {
@@ -1083,6 +1117,36 @@ async function addBuilding(scenarioDir: string, id: string): Promise<void> {
     country: { bohemia: { name: "Богемия" } },
     good: { grain: { name: "Зерно" } },
     building: { [id.replace(/^building:/, "")]: { name: "Ферма" } },
+    modifier: { industrialProgram: { name: "Промышленная программа" } },
+    decision: { legacy: { name: "Legacy decision RU" } },
+    event: { legacy: { name: "Legacy RU", title: "Legacy RU", description: "Legacy RU", option: { ok: "OK" } } },
+    arcawiki: { economy: { name: "Экономика" } },
+  });
+}
+
+async function addCulture(scenarioDir: string, id: string): Promise<void> {
+  const slug = id.replace(/^culture:/, "");
+  await writeJson(join(scenarioDir, `common/cultures/${id.replace(/[^a-zA-Z0-9_-]/g, "_")}.json`), {
+    id,
+    nameKey: `culture.${slug}.name`,
+  });
+  await writeJson(join(scenarioDir, "localisation/en.json"), {
+    scenario: { fixture: { name: "Fixture" } },
+    region: { bohemia: { name: "Bohemia" } },
+    country: { bohemia: { name: "Bohemia" } },
+    good: { grain: { name: "Grain" } },
+    culture: { [slug]: { name: "Lantian" } },
+    modifier: { industrialProgram: { name: "Industrial program" } },
+    decision: { legacy: { name: "Legacy decision" } },
+    event: { legacy: { name: "Legacy", title: "Legacy", description: "Legacy", option: { ok: "OK" } } },
+    arcawiki: { economy: { name: "Economy" } },
+  });
+  await writeJson(join(scenarioDir, "localisation/ru.json"), {
+    scenario: { fixture: { name: "Fixture RU" } },
+    region: { bohemia: { name: "Богемия" } },
+    country: { bohemia: { name: "Богемия" } },
+    good: { grain: { name: "Зерно" } },
+    culture: { [slug]: { name: "Лантийская" } },
     modifier: { industrialProgram: { name: "Промышленная программа" } },
     decision: { legacy: { name: "Legacy decision RU" } },
     event: { legacy: { name: "Legacy RU", title: "Legacy RU", description: "Legacy RU", option: { ok: "OK" } } },

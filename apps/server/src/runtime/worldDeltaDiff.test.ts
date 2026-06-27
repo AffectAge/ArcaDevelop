@@ -114,6 +114,91 @@ describe("worldDeltaDiff", () => {
     expect(compact.f).toEqual({ "region:a": "country:a" });
   });
 
+  it("groups civilian, settlement, city, and equipment changes under unit equipment delta mask", () => {
+    const prev = makeWorldBase();
+    const next = makeWorldBase({
+      civilianUnitsById: {
+        "civilian:a": {
+          id: "civilian:a",
+          countryId: "country:a",
+          type: "colonizer",
+          hexId: "hex:0:0",
+          status: "idle",
+          movementPoints: 2,
+          maxMovementPoints: 2,
+          path: [],
+          createdTurnId: 1,
+        },
+      },
+      settlementProjectsById: {
+        "settlement:a": {
+          id: "settlement:a",
+          countryId: "country:a",
+          regionId: "region:a",
+          targetHexId: "hex:0:0",
+          cultureId: "culture:a",
+          progressColonization: 1,
+          costColonization: 10,
+          state: "active",
+          visualState: "underConstruction",
+          createdTurnId: 1,
+        },
+      },
+      cityMarkersById: {
+        "city:a": {
+          id: "city:a",
+          countryId: "country:a",
+          ownerCountryId: "country:a",
+          regionId: "region:a",
+          targetHexId: "hex:0:0",
+          cultureId: "culture:a",
+          visualState: "working",
+          createdTurnId: 1,
+        },
+      },
+      equipmentVariantsById: {
+        "equipment:a": {
+          id: "equipment:a",
+          countryId: "country:a",
+          classId: "equipment-class:infantry",
+          name: "Infantry Kit",
+          moduleIdsBySlotId: { weapon: "module:rifle" },
+          stats: { attack: 1 },
+          goodsCost: [{ goodId: "good:iron", amount: 1 }],
+          createdTurnId: 1,
+        },
+      },
+      equipmentProductionLinesByCountry: {
+        "country:a": [
+          {
+            id: "line:a",
+            countryId: "country:a",
+            equipmentVariantId: "equipment:a",
+            assignedCapacity: 1,
+            progress: 0,
+            active: true,
+            createdTurnId: 1,
+          },
+        ],
+      },
+      equipmentStockpileByCountry: { "country:a": { "equipment:a": 3 } },
+    });
+
+    const compact = buildCompactWorldDelta({
+      prev,
+      next,
+      isEqualRegionPopulation: (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b),
+    });
+
+    expect(compact.mask).toBe(WORLD_DELTA_MASK.unitEquipmentState);
+    expect(compact.cu?.["civilian:a"]?.type).toBe("colonizer");
+    expect(compact.sp?.["settlement:a"]?.visualState).toBe("underConstruction");
+    expect(compact.ci?.["city:a"]?.visualState).toBe("working");
+    expect(compact.ev?.["equipment:a"]?.stats.attack).toBe(1);
+    expect(compact.el?.["country:a"]?.[0]?.equipmentVariantId).toBe("equipment:a");
+    expect(compact.es?.["country:a"]).toEqual({ "equipment:a": 3 });
+  });
+
   it("diffs explanation records by turn with compact xr payload", () => {
     const prev = makeWorldBase({
       explanationRecordsByTurn: {},
@@ -488,6 +573,13 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     divisionTemplatesByCountry: {},
     divisionsById: {},
     militaryFormationQueueByCountry: {},
+    civilianUnitsById: {},
+    civilianUnitQueueByCountry: {},
+    settlementProjectsById: {},
+    cityMarkersById: {},
+    equipmentVariantsById: {},
+    equipmentProductionLinesByCountry: {},
+    equipmentStockpileByCountry: {},
     diplomacyProposals: [],
     ...overrides,
     countryModifiersByCountryId: overrides?.countryModifiersByCountryId ?? {},

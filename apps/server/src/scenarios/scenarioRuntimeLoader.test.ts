@@ -133,6 +133,13 @@ function makeWorldBase(currentTurnId: number): WorldBase {
     divisionTemplatesByCountry: {},
     divisionsById: {},
     militaryFormationQueueByCountry: {},
+    civilianUnitsById: {},
+    civilianUnitQueueByCountry: {},
+    settlementProjectsById: {},
+    cityMarkersById: {},
+    equipmentVariantsById: {},
+    equipmentProductionLinesByCountry: {},
+    equipmentStockpileByCountry: {},
     diplomacyProposals: [],
   };
 }

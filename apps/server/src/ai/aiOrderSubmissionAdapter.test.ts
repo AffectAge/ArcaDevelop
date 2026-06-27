@@ -46,18 +46,38 @@ function createDiplomacyCandidate(countryId: string): AiDiplomacyMilitaryCandida
 
 function createColonizationCandidate(countryId: string): AiColonizationCandidate {
   return {
-    kind: "colonize-region",
+    kind: "found-city",
     countryId,
     regionId: "region:frontier",
+    targetHexId: "hex:1:1",
+    civilianUnitId: "civilian:colonizer",
     pointCost: 5,
-    ducatCost: 2,
     isAdjacentToControlledRegion: true,
     requiresValidatedPipeline: true,
     orderDraft: {
-      type: "COLONIZE",
+      type: "FOUND_CITY",
       countryId,
+      civilianUnitId: "civilian:colonizer",
       regionId: "region:frontier",
-      payload: {},
+      targetHexId: "hex:1:1",
+      payload: { cultureId: countryId },
+    },
+  };
+}
+
+function createQueueColonizerCandidate(countryId: string): AiColonizationCandidate {
+  return {
+    kind: "queue-colonizer",
+    countryId,
+    regionId: "region:alpha-core",
+    targetHexId: "hex:0:0",
+    costColonization: 20,
+    costDucats: 10,
+    requiresValidatedPipeline: true,
+    actionDraft: {
+      type: "QUEUE_COLONIZER",
+      countryId,
+      hexId: "hex:0:0",
     },
   };
 }
@@ -118,23 +138,39 @@ describe("createAiBuildOrderDraftsFromPlan", () => {
     ]);
   });
 
-  it("converts selected colonization candidates into validated order drafts", () => {
+  it("converts selected found-city candidates into validated order drafts", () => {
     const drafts = createAiOrderDraftsFromPlan({ plan: createPlan(createColonizationCandidate("country:alpha")) });
 
     expect(drafts).toEqual([
       {
         kind: "validated-order-draft",
-        candidateKind: "colonize-region",
+        candidateKind: "found-city",
         countryId: "country:alpha",
         requiresValidatedPipeline: true,
         order: {
-          type: "COLONIZE",
+          type: "FOUND_CITY",
           turnId: 7,
           playerId: "ai:country:alpha",
           countryId: "country:alpha",
+          civilianUnitId: "civilian:colonizer",
           regionId: "region:frontier",
-          payload: {},
+          targetHexId: "hex:1:1",
+          payload: { cultureId: "country:alpha" },
         },
+      },
+    ]);
+  });
+
+  it("converts selected queue-colonizer candidates into validated action drafts", () => {
+    const drafts = createAiOrderDraftsFromPlan({ plan: createPlan(createQueueColonizerCandidate("country:alpha")) });
+
+    expect(drafts).toEqual([
+      {
+        kind: "validated-ai-action-draft",
+        candidateKind: "queue-colonizer",
+        countryId: "country:alpha",
+        requiresValidatedPipeline: true,
+        action: { type: "QUEUE_COLONIZER", countryId: "country:alpha", hexId: "hex:0:0" },
       },
     ]);
   });
@@ -155,6 +191,7 @@ describe("createAiBuildOrderDraftsFromPlan", () => {
   it("skips unsupported selected candidates and empty selections", () => {
     expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(createDiplomacyCandidate("country:alpha")) })).toEqual([]);
     expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(createColonizationCandidate("country:alpha")) })).toEqual([]);
+    expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(createQueueColonizerCandidate("country:alpha")) })).toEqual([]);
     expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(null) })).toEqual([]);
   });
 
@@ -165,6 +202,7 @@ describe("createAiBuildOrderDraftsFromPlan", () => {
     const results = await submitAiOrderDrafts({
       drafts,
       submitDraft: async (draft) => {
+        if (draft.kind !== "validated-order-draft") throw new Error("expected order draft");
         seenPlayerIds.push(draft.order.playerId);
         return { ok: true, submittedOrderId: "order:ai:1" };
       },

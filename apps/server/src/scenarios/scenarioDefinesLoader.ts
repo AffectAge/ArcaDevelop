@@ -38,6 +38,10 @@ export type ScenarioDefines = {
     ducatsCostPer1000Km2?: unknown;
     settlementEnabled?: unknown;
     settlementPopulationOnCapture?: unknown;
+    colonizerTurns?: unknown;
+    colonizerCostColonization?: unknown;
+    colonizerCostDucats?: unknown;
+    colonizerMovementPoints?: unknown;
   };
   customization?: {
     renameDucats?: unknown;
@@ -115,6 +119,10 @@ export const SCENARIO_DEFINES_SUPPORTED_SECTIONS = {
     ducatsCostPer1000Km2: { type: "integer", min: 0, max: 1_000_000_000_000 },
     settlementEnabled: { type: "boolean" },
     settlementPopulationOnCapture: { type: "integer", min: 0, max: 1_000_000_000 },
+    colonizerTurns: { type: "integer", min: 1, max: 3_650 },
+    colonizerCostColonization: { type: "integer", min: 0, max: 1_000_000_000_000 },
+    colonizerCostDucats: { type: "integer", min: 0, max: 1_000_000_000_000 },
+    colonizerMovementPoints: { type: "integer", min: 1, max: 100 },
   },
   customization: {
     renameDucats: { type: "integer", min: 0, max: 1_000_000_000_000 },
@@ -194,6 +202,10 @@ export type ColonizationSettings = {
   ducatsCostPer1000Km2: number;
   settlementEnabled: boolean;
   settlementPopulationOnCapture: number;
+  colonizerTurns: number;
+  colonizerCostColonization: number;
+  colonizerCostDucats: number;
+  colonizerMovementPoints: number;
 };
 
 export type CustomizationSettings = {
@@ -274,6 +286,10 @@ const scenarioDefinesShapeSchema = z
         ducatsCostPer1000Km2: z.unknown().optional(),
         settlementEnabled: z.unknown().optional(),
         settlementPopulationOnCapture: z.unknown().optional(),
+        colonizerTurns: z.unknown().optional(),
+        colonizerCostColonization: z.unknown().optional(),
+        colonizerCostDucats: z.unknown().optional(),
+        colonizerMovementPoints: z.unknown().optional(),
       })
       .strict()
       .optional(),
@@ -625,6 +641,34 @@ export function normalizeScenarioColonizationDefines(
       0,
       1_000_000_000,
       "INVALID_SCENARIO_COLONIZATION_SETTLEMENT_POPULATION",
+    ),
+    colonizerTurns: normalizeIntegerInRange(
+      colonizationDefines.colonizerTurns,
+      defaults.colonizerTurns,
+      1,
+      3_650,
+      "INVALID_SCENARIO_COLONIZATION_COLONIZER_TURNS",
+    ),
+    colonizerCostColonization: normalizeIntegerInRange(
+      colonizationDefines.colonizerCostColonization,
+      defaults.colonizerCostColonization,
+      0,
+      options.maxSettingNumber,
+      "INVALID_SCENARIO_COLONIZATION_COLONIZER_COST",
+    ),
+    colonizerCostDucats: normalizeIntegerInRange(
+      colonizationDefines.colonizerCostDucats,
+      defaults.colonizerCostDucats,
+      0,
+      options.maxSettingNumber,
+      "INVALID_SCENARIO_COLONIZATION_COLONIZER_DUCATS_COST",
+    ),
+    colonizerMovementPoints: normalizeIntegerInRange(
+      colonizationDefines.colonizerMovementPoints,
+      defaults.colonizerMovementPoints,
+      1,
+      100,
+      "INVALID_SCENARIO_COLONIZATION_COLONIZER_MOVEMENT",
     ),
   };
 }

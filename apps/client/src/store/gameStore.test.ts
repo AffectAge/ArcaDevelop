@@ -113,6 +113,95 @@ describe("gameStore region world deltas", () => {
     expect(useGameStore.getState().worldBase?.regionConstructionQueueByRegion).not.toHaveProperty("region:a");
   });
 
+  it("applies grouped unit, settlement, city, and equipment deltas", () => {
+    useGameStore.getState().setWorldBase(makeWorldBase(), 1, 1);
+
+    useGameStore.getState().applyWorldDelta(
+      {
+        type: "WORLD_DELTA",
+        turnId: 2,
+        worldStateVersion: 2,
+        mask: WORLD_DELTA_MASK.unitEquipmentState,
+        cu: {
+          "civilian:a": {
+            id: "civilian:a",
+            countryId: "country:a",
+            type: "colonizer",
+            hexId: "hex:0:0",
+            status: "idle",
+            movementPoints: 2,
+            maxMovementPoints: 2,
+            path: [],
+            createdTurnId: 1,
+          },
+        },
+        sp: {
+          "settlement:a": {
+            id: "settlement:a",
+            countryId: "country:a",
+            regionId: "region:a",
+            targetHexId: "hex:0:0",
+            cultureId: "culture:a",
+            progressColonization: 1,
+            costColonization: 10,
+            state: "active",
+            visualState: "underConstruction",
+            createdTurnId: 1,
+          },
+        },
+        ci: {
+          "city:a": {
+            id: "city:a",
+            countryId: "country:a",
+            ownerCountryId: "country:a",
+            regionId: "region:a",
+            targetHexId: "hex:0:0",
+            cultureId: "culture:a",
+            visualState: "working",
+            createdTurnId: 1,
+          },
+        },
+        ev: {
+          "equipment:a": {
+            id: "equipment:a",
+            countryId: "country:a",
+            classId: "equipment-class:infantry",
+            name: "Infantry Kit",
+            moduleIdsBySlotId: { weapon: "module:rifle" },
+            stats: { attack: 1 },
+            goodsCost: [{ goodId: "good:iron", amount: 1 }],
+            createdTurnId: 1,
+          },
+        },
+        el: {
+          "country:a": [
+            {
+              id: "line:a",
+              countryId: "country:a",
+              equipmentVariantId: "equipment:a",
+              assignedCapacity: 1,
+              progress: 0,
+              active: true,
+              createdTurnId: 1,
+            },
+          ],
+        },
+        es: { "country:a": { "equipment:a": 3 } },
+        rejectedOrders: [],
+      },
+      2,
+      2,
+    );
+
+    const world = useGameStore.getState().worldBase;
+    expect(world?.civilianUnitsById["civilian:a"]?.type).toBe("colonizer");
+    expect(world?.settlementProjectsById["settlement:a"]?.state).toBe("active");
+    expect(world?.cityMarkersById["city:a"]?.visualState).toBe("working");
+    expect(world?.equipmentVariantsById["equipment:a"]?.stats.attack).toBe(1);
+    expect(world?.equipmentProductionLinesByCountry["country:a"]?.[0]?.equipmentVariantId).toBe("equipment:a");
+    expect(world?.equipmentStockpileByCountry["country:a"]).toEqual({ "equipment:a": 3 });
+  });
+
   it("applies explanation record deltas by turn", () => {
     useGameStore.getState().setWorldBase(
       makeWorldBase({
@@ -279,6 +368,13 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     divisionTemplatesByCountry: {},
     divisionsById: {},
     militaryFormationQueueByCountry: {},
+    civilianUnitsById: {},
+    civilianUnitQueueByCountry: {},
+    settlementProjectsById: {},
+    cityMarkersById: {},
+    equipmentVariantsById: {},
+    equipmentProductionLinesByCountry: {},
+    equipmentStockpileByCountry: {},
     diplomacyProposals: [],
     ...overrides,
     countryModifiersByCountryId: overrides?.countryModifiersByCountryId ?? {},

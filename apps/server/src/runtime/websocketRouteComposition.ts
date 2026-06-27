@@ -18,6 +18,7 @@ type WebSocketRouteCompositionParams = {
   getOrdersByTurn: WebSocketDeps["getOrdersByTurn"];
   getQueuedColonizeRegionsByCountryByTurn: WebSocketDeps["getQueuedColonizeRegionsByCountryByTurn"];
   getActiveColonizeRegionsByCountry: WebSocketDeps["getActiveColonizeRegionsByCountry"];
+  getHexIndex: WebSocketDeps["getHexIndex"];
   parseAuthToken: WebSocketDeps["parseAuthToken"];
   countryRuntimeHelpers: Pick<
     WebSocketDeps,
@@ -54,6 +55,7 @@ type WebSocketRouteCompositionParams = {
   getGlobalBuildLimit: WebSocketDeps["getGlobalBuildLimit"];
   normalizeArmyMoveRoute: WebSocketDeps["normalizeArmyMoveRoute"];
   isContiguousArmyRoute: WebSocketDeps["isContiguousArmyRoute"];
+  getHexMovementCost: WebSocketDeps["getHexMovementCost"];
   broadcast: (message: WsOutMessage) => void;
   broadcastTurnResolveStarted: WebSocketDeps["broadcastTurnResolveStarted"];
   resolveAndBroadcastCurrentTurn: WebSocketDeps["resolveAndBroadcastCurrentTurn"];
@@ -72,6 +74,7 @@ export function registerWebSocketRouteComposition(params: WebSocketRouteComposit
     getOrdersByTurn: params.getOrdersByTurn,
     getQueuedColonizeRegionsByCountryByTurn: params.getQueuedColonizeRegionsByCountryByTurn,
     getActiveColonizeRegionsByCountry: params.getActiveColonizeRegionsByCountry,
+    getHexIndex: params.getHexIndex,
     parseAuthToken: params.parseAuthToken,
     findCountryForAuth: (countryId) =>
       params.prisma.country.findUnique({
@@ -119,5 +122,6 @@ export function registerWebSocketRouteComposition(params: WebSocketRouteComposit
     getGlobalBuildLimit: params.getGlobalBuildLimit,
     normalizeArmyMoveRoute: params.normalizeArmyMoveRoute,
     isContiguousArmyRoute: params.isContiguousArmyRoute,
+    getHexMovementCost: params.getHexMovementCost,
   });
 }

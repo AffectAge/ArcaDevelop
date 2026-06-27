@@ -22,6 +22,8 @@ type CountryActionRouteRuntimeParams = {
     resourcesByCountry: number;
     regionBuildingsByRegion: number;
     regionBuildingDucatsByRegion: number;
+    resourceLedgerByTurn: number;
+    unitEquipmentState: number;
   };
   getTurnId: () => number;
   getWorldBase: () => WorldBase;
@@ -33,6 +35,7 @@ type CountryActionRouteRuntimeParams = {
   getActiveColonizeRegionIds: (countryId: string) => Iterable<string>;
   getQueuedColonizeRegionIds: (turnId: number, countryId: string) => Iterable<string>;
   getRegionColonizationConfig: (hexId: string) => RegionColonizationConfig;
+  getHexRegionId: (hexId: string) => string | null;
   ensureCountryInWorldBase: (countryId: string) => void;
   addActiveColonizationTarget: (countryId: string, hexId: string) => void;
   removeActiveColonizationTarget: (countryId: string, hexId: string) => void;
@@ -68,12 +71,17 @@ export function registerCountryActionRouteRuntime(params: CountryActionRouteRunt
     masks: {
       colonyProgressByRegion: params.masks.colonyProgressByRegion,
       regionResourceExplorationQueueByRegion: params.masks.regionResourceExplorationQueueByRegion,
+      resourcesByCountry: params.masks.resourcesByCountry,
+      resourceLedgerByTurn: params.masks.resourceLedgerByTurn,
+      unitEquipmentState: params.masks.unitEquipmentState,
     },
     createId: randomUUID,
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,
     getWorldState: params.getWorldBase,
     getMaxActiveColonizations: () => params.getGameSettings().colonization.maxActiveColonizations,
+    getColonizerQueueConfig: () => params.getGameSettings().colonization,
+    getHexRegionId: params.getHexRegionId,
     getExplorationDurationTurns: () =>
       Math.max(
         1,
@@ -94,6 +102,8 @@ export function registerCountryActionRouteRuntime(params: CountryActionRouteRunt
     savePersistentState: params.savePersistentState,
     broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase) =>
       params.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase as WorldBaseSectionSnapshot),
+    addResourceLedgerExpense: params.addResourceLedgerExpense,
+    flushResourceLedger: params.flushResourceLedger,
     makeOfficialNews: params.makeOfficialNews,
     broadcast: params.broadcast,
   });

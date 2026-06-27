@@ -1,6 +1,6 @@
 import express from "express";
 import { describe, expect, it, vi } from "vitest";
-import type { Division, DivisionStats, DivisionTemplate } from "@arcanorum/shared";
+import type { Division, DivisionStats, DivisionTemplate, EquipmentVariant } from "@arcanorum/shared";
 import type { RouteAuth } from "../security/routeAuth";
 import { registerMilitaryRoutes, type MilitaryRoutesDependencies } from "./militaryRoutes";
 
@@ -74,6 +74,72 @@ describe("militaryRoutes", () => {
     expect(await response.json()).toEqual({ error: "TEMPLATE_IN_USE" });
     expect(deps.setCountryDivisionTemplates).not.toHaveBeenCalled();
   });
+
+  it("creates an equipment variant through injected equipment catalogs", async () => {
+    const deps = makeDeps();
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/equipment/variants", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        classId: "equipment_class:test",
+        name: "Test Spear Kit",
+        moduleIdsBySlotId: { weapon: "equipment_module:spear" },
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(Object.values(deps.getEquipmentVariantsById())).toEqual([
+      expect.objectContaining({
+        id: "equipment_variant:country-a:id-1",
+        countryId: "country-a",
+        classId: "equipment_class:test",
+        name: "Test Spear Kit",
+        stats: { attack: 3 },
+        goodsCost: [{ goodId: "good:wood", amount: 1 }],
+      }),
+    ]);
+    expect(deps.savePersistentState).toHaveBeenCalledOnce();
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledOnce();
+  });
+
+  it("saves military template equipment requirements", async () => {
+    const deps = makeDeps();
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/templates", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        kind: "land",
+        name: "Equipped Division",
+        components: [{ typeId: "infantry", count: 2 }],
+        equipmentRequirements: [
+          { equipmentClassId: "equipment_class:test", role: "attack", count: 200 },
+        ],
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(deps.setCountryDivisionTemplates).toHaveBeenCalledWith(
+      "country-a",
+      [
+        expect.objectContaining({
+          id: "id-1",
+          name: "Equipped Division",
+          equipmentRequirements: [
+            {
+              id: "equipment_class:test:attack",
+              equipmentClassId: "equipment_class:test",
+              role: "attack",
+              count: 200,
+            },
+          ],
+        }),
+      ],
+    );
+  });
 });
 
 function makeApp(deps: MilitaryRoutesDependencies): express.Express {
@@ -89,6 +155,7 @@ function makeDeps(overrides?: {
 }): MilitaryRoutesDependencies {
   const templates = overrides?.templates ?? {};
   const divisions = overrides?.divisions ?? {};
+  const equipmentVariants: Record<string, EquipmentVariant> = {};
   let nextId = 1;
   return {
     routeAuth: createAllowedRouteAuth(),
@@ -98,6 +165,7 @@ function makeDeps(overrides?: {
       divisionsById: 2,
       resourcesByCountry: 4,
       militaryFormationQueueByCountry: 8,
+      unitEquipmentState: 16,
     },
     createId: () => `id-${nextId++}`,
     getTurnId: () => 3,
@@ -111,6 +179,21 @@ function makeDeps(overrides?: {
     getCountryDivisionsById: () => divisions,
     getCountryMilitaryQueue: () => [],
     setCountryMilitaryQueue: vi.fn(),
+    getEquipmentClasses: () => [
+      { id: "equipment_class:test", branch: "land", slotIds: ["weapon"], roles: ["attack"], baseStats: { attack: 1 } },
+    ],
+    getEquipmentModules: () => [
+      {
+        id: "equipment_module:spear",
+        classId: "equipment_class:test",
+        slotId: "weapon",
+        stats: { attack: 2 },
+        goodsCost: [{ goodId: "good:wood", amount: 1 }],
+      },
+    ],
+    getEquipmentVariantsById: () => equipmentVariants,
+    getCountryEquipmentProductionLines: () => [],
+    setCountryEquipmentProductionLines: vi.fn(),
     getHexOwner: () => "country-a",
     normalizeMilitaryTemplateComponents: (_input, _kind, fallbackBattalions) =>
       fallbackBattalions?.map((battalion) => ({

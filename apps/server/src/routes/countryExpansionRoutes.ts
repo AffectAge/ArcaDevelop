@@ -1,8 +1,22 @@
 import type express from "express";
-import type { EventLogEntry, Order, RegionResourceExplorationProject, ResourceTotals, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import type {
+  EventLogEntry,
+  Order,
+  RegionResourceExplorationProject,
+  ResourceFlowSourceType,
+  ResourceId,
+  ResourceTotals,
+  WorldBase,
+  WsOutMessage,
+} from "@arcanorum/shared";
 import { z } from "zod";
 import type { RouteAuth } from "../security/routeAuth";
 import { createResourceExplorationProject } from "../mechanics/resourceExplorationMechanics";
+import {
+  makeCivilianUnitLedgerFlows,
+  queueColonizerUnit,
+  type CivilianUnitQueueConfig,
+} from "../mechanics/civilianUnitMechanics";
 
 export const colonizationActionSchema = z.object({
   regionId: z.string().min(1),
@@ -12,9 +26,16 @@ export const explorationActionSchema = z.object({
   regionId: z.string().min(1),
 });
 
+export const colonizerQueueSchema = z.object({
+  hexId: z.string().regex(/^hex:-?\d+:-?\d+$/),
+});
+
 export type CountryExpansionMasks = {
   colonyProgressByRegion: number;
   regionResourceExplorationQueueByRegion: number;
+  resourcesByCountry: number;
+  resourceLedgerByTurn: number;
+  unitEquipmentState: number;
 };
 
 export type CountryExpansionWorldState = {
@@ -23,6 +44,8 @@ export type CountryExpansionWorldState = {
   colonyProgressByRegion: Record<string, Record<string, number>>;
   resourcesByCountry: Record<string, ResourceTotals>;
   regionResourceExplorationQueueByRegion: Record<string, RegionResourceExplorationProject[]>;
+  civilianUnitsById: WorldBase["civilianUnitsById"];
+  civilianUnitQueueByCountry: WorldBase["civilianUnitQueueByCountry"];
 };
 
 export type CountryExpansionRoutesDependencies = {
@@ -34,6 +57,8 @@ export type CountryExpansionRoutesDependencies = {
   getWorldState: () => CountryExpansionWorldState;
   getMaxActiveColonizations: () => number;
   getExplorationDurationTurns: () => number;
+  getColonizerQueueConfig: () => CivilianUnitQueueConfig;
+  getHexRegionId: (hexId: string) => string | null;
   getRegionColonizationConfig: (regionId: string) => { disabled: boolean };
   ensureCountryInWorldBase: (countryId: string) => void;
   addActiveColonizationTarget: (countryId: string, regionId: string) => void;
@@ -48,6 +73,18 @@ export type CountryExpansionRoutesDependencies = {
   cloneWorldBaseSectionSnapshot: (mask: number) => unknown;
   savePersistentState: () => void;
   broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase: unknown) => void;
+  addResourceLedgerExpense?: (input: {
+    countryId: string;
+    resourceId: ResourceId;
+    amount: number;
+    sourceType: ResourceFlowSourceType;
+    sourceId: string;
+    categoryId: string;
+    labelKey: string;
+    labelParams?: Record<string, string | number | boolean | null>;
+    metadata?: Record<string, string | number | boolean | null>;
+  }) => void;
+  flushResourceLedger?: () => void;
   makeOfficialNews: (input: {
     turn: number;
     category: "colonization";
@@ -211,6 +248,59 @@ export function registerCountryExpansionRoutes(
     deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
     return res.json({ ok: true, regionId, queue: worldState.regionResourceExplorationQueueByRegion[regionId] });
   });
+
+  app.post("/country/colonization/queue-colonizer", (req, res) => {
+    const auth = deps.routeAuth.requireAuth(req, res);
+    if (!auth) return;
+    const parsed = colonizerQueueSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
+    }
+    deps.ensureCountryInWorldBase(auth.countryId);
+    if (!deps.addResourceLedgerExpense || !deps.flushResourceLedger) {
+      return res.status(500).json({ error: "RESOURCE_LEDGER_UNAVAILABLE" });
+    }
+
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
+      deps.masks.unitEquipmentState | deps.masks.resourcesByCountry | deps.masks.resourceLedgerByTurn,
+    );
+    const worldBase = deps.getWorldBase();
+    const result = queueColonizerUnit({
+      worldBase,
+      countryId: auth.countryId,
+      hexId: parsed.data.hexId as `hex:${number}:${number}`,
+      getHexRegionId: deps.getHexRegionId,
+      config: deps.getColonizerQueueConfig(),
+      createId: deps.createId,
+      turnId: deps.getTurnId(),
+    });
+    if (!result.ok) {
+      return res.status(colonizerQueueErrorStatus(result.error)).json({ error: result.error });
+    }
+
+    for (const flow of makeCivilianUnitLedgerFlows({
+      countryId: auth.countryId,
+      queueId: result.item.id,
+      cost: result.item.cost,
+    })) {
+      deps.addResourceLedgerExpense(flow);
+    }
+    deps.flushResourceLedger();
+    deps.savePersistentState();
+    deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
+    return res.json({
+      ok: true,
+      item: result.item,
+      queue: worldBase.civilianUnitQueueByCountry[auth.countryId] ?? [],
+      turnId: deps.getTurnId(),
+    });
+  });
+}
+
+function colonizerQueueErrorStatus(error: string): 400 | 403 | 409 {
+  if (error === "HEX_NOT_CONTROLLED") return 403;
+  if (error === "CIVILIAN_UNIT_QUEUE_HEX_OCCUPIED" || error === "CIVILIAN_UNIT_HEX_OCCUPIED") return 409;
+  return 400;
 }
 
 function removeColonizationOrdersForRegion(

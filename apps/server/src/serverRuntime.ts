@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { WebSocketServer } from "ws";
 import { createServer } from "http";
@@ -51,6 +52,7 @@ import {
   buildRegionAdjacencyByIdFromHexes,
   selectAiColonizationCandidates,
 } from "./ai/aiColonizationCandidates";
+import { makeCivilianUnitLedgerFlows, queueColonizerUnit } from "./mechanics/civilianUnitMechanics";
 import { selectAiEconomyOrderCandidates } from "./ai/aiEconomyCandidates";
 import { runAiOrderRuntimeCycleWithRuntimeSubmitter } from "./runtime/aiRuntimeCoordinator";
 import type { AiRuntimeCandidateProvider } from "./ai/aiRuntimePlanner";
@@ -132,6 +134,10 @@ const mapRuntime = createMapRuntimeState(
   defaultScenarioBootstrap.mapRoot,
   defaultScenarioBootstrap.hexIndexPath,
 );
+const getHexMovementCost = (hexId: string): number => {
+  const tile = mapRuntime.getHexMapArtifact()?.tiles.find((entry) => entry.id === hexId);
+  return Math.max(0.001, Number(tile?.movementCost ?? 1) || 1);
+};
 
 const app = createServerApp({ dataRoot });
 
@@ -549,6 +555,35 @@ const turnRuntime = createTurnRuntime({
       aiSettings,
       countryIds,
       candidateProviders: createAiRuntimeCandidateProviders(),
+      submitAiAction: async (draft) => {
+        if (draft.action.type !== "QUEUE_COLONIZER") {
+          return { ok: false, reason: "AI_ACTION_NOT_SUPPORTED" };
+        }
+        const previousWorldBase = worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot(
+          TURN_RESOLVE_WORLD_DELTA_MASK,
+        );
+        const result = queueColonizerUnit({
+          worldBase,
+          countryId: draft.action.countryId,
+          hexId: draft.action.hexId,
+          getHexRegionId: (hexId) => mapRuntime.getHexIndex().find((hex) => hex.id === hexId)?.regionId ?? null,
+          config: gameSettings.colonization,
+          createId: randomUUID,
+          turnId,
+        });
+        if (!result.ok) return { ok: false, reason: result.error };
+        for (const flow of makeCivilianUnitLedgerFlows({
+          countryId: draft.action.countryId,
+          queueId: result.item.id,
+          cost: result.item.cost,
+        })) {
+          resourceLedgerRuntime.addExpense(flow);
+        }
+        resourceLedgerRuntime.flushTurn();
+        persistenceFacade.savePersistentState();
+        worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
+        return { ok: true, submittedOrderId: result.item.id };
+      },
       runtimeParams: {
         wsServer: wss,
         onlinePlayers: sessionStateRuntime.onlinePlayers,
@@ -559,6 +594,7 @@ const turnRuntime = createTurnRuntime({
         getOrdersByTurn: () => turnStateRuntime.ordersByTurn,
         getQueuedColonizeRegionsByCountryByTurn: () => turnStateRuntime.queuedColonizeRegionsByCountryByTurn,
         getActiveColonizeRegionsByCountry: () => turnStateRuntime.activeColonizeRegionsByCountry,
+        getHexIndex: mapRuntime.getHexIndex,
         parseAuthToken,
         findCountryForAuth: (countryId) =>
           prisma.country.findUnique({
@@ -606,6 +642,7 @@ const turnRuntime = createTurnRuntime({
         getGlobalBuildLimit,
         normalizeArmyMoveRoute: turnMechanicsAdapterRuntime.normalizeArmyMoveRoute,
         isContiguousArmyRoute: turnMechanicsAdapterRuntime.isContiguousArmyRoute,
+        getHexMovementCost,
       },
       onSubmissionError: (message) => console.warn("[ai] order rejected", message.code),
     });
@@ -621,6 +658,7 @@ const turnRuntime = createTurnRuntime({
   getRegionDerivedColonizationCosts: colonizationRuntime.getRegionDerivedColonizationCosts,
   buildColonizationSettlementPopulation: worldPopulationRuntime.buildColonizationSettlementPopulation,
   areHexIdsAdjacentOrSame: marketAccessRuntime.areHexIdsAdjacentOrSame,
+  getHexMovementCost,
   enqueueBuildingAutoUpgradesTurn: buildingRuntime.enqueueBuildingAutoUpgradesTurn,
   resolveBuildingConstructionQueuesTurn: buildingRuntime.resolveBuildingConstructionQueuesTurn,
   addResourceLedgerIncome: resourceLedgerRuntime.addIncome,
@@ -654,12 +692,10 @@ function createAiRuntimeCandidateProviders(): AiRuntimeCandidateProvider[] {
         selectAiColonizationCandidates({
           context,
           world,
+          hexes: hexIndex,
           regionIds,
           regionAdjacencyById,
-          maxActiveColonizations: gameSettings.colonization.maxActiveColonizations,
-          activeColonizeRegionIds: turnStateRuntime.activeColonizeRegionsByCountry.get(context.countryId) ?? [],
-          queuedColonizeRegionIds:
-            turnStateRuntime.queuedColonizeRegionsByCountryByTurn.get(turnId)?.get(context.countryId) ?? [],
+          colonizerQueueConfig: gameSettings.colonization,
           getRegionColonizationConfig: colonizationRuntime.getRegionColonizationConfig,
           getRegionDerivedColonizationCosts: colonizationRuntime.getRegionDerivedColonizationCosts,
         }),
@@ -787,6 +823,8 @@ registerServerInteractiveRouteRuntime({
   getWorldStateVersion: () => worldStateVersion,
   getWorldBase: () => worldBase,
   getGameSettings: () => gameSettings,
+  getHexIndex: mapRuntime.getHexIndex,
+  getHexMovementCost,
   getAiControlledCountryIds: () => new Set(aiControlledCountryIds),
   pushAdminAuditLog: (entry) => adminAuditLogStore.push(entry),
   validateImageRule,

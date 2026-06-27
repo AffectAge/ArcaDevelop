@@ -10,6 +10,8 @@ import {
   normalizeContentBuildings,
   normalizeContentCultures,
   normalizeContentGoods,
+  normalizeContentEquipmentClasses,
+  normalizeContentEquipmentModules,
   normalizeContentRaces,
   normalizeContentShipTypes,
 } from "../content/contentNormalizers";
@@ -76,6 +78,8 @@ export function normalizeScenarioContentForRuntime(source: unknown): GameSetting
     battalions: normalizeContentBattalions(contentSource.battalions),
     shipTypes: normalizeContentShipTypes(contentSource.shipTypes ?? contentSource.ship_types),
     aircraftTypes: normalizeContentAircraftTypes(contentSource.aircraftTypes ?? contentSource.aircraft_types),
+    equipmentClasses: normalizeContentEquipmentClasses(contentSource.equipmentClasses ?? contentSource.equipment_classes),
+    equipmentModules: normalizeContentEquipmentModules(contentSource.equipmentModules ?? contentSource.equipment_modules),
   };
 }
 

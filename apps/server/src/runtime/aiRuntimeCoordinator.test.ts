@@ -37,18 +37,38 @@ function createBuildCandidate(countryId: string): AiEconomyOrderCandidate {
 
 function createColonizationCandidate(countryId: string): AiColonizationCandidate {
   return {
-    kind: "colonize-region",
+    kind: "found-city",
     countryId,
     regionId: "region:frontier",
+    targetHexId: "hex:1:1",
+    civilianUnitId: "civilian:colonizer",
     pointCost: 5,
-    ducatCost: 2,
     isAdjacentToControlledRegion: true,
     requiresValidatedPipeline: true,
     orderDraft: {
-      type: "COLONIZE",
+      type: "FOUND_CITY",
       countryId,
+      civilianUnitId: "civilian:colonizer",
       regionId: "region:frontier",
-      payload: {},
+      targetHexId: "hex:1:1",
+      payload: { cultureId: countryId },
+    },
+  };
+}
+
+function createQueueColonizerCandidate(countryId: string): AiColonizationCandidate {
+  return {
+    kind: "queue-colonizer",
+    countryId,
+    regionId: "region:alpha-core",
+    targetHexId: "hex:0:0",
+    costColonization: 20,
+    costDucats: 10,
+    requiresValidatedPipeline: true,
+    actionDraft: {
+      type: "QUEUE_COLONIZER",
+      countryId,
+      hexId: "hex:0:0",
     },
   };
 }
@@ -90,7 +110,9 @@ describe("runAiBuildOrderRuntimeCycle", () => {
 
     expect(result.plan.processedCountryIds).toEqual(["country:alpha"]);
     expect(result.drafts).toHaveLength(1);
-    expect(submittedOrders).toEqual([{ type: "ORDER_DELTA", order: result.drafts[0]?.order }]);
+    const buildDraft = result.drafts[0];
+    expect(buildDraft?.kind).toBe("validated-order-draft");
+    expect(submittedOrders).toEqual([{ type: "ORDER_DELTA", order: buildDraft?.kind === "validated-order-draft" ? buildDraft.order : null }]);
     expect(result.submissions).toEqual([{ ok: true, draft: result.drafts[0], submittedOrderId: "order:ai:build" }]);
   });
 
@@ -106,7 +128,7 @@ describe("runAiBuildOrderRuntimeCycle", () => {
     expect(result.submissions).toEqual([{ ok: false, draft: result.drafts[0], reason: "BUILD_CONFLICT" }]);
   });
 
-  it("plans colonization drafts and submits them through the injected order-delta path", async () => {
+  it("plans found-city drafts and submits them through the injected order-delta path", async () => {
     const submittedOrders: unknown[] = [];
 
     const result = await runAiOrderRuntimeCycle({
@@ -124,14 +146,45 @@ describe("runAiBuildOrderRuntimeCycle", () => {
     });
 
     expect(result.drafts).toHaveLength(1);
-    expect(result.drafts[0]?.order).toMatchObject({
-      type: "COLONIZE",
-      playerId: "ai:country:alpha",
-      countryId: "country:alpha",
-      regionId: "region:frontier",
-    });
-    expect(submittedOrders).toEqual([{ type: "ORDER_DELTA", order: result.drafts[0]?.order }]);
+    const foundCityDraft = result.drafts[0];
+    expect(foundCityDraft?.kind).toBe("validated-order-draft");
+    expect(foundCityDraft?.kind === "validated-order-draft" ? foundCityDraft.order : null).toMatchObject({
+          type: "FOUND_CITY",
+          playerId: "ai:country:alpha",
+          countryId: "country:alpha",
+          regionId: "region:frontier",
+          targetHexId: "hex:1:1",
+        });
+    expect(submittedOrders).toEqual([{ type: "ORDER_DELTA", order: foundCityDraft?.kind === "validated-order-draft" ? foundCityDraft.order : null }]);
     expect(result.submissions).toEqual([{ ok: true, draft: result.drafts[0], submittedOrderId: "order:ai:colonize" }]);
+  });
+
+  it("submits queue-colonizer drafts through the injected AI action path", async () => {
+    const submittedActions: unknown[] = [];
+
+    const result = await runAiOrderRuntimeCycle({
+      world: createAiFixtureWorld(),
+      aiSettings,
+      countryIds: ["country:alpha"],
+      candidateProviders: [{
+        id: "colonization",
+        selectCandidates: ({ countryId }) => [createQueueColonizerCandidate(countryId)],
+      }],
+      submitOrderDelta: async () => ({ ok: false, reason: "UNEXPECTED_ORDER" }),
+      submitAiAction: async (draft) => {
+        submittedActions.push(draft.action);
+        return { ok: true, submittedOrderId: "queue:ai:colonizer" };
+      },
+    });
+
+    expect(result.drafts).toHaveLength(1);
+    expect(result.drafts[0]).toMatchObject({
+      kind: "validated-ai-action-draft",
+      candidateKind: "queue-colonizer",
+      action: { type: "QUEUE_COLONIZER", countryId: "country:alpha", hexId: "hex:0:0" },
+    });
+    expect(submittedActions).toEqual([{ type: "QUEUE_COLONIZER", countryId: "country:alpha", hexId: "hex:0:0" }]);
+    expect(result.submissions).toEqual([{ ok: true, draft: result.drafts[0], submittedOrderId: "queue:ai:colonizer" }]);
   });
 
   it("adapts websocket runtime errors into AI submission diagnostics", async () => {
@@ -206,6 +259,8 @@ function createRuntimeParamsWithoutResources(): AiOrderDeltaRuntimeParams {
     getOrdersByTurn: () => new Map(),
     getQueuedColonizeRegionsByCountryByTurn: () => new Map(),
     getActiveColonizeRegionsByCountry: () => new Map(),
+    getHexIndex: () => [],
+    getHexMovementCost: () => 1,
     parseAuthToken: () => null,
     findCountryForAuth: async () => null,
     listResolveStatusCountries: async () => [],

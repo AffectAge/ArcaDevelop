@@ -7,6 +7,8 @@ import {
   normalizeContentBuildings,
   normalizeContentCultures,
   normalizeContentGoods,
+  normalizeContentEquipmentClasses,
+  normalizeContentEquipmentModules,
   normalizeContentRaces,
   normalizeContentShipTypes,
 } from "../content/contentNormalizers";
@@ -85,6 +87,12 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
       battalions: normalizeContentBattalions((next as Partial<{ content?: { battalions?: unknown } }>).content?.battalions),
       shipTypes: normalizeContentShipTypes((next as Partial<{ content?: { shipTypes?: unknown } }>).content?.shipTypes),
       aircraftTypes: normalizeContentAircraftTypes((next as Partial<{ content?: { aircraftTypes?: unknown } }>).content?.aircraftTypes),
+      equipmentClasses: normalizeContentEquipmentClasses(
+        (next as Partial<{ content?: { equipmentClasses?: unknown } }>).content?.equipmentClasses,
+      ),
+      equipmentModules: normalizeContentEquipmentModules(
+        (next as Partial<{ content?: { equipmentModules?: unknown } }>).content?.equipmentModules,
+      ),
     },
     ai: restoreAi(next, defaults),
     civilopedia: {
@@ -121,6 +129,22 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
         typeof next.colonization?.settlementPopulationOnCapture === "number"
           ? Math.max(0, Math.min(1_000_000_000, Math.floor(next.colonization.settlementPopulationOnCapture)))
           : defaults.colonization.settlementPopulationOnCapture,
+      colonizerTurns:
+        typeof next.colonization?.colonizerTurns === "number"
+          ? Math.max(1, Math.min(3_650, Math.floor(next.colonization.colonizerTurns)))
+          : defaults.colonization.colonizerTurns,
+      colonizerCostColonization:
+        typeof next.colonization?.colonizerCostColonization === "number"
+          ? Math.max(0, Math.floor(next.colonization.colonizerCostColonization))
+          : defaults.colonization.colonizerCostColonization,
+      colonizerCostDucats:
+        typeof next.colonization?.colonizerCostDucats === "number"
+          ? Math.max(0, Math.floor(next.colonization.colonizerCostDucats))
+          : defaults.colonization.colonizerCostDucats,
+      colonizerMovementPoints:
+        typeof next.colonization?.colonizerMovementPoints === "number"
+          ? Math.max(1, Math.min(100, Math.floor(next.colonization.colonizerMovementPoints)))
+          : defaults.colonization.colonizerMovementPoints,
     },
     customization: {
       renameDucats: numberOrDefault(next.customization?.renameDucats, defaults.customization.renameDucats),

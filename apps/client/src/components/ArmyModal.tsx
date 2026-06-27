@@ -1,8 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plane, Plus, Shield, Ship, Trash2, Upload } from "lucide-react";
-import type { DivisionTemplate, MilitaryBranch, MilitaryTemplateComponent } from "@arcanorum/shared";
+import { Factory, Plane, Plus, Shield, Ship, Trash2, Upload, Wrench } from "lucide-react";
+import type {
+  DivisionTemplate,
+  EquipmentClass,
+  EquipmentClassRole,
+  EquipmentModule,
+  EquipmentStats,
+  MilitaryBranch,
+  MilitaryEquipmentRequirement,
+  MilitaryTemplateComponent,
+} from "@arcanorum/shared";
 import {
   cancelMilitaryFormation,
+  createEquipmentProductionLine,
+  createEquipmentVariant,
   createMilitaryFormation,
   deleteMilitaryTemplate,
   fetchMilitaryOverview,
@@ -35,6 +46,8 @@ const BRANCH_ICON: Record<MilitaryBranch, typeof Shield> = {
   naval: Ship,
   air: Plane,
 };
+
+const EQUIPMENT_ROLE_OPTIONS: EquipmentClassRole[] = ["attack", "defense", "breakthrough", "speed", "range", "support"];
 
 function formatNumber(value: number, digits = 0) {
   return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: digits }).format(value);
@@ -121,21 +134,64 @@ function branchDefaultNameKey(kind: MilitaryBranch): UiTextKey {
   return "army.defaultLand";
 }
 
+function normalizeTemplateEquipmentRequirements(template: DivisionTemplate): MilitaryEquipmentRequirement[] {
+  return template.equipmentRequirements ?? [];
+}
+
+function getEquipmentClassLabel(equipmentClass: EquipmentClass): string {
+  return equipmentClass.id.replace(/^equipment_class:/, "").replaceAll("_", " ");
+}
+
+function getEquipmentModuleLabel(module: EquipmentModule): string {
+  return module.id.replace(/^equipment_module:/, "").replaceAll("_", " ");
+}
+
+function calculateEquipmentPreview(
+  equipmentClass: EquipmentClass | null,
+  modules: EquipmentModule[],
+  moduleIdsBySlotId: Record<string, string>,
+) {
+  const stats: EquipmentStats = { ...(equipmentClass?.baseStats ?? {}) };
+  const goodsCost = new Map<string, number>();
+  if (!equipmentClass) return { stats, goodsCost: [] as Array<{ goodId: string; amount: number }> };
+  for (const slotId of equipmentClass.slotIds) {
+    const module = modules.find((entry) => entry.id === moduleIdsBySlotId[slotId]);
+    if (!module || module.slotId !== slotId || (module.classId && module.classId !== equipmentClass.id)) continue;
+    for (const [key, value] of Object.entries(module.stats)) {
+      const statKey = key as keyof EquipmentStats;
+      stats[statKey] = Number(((stats[statKey] ?? 0) + Number(value ?? 0)).toFixed(3));
+    }
+    for (const cost of module.goodsCost) {
+      goodsCost.set(cost.goodId, Number(((goodsCost.get(cost.goodId) ?? 0) + cost.amount).toFixed(3)));
+    }
+  }
+  return {
+    stats,
+    goodsCost: [...goodsCost.entries()].map(([goodId, amount]) => ({ goodId, amount })),
+  };
+}
+
 export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
   const { t } = useUiText();
   const [overview, setOverview] = useState<MilitaryOverview | null>(null);
-  const [activeTab, setActiveTab] = useState<MilitaryBranch | "queue">("land");
+  const [activeTab, setActiveTab] = useState<MilitaryBranch | "queue" | "equipment">("land");
   const [loading, setLoading] = useState(false);
   const [pending, setPending] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [templateName, setTemplateName] = useState("");
   const [components, setComponents] = useState<MilitaryTemplateComponent[]>([]);
+  const [equipmentRequirements, setEquipmentRequirements] = useState<MilitaryEquipmentRequirement[]>([]);
   const [formationName, setFormationName] = useState("");
   const [formationHexId, setFormationHexId] = useState("");
   const [iconError, setIconError] = useState<string | null>(null);
   const [moveTargetsByUnitId, setMoveTargetsByUnitId] = useState<Record<string, string>>({});
+  const [equipmentClassId, setEquipmentClassId] = useState("");
+  const [equipmentVariantName, setEquipmentVariantName] = useState("");
+  const [equipmentModuleIdsBySlotId, setEquipmentModuleIdsBySlotId] = useState<Record<string, string>>({});
+  const [equipmentProductionVariantId, setEquipmentProductionVariantId] = useState("");
+  const [equipmentProductionCapacity, setEquipmentProductionCapacity] = useState(1);
 
-  const activeKind: MilitaryBranch = activeTab === "queue" ? "land" : activeTab;
+  const activeKind: MilitaryBranch = activeTab === "queue" || activeTab === "equipment" ? "land" : activeTab;
   const catalog = useMemo(() => getCatalog(overview, activeKind), [activeKind, overview]);
   const selectedTemplate = useMemo(
     () => overview?.templates.find((template) => template.id === selectedTemplateId) ?? null,
@@ -143,10 +199,25 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
   );
   const draftStats = useMemo(() => calculateDraftStats(catalog, components), [catalog, components]);
   const hexById = useMemo(() => new Map((overview?.hexOptions ?? []).map((hex) => [hex.id, hex] as const)), [overview]);
+  const selectedEquipmentClass = useMemo(
+    () => overview?.equipmentClasses.find((entry) => entry.id === equipmentClassId) ?? overview?.equipmentClasses[0] ?? null,
+    [equipmentClassId, overview?.equipmentClasses],
+  );
+  const equipmentModulesForClass = useMemo(
+    () =>
+      overview?.equipmentModules.filter((module) => !selectedEquipmentClass || !module.classId || module.classId === selectedEquipmentClass.id) ?? [],
+    [overview?.equipmentModules, selectedEquipmentClass],
+  );
+  const equipmentPreview = useMemo(
+    () => calculateEquipmentPreview(selectedEquipmentClass, equipmentModulesForClass, equipmentModuleIdsBySlotId),
+    [equipmentModuleIdsBySlotId, equipmentModulesForClass, selectedEquipmentClass],
+  );
 
   const applyOverview = (data: MilitaryOverview) => {
     setOverview(data);
     setFormationHexId((current) => current || data.hexOptions[0]?.id || "");
+    setEquipmentClassId((current) => current || data.equipmentClasses[0]?.id || "");
+    setEquipmentProductionVariantId((current) => current || data.equipmentVariants[0]?.id || "");
   };
 
   const selectTemplate = (template: DivisionTemplate) => {
@@ -155,6 +226,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
     setSelectedTemplateId(template.id);
     setTemplateName(template.name);
     setComponents(normalizeTemplateComponents(template));
+    setEquipmentRequirements(normalizeTemplateEquipmentRequirements(template));
   };
 
   const startNewTemplate = (kind = activeKind) => {
@@ -163,6 +235,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
     setSelectedTemplateId(null);
     setTemplateName(t(branchDefaultNameKey(kind)));
     setComponents(makeDefaultComponents(nextCatalog, kind));
+    setEquipmentRequirements([]);
   };
 
   useEffect(() => {
@@ -190,7 +263,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
   }, [open, token, t]);
 
   useEffect(() => {
-    if (activeTab === "queue") return;
+    if (activeTab === "queue" || activeTab === "equipment") return;
     const currentKind = selectedTemplate?.kind ?? "land";
     if (selectedTemplate && currentKind === activeTab) return;
     const template = overview?.templates.find((entry) => (entry.kind ?? "land") === activeTab);
@@ -200,6 +273,21 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
     }
     startNewTemplate(activeTab);
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!selectedEquipmentClass) return;
+    setEquipmentVariantName((current) => current || getEquipmentClassLabel(selectedEquipmentClass));
+    setEquipmentModuleIdsBySlotId((current) => {
+      const next: Record<string, string> = {};
+      for (const slotId of selectedEquipmentClass.slotIds) {
+        const currentModule = equipmentModulesForClass.find((module) => module.id === current[slotId]);
+        const fallbackModule = equipmentModulesForClass.find((module) => module.slotId === slotId);
+        if (currentModule?.slotId === slotId) next[slotId] = currentModule.id;
+        else if (fallbackModule) next[slotId] = fallbackModule.id;
+      }
+      return next;
+    });
+  }, [equipmentModulesForClass, selectedEquipmentClass]);
 
   const updateComponentCount = (typeId: string, count: number, role: "line" | "support" = "line") => {
     setComponents((current) => {
@@ -214,6 +302,38 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
     });
   };
 
+  const addEquipmentRequirement = () => {
+    const equipmentClass = equipmentClassesForTemplate[0];
+    if (!equipmentClass) return;
+    const role = equipmentClass.roles[0] ?? "support";
+    const id = `${equipmentClass.id}:${role}:${equipmentRequirements.length + 1}`;
+    setEquipmentRequirements((current) => [
+      ...current,
+      { id, equipmentClassId: equipmentClass.id, role, count: 100 },
+    ]);
+  };
+
+  const updateEquipmentRequirement = (id: string, patch: Partial<MilitaryEquipmentRequirement>) => {
+    setEquipmentRequirements((current) =>
+      current.map((requirement) => {
+        if (requirement.id !== id) return requirement;
+        const next = { ...requirement, ...patch };
+        const equipmentClass = equipmentClassesForTemplate.find((entry) => entry.id === next.equipmentClassId);
+        if (equipmentClass && !equipmentClass.roles.includes(next.role)) {
+          next.role = equipmentClass.roles[0] ?? "support";
+        }
+        return {
+          ...next,
+          count: Math.max(1, Math.min(1_000_000, Math.floor(Number(next.count) || 1))),
+        };
+      }),
+    );
+  };
+
+  const removeEquipmentRequirement = (id: string) => {
+    setEquipmentRequirements((current) => current.filter((requirement) => requirement.id !== id));
+  };
+
   const handleSaveTemplate = async () => {
     if (!token || components.length === 0 || !templateName.trim()) return;
     setPending(true);
@@ -223,6 +343,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
         kind: activeKind,
         name: templateName.trim(),
         components,
+        equipmentRequirements,
       });
       applyOverview(data);
       const updated = data.templates.find((template) => template.name === templateName.trim() && (template.kind ?? "land") === activeKind);
@@ -291,8 +412,43 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
     }
   };
 
+  const handleCreateEquipmentVariant = async () => {
+    if (!token || !selectedEquipmentClass || !equipmentVariantName.trim()) return;
+    setPending(true);
+    try {
+      const data = await createEquipmentVariant(token, {
+        classId: selectedEquipmentClass.id,
+        name: equipmentVariantName.trim(),
+        moduleIdsBySlotId: equipmentModuleIdsBySlotId,
+      });
+      applyOverview(data);
+      const created = data.equipmentVariants.find((variant) => variant.name === equipmentVariantName.trim());
+      if (created) setEquipmentProductionVariantId(created.id);
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const handleCreateEquipmentProductionLine = async () => {
+    if (!token || !equipmentProductionVariantId) return;
+    setPending(true);
+    try {
+      applyOverview(
+        await createEquipmentProductionLine(token, {
+          equipmentVariantId: equipmentProductionVariantId,
+          assignedCapacity: equipmentProductionCapacity,
+          active: true,
+        }),
+      );
+    } finally {
+      setPending(false);
+    }
+  };
+
   const templatesForTab = overview?.templates.filter((template) => (template.kind ?? "land") === activeKind) ?? [];
   const unitsForTab = overview?.units.filter((unit) => (unit.kind ?? "land") === activeKind) ?? [];
+  const equipmentClassesForTemplate = overview?.equipmentClasses.filter((entry) => entry.branch === activeKind) ?? [];
+  const selectedTemplateAssignment = selectedTemplateId ? overview?.templateEquipmentAssignments[selectedTemplateId] : null;
 
   return (
     <AppModal open={open} onClose={onClose} modalKey="army" panelClassName="arc-pop-panel mx-auto max-h-[92vh] w-[min(96vw,1240px)] overflow-auto">
@@ -329,9 +485,168 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
             >
               {t("army.queue", { count: overview.queue.length })}
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("equipment")}
+              className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs transition ${
+                activeTab === "equipment" ? "border-[var(--arc-color-atlas-primary)] bg-[color-mix(in_srgb,var(--arc-color-atlas-primary)_10%,var(--arc-color-atlas-paper))] text-[var(--arc-color-atlas-primary)]" : "border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] text-[var(--arc-color-atlas-muted)]"
+              }`}
+            >
+              <Wrench size={15} />
+              {t("army.equipment")}
+            </button>
           </div>
 
-          {activeTab === "queue" ? (
+          {activeTab === "equipment" ? (
+            <div className="grid gap-3 lg:grid-cols-[1fr_0.9fr]">
+              <AppSection>
+                <AppSectionHeader title={t("army.equipmentConstructor")} icon={<Wrench size={15} />} />
+                <AppCard className="arc-pop-card">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <label className="arc-pop-muted text-xs">
+                      {t("army.equipmentClass")}
+                      <select
+                        value={selectedEquipmentClass?.id ?? ""}
+                        onChange={(event) => {
+                          setEquipmentClassId(event.target.value);
+                          setEquipmentVariantName("");
+                        }}
+                        className="mt-1 h-9 w-full rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
+                      >
+                        {overview.equipmentClasses.map((entry) => (
+                          <option key={entry.id} value={entry.id}>{getEquipmentClassLabel(entry)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="arc-pop-muted text-xs">
+                      {t("army.equipmentVariantName")}
+                      <input
+                        value={equipmentVariantName}
+                        onChange={(event) => setEquipmentVariantName(event.target.value)}
+                        className="mt-1 h-9 w-full rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {(selectedEquipmentClass?.slotIds ?? []).map((slotId) => {
+                      const slotModules = equipmentModulesForClass.filter((module) => module.slotId === slotId);
+                      return (
+                        <label key={slotId} className="arc-pop-card p-2 text-xs">
+                          <span className="arc-pop-label">{slotId}</span>
+                          <select
+                            value={equipmentModuleIdsBySlotId[slotId] ?? ""}
+                            onChange={(event) =>
+                              setEquipmentModuleIdsBySlotId((current) => ({ ...current, [slotId]: event.target.value }))
+                            }
+                            className="mt-2 h-8 w-full rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-xs text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
+                          >
+                            {slotModules.map((module) => (
+                              <option key={module.id} value={module.id}>{getEquipmentModuleLabel(module)}</option>
+                            ))}
+                          </select>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div className="arc-pop-card p-2 text-xs">
+                      <div className="arc-pop-label mb-2">{t("army.equipmentStats")}</div>
+                      {Object.entries(equipmentPreview.stats).length === 0 ? (
+                        <div className="arc-pop-muted">{t("army.noEquipmentStats")}</div>
+                      ) : (
+                        <div className="grid gap-1">
+                          {Object.entries(equipmentPreview.stats).map(([key, value]) => (
+                            <div key={key} className="flex justify-between gap-2">
+                              <span className="arc-pop-muted">{key}</span>
+                              <span className="text-[var(--arc-color-atlas-ink)]">{formatNumber(Number(value), 2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="arc-pop-card p-2 text-xs">
+                      <div className="arc-pop-label mb-2">{t("army.equipmentCost")}</div>
+                      {equipmentPreview.goodsCost.length === 0 ? (
+                        <div className="arc-pop-muted">{t("army.noEquipmentCost")}</div>
+                      ) : (
+                        <div className="grid gap-1">
+                          {equipmentPreview.goodsCost.map((cost) => (
+                            <div key={cost.goodId} className="flex justify-between gap-2">
+                              <span className="arc-pop-muted">{cost.goodId}</span>
+                              <span className="text-[var(--arc-color-atlas-ink)]">{formatNumber(cost.amount, 2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <AppButton type="button" disabled={pending || !selectedEquipmentClass} onClick={() => void handleCreateEquipmentVariant()}>
+                      {t("army.createEquipmentVariant")}
+                    </AppButton>
+                  </div>
+                </AppCard>
+              </AppSection>
+
+              <div className="grid gap-3">
+                <AppSection>
+                  <AppSectionHeader title={t("army.equipmentProduction")} icon={<Factory size={15} />} />
+                  <div className="grid gap-2">
+                    <label className="arc-pop-muted text-xs">
+                      {t("army.equipmentVariant")}
+                      <select
+                        value={equipmentProductionVariantId}
+                        onChange={(event) => setEquipmentProductionVariantId(event.target.value)}
+                        className="mt-1 h-9 w-full rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
+                      >
+                        {overview.equipmentVariants.map((variant) => (
+                          <option key={variant.id} value={variant.id}>{variant.name}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="arc-pop-muted text-xs">
+                      {t("army.productionCapacity")}
+                      <input
+                        type="number"
+                        min={0}
+                        max={1000}
+                        value={equipmentProductionCapacity}
+                        onChange={(event) => setEquipmentProductionCapacity(Math.max(0, Number(event.target.value) || 0))}
+                        className="mt-1 h-9 w-full rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
+                      />
+                    </label>
+                    <AppButton type="button" disabled={pending || !equipmentProductionVariantId} onClick={() => void handleCreateEquipmentProductionLine()}>
+                      {t("army.createProductionLine")}
+                    </AppButton>
+                  </div>
+                </AppSection>
+                <AppSection>
+                  <AppSectionHeader title={t("army.equipmentLines")} icon={<Factory size={15} />} />
+                  <div className="grid gap-2">
+                    {overview.equipmentProductionLines.length === 0 && (
+                      <AppEmptyState title={t("army.noEquipmentLines")}>{t("army.noEquipmentLinesDescription")}</AppEmptyState>
+                    )}
+                    {overview.equipmentProductionLines.map((line) => {
+                      const variant = overview.equipmentVariants.find((entry) => entry.id === line.equipmentVariantId);
+                      return (
+                        <AppCard key={line.id} className="arc-pop-card">
+                          <div className="flex items-center justify-between gap-3 text-xs">
+                            <div>
+                              <div className="text-sm font-semibold text-[var(--arc-color-atlas-ink)]">{variant?.name ?? line.equipmentVariantId}</div>
+                              <div className="arc-pop-muted">{t("army.productionCapacityValue", { value: formatNumber(line.assignedCapacity, 2) })}</div>
+                            </div>
+                            <div className={line.active ? "text-[var(--arc-color-success-text)]" : "text-[var(--arc-color-danger-text)]"}>
+                              {line.active ? t("army.active") : t("army.inactive")}
+                            </div>
+                          </div>
+                        </AppCard>
+                      );
+                    })}
+                  </div>
+                </AppSection>
+              </div>
+            </div>
+          ) : activeTab === "queue" ? (
             <AppSection>
               <AppSectionHeader title={t("army.formationQueue")} icon={<Plus size={15} />} />
               <div className="grid gap-2">
@@ -406,6 +721,83 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                       <div>{t("army.organizationShort")}: <span className="text-[var(--arc-color-atlas-ink)]">{formatNumber(draftStats.organization, 1)}</span></div>
                       <div>{t("army.supplyShort")}: <span className="text-[var(--arc-color-atlas-ink)]">{formatNumber(draftStats.supplyUse, 1)}</span></div>
                     </div>
+                  </div>
+
+                  <div className="mt-3 arc-pop-card p-2">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div className="arc-pop-label">{t("army.equipmentRequirements")}</div>
+                      <AppButton type="button" size="sm" variant="secondary" icon={<Plus size={14} />} disabled={equipmentClassesForTemplate.length === 0} onClick={addEquipmentRequirement}>
+                        {t("army.addEquipmentRequirement")}
+                      </AppButton>
+                    </div>
+                    {equipmentRequirements.length === 0 ? (
+                      <div className="arc-pop-muted text-xs">{t("army.noEquipmentRequirements")}</div>
+                    ) : (
+                      <div className="grid gap-2">
+                        {equipmentRequirements.map((requirement) => {
+                          const equipmentClass = equipmentClassesForTemplate.find((entry) => entry.id === requirement.equipmentClassId);
+                          const assignment = selectedTemplateAssignment?.choices.find((choice) => choice.requirementId === requirement.id);
+                          const variant = assignment?.equipmentVariantId
+                            ? overview.equipmentVariants.find((entry) => entry.id === assignment.equipmentVariantId)
+                            : null;
+                          return (
+                            <div key={requirement.id} className="grid gap-2 rounded border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper-soft)] p-2 md:grid-cols-[1fr_120px_90px_auto]">
+                              <select
+                                value={requirement.equipmentClassId}
+                                onChange={(event) => updateEquipmentRequirement(requirement.id, { equipmentClassId: event.target.value })}
+                                className="h-8 rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-xs text-[var(--arc-color-atlas-ink)]"
+                              >
+                                {equipmentClassesForTemplate.map((entry) => (
+                                  <option key={entry.id} value={entry.id}>{getEquipmentClassLabel(entry)}</option>
+                                ))}
+                              </select>
+                              <select
+                                value={requirement.role}
+                                onChange={(event) => updateEquipmentRequirement(requirement.id, { role: event.target.value as EquipmentClassRole })}
+                                className="h-8 rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-xs text-[var(--arc-color-atlas-ink)]"
+                              >
+                                {(equipmentClass?.roles ?? EQUIPMENT_ROLE_OPTIONS).map((role) => (
+                                  <option key={role} value={role}>{role}</option>
+                                ))}
+                              </select>
+                              <input
+                                type="number"
+                                min={1}
+                                value={requirement.count}
+                                onChange={(event) => updateEquipmentRequirement(requirement.id, { count: Number(event.target.value) })}
+                                className="h-8 rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-xs text-[var(--arc-color-atlas-ink)]"
+                              />
+                              <button
+                                type="button"
+                                className="grid h-8 w-8 place-items-center rounded-md border border-[var(--arc-color-atlas-danger)] text-[var(--arc-color-atlas-danger)]"
+                                disabled={pending}
+                                onClick={() => removeEquipmentRequirement(requirement.id)}
+                                title={t("army.delete")}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                              <div className="md:col-span-4">
+                                <div className="arc-pop-muted flex justify-between text-[11px]">
+                                  <span>{variant?.name ?? t("army.noAssignedEquipment")}</span>
+                                  <span>{t("army.equipmentCoverage", { value: formatNumber((assignment?.coverage ?? 0) * 100, 0) })}</span>
+                                </div>
+                                <div className="mt-1 h-1.5 overflow-hidden rounded bg-[var(--arc-color-atlas-line)]">
+                                  <div
+                                    className="h-full bg-[var(--arc-color-atlas-primary)]"
+                                    style={{ width: `${Math.max(0, Math.min(100, (assignment?.coverage ?? 0) * 100))}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {selectedTemplateAssignment && equipmentRequirements.length > 0 && (
+                      <div className="arc-pop-muted mt-2 text-[11px]">
+                        {t("army.templateEquipmentCoverage", { value: formatNumber(selectedTemplateAssignment.coverage * 100, 0) })}
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper-soft)] p-2">

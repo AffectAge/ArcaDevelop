@@ -3,6 +3,7 @@ import type { ResourceFlow } from "./resource-ledger";
 import type { DiplomacyProposal } from "./diplomacy";
 import type { CountryAppliedModifier, CountryDecisionRecord, CountryEventRecord, CountryJournalState, ExplanationRecord, ScheduledCountryEvent } from "./content";
 import type { Division, DivisionTemplate, MilitaryFormationQueueItem } from "./military";
+import type { CivilianUnit, CivilianUnitQueueItem, CityMarker, EquipmentProductionLine, EquipmentStockpileByCountry, EquipmentVariant, SettlementProject } from "./unit-equipment";
 import type { BuildingInstance, RegionConstructionProject, RegionPopulation, RegionResourceDeposit, RegionResourceExplorationProject } from "./region-state";
 import type { CountryParliament, CountryTechnologyState } from "./politics";
 export type WorldBase = {
@@ -35,6 +36,13 @@ export type WorldBase = {
   divisionTemplatesByCountry: Record<string, DivisionTemplate[]>;
   divisionsById: Record<string, Division>;
   militaryFormationQueueByCountry: Record<string, MilitaryFormationQueueItem[]>;
+  civilianUnitsById: Record<string, CivilianUnit>;
+  civilianUnitQueueByCountry: Record<string, CivilianUnitQueueItem[]>;
+  settlementProjectsById: Record<string, SettlementProject>;
+  cityMarkersById: Record<string, CityMarker>;
+  equipmentVariantsById: Record<string, EquipmentVariant>;
+  equipmentProductionLinesByCountry: Record<string, EquipmentProductionLine[]>;
+  equipmentStockpileByCountry: EquipmentStockpileByCountry;
   diplomacyProposals: DiplomacyProposal[];
 };
 
@@ -68,6 +76,7 @@ export const WORLD_DELTA_MASK = {
   journalEntriesByCountryId: 1 << 27,
   explanationRecordsByTurn: 1 << 28,
   countryModifiersByCountryId: 1 << 29,
+  unitEquipmentState: 1 << 30,
 } as const;
 
 export type WorldDelta = {
@@ -103,6 +112,13 @@ export type WorldDelta = {
   g?: Record<string, DivisionTemplate[] | null>;
   x?: Record<string, Division | null>;
   w?: Record<string, MilitaryFormationQueueItem[] | null>;
+  cu?: Record<string, CivilianUnit | null>;
+  cq?: Record<string, CivilianUnitQueueItem[] | null>;
+  sp?: Record<string, SettlementProject | null>;
+  ci?: Record<string, CityMarker | null>;
+  ev?: Record<string, EquipmentVariant | null>;
+  el?: Record<string, EquipmentProductionLine[] | null>;
+  es?: Record<string, Record<string, number> | null>;
   j?: DiplomacyProposal[];
   rejectedOrders: Array<{ playerId: string; reason: string; tempOrderId?: string }>;
 };

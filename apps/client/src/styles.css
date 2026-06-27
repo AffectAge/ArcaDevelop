@@ -1314,6 +1314,20 @@ select,
   min-width: 0;
 }
 
+.arc-map-building-popover {
+  position: absolute;
+  z-index: 74;
+  width: min(370px, calc(100vw - 24px));
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.arc-map-building-popover .arc-building-overview-card {
+  width: 100%;
+}
+
 .arc-strategy-workspace-frame {
   position: absolute;
   top: 124px;
@@ -4047,6 +4061,59 @@ select,
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.arc-hex-map__unit-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+  border-top: 1px solid var(--arc-color-atlas-line);
+  padding-top: 9px;
+}
+
+.arc-hex-map__unit-list-title {
+  color: var(--arc-color-atlas-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.arc-hex-map__unit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--arc-color-atlas-line);
+  background: color-mix(in srgb, var(--arc-color-atlas-paper-deep) 58%, transparent);
+  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%);
+  padding: 7px;
+}
+
+.arc-hex-map__unit-row > div {
+  display: grid;
+  min-width: 0;
+}
+
+.arc-hex-map__unit-row strong {
+  overflow: hidden;
+  color: var(--arc-color-atlas-ink);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arc-hex-map__unit-row span {
+  color: var(--arc-color-atlas-muted);
+  font-size: 11px;
+}
+
+.arc-hex-map__unit-row .map-btn {
+  width: auto;
+  min-width: 0;
+  gap: 6px;
+  padding: 0 9px;
 }
 
 .arc-hex-map__actions {

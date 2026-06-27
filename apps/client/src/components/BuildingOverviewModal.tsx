@@ -28,7 +28,7 @@ import type { UiTextKey } from "../i18n/uiText";
 import { BuildingAtlasIcon } from "./BuildingAtlasIcon";
 import { Tooltip, type TooltipStructuredContent } from "./Tooltip";
 
-type CategoryEntry = {
+export type CategoryEntry = {
   id: string;
   name: string;
   logoUrl?: string | null;
@@ -38,22 +38,25 @@ export type BuildingOverviewCancelPayload =
   | { source: "queued"; regionId: string; queueId: string; targetHexId: HexId; buildingId: string }
   | { source: "pending"; orderId: string };
 
-type Props = {
-  open: boolean;
-  onClose: () => void;
-  token: string;
+export type BuildingOverviewModelInput = {
   countryId: string;
-  scenarioId?: string | null;
   worldBase: WorldBase | null;
   turnId: number;
   ordersByTurn: Map<number, Map<string, Order[]>>;
   buildings: ContentEntry[];
-  industries: CategoryEntry[];
-  sectors: CategoryEntry[];
   companies: ContentEntry[];
   countries: Country[];
   demolitionCostConstructionPercent: number;
   canceledConstructionQueueKeys: readonly string[];
+};
+
+type Props = BuildingOverviewModelInput & {
+  open: boolean;
+  onClose: () => void;
+  token: string;
+  scenarioId?: string | null;
+  industries: CategoryEntry[];
+  sectors: CategoryEntry[];
   cancelingConstructionQueueKey?: string | null;
   onCancelConstructionProject: (item: BuildingOverviewCancelPayload) => void;
   onFocusHex: (hexId: HexId) => void;
@@ -61,7 +64,7 @@ type Props = {
 
 type OverviewStatus = "working" | "inactive" | "queued" | "pending";
 
-type OverviewItem = {
+export type OverviewItem = {
   id: string;
   kind: "built" | "queued" | "pending";
   status: OverviewStatus;
@@ -92,7 +95,7 @@ type OverviewItem = {
   demolitionCostConstruction?: number;
 };
 
-type GoodMeta = {
+export type GoodMeta = {
   id: string;
   name: string;
   logoUrl?: string | null;
@@ -111,7 +114,7 @@ type CoverageMetric = {
   tooltip: string;
 };
 
-type ConfirmState =
+export type BuildingOverviewConfirmState =
   | { type: "cancel"; item: OverviewItem; payload: BuildingOverviewCancelPayload }
   | { type: "demolish"; item: OverviewItem };
 
@@ -126,7 +129,7 @@ export function BuildingOverviewModal(props: Props) {
   const [industryFilter, setIndustryFilter] = useState(ALL);
   const [ownerFilter, setOwnerFilter] = useState(ALL);
   const [search, setSearch] = useState("");
-  const [confirm, setConfirm] = useState<ConfirmState | null>(null);
+  const [confirm, setConfirm] = useState<BuildingOverviewConfirmState | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [renameDraftById, setRenameDraftById] = useState<Record<string, string>>({});
   const [editingNameId, setEditingNameId] = useState<string | null>(null);
@@ -409,7 +412,7 @@ function FilterSelect(props: { label: string; value: string; onChange: (value: s
   );
 }
 
-function BuildingOverviewCard(props: {
+export function BuildingOverviewCard(props: {
   item: OverviewItem;
   goodsById: Map<string, GoodMeta>;
   scenarioId?: string | null;
@@ -653,7 +656,7 @@ function GoodLabel(props: { goodId: string; goodsById: Map<string, GoodMeta> }) 
   );
 }
 
-function DangerConfirmDialog(props: { state: ConfirmState | null; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
+export function DangerConfirmDialog(props: { state: BuildingOverviewConfirmState | null; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
   const { t } = useUiText();
   if (!props.state) return null;
   const title = props.state.type === "cancel" ? t("buildings.cancelConstructionTitle") : t("buildings.demolishBuildingTitle");
@@ -703,7 +706,7 @@ function DangerConfirmDialog(props: { state: ConfirmState | null; busy: boolean;
   );
 }
 
-function buildOverviewItems(props: Props, t: (key: UiTextKey, params?: Record<string, string | number>) => string): OverviewItem[] {
+export function buildOverviewItems(props: BuildingOverviewModelInput, t: (key: UiTextKey, params?: Record<string, string | number>) => string): OverviewItem[] {
   const world = props.worldBase;
   if (!world) return [];
   const buildingById = new Map(props.buildings.map((entry) => [entry.id, entry] as const));
@@ -897,7 +900,7 @@ function uniqueOptions(options: Array<{ value: string; label: string }>) {
   return [...new Map(options.map((option) => [option.value, option] as const)).values()].sort((a, b) => a.label.localeCompare(b.label, "ru"));
 }
 
-function getCancelPayload(item: OverviewItem): BuildingOverviewCancelPayload | null {
+export function getCancelPayload(item: OverviewItem): BuildingOverviewCancelPayload | null {
   if (item.kind === "queued" && item.project) {
     return { source: "queued", regionId: item.regionId, queueId: item.project.queueId, targetHexId: item.targetHexId, buildingId: item.buildingId };
   }
@@ -907,7 +910,7 @@ function getCancelPayload(item: OverviewItem): BuildingOverviewCancelPayload | n
   return null;
 }
 
-function getCancelKey(item: OverviewItem): string | null {
+export function getCancelKey(item: OverviewItem): string | null {
   if (item.kind === "queued" && item.project) return `${item.regionId}:${item.project.queueId}`;
   if (item.kind === "pending" && item.order) return item.order.id;
   return null;

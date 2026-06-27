@@ -48,6 +48,7 @@ import {
   markUiNotificationViewed,
   acceptDiplomacyProposal,
   cancelCountryBuild,
+  queueCountryColonizer,
   rejectDiplomacyProposal,
   type ContentEntry,
   type MarketOverviewResponse,
@@ -104,6 +105,16 @@ function calculateLastRelativeDeltaPct(history: number[] | undefined): number {
   const current = Number(history[history.length - 1] ?? 0);
   if (!Number.isFinite(previous) || Math.abs(previous) < 1e-9) return 0;
   return ((current - previous) / previous) * 100;
+}
+
+function resolveColonizerQueueErrorKey(code: string): UiTextKey {
+  if (code === "HEX_NOT_CONTROLLED") return "hexMap.queueColonizerHexNotControlled";
+  if (code === "CIVILIAN_UNIT_QUEUE_HEX_OCCUPIED" || code === "CIVILIAN_UNIT_HEX_OCCUPIED") {
+    return "hexMap.queueColonizerHexOccupied";
+  }
+  if (code === "INSUFFICIENT_COLONIZATION_POINTS") return "hexMap.queueColonizerInsufficientColonization";
+  if (code === "INSUFFICIENT_DUCATS") return "hexMap.queueColonizerInsufficientDucats";
+  return "hexMap.queueColonizerFailed";
 }
 
 function buildMarketShellPartners(input: Record<string, number> | undefined, countryById: Map<string, Country>) {
@@ -328,6 +339,7 @@ export default function App() {
   const [cancelingConstructionQueueKey, setCancelingConstructionQueueKey] = useState<string | null>(null);
   const [canceledConstructionQueueKeys, setCanceledConstructionQueueKeys] = useState<Set<string>>(() => new Set());
   const [mapFocusRequest, setMapFocusRequest] = useState<{ hexId: HexId; nonce: number } | null>(null);
+  const [queueingColonizerHexId, setQueueingColonizerHexId] = useState<HexId | null>(null);
   const [hexBuildPlacement, setHexBuildPlacement] = useState<{
     building: ContentEntry;
     owner: { type: "state"; countryId: string } | { type: "company"; companyId: string };
@@ -496,12 +508,14 @@ export default function App() {
         const targetId =
           msg.order.type === "ARMY_MOVE"
             ? msg.order.targetHexId
-            : msg.order.type === "BUILD" || msg.order.type === "COLONIZE"
+            : msg.order.type === "FOUND_CITY"
+              ? msg.order.targetHexId
+              : msg.order.type === "BUILD" || msg.order.type === "COLONIZE"
               ? msg.order.regionId
               : "";
         addEvent({
-          category: msg.order.type === "COLONIZE" ? "colonization" : "military",
-          title: msg.order.type === "COLONIZE" ? t("shell.orderColonizationTitle") : t("shell.orderTitle"),
+          category: msg.order.type === "COLONIZE" || msg.order.type === "FOUND_CITY" ? "colonization" : "military",
+          title: msg.order.type === "COLONIZE" || msg.order.type === "FOUND_CITY" ? t("shell.orderColonizationTitle") : t("shell.orderTitle"),
           message: `${msg.order.countryId} -> ${msg.order.type} (${targetId})`,
           countryId: msg.order.countryId,
           priority: "low",
@@ -1033,7 +1047,63 @@ export default function App() {
       predictedSupportDucatSpend: Math.max(0, Math.floor(predictedSupportDucatSpend)),
     };
   }, [auth, colonizationCostPer1000Km2.ducats, colonizationCostPer1000Km2.points, currentResources.colonization, currentResources.ducats, ordersByTurn, provinceAreaKm2ById, turnId, worldBase]);
-  const activeColonizationCount = myColonizationProjection.activeCount;
+  const colonizerQueuePreview = useMemo(() => {
+    if (!auth || !worldBase) return [];
+    return (worldBase.civilianUnitQueueByCountry?.[auth.countryId] ?? [])
+      .filter((item) => item.type === "colonizer" && isHexId(item.hexId))
+      .map((item) => ({
+        id: item.id,
+        type: "colonizer" as const,
+        hexId: item.hexId,
+        progressPct: Math.max(0, Math.min(100, Number(item.progress ?? 0) * 100)),
+        turnsRemaining: Math.max(0, Math.floor(Number(item.turnsRemaining ?? 0))),
+        turnsTotal: Math.max(1, Math.floor(Number(item.turnsTotal ?? 1))),
+        costColonization: Math.max(0, Number(item.cost?.colonization ?? 0)),
+        costDucats: Math.max(0, Number(item.cost?.ducats ?? 0)),
+      }))
+      .sort((a, b) => a.turnsRemaining - b.turnsRemaining || a.hexId.localeCompare(b.hexId, "ru"));
+  }, [auth, worldBase]);
+
+  const colonizerUnitPreview = useMemo(() => {
+    if (!auth || !worldBase) return [];
+    return Object.values(worldBase.civilianUnitsById ?? {})
+      .filter((unit) => unit.countryId === auth.countryId && unit.type === "colonizer" && isHexId(unit.hexId))
+      .map((unit) => ({
+        id: unit.id,
+        type: "colonizer" as const,
+        hexId: unit.hexId,
+        movementPoints: Math.max(0, Number(unit.movementPoints ?? 0)),
+        maxMovementPoints: Math.max(1, Number(unit.maxMovementPoints ?? 1)),
+        status: unit.status,
+      }))
+      .sort((a, b) => a.hexId.localeCompare(b.hexId, "ru"));
+  }, [auth, worldBase]);
+
+  const settlementProjectPreview = useMemo(() => {
+    if (!auth || !worldBase) return [];
+    return Object.values(worldBase.settlementProjectsById ?? {})
+      .filter((project) => project.countryId === auth.countryId && isHexId(project.targetHexId))
+      .map((project) => {
+        const cost = Math.max(1, Number(project.costColonization ?? 0));
+        const progress = Math.max(0, Number(project.progressColonization ?? 0));
+        return {
+          id: project.id,
+          regionId: project.regionId,
+          targetHexId: project.targetHexId,
+          progressPct: Math.max(0, Math.min(100, (progress / cost) * 100)),
+          progressColonization: progress,
+          costColonization: cost,
+          state: project.state,
+          stallReasonCode: project.stallReasonCode ?? null,
+        };
+      })
+      .sort((a, b) => Number(a.state === "stalled") - Number(b.state === "stalled") || a.regionId.localeCompare(b.regionId, "ru"));
+  }, [auth, worldBase]);
+
+  const activeColonizationCount = Math.max(
+    myColonizationProjection.activeCount,
+    settlementProjectPreview.filter((project) => project.state === "active" || project.state === "stalled").length,
+  );
   const myConstructionProjection = useMemo(() => {
     if (!auth || !worldBase) {
       return { activeCount: 0, predictedPointsSpend: 0, predictedDucatSpend: 0 };
@@ -1733,6 +1803,109 @@ export default function App() {
     toast(t("buildings.hexPlacementStarted"), { description: request.building.name });
   };
 
+  const queueCivilianUnitMoveOrder = (unitId: string, fromHexId: HexId, targetHexId: HexId, path?: HexId[]) => {
+    if (!auth || !unitId || !isHexId(fromHexId) || !isHexId(targetHexId)) {
+      return;
+    }
+    const routePath = Array.isArray(path) && path.length > 0 ? path : [fromHexId, targetHexId];
+
+    const delta: OrderDelta = {
+      type: "ORDER_DELTA",
+      order: {
+        turnId,
+        playerId: auth.playerId,
+        countryId: auth.countryId,
+        unitId,
+        unitKind: "civilian",
+        targetHexId,
+        path: routePath,
+        type: "UNIT_MOVE",
+        payload: { unitId, unitKind: "civilian", path: routePath },
+      },
+    };
+
+    send(delta);
+    addOrder({
+      ...delta.order,
+      id: `local:${turnId}:${unitId}:unit-move`,
+      createdAt: new Date().toISOString(),
+    });
+    toast(t("hexMap.civilianMoveOrderSent"), { description: `${unitId} -> ${targetHexId}` });
+    addEvent({
+      category: "colonization",
+      title: t("hexMap.civilianMoveOrderSent"),
+      message: `${unitId} -> ${targetHexId}`,
+      countryId: auth.countryId,
+      priority: "medium",
+      visibility: "private",
+      turn: turnId,
+    });
+  };
+
+  const queueFoundCityOrder = (civilianUnitId: string, hexId: HexId, regionId: string, cultureId?: string | null) => {
+    if (!auth || !civilianUnitId || !isHexId(hexId)) {
+      return;
+    }
+
+    const delta: OrderDelta = {
+      type: "ORDER_DELTA",
+      order: {
+        turnId,
+        playerId: auth.playerId,
+        countryId: auth.countryId,
+        civilianUnitId,
+        regionId,
+        targetHexId: hexId,
+        type: "FOUND_CITY",
+        payload: cultureId ? { cultureId } : {},
+      },
+    };
+
+    send(delta);
+    addOrder({
+      ...delta.order,
+      id: `local:${turnId}:${civilianUnitId}:found-city`,
+      createdAt: new Date().toISOString(),
+    });
+    toast(t("hexMap.foundCityOrderSent"), { description: hexId });
+    addEvent({
+      category: "colonization",
+      title: t("hexMap.foundCityOrderSent"),
+      message: `${civilianUnitId} -> ${hexId}`,
+      countryId: auth.countryId,
+      priority: "medium",
+      visibility: "private",
+      turn: turnId,
+    });
+  };
+
+  const queueColonizerOnHex = async (hexId: HexId) => {
+    if (!auth?.token) {
+      toast.error(t("shell.buildings.noCountry"));
+      return;
+    }
+    setQueueingColonizerHexId(hexId);
+    try {
+      await queueCountryColonizer(auth.token, hexId);
+      toast.success(t("hexMap.queueColonizerQueued"), { description: hexId });
+      addEvent({
+        category: "colonization",
+        title: t("hexMap.queueColonizerQueued"),
+        message: hexId,
+        countryId: auth.countryId,
+        priority: "medium",
+        visibility: "private",
+        turn: turnId,
+      });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "COLONIZER_QUEUE_FAILED";
+      const key = resolveColonizerQueueErrorKey(code);
+      toast.error(t(key));
+    } finally {
+      setQueueingColonizerHexId((current) => (current === hexId ? null : current));
+    }
+  };
+
   const startHexBuildPlacementForBuilding = (buildingId: string) => {
     if (!auth) {
       toast.error(t("shell.buildings.noCountry"));
@@ -2046,6 +2219,10 @@ export default function App() {
         scenarioId={activeScenarioId}
         focusHexRequest={mapFocusRequest}
         onQueueArmyMoveOrder={queueArmyMoveOrder}
+        onQueueCivilianUnitMoveOrder={queueCivilianUnitMoveOrder}
+        onFoundCityOrder={queueFoundCityOrder}
+        onQueueColonizer={queueColonizerOnHex}
+        queueingColonizerHexId={queueingColonizerHexId}
         colonizationIconUrl={BASE_RESOURCE_ICON_URLS.colonization}
         ducatsIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
         maxActiveColonizations={maxActiveColonizations}
@@ -2058,6 +2235,16 @@ export default function App() {
         showMapControls={showMapControls}
         showAntarctica={showAntarctica}
         buildingEntries={buildingEntries}
+        buildingOverviewToken={auth?.token ?? null}
+        buildingOverviewCountryId={auth?.countryId ?? null}
+        buildingOverviewBuildings={buildingEntries}
+        buildingOverviewCompanies={companyEntries}
+        buildingOverviewCountries={countries}
+        buildingOverviewIndustries={industryEntries}
+        buildingOverviewSectors={sectorEntries}
+        buildingOverviewDemolitionCostConstructionPercent={demolitionCostConstructionPercent}
+        buildingOverviewCancelingConstructionQueueKey={cancelingConstructionQueueKey}
+        onCancelConstructionProject={cancelConstructionQueueProject}
         canceledConstructionQueueKeys={canceledConstructionQueueKeyList}
         hexBuildPlacement={hexBuildPlacement}
         onCancelHexBuildPlacement={() => {
@@ -2232,6 +2419,7 @@ export default function App() {
             cancelingConstructionQueueKey={cancelingConstructionQueueKey}
             onCancelConstructionProject={cancelConstructionQueueProject}
             onFocusConstructionHex={focusConstructionHex}
+            onFocusHex={focusConstructionHex}
             populationPreview={populationPreview}
             marketPreview={marketPreview}
             marketTradeRows={marketTradeRows}
@@ -2258,6 +2446,9 @@ export default function App() {
             resourceGrowthByTurn={resourceGrowthByTurn}
             resourceExpenseByTurn={currentTurnExpenses}
             colonizationLimit={{ active: activeColonizationCount, max: maxActiveColonizations }}
+            colonizerQueuePreview={colonizerQueuePreview}
+            colonizerUnitPreview={colonizerUnitPreview}
+            settlementProjectPreview={settlementProjectPreview}
             countryDetails={currentCountryDetails}
             notificationCount={uiNotificationHistory.length}
             pendingDecisionCount={pendingDecisionNotificationCount}

@@ -8,6 +8,10 @@ import type {
   HexId,
 } from "@arcanorum/shared";
 import { calculateFormationTurns, spendMilitaryFormationCost } from "../mechanics/militaryMechanics";
+import {
+  calculateEquipmentCoverage,
+  selectBestEquipmentVariantForRequirement,
+} from "../mechanics/equipmentMechanics";
 import type { GoodFlow } from "../mechanics/contentFieldNormalizers";
 import { registerMilitaryRoutes } from "../routes/militaryRoutes";
 import type { RouteAuth } from "../security/routeAuth";
@@ -16,6 +20,7 @@ import type { GameSettings } from "./gameSettingsTypes";
 import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 import type { MilitaryUploadMiddleware } from "../routes/militaryRoutes";
 import type {
+  EquipmentProductionLine,
   MilitaryBranch,
   DivisionStats,
   DivisionTemplateBattalion,
@@ -28,6 +33,7 @@ type MilitaryRuntimeMasks = {
   divisionsById: number;
   resourcesByCountry: number;
   militaryFormationQueueByCountry: number;
+  unitEquipmentState: number;
 };
 
 type MilitaryRuntimeParams = {
@@ -110,6 +116,22 @@ export function registerMilitaryRuntimeRoutes(params: MilitaryRuntimeParams): vo
 
   const buildMilitaryOverview = (countryId: string) => {
     const gameSettings = params.getGameSettings();
+    const variants = Object.values(params.getWorldBase().equipmentVariantsById)
+      .filter((variant) => !variant.countryId || variant.countryId === countryId)
+      .sort((a, b) => a.name.localeCompare(b.name, "ru") || a.id.localeCompare(b.id, "en"));
+    const stockpile = params.getWorldBase().equipmentStockpileByCountry[countryId] ?? {};
+    const templateEquipmentAssignments = Object.fromEntries(
+      getCountryDivisionTemplates(countryId).map((template) => {
+        const choices = (template.equipmentRequirements ?? []).map((requirement) =>
+          selectBestEquipmentVariantForRequirement({
+            requirement,
+            variants,
+            stockpileByVariantId: stockpile,
+          }),
+        );
+        return [template.id, { choices, coverage: calculateEquipmentCoverage(choices) }];
+      }),
+    );
     return {
       battalionCatalog: gameSettings.content.battalions,
       shipTypeCatalog: gameSettings.content.shipTypes,
@@ -120,6 +142,14 @@ export function registerMilitaryRuntimeRoutes(params: MilitaryRuntimeParams): vo
       queue: getCountryMilitaryQueue(countryId),
       hexOptions: getCountryOwnedHexOptions(countryId),
       formationSpeed: Math.max(1, Number(gameSettings.military.militaryFormationSpeed || 10)),
+      equipmentClasses: gameSettings.content.equipmentClasses,
+      equipmentModules: gameSettings.content.equipmentModules,
+      equipmentVariants: variants,
+      equipmentProductionLines: [...(params.getWorldBase().equipmentProductionLinesByCountry[countryId] ?? [])].sort(
+        (a, b) => a.createdTurnId - b.createdTurnId || a.id.localeCompare(b.id, "en"),
+      ),
+      equipmentStockpile: stockpile,
+      templateEquipmentAssignments,
     };
   };
 
@@ -165,6 +195,14 @@ export function registerMilitaryRuntimeRoutes(params: MilitaryRuntimeParams): vo
     getCountryMilitaryQueue,
     setCountryMilitaryQueue: (countryId, queue) => {
       params.getWorldBase().militaryFormationQueueByCountry[countryId] = queue;
+    },
+    getEquipmentClasses: () => params.getGameSettings().content.equipmentClasses,
+    getEquipmentModules: () => params.getGameSettings().content.equipmentModules,
+    getEquipmentVariantsById: () => params.getWorldBase().equipmentVariantsById,
+    getCountryEquipmentProductionLines: (countryId): EquipmentProductionLine[] =>
+      params.getWorldBase().equipmentProductionLinesByCountry[countryId] ?? [],
+    setCountryEquipmentProductionLines: (countryId, lines) => {
+      params.getWorldBase().equipmentProductionLinesByCountry[countryId] = lines;
     },
     getHexOwner: (hexId) => params.getWorldBase().hexOwner[hexId] ?? null,
     normalizeMilitaryTemplateComponents: params.normalizeMilitaryTemplateComponents,

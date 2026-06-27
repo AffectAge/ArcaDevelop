@@ -2,15 +2,22 @@ import type express from "express";
 import type {
   Division,
   DivisionStats,
+  EquipmentClass,
+  EquipmentClassRole,
+  EquipmentModule,
+  EquipmentProductionLine,
+  EquipmentVariant,
   HexId,
   DivisionTemplate,
   DivisionTemplateBattalion,
   MilitaryBranch,
   MilitaryFormationQueueItem,
   MilitaryTemplateComponent,
+  MilitaryEquipmentRequirement,
 } from "@arcanorum/shared";
 import { z } from "zod";
 import type { RouteAuth } from "../security/routeAuth";
+import { deriveEquipmentVariant } from "../mechanics/equipmentMechanics";
 
 export type MilitaryGoodFlow = {
   goodId: string;
@@ -36,6 +43,7 @@ export type MilitaryRouteMasks = {
   divisionsById: number;
   resourcesByCountry: number;
   militaryFormationQueueByCountry: number;
+  unitEquipmentState: number;
 };
 
 export type MilitaryRoutesDependencies = {
@@ -52,6 +60,11 @@ export type MilitaryRoutesDependencies = {
   getCountryDivisionsById: () => Record<string, Division>;
   getCountryMilitaryQueue: (countryId: string) => MilitaryFormationQueueItem[];
   setCountryMilitaryQueue: (countryId: string, queue: MilitaryFormationQueueItem[]) => void;
+  getEquipmentClasses: () => EquipmentClass[];
+  getEquipmentModules: () => EquipmentModule[];
+  getEquipmentVariantsById: () => Record<string, EquipmentVariant>;
+  getCountryEquipmentProductionLines: (countryId: string) => EquipmentProductionLine[];
+  setCountryEquipmentProductionLines: (countryId: string, lines: EquipmentProductionLine[]) => void;
   getHexOwner: (hexId: string) => string | null;
   normalizeMilitaryTemplateComponents: (
     input: unknown,
@@ -114,6 +127,15 @@ const militaryTemplateComponentInputSchema = z.object({
   role: z.enum(["line", "support"]).optional(),
 });
 
+const equipmentClassRoleSchema = z.enum(["attack", "defense", "breakthrough", "speed", "range", "support"]);
+
+const militaryEquipmentRequirementInputSchema = z.object({
+  id: z.string().trim().min(1).max(120).optional(),
+  equipmentClassId: z.string().trim().min(1).max(160),
+  role: equipmentClassRoleSchema,
+  count: z.coerce.number().int().min(1).max(1_000_000),
+});
+
 const militaryTemplateInputSchema = z.object({
   templateId: z.string().trim().min(1).max(120).optional(),
   kind: militaryBranchSchema,
@@ -121,12 +143,25 @@ const militaryTemplateInputSchema = z.object({
   iconUrl: z.string().trim().max(500).nullable().optional(),
   battalions: z.array(divisionBattalionInputSchema).max(12).optional(),
   components: z.array(militaryTemplateComponentInputSchema).min(1).max(24),
+  equipmentRequirements: z.array(militaryEquipmentRequirementInputSchema).max(24).optional(),
 });
 
 const createMilitaryFormationInputSchema = z.object({
   templateId: z.string().trim().min(1).max(120),
   hexId: z.string().trim().regex(/^hex:-?\d+:-?\d+$/).max(120),
   name: z.string().trim().min(1).max(80).optional(),
+});
+
+const createEquipmentVariantInputSchema = z.object({
+  classId: z.string().trim().min(1).max(160),
+  name: z.string().trim().min(1).max(120),
+  moduleIdsBySlotId: z.record(z.string().trim().min(1).max(80), z.string().trim().min(1).max(160)).default({}),
+});
+
+const createEquipmentProductionLineInputSchema = z.object({
+  equipmentVariantId: z.string().trim().min(1).max(180),
+  assignedCapacity: z.coerce.number().min(0).max(1_000),
+  active: z.boolean().optional(),
 });
 
 export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoutesDependencies): void {
@@ -160,6 +195,25 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
     if (components.some((component) => !deps.getMilitaryContentById(kind, component.typeId))) {
       return res.status(400).json({ error: "UNKNOWN_MILITARY_TYPE" });
     }
+    const equipmentClassesById = new Map(deps.getEquipmentClasses().map((entry) => [entry.id, entry]));
+    const equipmentRequirements: MilitaryEquipmentRequirement[] = (parsed.data.equipmentRequirements ?? []).map((requirement) => ({
+      id: requirement.id ?? `${requirement.equipmentClassId}:${requirement.role}`,
+      equipmentClassId: requirement.equipmentClassId,
+      role: requirement.role as EquipmentClassRole,
+      count: requirement.count,
+    }));
+    for (const requirement of equipmentRequirements) {
+      const equipmentClass = equipmentClassesById.get(requirement.equipmentClassId);
+      if (!equipmentClass) {
+        return res.status(400).json({ error: "UNKNOWN_EQUIPMENT_CLASS", equipmentClassId: requirement.equipmentClassId });
+      }
+      if (equipmentClass.branch !== kind) {
+        return res.status(400).json({ error: "EQUIPMENT_CLASS_BRANCH_MISMATCH", equipmentClassId: requirement.equipmentClassId });
+      }
+      if (!equipmentClass.roles.includes(requirement.role)) {
+        return res.status(400).json({ error: "EQUIPMENT_ROLE_NOT_SUPPORTED", equipmentClassId: requirement.equipmentClassId, role: requirement.role });
+      }
+    }
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
       deps.masks.divisionTemplatesByCountry | deps.masks.divisionsById,
     );
@@ -175,6 +229,7 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
       iconUrl: parsed.data.iconUrl ?? previousTemplate?.iconUrl ?? null,
       battalions,
       components,
+      equipmentRequirements,
       stats: deps.calculateMilitaryStats(kind, components),
       createdTurnId: previousTemplate?.createdTurnId ?? deps.getTurnId(),
       updatedTurnId: deps.getTurnId(),
@@ -272,6 +327,73 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
       createdTurnId: deps.getTurnId(),
     };
     deps.setCountryMilitaryQueue(auth.countryId, [...deps.getCountryMilitaryQueue(auth.countryId), item]);
+    deps.savePersistentState();
+    deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
+    return res.json(deps.buildMilitaryOverview(auth.countryId));
+  });
+
+  app.post("/military/equipment/variants", async (req, res) => {
+    const auth = deps.routeAuth.requireAuth(req, res);
+    if (!auth) return;
+    const parsed = createEquipmentVariantInputSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
+    }
+    deps.ensureCountryInWorldBase(auth.countryId);
+    const equipmentClass = deps.getEquipmentClasses().find((entry) => entry.id === parsed.data.classId);
+    if (!equipmentClass) {
+      return res.status(404).json({ error: "EQUIPMENT_CLASS_NOT_FOUND" });
+    }
+    const modulesById = Object.fromEntries(deps.getEquipmentModules().map((entry) => [entry.id, entry]));
+    for (const slotId of equipmentClass.slotIds) {
+      const moduleId = parsed.data.moduleIdsBySlotId[slotId];
+      if (!moduleId) {
+        return res.status(400).json({ error: "EQUIPMENT_SLOT_EMPTY", slotId });
+      }
+      const module = modulesById[moduleId];
+      if (!module || module.slotId !== slotId || (module.classId && module.classId !== equipmentClass.id)) {
+        return res.status(400).json({ error: "EQUIPMENT_MODULE_INVALID", slotId, moduleId });
+      }
+    }
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.unitEquipmentState);
+    const id = `equipment_variant:${auth.countryId}:${deps.createId()}`;
+    deps.getEquipmentVariantsById()[id] = deriveEquipmentVariant({
+      id,
+      countryId: auth.countryId,
+      equipmentClass,
+      modulesById,
+      moduleIdsBySlotId: parsed.data.moduleIdsBySlotId,
+      name: parsed.data.name,
+      createdTurnId: deps.getTurnId(),
+    });
+    deps.savePersistentState();
+    deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
+    return res.json(deps.buildMilitaryOverview(auth.countryId));
+  });
+
+  app.post("/military/equipment/production-lines", async (req, res) => {
+    const auth = deps.routeAuth.requireAuth(req, res);
+    if (!auth) return;
+    const parsed = createEquipmentProductionLineInputSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
+    }
+    deps.ensureCountryInWorldBase(auth.countryId);
+    const variant = deps.getEquipmentVariantsById()[parsed.data.equipmentVariantId];
+    if (!variant || (variant.countryId && variant.countryId !== auth.countryId)) {
+      return res.status(404).json({ error: "EQUIPMENT_VARIANT_NOT_FOUND" });
+    }
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.unitEquipmentState);
+    const line: EquipmentProductionLine = {
+      id: `equipment_line:${auth.countryId}:${deps.createId()}`,
+      countryId: auth.countryId,
+      equipmentVariantId: variant.id,
+      assignedCapacity: Number(parsed.data.assignedCapacity.toFixed(3)),
+      progress: 0,
+      active: parsed.data.active ?? true,
+      createdTurnId: deps.getTurnId(),
+    };
+    deps.setCountryEquipmentProductionLines(auth.countryId, [...deps.getCountryEquipmentProductionLines(auth.countryId), line]);
     deps.savePersistentState();
     deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
     return res.json(deps.buildMilitaryOverview(auth.countryId));

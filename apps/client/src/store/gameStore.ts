@@ -384,6 +384,81 @@ export const useGameStore = create<GameState>((set) => ({
         }
       }
 
+      if ((delta.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0) {
+        if (delta.cu) {
+          nextWorldBase.civilianUnitsById = { ...nextWorldBase.civilianUnitsById };
+          for (const [unitId, value] of Object.entries(delta.cu)) {
+            if (!value) {
+              delete nextWorldBase.civilianUnitsById[unitId];
+              continue;
+            }
+            nextWorldBase.civilianUnitsById[unitId] = value;
+          }
+        }
+        if (delta.cq) {
+          nextWorldBase.civilianUnitQueueByCountry = { ...nextWorldBase.civilianUnitQueueByCountry };
+          for (const [countryId, value] of Object.entries(delta.cq)) {
+            if (!value) {
+              delete nextWorldBase.civilianUnitQueueByCountry[countryId];
+              continue;
+            }
+            nextWorldBase.civilianUnitQueueByCountry[countryId] = value;
+          }
+        }
+        if (delta.sp) {
+          nextWorldBase.settlementProjectsById = { ...nextWorldBase.settlementProjectsById };
+          for (const [projectId, value] of Object.entries(delta.sp)) {
+            if (!value) {
+              delete nextWorldBase.settlementProjectsById[projectId];
+              continue;
+            }
+            nextWorldBase.settlementProjectsById[projectId] = value;
+          }
+        }
+        if (delta.ci) {
+          nextWorldBase.cityMarkersById = { ...nextWorldBase.cityMarkersById };
+          for (const [markerId, value] of Object.entries(delta.ci)) {
+            if (!value) {
+              delete nextWorldBase.cityMarkersById[markerId];
+              continue;
+            }
+            nextWorldBase.cityMarkersById[markerId] = value;
+          }
+        }
+        if (delta.ev) {
+          nextWorldBase.equipmentVariantsById = { ...nextWorldBase.equipmentVariantsById };
+          for (const [variantId, value] of Object.entries(delta.ev)) {
+            if (!value) {
+              delete nextWorldBase.equipmentVariantsById[variantId];
+              continue;
+            }
+            nextWorldBase.equipmentVariantsById[variantId] = value;
+          }
+        }
+        if (delta.el) {
+          nextWorldBase.equipmentProductionLinesByCountry = {
+            ...nextWorldBase.equipmentProductionLinesByCountry,
+          };
+          for (const [countryId, value] of Object.entries(delta.el)) {
+            if (!value) {
+              delete nextWorldBase.equipmentProductionLinesByCountry[countryId];
+              continue;
+            }
+            nextWorldBase.equipmentProductionLinesByCountry[countryId] = value;
+          }
+        }
+        if (delta.es) {
+          nextWorldBase.equipmentStockpileByCountry = { ...nextWorldBase.equipmentStockpileByCountry };
+          for (const [countryId, value] of Object.entries(delta.es)) {
+            if (!value) {
+              delete nextWorldBase.equipmentStockpileByCountry[countryId];
+              continue;
+            }
+            nextWorldBase.equipmentStockpileByCountry[countryId] = value;
+          }
+        }
+      }
+
       if ((delta.mask & WORLD_DELTA_MASK.diplomacyProposals) !== 0 && delta.j) {
         nextWorldBase.diplomacyProposals = delta.j;
       }
@@ -530,7 +605,7 @@ export const selectOrdersForHex = (hexId: string, turnId: number) => (state: Gam
   const orders: Order[] = [];
   for (const list of byPlayer.values()) {
     for (const order of list) {
-      if (order.type === "ARMY_MOVE" && order.targetHexId === hexId) {
+      if ((order.type === "ARMY_MOVE" || order.type === "UNIT_MOVE") && order.targetHexId === hexId) {
         orders.push(order);
       }
     }

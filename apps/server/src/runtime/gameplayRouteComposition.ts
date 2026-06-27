@@ -96,6 +96,10 @@ export function registerGameplayRouteComposition(params: GameplayRouteCompositio
     dropTurnOrderIndexes: params.turnOrderRuntime.dropTurnOrderIndexes,
     getActiveColonizeRegionIds: params.getActiveColonizeRegionIds,
     getQueuedColonizeRegionIds: params.getQueuedColonizeRegionIds,
+    getHexRegionId: (hexId) => {
+      const hex = params.mapRuntime.getHexIndex().find((entry) => entry.id === hexId);
+      return hex?.regionId ?? null;
+    },
     getRegionColonizationConfig: params.colonizationRuntime.getRegionColonizationConfig,
     ensureCountryInWorldBase: params.countryWorldRuntime.ensureCountryInWorldBase,
     addActiveColonizationTarget: params.colonizationRuntime.addActiveColonizationTarget,

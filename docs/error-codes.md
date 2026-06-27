@@ -45,3 +45,24 @@ Error responses should include:
 - `BUILD_PLACEMENT_TERRAIN_DENIED` and `BUILD_PLACEMENT_TERRAIN_NOT_ALLOWED`: terrain rules reject the target hex.
 - `BUILD_PLACEMENT_FEATURE_DENIED` and `BUILD_PLACEMENT_FEATURE_NOT_ALLOWED`: feature rules reject the target hex.
 - `BUILD_PLACEMENT_WATER_DENIED` and `BUILD_PLACEMENT_WATER_NOT_ALLOWED`: water rules reject the target hex.
+
+## Settlement / Found City Codes
+
+- `COLONIZER_NOT_FOUND`: the `FOUND_CITY` order references a missing colonizer, a non-colonizer civilian unit, or a unit owned by another country.
+- `COLONIZER_CAPTURED`: the referenced colonizer is captured and cannot found a city.
+- `COLONIZER_NOT_ON_TARGET_HEX`: the colonizer is not standing on the requested `targetHexId`.
+- `FOUND_CITY_HEX_REGION_MISMATCH`: the requested hex is not part of the requested region.
+- `REGION_NOT_NEUTRAL`: the target region already has an owner or controller.
+- `SETTLEMENT_PROJECT_EXISTS`: the target region already has an active or stalled settlement project.
+- `COLONIZATION_DISABLED`: scenario/admin settings forbid colonization in the target region.
+
+## Unit Movement Codes
+
+- `UNIT_MOVE_KIND_UNSUPPORTED`: the current `UNIT_MOVE` server slice supports only civilian units.
+- `CIVILIAN_UNIT_NOT_FOUND`: the referenced civilian unit does not exist, is not owned by the order country, or is not available to the player.
+- `CIVILIAN_UNIT_CAPTURED`: the referenced civilian unit is captured and cannot move.
+- `CIVILIAN_UNIT_ALREADY_MOVED`: the civilian unit already moved during the current turn.
+- `CIVILIAN_UNIT_ALREADY_QUEUED`: the player already queued a movement order for this civilian unit this turn.
+- `UNIT_MOVE_TARGET_INVALID`: the movement target/path is empty or invalid.
+- `UNIT_MOVE_PATH_NOT_CONTIGUOUS`: the submitted route is not a contiguous hex route.
+- `CIVILIAN_UNIT_HEX_OCCUPIED`: another civilian unit already occupies a target hex in the route.

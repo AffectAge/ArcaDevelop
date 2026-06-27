@@ -1,4 +1,4 @@
-import type { ActiveModifierRow, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionAvailabilityReason, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, EventResolvedScope, EventTriggerExplanation, GameEventDefinition, IdeologyAttractionRule, JournalEntryDefinition, LawParliamentPowerEffect, LoginPayload, MilitaryBranch, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import type { ActiveModifierRow, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionAvailabilityReason, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, EquipmentClass, EquipmentModule, EquipmentProductionLine, EquipmentVariant, EventResolvedScope, EventTriggerExplanation, GameEventDefinition, IdeologyAttractionRule, JournalEntryDefinition, LawParliamentPowerEffect, LoginPayload, MilitaryBranch, MilitaryEquipmentRequirement, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, WorldBase, WsOutMessage } from "@arcanorum/shared";
 
 const API = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
@@ -363,6 +363,22 @@ export type MilitaryOverview = {
   queue: MilitaryFormationQueueItem[];
   hexOptions: Array<{ id: string; name: string; neighbors: string[] }>;
   formationSpeed: number;
+  equipmentClasses: EquipmentClass[];
+  equipmentModules: EquipmentModule[];
+  equipmentVariants: EquipmentVariant[];
+  equipmentProductionLines: EquipmentProductionLine[];
+  equipmentStockpile: Record<string, number>;
+  templateEquipmentAssignments: Record<string, { choices: EquipmentAssignmentChoiceRow[]; coverage: number }>;
+};
+
+export type EquipmentAssignmentChoiceRow = {
+  requirementId: string;
+  equipmentVariantId: string | null;
+  score: number;
+  requiredCount: number;
+  availableCount: number;
+  assignedCount: number;
+  coverage: number;
 };
 
 export async function fetchArmyOverview(token: string): Promise<ArmyOverview> {
@@ -385,7 +401,7 @@ export async function fetchMilitaryOverview(token: string): Promise<MilitaryOver
 
 export async function saveMilitaryTemplate(
   token: string,
-  payload: { templateId?: string; kind: MilitaryBranch; name: string; components: MilitaryTemplateComponent[]; iconUrl?: string | null },
+  payload: { templateId?: string; kind: MilitaryBranch; name: string; components: MilitaryTemplateComponent[]; equipmentRequirements?: MilitaryEquipmentRequirement[]; iconUrl?: string | null },
 ): Promise<MilitaryOverview> {
   const response = await fetch(`${API}/military/templates`, {
     method: "POST",
@@ -2657,6 +2673,45 @@ export async function cancelCountryColonization(token: string, regionId: string)
   if (!response.ok) {
     const err = await response.json();
     throw new Error(err.error ?? "COLONIZATION_CANCEL_FAILED");
+  }
+}
+
+export async function createEquipmentVariant(
+  token: string,
+  payload: { classId: string; name: string; moduleIdsBySlotId: Record<string, string> },
+): Promise<MilitaryOverview> {
+  const response = await fetch(`${API}/military/equipment/variants`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(payload),
+  });
+  return handleJson<MilitaryOverview>(response);
+}
+
+export async function createEquipmentProductionLine(
+  token: string,
+  payload: { equipmentVariantId: string; assignedCapacity: number; active?: boolean },
+): Promise<MilitaryOverview> {
+  const response = await fetch(`${API}/military/equipment/production-lines`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(payload),
+  });
+  return handleJson<MilitaryOverview>(response);
+}
+
+export async function queueCountryColonizer(token: string, hexId: string): Promise<void> {
+  const response = await fetch(`${API}/country/colonization/queue-colonizer`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ hexId }),
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error ?? "COLONIZER_QUEUE_FAILED");
   }
 }
 

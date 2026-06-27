@@ -24,9 +24,25 @@ World delta changes must:
 
 Current compact world-delta fields include `j` for full-list `diplomacyProposals` replacement, `s` for `countryScheduledEventsByCountryId`, `xg` for `countryEventFlagsByCountryId`, `jo` for `journalEntriesByCountryId`, and `xr` for `explanationRecordsByTurn`. Any new compact field must be documented here with its shared mask, server producer, and client consumer.
 
+The Civ-like units/equipment contract introduces grouped mask `WORLD_DELTA_MASK.unitEquipmentState` because the current numeric bitmask is near its 32-bit limit. The grouped mask carries compact fields `cu` (`civilianUnitsById`), `sp` (`settlementProjectsById`), `ci` (`cityMarkersById`), `ev` (`equipmentVariantsById`), `el` (`equipmentProductionLinesByCountry`), and `es` (`equipmentStockpileByCountry`). Server producer: `apps/server/src/runtime/worldDeltaDiff.ts`. Client consumer: `apps/client/src/store/gameStore.ts`. A future protocol version can split this grouped mask into per-section masks after replacing the 32-bit mask constraint.
+
 ## Error Codes
 
 Do not rely on raw human-readable server messages. Use machine-readable `code` values and localize UI messages on the client.
+
+## Unit, Settlement, And Equipment Orders
+
+The shared order union reserves player-facing target orders for the new model:
+
+- `UNIT_MOVE`: moves a civilian unit, land division, or fleet along a server-validated hex path.
+- `UNIT_ATTACK`: requests a manual Civ-like attack against a target hex/unit.
+- `FOUND_CITY`: consumes a `colonizer` civilian unit and starts a region-owned settlement project at the unit hex when the target region is neutral and eligible.
+- `EQUIPMENT_VARIANT`: creates or updates a country/scenario equipment variant from module slots.
+- `EQUIPMENT_PRODUCTION_LINE`: creates or updates a production line for a specific equipment variant.
+
+`COLONIZE` remains a legacy/internal compatibility order while the player UI transitions away from button colonization. New player-facing colonization should use `FOUND_CITY`.
+
+`FOUND_CITY` is validated both on order submission and during turn resolution. The server requires the referenced colonizer to belong to the order country, stand on `targetHexId`, and target a hex inside `regionId`. The region must be neutral, colonization must not be disabled, and there must be no active/stalled settlement project for that region. On acceptance during turn resolution, the colonizer is removed immediately and a `SettlementProject` is created. Settlement progress spends colonization points through the resource ledger with `resourceLedger.source.settlement.progress`; the region owner/controller changes only when the project completes, at which point the server creates a `CityMarker`.
 
 ## Build Order Contract
 
@@ -39,6 +55,8 @@ Do not rely on raw human-readable server messages. Use machine-readable `code` v
 Building visual URLs are not part of the building content contract. Clients derive authored building atlas URLs from the active scenario id and building id as `/scenario-assets/<scenarioId>/assets/buildings/<sanitizedBuildingId>.png`. `GET /game-settings/public` includes `activeScenarioId` so unauthenticated and player clients can compute scenario-owned asset paths without admin metadata access.
 
 The server statically serves `/scenario-assets/:scenarioId/assets/buildings/*` from `scenarios/<scenarioId>/assets/buildings/`; unsafe scenario ids return 404. Scenario validation requires each building atlas to be a readable PNG sized `256x64`.
+
+City marker visuals use the same atlas convention with culture ids. Clients derive city atlas URLs as `/scenario-assets/<scenarioId>/assets/cities/<sanitizedCultureId>.png`, and the server statically serves `/scenario-assets/:scenarioId/assets/cities/*` from `scenarios/<scenarioId>/assets/cities/`. Scenario validation requires each culture's city atlas to be a readable PNG sized `256x64`.
 ## Resource Ledger Deltas
 
 `WorldBase.resourceLedgerByTurn` stores bounded persisted `ResourceFlow[]` history. World deltas use the compact `resourceLedgerByTurn` delta field for newly changed or pruned ledger turns. Bootstrap/resync may include the bounded snapshot, but normal turn deltas must not rebroadcast full history.

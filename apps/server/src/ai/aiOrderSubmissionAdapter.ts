@@ -13,13 +13,28 @@ export type AiBuildOrderSubmissionDraft = {
 
 export type AiColonizeOrderSubmissionDraft = {
   kind: "validated-order-draft";
-  candidateKind: "colonize-region";
+  candidateKind: "found-city";
   countryId: string;
   requiresValidatedPipeline: true;
-  order: Extract<OrderInput, { type: "COLONIZE" }>;
+  order: Extract<OrderInput, { type: "FOUND_CITY" }>;
 };
 
-export type AiOrderSubmissionDraft = AiBuildOrderSubmissionDraft | AiColonizeOrderSubmissionDraft;
+export type AiQueueColonizerActionSubmissionDraft = {
+  kind: "validated-ai-action-draft";
+  candidateKind: "queue-colonizer";
+  countryId: string;
+  requiresValidatedPipeline: true;
+  action: {
+    type: "QUEUE_COLONIZER";
+    countryId: string;
+    hexId: Extract<OrderInput, { type: "FOUND_CITY" }>["targetHexId"];
+  };
+};
+
+export type AiOrderSubmissionDraft =
+  | AiBuildOrderSubmissionDraft
+  | AiColonizeOrderSubmissionDraft
+  | AiQueueColonizerActionSubmissionDraft;
 
 export type CreateAiBuildOrderDraftsParams = {
   plan: AiRuntimePlan;
@@ -55,13 +70,22 @@ function createAiOrderDraft(
       order: createBuildOrderInput(candidate, turnId, playerIdPrefix),
     }];
   }
-  if (candidate.kind === "colonize-region") {
+  if (candidate.kind === "found-city") {
     return [{
       kind: "validated-order-draft",
-      candidateKind: "colonize-region",
+      candidateKind: "found-city",
       countryId: action.countryId,
       requiresValidatedPipeline: true,
-      order: createColonizeOrderInput(candidate, turnId, playerIdPrefix),
+      order: createFoundCityOrderInput(candidate, turnId, playerIdPrefix),
+    }];
+  }
+  if (candidate.kind === "queue-colonizer") {
+    return [{
+      kind: "validated-ai-action-draft",
+      candidateKind: "queue-colonizer",
+      countryId: action.countryId,
+      requiresValidatedPipeline: true,
+      action: candidate.actionDraft,
     }];
   }
   return [];
@@ -83,17 +107,22 @@ function createBuildOrderInput(
   };
 }
 
-function createColonizeOrderInput(
+function createFoundCityOrderInput(
   candidate: AiColonizationCandidate,
   turnId: number,
   playerIdPrefix: string,
-): Extract<OrderInput, { type: "COLONIZE" }> {
+): Extract<OrderInput, { type: "FOUND_CITY" }> {
+  if (candidate.kind !== "found-city") {
+    throw new Error("AI_COLONIZATION_CANDIDATE_IS_NOT_FOUND_CITY");
+  }
   return {
-    type: "COLONIZE",
+    type: "FOUND_CITY",
     turnId,
     playerId: `${playerIdPrefix}:${candidate.countryId}`,
     countryId: candidate.countryId,
+    civilianUnitId: candidate.civilianUnitId,
     regionId: candidate.regionId,
+    targetHexId: candidate.targetHexId,
     payload: candidate.orderDraft.payload,
   };
 }
@@ -151,9 +180,14 @@ function normalizeRejectedReason(reason: string): string {
 export type AiOrderDeltaSubmitter = (delta: OrderDelta) => Promise<AiOrderDraftSubmitOutcome>;
 
 export function createAiOrderDeltaSubmitter(submitOrderDelta: AiOrderDeltaSubmitter): SubmitAiOrderDraftsParams["submitDraft"] {
-  return async (draft) => submitOrderDelta(createOrderDeltaFromAiDraft(draft));
+  return async (draft) => {
+    if (draft.kind !== "validated-order-draft") {
+      return { ok: false, reason: "AI_ACTION_SUBMITTER_REQUIRED" };
+    }
+    return submitOrderDelta(createOrderDeltaFromAiDraft(draft));
+  };
 }
 
-export function createOrderDeltaFromAiDraft(draft: AiOrderSubmissionDraft): OrderDelta {
+export function createOrderDeltaFromAiDraft(draft: Extract<AiOrderSubmissionDraft, { kind: "validated-order-draft" }>): OrderDelta {
   return { type: "ORDER_DELTA", order: draft.order };
 }

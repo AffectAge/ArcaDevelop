@@ -13,6 +13,9 @@ import type {
 } from "@arcanorum/shared";
 import type { GameContentEntry, GameSettings } from "./gameSettingsTypes";
 import type { RegionColonizationConfig } from "../mechanics/colonizationMechanics";
+import { validateFoundCityOrder } from "../mechanics/settlementMechanics";
+import { isCivilianHexOccupied, normalizeUnitMoveRoute } from "../mechanics/unitMovementMechanics";
+import type { HexMapIndexEntry } from "../map/hexIndex";
 
 type WebSocketCountryRecord = {
   id: string;
@@ -38,6 +41,7 @@ type WebSocketRuntimeParams = {
   getOrdersByTurn: () => Map<number, Map<string, Order[]>>;
   getQueuedColonizeRegionsByCountryByTurn: () => Map<number, Map<string, Set<string>>>;
   getActiveColonizeRegionsByCountry: () => Map<string, Set<string>>;
+  getHexIndex: () => HexMapIndexEntry[];
   parseAuthToken: (token: string) => AuthHeaderPayload | null;
   findCountryForAuth: (countryId: string) => Promise<WebSocketCountryRecord | null>;
   listResolveStatusCountries: () => Promise<ResolveStatusCountryRecord[]>;
@@ -82,6 +86,7 @@ type WebSocketRuntimeParams = {
     currentHexId: HexId,
   ) => HexId[];
   isContiguousArmyRoute: (fromHexId: HexId, route: HexId[]) => boolean;
+  getHexMovementCost: (hexId: HexId) => number;
 };
 
 export function registerWebSocketRuntime(params: WebSocketRuntimeParams): void {
@@ -334,7 +339,14 @@ export async function submitOrderDeltaToRuntime(input: {
     return;
   }
 
-  if (delta.order.type !== "COLONIZE" && delta.order.type !== "BUILD" && delta.order.type !== "ARMY_MOVE" && countryResource.ducats <= 0) {
+  if (
+    delta.order.type !== "COLONIZE" &&
+    delta.order.type !== "BUILD" &&
+    delta.order.type !== "ARMY_MOVE" &&
+    delta.order.type !== "UNIT_MOVE" &&
+    delta.order.type !== "FOUND_CITY" &&
+    countryResource.ducats <= 0
+  ) {
     send({ type: "ERROR", code: "NO_RESOURCES", message: "Недостаточно дукатов для приказа" });
     return;
   }
@@ -349,6 +361,8 @@ export async function submitOrderDeltaToRuntime(input: {
   const playerOrders = turnOrders.get(playerId) ?? [];
 
   if (!validateColonizeOrder({ params, delta, send, turnId, worldBase, gameSettings })) return;
+  if (!validateUnitMoveOrder({ params, delta, send, worldBase, playerOrders })) return;
+  if (!validateFoundCityOrderForSubmit({ params, delta, send, worldBase })) return;
   if (!(await validateBuildOrder({ params, delta, send, worldBase, gameSettings }))) return;
   if (!validateArmyMoveOrder({ params, delta, send, worldBase, playerOrders })) return;
 
@@ -363,6 +377,81 @@ export async function submitOrderDeltaToRuntime(input: {
   params.getOrdersByTurn().set(turnId, turnOrders);
   params.savePersistentState();
   params.broadcast({ type: "ORDER_BROADCAST", order });
+}
+
+function validateFoundCityOrderForSubmit(input: {
+  params: WebSocketRuntimeParams;
+  delta: OrderDelta;
+  send: (message: WsOutMessage) => void;
+  worldBase: WorldBase;
+}): boolean {
+  const { params, delta, send, worldBase } = input;
+  if (delta.order.type !== "FOUND_CITY") return true;
+  const hexRegionById = new Map(params.getHexIndex().map((hex) => [hex.id, hex.regionId ?? null] as const));
+  const validation = validateFoundCityOrder({
+    order: { ...delta.order, id: "submit-validation", createdAt: new Date(0).toISOString() },
+    worldBase,
+    getHexRegionId: (hexId) => hexRegionById.get(hexId) ?? null,
+    getRegionColonizationConfig: params.getRegionColonizationConfig,
+  });
+  if (validation.ok) return true;
+  send({ type: "ERROR", code: validation.reason, message: validation.reason });
+  return false;
+}
+
+function validateUnitMoveOrder(input: {
+  params: WebSocketRuntimeParams;
+  delta: OrderDelta;
+  send: (message: WsOutMessage) => void;
+  worldBase: WorldBase;
+  playerOrders: Order[];
+}): boolean {
+  const { params, delta, send, worldBase, playerOrders } = input;
+  if (delta.order.type !== "UNIT_MOVE") return true;
+  if (delta.order.unitKind !== "civilian") {
+    send({ type: "ERROR", code: "UNIT_MOVE_KIND_UNSUPPORTED", message: "UNIT_MOVE_KIND_UNSUPPORTED" });
+    return false;
+  }
+  const unit = worldBase.civilianUnitsById[delta.order.unitId];
+  if (!unit || unit.countryId !== delta.order.countryId) {
+    send({ type: "ERROR", code: "CIVILIAN_UNIT_NOT_FOUND", message: "CIVILIAN_UNIT_NOT_FOUND" });
+    return false;
+  }
+  if (unit.status === "captured") {
+    send({ type: "ERROR", code: "CIVILIAN_UNIT_CAPTURED", message: "CIVILIAN_UNIT_CAPTURED" });
+    return false;
+  }
+  const route = normalizeUnitMoveRoute(delta.order.payload, delta.order.targetHexId, unit.hexId);
+  if (route.length === 0) {
+    send({ type: "ERROR", code: "UNIT_MOVE_TARGET_INVALID", message: "UNIT_MOVE_TARGET_INVALID" });
+    return false;
+  }
+  if (!params.isContiguousArmyRoute(unit.hexId, route)) {
+    send({ type: "ERROR", code: "UNIT_MOVE_PATH_NOT_CONTIGUOUS", message: "UNIT_MOVE_PATH_NOT_CONTIGUOUS" });
+    return false;
+  }
+  const routeCost = route.reduce((sum, hexId) => sum + Math.max(0.001, Number(params.getHexMovementCost(hexId)) || 1), 0);
+  if (routeCost > Math.max(0, Number(unit.movementPoints) || 0)) {
+    send({ type: "ERROR", code: "UNIT_MOVE_INSUFFICIENT_MOVEMENT", message: "UNIT_MOVE_INSUFFICIENT_MOVEMENT" });
+    return false;
+  }
+  if (route.some((hexId) => isCivilianHexOccupied(worldBase, hexId, unit.id))) {
+    send({ type: "ERROR", code: "CIVILIAN_UNIT_HEX_OCCUPIED", message: "CIVILIAN_UNIT_HEX_OCCUPIED" });
+    return false;
+  }
+  if (
+    playerOrders.some(
+      (order) =>
+        order.type === "UNIT_MOVE" &&
+        order.countryId === delta.order.countryId &&
+        order.unitKind === "civilian" &&
+        order.unitId === unit.id,
+    )
+  ) {
+    send({ type: "ERROR", code: "CIVILIAN_UNIT_ALREADY_QUEUED", message: "CIVILIAN_UNIT_ALREADY_QUEUED" });
+    return false;
+  }
+  return true;
 }
 
 function validateColonizeOrder(input: {

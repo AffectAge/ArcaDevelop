@@ -1,4 +1,14 @@
-import type { BuildingAdjacencyEffect, BuildingPlacementRules, DivisionStats } from "@arcanorum/shared";
+import type {
+  BuildingAdjacencyEffect,
+  BuildingPlacementRules,
+  DivisionStats,
+  EquipmentBranch,
+  EquipmentClass,
+  EquipmentClassRole,
+  EquipmentModule,
+  EquipmentStats,
+  EquipmentStatKey,
+} from "@arcanorum/shared";
 import {
   POPULATION_FALLBACK_KEY_BY_DIMENSION,
   POPULATION_FALLBACK_NAME_BY_DIMENSION,
@@ -300,6 +310,56 @@ export function ensureDefaultBattalions(battalions: GameSettings["content"]["bat
   }
   return next;
 }
+
+export const DEFAULT_EQUIPMENT_CLASSES: EquipmentClass[] = [
+  {
+    id: "equipment_class:infantry_kit",
+    branch: "land",
+    slotIds: ["weapon", "armor", "support"],
+    roles: ["attack", "defense", "support"],
+    baseStats: { attack: 1, defense: 1, reliability: 1, supplyUse: 0.2 },
+  },
+  {
+    id: "equipment_class:field_vehicle",
+    branch: "land",
+    slotIds: ["chassis", "weapon", "engine"],
+    roles: ["breakthrough", "speed", "attack"],
+    baseStats: { breakthrough: 1, armor: 1, speed: 1, reliability: 0.8, supplyUse: 0.6, fuelUse: 0.4 },
+  },
+  {
+    id: "equipment_class:aircraft",
+    branch: "air",
+    slotIds: ["airframe", "engine", "payload"],
+    roles: ["range", "attack", "support"],
+    baseStats: { speed: 2, range: 2, reliability: 0.75, fuelUse: 0.8 },
+  },
+  {
+    id: "equipment_class:warship",
+    branch: "naval",
+    slotIds: ["hull", "battery", "engine"],
+    roles: ["attack", "defense", "range"],
+    baseStats: { attack: 2, defense: 2, range: 1, reliability: 0.75, supplyUse: 1.2, fuelUse: 0.5 },
+  },
+];
+
+export const DEFAULT_EQUIPMENT_MODULES: EquipmentModule[] = [
+  { id: "equipment_module:spears", classId: "equipment_class:infantry_kit", slotId: "weapon", stats: { attack: 2, piercing: 1 }, goodsCost: [{ goodId: "good:wood", amount: 1 }] },
+  { id: "equipment_module:crossbows", classId: "equipment_class:infantry_kit", slotId: "weapon", stats: { attack: 4, piercing: 2, range: 1 }, goodsCost: [{ goodId: "good:wood", amount: 1 }, { goodId: "good:iron", amount: 1 }] },
+  { id: "equipment_module:padded_armor", classId: "equipment_class:infantry_kit", slotId: "armor", stats: { defense: 2, reliability: 0.1 }, goodsCost: [{ goodId: "good:textiles", amount: 1 }] },
+  { id: "equipment_module:plate_armor", classId: "equipment_class:infantry_kit", slotId: "armor", stats: { defense: 4, armor: 2, speed: -0.15 }, goodsCost: [{ goodId: "good:iron", amount: 2 }] },
+  { id: "equipment_module:field_tools", classId: "equipment_class:infantry_kit", slotId: "support", stats: { defense: 1, supplyUse: -0.05 }, goodsCost: [{ goodId: "good:wood", amount: 1 }] },
+  { id: "equipment_module:light_chassis", classId: "equipment_class:field_vehicle", slotId: "chassis", stats: { speed: 1.5, armor: 1 }, goodsCost: [{ goodId: "good:iron", amount: 2 }] },
+  { id: "equipment_module:heavy_chassis", classId: "equipment_class:field_vehicle", slotId: "chassis", stats: { armor: 4, defense: 2, speed: -0.5 }, goodsCost: [{ goodId: "good:iron", amount: 4 }] },
+  { id: "equipment_module:cannon", classId: "equipment_class:field_vehicle", slotId: "weapon", stats: { attack: 5, breakthrough: 2, piercing: 3 }, goodsCost: [{ goodId: "good:iron", amount: 3 }] },
+  { id: "equipment_module:steam_engine", classId: "equipment_class:field_vehicle", slotId: "engine", stats: { speed: 1, fuelUse: 0.4 }, goodsCost: [{ goodId: "good:coal", amount: 2 }] },
+  { id: "equipment_module:wood_airframe", classId: "equipment_class:aircraft", slotId: "airframe", stats: { speed: 1, reliability: 0.15 }, goodsCost: [{ goodId: "good:wood", amount: 2 }] },
+  { id: "equipment_module:arcane_engine", classId: "equipment_class:aircraft", slotId: "engine", stats: { speed: 2, range: 2, fuelUse: 0.2 }, goodsCost: [{ goodId: "good:crystal", amount: 2 }] },
+  { id: "equipment_module:bomb_rack", classId: "equipment_class:aircraft", slotId: "payload", stats: { attack: 5, breakthrough: 2, range: -0.25 }, goodsCost: [{ goodId: "good:iron", amount: 2 }] },
+  { id: "equipment_module:wooden_hull", classId: "equipment_class:warship", slotId: "hull", stats: { defense: 3, supplyUse: 0.2 }, goodsCost: [{ goodId: "good:wood", amount: 5 }] },
+  { id: "equipment_module:ironclad_hull", classId: "equipment_class:warship", slotId: "hull", stats: { defense: 6, armor: 4, speed: -0.4 }, goodsCost: [{ goodId: "good:iron", amount: 6 }] },
+  { id: "equipment_module:broadside_battery", classId: "equipment_class:warship", slotId: "battery", stats: { attack: 6, range: 1 }, goodsCost: [{ goodId: "good:iron", amount: 4 }] },
+  { id: "equipment_module:sail_rig", classId: "equipment_class:warship", slotId: "engine", stats: { speed: 1, fuelUse: -0.2 }, goodsCost: [{ goodId: "good:textiles", amount: 2 }] },
+];
 
 export const DEFAULT_SHIP_TYPES: MilitaryContentEntry[] = [
   {
@@ -798,4 +858,95 @@ export function normalizeContentShipTypes(input: unknown): GameSettings["content
 
 export function normalizeContentAircraftTypes(input: unknown): GameSettings["content"]["aircraftTypes"] {
   return normalizeContentMilitaryEntries(input, DEFAULT_AIRCRAFT_TYPES);
+}
+
+const EQUIPMENT_BRANCHES = new Set<EquipmentBranch>(["land", "air", "naval"]);
+const EQUIPMENT_ROLES = new Set<EquipmentClassRole>(["attack", "defense", "breakthrough", "speed", "range", "support"]);
+const EQUIPMENT_STAT_KEYS = new Set<EquipmentStatKey>([
+  "attack",
+  "defense",
+  "breakthrough",
+  "armor",
+  "piercing",
+  "speed",
+  "range",
+  "reliability",
+  "supplyUse",
+  "fuelUse",
+]);
+
+export function normalizeContentEquipmentClasses(input: unknown): GameSettings["content"]["equipmentClasses"] {
+  const rows = Array.isArray(input) ? input : [];
+  const normalized: EquipmentClass[] = [];
+  for (const raw of rows) {
+    if (!raw || typeof raw !== "object") continue;
+    const entry = raw as Record<string, unknown>;
+    const id = typeof entry.id === "string" ? entry.id.trim() : "";
+    const branch = typeof entry.branch === "string" && EQUIPMENT_BRANCHES.has(entry.branch as EquipmentBranch)
+      ? (entry.branch as EquipmentBranch)
+      : null;
+    const slotIds = Array.isArray(entry.slotIds)
+      ? entry.slotIds.map((slotId) => (typeof slotId === "string" ? slotId.trim() : "")).filter(Boolean)
+      : [];
+    if (!id || !branch || slotIds.length === 0) continue;
+    const roles = Array.isArray(entry.roles)
+      ? entry.roles.filter((role): role is EquipmentClassRole => typeof role === "string" && EQUIPMENT_ROLES.has(role as EquipmentClassRole))
+      : [];
+    normalized.push({
+      id,
+      branch,
+      slotIds: [...new Set(slotIds)].slice(0, 12),
+      roles: roles.length > 0 ? [...new Set(roles)].slice(0, 8) : ["support"],
+      baseStats: normalizeEquipmentStats(entry.baseStats),
+    });
+  }
+  return ensureDefaultEquipmentClasses(normalized);
+}
+
+export function normalizeContentEquipmentModules(input: unknown): GameSettings["content"]["equipmentModules"] {
+  const rows = Array.isArray(input) ? input : [];
+  const normalized: EquipmentModule[] = [];
+  for (const raw of rows) {
+    if (!raw || typeof raw !== "object") continue;
+    const entry = raw as Record<string, unknown>;
+    const id = typeof entry.id === "string" ? entry.id.trim() : "";
+    const classId = typeof entry.classId === "string" && entry.classId.trim() ? entry.classId.trim() : null;
+    const slotId = typeof entry.slotId === "string" ? entry.slotId.trim() : "";
+    if (!id || !slotId) continue;
+    normalized.push({
+      id,
+      classId,
+      slotId,
+      stats: normalizeEquipmentStats(entry.stats),
+      goodsCost: normalizeGoodFlows(entry.goodsCost),
+    });
+  }
+  return ensureDefaultEquipmentModules(normalized);
+}
+
+export function ensureDefaultEquipmentClasses(classes: EquipmentClass[]): EquipmentClass[] {
+  const byId = new Map(classes.map((entry) => [entry.id, entry]));
+  for (const fallback of DEFAULT_EQUIPMENT_CLASSES) {
+    if (!byId.has(fallback.id)) byId.set(fallback.id, fallback);
+  }
+  return [...byId.values()];
+}
+
+export function ensureDefaultEquipmentModules(modules: EquipmentModule[]): EquipmentModule[] {
+  const byId = new Map(modules.map((entry) => [entry.id, entry]));
+  for (const fallback of DEFAULT_EQUIPMENT_MODULES) {
+    if (!byId.has(fallback.id)) byId.set(fallback.id, fallback);
+  }
+  return [...byId.values()];
+}
+
+function normalizeEquipmentStats(input: unknown): EquipmentStats {
+  const normalized: EquipmentStats = {};
+  if (!input || typeof input !== "object") return normalized;
+  for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
+    if (!EQUIPMENT_STAT_KEYS.has(key as EquipmentStatKey)) continue;
+    if (typeof value !== "number" || !Number.isFinite(value)) continue;
+    normalized[key as EquipmentStatKey] = Number(Math.max(-10_000, Math.min(10_000, value)).toFixed(3));
+  }
+  return normalized;
 }

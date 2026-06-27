@@ -62,6 +62,10 @@ const baseColonization: ColonizationSettings = {
   ducatsCostPer1000Km2: 5,
   settlementEnabled: true,
   settlementPopulationOnCapture: 1_000,
+  colonizerTurns: 2,
+  colonizerCostColonization: 20,
+  colonizerCostDucats: 10,
+  colonizerMovementPoints: 2,
 };
 const baseCustomization: CustomizationSettings = {
   renameDucats: 20,

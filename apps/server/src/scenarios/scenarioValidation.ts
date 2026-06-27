@@ -36,6 +36,7 @@ export type ScenarioValidationIssueCode =
   | "INVALID_EVENT_DEFINITION"
   | "INVALID_JOURNAL_DEFINITION"
   | "INVALID_BUILDING_ATLAS"
+  | "INVALID_CITY_ATLAS"
   | "BROKEN_REFERENCE"
   | "MISSING_LOCALIZATION_KEY"
   | "MISSING_REGION_MEMBERSHIP"
@@ -177,6 +178,10 @@ const VALIDATION_COLONIZATION_DEFAULTS = {
   ducatsCostPer1000Km2: 5,
   settlementEnabled: true,
   settlementPopulationOnCapture: 1_000,
+  colonizerTurns: 2,
+  colonizerCostColonization: 20,
+  colonizerCostDucats: 10,
+  colonizerMovementPoints: 2,
 };
 const VALIDATION_CUSTOMIZATION_DEFAULTS = {
   renameDucats: 20,
@@ -310,6 +315,7 @@ export async function validateScenarioDirectory(
   validateJournalDefinitions(root, loadedEntities, localizationKeys, issues);
   validateEntityLocalization(root, loadedEntities, localizationKeys, issues);
   await validateBuildingAtlases(root, loadedEntities, issues);
+  await validateCityAtlases(root, loadedEntities, issues);
   await validateGeneratedManifest(root, summary, issues, options.requireGeneratedIndexes === true);
 
   return {
@@ -547,6 +553,43 @@ async function validateBuildingAtlases(root: string, entities: LoadedEntity[], i
 
 function sanitizeBuildingAtlasId(buildingId: string): string {
   return buildingId.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+async function validateCityAtlases(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
+  for (const culture of entities.filter((entity) => entity.kind === "culture")) {
+    const relativePath = `assets/cities/${sanitizeCityAtlasId(culture.id)}.png`;
+    const atlasPath = join(root, relativePath);
+    if (!existsSync(atlasPath)) {
+      issues.push({
+        code: "MISSING_REQUIRED_FILE",
+        path: relativePath,
+        message: `Culture ${culture.id} requires a 256x64 PNG city atlas at ${relativePath}.`,
+      });
+      continue;
+    }
+    try {
+      const dimensions = imageSize(await readFile(atlasPath));
+      const width = dimensions.width ?? 0;
+      const height = dimensions.height ?? 0;
+      if (dimensions.type !== "png" || width !== 256 || height !== 64) {
+        issues.push({
+          code: "INVALID_CITY_ATLAS",
+          path: relativePath,
+          message: `City atlas must be a PNG sized 256x64; received ${dimensions.type ?? "unknown"} ${width}x${height}.`,
+        });
+      }
+    } catch {
+      issues.push({
+        code: "INVALID_CITY_ATLAS",
+        path: relativePath,
+        message: "City atlas must be a readable PNG sized 256x64.",
+      });
+    }
+  }
+}
+
+function sanitizeCityAtlasId(cultureId: string): string {
+  return cultureId.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
 function validateCountryAuthoringFields(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {

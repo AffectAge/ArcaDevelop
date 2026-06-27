@@ -12,6 +12,7 @@ export type ResourceFlowSourceType =
   | "event"
   | "trade"
   | "army"
+  | "unit"
   | "diplomacy"
   | "colonization"
   | "construction"
