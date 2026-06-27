@@ -59,6 +59,7 @@ export type UnitAttackOrder = OrderBase & {
 export type FoundCityOrder = OrderBase & {
   type: "FOUND_CITY";
   civilianUnitId: string;
+  name: string;
   regionId: string;
   targetHexId: HexId;
 };

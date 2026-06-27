@@ -5,6 +5,7 @@ import type {
   RegionPopulation,
   WorldBase,
 } from "@arcanorum/shared";
+import { buildCityHexIdSet } from "@arcanorum/shared";
 import type { HexMapIndexEntry } from "../map/hexIndex";
 import type {
   BuildingContentEntry,
@@ -163,6 +164,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   const domains = getPopulationDomainKeys();
   const fallbackByDimension = resolvePopulationFallbackKeys(domains);
   const buildingById = new Map(gameSettings.content.buildings.map((entry) => [entry.id, entry] as const));
+  const cityHexIds = buildCityHexIdSet(worldBase);
   const goodById = new Map(gameSettings.content.goods.map((entry) => [entry.id, entry] as const));
   const professionById = new Map(gameSettings.content.professions.map((entry) => [entry.id, entry] as const));
   const nextProfessionsByPopIdByHex: Record<string, Record<string, Record<string, PopulationProfessionState>>> = {};
@@ -476,6 +478,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         instance,
         regionBuildingsByRegion: worldBase.regionBuildingsByRegion,
         hexHexIndex,
+        cityHexIds,
       }));
       const warehouse = instance.warehouseByGoodId ?? {};
       const operationEconomics = prepareBuildingOperationEconomics({
@@ -825,6 +828,7 @@ function resolveAdjacencyThroughputFactor(params: {
   instance: BuildingInstance;
   regionBuildingsByRegion: WorldBase["regionBuildingsByRegion"];
   hexHexIndex: HexMapIndexEntry[];
+  cityHexIds?: ReadonlySet<string>;
 }): number {
   const effects = params.building.adjacencyEffects ?? [];
   const targetHexId = params.instance.targetHexId;
@@ -843,6 +847,7 @@ function resolveAdjacencyThroughputFactor(params: {
       const feature = neighbor.landscape ?? "";
       if (effect.when.neighborTerrains?.length && !effect.when.neighborTerrains.some((item) => item === terrain)) continue;
       if (effect.when.neighborFeatures?.length && !effect.when.neighborFeatures.some((item) => item === feature)) continue;
+      if (effect.when.neighborTags?.length && !effect.when.neighborTags.some((tag) => tag === "city" && params.cityHexIds?.has(neighbor.id))) continue;
       if (effect.when.neighborBuildingIds?.length) {
         const instances = params.regionBuildingsByRegion[neighbor.regionId ?? ""] ?? [];
         if (!instances.some((instance) => instance.targetHexId === neighbor.id && effect.when.neighborBuildingIds?.includes(instance.buildingId))) continue;

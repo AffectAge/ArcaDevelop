@@ -127,12 +127,14 @@ describe("worldDeltaDiff", () => {
           movementPoints: 2,
           maxMovementPoints: 2,
           path: [],
+          targetHexId: null,
           createdTurnId: 1,
         },
       },
       settlementProjectsById: {
         "settlement:a": {
           id: "settlement:a",
+          name: "Babylon",
           countryId: "country:a",
           regionId: "region:a",
           targetHexId: "hex:0:0",
@@ -147,6 +149,7 @@ describe("worldDeltaDiff", () => {
       cityMarkersById: {
         "city:a": {
           id: "city:a",
+          name: "Babylon",
           countryId: "country:a",
           ownerCountryId: "country:a",
           regionId: "region:a",

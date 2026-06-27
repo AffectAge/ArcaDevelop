@@ -1,5 +1,5 @@
 import { Container, Geometry, GlProgram, Mesh, Shader, UniformGroup } from "pixi.js";
-import type { HexMapArtifact } from "@arcanorum/shared";
+import type { HexId, HexMapArtifact } from "@arcanorum/shared";
 import { buildHexTerrainMeshData, type HexChunkRenderData, type HexTerrainMeshBuildResult } from "./hexTerrainMesh";
 import { generatedHexMaterialPack, resolveShaderQualityFeatures, resolveTerrainMaterialAtlasIndex, type HexTerrainShaderQuality } from "./hexTerrainMaterials";
 import { loadHexMaterialTextures, type LoadedHexMaterialTextures } from "./hexTerrainMaterialTextures";
@@ -10,6 +10,7 @@ export type HexTerrainMeshRenderer = {
   meshData: HexTerrainMeshBuildResult;
   meshCount: number;
   setQuality: (quality: HexTerrainShaderQuality, reducedMotion: boolean) => void;
+  setCityHexIds: (cityHexIds: ReadonlySet<HexId>) => void;
   updateVisibility: (camera: HexCamera, viewport: { width: number; height: number }) => number;
   destroy: () => void;
 };
@@ -23,13 +24,14 @@ export async function createHexTerrainMeshRenderer(map: HexMapArtifact): Promise
   const materialTextures = await loadHexMaterialTextures(generatedHexMaterialPack);
   const shader = createHexTerrainShader(materialTextures);
   const container = new Container();
-  const meshData = buildHexTerrainMeshData(map, generatedHexMaterialPack);
-  const chunkMeshes = meshData.chunks.map((chunk) => {
+  let meshData = buildHexTerrainMeshData(map, generatedHexMaterialPack);
+  let chunkMeshes = meshData.chunks.map((chunk) => {
     const geometry = createChunkGeometry(chunk);
     const primary = new Mesh({ geometry, shader });
     container.addChild(primary);
     return { chunk, primary };
   });
+  let cityHexKey = "";
   let destroyed = false;
 
   return {
@@ -37,6 +39,22 @@ export async function createHexTerrainMeshRenderer(map: HexMapArtifact): Promise
     meshData,
     meshCount: chunkMeshes.length,
     setQuality: (quality, reducedMotion) => updateShaderQuality(shader, quality, reducedMotion),
+    setCityHexIds: (cityHexIds) => {
+      const nextKey = [...cityHexIds].sort((left, right) => left.localeCompare(right)).join("|");
+      if (nextKey === cityHexKey || destroyed) return;
+      cityHexKey = nextKey;
+      for (const pair of chunkMeshes) {
+        container.removeChild(pair.primary);
+        safeDestroyMesh(pair.primary);
+      }
+      meshData = buildHexTerrainMeshData(map, generatedHexMaterialPack, { cityHexIds });
+      chunkMeshes = meshData.chunks.map((chunk) => {
+        const geometry = createChunkGeometry(chunk);
+        const primary = new Mesh({ geometry, shader });
+        container.addChild(primary);
+        return { chunk, primary };
+      });
+    },
     updateVisibility: (camera, viewport) => {
       updateShaderCameraScale(shader, camera.scale);
       return updateChunkVisibility(chunkMeshes, camera, viewport, map.settings.hexSize);

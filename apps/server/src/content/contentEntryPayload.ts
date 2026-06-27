@@ -66,6 +66,8 @@ const buildingPlacementPayloadSchema = z.object({
   deniedFeatures: z.array(z.string().trim().min(1).max(80)).optional(),
   allowedWaterKinds: z.array(z.string().trim().min(1).max(80)).optional(),
   deniedWaterKinds: z.array(z.string().trim().min(1).max(80)).optional(),
+  allowedTags: z.array(z.string().trim().min(1).max(80)).optional(),
+  deniedTags: z.array(z.string().trim().min(1).max(80)).optional(),
 }).optional();
 
 const buildingAdjacencyEffectPayloadSchema = z.object({
@@ -73,6 +75,7 @@ const buildingAdjacencyEffectPayloadSchema = z.object({
   when: z.object({
     neighborTerrains: z.array(z.string().trim().min(1).max(80)).optional(),
     neighborFeatures: z.array(z.string().trim().min(1).max(80)).optional(),
+    neighborTags: z.array(z.string().trim().min(1).max(80)).optional(),
     neighborBuildingIds: z.array(z.string().trim().min(1).max(120)).optional(),
     adjacentToRiver: z.boolean().optional(),
   }),
@@ -122,6 +125,7 @@ const modifierEffectPayloadSchema = z.object({
     "building_input",
     "building_throughput",
     "building_wage",
+    "hex_movement_cost",
   ]),
   mode: z.enum(["add", "add_pct", "mult"]),
   value: z.number().finite().min(-1_000_000).max(1_000_000),
@@ -131,6 +135,7 @@ const modifierEffectPayloadSchema = z.object({
       goodId: z.string().trim().min(1).max(120).nullable().optional(),
       professionId: z.string().trim().min(1).max(120).nullable().optional(),
       resourceCategoryId: z.string().trim().min(1).max(120).nullable().optional(),
+      hexTag: z.string().trim().min(1).max(80).nullable().optional(),
     })
     .nullable()
     .optional(),

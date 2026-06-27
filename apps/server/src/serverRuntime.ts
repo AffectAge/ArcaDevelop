@@ -105,6 +105,7 @@ import {
 } from "./uploads/uploadValidation";
 import {
   type ResourceId,
+  buildCityHexIdSet,
   type WorldBase,
   type WorldDelta,
 } from "@arcanorum/shared";
@@ -134,9 +135,17 @@ const mapRuntime = createMapRuntimeState(
   defaultScenarioBootstrap.mapRoot,
   defaultScenarioBootstrap.hexIndexPath,
 );
-const getHexMovementCost = (hexId: string): number => {
+const getHexMovementCost = (hexId: string, countryId?: string): number => {
   const tile = mapRuntime.getHexMapArtifact()?.tiles.find((entry) => entry.id === hexId);
-  return Math.max(0.001, Number(tile?.movementCost ?? 1) || 1);
+  const baseCost = Math.max(0.001, Number(tile?.movementCost ?? 1) || 1);
+  if (!countryId || !tile) return baseCost;
+  const cityHexIds = buildCityHexIdSet(worldBase);
+  const hexTags = cityHexIds.has(tile.id) ? ["city"] : [];
+  return Math.max(0.001, modifierFacade.resolveModifiedValue("hex_movement_cost", baseCost, {
+    countryId,
+    hexId,
+    hexTags,
+  }));
 };
 
 const app = createServerApp({ dataRoot });

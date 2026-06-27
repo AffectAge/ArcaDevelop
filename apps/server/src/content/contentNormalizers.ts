@@ -500,6 +500,8 @@ function normalizeBuildingPlacement(input: unknown): BuildingPlacementRules | nu
     deniedFeatures: normalizeStringList(source.deniedFeatures) as BuildingPlacementRules["deniedFeatures"],
     allowedWaterKinds: normalizeStringList(source.allowedWaterKinds) as BuildingPlacementRules["allowedWaterKinds"],
     deniedWaterKinds: normalizeStringList(source.deniedWaterKinds) as BuildingPlacementRules["deniedWaterKinds"],
+    allowedTags: normalizeStringList(source.allowedTags) as BuildingPlacementRules["allowedTags"],
+    deniedTags: normalizeStringList(source.deniedTags) as BuildingPlacementRules["deniedTags"],
   };
   return placement;
 }
@@ -521,6 +523,7 @@ function normalizeBuildingAdjacencyEffects(input: unknown): BuildingAdjacencyEff
       when: {
         neighborTerrains: normalizeStringList(when.neighborTerrains) as BuildingAdjacencyEffect["when"]["neighborTerrains"],
         neighborFeatures: normalizeStringList(when.neighborFeatures) as BuildingAdjacencyEffect["when"]["neighborFeatures"],
+        neighborTags: normalizeStringList(when.neighborTags) as BuildingAdjacencyEffect["when"]["neighborTags"],
         neighborBuildingIds: normalizeStringList(when.neighborBuildingIds),
         adjacentToRiver: when.adjacentToRiver === true,
       },

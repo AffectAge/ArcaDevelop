@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { HexTile } from "./contracts/hex-map";
 import { evaluateBuildingPlacement } from "./buildingPlacement";
+import { buildCityHexIdSet, resolveEffectiveHexTile } from "./effectiveHex";
 
 describe("evaluateBuildingPlacement", () => {
   it("accepts eligible controlled free hexes and aggregates adjacency throughput", () => {
@@ -95,6 +96,67 @@ describe("evaluateBuildingPlacement", () => {
         world: makeWorld(),
       }).reason.code,
     ).toBe("BUILD_PLACEMENT_WATER_DENIED");
+  });
+
+  it("uses city tags without replacing base terrain", () => {
+    const cityHexIds = buildCityHexIdSet({
+      settlementProjectsById: {
+        "settlement:a": {
+          id: "settlement:a",
+          name: "Babylon",
+          countryId: "country:a",
+          regionId: "region:a",
+          targetHexId: "hex:0:0",
+          cultureId: "culture:a",
+          progressColonization: 1,
+          costColonization: 10,
+          state: "active",
+          visualState: "underConstruction",
+          createdTurnId: 1,
+        },
+      },
+      cityMarkersById: {},
+    });
+    const hex = resolveEffectiveHexTile(makeHex({ id: "hex:0:0", terrain: "plains" }), cityHexIds);
+
+    const result = evaluateBuildingPlacement({
+      building: { id: "building:city-market", placement: { allowedTerrains: ["plains"], allowedTags: ["city"] } },
+      countryId: "country:a",
+      hex,
+      world: makeWorld(),
+    });
+
+    expect(hex.terrain).toBe("plains");
+    expect(hex.baseTerrain).toBe("plains");
+    expect(hex.tags).toEqual(["city"]);
+    expect(result.reason.code).toBe("BUILD_PLACEMENT_OK");
+  });
+
+  it("aggregates adjacency throughput by neighbor city tags", () => {
+    const result = evaluateBuildingPlacement({
+      building: {
+        id: "building:workshop",
+        adjacencyEffects: [
+          {
+            id: "city_support",
+            when: { neighborTags: ["city"] },
+            perNeighbor: true,
+            modifier: { target: "building.throughput", operation: "add", value: 0.1 },
+          },
+        ],
+      },
+      countryId: "country:a",
+      hex: makeHex({ id: "hex:0:0" }),
+      neighborHexes: [
+        { ...makeHex({ id: "hex:1:0" }), tags: ["city"] },
+        makeHex({ id: "hex:0:1" }),
+      ],
+      world: makeWorld(),
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.adjacencySources).toEqual([{ effectId: "city_support", operation: "add", stacks: 1, value: 0.1 }]);
+    expect(result.throughputFactor).toBe(1.1);
   });
 });
 

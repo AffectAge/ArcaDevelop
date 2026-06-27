@@ -14,7 +14,7 @@ import type {
 import type { GameContentEntry, GameSettings } from "./gameSettingsTypes";
 import type { RegionColonizationConfig } from "../mechanics/colonizationMechanics";
 import { validateFoundCityOrder } from "../mechanics/settlementMechanics";
-import { isCivilianHexOccupied, normalizeUnitMoveRoute } from "../mechanics/unitMovementMechanics";
+import { findCivilianRouteToTarget, isCivilianHexOccupied, normalizeUnitMoveRoute } from "../mechanics/unitMovementMechanics";
 import type { HexMapIndexEntry } from "../map/hexIndex";
 
 type WebSocketCountryRecord = {
@@ -86,7 +86,7 @@ type WebSocketRuntimeParams = {
     currentHexId: HexId,
   ) => HexId[];
   isContiguousArmyRoute: (fromHexId: HexId, route: HexId[]) => boolean;
-  getHexMovementCost: (hexId: HexId) => number;
+  getHexMovementCost: (hexId: HexId, countryId?: string) => number;
 };
 
 export function registerWebSocketRuntime(params: WebSocketRuntimeParams): void {
@@ -422,20 +422,24 @@ function validateUnitMoveOrder(input: {
     return false;
   }
   const route = normalizeUnitMoveRoute(delta.order.payload, delta.order.targetHexId, unit.hexId);
-  if (route.length === 0) {
+  const hexById = new Map(params.getHexIndex().map((hex) => [hex.id, hex] as const));
+  const serverRoute = findCivilianRouteToTarget({
+    worldBase,
+    unit,
+    targetHexId: delta.order.targetHexId,
+    getNeighborHexIds: (hexId) => (hexById.get(hexId)?.neighbors ?? []).filter((neighborId): neighborId is HexId => /^hex:-?\d+:-?\d+$/.test(neighborId)),
+    getHexMovementCost: params.getHexMovementCost,
+  });
+  const validatedRoute = serverRoute.length > 0 ? serverRoute : route;
+  if (validatedRoute.length === 0) {
     send({ type: "ERROR", code: "UNIT_MOVE_TARGET_INVALID", message: "UNIT_MOVE_TARGET_INVALID" });
     return false;
   }
-  if (!params.isContiguousArmyRoute(unit.hexId, route)) {
+  if (!params.isContiguousArmyRoute(unit.hexId, validatedRoute)) {
     send({ type: "ERROR", code: "UNIT_MOVE_PATH_NOT_CONTIGUOUS", message: "UNIT_MOVE_PATH_NOT_CONTIGUOUS" });
     return false;
   }
-  const routeCost = route.reduce((sum, hexId) => sum + Math.max(0.001, Number(params.getHexMovementCost(hexId)) || 1), 0);
-  if (routeCost > Math.max(0, Number(unit.movementPoints) || 0)) {
-    send({ type: "ERROR", code: "UNIT_MOVE_INSUFFICIENT_MOVEMENT", message: "UNIT_MOVE_INSUFFICIENT_MOVEMENT" });
-    return false;
-  }
-  if (route.some((hexId) => isCivilianHexOccupied(worldBase, hexId, unit.id))) {
+  if (validatedRoute.some((hexId) => isCivilianHexOccupied(worldBase, hexId, unit.id))) {
     send({ type: "ERROR", code: "CIVILIAN_UNIT_HEX_OCCUPIED", message: "CIVILIAN_UNIT_HEX_OCCUPIED" });
     return false;
   }

@@ -110,6 +110,7 @@ describe("AI colonization candidates", () => {
           type: "FOUND_CITY",
           countryId: "country:alpha",
           civilianUnitId: "civilian:colonizer",
+          name: "City region:frontier",
           regionId: "region:frontier",
           targetHexId: "hex:2:1",
           payload: { cultureId: "country:alpha" },

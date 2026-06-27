@@ -19,6 +19,7 @@ export type ModifierContext = {
   goodId?: string | null;
   professionId?: string | null;
   resourceCategoryId?: string | null;
+  hexTags?: readonly string[] | null;
 };
 
 type ModifierRuntimeParams = {
@@ -124,6 +125,7 @@ export function createModifierRuntime(params: ModifierRuntimeParams): ModifierRu
     if (target.goodId && target.goodId !== context.goodId) return false;
     if (target.professionId && target.professionId !== context.professionId) return false;
     if (target.resourceCategoryId && target.resourceCategoryId !== context.resourceCategoryId) return false;
+    if (target.hexTag && !context.hexTags?.some((tag) => tag === target.hexTag)) return false;
     return true;
   };
 

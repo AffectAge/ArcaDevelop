@@ -119,7 +119,7 @@ type TurnRuntimeParams = {
     options?: { includePendingOrders?: boolean },
   ) => { byCountry: number; global: number };
   resolveModifiedValue: (
-    stat: EconomyTickResourceStat | "building_construction_cost" | "technology_cost",
+    stat: EconomyTickResourceStat | "building_construction_cost" | "technology_cost" | "hex_movement_cost",
     base: number,
     context: { countryId: string; hexId?: string | null; buildingId?: string | null },
   ) => number;
@@ -127,7 +127,7 @@ type TurnRuntimeParams = {
   getRegionDerivedColonizationCosts: (hexId: string) => { pointsCost: number; ducatsCost: number };
   buildColonizationSettlementPopulation: (regionId: string, countryId: string, total: number) => RegionPopulation;
   areHexIdsAdjacentOrSame: (fromHexId: string, toHexId: string) => boolean;
-  getHexMovementCost: (hexId: string) => number;
+  getHexMovementCost: (hexId: string, countryId?: string) => number;
   enqueueBuildingAutoUpgradesTurn: () => void;
   resolveBuildingConstructionQueuesTurn: () => void;
   addResourceLedgerIncome: (input: ResourceLedgerEntryInput) => void;
@@ -199,6 +199,19 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
     });
   };
 
+  let neighborHexIdsByHexId: Map<string, HexId[]> | null = null;
+  const getNeighborHexIds = (hexId: HexId): HexId[] => {
+    if (!neighborHexIdsByHexId) {
+      neighborHexIdsByHexId = new Map(
+        params.getHexIndex().map((hex) => [
+          hex.id,
+          (hex.neighbors ?? []).filter((neighborId): neighborId is HexId => /^hex:-?\d+:-?\d+$/.test(neighborId)),
+        ]),
+      );
+    }
+    return neighborHexIdsByHexId.get(hexId) ?? [];
+  };
+
   const resolveTurn = async (): Promise<TurnRuntimeResult> => {
     const gameSettings = params.getGameSettings();
     await runAiTurnBeforeResolveIfEnabled({
@@ -241,7 +254,8 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           movedCivilianUnitIds,
           news,
           areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
-          getHexMovementCost: params.getHexMovementCost as (hexId: HexId) => number,
+          getNeighborHexIds,
+          getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string) => number,
         });
         if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
       },
@@ -313,7 +327,8 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           movedCivilianUnitIds,
           news,
           areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
-          getHexMovementCost: params.getHexMovementCost as (hexId: HexId) => number,
+          getNeighborHexIds,
+          getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string) => number,
         });
       },
       advanceMilitaryFormationQueue,

@@ -378,6 +378,7 @@ type ModifierEffectDraft = {
   goodId: string;
   professionId: string;
   resourceCategoryId: string;
+  hexTag: string;
 };
 type ModifierDraft = {
   id: string;
@@ -528,13 +529,14 @@ const EVENT_VISIBILITY_OPTIONS: Array<{ value: EventVisibility; labelKey: UiText
   { value: "public", labelKey: "contentPanel.option.eventVisibility.public" },
 ];
 
-type ModifierTargetKey = "buildingId" | "goodId" | "professionId" | "resourceCategoryId";
+type ModifierTargetKey = "buildingId" | "goodId" | "professionId" | "resourceCategoryId" | "hexTag";
 
 const MODIFIER_TARGET_LABELS: Record<ModifierTargetKey, UiTextKey> = {
   buildingId: "contentPanel.modifierTarget.building",
   goodId: "contentPanel.modifierTarget.good",
   professionId: "contentPanel.modifierTarget.profession",
   resourceCategoryId: "contentPanel.modifierTarget.resourceCategory",
+  hexTag: "contentPanel.modifierTarget.hexTag",
 };
 
 const MODIFIER_STAT_CONFIG: Record<
@@ -618,6 +620,12 @@ const MODIFIER_STAT_CONFIG: Record<
     targets: ["buildingId", "professionId"],
     defaultMode: "add_pct",
     valueHintKey: "contentPanel.modifierStatConfig.wage.valueHint",
+  },
+  hex_movement_cost: {
+    descriptionKey: "contentPanel.modifierStatConfig.hexMovementCost.description",
+    targets: ["hexTag"],
+    defaultMode: "add_pct",
+    valueHintKey: "contentPanel.modifierStatConfig.cost.valueHint",
   },
 };
 
@@ -1067,6 +1075,7 @@ function cleanModifierEffectForStat(effect: ModifierEffectDraft, stat: ModifierS
     goodId: isModifierTargetEnabled(stat, "goodId") ? effect.goodId : "",
     professionId: isModifierTargetEnabled(stat, "professionId") ? effect.professionId : "",
     resourceCategoryId: isModifierTargetEnabled(stat, "resourceCategoryId") ? effect.resourceCategoryId : "",
+    hexTag: isModifierTargetEnabled(stat, "hexTag") ? effect.hexTag : "",
   };
 }
 
@@ -1096,6 +1105,7 @@ function normalizeModifiersDraft(rows: ModifierDraft[]): ModifierDefinition[] {
             goodId: cleanEffect.goodId.trim() || null,
             professionId: cleanEffect.professionId.trim() || null,
             resourceCategoryId: cleanEffect.resourceCategoryId.trim() || null,
+            hexTag: cleanEffect.hexTag.trim() || null,
           };
           return {
             stat: cleanEffect.stat,
@@ -1205,6 +1215,7 @@ function modifiersToDraft(value?: ModifierDefinition[] | null): ModifierDraft[] 
       goodId: effect.target?.goodId ?? "",
       professionId: effect.target?.professionId ?? "",
       resourceCategoryId: effect.target?.resourceCategoryId ?? "",
+      hexTag: effect.target?.hexTag ?? "",
     })),
   }));
 }
@@ -3977,6 +3988,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                     goodId: "",
                     professionId: "",
                     resourceCategoryId: "",
+                    hexTag: "",
                   },
                 ],
               },
@@ -4185,6 +4197,7 @@ export function ContentPanel({ open, token, onClose }: Props) {
                                     goodId: "",
                                     professionId: "",
                                     resourceCategoryId: "",
+                                    hexTag: "",
                                   },
                                 ],
                               }
@@ -4398,6 +4411,30 @@ export function ContentPanel({ open, token, onClose }: Props) {
                           )
                         }
                         options={[{ value: "", label: t("contentPanel.anyCategory") }, ...resourceCategoryOptions.map((option) => ({ value: option.id, label: option.name }))]}
+                        buttonClassName="h-[38px]"
+                      />
+                      </label>
+                      )}
+                      {targets.includes("hexTag") && (
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] text-[rgb(var(--theme-text-muted))]">{t(MODIFIER_TARGET_LABELS.hexTag)}</span>
+                        <CustomSelect
+                        value={effect.hexTag}
+                        onChange={(value) =>
+                          setDraftModifiers((prev) =>
+                            prev.map((item, i) =>
+                              i === modifierIndex
+                                ? {
+                                    ...item,
+                                    effects: item.effects.map((row, j) =>
+                                      j === effectIndex ? { ...row, hexTag: value } : row,
+                                    ),
+                                  }
+                                : item,
+                            ),
+                          )
+                        }
+                        options={[{ value: "", label: t("contentPanel.anyHexTag") }, { value: "city", label: t("hexMap.feature.city") }]}
                         buttonClassName="h-[38px]"
                       />
                       </label>

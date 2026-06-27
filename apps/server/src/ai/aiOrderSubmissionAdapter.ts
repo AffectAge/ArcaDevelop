@@ -121,6 +121,7 @@ function createFoundCityOrderInput(
     playerId: `${playerIdPrefix}:${candidate.countryId}`,
     countryId: candidate.countryId,
     civilianUnitId: candidate.civilianUnitId,
+    name: candidate.orderDraft.name,
     regionId: candidate.regionId,
     targetHexId: candidate.targetHexId,
     payload: candidate.orderDraft.payload,

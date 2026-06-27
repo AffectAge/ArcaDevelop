@@ -49,6 +49,7 @@ function createColonizationCandidate(countryId: string): AiColonizationCandidate
       type: "FOUND_CITY",
       countryId,
       civilianUnitId: "civilian:colonizer",
+      name: "Frontier",
       regionId: "region:frontier",
       targetHexId: "hex:1:1",
       payload: { cultureId: countryId },

@@ -13,6 +13,7 @@ export type CivilianUnit = {
   movementPoints: number;
   maxMovementPoints: number;
   path: HexId[];
+  targetHexId?: HexId | null;
   createdTurnId: number;
   lastMovedTurnId?: number | null;
   capturedByCountryId?: string | null;
@@ -39,6 +40,7 @@ export type SettlementProjectState = "active" | "stalled" | "completed" | "cance
 
 export type SettlementProject = {
   id: string;
+  name: string;
   countryId: string;
   regionId: string;
   targetHexId: HexId;
@@ -54,6 +56,7 @@ export type SettlementProject = {
 
 export type CityMarker = {
   id: string;
+  name: string;
   countryId: string;
   ownerCountryId: string;
   regionId: string;

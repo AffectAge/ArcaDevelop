@@ -15,13 +15,15 @@ export type ModifierStat =
   | "building_output"
   | "building_input"
   | "building_throughput"
-  | "building_wage";
+  | "building_wage"
+  | "hex_movement_cost";
 
 export type ModifierTarget = {
   buildingId?: string | null;
   goodId?: string | null;
   professionId?: string | null;
   resourceCategoryId?: string | null;
+  hexTag?: string | null;
 };
 
 export type ModifierConditionType = "always" | "law_active" | "technology_researched" | "country_is" | "has_building";

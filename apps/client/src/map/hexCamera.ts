@@ -31,8 +31,8 @@ export type EdgeScrollVelocity = {
   y: number;
 };
 
-export const HEX_CAMERA_MIN_SCALE = 0.14;
-export const HEX_CAMERA_MAX_SCALE = 2.2;
+export const HEX_CAMERA_MIN_SCALE = 0.5;
+export const HEX_CAMERA_MAX_SCALE = 5;
 export const HEX_CAMERA_EDGE_MARGIN_PX = 44;
 export const HEX_CAMERA_EDGE_MAX_SPEED_PX_PER_SECOND = 720;
 

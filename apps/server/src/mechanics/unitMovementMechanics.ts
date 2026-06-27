@@ -14,6 +14,12 @@ export type UnitMoveOrderResolution = {
   rejectedOrder: UnitMovementRejectedOrder | null;
 };
 
+type FindRouteParams = {
+  fromHexId: HexId;
+  targetHexId: HexId;
+  unit: CivilianUnit;
+};
+
 export function resolveUnitMoveOrder(params: {
   order: Order;
   playerId: string;
@@ -21,7 +27,8 @@ export function resolveUnitMoveOrder(params: {
   turnId: number;
   movedCivilianUnitIds: Set<string>;
   areHexIdsAdjacentOrSame: (fromHexId: HexId, toHexId: HexId) => boolean;
-  getHexMovementCost?: (hexId: HexId) => number;
+  getNeighborHexIds?: (hexId: HexId) => HexId[];
+  getHexMovementCost?: (hexId: HexId, countryId?: string) => number;
   news?: EventLogEntry[];
 }): UnitMoveOrderResolution {
   const reject = (reason: string): UnitMoveOrderResolution => ({
@@ -36,7 +43,15 @@ export function resolveUnitMoveOrder(params: {
   if (params.movedCivilianUnitIds.has(unit.id) || unit.lastMovedTurnId === params.turnId) {
     return reject("CIVILIAN_UNIT_ALREADY_MOVED");
   }
-  const route = normalizeUnitMoveRoute(params.order.payload, params.order.targetHexId, unit.hexId);
+  const route = resolveCivilianRouteToTarget({
+    worldBase: params.worldBase,
+    unit,
+    targetHexId: params.order.targetHexId,
+    fallbackPayload: params.order.payload,
+    areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
+    getNeighborHexIds: params.getNeighborHexIds,
+    getHexMovementCost: params.getHexMovementCost,
+  });
   if (route.length === 0) return reject("UNIT_MOVE_TARGET_INVALID");
   if (!isContiguousUnitRoute({ fromHexId: unit.hexId, route, areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame })) {
     return reject("UNIT_MOVE_PATH_NOT_CONTIGUOUS");
@@ -45,6 +60,7 @@ export function resolveUnitMoveOrder(params: {
     return reject("CIVILIAN_UNIT_HEX_OCCUPIED");
   }
   unit.path = route;
+  unit.targetHexId = params.order.targetHexId;
   const moved = advanceCivilianUnitAlongRoute({
     unit,
     worldBase: params.worldBase,
@@ -61,31 +77,47 @@ export function advanceStoredCivilianUnitRoutesTurn(params: {
   turnId: number;
   movedCivilianUnitIds: Set<string>;
   areHexIdsAdjacentOrSame: (fromHexId: HexId, toHexId: HexId) => boolean;
-  getHexMovementCost?: (hexId: HexId) => number;
+  getNeighborHexIds?: (hexId: HexId) => HexId[];
+  getHexMovementCost?: (hexId: HexId, countryId?: string) => number;
   news?: EventLogEntry[];
 }): void {
   for (const unit of Object.values(params.worldBase.civilianUnitsById)) {
     if (unit.status === "captured") continue;
     if (params.movedCivilianUnitIds.has(unit.id) || unit.lastMovedTurnId === params.turnId) continue;
     unit.movementPoints = Math.max(0, Number(unit.maxMovementPoints) || 0);
-    if (unit.path.length === 0) {
+    const targetHexId = unit.targetHexId ?? unit.path.at(-1) ?? null;
+    if (!targetHexId || targetHexId === unit.hexId) {
+      unit.path = [];
+      unit.targetHexId = null;
       unit.status = "idle";
       params.worldBase.civilianUnitsById[unit.id] = unit;
       continue;
     }
-    const route = unit.path.filter((hexId) => hexId !== unit.hexId).slice(0, 64);
+    const route = resolveCivilianRouteToTarget({
+      worldBase: params.worldBase,
+      unit,
+      targetHexId,
+      fallbackPayload: { path: unit.path },
+      areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
+      getNeighborHexIds: params.getNeighborHexIds,
+      getHexMovementCost: params.getHexMovementCost,
+    });
+    if (route.length === 0) {
+      unit.path = [];
+      unit.targetHexId = null;
+      unit.status = "idle";
+      params.worldBase.civilianUnitsById[unit.id] = unit;
+      params.news?.push(makeCivilianMovementBlockedNews(unit, params.turnId, targetHexId));
+      continue;
+    }
     if (!isContiguousUnitRoute({ fromHexId: unit.hexId, route, areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame })) {
       unit.path = [];
+      unit.targetHexId = null;
       unit.status = "idle";
       params.worldBase.civilianUnitsById[unit.id] = unit;
       continue;
     }
-    if (route.some((hexId) => isCivilianHexOccupied(params.worldBase, hexId, unit.id))) {
-      unit.path = route;
-      unit.status = "idle";
-      params.worldBase.civilianUnitsById[unit.id] = unit;
-      continue;
-    }
+    unit.path = route;
     if (
       advanceCivilianUnitAlongRoute({
         unit,
@@ -104,12 +136,12 @@ export function advanceCivilianUnitAlongRoute(params: {
   unit: CivilianUnit;
   worldBase: UnitMovementWorldState;
   turnId: number;
-  getHexMovementCost?: (hexId: HexId) => number;
+  getHexMovementCost?: (hexId: HexId, countryId?: string) => number;
   news?: EventLogEntry[];
 }): boolean {
   let remainingMovement = Math.max(0, Number(params.unit.movementPoints) || 0);
   if (remainingMovement <= 0) {
-    params.unit.status = "idle";
+    params.unit.status = params.unit.targetHexId || params.unit.path.length > 0 ? "moving" : "idle";
     params.worldBase.civilianUnitsById[params.unit.id] = params.unit;
     return false;
   }
@@ -118,7 +150,7 @@ export function advanceCivilianUnitAlongRoute(params: {
   while (remainingRoute.length > 0) {
     const nextHexId = remainingRoute[0];
     if (isCivilianHexOccupied(params.worldBase, nextHexId, params.unit.id)) break;
-    const movementCost = Math.max(0.001, Number(params.getHexMovementCost?.(nextHexId) ?? 1) || 1);
+    const movementCost = Math.max(0.001, Number(params.getHexMovementCost?.(nextHexId, params.unit.countryId) ?? 1) || 1);
     if (movementCost > remainingMovement) break;
     params.unit.hexId = nextHexId;
     remainingRoute = remainingRoute.slice(1);
@@ -126,11 +158,15 @@ export function advanceCivilianUnitAlongRoute(params: {
     movedSteps += 1;
   }
   if (movedSteps <= 0) {
-    params.unit.status = "idle";
+    params.unit.path = remainingRoute;
+    params.unit.status = remainingRoute.length > 0 ? "moving" : "idle";
     params.worldBase.civilianUnitsById[params.unit.id] = params.unit;
     return false;
   }
   params.unit.path = remainingRoute;
+  if (params.unit.targetHexId === params.unit.hexId || remainingRoute.length === 0) {
+    params.unit.targetHexId = null;
+  }
   params.unit.movementPoints = remainingMovement;
   params.unit.status = remainingRoute.length > 0 ? "moving" : "idle";
   params.unit.lastMovedTurnId = params.turnId;
@@ -165,6 +201,75 @@ export function isCivilianHexOccupied(worldBase: UnitMovementWorldState, hexId: 
   );
 }
 
+function resolveCivilianRouteToTarget(params: {
+  worldBase: UnitMovementWorldState;
+  unit: CivilianUnit;
+  targetHexId: HexId;
+  fallbackPayload?: Record<string, unknown>;
+  areHexIdsAdjacentOrSame: (fromHexId: HexId, toHexId: HexId) => boolean;
+  getNeighborHexIds?: (hexId: HexId) => HexId[];
+  getHexMovementCost?: (hexId: HexId, countryId?: string) => number;
+}): HexId[] {
+  if (params.targetHexId === params.unit.hexId) return [];
+  if (params.getNeighborHexIds) {
+    return findCivilianRouteToTarget({
+      worldBase: params.worldBase,
+      unit: params.unit,
+      targetHexId: params.targetHexId,
+      getNeighborHexIds: params.getNeighborHexIds,
+      getHexMovementCost: params.getHexMovementCost,
+    });
+  }
+  const route = normalizeUnitMoveRoute(params.fallbackPayload, params.targetHexId, params.unit.hexId);
+  return isContiguousUnitRoute({ fromHexId: params.unit.hexId, route, areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame })
+    ? route
+    : [];
+}
+
+export function findCivilianRouteToTarget(params: {
+  worldBase: UnitMovementWorldState;
+  unit: CivilianUnit;
+  targetHexId: HexId;
+  getNeighborHexIds: (hexId: HexId) => HexId[];
+  getHexMovementCost?: (hexId: HexId, countryId?: string) => number;
+  limit?: number;
+}): HexId[] {
+  if (params.unit.hexId === params.targetHexId) return [];
+  if (isCivilianHexOccupied(params.worldBase, params.targetHexId, params.unit.id)) return [];
+  const frontier: Array<{ id: HexId; cost: number }> = [{ id: params.unit.hexId, cost: 0 }];
+  const cameFrom = new Map<HexId, HexId | null>([[params.unit.hexId, null]]);
+  const costSoFar = new Map<HexId, number>([[params.unit.hexId, 0]]);
+  const limit = Math.max(1, params.limit ?? 1600);
+  let visited = 0;
+
+  while (frontier.length > 0 && visited < limit) {
+    visited += 1;
+    frontier.sort((left, right) => left.cost - right.cost || left.id.localeCompare(right.id));
+    const current = frontier.shift();
+    if (!current) break;
+    if (current.id === params.targetHexId) break;
+    for (const neighborId of params.getNeighborHexIds(current.id)) {
+      if (isCivilianHexOccupied(params.worldBase, neighborId, params.unit.id)) continue;
+      const movementCost = Math.max(0.001, Number(params.getHexMovementCost?.(neighborId, params.unit.countryId) ?? 1) || 1);
+      const nextCost = (costSoFar.get(current.id) ?? 0) + movementCost;
+      if (!costSoFar.has(neighborId) || nextCost < (costSoFar.get(neighborId) ?? Number.POSITIVE_INFINITY)) {
+        costSoFar.set(neighborId, nextCost);
+        cameFrom.set(neighborId, current.id);
+        frontier.push({ id: neighborId, cost: nextCost });
+      }
+    }
+  }
+
+  if (!cameFrom.has(params.targetHexId)) return [];
+  const route: HexId[] = [];
+  let cursor: HexId | null = params.targetHexId;
+  while (cursor && cursor !== params.unit.hexId) {
+    route.push(cursor);
+    cursor = cameFrom.get(cursor) ?? null;
+  }
+  return route.reverse().slice(0, 64);
+}
+
 export function makeUnitMovementHexes(hexes: MilitaryHexNode[]): MilitaryHexNode[] {
   return hexes;
 }
@@ -181,6 +286,20 @@ function makeCivilianMovementNews(unit: CivilianUnit, turnId: number, remainingS
         : `${unit.id} завершил движение в hex ${unit.hexId}`,
     countryId: unit.countryId,
     priority: "low",
+    visibility: "private",
+    timestamp: new Date().toISOString(),
+  };
+}
+
+function makeCivilianMovementBlockedNews(unit: CivilianUnit, turnId: number, targetHexId: HexId): EventLogEntry {
+  return {
+    id: `event:unit-route-blocked:${unit.id}:${turnId}`,
+    turn: turnId,
+    category: "colonization",
+    title: "Маршрут гражданского юнита недоступен",
+    message: `${unit.id} не может построить путь к ${targetHexId}`,
+    countryId: unit.countryId,
+    priority: "medium",
     visibility: "private",
     timestamp: new Date().toISOString(),
   };

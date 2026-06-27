@@ -113,6 +113,7 @@ export type UiTextKey =
   | "common.refresh"
   | "common.save"
   | "common.saving"
+  | "common.unknown"
   | "common.no"
   | "common.yes"
   | "commandPalette.action.budget"
@@ -180,6 +181,7 @@ export type UiTextKey =
   | "contentPanel.activationConditions"
   | "contentPanel.anyBuilding"
   | "contentPanel.anyCategory"
+  | "contentPanel.anyHexTag"
   | "contentPanel.anyGood"
   | "contentPanel.anyProfession"
   | "contentPanel.effectNumber"
@@ -739,6 +741,7 @@ export type UiTextKey =
   | "contentPanel.modifierStatConfig.buildingOutput.description"
   | "contentPanel.modifierStatConfig.buildingThroughput.description"
   | "contentPanel.modifierStatConfig.buildingWage.description"
+  | "contentPanel.modifierStatConfig.hexMovementCost.description"
   | "contentPanel.modifierStatConfig.colonizationGain.description"
   | "contentPanel.modifierStatConfig.constructionGain.description"
   | "contentPanel.modifierStatConfig.cost.valueHint"
@@ -757,6 +760,7 @@ export type UiTextKey =
   | "contentPanel.modifierTarget.good"
   | "contentPanel.modifierTarget.profession"
   | "contentPanel.modifierTarget.resourceCategory"
+  | "contentPanel.modifierTarget.hexTag"
   | "contentPanel.option.modifierStat.buildingConstructionCost"
   | "contentPanel.option.modifierStat.buildingInput"
   | "contentPanel.option.modifierStat.buildingOutput"
@@ -1524,10 +1528,16 @@ export type UiTextKey =
   | "hexMap.queueColonizerInsufficientColonization"
   | "hexMap.queueColonizerInsufficientDucats"
   | "hexMap.foundCity"
+  | "hexMap.foundCityConfirmTitle"
+  | "hexMap.foundCityCost"
+  | "hexMap.foundCityNameCounter"
+  | "hexMap.foundCityNameLabel"
+  | "hexMap.foundCityNameRequired"
   | "hexMap.foundCityTooltipCan"
   | "hexMap.foundCityTooltipCannot"
   | "hexMap.foundCityNeutralRequired"
   | "hexMap.foundCityOrderSent"
+  | "hexMap.cityPendingNameFallback"
   | "hexMap.build"
   | "hexMap.colonize"
   | "hexMap.admin"
@@ -1570,6 +1580,7 @@ export type UiTextKey =
   | "hexMap.feature.marsh"
   | "hexMap.feature.scrub"
   | "hexMap.feature.snowcap"
+  | "hexMap.feature.city"
   | "hexMap.water.none"
   | "hexMap.water.ocean"
   | "hexMap.water.sea"
@@ -1768,6 +1779,7 @@ export type UiTextKey =
   | "modifiers.stat.building_output"
   | "modifiers.stat.building_throughput"
   | "modifiers.stat.building_wage"
+  | "modifiers.stat.hex_movement_cost"
   | "modifiers.stat.colonization_gain"
   | "modifiers.stat.construction_gain"
   | "modifiers.stat.culture_gain"
@@ -1780,6 +1792,7 @@ export type UiTextKey =
   | "modifiers.target.building"
   | "modifiers.target.category"
   | "modifiers.target.good"
+  | "modifiers.target.hexTag"
   | "modifiers.target.profession"
   | "modifiers.title"
   | "notifications.category.diplomacy"
@@ -2374,6 +2387,7 @@ export type UiTextKey =
   | "buildings.hexPlacementReasonInvalid"
   | "buildings.hexPlacementReasonOccupied"
   | "buildings.hexPlacementReasonRegion"
+  | "buildings.hexPlacementReasonTag"
   | "buildings.hexPlacementReasonTerrain"
   | "buildings.hexPlacementReasonWater"
   | "buildings.hexPlacementRequired"
@@ -3143,6 +3157,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "common.refresh": "Refresh",
     "common.save": "Save",
     "common.saving": "Saving...",
+    "common.unknown": "Unknown",
     "common.no": "No",
     "common.yes": "Yes",
     "commandPalette.action.budget": "Open budget",
@@ -3210,6 +3225,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.activationConditions": "Activation conditions",
     "contentPanel.anyBuilding": "Any building",
     "contentPanel.anyCategory": "Any category",
+    "contentPanel.anyHexTag": "Any tag",
     "contentPanel.anyGood": "Any good",
     "contentPanel.anyProfession": "Any profession",
     "contentPanel.effectNumber": "Effect {index}",
@@ -3769,6 +3785,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.modifierStatConfig.buildingOutput.description": "Changes goods produced by buildings.",
     "contentPanel.modifierStatConfig.buildingThroughput.description": "Changes overall throughput of selected buildings.",
     "contentPanel.modifierStatConfig.buildingWage.description": "Changes base wages in selected buildings or professions.",
+    "contentPanel.modifierStatConfig.hexMovementCost.description": "Changes movement cost on matching hex tags.",
     "contentPanel.modifierStatConfig.colonizationGain.description": "Changes country colonization gain per turn.",
     "contentPanel.modifierStatConfig.constructionGain.description": "Changes country construction gain per turn.",
     "contentPanel.modifierStatConfig.cost.valueHint": "-0.1 = 10% cheaper, 0.1 = 10% more expensive",
@@ -3787,6 +3804,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.modifierTarget.good": "Good",
     "contentPanel.modifierTarget.profession": "Profession",
     "contentPanel.modifierTarget.resourceCategory": "Category",
+    "contentPanel.modifierTarget.hexTag": "Hex tag",
     "contentPanel.option.modifierStat.buildingConstructionCost": "Construction cost",
     "contentPanel.option.modifierStat.buildingInput": "Building input",
     "contentPanel.option.modifierStat.buildingOutput": "Building output",
@@ -4536,7 +4554,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.civilianMoveTooltipCannot": "This civilian unit cannot move now.",
     "hexMap.civilianMoveUnavailable": "This civilian unit cannot move now.",
     "hexMap.civilianMoveSelectTarget": "Select a target hex for the colonizer.",
-    "hexMap.civilianMovePreview": "Route cost {cost}/{points}",
+    "hexMap.civilianMovePreview": "Route cost {cost}; this turn {points}",
     "hexMap.civilianMoveNoPath": "No valid route to that hex.",
     "hexMap.civilianMoveTooFar": "Route is too long: {cost}/{points} movement points.",
     "hexMap.civilianMoveOrderSent": "Colonizer movement order sent",
@@ -4554,10 +4572,16 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.queueColonizerInsufficientColonization": "Not enough colonization points.",
     "hexMap.queueColonizerInsufficientDucats": "Not enough ducats.",
     "hexMap.foundCity": "Found city",
+    "hexMap.foundCityConfirmTitle": "Confirm city foundation",
+    "hexMap.foundCityCost": "Colonization cost",
+    "hexMap.foundCityNameCounter": "{current}/{max}",
+    "hexMap.foundCityNameLabel": "City name",
+    "hexMap.foundCityNameRequired": "Enter a city name from 1 to 32 characters.",
     "hexMap.foundCityTooltipCan": "Consume this colonizer and start a settlement project on the current hex.",
     "hexMap.foundCityTooltipCannot": "A city can be founded only by your colonizer on a neutral region.",
     "hexMap.foundCityNeutralRequired": "City foundation requires a neutral region.",
     "hexMap.foundCityOrderSent": "City foundation order sent",
+    "hexMap.cityPendingNameFallback": "New city",
     "hexMap.build": "Build",
     "hexMap.colonize": "Colonize",
     "hexMap.admin": "Admin",
@@ -4600,6 +4624,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.feature.marsh": "Marsh",
     "hexMap.feature.scrub": "Scrub",
     "hexMap.feature.snowcap": "Snowcap",
+    "hexMap.feature.city": "City",
     "hexMap.water.none": "None",
     "hexMap.water.ocean": "Ocean",
     "hexMap.water.sea": "Sea",
@@ -4798,6 +4823,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "modifiers.stat.building_output": "Building output",
     "modifiers.stat.building_throughput": "Building throughput",
     "modifiers.stat.building_wage": "Building wages",
+    "modifiers.stat.hex_movement_cost": "Hex movement cost",
     "modifiers.stat.colonization_gain": "Colonization gain",
     "modifiers.stat.construction_gain": "Construction gain",
     "modifiers.stat.culture_gain": "Culture gain",
@@ -4810,6 +4836,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "modifiers.target.building": "building: {value}",
     "modifiers.target.category": "category: {value}",
     "modifiers.target.good": "good: {value}",
+    "modifiers.target.hexTag": "hex tag: {value}",
     "modifiers.target.profession": "profession: {value}",
     "modifiers.title": "Country modifiers",
     "notifications.category.diplomacy": "Diplomacy",
@@ -5404,6 +5431,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.hexPlacementReasonInvalid": "This hex cannot receive the selected building.",
     "buildings.hexPlacementReasonOccupied": "This hex already has a building or construction project.",
     "buildings.hexPlacementReasonRegion": "Your country does not control this region.",
+    "buildings.hexPlacementReasonTag": "This hex feature does not match the building requirements.",
     "buildings.hexPlacementReasonTerrain": "This terrain does not match the building requirements.",
     "buildings.hexPlacementReasonWater": "This water type does not match the building requirements.",
     "buildings.hexPlacementRequired": "Choose a map hex before adding a building.",
@@ -6172,6 +6200,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "common.refresh": "Обновить",
     "common.save": "Сохранить",
     "common.saving": "Сохранение...",
+    "common.unknown": "Неизвестно",
     "common.no": "Нет",
     "common.yes": "Да",
     "commandPalette.action.budget": "Открыть бюджет",
@@ -6239,6 +6268,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.activationConditions": "Условия активации",
     "contentPanel.anyBuilding": "Любое здание",
     "contentPanel.anyCategory": "Любая категория",
+    "contentPanel.anyHexTag": "Любой тег",
     "contentPanel.anyGood": "Любой товар",
     "contentPanel.anyProfession": "Любая профессия",
     "contentPanel.effectNumber": "Эффект {index}",
@@ -6798,6 +6828,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.modifierStatConfig.buildingOutput.description": "Изменяет выпуск товаров зданиями.",
     "contentPanel.modifierStatConfig.buildingThroughput.description": "Изменяет общую производительность выбранных зданий.",
     "contentPanel.modifierStatConfig.buildingWage.description": "Изменяет базовые зарплаты в выбранных зданиях или профессиях.",
+    "contentPanel.modifierStatConfig.hexMovementCost.description": "Изменяет стоимость движения на гексах с подходящими тегами.",
     "contentPanel.modifierStatConfig.colonizationGain.description": "Изменяет прирост колонизации страны за ход.",
     "contentPanel.modifierStatConfig.constructionGain.description": "Изменяет прирост строительства страны за ход.",
     "contentPanel.modifierStatConfig.cost.valueHint": "-0.1 = дешевле на 10%, 0.1 = дороже на 10%",
@@ -6816,6 +6847,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.modifierTarget.good": "Товар",
     "contentPanel.modifierTarget.profession": "Профессия",
     "contentPanel.modifierTarget.resourceCategory": "Категория",
+    "contentPanel.modifierTarget.hexTag": "Тег гекса",
     "contentPanel.option.modifierStat.buildingConstructionCost": "Стоимость строительства",
     "contentPanel.option.modifierStat.buildingInput": "Расходы зданий",
     "contentPanel.option.modifierStat.buildingOutput": "Выпуск зданий",
@@ -7565,7 +7597,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.civilianMoveTooltipCannot": "Этот гражданский юнит сейчас не может двигаться.",
     "hexMap.civilianMoveUnavailable": "Этот гражданский юнит сейчас не может двигаться.",
     "hexMap.civilianMoveSelectTarget": "Выберите целевой гекс для колонизатора.",
-    "hexMap.civilianMovePreview": "Стоимость пути {cost}/{points}",
+    "hexMap.civilianMovePreview": "Стоимость пути {cost}; на этот ход {points}",
     "hexMap.civilianMoveNoPath": "Нет допустимого маршрута до этого гекса.",
     "hexMap.civilianMoveTooFar": "Маршрут слишком длинный: {cost}/{points} очков хода.",
     "hexMap.civilianMoveOrderSent": "Приказ перемещения колонизатора отправлен",
@@ -7583,10 +7615,16 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.queueColonizerInsufficientColonization": "Не хватает очков колонизации.",
     "hexMap.queueColonizerInsufficientDucats": "Не хватает дукатов.",
     "hexMap.foundCity": "Основать город",
+    "hexMap.foundCityConfirmTitle": "Подтвердить основание города",
+    "hexMap.foundCityCost": "Стоимость колонизации",
+    "hexMap.foundCityNameCounter": "{current}/{max}",
+    "hexMap.foundCityNameLabel": "Название города",
+    "hexMap.foundCityNameRequired": "Введите название города от 1 до 32 символов.",
     "hexMap.foundCityTooltipCan": "Потратить этого колонизатора и начать проект основания города на текущем гексе.",
     "hexMap.foundCityTooltipCannot": "Город может основать только ваш колонизатор в нейтральном регионе.",
     "hexMap.foundCityNeutralRequired": "Для основания города нужен нейтральный регион.",
     "hexMap.foundCityOrderSent": "Приказ основания города отправлен",
+    "hexMap.cityPendingNameFallback": "Новый город",
     "hexMap.build": "Строить",
     "hexMap.colonize": "Колонизировать",
     "hexMap.admin": "Админ",
@@ -7629,6 +7667,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.feature.marsh": "Трясина",
     "hexMap.feature.scrub": "Кустарник",
     "hexMap.feature.snowcap": "Снежная шапка",
+    "hexMap.feature.city": "Город",
     "hexMap.water.none": "Нет",
     "hexMap.water.ocean": "Океан",
     "hexMap.water.sea": "Море",
@@ -7827,6 +7866,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "modifiers.stat.building_output": "Выпуск зданий",
     "modifiers.stat.building_throughput": "Производительность зданий",
     "modifiers.stat.building_wage": "Зарплаты зданий",
+    "modifiers.stat.hex_movement_cost": "Стоимость движения по гексу",
     "modifiers.stat.colonization_gain": "Прирост колонизации",
     "modifiers.stat.construction_gain": "Прирост строительства",
     "modifiers.stat.culture_gain": "Прирост культуры",
@@ -7839,6 +7879,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "modifiers.target.building": "здание: {value}",
     "modifiers.target.category": "категория: {value}",
     "modifiers.target.good": "товар: {value}",
+    "modifiers.target.hexTag": "тег гекса: {value}",
     "modifiers.target.profession": "профессия: {value}",
     "modifiers.title": "Модификаторы страны",
     "notifications.category.diplomacy": "Дипломатия",
@@ -8433,6 +8474,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.hexPlacementReasonInvalid": "На этом гексе нельзя разместить выбранное здание.",
     "buildings.hexPlacementReasonOccupied": "На этом гексе уже есть здание или строительный проект.",
     "buildings.hexPlacementReasonRegion": "Ваша страна не контролирует этот регион.",
+    "buildings.hexPlacementReasonTag": "Особенность гекса не подходит требованиям здания.",
     "buildings.hexPlacementReasonTerrain": "Местность гекса не подходит требованиям здания.",
     "buildings.hexPlacementReasonWater": "Тип воды не подходит требованиям здания.",
     "buildings.hexPlacementRequired": "Выберите гекс на карте перед добавлением здания.",

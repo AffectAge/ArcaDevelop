@@ -90,6 +90,7 @@ const colonizationCandidate: AiColonizationCandidate = {
     type: "FOUND_CITY",
     countryId: "country:alpha",
     civilianUnitId: "civilian:colonizer",
+    name: "Frontier",
     regionId: "region:frontier",
     targetHexId: "hex:1:1",
     payload: { cultureId: "country:alpha" },

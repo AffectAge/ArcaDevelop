@@ -51,6 +51,8 @@ Error responses should include:
 - `COLONIZER_NOT_FOUND`: the `FOUND_CITY` order references a missing colonizer, a non-colonizer civilian unit, or a unit owned by another country.
 - `COLONIZER_CAPTURED`: the referenced colonizer is captured and cannot found a city.
 - `COLONIZER_NOT_ON_TARGET_HEX`: the colonizer is not standing on the requested `targetHexId`.
+- `FOUND_CITY_NAME_REQUIRED`: the city name is missing or empty after trimming.
+- `FOUND_CITY_NAME_TOO_LONG`: the city name is longer than 32 characters after trimming.
 - `FOUND_CITY_HEX_REGION_MISMATCH`: the requested hex is not part of the requested region.
 - `REGION_NOT_NEUTRAL`: the target region already has an owner or controller.
 - `SETTLEMENT_PROJECT_EXISTS`: the target region already has an active or stalled settlement project.
@@ -63,6 +65,6 @@ Error responses should include:
 - `CIVILIAN_UNIT_CAPTURED`: the referenced civilian unit is captured and cannot move.
 - `CIVILIAN_UNIT_ALREADY_MOVED`: the civilian unit already moved during the current turn.
 - `CIVILIAN_UNIT_ALREADY_QUEUED`: the player already queued a movement order for this civilian unit this turn.
-- `UNIT_MOVE_TARGET_INVALID`: the movement target/path is empty or invalid.
+- `UNIT_MOVE_TARGET_INVALID`: the movement target is empty, invalid, or unreachable.
 - `UNIT_MOVE_PATH_NOT_CONTIGUOUS`: the submitted route is not a contiguous hex route.
 - `CIVILIAN_UNIT_HEX_OCCUPIED`: another civilian unit already occupies a target hex in the route.

@@ -58,6 +58,67 @@ describe("unitMovementMechanics", () => {
     });
   });
 
+  it("accepts a distant target and stores it while moving only as far as points allow", () => {
+    const worldBase = makeWorld({
+      "unit:a": makeColonizer({ movementPoints: 1, maxMovementPoints: 1 }),
+    });
+
+    const result = resolveUnitMoveOrder({
+      order: makeMoveOrder({ targetHexId: "hex:3:0", payload: {} }),
+      playerId: "player:a",
+      worldBase,
+      turnId: 5,
+      movedCivilianUnitIds: new Set(),
+      areHexIdsAdjacentOrSame,
+      getNeighborHexIds,
+    });
+
+    expect(result).toEqual({ moved: true, rejectedOrder: null });
+    expect(worldBase.civilianUnitsById["unit:a"]).toMatchObject({
+      hexId: "hex:1:0",
+      targetHexId: "hex:3:0",
+      path: ["hex:2:0", "hex:3:0"],
+      status: "moving",
+    });
+  });
+
+  it("recalculates a stored target route when the old next hex becomes occupied", () => {
+    const worldBase = makeWorld({
+      "unit:a": makeColonizer({
+        path: ["hex:1:0", "hex:3:0"],
+        targetHexId: "hex:3:0",
+        movementPoints: 0,
+        maxMovementPoints: 1,
+        status: "moving",
+        lastMovedTurnId: 5,
+      }),
+      "unit:b": makeColonizer({ id: "unit:b", hexId: "hex:1:0" }),
+    });
+
+    advanceStoredCivilianUnitRoutesTurn({
+      worldBase,
+      turnId: 6,
+      movedCivilianUnitIds: new Set(),
+      areHexIdsAdjacentOrSame,
+      getNeighborHexIds: (hexId) => {
+        const graph: Record<string, string[]> = {
+          "hex:0:0": ["hex:1:0", "hex:0:1"],
+          "hex:0:1": ["hex:0:0", "hex:3:0"],
+          "hex:1:0": ["hex:0:0", "hex:3:0"],
+          "hex:3:0": ["hex:0:1", "hex:1:0"],
+        };
+        return (graph[hexId] ?? []).filter((id): id is `hex:${number}:${number}` => /^hex:-?\d+:-?\d+$/.test(id));
+      },
+    });
+
+    expect(worldBase.civilianUnitsById["unit:a"]).toMatchObject({
+      hexId: "hex:0:1",
+      targetHexId: "hex:3:0",
+      path: ["hex:3:0"],
+      status: "moving",
+    });
+  });
+
   it("continues stored route only while refreshed movement covers next hex cost", () => {
     const worldBase = makeWorld({
       "unit:a": makeColonizer({
@@ -205,8 +266,20 @@ function areHexIdsAdjacentOrSame(from: string, to: string): boolean {
   if (from === to) return true;
   return (
     (from === "hex:0:0" && to === "hex:1:0") ||
+    (from === "hex:0:0" && to === "hex:0:1") ||
+    (from === "hex:0:1" && (to === "hex:0:0" || to === "hex:3:0")) ||
     (from === "hex:1:0" && (to === "hex:0:0" || to === "hex:2:0")) ||
     (from === "hex:2:0" && (to === "hex:1:0" || to === "hex:3:0")) ||
-    (from === "hex:3:0" && to === "hex:2:0")
+    (from === "hex:3:0" && (to === "hex:2:0" || to === "hex:0:1"))
   );
+}
+
+function getNeighborHexIds(hexId: string): `hex:${number}:${number}`[] {
+  const graph: Record<string, string[]> = {
+    "hex:0:0": ["hex:1:0"],
+    "hex:1:0": ["hex:0:0", "hex:2:0"],
+    "hex:2:0": ["hex:1:0", "hex:3:0"],
+    "hex:3:0": ["hex:2:0"],
+  };
+  return (graph[hexId] ?? []).filter((id): id is `hex:${number}:${number}` => /^hex:-?\d+:-?\d+$/.test(id));
 }

@@ -12,5 +12,6 @@ export * from "./contracts/ws";
 export * from "./contracts/auth";
 export * from "./contracts/hex-map";
 export * from "./buildingPlacement";
+export * from "./effectiveHex";
 export * from "./hexGeometry";
 export * from "./hexMapGenerator";

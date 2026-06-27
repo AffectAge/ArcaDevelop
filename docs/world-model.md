@@ -30,6 +30,8 @@ Hexes may host one visual building placement slot. That slot is identified by `t
 
 Hexes may also host map units and visual settlement/city markers. A civilian colonizer, land division, fleet, settlement project marker, or city marker uses a `targetHexId`/`hexId` for map position and interaction. This address does not make the hex a population, economy, tax, or building simulation container.
 
+Settlement projects and city markers also add a derived `city` tag to their hex for map mechanics. The generated/base `terrain` remains unchanged, so a city on plains is still plains for terrain rules unless content explicitly targets the `city` tag. City-specific effects must be authored through modifiers or tag-aware placement/adjacency rules, not hardcoded province-level simulation.
+
 ### Regions
 
 Regions are stable gameplay entities composed from hexes. Regions are the main gameplay units for heavy mechanics:
@@ -48,7 +50,7 @@ New heavy mechanics must use `regionId`. Do not add population, buildings, const
 
 Building placement is the narrow exception for map addressability: a building occupies one free hex slot, but the building instance still belongs to `regionBuildingsByRegion[regionId]` and its construction project still belongs to `regionConstructionQueueByRegion[regionId]`.
 
-Settler-based colonization follows the same region-first rule. A colonizer founds a `SettlementProject` on its current hex, but the project belongs to a region and completion transfers the region owner/controller. The final city marker is a visual and interaction anchor; population, resources, buildings, construction, production, taxes, and ownership remain region-level.
+Settler-based colonization follows the same region-first rule. A colonizer founds a named `SettlementProject` on its current hex, but the project belongs to a region and completion transfers the region owner/controller. The final named city marker is a visual and interaction anchor; population, resources, buildings, construction, production, taxes, and ownership remain region-level.
 
 ## Ownership
 
@@ -67,6 +69,7 @@ The controller receives the economy of the region while controlling it.
 - Diplomacy transfers regions, not individual hexes.
 - Colonization targets whole regions.
 - Hex movement uses region owner/controller for access and supply.
+- City hexes use base terrain plus a derived city tag; mechanics that need city behavior should read effective hex state rather than mutating map terrain.
 - Countries may start with no regions.
 - UI must make the distinction clear: hexes explain geography and movement; regions explain economy and politics.
 - Building UI must explain why a hex can or cannot receive a selected building, including occupation, region control, terrain, water, feature, and expected adjacency throughput effects.

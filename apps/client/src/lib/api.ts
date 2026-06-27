@@ -114,12 +114,15 @@ export type ContentCulture = {
     deniedFeatures?: string[];
     allowedWaterKinds?: string[];
     deniedWaterKinds?: string[];
+    allowedTags?: string[];
+    deniedTags?: string[];
   } | null;
   adjacencyEffects?: Array<{
     id: string;
     when: {
       neighborTerrains?: string[];
       neighborFeatures?: string[];
+      neighborTags?: string[];
       neighborBuildingIds?: string[];
       adjacentToRiver?: boolean;
     };

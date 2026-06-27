@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import {
   evaluateBuildingPlacement,
+  buildCityHexIdSet,
+  resolveEffectiveHexTile,
   type BuildingOwner,
   type HexFeature,
   type HexTerrain,
@@ -54,6 +56,13 @@ export function createBuildingRuntime(params: BuildingRuntimeParams) {
     const hexById = params.getHexById();
     const exactHex = hexById.get(targetHexId);
     if (!exactHex) {
+      if (!regionId) {
+        const legacyRegionHexes = [...hexById.values()].filter((hex) => hex.regionId === targetHexId);
+        if (legacyRegionHexes.length > 0) {
+          const restrictions = legacyRegionHexes.map((hex) => getHexBuildRestriction(building, hex)).filter(Boolean);
+          return restrictions.length < legacyRegionHexes.length ? null : restrictions[0] ?? "BUILD_PLACEMENT_HEX_NOT_FOUND";
+        }
+      }
       return "BUILD_PLACEMENT_HEX_NOT_FOUND";
     }
     if (regionId && exactHex.regionId !== regionId) {
@@ -61,12 +70,13 @@ export function createBuildingRuntime(params: BuildingRuntimeParams) {
     }
     const legacyRestriction = getHexBuildRestriction(building, exactHex);
     if (legacyRestriction) return legacyRestriction;
-    const hex = toPlacementHexTile(exactHex);
+    const cityHexIds = buildCityHexIdSet(params.getWorldBase());
+    const hex = toPlacementHexTile(exactHex, cityHexIds);
     if (!hex || !countryId) {
       return "BUILD_PLACEMENT_HEX_NOT_FOUND";
     }
     const neighborHexes = exactHex.neighbors
-      .map((neighborId) => toPlacementHexTile(hexById.get(neighborId)))
+      .map((neighborId) => toPlacementHexTile(hexById.get(neighborId), cityHexIds))
       .filter((tile): tile is HexTile => Boolean(tile));
     const evaluation = evaluateBuildingPlacement({
       building,
@@ -158,11 +168,11 @@ export function createBuildingRuntime(params: BuildingRuntimeParams) {
   };
 }
 
-function toPlacementHexTile(input: HexMapIndexEntry | undefined): HexTile | null {
+function toPlacementHexTile(input: HexMapIndexEntry | undefined, cityHexIds: ReadonlySet<HexTile["id"]> = new Set()): HexTile | null {
   if (!input?.id || !input.regionId) return null;
   const terrain = normalizePlacementTerrain(input.landscape ?? input.hexType);
   const waterKind = normalizePlacementWaterKind(input.landscape ?? input.hexType);
-  return {
+  return resolveEffectiveHexTile({
     id: input.id as HexTile["id"],
     q: 0,
     r: 0,
@@ -177,7 +187,7 @@ function toPlacementHexTile(input: HexMapIndexEntry | undefined): HexTile | null
     temperature: 0,
     movementCost: 1,
     passable: true,
-  };
+  }, cityHexIds);
 }
 
 function normalizePlacementTerrain(value: string | null | undefined): HexTerrain {

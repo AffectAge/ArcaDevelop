@@ -1,5 +1,6 @@
 import type { HexId, HexTile } from "./contracts/hex-map";
 import type { WorldBase } from "./contracts/world";
+import { hexHasTag } from "./effectiveHex";
 
 export type BuildingPlacementRules = {
   allowedTerrains?: string[];
@@ -8,6 +9,8 @@ export type BuildingPlacementRules = {
   deniedFeatures?: string[];
   allowedWaterKinds?: string[];
   deniedWaterKinds?: string[];
+  allowedTags?: string[];
+  deniedTags?: string[];
 };
 
 export type BuildingAdjacencyEffect = {
@@ -15,6 +18,7 @@ export type BuildingAdjacencyEffect = {
   when: {
     neighborTerrains?: string[];
     neighborFeatures?: string[];
+    neighborTags?: string[];
     neighborBuildingIds?: string[];
     adjacentToRiver?: boolean;
   };
@@ -43,7 +47,9 @@ export type BuildingPlacementReasonCode =
   | "BUILD_PLACEMENT_FEATURE_DENIED"
   | "BUILD_PLACEMENT_FEATURE_NOT_ALLOWED"
   | "BUILD_PLACEMENT_WATER_DENIED"
-  | "BUILD_PLACEMENT_WATER_NOT_ALLOWED";
+  | "BUILD_PLACEMENT_WATER_NOT_ALLOWED"
+  | "BUILD_PLACEMENT_TAG_DENIED"
+  | "BUILD_PLACEMENT_TAG_NOT_ALLOWED";
 
 export type BuildingPlacementReason = {
   code: BuildingPlacementReasonCode;
@@ -73,8 +79,8 @@ export type BuildingPlacementWorld = Pick<
 export function evaluateBuildingPlacement(params: {
   building: BuildingPlacementContent;
   countryId: string;
-  hex: HexTile | null | undefined;
-  neighborHexes?: HexTile[];
+  hex: (HexTile & { tags?: readonly string[] }) | null | undefined;
+  neighborHexes?: Array<HexTile & { tags?: readonly string[] }>;
   world: BuildingPlacementWorld;
   riverNeighborHexIds?: Set<HexId>;
 }): BuildingPlacementEvaluation {
@@ -114,6 +120,13 @@ export function evaluateBuildingPlacement(params: {
   if (!allowsList(waterKind, placement.allowedWaterKinds)) {
     return blocked({ code: "BUILD_PLACEMENT_WATER_NOT_ALLOWED", params: { waterKind } });
   }
+  const deniedTag = placement.deniedTags?.find((tag) => hexHasTag(hex, tag));
+  if (deniedTag) {
+    return blocked({ code: "BUILD_PLACEMENT_TAG_DENIED", params: { tag: deniedTag } });
+  }
+  if (placement.allowedTags?.length && !placement.allowedTags.some((tag) => hexHasTag(hex, tag))) {
+    return blocked({ code: "BUILD_PLACEMENT_TAG_NOT_ALLOWED", params: { tags: placement.allowedTags.join(",") } });
+  }
 
   const adjacencySources = evaluateAdjacencyEffects({ ...params, hex });
   const throughputFactor = adjacencySources.reduce((value, source) => {
@@ -139,8 +152,8 @@ export function isBuildingSlotOccupied(world: BuildingPlacementWorld, hexId: str
 
 function evaluateAdjacencyEffects(params: {
   building: BuildingPlacementContent;
-  hex: HexTile;
-  neighborHexes?: HexTile[];
+  hex: HexTile & { tags?: readonly string[] };
+  neighborHexes?: Array<HexTile & { tags?: readonly string[] }>;
   world: BuildingPlacementWorld;
   riverNeighborHexIds?: Set<HexId>;
 }): BuildingPlacementAdjacencySource[] {
@@ -164,13 +177,14 @@ function evaluateAdjacencyEffects(params: {
 }
 
 function countMatchingNeighbors(
-  params: { neighborHexes?: HexTile[]; world: BuildingPlacementWorld; hex: HexTile },
+  params: { neighborHexes?: Array<HexTile & { tags?: readonly string[] }>; world: BuildingPlacementWorld; hex: HexTile },
   effect: BuildingAdjacencyEffect,
 ): number {
   let count = 0;
   for (const neighbor of params.neighborHexes ?? []) {
     if (effect.when.neighborTerrains?.length && !matchesList(neighbor.terrain, effect.when.neighborTerrains)) continue;
     if (effect.when.neighborFeatures?.length && !matchesList(neighbor.feature, effect.when.neighborFeatures)) continue;
+    if (effect.when.neighborTags?.length && !effect.when.neighborTags.some((tag) => hexHasTag(neighbor, tag))) continue;
     if (effect.when.neighborBuildingIds?.length) {
       const instances = params.world.regionBuildingsByRegion[neighbor.regionId] ?? [];
       if (!instances.some((instance) => instance.targetHexId === neighbor.id && matchesList(instance.buildingId, effect.when.neighborBuildingIds))) {

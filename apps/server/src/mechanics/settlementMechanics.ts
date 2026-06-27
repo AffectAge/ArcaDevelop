@@ -94,9 +94,11 @@ export function resolveFoundCityOrder(params: {
 
   const projectId = `settlement:${params.createId()}`;
   const unit = validation.unit;
+  const cityName = normalizeCityName(params.order.name);
   delete params.worldBase.civilianUnitsById[unit.id];
   params.worldBase.settlementProjectsById[projectId] = {
     id: projectId,
+    name: cityName,
     countryId: params.order.countryId,
     regionId: params.order.regionId,
     targetHexId: params.order.targetHexId,
@@ -120,6 +122,10 @@ export function validateFoundCityOrder(params: {
 }):
   | { ok: true; unit: CivilianUnit; regionConfig: RegionColonizationConfig }
   | { ok: false; reason: string } {
+  const cityNameValidation = validateCityName(params.order.name);
+  if (!cityNameValidation.ok) {
+    return { ok: false, reason: cityNameValidation.reason };
+  }
   const unit = params.worldBase.civilianUnitsById[params.order.civilianUnitId];
   if (!unit || unit.countryId !== params.order.countryId || unit.type !== "colonizer") {
     return { ok: false, reason: "COLONIZER_NOT_FOUND" };
@@ -145,6 +151,14 @@ export function validateFoundCityOrder(params: {
     return { ok: false, reason: "COLONIZATION_DISABLED" };
   }
   return { ok: true, unit, regionConfig };
+}
+
+function validateCityName(value: unknown): { ok: true } | { ok: false; reason: string } {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return { ok: false, reason: "FOUND_CITY_NAME_REQUIRED" };
+  }
+  if (value.trim().length > 32) return { ok: false, reason: "FOUND_CITY_NAME_TOO_LONG" };
+  return { ok: true };
 }
 
 export function resolveSettlementProjectsTurn(params: {
@@ -258,6 +272,7 @@ function completeSettlementProject(params: {
   const markerId = `city:${params.createId()}`;
   const marker: CityMarker = {
     id: markerId,
+    name: project.name,
     countryId: project.countryId,
     ownerCountryId: project.countryId,
     regionId: project.regionId,
@@ -290,4 +305,10 @@ function hasSettlementProjectInRegion(worldBase: SettlementWorldState, regionId:
 function parseCultureId(payload: Record<string, unknown>, fallbackCountryId: string): string {
   const raw = payload.cultureId;
   return typeof raw === "string" && raw.trim() ? raw.trim().slice(0, 120) : `culture:${fallbackCountryId}`;
+}
+
+export function normalizeCityName(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  return trimmed.length > 0 && trimmed.length <= 32 ? trimmed : "";
 }

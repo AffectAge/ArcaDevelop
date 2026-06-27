@@ -23,6 +23,7 @@ describe("settlementMechanics", () => {
     expect(result).toMatchObject({ accepted: true, rejectedOrder: null });
     expect(worldBase.civilianUnitsById["unit:colonizer"]).toBeUndefined();
     expect(worldBase.settlementProjectsById["settlement:project:a"]).toMatchObject({
+      name: "Babylon",
       countryId: "country:a",
       regionId: "region:a",
       targetHexId: "hex:0:0",
@@ -46,12 +47,31 @@ describe("settlementMechanics", () => {
     expect(result).toEqual({ ok: false, reason: "REGION_NOT_NEUTRAL" });
   });
 
+  it("rejects missing or too long city names", () => {
+    const worldBase = makeWorldBase();
+
+    expect(validateFoundCityOrder({
+      order: makeFoundCityOrder({ name: "   " }),
+      worldBase,
+      getHexRegionId: () => "region:a",
+      getRegionColonizationConfig: () => ({ cost: 12, disabled: false, manualCost: false }),
+    })).toEqual({ ok: false, reason: "FOUND_CITY_NAME_REQUIRED" });
+
+    expect(validateFoundCityOrder({
+      order: makeFoundCityOrder({ name: "A".repeat(33) }),
+      worldBase,
+      getHexRegionId: () => "region:a",
+      getRegionColonizationConfig: () => ({ cost: 12, disabled: false, manualCost: false }),
+    })).toEqual({ ok: false, reason: "FOUND_CITY_NAME_TOO_LONG" });
+  });
+
   it("advances projects through the resource ledger and stalls when points run out", () => {
     const worldBase = makeWorldBase({
       resourcesByCountry: { "country:a": makeResources({ colonization: 5 }) },
       settlementProjectsById: {
         "settlement:a": {
           id: "settlement:a",
+          name: "Babylon",
           countryId: "country:a",
           regionId: "region:a",
           targetHexId: "hex:0:0",
@@ -64,6 +84,7 @@ describe("settlementMechanics", () => {
         },
         "settlement:b": {
           id: "settlement:b",
+          name: "Akkad",
           countryId: "country:a",
           regionId: "region:b",
           targetHexId: "hex:1:0",
@@ -103,6 +124,7 @@ describe("settlementMechanics", () => {
       settlementProjectsById: {
         "settlement:a": {
           id: "settlement:a",
+          name: "Babylon",
           countryId: "country:a",
           regionId: "region:a",
           targetHexId: "hex:0:0",
@@ -135,6 +157,7 @@ describe("settlementMechanics", () => {
       regionId: "region:a",
       targetHexId: "hex:0:0",
       visualState: "working",
+      name: "Babylon",
     });
     expect(worldBase.regionOwner["region:a"]).toBe("country:a");
     expect(worldBase.regionController["region:a"]).toBe("country:a");
@@ -150,6 +173,7 @@ function makeFoundCityOrder(overrides: Partial<FoundCityOrder> = {}): FoundCityO
     playerId: "player:a",
     countryId: "country:a",
     civilianUnitId: "unit:colonizer",
+    name: "Babylon",
     regionId: "region:a",
     targetHexId: "hex:0:0",
     payload: {},

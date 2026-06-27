@@ -64,6 +64,7 @@ function createColonizationCandidate(countryId: string, regionId = "region:front
       type: "FOUND_CITY",
       countryId,
       civilianUnitId: "civilian:colonizer",
+      name: "Frontier",
       regionId,
       targetHexId: "hex:1:1",
       payload: { cultureId: countryId },

@@ -34,7 +34,7 @@ Do not rely on raw human-readable server messages. Use machine-readable `code` v
 
 The shared order union reserves player-facing target orders for the new model:
 
-- `UNIT_MOVE`: moves a civilian unit, land division, or fleet along a server-validated hex path.
+- `UNIT_MOVE`: moves a civilian unit, land division, or fleet toward a server-validated target hex. Civilian units store the target and recalculate their route each turn; routes may exceed current movement points.
 - `UNIT_ATTACK`: requests a manual Civ-like attack against a target hex/unit.
 - `FOUND_CITY`: consumes a `colonizer` civilian unit and starts a region-owned settlement project at the unit hex when the target region is neutral and eligible.
 - `EQUIPMENT_VARIANT`: creates or updates a country/scenario equipment variant from module slots.
@@ -42,13 +42,15 @@ The shared order union reserves player-facing target orders for the new model:
 
 `COLONIZE` remains a legacy/internal compatibility order while the player UI transitions away from button colonization. New player-facing colonization should use `FOUND_CITY`.
 
-`FOUND_CITY` is validated both on order submission and during turn resolution. The server requires the referenced colonizer to belong to the order country, stand on `targetHexId`, and target a hex inside `regionId`. The region must be neutral, colonization must not be disabled, and there must be no active/stalled settlement project for that region. On acceptance during turn resolution, the colonizer is removed immediately and a `SettlementProject` is created. Settlement progress spends colonization points through the resource ledger with `resourceLedger.source.settlement.progress`; the region owner/controller changes only when the project completes, at which point the server creates a `CityMarker`.
+`FOUND_CITY` is validated both on order submission and during turn resolution. The server requires a trimmed city `name` from 1 to 32 characters, the referenced colonizer to belong to the order country, stand on `targetHexId`, and target a hex inside `regionId`. The region must be neutral, colonization must not be disabled, and there must be no active/stalled settlement project for that region. On acceptance during turn resolution, the colonizer is removed immediately and a named `SettlementProject` is created. Settlement progress spends colonization points through the resource ledger with `resourceLedger.source.settlement.progress`; the region owner/controller changes only when the project completes, at which point the server creates a named `CityMarker`.
 
 ## Build Order Contract
 
 `BUILD` orders require `targetHexId` in addition to `countryId`, `regionId`, and `payload.buildingId`. The server rejects missing values with `BUILD_TARGET_HEX_REQUIRED` and validates that the target hex is in the requested region, controlled by the requester, eligible for the selected building placement rules, and not occupied by another building instance or construction project.
 
 `RegionConstructionProject.targetHexId` and `BuildingInstance.targetHexId` are part of the persisted and delta-visible state. Upgrade and auto-upgrade projects preserve the existing instance hex. Persisted projects or instances without `targetHexId` are not migrated to invented hexes; runtime normalizers remove them as incompatible legacy state.
+
+Building placement rules may target derived hex tags in addition to base terrain/feature/water. `placement.allowedTags` and `placement.deniedTags` currently support `city`; adjacency effects may use `when.neighborTags`. Tags are derived from world state and do not mutate the map artifact `terrain`.
 
 ## Scenario Building Atlas Assets
 

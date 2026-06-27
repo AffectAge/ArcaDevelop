@@ -1,8 +1,8 @@
 import type { HexBiome, HexTerrain, HexTile } from "@arcanorum/shared";
 
-export type TerrainMaterialId = "deep_water" | "coastal_water" | "fresh_water" | "grass" | "plains" | "forest" | "hills" | "rock" | "sand" | "tundra" | "snow" | "wetland";
+export type TerrainMaterialId = "deep_water" | "coastal_water" | "fresh_water" | "grass" | "plains" | "forest" | "hills" | "rock" | "sand" | "tundra" | "snow" | "wetland" | "city";
 export type HexTerrainShaderQuality = "low" | "medium" | "high";
-export const TERRAIN_MATERIAL_IDS: TerrainMaterialId[] = ["deep_water", "coastal_water", "fresh_water", "grass", "plains", "forest", "hills", "rock", "sand", "tundra", "snow", "wetland"];
+export const TERRAIN_MATERIAL_IDS: TerrainMaterialId[] = ["deep_water", "coastal_water", "fresh_water", "grass", "plains", "forest", "hills", "rock", "sand", "tundra", "snow", "wetland", "city"];
 
 export type HexMaterialLayerSet = {
   albedo: string;
@@ -58,7 +58,7 @@ export const generatedHexMaterialPack: HexMaterialPackManifest = {
   id: "arcanorum-generated-terrain-materials-v1",
   atlas: {
     columns: 4,
-    rows: 3,
+    rows: 4,
     tileSize: 128,
     albedoUrl: "/game-assets/hex-materials/hex-terrain-albedo.png",
     detailUrl: "/game-assets/hex-materials/hex-terrain-detail.png",
@@ -97,6 +97,7 @@ export const generatedHexMaterialPack: HexMaterialPackManifest = {
     tundra: material("tundra", [0.56, 0.62, 0.53], 0.2, 0.88),
     snow: material("snow", [0.82, 0.87, 0.84], 0.12, 0.7),
     wetland: material("wetland", [0.34, 0.49, 0.39], 0.24, 0.92),
+    city: material("city", [0.54, 0.48, 0.42], 0.32, 0.96),
   },
 };
 

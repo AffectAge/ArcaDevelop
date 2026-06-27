@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { HexDirection, HexId, HexMapArtifact, HexTile } from "@arcanorum/shared";
 import { DEFAULT_HEX_MAP_SETTINGS, generateHexMap } from "./hexMapGenerator";
-import { buildHexTerrainMeshData, resolveHexBiomeTransitionAtlasIndex, resolveHexCoastMaskAtlasIndex, resolveHexCoastMaskParams, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
+import { buildHexTerrainMeshData, resolveEffectiveTerrainMaterialId, resolveHexBiomeTransitionAtlasIndex, resolveHexCoastMaskAtlasIndex, resolveHexCoastMaskParams, resolveHexNeighborMaterialIds } from "./hexTerrainMesh";
 import { generatedHexMaterialPack, isWaterMaterial, resolveShaderQualityFeatures, resolveTerrainMaterialId, TERRAIN_MATERIAL_IDS } from "./hexTerrainMaterials";
 import { validateHexMaterialPack } from "./hexTerrainMaterialTextures";
 import { resolveHexRiverMaskAtlasIndex } from "./hexRiverMasks";
@@ -15,6 +15,12 @@ describe("hex terrain mesh renderer data", () => {
     expect(resolveTerrainMaterialId({ terrain: "desert", biome: "arid", waterKind: null })).toBe("sand");
     expect(resolveTerrainMaterialId({ terrain: "snow", biome: "cold", waterKind: null })).toBe("snow");
     expect(resolveTerrainMaterialId({ terrain: "sea", biome: "coastal_water", waterKind: "sea" })).toBe("coastal_water");
+  });
+
+  it("uses city material for city-tagged hexes without changing terrain material mapping", () => {
+    const tile = makeTestTile(1, 1, { terrain: "plains", biome: "temperate", waterKind: null });
+    expect(resolveTerrainMaterialId(tile)).toBe("plains");
+    expect(resolveEffectiveTerrainMaterialId(tile, new Set([tile.id]))).toBe("city");
   });
 
   it("builds deterministic chunk geometry", () => {

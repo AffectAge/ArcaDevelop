@@ -42,6 +42,7 @@ const MODIFIER_STATS = new Set<ModifierStat>([
   "building_input",
   "building_throughput",
   "building_wage",
+  "hex_movement_cost",
 ]);
 const MODIFIER_MODES = new Set<ModifierMode>(["add", "add_pct", "mult"]);
 const MODIFIER_SCOPES = new Set<ModifierScope>(["country", "region", "building", "pop", "market"]);
@@ -182,6 +183,7 @@ export function normalizeModifiers(input: unknown): ModifierDefinition[] {
               typeof targetRaw.resourceCategoryId === "string" && targetRaw.resourceCategoryId.trim()
                 ? targetRaw.resourceCategoryId.trim().slice(0, 120)
                 : null,
+            hexTag: typeof targetRaw.hexTag === "string" && targetRaw.hexTag.trim() ? targetRaw.hexTag.trim().slice(0, 80) : null,
           };
           const hasTarget = Object.values(target).some(Boolean);
           return {

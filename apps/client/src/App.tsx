@@ -117,6 +117,12 @@ function resolveColonizerQueueErrorKey(code: string): UiTextKey {
   return "hexMap.queueColonizerFailed";
 }
 
+function resolveWsPlayerErrorKey(code: string): UiTextKey | null {
+  if (code === "FOUND_CITY_NAME_REQUIRED") return "hexMap.foundCityNameRequired";
+  if (code === "FOUND_CITY_NAME_TOO_LONG") return "hexMap.foundCityNameRequired";
+  return null;
+}
+
 function buildMarketShellPartners(input: Record<string, number> | undefined, countryById: Map<string, Country>) {
   return Object.entries(input ?? {})
     .map(([countryId, value]) => {
@@ -629,8 +635,10 @@ export default function App() {
           void resyncWorldState();
           return;
         }
-        toast.error(msg.message);
-        addEvent({ category: "system", title: t("shell.serverErrorTitle"), message: msg.message, priority: "high", visibility: "private" });
+        const localizedKey = resolveWsPlayerErrorKey(msg.code);
+        const message = localizedKey ? t(localizedKey) : msg.message;
+        toast.error(message);
+        addEvent({ category: "system", title: t("shell.serverErrorTitle"), message, priority: "high", visibility: "private" });
       }
     },
     [addEvent, addOrder, applyWorldDelta, clearResolveStartTimeout, hydrateCurrentTurnOrders, pruneLogEntries, resetOverlay, resyncWorldState, setEventLogRetentionTurns, setPresence, setWorldBase, t],
@@ -1842,8 +1850,9 @@ export default function App() {
     });
   };
 
-  const queueFoundCityOrder = (civilianUnitId: string, hexId: HexId, regionId: string, cultureId?: string | null) => {
-    if (!auth || !civilianUnitId || !isHexId(hexId)) {
+  const queueFoundCityOrder = (civilianUnitId: string, hexId: HexId, regionId: string, cityName: string, cultureId?: string | null) => {
+    const normalizedCityName = cityName.trim();
+    if (!auth || !civilianUnitId || !isHexId(hexId) || normalizedCityName.length === 0 || normalizedCityName.length > 32) {
       return;
     }
 
@@ -1854,10 +1863,11 @@ export default function App() {
         playerId: auth.playerId,
         countryId: auth.countryId,
         civilianUnitId,
+        name: normalizedCityName,
         regionId,
         targetHexId: hexId,
         type: "FOUND_CITY",
-        payload: cultureId ? { cultureId } : {},
+        payload: cultureId ? { cultureId, name: normalizedCityName } : { name: normalizedCityName },
       },
     };
 
@@ -1867,11 +1877,11 @@ export default function App() {
       id: `local:${turnId}:${civilianUnitId}:found-city`,
       createdAt: new Date().toISOString(),
     });
-    toast(t("hexMap.foundCityOrderSent"), { description: hexId });
+    toast(t("hexMap.foundCityOrderSent"), { description: normalizedCityName });
     addEvent({
       category: "colonization",
       title: t("hexMap.foundCityOrderSent"),
-      message: `${civilianUnitId} -> ${hexId}`,
+      message: `${civilianUnitId} -> ${normalizedCityName}`,
       countryId: auth.countryId,
       priority: "medium",
       visibility: "private",

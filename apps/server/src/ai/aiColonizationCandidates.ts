@@ -17,6 +17,7 @@ export type AiFoundCityCandidate = {
     type: "FOUND_CITY";
     countryId: string;
     civilianUnitId: string;
+    name: string;
     regionId: string;
     targetHexId: HexId;
     payload: Record<string, string>;
@@ -127,6 +128,7 @@ function selectFoundCityCandidates(params: AiColonizationCandidateParams): AiFou
           type: "FOUND_CITY",
           countryId,
           civilianUnitId: unit.id,
+          name: `City ${regionId}`.slice(0, 32),
           regionId,
           targetHexId: unit.hexId,
           payload: { cultureId: countryId },

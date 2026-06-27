@@ -32,6 +32,7 @@ const STAT_LABEL_KEY: Record<ModifierStat, UiTextKey> = {
   building_input: "modifiers.stat.building_input",
   building_throughput: "modifiers.stat.building_throughput",
   building_wage: "modifiers.stat.building_wage",
+  hex_movement_cost: "modifiers.stat.hex_movement_cost",
 };
 
 const MODE_LABEL: Record<ModifierMode, string> = {
@@ -74,6 +75,7 @@ function formatTarget(effect: ModifierEffect, t: (key: UiTextKey, params?: Recor
     target.goodId ? t("modifiers.target.good", { value: target.goodId }) : null,
     target.professionId ? t("modifiers.target.profession", { value: target.professionId }) : null,
     target.resourceCategoryId ? t("modifiers.target.category", { value: target.resourceCategoryId }) : null,
+    target.hexTag ? t("modifiers.target.hexTag", { value: target.hexTag }) : null,
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(", ") : t("modifiers.target.all");
 }

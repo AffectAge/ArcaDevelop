@@ -3,7 +3,10 @@ import { Application, Container, Graphics, Sprite } from "pixi.js";
 import { BookOpen, Building2, Flag, Grid3X3, HandCoins, Info, Landmark, Layers, Leaf, Mountain, Move, Shield, Tags, Users, Waves } from "lucide-react";
 import { toast } from "sonner";
 import {
+  buildCityHexIdSet,
   evaluateBuildingPlacement,
+  resolveEffectiveHexTile,
+  type ActiveModifierRow,
   type Country,
   type BuildingPlacementContent,
   type HexId,
@@ -16,6 +19,7 @@ import {
 import {
   demolishCountryBuild,
   fetchContentEntries,
+  fetchCountryModifiers,
   setCountryBuildAutoUpgradeState,
   setCountryBuildCustomName,
   setCountryBuildManualWorkState,
@@ -29,6 +33,8 @@ import {
   calculateEdgeScrollVelocity,
   centerCameraOnWorldPoint,
   clampScale,
+  HEX_CAMERA_MAX_SCALE,
+  HEX_CAMERA_MIN_SCALE,
   normalizeHexCamera,
   screenToWorld,
   smoothCameraToward,
@@ -103,7 +109,7 @@ type Props = {
   focusHexRequest?: { hexId: HexId; nonce: number } | null;
   onQueueArmyMoveOrder?: (divisionId: string, hexId: string, path?: string[]) => void;
   onQueueCivilianUnitMoveOrder?: (unitId: string, fromHexId: HexId, targetHexId: HexId, path?: HexId[]) => void;
-  onFoundCityOrder?: (civilianUnitId: string, hexId: HexId, regionId: string, cultureId?: string | null) => void;
+  onFoundCityOrder?: (civilianUnitId: string, hexId: HexId, regionId: string, cityName: string, cultureId?: string | null) => void;
   onQueueColonizer?: (hexId: HexId) => void;
   queueingColonizerHexId?: HexId | null;
   onOpenAdminHexEditor?: (hexId: string) => void;
@@ -157,6 +163,16 @@ type HexBuildingTooltipInfo = {
   tone: "default" | "good" | "warn" | "bad";
 };
 
+type FoundCityConfirmTarget = {
+  civilianUnitId: string;
+  hexId: HexId;
+  regionId: string;
+  countryId: string;
+  ownerName: string;
+  ownerFlagUrl: string | null;
+  costColonization: number | null;
+};
+
 type PointerGesture = {
   startX: number;
   startY: number;
@@ -171,7 +187,7 @@ type PointerGesture = {
 const DEFAULT_CAMERA: HexCamera = {
   x: axialToPixel({ q: DEFAULT_HEX_MAP_SETTINGS.width / 2, r: DEFAULT_HEX_MAP_SETTINGS.height / 2 }, DEFAULT_HEX_MAP_SETTINGS.hexSize).x,
   y: axialToPixel({ q: DEFAULT_HEX_MAP_SETTINGS.width / 2, r: DEFAULT_HEX_MAP_SETTINGS.height / 2 }, DEFAULT_HEX_MAP_SETTINGS.hexSize).y,
-  scale: 0.32,
+  scale: 1,
 };
 
 const HEX_GRID_MIN_SCALE = 0.78;
@@ -197,7 +213,7 @@ function buildInitialHexCamera(settings: HexMapSettings): HexCamera {
 function resolveInitialHexScale(): number {
   if (typeof window === "undefined") return DEFAULT_CAMERA.scale;
   const requested = Number(new URLSearchParams(window.location.search).get("hexScale"));
-  return Number.isFinite(requested) ? Math.max(0.12, Math.min(1.8, requested)) : DEFAULT_CAMERA.scale;
+  return Number.isFinite(requested) ? Math.max(HEX_CAMERA_MIN_SCALE, Math.min(HEX_CAMERA_MAX_SCALE, requested)) : DEFAULT_CAMERA.scale;
 }
 
 function shouldShowMapStatsPanel(): boolean {
@@ -353,11 +369,14 @@ export function MapView({
   const [selectedBuildingPopoverHexId, setSelectedBuildingPopoverHexId] = useState<HexId | null>(null);
   const [expandedMapBuildingId, setExpandedMapBuildingId] = useState<string | null>(null);
   const [civilianMoveSelection, setCivilianMoveSelection] = useState<{ unitId: string; fromHexId: HexId } | null>(null);
+  const [foundCityConfirmTarget, setFoundCityConfirmTarget] = useState<FoundCityConfirmTarget | null>(null);
+  const [foundCityNameDraft, setFoundCityNameDraft] = useState("");
   const [mapBuildingBusyAction, setMapBuildingBusyAction] = useState<string | null>(null);
   const [mapBuildingConfirm, setMapBuildingConfirm] = useState<BuildingOverviewConfirmState | null>(null);
   const [mapBuildingEditingNameId, setMapBuildingEditingNameId] = useState<string | null>(null);
   const [mapBuildingRenameDraftById, setMapBuildingRenameDraftById] = useState<Record<string, string>>({});
   const [goods, setGoods] = useState<GoodMeta[]>([]);
+  const [activeCountryModifiers, setActiveCountryModifiers] = useState<ActiveModifierRow[]>([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -394,6 +413,24 @@ export function MapView({
     };
   }, []);
 
+  useEffect(() => {
+    if (!buildingOverviewToken || !authCountryId) {
+      setActiveCountryModifiers([]);
+      return;
+    }
+    let cancelled = false;
+    fetchCountryModifiers(buildingOverviewToken, authCountryId)
+      .then((result) => {
+        if (!cancelled) setActiveCountryModifiers(result.modifiers);
+      })
+      .catch(() => {
+        if (!cancelled) setActiveCountryModifiers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authCountryId, buildingOverviewToken]);
+
   const selectedTile = selectedTileId ? tileById.get(selectedTileId) ?? null : null;
   const hoverPath = useMemo(() => {
     if (!selectedTile || !hoverState?.tile || selectedTile.id === hoverState.tile.id) return [];
@@ -407,9 +444,12 @@ export function MapView({
     () => new Map(Object.values(worldBase?.civilianUnitsById ?? {}).map((unit) => [unit.id, unit] as const)),
     [worldBase?.civilianUnitsById],
   );
+  const cityHexIds = useMemo(() => {
+    return buildCityHexIdSet(worldBase);
+  }, [worldBase]);
   const civilianMovePreviewCost = useMemo(
-    () => calculateHexPathMovementCost(civilianMoveHoverPath, tileById),
-    [civilianMoveHoverPath, tileById],
+    () => calculateHexPathMovementCost(civilianMoveHoverPath, tileById, cityHexIds, activeCountryModifiers),
+    [activeCountryModifiers, cityHexIds, civilianMoveHoverPath, tileById],
   );
 
   const pendingColonyProgressByRegion = useMemo(() => {
@@ -449,20 +489,21 @@ export function MapView({
   const pendingFoundCityMarkers = useMemo(() => {
     const byPlayer = ordersByTurn.get(turnId);
     if (!byPlayer) return [];
-    const markers: Array<{ targetHexId: HexId; regionId: string; civilianUnitId: string; cultureId: string }> = [];
+    const markers: Array<{ targetHexId: HexId; regionId: string; civilianUnitId: string; countryId: string; cultureId: string; name: string }> = [];
     const seen = new Set<string>();
     for (const orders of byPlayer.values()) {
       for (const order of orders) {
         if (order.type !== "FOUND_CITY") continue;
         const cultureId = typeof order.payload?.cultureId === "string" && order.payload.cultureId.trim() ? order.payload.cultureId : order.countryId;
+        const name = typeof order.name === "string" && order.name.trim() ? order.name.trim() : t("hexMap.cityPendingNameFallback");
         const key = `${order.civilianUnitId}:${order.targetHexId}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        markers.push({ targetHexId: order.targetHexId, regionId: order.regionId, civilianUnitId: order.civilianUnitId, cultureId });
+        markers.push({ targetHexId: order.targetHexId, regionId: order.regionId, civilianUnitId: order.civilianUnitId, countryId: order.countryId, cultureId, name });
       }
     }
     return markers;
-  }, [ordersByTurn, turnId]);
+  }, [ordersByTurn, t, turnId]);
 
   const pendingFoundCityUnitIds = useMemo(() => new Set(pendingFoundCityMarkers.map((marker) => marker.civilianUnitId)), [pendingFoundCityMarkers]);
 
@@ -578,14 +619,6 @@ export function MapView({
     return map;
   }, [mapBuildingOverviewItems]);
 
-  const cityHexIds = useMemo(() => {
-    const set = new Set<HexId>();
-    for (const marker of Object.values(worldBase?.cityMarkersById ?? {})) {
-      if (marker.visualState !== "ruins") set.add(marker.targetHexId);
-    }
-    return set;
-  }, [worldBase?.cityMarkersById]);
-
   const civilianUnitsByHexId = useMemo(() => {
     const map = new Map<HexId, NonNullable<WorldBase["civilianUnitsById"][string]>[]>();
     for (const unit of Object.values(worldBase?.civilianUnitsById ?? {})) {
@@ -596,6 +629,11 @@ export function MapView({
     }
     return map;
   }, [pendingFoundCityUnitIds, worldBase?.civilianUnitsById]);
+
+  useEffect(() => {
+    terrainMeshRendererRef.current?.setCityHexIds(cityHexIds);
+    appRef.current?.render();
+  }, [cityHexIds]);
 
   const selectedCivilianUnits = selectedTile ? civilianUnitsByHexId.get(selectedTile.id) ?? [] : [];
   const selectedCivilianQueueItems = useMemo(() => {
@@ -629,17 +667,18 @@ export function MapView({
     for (const tile of mapArtifact.tiles) {
       const controller = placementWorld.regionController[tile.regionId] ?? placementWorld.regionOwner[tile.regionId] ?? null;
       if (controller !== authCountryId) continue;
-      const neighbors = getNeighborTiles(tile, tileById, mapArtifact.settings);
+      const effectiveTile = resolveEffectiveHexTile(tile, cityHexIds);
+      const neighbors = getNeighborTiles(tile, tileById, mapArtifact.settings).map((neighbor) => resolveEffectiveHexTile(neighbor, cityHexIds));
       map.set(tile.id, evaluateBuildingPlacement({
         building: hexBuildPlacement.building,
         countryId: authCountryId,
-        hex: tile,
+        hex: effectiveTile,
         neighborHexes: neighbors,
         world: placementWorld,
       }));
     }
     return map;
-  }, [authCountryId, hexBuildPlacement, mapArtifact.settings, mapArtifact.tiles, placementWorld, tileById]);
+  }, [authCountryId, cityHexIds, hexBuildPlacement, mapArtifact.settings, mapArtifact.tiles, placementWorld, tileById]);
 
   const layerOptions = useMemo(
     () =>
@@ -774,13 +813,6 @@ export function MapView({
           setMapActionNotice(t("hexMap.civilianMoveNoPath"));
           return;
         }
-        const routeCost = calculateHexPathMovementCost(path, tileById);
-        const unit = civilianUnitById.get(civilianMoveSelection.unitId);
-        const movementPoints = Math.max(0, Number(unit?.movementPoints ?? 0));
-        if (routeCost > movementPoints) {
-          setMapActionNotice(t("hexMap.civilianMoveTooFar", { cost: formatCompactNumber(routeCost), points: formatCompactNumber(movementPoints) }));
-          return;
-        }
         onQueueCivilianUnitMoveOrder?.(civilianMoveSelection.unitId, civilianMoveSelection.fromHexId, tile.id, path);
         setCivilianMoveSelection(null);
         setMapActionNotice(t("hexMap.civilianMoveOrderSent"));
@@ -796,7 +828,6 @@ export function MapView({
     },
     [
       civilianMoveSelection,
-      civilianUnitById,
       hexBuildPlacement,
       mapBuildingItemByHexId,
       mapArtifact,
@@ -804,7 +835,6 @@ export function MapView({
       onSelectHexBuildPlacementTarget,
       placementEvaluations,
       selectTile,
-      tileById,
       t,
     ],
   );
@@ -879,6 +909,7 @@ export function MapView({
       container.appendChild(app.canvas);
       try {
         terrainMeshRendererRef.current = await createHexTerrainMeshRenderer(mapArtifact);
+        terrainMeshRendererRef.current.setCityHexIds(buildCityHexIdSet(worldBase));
         overlayMeshRendererRef.current = await createHexMapOverlayMeshRenderer(mapArtifact);
         lensOverlayRendererRef.current = createHexMapLensOverlayRenderer(mapArtifact);
       } catch {
@@ -1331,14 +1362,6 @@ export function MapView({
         drawHexFillAndOutline(overlayLayer, tile, mapArtifact.settings.hexSize, colors.fill, colors.border);
       }
     }
-    if (cityHexIds.size > 0 && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      for (const hexId of cityHexIds) {
-        const tile = tileById.get(hexId);
-        if (!tile || !isTileInViewport(tile, camera, rect, mapArtifact.settings.hexSize)) continue;
-        drawHexFillAndOutline(overlayLayer, tile, mapArtifact.settings.hexSize, 0xd8b45c, 0xf3df99);
-      }
-    }
     if (selectedTile) {
       drawHexOutline(overlayLayer, selectedTile, mapArtifact.settings.hexSize, 0xf5d56b, 2.6);
     }
@@ -1347,7 +1370,7 @@ export function MapView({
       drawPathOverlay(overlayLayer, activePath, tileById, mapArtifact.settings.hexSize);
     }
     app.render();
-  }, [camera, cityHexIds, civilianMoveHoverPath, civilianMoveSelection, hexBuildPlacement, hoverPath, hoverState, mapArtifact, mapLayers, pixiReady, placementEvaluations, selectedTile, tileById, worldBase]);
+  }, [camera, civilianMoveHoverPath, civilianMoveSelection, hexBuildPlacement, hoverPath, hoverState, mapArtifact, mapLayers, pixiReady, placementEvaluations, selectedTile, tileById, worldBase]);
 
   useEffect(() => {
     const layer = buildingLayerRef.current;
@@ -1522,11 +1545,8 @@ export function MapView({
   }, [camera.scale, countryColorById, mapArtifact.settings.hexSize, mapLayers.armies, pendingFoundCityUnitIds, pixiReady, tileById, worldBase]);
 
   const selectedName = selectedTile ? resolveHexName(selectedTile) : null;
-  const selectedTerrainLabel = selectedTile
-    ? cityHexIds.has(selectedTile.id)
-      ? t("hexMap.terrain.city")
-      : t(`hexMap.terrain.${selectedTile.terrain}`)
-    : "";
+  const selectedTerrainLabel = selectedTile ? t(`hexMap.terrain.${selectedTile.terrain}`) : "";
+  const selectedHasCity = Boolean(selectedTile && cityHexIds.has(selectedTile.id));
   const selectedRegionIsNeutral = selectedTile
     ? !worldBase?.regionOwner[selectedTile.regionId] && !worldBase?.regionController[selectedTile.regionId]
     : false;
@@ -1552,6 +1572,92 @@ export function MapView({
       top: Math.min(Math.max(92, y - 24), Math.max(92, rect.height - 520)),
     };
   }, [camera, mapArtifact.settings.hexSize, selectedBuildingPopoverTile]);
+  const countryById = useMemo(() => new Map(buildingOverviewCountries.map((country) => [country.id, country] as const)), [buildingOverviewCountries]);
+  const cityLabels = useMemo(() => {
+    if (!containerRef.current || !mapLayers.buildings || camera.scale < 0.46) return [];
+    const rect = containerRef.current.getBoundingClientRect();
+    const labels: Array<{
+      key: string;
+      name: string;
+      ownerName: string;
+      flagUrl: string | null;
+      left: number;
+      top: number;
+      progress: number | null;
+      pending: boolean;
+    }> = [];
+    const addLabel = (input: {
+      key: string;
+      hexId: HexId;
+      name: string;
+      countryId: string;
+      progress?: { current: number; total: number } | null;
+      pending?: boolean;
+    }) => {
+      const tile = tileById.get(input.hexId);
+      if (!tile || !isTileInViewport(tile, camera, rect, mapArtifact.settings.hexSize)) return;
+      const center = axialToPixel(tile, mapArtifact.settings.hexSize);
+      const x = rect.width / 2 + (center.x - camera.x) * camera.scale;
+      const y = rect.height / 2 + (center.y - camera.y) * camera.scale - Math.max(28, mapArtifact.settings.hexSize * camera.scale * 0.72);
+      const country = countryById.get(input.countryId);
+      const width = 176;
+      labels.push({
+        key: input.key,
+        name: input.name,
+        ownerName: country?.name ?? countryNameById?.[input.countryId] ?? input.countryId,
+        flagUrl: country?.flagUrl ?? null,
+        left: Math.min(Math.max(8, x - width / 2), Math.max(8, rect.width - width - 8)),
+        top: Math.min(Math.max(92, y), Math.max(92, rect.height - 54)),
+        progress: input.progress && input.progress.total > 0 ? Math.max(0, Math.min(1, input.progress.current / input.progress.total)) : null,
+        pending: Boolean(input.pending),
+      });
+    };
+    for (const project of Object.values(worldBase?.settlementProjectsById ?? {})) {
+      if (project.state === "completed" || project.state === "canceled") continue;
+      addLabel({
+        key: project.id,
+        hexId: project.targetHexId,
+        name: project.name || t("hexMap.cityPendingNameFallback"),
+        countryId: project.countryId,
+        progress: { current: project.progressColonization, total: project.costColonization },
+      });
+    }
+    for (const marker of Object.values(worldBase?.cityMarkersById ?? {})) {
+      addLabel({
+        key: marker.id,
+        hexId: marker.targetHexId,
+        name: marker.name || t("hexMap.cityPendingNameFallback"),
+        countryId: marker.ownerCountryId || marker.countryId,
+        progress: null,
+      });
+    }
+    for (const marker of pendingFoundCityMarkers) {
+      addLabel({
+        key: `pending:${marker.civilianUnitId}`,
+        hexId: marker.targetHexId,
+        name: marker.name,
+        countryId: marker.countryId,
+        progress: { current: 0, total: 1 },
+        pending: true,
+      });
+    }
+    return labels;
+  }, [camera, countryById, countryNameById, mapArtifact.settings.hexSize, mapLayers.buildings, pendingFoundCityMarkers, t, tileById, worldBase?.cityMarkersById, worldBase?.settlementProjectsById]);
+
+  const foundCityName = foundCityNameDraft.trim();
+  const foundCityNameValid = foundCityName.length > 0 && foundCityName.length <= 32;
+  const confirmFoundCity = useCallback(() => {
+    if (!foundCityConfirmTarget || !foundCityNameValid) return;
+    onFoundCityOrder?.(
+      foundCityConfirmTarget.civilianUnitId,
+      foundCityConfirmTarget.hexId,
+      foundCityConfirmTarget.regionId,
+      foundCityName,
+      foundCityConfirmTarget.countryId,
+    );
+    setFoundCityConfirmTarget(null);
+    setFoundCityNameDraft("");
+  }, [foundCityConfirmTarget, foundCityName, foundCityNameValid, onFoundCityOrder]);
 
   const runMapBuiltAction = async (action: string, item: OverviewItem, task: () => Promise<void>) => {
     if (!item.instance || !buildingOverviewToken) return;
@@ -1770,6 +1876,24 @@ export function MapView({
           </div>
         </div>
       ) : null}
+      {cityLabels.map((label) => (
+        <div
+          key={label.key}
+          className={`arc-map-city-label${label.pending ? " arc-map-city-label--pending" : ""}`}
+          style={{ left: label.left, top: label.top }}
+          aria-hidden="true"
+        >
+          <span className="arc-map-city-label__flag">
+            {label.flagUrl ? <img src={label.flagUrl} alt="" /> : label.ownerName.slice(0, 1).toUpperCase()}
+          </span>
+          <span className="arc-map-city-label__name">{label.name}</span>
+          {label.progress != null ? (
+            <span className="arc-map-city-label__progress" aria-hidden="true">
+              <span style={{ width: `${Math.round(label.progress * 100)}%` }} />
+            </span>
+          ) : null}
+        </div>
+      ))}
       {selectedTile ? (
         <section className="arc-hex-map__selection arc-hud-panel">
           <div className="arc-hud-content">
@@ -1783,7 +1907,7 @@ export function MapView({
             <div className="arc-hex-map__detail-grid">
               <HexDetail icon={<Info size={14} />} label={t("hexMap.region")} value={selectedTile.regionId} />
               <HexDetail icon={<Mountain size={14} />} label={t("hexMap.terrain")} value={selectedTerrainLabel} />
-              <HexDetail icon={<Leaf size={14} />} label={t("hexMap.feature")} value={t(`hexMap.feature.${selectedTile.feature}`)} />
+              <HexDetail icon={<Leaf size={14} />} label={t("hexMap.feature")} value={selectedHasCity ? `${t(`hexMap.feature.${selectedTile.feature}`)} · ${t("hexMap.feature.city")}` : t(`hexMap.feature.${selectedTile.feature}`)} />
               <HexDetail icon={<Waves size={14} />} label={t("hexMap.water")} value={selectedTile.waterKind ? t(`hexMap.water.${selectedTile.waterKind}`) : t("hexMap.water.none")} />
               <HexDetail icon={<Info size={14} />} label={t("hexMap.owner")} value={resolveOwnerName(selectedTile)} />
               <HexDetail icon={<Info size={14} />} label={t("hexMap.movementCost")} value={selectedTile.movementCost.toFixed(1)} />
@@ -1836,7 +1960,17 @@ export function MapView({
                               setMapActionNotice(t("hexMap.foundCityNeutralRequired"));
                               return;
                             }
-                            onFoundCityOrder?.(unit.id, selectedTile.id, selectedTile.regionId, unit.countryId);
+                            const ownerCountry = buildingOverviewCountries.find((country) => country.id === unit.countryId) ?? null;
+                            setFoundCityNameDraft("");
+                            setFoundCityConfirmTarget({
+                              civilianUnitId: unit.id,
+                              hexId: selectedTile.id,
+                              regionId: selectedTile.regionId,
+                              countryId: unit.countryId,
+                              ownerName: ownerCountry?.name ?? countryNameById?.[unit.countryId] ?? unit.countryId,
+                              ownerFlagUrl: ownerCountry?.flagUrl ?? null,
+                              costColonization: worldBase?.regionColonizationByRegion?.[selectedTile.regionId]?.cost ?? null,
+                            });
                           }}
                         >
                           <Flag size={15} />
@@ -1969,10 +2103,10 @@ export function MapView({
             { label: t("hexMap.region"), value: hoverState.tile.regionId },
             {
               label: t("hexMap.terrain"),
-              value: cityHexIds.has(hoverState.tile.id) ? t("hexMap.terrain.city") : t(`hexMap.terrain.${hoverState.tile.terrain}`),
+              value: t(`hexMap.terrain.${hoverState.tile.terrain}`),
             },
             { label: t("hexMap.biome"), value: t(`hexMap.biome.${hoverState.tile.biome}`) },
-            { label: t("hexMap.feature"), value: t(`hexMap.feature.${hoverState.tile.feature}`) },
+            { label: t("hexMap.feature"), value: cityHexIds.has(hoverState.tile.id) ? `${t(`hexMap.feature.${hoverState.tile.feature}`)} · ${t("hexMap.feature.city")}` : t(`hexMap.feature.${hoverState.tile.feature}`) },
             ...(hexBuildingTooltipByHexId.get(hoverState.tile.id)
               ? [
                   {
@@ -1985,12 +2119,108 @@ export function MapView({
           ]}
         />
       ) : null}
+      <FoundCityConfirmDialog
+        target={foundCityConfirmTarget}
+        nameDraft={foundCityNameDraft}
+        nameValid={foundCityNameValid}
+        onNameChange={setFoundCityNameDraft}
+        onCancel={() => {
+          setFoundCityConfirmTarget(null);
+          setFoundCityNameDraft("");
+        }}
+        onConfirm={confirmFoundCity}
+      />
       <DangerConfirmDialog
         state={mapBuildingConfirm}
         busy={Boolean(mapBuildingBusyAction?.startsWith("demolish:"))}
         onCancel={() => setMapBuildingConfirm(null)}
         onConfirm={confirmMapBuildingDanger}
       />
+    </div>
+  );
+}
+
+function FoundCityConfirmDialog(props: {
+  target: FoundCityConfirmTarget | null;
+  nameDraft: string;
+  nameValid: boolean;
+  onNameChange: (value: string) => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const { t } = useUiText();
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (!props.target) return;
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(timer);
+  }, [props.target]);
+  useEffect(() => {
+    if (!props.target) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") props.onCancel();
+      if (event.key === "Enter" && props.nameValid) props.onConfirm();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [props]);
+  if (!props.target) return null;
+  const normalizedLength = props.nameDraft.trim().length;
+  return (
+    <div className="arc-found-city-confirm-wrap" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
+      <section className="arc-hex-build-confirm" role="dialog" aria-modal="true" aria-labelledby="arc-found-city-confirm-title">
+        <div className="arc-hex-build-confirm__header">
+          <h2 id="arc-found-city-confirm-title" className="arc-hex-build-confirm__title">
+            {t("hexMap.foundCityConfirmTitle")}
+          </h2>
+        </div>
+        <div className="arc-hex-build-confirm__body">
+          <div className="arc-hex-build-confirm__row">
+            <span>{t("hexMap.foundCityNameLabel")}</span>
+            <strong className="arc-found-city-confirm__name">
+              <input
+                ref={inputRef}
+                value={props.nameDraft}
+                maxLength={32}
+                onChange={(event) => props.onNameChange(event.target.value.slice(0, 32))}
+                aria-invalid={!props.nameValid}
+                aria-label={t("hexMap.foundCityNameLabel")}
+              />
+              <span>{t("hexMap.foundCityNameCounter", { current: normalizedLength, max: 32 })}</span>
+            </strong>
+          </div>
+          <div className="arc-hex-build-confirm__row">
+            <span>{t("hexMap.hex")}</span>
+            <strong>{props.target.hexId}</strong>
+          </div>
+          <div className="arc-hex-build-confirm__row">
+            <span>{t("hexMap.region")}</span>
+            <strong>{props.target.regionId}</strong>
+          </div>
+          <div className="arc-hex-build-confirm__row">
+            <span>{t("hexMap.owner")}</span>
+            <strong className="arc-hex-build-confirm__owner-current">
+              <span className="arc-hex-build-confirm__owner-flag" aria-hidden="true">
+                {props.target.ownerFlagUrl ? <img src={props.target.ownerFlagUrl} alt="" /> : props.target.ownerName.slice(0, 1).toUpperCase()}
+              </span>
+              <span>{props.target.ownerName}</span>
+            </strong>
+          </div>
+          <div className="arc-hex-build-confirm__row">
+            <span>{t("hexMap.foundCityCost")}</span>
+            <strong>{props.target.costColonization == null ? t("common.unknown") : formatCompactNumber(props.target.costColonization)}</strong>
+          </div>
+          {!props.nameValid ? <p className="arc-found-city-confirm__error">{t("hexMap.foundCityNameRequired")}</p> : null}
+        </div>
+        <div className="arc-hex-build-confirm__actions">
+          <button type="button" className="arc-strategy-workspace-action arc-strategy-workspace-action--primary arc-hex-build-confirm__action arc-hex-build-confirm__action--cancel" onClick={props.onCancel}>
+            <span>{t("common.cancel")}</span>
+          </button>
+          <button type="button" className="arc-strategy-workspace-action arc-hex-build-confirm__action" onClick={props.onConfirm} disabled={!props.nameValid}>
+            <span>{t("common.confirm")}</span>
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
@@ -2155,11 +2385,37 @@ function drawPathOverlay(graphics: Graphics, path: HexId[], tileById: Map<HexId,
   graphics.stroke({ color: 0xf1df8b, width: 2.5, alpha: 0.74 });
 }
 
-function calculateHexPathMovementCost(path: HexId[], tileById: Map<HexId, HexTile>): number {
+function calculateHexPathMovementCost(
+  path: HexId[],
+  tileById: Map<HexId, HexTile>,
+  cityHexIds: ReadonlySet<HexId> = new Set(),
+  modifiers: readonly ActiveModifierRow[] = [],
+): number {
   return path.slice(1).reduce((sum, hexId) => {
     const tile = tileById.get(hexId);
-    return sum + Math.max(0, Number(tile?.movementCost ?? 1) || 0);
+    const baseCost = Math.max(0, Number(tile?.movementCost ?? 1) || 0);
+    return sum + resolveClientHexMovementCost(baseCost, cityHexIds.has(hexId) ? ["city"] : [], modifiers);
   }, 0);
+}
+
+function resolveClientHexMovementCost(baseCost: number, hexTags: readonly string[], modifiers: readonly ActiveModifierRow[]): number {
+  const effects = modifiers.flatMap((modifier) =>
+    modifier.effects.filter((effect) => {
+      if (effect.stat !== "hex_movement_cost") return false;
+      const targetTag = effect.target?.hexTag;
+      return !targetTag || hexTags.includes(targetTag);
+    }),
+  );
+  let value = Number.isFinite(baseCost) ? baseCost : 0;
+  for (const effect of effects.filter((entry) => entry.mode === "add")) {
+    value += effect.value;
+  }
+  const addPct = effects.filter((entry) => entry.mode === "add_pct").reduce((sum, effect) => sum + effect.value, 0);
+  value *= 1 + addPct;
+  for (const effect of effects.filter((entry) => entry.mode === "mult")) {
+    value *= effect.value;
+  }
+  return Math.max(0.001, Math.round(value * 1000) / 1000);
 }
 
 function formatCompactNumber(value: number): string {
@@ -2290,6 +2546,9 @@ function getPlacementReasonLabelKey(code: string | undefined): UiTextKey {
     case "BUILD_PLACEMENT_WATER_DENIED":
     case "BUILD_PLACEMENT_WATER_NOT_ALLOWED":
       return "buildings.hexPlacementReasonWater";
+    case "BUILD_PLACEMENT_TAG_DENIED":
+    case "BUILD_PLACEMENT_TAG_NOT_ALLOWED":
+      return "buildings.hexPlacementReasonTag";
     default:
       return "buildings.hexPlacementReasonInvalid";
   }

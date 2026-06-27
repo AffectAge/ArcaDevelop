@@ -40,7 +40,15 @@ export type HexTerrainMeshBuildResult = {
   chunksById: Map<HexChunkId, HexChunkRenderData>;
 };
 
-export function buildHexTerrainMeshData(map: HexMapArtifact, materialPack: HexMaterialPackManifest = generatedHexMaterialPack): HexTerrainMeshBuildResult {
+export type HexTerrainMeshBuildOptions = {
+  cityHexIds?: ReadonlySet<HexId>;
+};
+
+export function buildHexTerrainMeshData(
+  map: HexMapArtifact,
+  materialPack: HexMaterialPackManifest = generatedHexMaterialPack,
+  options: HexTerrainMeshBuildOptions = {},
+): HexTerrainMeshBuildResult {
   const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
   const tilesByChunk = new Map<HexChunkId, HexTile[]>();
   for (const tile of map.tiles) {
@@ -51,15 +59,19 @@ export function buildHexTerrainMeshData(map: HexMapArtifact, materialPack: HexMa
 
   const chunks = Array.from(tilesByChunk.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([chunkId, tiles]) => buildChunkRenderData(chunkId, tiles, map, tileById, materialPack));
+    .map(([chunkId, tiles]) => buildChunkRenderData(chunkId, tiles, map, tileById, materialPack, options));
   return { chunks, chunksById: new Map(chunks.map((chunk) => [chunk.chunkId, chunk])) };
 }
 
-export function resolveHexNeighborMaterialIds(tile: HexTile, map: HexMapArtifact, tileById: Map<HexId, HexTile>): TerrainMaterialId[] {
+export function resolveEffectiveTerrainMaterialId(tile: HexTile, cityHexIds?: ReadonlySet<HexId>): TerrainMaterialId {
+  return cityHexIds?.has(tile.id) ? "city" : resolveTerrainMaterialId(tile);
+}
+
+export function resolveHexNeighborMaterialIds(tile: HexTile, map: HexMapArtifact, tileById: Map<HexId, HexTile>, cityHexIds?: ReadonlySet<HexId>): TerrainMaterialId[] {
   return Array.from({ length: 6 }, (_, direction) => {
     const neighbor = getNeighborAxial(tile, direction as HexDirection, map.settings);
-    if (!neighbor) return resolveTerrainMaterialId(tile);
-    return resolveTerrainMaterialId(tileById.get(makeHexId(neighbor.q, neighbor.r)) ?? tile);
+    if (!neighbor) return resolveEffectiveTerrainMaterialId(tile, cityHexIds);
+    return resolveEffectiveTerrainMaterialId(tileById.get(makeHexId(neighbor.q, neighbor.r)) ?? tile, cityHexIds);
   });
 }
 
@@ -189,6 +201,7 @@ function buildChunkRenderData(
   map: HexMapArtifact,
   tileById: Map<HexId, HexTile>,
   materialPack: HexMaterialPackManifest,
+  options: HexTerrainMeshBuildOptions,
 ): HexChunkRenderData {
   const positions: number[] = [];
   const locals: number[] = [];
@@ -217,10 +230,10 @@ function buildChunkRenderData(
   const defaultRiverParams: [number, number, number, number] = [0, 0, 0, 0];
   for (const tile of sortedTiles) {
     const center = axialToPixel(tile, map.settings.hexSize);
-    const baseMaterial = resolveTerrainMaterialId(tile);
+    const baseMaterial = resolveEffectiveTerrainMaterialId(tile, options.cityHexIds);
     const baseColor = resolveTerrainMaterialColor(baseMaterial, materialPack);
     const baseMaterialIndex = resolveTerrainMaterialAtlasIndex(baseMaterial, materialPack);
-    const neighborMaterials = resolveHexNeighborMaterialIds(tile, map, tileById);
+    const neighborMaterials = resolveHexNeighborMaterialIds(tile, map, tileById, options.cityHexIds);
     const tileCoastParams = coastParamsByHexId.get(tile.id);
     const riverParam = riverParamsByHexId.get(tile.id) ?? defaultRiverParams;
     qMin = Math.min(qMin, tile.q);

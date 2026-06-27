@@ -132,12 +132,14 @@ describe("gameStore region world deltas", () => {
             movementPoints: 2,
             maxMovementPoints: 2,
             path: [],
+            targetHexId: null,
             createdTurnId: 1,
           },
         },
         sp: {
           "settlement:a": {
             id: "settlement:a",
+            name: "Babylon",
             countryId: "country:a",
             regionId: "region:a",
             targetHexId: "hex:0:0",
@@ -152,6 +154,7 @@ describe("gameStore region world deltas", () => {
         ci: {
           "city:a": {
             id: "city:a",
+            name: "Babylon",
             countryId: "country:a",
             ownerCountryId: "country:a",
             regionId: "region:a",

@@ -89,6 +89,7 @@ export function advanceCivilianUnitQueueTurn(params: {
           movementPoints,
           maxMovementPoints: movementPoints,
           path: [],
+          targetHexId: null,
           createdTurnId: params.turnId,
           lastMovedTurnId: null,
         };
