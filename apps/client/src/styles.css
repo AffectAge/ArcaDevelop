@@ -110,6 +110,14 @@ select,
   background: color-mix(in srgb, var(--arc-color-paper-muted) 92%, transparent);
   color: var(--arc-color-text-paper);
   box-shadow: var(--arc-shadow-inset-soft);
+  border-radius: 0 !important;
+  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+}
+
+.arc-topbar-action,
+.arc-topbar-next-turn {
+  border-radius: 0 !important;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
 }
 
 .arc-province-panel {
@@ -1003,6 +1011,7 @@ select,
   padding: 0 10px;
   font-size: 12px;
   font-weight: 700;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
   transition: transform 160ms ease, filter 160ms ease, background-color 160ms ease;
 }
 
@@ -1066,6 +1075,7 @@ select,
   font-size: 12px;
   font-weight: 700;
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.55) inset;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
   transition:
     width 180ms ease,
     transform 160ms ease,
@@ -1183,6 +1193,7 @@ select,
     linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, white), var(--arc-color-atlas-paper)),
     repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 10px);
   color: var(--arc-color-atlas-muted);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.55) inset, 0 5px 12px rgb(52 36 18 / 0.16);
   transition: transform 160ms ease, color 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease, filter 160ms ease;
 }
@@ -1369,6 +1380,7 @@ select,
   background: color-mix(in srgb, var(--arc-color-atlas-paper) 86%, white);
   color: var(--arc-color-atlas-muted);
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.52) inset;
+  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
   transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease, transform 180ms ease, box-shadow 160ms ease;
   will-change: transform;
 }
@@ -1829,7 +1841,7 @@ select,
   align-content: start;
   gap: 8px;
   overflow: auto;
-  padding-right: 2px;
+  padding-right: 4px;
 }
 
 .arc-strategy-building-category {
@@ -1850,6 +1862,7 @@ select,
   font-size: 13px;
   font-weight: 700;
   text-align: left;
+  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
 }
 
 .arc-strategy-building-category-header:hover,
@@ -2200,6 +2213,7 @@ select,
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
   color: var(--arc-color-atlas-ink);
   padding: 11px;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
   transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
 }
 
@@ -2214,15 +2228,295 @@ select,
 }
 
 .arc-strategy-workspace-action-icon {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   height: 36px;
   width: 36px;
   flex: none;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--arc-color-atlas-line);
-  background: var(--arc-color-atlas-paper);
+  overflow: hidden;
+  border: 0;
+  background: var(--arc-color-atlas-line);
   color: var(--arc-color-atlas-primary);
+  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+}
+
+.arc-strategy-workspace-action-icon::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--arc-color-atlas-paper);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
+.arc-strategy-workspace-action-icon > * {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-strategy-workspace-action--available {
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  gap: 10px;
+  padding: 7px 10px;
+}
+
+.arc-strategy-workspace-action--available .arc-strategy-workspace-action-icon {
+  height: 30px;
+  width: 30px;
+}
+
+.arc-strategy-workspace-action-label {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+
+.arc-hud-chip,
+.arc-topbar-action,
+.arc-topbar-next-turn,
+.arc-strategy-icon-button,
+.arc-strategy-primary,
+.arc-strategy-mode-button,
+.arc-map-lens-button,
+.arc-strategy-building-category-header,
+.arc-strategy-workspace-action {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0 !important;
+  background: var(--arc-cut-border);
+}
+
+.arc-hud-chip,
+.arc-topbar-action,
+.arc-topbar-next-turn,
+.arc-strategy-icon-button,
+.arc-strategy-primary,
+.arc-strategy-mode-button,
+.arc-map-lens-button,
+.arc-strategy-building-category-header,
+.arc-strategy-workspace-action {
+  --arc-cut-border: var(--arc-color-atlas-line);
+  --arc-cut-fill: var(--arc-color-atlas-paper-soft);
+  --arc-cut-outer: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  --arc-cut-inner: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  clip-path: var(--arc-cut-outer);
+}
+
+.arc-hud-chip::before,
+.arc-topbar-action::before,
+.arc-topbar-next-turn::before,
+.arc-strategy-icon-button::before,
+.arc-strategy-primary::before,
+.arc-strategy-mode-button::before,
+.arc-map-lens-button::before,
+.arc-strategy-building-category-header::before,
+.arc-strategy-workspace-action::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--arc-cut-fill);
+  clip-path: var(--arc-cut-inner);
+}
+
+.arc-hud-chip > *,
+.arc-topbar-action > *,
+.arc-topbar-next-turn > *,
+.arc-strategy-icon-button > *,
+.arc-strategy-primary > *,
+.arc-strategy-mode-button > *,
+.arc-map-lens-button > *,
+.arc-strategy-building-category-header > *,
+.arc-strategy-workspace-action > * {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-hud-chip {
+  --arc-cut-border: color-mix(in srgb, var(--arc-color-brown) 55%, transparent);
+  --arc-cut-fill: color-mix(in srgb, var(--arc-color-paper-muted) 92%, transparent);
+  --arc-cut-outer: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  --arc-cut-inner: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
+.arc-hud-chip:hover {
+  --arc-cut-border: var(--arc-color-gold);
+}
+
+.arc-topbar-chip {
+  --arc-cut-border: color-mix(in srgb, var(--arc-color-brown) 58%, transparent);
+  --arc-cut-fill: color-mix(in srgb, var(--arc-color-paper-muted) 94%, transparent);
+  --arc-cut-outer: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  --arc-cut-inner: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  border-radius: 0 !important;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.5) inset,
+    0 1px 0 rgb(0 0 0 / 0.12);
+}
+
+.arc-topbar-chip:hover {
+  --arc-cut-border: var(--arc-color-gold);
+  background: var(--arc-cut-border);
+}
+
+.arc-topbar-action,
+.arc-topbar-next-turn {
+  --arc-cut-border: var(--arc-color-brown-dark);
+  --arc-cut-fill: linear-gradient(180deg, var(--arc-color-panel-soft), var(--arc-color-panel));
+}
+
+.arc-topbar-action:hover,
+.arc-topbar-next-turn:hover {
+  --arc-cut-border: var(--arc-color-gold);
+}
+
+.arc-strategy-icon-button,
+.arc-strategy-primary {
+  --arc-cut-border: var(--arc-color-atlas-line-strong);
+  --arc-cut-fill: var(--arc-color-atlas-paper-soft);
+}
+
+.arc-strategy-icon-button--danger {
+  --arc-cut-border: color-mix(in srgb, var(--arc-color-atlas-danger) 55%, transparent);
+}
+
+.arc-strategy-primary {
+  --arc-cut-border: color-mix(in srgb, var(--arc-color-atlas-primary) 58%, var(--arc-color-atlas-line));
+  --arc-cut-fill: var(--arc-color-atlas-primary);
+}
+
+.arc-strategy-mode-button {
+  --arc-cut-border: var(--arc-color-atlas-line);
+  --arc-cut-fill: color-mix(in srgb, var(--arc-color-atlas-paper) 88%, white);
+}
+
+.arc-strategy-mode-button:hover,
+.arc-strategy-mode-button:focus-visible,
+.arc-strategy-mode-button--active {
+  --arc-cut-border: var(--arc-color-atlas-line-strong);
+  --arc-cut-fill: var(--arc-color-atlas-paper-soft);
+}
+
+.arc-map-lens-button {
+  --arc-cut-border: var(--arc-color-atlas-line);
+  --arc-cut-fill:
+    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, white), var(--arc-color-atlas-paper)),
+    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 10px);
+}
+
+.arc-map-lens-button:hover,
+.arc-map-lens-button:focus-visible,
+.arc-map-lens-button--active {
+  --arc-cut-border: var(--arc-color-atlas-line-strong);
+}
+
+.arc-map-lens-button--active {
+  --arc-cut-fill:
+    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white), var(--arc-color-atlas-paper-soft)),
+    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 10px);
+}
+
+.arc-strategy-workspace-tab {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0 !important;
+  --arc-cut-border: var(--arc-color-atlas-line);
+  --arc-cut-fill: color-mix(in srgb, var(--arc-color-atlas-paper) 86%, white);
+  --arc-cut-outer: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%);
+  --arc-cut-inner: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  background: var(--arc-cut-border);
+  clip-path: var(--arc-cut-outer);
+}
+
+.arc-strategy-workspace-tab::before {
+  content: "";
+  position: absolute;
+  inset: 1px 1px 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--arc-cut-fill);
+  clip-path: var(--arc-cut-inner);
+}
+
+.arc-strategy-workspace-tab > * {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-strategy-workspace-tab:hover,
+.arc-strategy-workspace-tab:focus-visible,
+.arc-strategy-workspace-tab--active {
+  --arc-cut-border: var(--arc-color-atlas-line-strong);
+  --arc-cut-fill: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 88%, white);
+}
+
+.arc-strategy-building-category-header {
+  --arc-cut-border: color-mix(in srgb, var(--arc-color-atlas-line) 82%, transparent);
+  --arc-cut-fill: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
+}
+
+.arc-strategy-building-category-header:hover,
+.arc-strategy-building-category-header:focus-visible {
+  --arc-cut-border: var(--arc-color-atlas-line-strong);
+}
+
+.arc-strategy-workspace-action {
+  --arc-cut-border: var(--arc-color-atlas-line);
+  --arc-cut-fill: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
+}
+
+.arc-strategy-workspace-action:hover {
+  --arc-cut-border: var(--arc-color-atlas-line-strong);
+  --arc-cut-fill: var(--arc-color-atlas-paper-soft);
+  background: var(--arc-cut-border);
+}
+
+.arc-strategy-workspace-action--primary {
+  --arc-cut-border: color-mix(in srgb, var(--arc-color-atlas-primary) 46%, transparent);
+}
+
+.arc-strategy-workspace-action--available {
+  transition: box-shadow 0.16s ease, filter 0.16s ease, transform 0.16s ease;
+}
+
+.arc-strategy-workspace-action--available::before {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, transparent), color-mix(in srgb, var(--arc-color-atlas-paper) 92%, transparent));
+}
+
+.arc-strategy-workspace-action--available:hover,
+.arc-strategy-workspace-action--available:focus-visible {
+  --arc-cut-border: var(--arc-color-atlas-primary);
+  z-index: 10;
+  background: var(--arc-cut-border);
+  filter: brightness(1.03);
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.56),
+    0 8px 18px rgb(52 36 18 / 0.18);
+}
+
+.arc-strategy-workspace-action--available:hover::before,
+.arc-strategy-workspace-action--available:focus-visible::before {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, transparent), color-mix(in srgb, var(--arc-color-atlas-paper) 96%, transparent));
+}
+
+.arc-strategy-workspace-action--available:hover .arc-strategy-workspace-action-icon,
+.arc-strategy-workspace-action--available:focus-visible .arc-strategy-workspace-action-icon {
+  background: color-mix(in srgb, var(--arc-color-atlas-primary) 68%, var(--arc-color-atlas-line));
+  filter: brightness(1.08) saturate(1.08);
 }
 
 .arc-hex-build-confirm {
@@ -3418,17 +3712,36 @@ select,
 }
 
 .arc-tooltip {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   z-index: 320;
   max-width: min(360px, calc(100vw - 24px));
-  border: 1px solid var(--arc-color-atlas-line-strong);
-  border-radius: var(--arc-radius-md);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 12px);
+  border: 0;
+  border-radius: 0;
+  background: var(--arc-color-atlas-line-strong);
   box-shadow: var(--arc-shadow-atlas-panel);
   color: var(--arc-color-atlas-ink);
   font-size: 12px;
   line-height: 1.35;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.arc-tooltip::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white), var(--arc-color-atlas-paper)),
+    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 12px);
+  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+}
+
+.arc-tooltip > * {
+  position: relative;
+  z-index: 1;
 }
 
 .arc-tooltip--compact {

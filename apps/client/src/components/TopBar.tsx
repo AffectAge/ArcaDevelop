@@ -123,7 +123,7 @@ function TopIconActionButton({ label, onClick, icon: Icon, variant = "default" }
   return (
     <button
       onClick={onClick}
-      className={`group inline-flex h-10 w-10 items-center justify-start overflow-hidden rounded-lg px-3 transition-[width,color,background-color,border-color,filter] duration-150 hover:w-[170px] ${variantClass}`}
+      className={`arc-topbar-action group inline-flex h-10 w-10 items-center justify-start overflow-hidden rounded-lg px-3 transition-[width,color,background-color,border-color,filter] duration-150 hover:w-[170px] ${variantClass}`}
       aria-label={label}
       type="button"
     >
@@ -323,7 +323,7 @@ export function TopBar({
           <div className="relative" onMouseEnter={schedulePopulationHoverOpen} onMouseLeave={closePopulationHover}>
             <button
               type="button"
-              className="arc-hud-chip flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition hover:border-[var(--arc-color-gold)]"
+              className="arc-hud-chip arc-topbar-chip flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition hover:border-[var(--arc-color-gold)]"
               aria-expanded={populationHovered}
               aria-label={t("topBar.populationAria", { population: formatCompact(populationTotal), growth: formatSignedCompact(populationNetGrowth) })}
             >
@@ -360,10 +360,10 @@ export function TopBar({
               {populationHovered && (
                 <motion.div
                   initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 6, scale: 1 }}
+                  animate={{ opacity: 1, y: 10, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.98 }}
                   transition={{ duration: 0.16, ease: "easeOut" }}
-                  className="absolute left-0 top-full z-20 mt-1 min-w-[220px] rounded-xl"
+                  className="absolute left-0 top-full z-20 mt-2 min-w-[220px] rounded-xl"
                 >
                   <TooltipPanel variant="rich">
                     <div className="arc-hud-content mb-2 flex items-center gap-2 text-[var(--arc-color-atlas-ink)]">
@@ -422,7 +422,7 @@ export function TopBar({
               >
                   <button
                     type="button"
-                    className="arc-hud-chip flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition hover:border-[var(--arc-color-gold)]"
+                    className="arc-hud-chip arc-topbar-chip flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition hover:border-[var(--arc-color-gold)]"
                     aria-expanded={hoveredResource === card.key}
                     aria-label={t("topBar.openResourceDetails", { resource: label })}
                   >
@@ -461,10 +461,10 @@ export function TopBar({
                     {hoveredResource === card.key && (
                       <motion.div
                         initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 6, scale: 1 }}
+                        animate={{ opacity: 1, y: 10, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.98 }}
                         transition={{ duration: 0.16, ease: "easeOut" }}
-                        className="absolute left-0 top-full z-20 mt-1 min-w-[220px] rounded-xl"
+                        className="absolute left-0 top-full z-20 mt-2 min-w-[220px] rounded-xl"
                       >
                         <TooltipPanel variant="rich">
                           <div className="arc-hud-content mb-2 flex items-center gap-2 text-[var(--arc-color-atlas-ink)]">
@@ -535,7 +535,7 @@ export function TopBar({
 
           <button
             onClick={onNextTurn}
-            className={`group inline-flex h-10 items-center justify-start overflow-hidden rounded-lg border border-[var(--arc-color-primary-border)] bg-gradient-to-b from-[var(--arc-color-primary-top)] to-[var(--arc-color-primary-bottom)] text-[var(--arc-color-text)] shadow-[var(--arc-shadow-inset-button)] transition-[width,filter] hover:brightness-110 ${
+            className={`arc-topbar-next-turn group inline-flex h-10 items-center justify-start overflow-hidden rounded-lg border border-[var(--arc-color-primary-border)] bg-gradient-to-b from-[var(--arc-color-primary-top)] to-[var(--arc-color-primary-bottom)] text-[var(--arc-color-text)] shadow-[var(--arc-shadow-inset-button)] transition-[width,filter] hover:brightness-110 ${
               turnTimer?.enabled && turnTimerRemainingSec !== null ? "gap-2 px-3" : "w-10 px-3 hover:w-[190px]"
             }`}
             aria-label={t("topBar.nextTurn", { turn: turnId })}

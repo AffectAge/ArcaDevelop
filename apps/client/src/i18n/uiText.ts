@@ -1466,6 +1466,12 @@ export type UiTextKey =
   | "hexMap.ownerCountry"
   | "hexMap.ownerNone"
   | "hexMap.movementCost"
+  | "hexMap.building"
+  | "hexMap.buildingStatusBurning"
+  | "hexMap.buildingStatusConstruction"
+  | "hexMap.buildingStatusInactive"
+  | "hexMap.buildingStatusRuins"
+  | "hexMap.buildingStatusWorking"
   | "hexMap.build"
   | "hexMap.colonize"
   | "hexMap.admin"
@@ -2880,6 +2886,7 @@ export type UiTextKey =
   | "shell.worldResynced"
   | "shell.workspaceTab.actions"
   | "shell.workspaceTab.buildings"
+  | "shell.workspaceTab.constructionQueue"
   | "shell.workspaceTab.records"
   | "shell.workspaceTab.summary"
   | "shell.workspaceTab.trade"
@@ -4416,6 +4423,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.ownerCountry": "Country {country}",
     "hexMap.ownerNone": "Unowned",
     "hexMap.movementCost": "Move cost",
+    "hexMap.building": "Building",
+    "hexMap.buildingStatusBurning": "Burning",
+    "hexMap.buildingStatusConstruction": "Under construction",
+    "hexMap.buildingStatusInactive": "Inactive",
+    "hexMap.buildingStatusRuins": "Ruins",
+    "hexMap.buildingStatusWorking": "Working",
     "hexMap.build": "Build",
     "hexMap.colonize": "Colonize",
     "hexMap.admin": "Admin",
@@ -5858,6 +5871,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.worldResynced": "World state synchronized again",
     "shell.workspaceTab.actions": "Available actions",
     "shell.workspaceTab.buildings": "Building construction",
+    "shell.workspaceTab.constructionQueue": "Construction queue",
     "shell.workspaceTab.records": "Records",
     "shell.workspaceTab.summary": "Country summary",
     "shell.workspaceTab.trade": "Trade",
@@ -7365,6 +7379,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.ownerCountry": "Страна {country}",
     "hexMap.ownerNone": "Нет владельца",
     "hexMap.movementCost": "Стоимость хода",
+    "hexMap.building": "Здание",
+    "hexMap.buildingStatusBurning": "Горит",
+    "hexMap.buildingStatusConstruction": "Строится",
+    "hexMap.buildingStatusInactive": "Неактивно",
+    "hexMap.buildingStatusRuins": "Руины",
+    "hexMap.buildingStatusWorking": "Работает",
     "hexMap.build": "Строить",
     "hexMap.colonize": "Колонизировать",
     "hexMap.admin": "Админ",
@@ -8807,6 +8827,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.worldResynced": "Состояние мира синхронизировано заново",
     "shell.workspaceTab.actions": "Доступные действия",
     "shell.workspaceTab.buildings": "Строительство зданий",
+    "shell.workspaceTab.constructionQueue": "Очередь строительства",
     "shell.workspaceTab.records": "Записи",
     "shell.workspaceTab.summary": "Сводка страны",
     "shell.workspaceTab.trade": "Торговля",

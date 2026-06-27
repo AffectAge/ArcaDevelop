@@ -110,6 +110,12 @@ type ActivePointer = {
   y: number;
 };
 
+type HexBuildingTooltipInfo = {
+  name: string;
+  statusKey: UiTextKey;
+  tone: "default" | "good" | "warn" | "bad";
+};
+
 type PointerGesture = {
   startX: number;
   startY: number;
@@ -227,6 +233,7 @@ export function MapView({
   suggestedMapLens,
   showMapControls = false,
   showAntarctica: _showAntarctica = false,
+  buildingEntries = [],
   canceledConstructionQueueKeys = [],
   hexBuildPlacement = null,
   onSelectHexBuildPlacementTarget,
@@ -376,6 +383,48 @@ export function MapView({
     }
     return { ...worldBase, regionConstructionQueueByRegion };
   }, [canceledConstructionQueueKeySet, pendingBuildMarkers, turnId, worldBase]);
+
+  const buildingNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const building of buildingEntries ?? []) {
+      map.set(building.id, building.name?.trim() || building.id);
+    }
+    return map;
+  }, [buildingEntries]);
+
+  const hexBuildingTooltipByHexId = useMemo(() => {
+    const map = new Map<HexId, HexBuildingTooltipInfo>();
+    if (!placementWorld) return map;
+    for (const queue of Object.values(placementWorld.regionConstructionQueueByRegion ?? {})) {
+      for (const project of queue ?? []) {
+        if ((project.projectType ?? "build") !== "build" || !project.targetHexId) continue;
+        map.set(project.targetHexId as HexId, {
+          name: buildingNameById.get(project.buildingId) ?? project.buildingId,
+          statusKey: "hexMap.buildingStatusConstruction",
+          tone: "warn",
+        });
+      }
+    }
+    for (const instances of Object.values(placementWorld.regionBuildingsByRegion ?? {})) {
+      for (const instance of instances ?? []) {
+        if (!instance.targetHexId) continue;
+        const visualState = getBuildingMapVisualState(instance);
+        map.set(instance.targetHexId as HexId, {
+          name: instance.customName?.trim() || buildingNameById.get(instance.buildingId) || instance.buildingId,
+          statusKey:
+            visualState === "burning"
+              ? "hexMap.buildingStatusBurning"
+              : visualState === "ruins"
+                ? "hexMap.buildingStatusRuins"
+                : instance.isInactive
+                  ? "hexMap.buildingStatusInactive"
+                  : "hexMap.buildingStatusWorking",
+          tone: visualState === "working" && !instance.isInactive ? "good" : "bad",
+        });
+      }
+    }
+    return map;
+  }, [buildingNameById, placementWorld]);
 
   const activeLensDescriptor = useMemo(() => getMapLensDescriptor(activeLens), [activeLens]);
   const lensCells = useMemo(() => {
@@ -1239,6 +1288,15 @@ export function MapView({
             { label: t("hexMap.terrain"), value: t(`hexMap.terrain.${hoverState.tile.terrain}`) },
             { label: t("hexMap.biome"), value: t(`hexMap.biome.${hoverState.tile.biome}`) },
             { label: t("hexMap.feature"), value: t(`hexMap.feature.${hoverState.tile.feature}`) },
+            ...(hexBuildingTooltipByHexId.get(hoverState.tile.id)
+              ? [
+                  {
+                    label: t("hexMap.building"),
+                    value: `${hexBuildingTooltipByHexId.get(hoverState.tile.id)?.name ?? ""} · ${t(hexBuildingTooltipByHexId.get(hoverState.tile.id)?.statusKey ?? "hexMap.buildingStatusWorking")}`,
+                    tone: hexBuildingTooltipByHexId.get(hoverState.tile.id)?.tone,
+                  },
+                ]
+              : []),
           ]}
         />
       ) : null}

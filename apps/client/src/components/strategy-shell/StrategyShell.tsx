@@ -7,6 +7,7 @@ import {
   Building2,
   ChevronDown,
   CircleDollarSign,
+  ClipboardList,
   Crosshair,
   FlaskConical,
   Flag,
@@ -20,6 +21,7 @@ import {
   ScrollText,
   Shield,
   SkipForward,
+  ListChecks,
   SlidersHorizontal,
   Sparkles,
   Users,
@@ -226,9 +228,9 @@ const resourceDescriptors: Array<{ key: ResourceKey; labelKey: UiTextKey; icon: 
 ];
 
 const workspaceTabDescriptors: Array<{ key: WorkspaceTabKey; labelKey: UiTextKey; icon: LucideIcon }> = [
-  { key: "actions", labelKey: "shell.workspaceTab.actions", icon: Sparkles },
+  { key: "actions", labelKey: "shell.workspaceTab.actions", icon: ListChecks },
   { key: "summary", labelKey: "shell.workspaceTab.summary", icon: Users },
-  { key: "records", labelKey: "shell.workspaceTab.records", icon: BookOpen },
+  { key: "records", labelKey: "shell.workspaceTab.records", icon: ClipboardList },
   { key: "trade", labelKey: "shell.workspaceTab.trade", icon: ArrowDownUp },
   { key: "buildings", labelKey: "shell.workspaceTab.buildings", icon: Building2 },
 ];
@@ -254,12 +256,18 @@ function getStoryPriorityKey(priority: "low" | "medium" | "high"): UiTextKey {
   }
 }
 
+function getWorkspaceTabLabelKey(tab: WorkspaceTabKey, mode: StrategyMode): UiTextKey {
+  if (tab === "records" && mode === "construction") return "shell.workspaceTab.constructionQueue";
+  return workspaceTabDescriptors.find((item) => item.key === tab)?.labelKey ?? "shell.workspaceTab.actions";
+}
+
 export function StrategyShell(props: Props) {
   const { t } = useUiText();
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTabKey>("actions");
   const activeMode = modeDescriptors.find((mode) => mode.key === props.activeMode) ?? modeDescriptors[0];
   const activeActions = getModeActions(props.activeMode, props, () => setWorkspaceTab("buildings"));
   const availableWorkspaceTabs = workspaceTabDescriptors.filter((tab) => {
+    if (tab.key === "summary") return props.activeMode === "overview";
     if (tab.key === "trade") return props.activeMode === "market";
     if (tab.key === "buildings") return props.activeMode === "construction";
     return true;
@@ -380,14 +388,15 @@ export function StrategyShell(props: Props) {
             <div className="arc-strategy-workspace-tabs" role="tablist" aria-label={t("shell.workspaceTabs")}>
               {availableWorkspaceTabs.map((tab) => {
                 const Icon = tab.icon;
+                const labelKey = getWorkspaceTabLabelKey(tab.key, props.activeMode);
                 const active = tab.key === workspaceTab;
                 return (
-                  <Tooltip key={tab.key} content={t(tab.labelKey)} placement="left">
+                  <Tooltip key={tab.key} content={t(labelKey)} placement="top">
                     <button
                       type="button"
                       role="tab"
                       aria-selected={active}
-                      aria-label={t(tab.labelKey)}
+                      aria-label={t(labelKey)}
                       className={`arc-strategy-workspace-tab ${active ? "arc-strategy-workspace-tab--active" : ""}`}
                       onClick={() => setWorkspaceTab(tab.key)}
                     >
@@ -406,11 +415,11 @@ export function StrategyShell(props: Props) {
                     <span>{t(activeMode.labelKey)}</span>
                   </div>
                   <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--arc-color-atlas-muted)]">
-                    {t(activeWorkspaceTab.labelKey)}
+                    {t(getWorkspaceTabLabelKey(activeWorkspaceTab.key, props.activeMode))}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Tooltip content={t("shell.closeWorkspace")} placement="left">
+                  <Tooltip content={t("shell.closeWorkspace")} placement="top">
                     <button type="button" className="arc-strategy-icon-button arc-strategy-icon-button--danger" onClick={props.onCloseWorkspace} aria-label={t("shell.closeWorkspace")}>
                       <X size={18} />
                     </button>
@@ -782,7 +791,7 @@ function ConstructionBuildingList(props: {
     return <EmptyPreview text={t("shell.buildings.empty")} />;
   }
   return (
-    <section className="arc-strategy-building-list" aria-label={t("shell.workspaceTab.buildings")}>
+    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.workspaceTab.buildings")}>
       {groups.map((group) => {
         const open = openGroupById[group.id] ?? false;
         return (
@@ -895,7 +904,7 @@ function ConstructionQueueList(props: {
     return <EmptyPreview text={t("shell.preview.noConstruction")} />;
   }
   return (
-    <section className="arc-strategy-building-list" aria-label={t("shell.preview.constructionQueue")}>
+    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.preview.constructionQueue")}>
       {groups.map((group) => {
         const open = openGroupById[group.id] ?? false;
         return (
@@ -1031,13 +1040,15 @@ function buildBuildingCategoryGroups<T extends { id: string; name: string; indus
     const rawCategoryId = building.industryId || building.sectorId || "__uncategorized__";
     const industry = building.industryId ? industryById.get(building.industryId) ?? null : null;
     const sector = building.sectorId ? sectorById.get(building.sectorId) ?? null : null;
+    const industryLabel = industry ? resolveBuildingCategoryDisplayName(industry) : null;
+    const sectorLabel = sector ? resolveBuildingCategoryDisplayName(sector) : null;
     const label =
       rawCategoryId === "__uncategorized__"
         ? "__uncategorized__"
         : building.industryId
-          ? industry?.name ?? formatBuildingCategoryLabel(building.industryId)
+          ? industryLabel ?? formatBuildingCategoryLabel(building.industryId)
           : building.sectorId
-            ? sector?.name ?? formatBuildingCategoryLabel(building.sectorId)
+            ? sectorLabel ?? formatBuildingCategoryLabel(building.sectorId)
             : "__uncategorized__";
     const logoUrl = industry?.logoUrl ?? sector?.logoUrl ?? null;
     const group = byId.get(rawCategoryId) ?? { id: rawCategoryId, label, logoUrl, items: [] };
@@ -1064,6 +1075,17 @@ function formatBuildingCategoryLabel(id: string): string {
     .filter(Boolean)
     .map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
     .join(" ");
+}
+
+function resolveBuildingCategoryDisplayName(entry: BuildingCategoryEntry): string | null {
+  const name = entry.name.trim();
+  if (name && name !== entry.id && !looksLikeGeneratedId(name)) return name;
+  return formatBuildingCategoryLabel(entry.id);
+}
+
+function looksLikeGeneratedId(value: string): boolean {
+  const compact = value.replace(/[\s_-]+/g, "");
+  return /^[0-9a-f]{24,}$/i.test(compact) || /^[0-9a-f]{8}[0-9a-f]{4}[0-9a-f]{4}[0-9a-f]{4}[0-9a-f]{12}$/i.test(compact);
 }
 
 function MarketTradeOverview({ rows, loading }: { rows: MarketTradeOverviewRow[]; loading: boolean }) {
@@ -1343,9 +1365,7 @@ function getModeActions(mode: StrategyMode, props: Props, openBuildingsTab: () =
   }
   if (mode === "construction") {
     return [
-      { key: "buildings", labelKey: "shell.action.buildings", descriptionKey: "shell.action.buildingsDescription", icon: Building2, onClick: openBuildingsTab, tone: "primary" },
-      { key: "building-overview", labelKey: "shell.action.buildingOverview", descriptionKey: "shell.action.buildingOverviewDescription", icon: Landmark, onClick: props.onOpenBuildingOverview ?? openBuildingsTab },
-      { key: "budget", labelKey: "shell.action.budget", descriptionKey: "shell.action.budgetDescription", icon: Wallet, onClick: props.onOpenBudget },
+      { key: "building-overview", labelKey: "shell.action.buildingOverview", descriptionKey: "shell.action.buildingOverviewDescription", icon: Landmark, onClick: props.onOpenBuildingOverview ?? openBuildingsTab, tone: "primary" },
     ];
   }
   if (mode === "colonization") {
@@ -1620,18 +1640,25 @@ function TopActionButton(props: {
 function WorkspaceAction({ action }: { action: ActionItem }) {
   const { t } = useUiText();
   const Icon = action.icon;
-  return (
-    <button type="button" className={`arc-strategy-workspace-action ${action.tone === "primary" ? "arc-strategy-workspace-action--primary" : ""}`} onClick={action.onClick}>
+  const button = (
+    <button
+      type="button"
+      className={`arc-strategy-workspace-action arc-strategy-workspace-action--available ${action.tone === "primary" ? "arc-strategy-workspace-action--primary" : ""}`}
+      onClick={action.onClick}
+    >
       <span className="arc-strategy-workspace-action-icon">
         <Icon size={18} />
       </span>
-      <span className="min-w-0 text-left">
-        <span className="block text-sm font-semibold">{t(action.labelKey)}</span>
-        {action.descriptionKey ? (
-          <span className="mt-0.5 block text-xs leading-4 text-[var(--arc-color-atlas-muted)]">{t(action.descriptionKey)}</span>
-        ) : null}
+      <span className="arc-strategy-workspace-action-label min-w-0 text-left">
+        <span className="block truncate text-sm font-semibold">{t(action.labelKey)}</span>
       </span>
     </button>
+  );
+  if (!action.descriptionKey) return button;
+  return (
+    <Tooltip content={t(action.descriptionKey)} placement="top" referenceClassName="flex w-full">
+      {button}
+    </Tooltip>
   );
 }
 
