@@ -2501,12 +2501,32 @@ export type UiTextKey =
   | "buildingOverview.allRegions"
   | "buildingOverview.allSectors"
   | "buildingOverview.allStatuses"
+  | "buildingOverview.coverageDurability"
+  | "buildingOverview.coverageDurabilityTooltip"
+  | "buildingOverview.coverageExtraction"
+  | "buildingOverview.coverageExtractionTooltip"
+  | "buildingOverview.coverageFinance"
+  | "buildingOverview.coverageFinanceTooltip"
+  | "buildingOverview.coverageInfrastructure"
+  | "buildingOverview.coverageInfrastructureTooltip"
+  | "buildingOverview.coverageInputs"
+  | "buildingOverview.coverageInputsTooltip"
+  | "buildingOverview.coverageLabor"
+  | "buildingOverview.coverageLaborTooltip"
+  | "buildingOverview.coverageProductivity"
+  | "buildingOverview.coverageProductivityTooltip"
   | "buildingOverview.emptyCountry"
   | "buildingOverview.emptyFilters"
   | "buildingOverview.expenses"
+  | "buildingOverview.financeTooltipDescription"
+  | "buildingOverview.financeTooltipTitle"
   | "buildingOverview.filters"
   | "buildingOverview.industryFilter"
+  | "buildingOverview.inputGoodsCost"
+  | "buildingOverview.levelTooltipDescription"
+  | "buildingOverview.levelTooltipTitle"
   | "buildingOverview.net"
+  | "buildingOverview.noOperationalData"
   | "buildingOverview.ownerFilter"
   | "buildingOverview.productivity"
   | "buildingOverview.regionFilter"
@@ -2514,7 +2534,15 @@ export type UiTextKey =
   | "buildingOverview.search"
   | "buildingOverview.searchPlaceholder"
   | "buildingOverview.sectorFilter"
+  | "buildingOverview.sectionConsumption"
+  | "buildingOverview.sectionEmpty"
+  | "buildingOverview.sectionExtraction"
+  | "buildingOverview.sectionProduction"
+  | "buildingOverview.sectionPurchases"
+  | "buildingOverview.sectionSales"
+  | "buildingOverview.sectionWarehouse"
   | "buildingOverview.stateOwnedOutsideControl"
+  | "buildingOverview.stateSubsidy"
   | "buildingOverview.statusFilter"
   | "buildingOverview.statusInactive"
   | "buildingOverview.statusConstruction"
@@ -2523,6 +2551,7 @@ export type UiTextKey =
   | "buildingOverview.statusWorking"
   | "buildingOverview.subtitle"
   | "buildingOverview.title"
+  | "buildingOverview.wagesCost"
   | "budget.category.baseIncome"
   | "budget.category.colonization"
   | "budget.category.construction"
@@ -5422,12 +5451,32 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildingOverview.allRegions": "All regions",
     "buildingOverview.allSectors": "All sectors",
     "buildingOverview.allStatuses": "All statuses",
+    "buildingOverview.coverageDurability": "Durability",
+    "buildingOverview.coverageDurabilityTooltip": "Current durability limits the building's maximum safe productivity.",
+    "buildingOverview.coverageExtraction": "Extraction",
+    "buildingOverview.coverageExtractionTooltip": "Resource deposit and extraction availability for this building this turn.",
+    "buildingOverview.coverageFinance": "Finance",
+    "buildingOverview.coverageFinanceTooltip": "How much of the building's required operating money was covered.",
+    "buildingOverview.coverageInfrastructure": "Infrastructure",
+    "buildingOverview.coverageInfrastructureTooltip": "Infrastructure coverage available for moving inputs and outputs.",
+    "buildingOverview.coverageInputs": "Inputs",
+    "buildingOverview.coverageInputsTooltip": "Input goods coverage for the building's planned production.",
+    "buildingOverview.coverageLabor": "Labor",
+    "buildingOverview.coverageLaborTooltip": "Workforce coverage compared with the building's required labor.",
+    "buildingOverview.coverageProductivity": "Efficiency",
+    "buildingOverview.coverageProductivityTooltip": "Final productivity after labor, inputs, finance, infrastructure, extraction, durability, and modifiers.",
     "buildingOverview.emptyCountry": "The country has no buildings or construction projects yet.",
     "buildingOverview.emptyFilters": "No buildings match the selected filters.",
     "buildingOverview.expenses": "Expenses",
+    "buildingOverview.financeTooltipDescription": "Financial result for the last resolved turn.",
+    "buildingOverview.financeTooltipTitle": "Building finances",
     "buildingOverview.filters": "Building overview filters",
     "buildingOverview.industryFilter": "Industry",
+    "buildingOverview.inputGoodsCost": "Input goods",
+    "buildingOverview.levelTooltipDescription": "Higher building levels represent expansion of the same hex building and increase its operating scale through the existing building mechanics.",
+    "buildingOverview.levelTooltipTitle": "Level {value}",
     "buildingOverview.net": "Net",
+    "buildingOverview.noOperationalData": "Data will appear after the building works.",
     "buildingOverview.ownerFilter": "Owner",
     "buildingOverview.productivity": "Productivity",
     "buildingOverview.regionFilter": "Region",
@@ -5435,7 +5484,15 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildingOverview.search": "Search",
     "buildingOverview.searchPlaceholder": "Name, hex, owner, id",
     "buildingOverview.sectorFilter": "Sector",
+    "buildingOverview.sectionConsumption": "Consumption",
+    "buildingOverview.sectionEmpty": "No data",
+    "buildingOverview.sectionExtraction": "Extraction",
+    "buildingOverview.sectionProduction": "Production",
+    "buildingOverview.sectionPurchases": "Purchases",
+    "buildingOverview.sectionSales": "Sales",
+    "buildingOverview.sectionWarehouse": "Warehouse",
     "buildingOverview.stateOwnedOutsideControl": "State-owned outside control",
+    "buildingOverview.stateSubsidy": "State subsidy",
     "buildingOverview.statusFilter": "Status",
     "buildingOverview.statusInactive": "Inactive",
     "buildingOverview.statusConstruction": "Construction",
@@ -5444,6 +5501,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildingOverview.statusWorking": "Active",
     "buildingOverview.subtitle": "Buildings and construction projects across controlled regions, plus state-owned buildings outside control.",
     "buildingOverview.title": "Building overview",
+    "buildingOverview.wagesCost": "Wages",
     "budget.category.baseIncome": "State base income",
     "budget.category.colonization": "Colonization support",
     "budget.category.construction": "Construction projects",
@@ -8342,12 +8400,32 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildingOverview.allRegions": "Все регионы",
     "buildingOverview.allSectors": "Все секторы",
     "buildingOverview.allStatuses": "Все статусы",
+    "buildingOverview.coverageDurability": "Прочность",
+    "buildingOverview.coverageDurabilityTooltip": "Текущая прочность ограничивает максимальную безопасную производительность здания.",
+    "buildingOverview.coverageExtraction": "Добыча",
+    "buildingOverview.coverageExtractionTooltip": "Доступность залежи и добычи для этого здания в текущем ходу.",
+    "buildingOverview.coverageFinance": "Финансы",
+    "buildingOverview.coverageFinanceTooltip": "Какая часть нужных зданию операционных денег была покрыта.",
+    "buildingOverview.coverageInfrastructure": "Инфраструктура",
+    "buildingOverview.coverageInfrastructureTooltip": "Покрытие инфраструктурой для перемещения входных и выходных товаров.",
+    "buildingOverview.coverageInputs": "Входы",
+    "buildingOverview.coverageInputsTooltip": "Покрытие входными товарами для плановой работы здания.",
+    "buildingOverview.coverageLabor": "Труд",
+    "buildingOverview.coverageLaborTooltip": "Покрытие рабочей силой относительно потребности здания.",
+    "buildingOverview.coverageProductivity": "Эффективность",
+    "buildingOverview.coverageProductivityTooltip": "Итоговая производительность после труда, товаров, финансов, инфраструктуры, добычи, прочности и модификаторов.",
     "buildingOverview.emptyCountry": "У страны пока нет зданий или проектов строительства.",
     "buildingOverview.emptyFilters": "Нет зданий по выбранным фильтрам.",
     "buildingOverview.expenses": "Расходы",
+    "buildingOverview.financeTooltipDescription": "Финансовый результат за последний рассчитанный ход.",
+    "buildingOverview.financeTooltipTitle": "Финансы здания",
     "buildingOverview.filters": "Фильтры обзора зданий",
     "buildingOverview.industryFilter": "Отрасль",
+    "buildingOverview.inputGoodsCost": "Входные товары",
+    "buildingOverview.levelTooltipDescription": "Более высокий уровень означает расширение этого здания на том же гексе и увеличивает масштаб его работы через существующие механики здания.",
+    "buildingOverview.levelTooltipTitle": "Уровень {value}",
     "buildingOverview.net": "Итог",
+    "buildingOverview.noOperationalData": "Данные появятся после работы здания.",
     "buildingOverview.ownerFilter": "Владелец",
     "buildingOverview.productivity": "Производительность",
     "buildingOverview.regionFilter": "Регион",
@@ -8355,7 +8433,15 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildingOverview.search": "Поиск",
     "buildingOverview.searchPlaceholder": "Название, гекс, владелец, id",
     "buildingOverview.sectorFilter": "Сектор",
+    "buildingOverview.sectionConsumption": "Потребление",
+    "buildingOverview.sectionEmpty": "Нет данных",
+    "buildingOverview.sectionExtraction": "Добыча",
+    "buildingOverview.sectionProduction": "Производство",
+    "buildingOverview.sectionPurchases": "Покупки",
+    "buildingOverview.sectionSales": "Продажи",
+    "buildingOverview.sectionWarehouse": "Склад",
     "buildingOverview.stateOwnedOutsideControl": "Государственные вне контроля",
+    "buildingOverview.stateSubsidy": "Госсубсидия",
     "buildingOverview.statusFilter": "Статус",
     "buildingOverview.statusInactive": "Неактивна",
     "buildingOverview.statusConstruction": "Стройка",
@@ -8364,6 +8450,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildingOverview.statusWorking": "Активна",
     "buildingOverview.subtitle": "Здания и проекты в контролируемых регионах, плюс государственные здания вне контроля.",
     "buildingOverview.title": "Обзор зданий",
+    "buildingOverview.wagesCost": "Зарплаты",
     "budget.category.baseIncome": "Базовый доход государства",
     "budget.category.colonization": "Поддержка колонизаций",
     "budget.category.construction": "Строительные проекты",

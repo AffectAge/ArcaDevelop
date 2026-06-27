@@ -2674,6 +2674,16 @@ select,
   --arc-building-overview-card-glow: color-mix(in srgb, var(--arc-color-atlas-danger) 14%, transparent);
 }
 
+.arc-building-overview-card-compact {
+  cursor: pointer;
+}
+
+.arc-building-overview-card-compact:hover,
+.arc-building-overview-card-compact:focus-visible {
+  background: color-mix(in srgb, var(--arc-color-atlas-primary) 6%, transparent);
+  outline: none;
+}
+
 .arc-building-overview-card-main {
   display: grid;
   width: 100%;
@@ -2685,10 +2695,12 @@ select,
   text-align: left;
 }
 
-.arc-building-overview-card-main:hover,
-.arc-building-overview-card-main:focus-visible {
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 9%, transparent);
-  outline: none;
+.arc-building-overview-card-icon-wrap {
+  position: relative;
+  display: block;
+  height: 46px;
+  width: 46px;
+  flex: none;
 }
 
 .arc-building-overview-card-icon {
@@ -2712,6 +2724,41 @@ select,
   width: calc(100% - 2px) !important;
   height: calc(100% - 2px) !important;
   clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+}
+
+.arc-building-overview-level-badge {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  min-width: 17px;
+  height: 17px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--arc-color-atlas-line);
+  color: var(--arc-color-atlas-ink);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
+}
+
+.arc-building-overview-level-reference {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  z-index: 3;
+  display: inline-flex;
+}
+
+.arc-building-overview-level-badge::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 82%, white);
+  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
 }
 
 .arc-building-overview-card-text {
@@ -2809,24 +2856,24 @@ select,
 
 .arc-building-overview-card-metrics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 5px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
   padding: 2px 10px 10px;
 }
 
-.arc-building-overview-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  padding: 0 10px 10px;
+.arc-building-overview-tooltip-reference {
+  display: flex;
+  width: 100%;
+  min-width: 0;
 }
 
 .arc-building-overview-metric {
   position: relative;
   overflow: hidden;
   display: flex;
+  width: 100%;
   min-width: 0;
-  min-height: 26px;
+  min-height: 23px;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -2886,29 +2933,51 @@ select,
   border-top: 1px solid var(--arc-color-atlas-line);
 }
 
-.arc-building-overview-detail-grid {
-  padding-top: 10px;
-}
-
 .arc-building-overview-bars {
   display: grid;
-  gap: 8px;
-  padding: 0 10px 10px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  padding: 10px 10px 10px;
 }
 
 .arc-building-overview-progress {
+  position: relative;
+  overflow: hidden;
   display: grid;
-  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  min-height: 26px;
+  border: 0;
+  background: var(--arc-color-atlas-line);
+  color: var(--arc-color-atlas-ink);
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
+    0 1px 2px rgb(0 0 0 / 0.1);
+}
+
+.arc-building-overview-progress::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white);
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
 }
 
 .arc-building-overview-progress > div:first-child {
+  position: relative;
+  z-index: 2;
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-height: 23px;
+  padding: 0 8px;
   color: var(--arc-color-atlas-muted);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -2917,16 +2986,148 @@ select,
 }
 
 .arc-building-overview-progress-track {
-  height: 7px;
+  position: absolute;
+  inset: auto 8px 4px;
+  z-index: 1;
+  height: 3px;
   overflow: hidden;
-  border: 1px solid var(--arc-color-atlas-line);
-  background: var(--arc-color-atlas-paper-deep);
+  background: color-mix(in srgb, var(--arc-color-atlas-line) 72%, transparent);
 }
 
 .arc-building-overview-progress-track span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--arc-color-atlas-primary), color-mix(in srgb, var(--arc-color-atlas-good) 58%, var(--arc-color-atlas-primary)));
+  background: var(--arc-color-atlas-good);
+}
+
+.arc-building-overview-progress--warn .arc-building-overview-progress-track span {
+  background: var(--arc-color-atlas-primary);
+}
+
+.arc-building-overview-progress--bad .arc-building-overview-progress-track span {
+  background: var(--arc-color-atlas-danger);
+}
+
+.arc-building-overview-progress--warn > div:first-child strong {
+  color: var(--arc-color-atlas-primary);
+}
+
+.arc-building-overview-progress--bad > div:first-child strong {
+  color: var(--arc-color-atlas-danger);
+}
+
+.arc-building-overview-economy-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 10px 12px;
+}
+
+.arc-building-overview-economy-section {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  background: var(--arc-color-atlas-line);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  padding: 7px;
+}
+
+.arc-building-overview-economy-section::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white);
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+}
+
+.arc-building-overview-economy-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-building-overview-economy-section h4 {
+  margin: 0 0 6px;
+  color: var(--arc-color-atlas-muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.arc-building-overview-economy-empty {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  color: var(--arc-color-atlas-muted);
+  font-size: 11px;
+}
+
+.arc-building-overview-economy-table {
+  display: grid;
+  gap: 4px;
+}
+
+.arc-building-overview-economy-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 25px;
+  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 72%, transparent);
+  background: color-mix(in srgb, var(--arc-color-atlas-paper-deep) 64%, transparent);
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  padding: 2px 6px;
+  color: var(--arc-color-atlas-ink);
+  font-size: 11px;
+}
+
+.arc-building-overview-economy-row strong,
+.arc-building-overview-economy-row > span:last-child {
+  color: var(--arc-color-atlas-ink);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.arc-building-overview-economy-row > span:last-child {
+  color: var(--arc-color-atlas-muted);
+}
+
+.arc-building-overview-good-label {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.arc-building-overview-good-label > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arc-building-overview-good-icon {
+  display: inline-flex;
+  height: 18px;
+  width: 18px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--arc-color-atlas-line);
+  background: var(--arc-color-atlas-paper-deep);
+  color: var(--arc-color-atlas-muted);
+  font-size: 9px;
+  font-weight: 900;
+  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+}
+
+.arc-building-overview-good-icon img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
 }
 
 .arc-building-overview-card-actions {

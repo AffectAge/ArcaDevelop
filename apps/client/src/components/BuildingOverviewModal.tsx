@@ -10,11 +10,12 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import type { BuildingInstance, Country, HexId, Order, RegionConstructionProject, WorldBase } from "@arcanorum/shared";
 import {
   demolishCountryBuild,
+  fetchContentEntries,
   setCountryBuildAutoUpgradeState,
   setCountryBuildCustomName,
   setCountryBuildManualWorkState,
@@ -25,7 +26,7 @@ import {
 import { useUiText } from "../i18n/useUiText";
 import type { UiTextKey } from "../i18n/uiText";
 import { BuildingAtlasIcon } from "./BuildingAtlasIcon";
-import { Tooltip } from "./Tooltip";
+import { Tooltip, type TooltipStructuredContent } from "./Tooltip";
 
 type CategoryEntry = {
   id: string;
@@ -91,6 +92,25 @@ type OverviewItem = {
   demolitionCostConstruction?: number;
 };
 
+type GoodMeta = {
+  id: string;
+  name: string;
+  logoUrl?: string | null;
+};
+
+type GoodFlowRow = {
+  goodId: string;
+  amount: number;
+  ducats?: number;
+};
+
+type CoverageMetric = {
+  key: string;
+  label: string;
+  value: number;
+  tooltip: string;
+};
+
 type ConfirmState =
   | { type: "cancel"; item: OverviewItem; payload: BuildingOverviewCancelPayload }
   | { type: "demolish"; item: OverviewItem };
@@ -110,8 +130,26 @@ export function BuildingOverviewModal(props: Props) {
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [renameDraftById, setRenameDraftById] = useState<Record<string, string>>({});
   const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [goods, setGoods] = useState<GoodMeta[]>([]);
+
+  useEffect(() => {
+    if (!props.open) return;
+    let cancelled = false;
+    fetchContentEntries("goods")
+      .then((entries) => {
+        if (cancelled) return;
+        setGoods(entries.map((entry) => ({ id: entry.id, name: entry.name, logoUrl: entry.logoUrl ?? null })));
+      })
+      .catch(() => {
+        if (!cancelled) setGoods([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [props.open]);
 
   const items = useMemo(() => buildOverviewItems(props, t), [props, t]);
+  const goodsById = useMemo(() => new Map(goods.map((good) => [good.id, good] as const)), [goods]);
   const filteredItems = useMemo(
     () => filterOverviewItems(items, { regionFilter, statusFilter, sectorFilter, industryFilter, ownerFilter, search }),
     [industryFilter, items, ownerFilter, regionFilter, search, sectorFilter, statusFilter],
@@ -306,6 +344,7 @@ export function BuildingOverviewModal(props: Props) {
                               <BuildingOverviewCard
                                 key={item.id}
                                 item={item}
+                                goodsById={goodsById}
                                 scenarioId={props.scenarioId}
                                 expanded={expandedId === item.id}
                                 busyAction={busyAction}
@@ -372,6 +411,7 @@ function FilterSelect(props: { label: string; value: string; onChange: (value: s
 
 function BuildingOverviewCard(props: {
   item: OverviewItem;
+  goodsById: Map<string, GoodMeta>;
   scenarioId?: string | null;
   expanded: boolean;
   busyAction: string | null;
@@ -394,10 +434,13 @@ function BuildingOverviewCard(props: {
   const { t } = useUiText();
   const item = props.item;
   const built = item.kind === "built" && item.instance;
+  const financeTooltip = built ? buildFinanceTooltip(item, t) : t("buildingOverview.noOperationalData");
+  const coverageMetrics = built ? buildCoverageMetrics(item, t) : [];
+  const flowSections = built ? buildGoodFlowSections(item.instance, t) : buildEmptyFlowSections(t, "buildingOverview.noOperationalData");
   return (
     <article className={`arc-building-overview-card arc-building-overview-card--${item.status}`}>
       <div
-        className="arc-building-overview-card-main"
+        className="arc-building-overview-card-compact"
         role="button"
         tabIndex={0}
         onClick={props.onToggleExpanded}
@@ -409,82 +452,97 @@ function BuildingOverviewCard(props: {
         }}
         aria-expanded={props.expanded}
       >
-        <BuildingAtlasIcon scenarioId={props.scenarioId} buildingId={item.buildingId} state={item.status === "queued" || item.status === "pending" ? "underConstruction" : item.status === "inactive" ? "ruins" : "working"} className="arc-building-overview-card-icon" />
-        <span className="arc-building-overview-card-text">
-          {props.editingName ? (
-            <input
-              className="arc-building-overview-title-input"
-              value={props.renameDraft}
-              autoFocus
-              onClick={(event) => event.stopPropagation()}
-              onChange={(event) => props.onRenameDraftChange(event.target.value)}
-              onBlur={props.onFinishRename}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") props.onFinishRename();
-                if (event.key === "Escape") props.onCancelRename();
-              }}
-            />
-          ) : (
-            <button
-              type="button"
-              className="arc-building-overview-name-button"
-              onClick={(event) => {
-                event.stopPropagation();
-                props.onStartRename();
-              }}
-              disabled={!built}
-              title={built ? t("buildings.renameTooltip") : undefined}
-            >
-              {item.customName || item.displayName}
-            </button>
-          )}
-          <span className="arc-building-overview-owner">
-            <span className="arc-building-overview-owner-icon" aria-hidden="true">
-              {item.ownerIconUrl ? <img src={item.ownerIconUrl} alt="" /> : item.ownerName.slice(0, 1).toUpperCase()}
+        <div className="arc-building-overview-card-main">
+          <span className="arc-building-overview-card-icon-wrap">
+            <BuildingAtlasIcon scenarioId={props.scenarioId} buildingId={item.buildingId} state={item.status === "queued" || item.status === "pending" ? "underConstruction" : item.status === "inactive" ? "ruins" : "working"} className="arc-building-overview-card-icon" />
+            {built ? (
+              <Tooltip
+                content={{
+                  title: t("buildingOverview.levelTooltipTitle", { value: Math.max(1, Math.floor(Number(item.instance?.level ?? 1))) }),
+                  description: t("buildingOverview.levelTooltipDescription"),
+                }}
+                placement="top"
+                referenceClassName="arc-building-overview-level-reference"
+              >
+                <span className="arc-building-overview-level-badge">{Math.max(1, Math.floor(Number(item.instance?.level ?? 1)))}</span>
+              </Tooltip>
+            ) : null}
+          </span>
+          <span className="arc-building-overview-card-text">
+            {props.editingName ? (
+              <input
+                className="arc-building-overview-title-input"
+                value={props.renameDraft}
+                autoFocus
+                onClick={(event) => event.stopPropagation()}
+                onChange={(event) => props.onRenameDraftChange(event.target.value)}
+                onBlur={props.onFinishRename}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") props.onFinishRename();
+                  if (event.key === "Escape") props.onCancelRename();
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                className="arc-building-overview-name-button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  props.onStartRename();
+                }}
+                disabled={!built}
+                title={built ? t("buildings.renameTooltip") : undefined}
+              >
+                {item.customName || item.displayName}
+              </button>
+            )}
+            <span className="arc-building-overview-owner">
+              <span className="arc-building-overview-owner-icon" aria-hidden="true">
+                {item.ownerIconUrl ? <img src={item.ownerIconUrl} alt="" /> : item.ownerName.slice(0, 1).toUpperCase()}
+              </span>
+              {item.ownerName}
             </span>
-            {item.ownerName}
           </span>
-        </span>
-        <Tooltip content={t(getStatusKey(item.status))} placement="top">
-          <span className="arc-building-overview-status" aria-label={t(getStatusKey(item.status))} role="img">
-            <span aria-hidden="true" />
-          </span>
-        </Tooltip>
-      </div>
-      <div className="arc-building-overview-card-actions" onClick={(event) => event.stopPropagation()}>
-        <IconAction label={t("buildings.focusConstructionHexTooltip")} onClick={props.onFocusHex}>
-          <Crosshair size={13} aria-hidden="true" />
-        </IconAction>
-        {item.kind === "queued" || item.kind === "pending" ? (
-          <IconAction label={t("buildings.cancelConstructionTooltip")} onClick={props.onCancelProject} disabled={props.canceling} danger>
-            <X size={13} aria-hidden="true" />
+          <Tooltip content={t(getStatusKey(item.status))} placement="top">
+            <span className="arc-building-overview-status" aria-label={t(getStatusKey(item.status))} role="img">
+              <span aria-hidden="true" />
+            </span>
+          </Tooltip>
+        </div>
+        <div className="arc-building-overview-card-actions" onClick={(event) => event.stopPropagation()}>
+          <IconAction label={t("buildings.focusConstructionHexTooltip")} onClick={props.onFocusHex}>
+            <Crosshair size={13} aria-hidden="true" />
           </IconAction>
-        ) : null}
-        {built ? (
-          <>
-            <IconAction label={t("buildings.projectUpgrade")} onClick={props.onUpgrade} disabled={props.busyAction === `upgrade:${item.id}`}>
-              <ArrowUpCircle size={13} aria-hidden="true" />
+          {item.kind === "queued" || item.kind === "pending" ? (
+            <IconAction label={t("buildings.cancelConstructionTooltip")} onClick={props.onCancelProject} disabled={props.canceling} danger>
+              <X size={13} aria-hidden="true" />
             </IconAction>
-            <IconAction label={item.instance?.autoUpgradeEnabled ? t("buildings.disableAutoUpgradeTooltip") : t("buildings.enableAutoUpgradeTooltip")} onClick={() => props.onToggleAutoUpgrade(!item.instance?.autoUpgradeEnabled)} active={Boolean(item.instance?.autoUpgradeEnabled)} disabled={props.busyAction === `autoUpgradeEnabled:${item.id}`}>
-              <Wrench size={13} aria-hidden="true" />
-            </IconAction>
-            <IconAction label={item.instance?.stateSubsidiesEnabled ? t("buildings.disableSubsidiesTooltip") : t("buildings.enableSubsidiesTooltip")} onClick={() => props.onToggleSubsidies(!item.instance?.stateSubsidiesEnabled)} active={Boolean(item.instance?.stateSubsidiesEnabled)} disabled={props.busyAction === `stateSubsidiesEnabled:${item.id}`}>
-              <ShieldCheck size={13} aria-hidden="true" />
-            </IconAction>
-            <IconAction label={item.instance?.manualWorkEnabled !== false ? t("buildings.disableManualWorkTooltip") : t("buildings.enableManualWorkTooltip")} onClick={() => props.onToggleManualWork(item.instance?.manualWorkEnabled === false)} active={item.instance?.manualWorkEnabled !== false} disabled={props.busyAction === `manualWorkEnabled:${item.id}`}>
-              <Pencil size={13} aria-hidden="true" />
-            </IconAction>
-            <IconAction label={t("buildings.demolishTooltip")} onClick={props.onDemolish} disabled={props.busyAction === `demolish:${item.id}`} danger>
-              <Trash2 size={13} aria-hidden="true" />
-            </IconAction>
-          </>
-        ) : null}
-      </div>
-      <div className="arc-building-overview-card-metrics">
-        <Metric label={t("buildingOverview.productivity")} value={formatPercent(item.productivity)} />
-        <Metric label={t("buildingOverview.revenue")} value={formatCompact(item.revenue ?? 0)} />
-        <Metric label={t("buildingOverview.expenses")} value={formatCompact(item.expenses ?? 0)} />
-        <Metric label={t("buildingOverview.net")} value={formatSignedCompact(item.net ?? 0)} tone={(item.net ?? 0) >= 0 ? "good" : "bad"} />
+          ) : null}
+          {built ? (
+            <>
+              <IconAction label={t("buildings.projectUpgrade")} onClick={props.onUpgrade} disabled={props.busyAction === `upgrade:${item.id}`}>
+                <ArrowUpCircle size={13} aria-hidden="true" />
+              </IconAction>
+              <IconAction label={item.instance?.autoUpgradeEnabled ? t("buildings.disableAutoUpgradeTooltip") : t("buildings.enableAutoUpgradeTooltip")} onClick={() => props.onToggleAutoUpgrade(!item.instance?.autoUpgradeEnabled)} active={Boolean(item.instance?.autoUpgradeEnabled)} disabled={props.busyAction === `autoUpgradeEnabled:${item.id}`}>
+                <Wrench size={13} aria-hidden="true" />
+              </IconAction>
+              <IconAction label={item.instance?.stateSubsidiesEnabled ? t("buildings.disableSubsidiesTooltip") : t("buildings.enableSubsidiesTooltip")} onClick={() => props.onToggleSubsidies(!item.instance?.stateSubsidiesEnabled)} active={Boolean(item.instance?.stateSubsidiesEnabled)} disabled={props.busyAction === `stateSubsidiesEnabled:${item.id}`}>
+                <ShieldCheck size={13} aria-hidden="true" />
+              </IconAction>
+              <IconAction label={item.instance?.manualWorkEnabled !== false ? t("buildings.disableManualWorkTooltip") : t("buildings.enableManualWorkTooltip")} onClick={() => props.onToggleManualWork(item.instance?.manualWorkEnabled === false)} active={item.instance?.manualWorkEnabled !== false} disabled={props.busyAction === `manualWorkEnabled:${item.id}`}>
+                <Pencil size={13} aria-hidden="true" />
+              </IconAction>
+              <IconAction label={t("buildings.demolishTooltip")} onClick={props.onDemolish} disabled={props.busyAction === `demolish:${item.id}`} danger>
+                <Trash2 size={13} aria-hidden="true" />
+              </IconAction>
+            </>
+          ) : null}
+        </div>
+        <div className="arc-building-overview-card-metrics">
+          <Metric label={t("buildingOverview.revenue")} value={formatCompact(item.revenue ?? 0)} tooltip={financeTooltip} />
+          <Metric label={t("buildingOverview.expenses")} value={formatCompact(item.expenses ?? 0)} tooltip={financeTooltip} tone={(item.expenses ?? 0) > 0 ? "bad" : undefined} />
+          <Metric label={t("buildingOverview.net")} value={formatSignedCompact(item.net ?? 0)} tooltip={financeTooltip} tone={(item.net ?? 0) >= 0 ? "good" : "bad"} />
+        </div>
       </div>
       <AnimatePresence initial={false}>
         {props.expanded ? (
@@ -495,16 +553,15 @@ function BuildingOverviewCard(props: {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
           >
-            <div className="arc-building-overview-detail-grid">
-              <Metric label={t("buildings.levelLabel")} value={built ? String(item.instance?.level ?? 1) : "-"} />
-              <Metric label={t("buildings.constructionProgress")} value={item.kind === "built" ? "100%" : `${Math.round(item.progressPct ?? 0)}%`} />
-              <Metric label={t("buildings.constructionCost")} value={item.remainingConstruction != null ? formatCompact(item.remainingConstruction) : "-"} />
-              <Metric label={t("buildings.buildingLabel")} value={item.buildingId} />
-            </div>
             <div className="arc-building-overview-bars">
-              <ProgressMetric label={t("buildings.durabilityLabel")} value={item.durabilityPct ?? 0} />
-              <ProgressMetric label={t("buildingOverview.productivity")} value={item.efficiencyPct ?? 0} />
-              <ProgressMetric label={t("buildings.finance")} value={item.financePct ?? 0} />
+              {coverageMetrics.map((metric) => (
+                <CoverageIndicator key={metric.key} label={metric.label} value={metric.value} tooltip={metric.tooltip} />
+              ))}
+            </div>
+            <div className="arc-building-overview-economy-sections">
+              {flowSections.map((section) => (
+                <GoodFlowSection key={section.key} title={section.title} rows={section.rows} emptyText={section.emptyText} goodsById={props.goodsById} />
+              ))}
             </div>
           </motion.div>
         ) : null}
@@ -529,27 +586,70 @@ function IconAction(props: { label: string; active?: boolean; danger?: boolean; 
   );
 }
 
-function Metric(props: { label: string; value: string; tone?: "good" | "bad" }) {
-  return (
+function Metric(props: { label: string; value: string; tone?: "good" | "bad"; tooltip?: ReactNode | TooltipStructuredContent }) {
+  const metric = (
     <span className={`arc-building-overview-metric ${props.tone ? `arc-building-overview-metric--${props.tone}` : ""}`}>
       <span>{props.label}</span>
       <strong>{props.value}</strong>
     </span>
   );
+  if (!props.tooltip) return metric;
+  return (
+    <Tooltip content={props.tooltip} placement="top" referenceClassName="arc-building-overview-tooltip-reference">
+      {metric}
+    </Tooltip>
+  );
 }
 
-function ProgressMetric(props: { label: string; value: number }) {
+function CoverageIndicator(props: { label: string; value: number; tooltip: string }) {
   const value = Math.max(0, Math.min(1, Number(props.value) || 0));
+  const tone = value < 0.35 ? "bad" : value < 0.75 ? "warn" : "good";
   return (
-    <div className="arc-building-overview-progress">
-      <div>
-        <span>{props.label}</span>
-        <strong>{Math.round(value * 100)}%</strong>
+    <Tooltip content={{ title: props.label, description: props.tooltip, rows: [{ label: props.label, value: `${Math.round(value * 100)}%`, tone: tone === "bad" ? "negative" : tone === "warn" ? "warning" : "positive" }] }} placement="top" referenceClassName="arc-building-overview-tooltip-reference">
+      <div className={`arc-building-overview-progress arc-building-overview-progress--${tone}`}>
+        <div>
+          <span>{props.label}</span>
+          <strong>{Math.round(value * 100)}%</strong>
+        </div>
+        <div className="arc-building-overview-progress-track">
+          <span style={{ width: `${Math.round(value * 100)}%` }} />
+        </div>
       </div>
-      <div className="arc-building-overview-progress-track">
-        <span style={{ width: `${Math.round(value * 100)}%` }} />
-      </div>
-    </div>
+    </Tooltip>
+  );
+}
+
+function GoodFlowSection(props: { title: string; rows: GoodFlowRow[]; emptyText: string; goodsById: Map<string, GoodMeta> }) {
+  return (
+    <section className="arc-building-overview-economy-section">
+      <h4>{props.title}</h4>
+      {props.rows.length === 0 ? (
+        <div className="arc-building-overview-economy-empty">{props.emptyText}</div>
+      ) : (
+        <div className="arc-building-overview-economy-table">
+          {props.rows.map((row) => (
+            <div key={row.goodId} className="arc-building-overview-economy-row">
+              <GoodLabel goodId={row.goodId} goodsById={props.goodsById} />
+              <strong>{formatCompact(row.amount)}</strong>
+              {row.ducats != null ? <span>{formatCompact(row.ducats)}</span> : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function GoodLabel(props: { goodId: string; goodsById: Map<string, GoodMeta> }) {
+  const good = props.goodsById.get(props.goodId);
+  const label = good?.name ?? formatIdLabel(props.goodId);
+  return (
+    <span className="arc-building-overview-good-label">
+      <span className="arc-building-overview-good-icon" aria-hidden="true">
+        {good?.logoUrl ? <img src={good.logoUrl} alt="" /> : label.slice(0, 1).toUpperCase()}
+      </span>
+      <span>{label}</span>
+    </span>
   );
 }
 
@@ -813,6 +913,71 @@ function getCancelKey(item: OverviewItem): string | null {
   return null;
 }
 
+function buildFinanceTooltip(item: OverviewItem, t: (key: UiTextKey, params?: Record<string, string | number>) => string) {
+  const instance = item.instance;
+  const inputCost = Number(instance?.lastInputCostDucats ?? 0);
+  const wages = Number(instance?.lastWagesDucats ?? 0);
+  const subsidy = Number(instance?.lastStateSubsidyDucats ?? 0);
+  return {
+    title: t("buildingOverview.financeTooltipTitle"),
+    description: t("buildingOverview.financeTooltipDescription"),
+    rows: [
+      { label: t("buildingOverview.revenue"), value: formatCompact(item.revenue ?? 0), tone: "positive" as const },
+      { label: t("buildingOverview.inputGoodsCost"), value: formatCompact(inputCost), tone: inputCost > 0 ? ("negative" as const) : ("muted" as const) },
+      { label: t("buildingOverview.wagesCost"), value: formatCompact(wages), tone: wages > 0 ? ("negative" as const) : ("muted" as const) },
+      { label: t("buildingOverview.stateSubsidy"), value: formatCompact(subsidy), tone: subsidy > 0 ? ("positive" as const) : ("muted" as const) },
+      { label: t("buildingOverview.net"), value: formatSignedCompact(item.net ?? 0), tone: (item.net ?? 0) >= 0 ? ("positive" as const) : ("negative" as const) },
+    ],
+  };
+}
+
+function buildCoverageMetrics(item: OverviewItem, t: (key: UiTextKey, params?: Record<string, string | number>) => string): CoverageMetric[] {
+  const instance = item.instance;
+  return [
+    { key: "durability", label: t("buildingOverview.coverageDurability"), value: item.durabilityPct ?? 0, tooltip: t("buildingOverview.coverageDurabilityTooltip") },
+    { key: "productivity", label: t("buildingOverview.coverageProductivity"), value: item.efficiencyPct ?? 0, tooltip: t("buildingOverview.coverageProductivityTooltip") },
+    { key: "labor", label: t("buildingOverview.coverageLabor"), value: clamp01(instance?.lastLaborCoverage), tooltip: t("buildingOverview.coverageLaborTooltip") },
+    { key: "infrastructure", label: t("buildingOverview.coverageInfrastructure"), value: clamp01(instance?.lastInfraCoverage), tooltip: t("buildingOverview.coverageInfrastructureTooltip") },
+    { key: "inputs", label: t("buildingOverview.coverageInputs"), value: clamp01(instance?.lastInputCoverage), tooltip: t("buildingOverview.coverageInputsTooltip") },
+    { key: "finance", label: t("buildingOverview.coverageFinance"), value: clamp01(instance?.lastFinanceCoverage), tooltip: t("buildingOverview.coverageFinanceTooltip") },
+    { key: "extraction", label: t("buildingOverview.coverageExtraction"), value: clamp01(instance?.lastExtractionCoverage), tooltip: t("buildingOverview.coverageExtractionTooltip") },
+  ];
+}
+
+function buildGoodFlowSections(instance: BuildingInstance | undefined, t: (key: UiTextKey) => string) {
+  if (!instance) return buildEmptyFlowSections(t, "buildingOverview.noOperationalData");
+  return [
+    { key: "warehouse", title: t("buildingOverview.sectionWarehouse"), rows: recordToGoodRows(instance.warehouseByGoodId), emptyText: t("buildingOverview.sectionEmpty") },
+    { key: "purchases", title: t("buildingOverview.sectionPurchases"), rows: recordToGoodRows(instance.lastPurchaseByGoodId, instance.lastPurchaseCostByGoodId), emptyText: t("buildingOverview.sectionEmpty") },
+    { key: "sales", title: t("buildingOverview.sectionSales"), rows: recordToGoodRows(instance.lastSalesByGoodId, instance.lastSalesRevenueByGoodId), emptyText: t("buildingOverview.sectionEmpty") },
+    { key: "production", title: t("buildingOverview.sectionProduction"), rows: recordToGoodRows(instance.lastProductionByGoodId), emptyText: t("buildingOverview.sectionEmpty") },
+    { key: "consumption", title: t("buildingOverview.sectionConsumption"), rows: recordToGoodRows(instance.lastConsumptionByGoodId), emptyText: t("buildingOverview.sectionEmpty") },
+    { key: "extraction", title: t("buildingOverview.sectionExtraction"), rows: recordToGoodRows(instance.lastExtractionByGoodId), emptyText: t("buildingOverview.sectionEmpty") },
+  ];
+}
+
+function buildEmptyFlowSections(t: (key: UiTextKey) => string, emptyKey: UiTextKey) {
+  return [
+    { key: "warehouse", title: t("buildingOverview.sectionWarehouse"), rows: [], emptyText: t(emptyKey) },
+    { key: "purchases", title: t("buildingOverview.sectionPurchases"), rows: [], emptyText: t(emptyKey) },
+    { key: "sales", title: t("buildingOverview.sectionSales"), rows: [], emptyText: t(emptyKey) },
+    { key: "production", title: t("buildingOverview.sectionProduction"), rows: [], emptyText: t(emptyKey) },
+    { key: "consumption", title: t("buildingOverview.sectionConsumption"), rows: [], emptyText: t(emptyKey) },
+    { key: "extraction", title: t("buildingOverview.sectionExtraction"), rows: [], emptyText: t(emptyKey) },
+  ];
+}
+
+function recordToGoodRows(amounts?: Record<string, number>, ducats?: Record<string, number>): GoodFlowRow[] {
+  return Object.entries(amounts ?? {})
+    .map(([goodId, amount]) => ({
+      goodId,
+      amount: Number(amount) || 0,
+      ducats: ducats?.[goodId] != null ? Number(ducats[goodId]) || 0 : undefined,
+    }))
+    .filter((row) => Math.abs(row.amount) > 0.0001 || Math.abs(row.ducats ?? 0) > 0.0001)
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount) || a.goodId.localeCompare(b.goodId, "ru"));
+}
+
 function isControlledRegion(world: WorldBase, countryId: string, regionId: string): boolean {
   return (world.regionController?.[regionId] ?? world.regionOwner?.[regionId] ?? "") === countryId;
 }
@@ -882,7 +1047,6 @@ function formatSignedCompact(value: number): string {
   return value >= 0 ? `+${formatCompact(value)}` : formatCompact(value);
 }
 
-function formatPercent(value: number | undefined): string {
-  const normalized = Number(value ?? 0);
-  return `${Math.round(normalized * 100)}%`;
+function clamp01(value: number | undefined): number {
+  return Math.max(0, Math.min(1, Number(value ?? 0) || 0));
 }
