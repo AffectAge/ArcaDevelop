@@ -40,6 +40,7 @@ export type BuildingOwner =
 export type BuildingInstance = {
   instanceId: string;
   buildingId: string;
+  targetHexId: string;
   customName?: string | null;
   owner: BuildingOwner;
   createdTurnId: number;
@@ -77,6 +78,7 @@ export type RegionConstructionProject = {
   queueId: string;
   requestedByCountryId: string;
   buildingId: string;
+  targetHexId: string;
   owner: BuildingOwner;
   projectType?: "build" | "upgrade";
   targetInstanceId?: string;

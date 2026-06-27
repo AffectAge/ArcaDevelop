@@ -76,6 +76,7 @@ function makeBuildOrder(
     playerId: "player:a",
     countryId: "country:a",
     regionId: "region:b",
+    targetHexId: "hex:0:0",
     type: "BUILD",
     payload: {},
     createdAt: "now",

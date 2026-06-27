@@ -60,6 +60,7 @@ type CoreRouteCompositionParams = {
   getCountryResourceNetByTurn: (countryId: string) => Partial<Record<ResourceId, number>>;
   getLastLoginAt: (countryId: string) => string | null;
   getCurrentTurnStartedAtMs: () => number;
+  getActiveScenarioId: () => string;
   getGameSettings: () => GameSettings;
   normalizeCivilopediaEntries: (input: unknown) => GameSettings["civilopedia"]["entries"];
   normalizeCivilopediaCategories: (
@@ -138,6 +139,7 @@ export function registerCoreRouteComposition(params: CoreRouteCompositionParams)
       const gameSettings = params.getGameSettings();
       return {
         civilopedia: gameSettings.civilopedia,
+        activeScenarioId: params.getActiveScenarioId(),
         economy: gameSettings.economy,
         colonization: gameSettings.colonization,
         customization: gameSettings.customization,

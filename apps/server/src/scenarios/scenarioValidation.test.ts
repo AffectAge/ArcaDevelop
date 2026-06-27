@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import sharp from "sharp";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildScenarioGeneratedIndexes, validateScenarioDirectory } from "./scenarioValidation";
 
@@ -37,6 +38,45 @@ describe("scenarioValidation", () => {
 
     expect(result.ok).toBe(false);
     expect(result.issues.some((issue) => issue.code === "DUPLICATE_ID")).toBe(true);
+  });
+
+  it("validates 256x64 PNG building atlases", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await addBuilding(scenarioDir, "building:farm");
+    await writeBuildingAtlas(join(scenarioDir, "assets/buildings/building_farm.png"), 256, 64);
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("fails when a building atlas is missing", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await addBuilding(scenarioDir, "building:farm");
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "MISSING_REQUIRED_FILE", path: "assets/buildings/building_farm.png" }),
+      ]),
+    );
+  });
+
+  it("fails when a building atlas has the wrong size", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await addBuilding(scenarioDir, "building:farm");
+    await writeBuildingAtlas(join(scenarioDir, "assets/buildings/building_farm.png"), 64, 64);
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "INVALID_BUILDING_ATLAS", path: "assets/buildings/building_farm.png" }),
+      ]),
+    );
   });
 
   it("fails on broken stable references", async () => {
@@ -1019,6 +1059,48 @@ function createHexSettings(): Record<string, unknown> {
     chunkSize: 8,
     wrapX: true,
   };
+}
+
+async function addBuilding(scenarioDir: string, id: string): Promise<void> {
+  await writeJson(join(scenarioDir, `common/buildings/${id.replace(/[^a-zA-Z0-9_-]/g, "_")}.json`), {
+    id,
+    nameKey: `building.${id.replace(/^building:/, "")}.name`,
+  });
+  await writeJson(join(scenarioDir, "localisation/en.json"), {
+    scenario: { fixture: { name: "Fixture" } },
+    region: { bohemia: { name: "Bohemia" } },
+    country: { bohemia: { name: "Bohemia" } },
+    good: { grain: { name: "Grain" } },
+    building: { [id.replace(/^building:/, "")]: { name: "Farm" } },
+    modifier: { industrialProgram: { name: "Industrial program" } },
+    decision: { legacy: { name: "Legacy decision" } },
+    event: { legacy: { name: "Legacy", title: "Legacy", description: "Legacy", option: { ok: "OK" } } },
+    arcawiki: { economy: { name: "Economy" } },
+  });
+  await writeJson(join(scenarioDir, "localisation/ru.json"), {
+    scenario: { fixture: { name: "Fixture RU" } },
+    region: { bohemia: { name: "Богемия" } },
+    country: { bohemia: { name: "Богемия" } },
+    good: { grain: { name: "Зерно" } },
+    building: { [id.replace(/^building:/, "")]: { name: "Ферма" } },
+    modifier: { industrialProgram: { name: "Промышленная программа" } },
+    decision: { legacy: { name: "Legacy decision RU" } },
+    event: { legacy: { name: "Legacy RU", title: "Legacy RU", description: "Legacy RU", option: { ok: "OK" } } },
+    arcawiki: { economy: { name: "Экономика" } },
+  });
+}
+
+async function writeBuildingAtlas(path: string, width: number, height: number): Promise<void> {
+  const dir = path.slice(0, Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")));
+  await mkdir(dir, { recursive: true });
+  await sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: { r: 40, g: 60, b: 80, alpha: 1 },
+    },
+  }).png().toFile(path);
 }
 
 async function writeJson(path: string, data: unknown): Promise<void> {

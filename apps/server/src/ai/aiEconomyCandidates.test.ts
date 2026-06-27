@@ -35,6 +35,7 @@ describe("AI economy candidates", () => {
       buildings: [mine, farm],
       isBuildingUnlockedForCountry: () => true,
       getRegionBuildRestriction: () => null,
+      selectBuildTargetHexId: () => "hex:0:0",
     });
 
     expect(candidates).toEqual([
@@ -66,6 +67,7 @@ describe("AI economy candidates", () => {
           type: "BUILD",
           countryId: "country:alpha",
           regionId: "region:alpha-core",
+          targetHexId: "hex:0:0",
           payload: {
             buildingId: "building:farm",
             owner: { type: "state", countryId: "country:alpha" },
@@ -81,6 +83,7 @@ describe("AI economy candidates", () => {
           type: "BUILD",
           countryId: "country:alpha",
           regionId: "region:alpha-core",
+          targetHexId: "hex:0:0",
           payload: {
             buildingId: "building:mine",
             owner: { type: "state", countryId: "country:alpha" },
@@ -106,6 +109,7 @@ describe("AI economy candidates", () => {
       ],
       isBuildingUnlockedForCountry: () => true,
       getRegionBuildRestriction: (building) => (building.id === "building:mine" ? "blocked" : null),
+      selectBuildTargetHexId: (building) => (building.id === "building:mine" ? null : "hex:0:0"),
     });
 
     expect(candidates.filter((candidate) => candidate.kind === "build")).toEqual([]);
@@ -134,6 +138,7 @@ describe("AI economy candidates", () => {
             queueId: "queue:farm",
             requestedByCountryId: "country:alpha",
             buildingId: "building:farm",
+            targetHexId: "hex:0:0",
             owner: { type: "state", countryId: "country:alpha" },
             projectType: "build",
             progressConstruction: 1,
@@ -154,6 +159,7 @@ describe("AI economy candidates", () => {
       buildings: [farm, mine],
       isBuildingUnlockedForCountry: () => true,
       getRegionBuildRestriction: () => null,
+      selectBuildTargetHexId: (building) => (building.id === "building:farm" ? null : "hex:0:0"),
     });
 
     expect(candidates).not.toContainEqual(expect.objectContaining({
@@ -197,6 +203,7 @@ describe("AI economy candidates", () => {
       ],
       isBuildingUnlockedForCountry: () => true,
       getRegionBuildRestriction: () => null,
+      selectBuildTargetHexId: () => "hex:0:0",
     });
 
     expect(candidates.filter((candidate) => candidate.kind === "build")).toEqual([

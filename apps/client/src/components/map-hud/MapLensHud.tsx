@@ -10,13 +10,16 @@ type MapLensOption<T extends string> = {
   icon?: LucideIcon;
 };
 
-type Props<TMode extends string, TLens extends string> = {
-  modes: Array<MapLensOption<TMode>>;
+type MapLayerOption<T extends string> = MapLensOption<T> & {
+  active: boolean;
+};
+
+type Props<TLayer extends string, TLens extends string> = {
+  layers: Array<MapLayerOption<TLayer>>;
   lenses: Array<MapLensOption<TLens>>;
-  activeModeId: TMode;
   activeLensId: TLens;
   legend: ReactNode;
-  onModeChange: (modeId: TMode) => void;
+  onLayerToggle: (layerId: TLayer) => void;
   onLensChange: (lensId: TLens) => void;
 };
 
@@ -24,15 +27,14 @@ export function getLensIconButtonClass(active: boolean) {
   return `arc-map-lens-button ${active ? "arc-map-lens-button--active" : ""}`;
 }
 
-export function MapLensHud<TMode extends string, TLens extends string>({
-  modes,
+export function MapLensHud<TLayer extends string, TLens extends string>({
+  layers,
   lenses,
-  activeModeId,
   activeLensId,
   legend,
-  onModeChange,
+  onLayerToggle,
   onLensChange,
-}: Props<TMode, TLens>) {
+}: Props<TLayer, TLens>) {
   return (
     <div className="arc-map-lens-hud pointer-events-auto absolute bottom-0 left-1/2 z-[34] w-[min(92vw,860px)] -translate-x-1/2 text-[var(--arc-color-text-soft)]">
       <div className="relative mx-auto mb-3 w-[min(100%,820px)]">
@@ -56,17 +58,16 @@ export function MapLensHud<TMode extends string, TLens extends string>({
             transition={{ layout: { duration: 0.16, ease: "easeOut" } }}
             className="arc-scrollbar relative z-10 flex min-h-[58px] max-h-[66px] items-center justify-center gap-2 overflow-x-auto overflow-y-hidden px-3 py-2.5"
           >
-            {lenses.map((lens) => {
-              const active = activeLensId === lens.id;
-              const Icon = lens.icon ?? Briefcase;
+            {layers.map((layer) => {
+              const Icon = layer.icon ?? Briefcase;
               return (
-                <Tooltip key={lens.id} content={lens.tooltip ?? lens.label}>
+                <Tooltip key={layer.id} content={layer.tooltip ?? layer.label}>
                   <motion.button
                     type="button"
-                    onClick={() => onLensChange(lens.id)}
-                    className={getLensIconButtonClass(active)}
-                    aria-label={lens.label}
-                    aria-pressed={active}
+                    onClick={() => onLayerToggle(layer.id)}
+                    className={getLensIconButtonClass(layer.active)}
+                    aria-label={layer.label}
+                    aria-pressed={layer.active}
                   >
                     <Icon size={20} />
                   </motion.button>
@@ -78,16 +79,16 @@ export function MapLensHud<TMode extends string, TLens extends string>({
       </div>
 
       <div className="arc-map-lens-mode-row relative z-10 flex justify-center gap-2 pb-2">
-        {modes.map((mode) => {
-          const active = activeModeId === mode.id;
-          const Icon = mode.icon ?? Briefcase;
+        {lenses.map((lens) => {
+          const active = activeLensId === lens.id;
+          const Icon = lens.icon ?? Briefcase;
           return (
-            <Tooltip key={mode.id} content={mode.tooltip ?? mode.label}>
+            <Tooltip key={lens.id} content={lens.tooltip ?? lens.label}>
               <motion.button
                 type="button"
-                onClick={() => onModeChange(mode.id)}
+                onClick={() => onLensChange(lens.id)}
                 className={getLensIconButtonClass(active)}
-                aria-label={mode.label}
+                aria-label={lens.label}
                 aria-pressed={active}
               >
                 <Icon size={20} />

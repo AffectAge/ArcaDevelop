@@ -6,6 +6,7 @@ import type {
   TreatyConstructionExpirationPolicy,
   WorldBase,
 } from "@arcanorum/shared";
+import { transferStateOwnedBuildingsToController } from "./buildingMechanics";
 
 export type DiplomacyResourceTransferWorldState = Pick<WorldBase, "resourcesByCountry" | "diplomacyProposals">;
 
@@ -271,7 +272,10 @@ export function applyTreatyMoneyTransferOnce(params: {
 
 export function applyTreatyClauses<TMode extends string>(params: {
   proposal: DiplomacyProposal;
-  worldBase: Pick<WorldBase, "resourcesByCountry" | "regionOwner" | "regionController" | "colonyProgressByRegion">;
+  worldBase: Pick<
+    WorldBase,
+    "resourcesByCountry" | "regionOwner" | "regionController" | "colonyProgressByRegion" | "regionBuildingsByRegion"
+  >;
   gameSettings: DiplomacyInfrastructureSettings<TMode>;
   ensureCountryInWorldBase: (countryId: string) => void;
   normalizeTransportModes: (input: unknown) => TMode[];
@@ -296,6 +300,11 @@ export function applyTreatyClauses<TMode extends string>(params: {
     } else if (clause.kind === "transfer_region") {
       params.worldBase.regionOwner[clause.regionId] = clause.toCountryId;
       params.worldBase.regionController[clause.regionId] = clause.toCountryId;
+      transferStateOwnedBuildingsToController({
+        worldBase: params.worldBase,
+        regionId: clause.regionId,
+        controllerCountryId: clause.toCountryId,
+      });
       if (params.worldBase.colonyProgressByRegion[clause.regionId]) {
         delete params.worldBase.colonyProgressByRegion[clause.regionId];
       }

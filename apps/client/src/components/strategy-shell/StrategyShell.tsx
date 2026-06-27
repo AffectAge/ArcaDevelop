@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowDownUp,
   Bell,
   BookOpen,
   Building2,
+  ChevronDown,
   CircleDollarSign,
+  Crosshair,
   FlaskConical,
   Flag,
   Hammer,
@@ -25,11 +28,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { ResourceFlow } from "@arcanorum/shared";
+import type { HexId, ResourceFlow } from "@arcanorum/shared";
 import { BASE_RESOURCE_ICON_URLS } from "../../assets/baseResourceIcons";
 import type { UiTextKey } from "../../i18n/uiText";
 import { useUiText } from "../../i18n/useUiText";
 import { Tooltip, type TooltipStructuredContent } from "../Tooltip";
+import { BuildingAtlasIcon } from "../BuildingAtlasIcon";
 
 export type StrategyMode = "overview" | "construction" | "colonization" | "population" | "market" | "diplomacy" | "army" | "governance";
 
@@ -62,7 +66,36 @@ type ActionItem = {
   tone?: "primary" | "danger";
 };
 
-type WorkspaceTabKey = "actions" | "summary" | "records" | "trade";
+type WorkspaceTabKey = "actions" | "summary" | "records" | "trade" | "buildings";
+
+type BuildingListEntry = {
+  id: string;
+  name: string;
+  costConstruction?: number | null;
+  costDucats?: number | null;
+  industryId?: string | null;
+  sectorId?: string | null;
+};
+
+type BuildingCategoryEntry = {
+  id: string;
+  name: string;
+  logoUrl?: string | null;
+};
+
+type ConstructionCancelPayload =
+  | { source: "queued"; regionId: string; queueId: string; targetHexId: HexId; buildingId: string }
+  | { source: "pending"; orderId: string };
+
+type ConstructionCancelConfirmTarget = {
+  key: string;
+  payload: ConstructionCancelPayload;
+  buildingName: string;
+  ownerName: string;
+  ownerIconUrl?: string | null;
+  regionId: string;
+  targetHexId: HexId;
+};
 
 type MarketTradePartner = {
   id: string;
@@ -101,16 +134,30 @@ type Props = {
   constructionProjection?: { activeCount: number; predictedPointsSpend: number; predictedDucatSpend: number };
   technologyProjection?: { activeCount: number; predictedPointsSpend: number };
   constructionQueuePreview?: Array<{
+    id: string;
+    source: "queued" | "pending";
+    queueId?: string;
+    orderId?: string;
     regionId: string;
+    targetHexId: HexId;
     buildingId: string;
-    buildingName: string;
+    name: string;
+    ownerName: string;
+    ownerIconUrl?: string | null;
     progressPct: number;
     remainingConstruction: number;
+    industryId?: string | null;
+    sectorId?: string | null;
   }>;
+  cancelingConstructionQueueKey?: string | null;
   populationPreview?: GenericPreviewItem[];
   marketPreview?: GenericPreviewItem[];
   marketTradeRows?: MarketTradeOverviewRow[];
   marketTradeLoading?: boolean;
+  scenarioId?: string | null;
+  buildingEntries?: BuildingListEntry[];
+  industryEntries?: BuildingCategoryEntry[];
+  sectorEntries?: BuildingCategoryEntry[];
   diplomacyPreview?: GenericPreviewItem[];
   armyPreview?: GenericPreviewItem[];
   governancePreview?: GenericPreviewItem[];
@@ -140,7 +187,10 @@ type Props = {
   onOpenCivilopedia?: () => void;
   onOpenCountryCustomization?: () => void;
   onOpenBudget: () => void;
-  onOpenBuildings: () => void;
+  onOpenBuildingOverview?: () => void;
+  onOpenBuildingConstruction?: (buildingId: string) => void;
+  onCancelConstructionProject?: (item: ConstructionCancelPayload) => void;
+  onFocusConstructionHex?: (hexId: HexId) => void;
   onOpenPopulation: () => void;
   onOpenMarket: () => void;
   onOpenGlobalMarket: () => void;
@@ -180,6 +230,7 @@ const workspaceTabDescriptors: Array<{ key: WorkspaceTabKey; labelKey: UiTextKey
   { key: "summary", labelKey: "shell.workspaceTab.summary", icon: Users },
   { key: "records", labelKey: "shell.workspaceTab.records", icon: BookOpen },
   { key: "trade", labelKey: "shell.workspaceTab.trade", icon: ArrowDownUp },
+  { key: "buildings", labelKey: "shell.workspaceTab.buildings", icon: Building2 },
 ];
 
 type ResourceLedgerChipSummary = {
@@ -207,9 +258,12 @@ export function StrategyShell(props: Props) {
   const { t } = useUiText();
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTabKey>("actions");
   const activeMode = modeDescriptors.find((mode) => mode.key === props.activeMode) ?? modeDescriptors[0];
-  const activeActions = getModeActions(props.activeMode, props);
-  const availableWorkspaceTabs =
-    props.activeMode === "market" ? workspaceTabDescriptors : workspaceTabDescriptors.filter((tab) => tab.key !== "trade");
+  const activeActions = getModeActions(props.activeMode, props, () => setWorkspaceTab("buildings"));
+  const availableWorkspaceTabs = workspaceTabDescriptors.filter((tab) => {
+    if (tab.key === "trade") return props.activeMode === "market";
+    if (tab.key === "buildings") return props.activeMode === "construction";
+    return true;
+  });
   const activeWorkspaceTab = availableWorkspaceTabs.find((tab) => tab.key === workspaceTab) ?? availableWorkspaceTabs[0] ?? workspaceTabDescriptors[0];
   const resourceLedgerSummaries = buildResourceLedgerSummaries({
     countryId: props.countryId,
@@ -410,6 +464,19 @@ export function StrategyShell(props: Props) {
                     <MarketTradeOverview rows={props.marketTradeRows ?? []} loading={Boolean(props.marketTradeLoading)} />
                   </div>
                 ) : null}
+
+                {workspaceTab === "buildings" && props.activeMode === "construction" ? (
+                  <div className="arc-strategy-tab-panel">
+                    <ConstructionBuildingList
+                      scenarioId={props.scenarioId}
+                      buildings={props.buildingEntries ?? []}
+                      industries={props.industryEntries ?? []}
+                      sectors={props.sectorEntries ?? []}
+                      disabledReason={props.countryId ? null : t("shell.buildings.noCountry")}
+                      onSelect={props.onOpenBuildingConstruction}
+                    />
+                  </div>
+                ) : null}
               </div>
             </aside>
           </motion.div>
@@ -440,19 +507,15 @@ function ModePreview({ mode, props }: { mode: StrategyMode; props: Props }) {
   }
   if (mode === "construction") {
     return (
-      <section className="arc-strategy-preview">
-        <div className="arc-strategy-preview-header">
-          <span>{t("shell.preview.constructionQueue")}</span>
-          <button type="button" onClick={props.onOpenBuildings}>{t("shell.preview.open")}</button>
-        </div>
-        <div className="mt-2 grid gap-2">
-          {(props.constructionQueuePreview ?? []).length > 0 ? (
-            props.constructionQueuePreview?.map((item) => <ConstructionPreviewRow key={`${item.regionId}:${item.buildingId}`} item={item} />)
-          ) : (
-            <EmptyPreview text={t("shell.preview.noConstruction")} />
-          )}
-        </div>
-      </section>
+      <ConstructionQueueList
+        scenarioId={props.scenarioId}
+        items={props.constructionQueuePreview ?? []}
+        industries={props.industryEntries ?? []}
+        sectors={props.sectorEntries ?? []}
+        cancelingKey={props.cancelingConstructionQueueKey ?? null}
+        onCancel={props.onCancelConstructionProject}
+        onFocusHex={props.onFocusConstructionHex}
+      />
     );
   }
   if (mode === "colonization") {
@@ -591,14 +654,51 @@ function StoryPreviewRow({ item }: { item: NonNullable<Props["storyPreview"]>[nu
   );
 }
 
-function ConstructionPreviewRow({ item }: { item: NonNullable<Props["constructionQueuePreview"]>[number] }) {
+function ConstructionPreviewRow({
+  item,
+  scenarioId,
+  canceling,
+  onRequestCancel,
+  onFocusHex,
+}: {
+  item: NonNullable<Props["constructionQueuePreview"]>[number];
+  scenarioId?: string | null;
+  canceling: boolean;
+  onRequestCancel?: (target: ConstructionCancelConfirmTarget) => void;
+  onFocusHex?: (hexId: HexId) => void;
+}) {
+  const { t } = useUiText();
+  const cancelTarget =
+    item.source === "queued" && item.queueId
+      ? { source: "queued" as const, regionId: item.regionId, queueId: item.queueId, targetHexId: item.targetHexId, buildingId: item.buildingId }
+      : item.source === "pending" && item.orderId
+        ? { source: "pending" as const, orderId: item.orderId }
+        : null;
   return (
-    <div className="arc-strategy-construction-row">
-      <div className="min-w-0">
-        <div className="truncate text-sm font-bold">{item.buildingName}</div>
-        <div className="mt-0.5 truncate text-xs text-[var(--arc-color-atlas-muted)]">{item.regionId}</div>
-      </div>
-      <div className="w-28">
+    <motion.div
+      className="arc-strategy-construction-row"
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.14 }}
+    >
+      <BuildingAtlasIcon
+        scenarioId={scenarioId}
+        buildingId={item.buildingId}
+        state="underConstruction"
+        className="arc-strategy-building-list-icon"
+      />
+      <span className="arc-strategy-building-list-main">
+        <span className="arc-strategy-building-list-name">{item.name}</span>
+        <span className="arc-strategy-building-list-effects">{item.regionId}</span>
+        <span className="arc-strategy-construction-row-owner">
+          <span className="arc-strategy-construction-row-owner-icon" aria-hidden="true">
+            {item.ownerIconUrl ? <img src={item.ownerIconUrl} alt="" /> : item.ownerName.slice(0, 1).toUpperCase()}
+          </span>
+          <span>{item.ownerName}</span>
+        </span>
+      </span>
+      <div className="arc-strategy-construction-row-progress">
         <div className="flex justify-between text-[10px] text-[var(--arc-color-atlas-muted)]">
           <span>{Math.round(item.progressPct)}%</span>
           <span>{formatCompact(item.remainingConstruction)}</span>
@@ -607,12 +707,363 @@ function ConstructionPreviewRow({ item }: { item: NonNullable<Props["constructio
           <div className="h-full bg-[var(--arc-color-atlas-primary)]" style={{ width: `${Math.max(0, Math.min(100, item.progressPct))}%` }} />
         </div>
       </div>
-    </div>
+      <div className="arc-strategy-construction-row-actions">
+        <Tooltip content={t("buildings.cancelConstructionTooltip")} placement="top">
+          <button
+            type="button"
+            className="arc-strategy-construction-row-action arc-strategy-construction-row-action--danger"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (cancelTarget) {
+                onRequestCancel?.({
+                  key: item.source === "queued" ? `${item.regionId}:${item.queueId ?? ""}` : item.orderId ?? item.id,
+                  payload: cancelTarget,
+                  buildingName: item.name,
+                  ownerName: item.ownerName,
+                  ownerIconUrl: item.ownerIconUrl,
+                  regionId: item.regionId,
+                  targetHexId: item.targetHexId,
+                });
+              }
+            }}
+            disabled={!onRequestCancel || !cancelTarget || canceling}
+            aria-label={t("buildings.cancelConstructionTooltip")}
+          >
+            <X size={13} aria-hidden="true" />
+          </button>
+        </Tooltip>
+        <Tooltip content={t("buildings.focusConstructionHexTooltip")} placement="top">
+          <button
+            type="button"
+            className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary"
+            onClick={(event) => {
+              event.stopPropagation();
+              onFocusHex?.(item.targetHexId);
+            }}
+            disabled={!onFocusHex}
+            aria-label={t("buildings.focusConstructionHexTooltip")}
+          >
+            <Crosshair size={13} aria-hidden="true" />
+          </button>
+        </Tooltip>
+      </div>
+    </motion.div>
   );
 }
 
 function EmptyPreview({ text }: { text: string }) {
   return <div className="arc-strategy-empty-preview">{text}</div>;
+}
+
+function ConstructionBuildingList(props: {
+  scenarioId?: string | null;
+  buildings: BuildingListEntry[];
+  industries: BuildingCategoryEntry[];
+  sectors: BuildingCategoryEntry[];
+  disabledReason: string | null;
+  onSelect?: (buildingId: string) => void;
+}) {
+  const { t } = useUiText();
+  const groups = buildBuildingCategoryGroups(props.buildings, props.industries, props.sectors);
+  const [openGroupById, setOpenGroupById] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(groups.map((group, index) => [group.id, index === 0])),
+  );
+  useEffect(() => {
+    setOpenGroupById((current) => {
+      const next: Record<string, boolean> = {};
+      groups.forEach((group, index) => {
+        next[group.id] = current[group.id] ?? index === 0;
+      });
+      return next;
+    });
+  }, [groups.map((group) => group.id).join("|")]);
+
+  if (groups.length === 0) {
+    return <EmptyPreview text={t("shell.buildings.empty")} />;
+  }
+  return (
+    <section className="arc-strategy-building-list" aria-label={t("shell.workspaceTab.buildings")}>
+      {groups.map((group) => {
+        const open = openGroupById[group.id] ?? false;
+        return (
+          <div key={group.id} className="arc-strategy-building-category">
+            <button
+              type="button"
+              className="arc-strategy-building-category-header"
+              aria-expanded={open}
+              onClick={() => setOpenGroupById((current) => ({ ...current, [group.id]: !open }))}
+            >
+              <span className="arc-strategy-building-category-title">
+                {group.logoUrl ? <img src={group.logoUrl} alt="" className="arc-strategy-building-category-logo" /> : null}
+                <span>{group.label === "__uncategorized__" ? t("shell.buildings.uncategorized") : group.label}</span>
+              </span>
+              <span className="arc-strategy-building-category-count">{group.items.length}</span>
+              <ChevronDown size={15} className={`arc-strategy-building-category-chevron ${open ? "arc-strategy-building-category-chevron--open" : ""}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {open ? (
+                <motion.div
+                  className="arc-strategy-building-category-body"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                >
+                  <div className="arc-strategy-building-category-rows">
+                    {group.items.map((building, index) => {
+                      const constructionCost = Math.max(0, Number(building.costConstruction ?? 0));
+                      const ducatCost = Math.max(0, Number(building.costDucats ?? 0));
+                      const disabled = Boolean(props.disabledReason || !props.onSelect);
+                      return (
+                        <motion.button
+                          key={building.id}
+                          type="button"
+                          className={`arc-strategy-building-list-row ${disabled ? "arc-strategy-building-list-row--disabled" : ""}`}
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          whileHover={disabled ? undefined : { y: -2 }}
+                          whileFocus={disabled ? undefined : { y: -2 }}
+                          transition={{ duration: 0.14, delay: Math.min(index * 0.025, 0.12) }}
+                          onClick={() => {
+                            if (disabled) return;
+                            props.onSelect?.(building.id);
+                          }}
+                          disabled={disabled}
+                        >
+                          <BuildingAtlasIcon
+                            scenarioId={props.scenarioId}
+                            buildingId={building.id}
+                            state="working"
+                            className="arc-strategy-building-list-icon"
+                          />
+                          <span className="arc-strategy-building-list-main">
+                            <span className="arc-strategy-building-list-name">{building.name}</span>
+                            {props.disabledReason ? (
+                              <span className="arc-strategy-building-list-effects">{props.disabledReason}</span>
+                            ) : null}
+                          </span>
+                          <span className="arc-strategy-building-list-meta">
+                            <span className="arc-strategy-building-list-cost">
+                              <img src={BASE_RESOURCE_ICON_URLS.construction} alt="" />
+                              <span>{formatCompact(constructionCost)}</span>
+                            </span>
+                            <span className="arc-strategy-building-list-cost">
+                              <img src={BASE_RESOURCE_ICON_URLS.ducats} alt="" />
+                              <span>{formatCompact(ducatCost)}</span>
+                            </span>
+                          </span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function ConstructionQueueList(props: {
+  scenarioId?: string | null;
+  items: NonNullable<Props["constructionQueuePreview"]>;
+  industries: BuildingCategoryEntry[];
+  sectors: BuildingCategoryEntry[];
+  cancelingKey: string | null;
+  onCancel?: (item: ConstructionCancelPayload) => void;
+  onFocusHex?: (hexId: HexId) => void;
+}) {
+  const { t } = useUiText();
+  const [cancelConfirmTarget, setCancelConfirmTarget] = useState<ConstructionCancelConfirmTarget | null>(null);
+  const groups = buildBuildingCategoryGroups(props.items, props.industries, props.sectors);
+  const [openGroupById, setOpenGroupById] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(groups.map((group, index) => [group.id, index === 0])),
+  );
+  useEffect(() => {
+    setOpenGroupById((current) => {
+      const next: Record<string, boolean> = {};
+      groups.forEach((group, index) => {
+        next[group.id] = current[group.id] ?? index === 0;
+      });
+      return next;
+    });
+  }, [groups.map((group) => group.id).join("|")]);
+
+  if (groups.length === 0) {
+    return <EmptyPreview text={t("shell.preview.noConstruction")} />;
+  }
+  return (
+    <section className="arc-strategy-building-list" aria-label={t("shell.preview.constructionQueue")}>
+      {groups.map((group) => {
+        const open = openGroupById[group.id] ?? false;
+        return (
+          <div key={group.id} className="arc-strategy-building-category">
+            <button
+              type="button"
+              className="arc-strategy-building-category-header"
+              aria-expanded={open}
+              onClick={() => setOpenGroupById((current) => ({ ...current, [group.id]: !open }))}
+            >
+              <span className="arc-strategy-building-category-title">
+                {group.logoUrl ? <img src={group.logoUrl} alt="" className="arc-strategy-building-category-logo" /> : null}
+                <span>{group.label === "__uncategorized__" ? t("shell.buildings.uncategorized") : group.label}</span>
+              </span>
+              <span className="arc-strategy-building-category-count">{group.items.length}</span>
+              <ChevronDown size={15} className={`arc-strategy-building-category-chevron ${open ? "arc-strategy-building-category-chevron--open" : ""}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {open ? (
+                <motion.div
+                  className="arc-strategy-building-category-body"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                >
+                  <div className="arc-strategy-building-category-rows">
+                    {group.items.map((item) => (
+                      <ConstructionPreviewRow
+                        key={`${item.source}:${item.id}`}
+                        item={item}
+                        scenarioId={props.scenarioId}
+                        canceling={props.cancelingKey === (item.source === "queued" ? `${item.regionId}:${item.queueId ?? ""}` : item.orderId)}
+                        onRequestCancel={setCancelConfirmTarget}
+                        onFocusHex={props.onFocusHex}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+      {typeof document !== "undefined"
+        ? createPortal(
+            <AnimatePresence>
+              {cancelConfirmTarget ? (
+                <motion.div
+                  className="arc-strategy-cancel-confirm-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  role="presentation"
+                >
+                  <motion.div
+                    className="arc-hex-build-confirm"
+                    initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="arc-strategy-cancel-confirm-title"
+                  >
+                    <div className="arc-hex-build-confirm__header">
+                      <h2 id="arc-strategy-cancel-confirm-title" className="arc-hex-build-confirm__title">
+                        {t("buildings.cancelConstructionTitle")}
+                      </h2>
+                    </div>
+                    <div className="arc-hex-build-confirm__body">
+                      <div className="arc-hex-build-confirm__row">
+                        <span>{t("buildings.buildingLabel")}</span>
+                        <strong>{cancelConfirmTarget.buildingName}</strong>
+                      </div>
+                      <div className="arc-hex-build-confirm__row">
+                        <span>{t("hexMap.hex")}</span>
+                        <strong>{cancelConfirmTarget.targetHexId}</strong>
+                      </div>
+                      <div className="arc-hex-build-confirm__row">
+                        <span>{t("buildings.owner")}</span>
+                        <strong className="arc-hex-build-confirm__owner-current">
+                          <span className="arc-hex-build-confirm__owner-flag" aria-hidden="true">
+                            {cancelConfirmTarget.ownerIconUrl ? (
+                              <img src={cancelConfirmTarget.ownerIconUrl} alt="" />
+                            ) : (
+                              cancelConfirmTarget.ownerName.slice(0, 1).toUpperCase()
+                            )}
+                          </span>
+                          <span>{cancelConfirmTarget.ownerName}</span>
+                        </strong>
+                      </div>
+                    </div>
+                    <div className="arc-hex-build-confirm__actions">
+                      <button
+                        type="button"
+                        className="arc-strategy-workspace-action arc-strategy-workspace-action--primary arc-hex-build-confirm__action"
+                        onClick={() => setCancelConfirmTarget(null)}
+                      >
+                        <span>{t("common.cancel")}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="arc-strategy-workspace-action arc-hex-build-confirm__action arc-hex-build-confirm__action--cancel"
+                        onClick={() => {
+                          props.onCancel?.(cancelConfirmTarget.payload);
+                          setCancelConfirmTarget(null);
+                        }}
+                        disabled={!props.onCancel || props.cancelingKey === cancelConfirmTarget.key}
+                      >
+                        <span>{t("common.confirm")}</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>,
+            document.body,
+          )
+        : null}
+    </section>
+  );
+}
+
+function buildBuildingCategoryGroups<T extends { id: string; name: string; industryId?: string | null; sectorId?: string | null }>(
+  buildings: T[],
+  industries: BuildingCategoryEntry[],
+  sectors: BuildingCategoryEntry[],
+): Array<{ id: string; label: string; logoUrl: string | null; items: T[] }> {
+  const industryById = new Map(industries.map((entry) => [entry.id, entry] as const));
+  const sectorById = new Map(sectors.map((entry) => [entry.id, entry] as const));
+  const byId = new Map<string, { id: string; label: string; logoUrl: string | null; items: T[] }>();
+  for (const building of buildings) {
+    const rawCategoryId = building.industryId || building.sectorId || "__uncategorized__";
+    const industry = building.industryId ? industryById.get(building.industryId) ?? null : null;
+    const sector = building.sectorId ? sectorById.get(building.sectorId) ?? null : null;
+    const label =
+      rawCategoryId === "__uncategorized__"
+        ? "__uncategorized__"
+        : building.industryId
+          ? industry?.name ?? formatBuildingCategoryLabel(building.industryId)
+          : building.sectorId
+            ? sector?.name ?? formatBuildingCategoryLabel(building.sectorId)
+            : "__uncategorized__";
+    const logoUrl = industry?.logoUrl ?? sector?.logoUrl ?? null;
+    const group = byId.get(rawCategoryId) ?? { id: rawCategoryId, label, logoUrl, items: [] };
+    if (!group.logoUrl && logoUrl) group.logoUrl = logoUrl;
+    group.items.push(building);
+    byId.set(rawCategoryId, group);
+  }
+  return [...byId.values()]
+    .map((group) => ({
+      ...group,
+      items: [...group.items].sort((a, b) => a.name.localeCompare(b.name, "ru")),
+    }))
+    .sort((a, b) => {
+      if (a.id === "__uncategorized__") return 1;
+      if (b.id === "__uncategorized__") return -1;
+      return a.label.localeCompare(b.label, "ru");
+    });
+}
+
+function formatBuildingCategoryLabel(id: string): string {
+  const withoutPrefix = id.includes(":") ? id.slice(id.indexOf(":") + 1) : id;
+  return withoutPrefix
+    .split(/[_-]+/g)
+    .filter(Boolean)
+    .map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
 }
 
 function MarketTradeOverview({ rows, loading }: { rows: MarketTradeOverviewRow[]; loading: boolean }) {
@@ -880,7 +1331,7 @@ function DashboardSection(props: {
   );
 }
 
-function getModeActions(mode: StrategyMode, props: Props): ActionItem[] {
+function getModeActions(mode: StrategyMode, props: Props, openBuildingsTab: () => void): ActionItem[] {
   if (mode === "overview") {
     return [
       { key: "colonization", labelKey: "shell.action.colonization", descriptionKey: "shell.action.colonizationDescription", icon: Flag, onClick: () => props.onModeChange("colonization"), tone: "primary" },
@@ -892,7 +1343,8 @@ function getModeActions(mode: StrategyMode, props: Props): ActionItem[] {
   }
   if (mode === "construction") {
     return [
-      { key: "buildings", labelKey: "shell.action.buildings", descriptionKey: "shell.action.buildingsDescription", icon: Building2, onClick: props.onOpenBuildings, tone: "primary" },
+      { key: "buildings", labelKey: "shell.action.buildings", descriptionKey: "shell.action.buildingsDescription", icon: Building2, onClick: openBuildingsTab, tone: "primary" },
+      { key: "building-overview", labelKey: "shell.action.buildingOverview", descriptionKey: "shell.action.buildingOverviewDescription", icon: Landmark, onClick: props.onOpenBuildingOverview ?? openBuildingsTab },
       { key: "budget", labelKey: "shell.action.budget", descriptionKey: "shell.action.budgetDescription", icon: Wallet, onClick: props.onOpenBudget },
     ];
   }

@@ -275,6 +275,7 @@ registerServerCoreRouteRuntime({
   getWorldStateVersion: () => worldStateVersion,
   turnSessionRuntime,
   contentCatalogRuntime,
+  getActiveScenarioId: () => activeScenarioId,
   getGameSettings: () => gameSettings,
   getAiControlledCountryIds: () => new Set(aiControlledCountryIds),
   getCountryResources: (countryId) => worldBase.resourcesByCountry[countryId] ?? null,
@@ -673,7 +674,12 @@ function createAiRuntimeCandidateProviders(): AiRuntimeCandidateProvider[] {
           buildings: gameSettings.content.buildings,
           maxBuildCompletionTurns: aiSettings.maxBuildCompletionTurns,
           isBuildingUnlockedForCountry: progressionRuntime.isBuildingUnlockedForCountry,
-          getRegionBuildRestriction: buildingRuntime.getHexBuildRestriction,
+          selectBuildTargetHexId: (building, regionId, countryId) =>
+            mapRuntime.getHexIndex()
+              .filter((hex) => hex.regionId === regionId)
+              .map((hex) => hex.id)
+              .sort((left, right) => left.localeCompare(right, "en"))
+              .find((hexId) => !buildingRuntime.getHexBuildRestriction(building, hexId, regionId, countryId)) ?? null,
         }),
     },
   ];

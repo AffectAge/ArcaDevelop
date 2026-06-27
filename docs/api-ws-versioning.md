@@ -27,6 +27,18 @@ Current compact world-delta fields include `j` for full-list `diplomacyProposals
 ## Error Codes
 
 Do not rely on raw human-readable server messages. Use machine-readable `code` values and localize UI messages on the client.
+
+## Build Order Contract
+
+`BUILD` orders require `targetHexId` in addition to `countryId`, `regionId`, and `payload.buildingId`. The server rejects missing values with `BUILD_TARGET_HEX_REQUIRED` and validates that the target hex is in the requested region, controlled by the requester, eligible for the selected building placement rules, and not occupied by another building instance or construction project.
+
+`RegionConstructionProject.targetHexId` and `BuildingInstance.targetHexId` are part of the persisted and delta-visible state. Upgrade and auto-upgrade projects preserve the existing instance hex. Persisted projects or instances without `targetHexId` are not migrated to invented hexes; runtime normalizers remove them as incompatible legacy state.
+
+## Scenario Building Atlas Assets
+
+Building visual URLs are not part of the building content contract. Clients derive authored building atlas URLs from the active scenario id and building id as `/scenario-assets/<scenarioId>/assets/buildings/<sanitizedBuildingId>.png`. `GET /game-settings/public` includes `activeScenarioId` so unauthenticated and player clients can compute scenario-owned asset paths without admin metadata access.
+
+The server statically serves `/scenario-assets/:scenarioId/assets/buildings/*` from `scenarios/<scenarioId>/assets/buildings/`; unsafe scenario ids return 404. Scenario validation requires each building atlas to be a readable PNG sized `256x64`.
 ## Resource Ledger Deltas
 
 `WorldBase.resourceLedgerByTurn` stores bounded persisted `ResourceFlow[]` history. World deltas use the compact `resourceLedgerByTurn` delta field for newly changed or pruned ledger turns. Bootstrap/resync may include the bounded snapshot, but normal turn deltas must not rebroadcast full history.

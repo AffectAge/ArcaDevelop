@@ -281,6 +281,7 @@ function makeBuildingInstance(overrides?: Partial<BuildingInstance>): BuildingIn
   return {
     instanceId: "building-instance:mine",
     buildingId: "building:mine",
+    targetHexId: "hex:0:0",
     owner: { type: "state", countryId: "country:a" },
     createdTurnId: 1,
     level: 1,

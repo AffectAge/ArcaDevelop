@@ -379,6 +379,7 @@ export function registerCountryBuildRoutes(
       owner: selection.targetInstance.owner,
       projectType: "upgrade",
       targetInstanceId: selection.targetInstance.instanceId,
+      targetHexId: selection.targetInstance.targetHexId,
       progressConstruction: 0,
       costConstruction: costs.costConstruction,
       costDucats: costs.costDucats,

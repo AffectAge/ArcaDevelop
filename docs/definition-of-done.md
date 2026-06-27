@@ -15,6 +15,7 @@ Use this checklist for implementation tasks.
 - Arcawiki is updated when player-facing mechanics change.
 - Technical docs are updated when architecture, data format, protocol, or operations change.
 - Performance impact is considered for map, resolver, AI, WS, scenario loading, and hot paths.
+- Building mechanics that appear on the map must include `targetHexId` validation, localized placement errors, map-visible construction/completed state, and tooltip-ready placement reasons.
 
 ## Final Report
 

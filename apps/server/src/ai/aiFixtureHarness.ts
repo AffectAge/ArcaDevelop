@@ -35,6 +35,7 @@ export function createAiFixtureWorld(overrides: AiFixtureWorldOverrides = {}): W
         {
           instanceId: "building:alpha-farm:1",
           buildingId: "building:farm",
+          targetHexId: "hex:0:0",
           owner: { type: "state", countryId: "country:alpha" },
           createdTurnId: 1,
           level: 1,
@@ -50,6 +51,7 @@ export function createAiFixtureWorld(overrides: AiFixtureWorldOverrides = {}): W
           queueId: "queue:alpha-farm:upgrade",
           requestedByCountryId: "country:alpha",
           buildingId: "building:farm",
+          targetHexId: "hex:0:0",
           owner: { type: "state", countryId: "country:alpha" },
           projectType: "upgrade",
           targetInstanceId: "building:alpha-farm:1",

@@ -65,6 +65,7 @@ type ServerCoreRouteRegistrationRuntimeParams = {
   getWorldStateVersion: () => number;
   getWsDeltaSizeMetrics: () => WsDeltaSizeMetrics;
   getWorldDeltaHistory: () => Parameters<typeof getWorldDeltaMemoryStatus>[0];
+  getActiveScenarioId: () => string;
   getGameSettings: () => GameSettings;
   getAiControlledCountryIds: () => Set<string>;
   getCountryResources: (countryId: string) => ResourceTotals | null;
@@ -128,6 +129,7 @@ export function registerServerCoreRouteRuntime(params: ServerCoreRouteRegistrati
     getCountryResourceNetByTurn: params.getCountryResourceNetByTurn,
     getLastLoginAt: (countryId) => params.sessionStateRuntime.lastLoginAtByCountryId.get(countryId) ?? null,
     getCurrentTurnStartedAtMs: params.turnSessionRuntime.getCurrentTurnStartedAtMs,
+    getActiveScenarioId: params.getActiveScenarioId,
     getGameSettings: params.getGameSettings,
     normalizeCivilopediaEntries,
     normalizeCivilopediaCategories,

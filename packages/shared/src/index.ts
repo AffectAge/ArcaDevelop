@@ -10,5 +10,6 @@ export * from "./contracts/world";
 export * from "./contracts/ws";
 export * from "./contracts/auth";
 export * from "./contracts/hex-map";
+export * from "./buildingPlacement";
 export * from "./hexGeometry";
 export * from "./hexMapGenerator";

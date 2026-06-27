@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join, relative, resolve, sep } from "node:path";
+import { imageSize } from "image-size";
 import {
   assertScenarioDefinesShape,
   normalizeScenarioAiDefines,
@@ -34,6 +35,7 @@ export type ScenarioValidationIssueCode =
   | "INVALID_DECISION_DEFINITION"
   | "INVALID_EVENT_DEFINITION"
   | "INVALID_JOURNAL_DEFINITION"
+  | "INVALID_BUILDING_ATLAS"
   | "BROKEN_REFERENCE"
   | "MISSING_LOCALIZATION_KEY"
   | "MISSING_REGION_MEMBERSHIP"
@@ -307,6 +309,7 @@ export async function validateScenarioDirectory(
   validateEventDefinitions(root, loadedEntities, localizationKeys, issues);
   validateJournalDefinitions(root, loadedEntities, localizationKeys, issues);
   validateEntityLocalization(root, loadedEntities, localizationKeys, issues);
+  await validateBuildingAtlases(root, loadedEntities, issues);
   await validateGeneratedManifest(root, summary, issues, options.requireGeneratedIndexes === true);
 
   return {
@@ -507,6 +510,43 @@ function validateDuplicateIds(entities: LoadedEntity[], issues: ScenarioValidati
     }
     seen.set(entity.id, entity);
   }
+}
+
+async function validateBuildingAtlases(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
+  for (const building of entities.filter((entity) => entity.kind === "building")) {
+    const relativePath = `assets/buildings/${sanitizeBuildingAtlasId(building.id)}.png`;
+    const atlasPath = join(root, relativePath);
+    if (!existsSync(atlasPath)) {
+      issues.push({
+        code: "MISSING_REQUIRED_FILE",
+        path: relativePath,
+        message: `Building ${building.id} requires a 256x64 PNG atlas at ${relativePath}.`,
+      });
+      continue;
+    }
+    try {
+      const dimensions = imageSize(await readFile(atlasPath));
+      const width = dimensions.width ?? 0;
+      const height = dimensions.height ?? 0;
+      if (dimensions.type !== "png" || width !== 256 || height !== 64) {
+        issues.push({
+          code: "INVALID_BUILDING_ATLAS",
+          path: relativePath,
+          message: `Building atlas must be a PNG sized 256x64; received ${dimensions.type ?? "unknown"} ${width}x${height}.`,
+        });
+      }
+    } catch {
+      issues.push({
+        code: "INVALID_BUILDING_ATLAS",
+        path: relativePath,
+        message: "Building atlas must be a readable PNG sized 256x64.",
+      });
+    }
+  }
+}
+
+function sanitizeBuildingAtlasId(buildingId: string): string {
+  return buildingId.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
 function validateCountryAuthoringFields(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {

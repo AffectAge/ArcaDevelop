@@ -14,6 +14,7 @@ export type OrderBase = {
 export type BuildOrder = OrderBase & {
   type: "BUILD";
   regionId: string;
+  targetHexId: HexId;
 };
 
 export type BudgetOrder = OrderBase & {

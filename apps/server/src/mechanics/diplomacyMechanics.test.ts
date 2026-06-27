@@ -282,6 +282,7 @@ describe("diplomacyMechanics", () => {
       },
       regionOwner: { "region:a": "country:a" },
       regionController: { "region:a": "country:a" },
+      regionBuildingsByRegion: {},
       colonyProgressByRegion: { "region:a": { "country:a": 5 } },
     };
     const ensured: string[] = [];

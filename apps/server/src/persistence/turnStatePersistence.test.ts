@@ -58,6 +58,7 @@ function createOrder(id: string): Order {
     playerId: "player:a",
     countryId: "country:a",
     regionId: "1",
+    targetHexId: "hex:0:0",
     type: "BUILD",
     payload: {},
     createdAt: "2026-01-01T00:00:00.000Z",

@@ -1382,6 +1382,20 @@ export type UiTextKey =
   | "map.controls.unlockInteraction"
   | "map.controls.enableEdgeScroll"
   | "map.controls.disableEdgeScroll"
+  | "map.layer.hexGrid"
+  | "map.layer.hexGridTooltip"
+  | "map.layer.countryFill"
+  | "map.layer.countryFillTooltip"
+  | "map.layer.countryBorders"
+  | "map.layer.countryBordersTooltip"
+  | "map.layer.regionFill"
+  | "map.layer.regionFillTooltip"
+  | "map.layer.buildings"
+  | "map.layer.buildingsTooltip"
+  | "map.layer.armies"
+  | "map.layer.armiesTooltip"
+  | "map.layer.countryLabels"
+  | "map.layer.countryLabelsTooltip"
   | "map.mode.overview"
   | "map.mode.overviewTooltip"
   | "map.mode.colonization"
@@ -1441,6 +1455,7 @@ export type UiTextKey =
   | "hexMap.tiles"
   | "hexMap.seed"
   | "hexMap.selected"
+  | "hexMap.hex"
   | "hexMap.hexTitle"
   | "hexMap.region"
   | "hexMap.terrain"
@@ -2288,6 +2303,18 @@ export type UiTextKey =
   | "buildings.filterStatusBuilt"
   | "buildings.filterStatusConstruction"
   | "buildings.filters"
+  | "buildings.hexPlacementConfirmTitle"
+  | "buildings.hexPlacementCancelAction"
+  | "buildings.hexPlacementConfirmAction"
+  | "buildings.hexPlacementHud"
+  | "buildings.hexPlacementReasonFeature"
+  | "buildings.hexPlacementReasonInvalid"
+  | "buildings.hexPlacementReasonOccupied"
+  | "buildings.hexPlacementReasonRegion"
+  | "buildings.hexPlacementReasonTerrain"
+  | "buildings.hexPlacementReasonWater"
+  | "buildings.hexPlacementRequired"
+  | "buildings.hexPlacementStarted"
   | "buildings.industryTitle"
   | "buildings.openConstruction"
   | "buildings.regionCounts"
@@ -2315,6 +2342,7 @@ export type UiTextKey =
   | "buildings.cancelQueuedProjectTooltip"
   | "buildings.cancelConstructionTitle"
   | "buildings.cancelConstructionTooltip"
+  | "buildings.focusConstructionHexTooltip"
   | "buildings.constructionCost"
   | "buildings.constructionParameters"
   | "buildings.constructionPointsUnit"
@@ -2468,6 +2496,33 @@ export type UiTextKey =
   | "buildings.wages"
   | "buildings.workforce"
   | "buildings.workersLabel"
+  | "buildingOverview.allIndustries"
+  | "buildingOverview.allOwners"
+  | "buildingOverview.allRegions"
+  | "buildingOverview.allSectors"
+  | "buildingOverview.allStatuses"
+  | "buildingOverview.emptyCountry"
+  | "buildingOverview.emptyFilters"
+  | "buildingOverview.expenses"
+  | "buildingOverview.filters"
+  | "buildingOverview.industryFilter"
+  | "buildingOverview.net"
+  | "buildingOverview.ownerFilter"
+  | "buildingOverview.productivity"
+  | "buildingOverview.regionFilter"
+  | "buildingOverview.revenue"
+  | "buildingOverview.search"
+  | "buildingOverview.searchPlaceholder"
+  | "buildingOverview.sectorFilter"
+  | "buildingOverview.stateOwnedOutsideControl"
+  | "buildingOverview.statusFilter"
+  | "buildingOverview.statusInactive"
+  | "buildingOverview.statusConstruction"
+  | "buildingOverview.statusPending"
+  | "buildingOverview.statusQueued"
+  | "buildingOverview.statusWorking"
+  | "buildingOverview.subtitle"
+  | "buildingOverview.title"
   | "budget.category.baseIncome"
   | "budget.category.colonization"
   | "budget.category.construction"
@@ -2512,6 +2567,8 @@ export type UiTextKey =
   | "shell.action.budgetDescription"
   | "shell.action.buildings"
   | "shell.action.buildingsDescription"
+  | "shell.action.buildingOverview"
+  | "shell.action.buildingOverviewDescription"
   | "shell.action.colonization"
   | "shell.action.colonizationDescription"
   | "shell.action.customization"
@@ -2793,10 +2850,14 @@ export type UiTextKey =
   | "shell.worldResyncFailed"
   | "shell.worldResynced"
   | "shell.workspaceTab.actions"
+  | "shell.workspaceTab.buildings"
   | "shell.workspaceTab.records"
   | "shell.workspaceTab.summary"
   | "shell.workspaceTab.trade"
   | "shell.workspaceTabs"
+  | "shell.buildings.empty"
+  | "shell.buildings.noCountry"
+  | "shell.buildings.uncategorized"
   | "resourceLedger.category.base"
   | "resourceLedger.category.colonization"
   | "resourceLedger.category.construction"
@@ -4242,6 +4303,20 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.controls.unlockInteraction": "Unlock pan/zoom",
     "map.controls.enableEdgeScroll": "Enable edge scrolling",
     "map.controls.disableEdgeScroll": "Disable edge scrolling",
+    "map.layer.hexGrid": "Hex grid",
+    "map.layer.hexGridTooltip": "Show hex grid lines when zoomed in",
+    "map.layer.countryFill": "Country fill",
+    "map.layer.countryFillTooltip": "Show country color fill",
+    "map.layer.countryBorders": "Country borders",
+    "map.layer.countryBordersTooltip": "Show borders between countries",
+    "map.layer.regionFill": "Regions",
+    "map.layer.regionFillTooltip": "Show state-region fill and borders",
+    "map.layer.buildings": "Buildings",
+    "map.layer.buildingsTooltip": "Show buildings and construction projects on the map",
+    "map.layer.armies": "Armies",
+    "map.layer.armiesTooltip": "Show army map elements",
+    "map.layer.countryLabels": "Country names",
+    "map.layer.countryLabelsTooltip": "Show country names on the map",
     "map.mode.overview": "Overview",
     "map.mode.overviewTooltip": "Select and inspect hexes and regions.",
     "map.mode.colonization": "Colonization",
@@ -4301,6 +4376,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.tiles": "Hexes",
     "hexMap.seed": "Seed",
     "hexMap.selected": "Selected hex",
+    "hexMap.hex": "Hex:",
     "hexMap.hexTitle": "Hex {id}",
     "hexMap.region": "Region",
     "hexMap.terrain": "Terrain",
@@ -5148,6 +5224,18 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.filterStatusBuilt": "Built",
     "buildings.filterStatusConstruction": "Under construction",
     "buildings.filters": "Filters",
+    "buildings.hexPlacementConfirmTitle": "Confirm construction",
+    "buildings.hexPlacementCancelAction": "Cancel",
+    "buildings.hexPlacementConfirmAction": "Confirm",
+    "buildings.hexPlacementHud": "Choose a highlighted hex. Esc or right click cancels.",
+    "buildings.hexPlacementReasonFeature": "This feature does not match the building requirements.",
+    "buildings.hexPlacementReasonInvalid": "This hex cannot receive the selected building.",
+    "buildings.hexPlacementReasonOccupied": "This hex already has a building or construction project.",
+    "buildings.hexPlacementReasonRegion": "Your country does not control this region.",
+    "buildings.hexPlacementReasonTerrain": "This terrain does not match the building requirements.",
+    "buildings.hexPlacementReasonWater": "This water type does not match the building requirements.",
+    "buildings.hexPlacementRequired": "Choose a map hex before adding a building.",
+    "buildings.hexPlacementStarted": "Choose a construction hex",
     "buildings.industryTitle": "Industry",
     "buildings.openConstruction": "Open construction",
     "buildings.regionCounts": "Built: {built}, queued: {queued}",
@@ -5175,6 +5263,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.cancelQueuedProjectTooltip": "Remove the project from the construction queue",
     "buildings.cancelConstructionTitle": "Cancel construction?",
     "buildings.cancelConstructionTooltip": "Cancel construction",
+    "buildings.focusConstructionHexTooltip": "Center the camera on the construction hex",
     "buildings.constructionCost": "Construction cost",
     "buildings.constructionParameters": "Construction parameters",
     "buildings.constructionPointsUnit": "construction points",
@@ -5328,6 +5417,33 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.wages": "Wages",
     "buildings.workforce": "Workforce",
     "buildings.workersLabel": "Workers:",
+    "buildingOverview.allIndustries": "All industries",
+    "buildingOverview.allOwners": "All owners",
+    "buildingOverview.allRegions": "All regions",
+    "buildingOverview.allSectors": "All sectors",
+    "buildingOverview.allStatuses": "All statuses",
+    "buildingOverview.emptyCountry": "The country has no buildings or construction projects yet.",
+    "buildingOverview.emptyFilters": "No buildings match the selected filters.",
+    "buildingOverview.expenses": "Expenses",
+    "buildingOverview.filters": "Building overview filters",
+    "buildingOverview.industryFilter": "Industry",
+    "buildingOverview.net": "Net",
+    "buildingOverview.ownerFilter": "Owner",
+    "buildingOverview.productivity": "Productivity",
+    "buildingOverview.regionFilter": "Region",
+    "buildingOverview.revenue": "Revenue",
+    "buildingOverview.search": "Search",
+    "buildingOverview.searchPlaceholder": "Name, hex, owner, id",
+    "buildingOverview.sectorFilter": "Sector",
+    "buildingOverview.stateOwnedOutsideControl": "State-owned outside control",
+    "buildingOverview.statusFilter": "Status",
+    "buildingOverview.statusInactive": "Inactive",
+    "buildingOverview.statusConstruction": "Construction",
+    "buildingOverview.statusPending": "Pending",
+    "buildingOverview.statusQueued": "Under construction",
+    "buildingOverview.statusWorking": "Active",
+    "buildingOverview.subtitle": "Buildings and construction projects across controlled regions, plus state-owned buildings outside control.",
+    "buildingOverview.title": "Building overview",
     "budget.category.baseIncome": "State base income",
     "budget.category.colonization": "Colonization support",
     "budget.category.construction": "Construction projects",
@@ -5372,6 +5488,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.budgetDescription": "Review treasury pressure, subsidies, and current-turn expenses.",
     "shell.action.buildings": "Regional construction",
     "shell.action.buildingsDescription": "Open the selected region's buildings and construction queue.",
+    "shell.action.buildingOverview": "Building overview",
+    "shell.action.buildingOverviewDescription": "Review and manage buildings and construction projects across the country.",
     "shell.action.colonization": "Colonization",
     "shell.action.colonizationDescription": "Switch to the colonization lens, then select a neutral region on the map.",
     "shell.action.customization": "Country identity",
@@ -5681,10 +5799,14 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.worldResyncFailed": "Failed to synchronize world; reloading",
     "shell.worldResynced": "World state synchronized again",
     "shell.workspaceTab.actions": "Available actions",
+    "shell.workspaceTab.buildings": "Building construction",
     "shell.workspaceTab.records": "Records",
     "shell.workspaceTab.summary": "Country summary",
     "shell.workspaceTab.trade": "Trade",
     "shell.workspaceTabs": "Workspace tabs",
+    "shell.buildings.empty": "No buildings are available.",
+    "shell.buildings.noCountry": "Choose a country before construction.",
+    "shell.buildings.uncategorized": "Other buildings",
     "turnStatus.blockedPermanent": "Blocked permanently",
     "turnStatus.blockedUntilTime": "Blocked until {time}",
     "turnStatus.blockedUntilTurn": "Blocked until turn {turn}",
@@ -7101,6 +7223,20 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.controls.unlockInteraction": "Разблокировать pan/zoom",
     "map.controls.enableEdgeScroll": "Включить прокрутку у края",
     "map.controls.disableEdgeScroll": "Выключить прокрутку у края",
+    "map.layer.hexGrid": "Сетка гексов",
+    "map.layer.hexGridTooltip": "Показывать линии сетки гексов при приближении",
+    "map.layer.countryFill": "Заливка государств",
+    "map.layer.countryFillTooltip": "Показывать цветовую заливку государств",
+    "map.layer.countryBorders": "Границы государств",
+    "map.layer.countryBordersTooltip": "Показывать границы между государствами",
+    "map.layer.regionFill": "Регионы",
+    "map.layer.regionFillTooltip": "Показывать заливку и границы государственных регионов",
+    "map.layer.buildings": "Здания",
+    "map.layer.buildingsTooltip": "Показывать здания и строительные проекты на карте",
+    "map.layer.armies": "Армии",
+    "map.layer.armiesTooltip": "Показывать армейские элементы карты",
+    "map.layer.countryLabels": "Названия стран",
+    "map.layer.countryLabelsTooltip": "Показывать названия стран на карте",
     "map.mode.overview": "Обзор",
     "map.mode.overviewTooltip": "Выбирать и осматривать гексы и регионы.",
     "map.mode.colonization": "Колонизация",
@@ -7160,6 +7296,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.tiles": "Гексы",
     "hexMap.seed": "Сид",
     "hexMap.selected": "Выбранный гекс",
+    "hexMap.hex": "Гекс:",
     "hexMap.hexTitle": "Гекс {id}",
     "hexMap.region": "Регион",
     "hexMap.terrain": "Местность",
@@ -8007,6 +8144,18 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.filterStatusBuilt": "Построенные",
     "buildings.filterStatusConstruction": "Строящиеся",
     "buildings.filters": "Фильтры",
+    "buildings.hexPlacementConfirmTitle": "Подтвердить строительство",
+    "buildings.hexPlacementCancelAction": "Отменить",
+    "buildings.hexPlacementConfirmAction": "Подтвердить",
+    "buildings.hexPlacementHud": "Выберите подсвеченный гекс. Esc или ПКМ отменяют режим.",
+    "buildings.hexPlacementReasonFeature": "Особенность гекса не подходит требованиям здания.",
+    "buildings.hexPlacementReasonInvalid": "На этом гексе нельзя разместить выбранное здание.",
+    "buildings.hexPlacementReasonOccupied": "На этом гексе уже есть здание или строительный проект.",
+    "buildings.hexPlacementReasonRegion": "Ваша страна не контролирует этот регион.",
+    "buildings.hexPlacementReasonTerrain": "Местность гекса не подходит требованиям здания.",
+    "buildings.hexPlacementReasonWater": "Тип воды не подходит требованиям здания.",
+    "buildings.hexPlacementRequired": "Выберите гекс на карте перед добавлением здания.",
+    "buildings.hexPlacementStarted": "Выберите гекс для строительства",
     "buildings.industryTitle": "Индустрия",
     "buildings.openConstruction": "Открыть строительство",
     "buildings.regionCounts": "Построек: {built}, в очереди: {queued}",
@@ -8034,6 +8183,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.cancelQueuedProjectTooltip": "Удалить проект из очереди строительства",
     "buildings.cancelConstructionTitle": "Отменить строительство?",
     "buildings.cancelConstructionTooltip": "Отменить строительство",
+    "buildings.focusConstructionHexTooltip": "Центрировать камеру на гексе строительства",
     "buildings.constructionCost": "Стоимость строительства",
     "buildings.constructionParameters": "Общие параметры строительства",
     "buildings.constructionPointsUnit": "очков строительства",
@@ -8187,6 +8337,33 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.wages": "Зарплаты",
     "buildings.workforce": "Рабочая сила",
     "buildings.workersLabel": "Рабочие:",
+    "buildingOverview.allIndustries": "Все отрасли",
+    "buildingOverview.allOwners": "Все владельцы",
+    "buildingOverview.allRegions": "Все регионы",
+    "buildingOverview.allSectors": "Все секторы",
+    "buildingOverview.allStatuses": "Все статусы",
+    "buildingOverview.emptyCountry": "У страны пока нет зданий или проектов строительства.",
+    "buildingOverview.emptyFilters": "Нет зданий по выбранным фильтрам.",
+    "buildingOverview.expenses": "Расходы",
+    "buildingOverview.filters": "Фильтры обзора зданий",
+    "buildingOverview.industryFilter": "Отрасль",
+    "buildingOverview.net": "Итог",
+    "buildingOverview.ownerFilter": "Владелец",
+    "buildingOverview.productivity": "Производительность",
+    "buildingOverview.regionFilter": "Регион",
+    "buildingOverview.revenue": "Доход",
+    "buildingOverview.search": "Поиск",
+    "buildingOverview.searchPlaceholder": "Название, гекс, владелец, id",
+    "buildingOverview.sectorFilter": "Сектор",
+    "buildingOverview.stateOwnedOutsideControl": "Государственные вне контроля",
+    "buildingOverview.statusFilter": "Статус",
+    "buildingOverview.statusInactive": "Неактивна",
+    "buildingOverview.statusConstruction": "Стройка",
+    "buildingOverview.statusPending": "Приказано",
+    "buildingOverview.statusQueued": "Строится",
+    "buildingOverview.statusWorking": "Активна",
+    "buildingOverview.subtitle": "Здания и проекты в контролируемых регионах, плюс государственные здания вне контроля.",
+    "buildingOverview.title": "Обзор зданий",
     "budget.category.baseIncome": "Базовый доход государства",
     "budget.category.colonization": "Поддержка колонизаций",
     "budget.category.construction": "Строительные проекты",
@@ -8231,6 +8408,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.budgetDescription": "Проверить казну, субсидии и расходы текущего хода.",
     "shell.action.buildings": "Строительство региона",
     "shell.action.buildingsDescription": "Открыть здания выбранного региона и очередь строительства.",
+    "shell.action.buildingOverview": "Обзор зданий",
+    "shell.action.buildingOverviewDescription": "Посмотреть и управлять зданиями и проектами строительства по стране.",
     "shell.action.colonization": "Колонизация",
     "shell.action.colonizationDescription": "Переключиться на линзу колонизации, затем выбрать нейтральный регион на карте.",
     "shell.action.customization": "Облик страны",
@@ -8540,10 +8719,14 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.worldResyncFailed": "Не удалось синхронизировать мир, выполняется перезагрузка",
     "shell.worldResynced": "Состояние мира синхронизировано заново",
     "shell.workspaceTab.actions": "Доступные действия",
+    "shell.workspaceTab.buildings": "Строительство зданий",
     "shell.workspaceTab.records": "Записи",
     "shell.workspaceTab.summary": "Сводка страны",
     "shell.workspaceTab.trade": "Торговля",
     "shell.workspaceTabs": "Вкладки рабочей области",
+    "shell.buildings.empty": "Нет доступных построек.",
+    "shell.buildings.noCountry": "Выберите страну перед строительством.",
+    "shell.buildings.uncategorized": "Прочие здания",
     "turnStatus.blockedPermanent": "Заблокирована бессрочно",
     "turnStatus.blockedUntilTime": "Заблокирована до {time}",
     "turnStatus.blockedUntilTurn": "Заблокирована до хода {turn}",

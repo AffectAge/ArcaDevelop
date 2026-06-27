@@ -399,6 +399,7 @@ function makeProject(overrides?: Partial<RegionConstructionProject>): RegionCons
     queueId: "queue:a",
     requestedByCountryId: "country:a",
     buildingId: "building:a",
+    targetHexId: "hex:0:0",
     owner: { type: "state", countryId: "country:a" },
     projectType: "build",
     progressConstruction: 0,
@@ -413,6 +414,7 @@ function makeBuildingInstance(overrides?: Partial<BuildingInstance>): BuildingIn
   return {
     instanceId: "instance:a",
     buildingId: "building:a",
+    targetHexId: "hex:0:0",
     owner: { type: "state", countryId: "country:a" },
     createdTurnId: 1,
     level: 1,

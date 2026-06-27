@@ -168,8 +168,12 @@ function drawChunk(cells: MapLensRenderCell[], map: HexMapArtifact): DrawnChunk 
     if (cell.surfaceAlpha > 0) {
       base.poly(points, true).fill({ color: cell.tile.waterKind ? 0x315d6c : 0xf1dfb8, alpha: cell.surfaceAlpha });
     }
-    veil.poly(points, true).fill({ color: cell.tile.waterKind ? 0x071522 : 0x1d1b17, alpha: cell.tile.waterKind ? 0.76 : 0.86 });
-    fill.poly(points, true).fill({ color: cell.color, alpha: cell.alpha });
+    if (cell.terrainMute > 0 || cell.surfaceAlpha > 0 || cell.alpha > 0) {
+      veil.poly(points, true).fill({ color: cell.tile.waterKind ? 0x071522 : 0x1d1b17, alpha: cell.tile.waterKind ? 0.76 : 0.86 });
+    }
+    if (cell.alpha > 0) {
+      fill.poly(points, true).fill({ color: cell.color, alpha: cell.alpha });
+    }
     if (cell.pattern === "hatch" || cell.hatch) {
       drawHatch(fill, center.x, center.y, size, 0x2a2430, 0.28);
     } else if (cell.pattern === "stripe") {

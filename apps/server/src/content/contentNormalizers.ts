@@ -1,4 +1,4 @@
-import type { DivisionStats } from "@arcanorum/shared";
+import type { BuildingAdjacencyEffect, BuildingPlacementRules, DivisionStats } from "@arcanorum/shared";
 import {
   POPULATION_FALLBACK_KEY_BY_DIMENSION,
   POPULATION_FALLBACK_NAME_BY_DIMENSION,
@@ -430,6 +430,52 @@ export function normalizeOptionalFiniteNumber(input: unknown, min: number | null
   return Number(value.toFixed(3));
 }
 
+function normalizeBuildingPlacement(input: unknown): BuildingPlacementRules | null {
+  if (!input || typeof input !== "object") return null;
+  const source = input as Record<string, unknown>;
+  const placement: BuildingPlacementRules = {
+    allowedTerrains: normalizeStringList(source.allowedTerrains) as BuildingPlacementRules["allowedTerrains"],
+    deniedTerrains: normalizeStringList(source.deniedTerrains) as BuildingPlacementRules["deniedTerrains"],
+    allowedFeatures: normalizeStringList(source.allowedFeatures) as BuildingPlacementRules["allowedFeatures"],
+    deniedFeatures: normalizeStringList(source.deniedFeatures) as BuildingPlacementRules["deniedFeatures"],
+    allowedWaterKinds: normalizeStringList(source.allowedWaterKinds) as BuildingPlacementRules["allowedWaterKinds"],
+    deniedWaterKinds: normalizeStringList(source.deniedWaterKinds) as BuildingPlacementRules["deniedWaterKinds"],
+  };
+  return placement;
+}
+
+function normalizeBuildingAdjacencyEffects(input: unknown): BuildingAdjacencyEffect[] {
+  if (!Array.isArray(input)) return [];
+  const effects: BuildingAdjacencyEffect[] = [];
+  for (const raw of input) {
+    if (!raw || typeof raw !== "object") continue;
+    const source = raw as Record<string, unknown>;
+    const when = source.when && typeof source.when === "object" ? source.when as Record<string, unknown> : {};
+    const modifier = source.modifier && typeof source.modifier === "object" ? source.modifier as Record<string, unknown> : {};
+    const id = typeof source.id === "string" && source.id.trim().length > 0 ? source.id.trim() : "";
+    const operation = modifier.operation === "multiply" ? "multiply" : modifier.operation === "add" ? "add" : null;
+    const value = typeof modifier.value === "number" && Number.isFinite(modifier.value) ? Number(modifier.value.toFixed(6)) : null;
+    if (!id || !operation || value == null || modifier.target !== "building.throughput") continue;
+    effects.push({
+      id,
+      when: {
+        neighborTerrains: normalizeStringList(when.neighborTerrains) as BuildingAdjacencyEffect["when"]["neighborTerrains"],
+        neighborFeatures: normalizeStringList(when.neighborFeatures) as BuildingAdjacencyEffect["when"]["neighborFeatures"],
+        neighborBuildingIds: normalizeStringList(when.neighborBuildingIds),
+        adjacentToRiver: when.adjacentToRiver === true,
+      },
+      perNeighbor: source.perNeighbor === true,
+      maxStacks: typeof source.maxStacks === "number" && Number.isFinite(source.maxStacks) ? Math.max(1, Math.floor(source.maxStacks)) : null,
+      modifier: {
+        target: "building.throughput",
+        operation,
+        value,
+      },
+    });
+  }
+  return effects.slice(0, 64);
+}
+
 export function normalizeContentGoods(input: unknown): GameSettings["content"]["goods"] {
   const base = normalizeContentCultures(input);
   const sourceRows = Array.isArray(input) ? input : [];
@@ -605,6 +651,8 @@ export function normalizeContentBuildings(input: unknown): GameSettings["content
       pollutionProductivityMode?: unknown;
       countryBuildLimits?: unknown;
       globalBuildLimit?: unknown;
+      placement?: unknown;
+      adjacencyEffects?: unknown;
     }> | undefined;
     const costConstruction =
       typeof raw?.costConstruction === "number" && Number.isFinite(raw.costConstruction)
@@ -688,6 +736,8 @@ export function normalizeContentBuildings(input: unknown): GameSettings["content
       pollutionProductivityMode: normalizePollutionProductivityMode(raw?.pollutionProductivityMode),
       countryBuildLimits: normalizeBuildingCountryLimits(raw?.countryBuildLimits),
       globalBuildLimit,
+      placement: normalizeBuildingPlacement(raw?.placement),
+      adjacencyEffects: normalizeBuildingAdjacencyEffects(raw?.adjacencyEffects),
     };
   });
 }

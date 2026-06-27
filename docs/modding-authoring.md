@@ -189,6 +189,33 @@ Scenario-authored buildings live in `scenarios/<scenarioId>/common/buildings/*.j
 
 Legacy extraction fields (`extractionGoodId`, `extractionAmountPerTurn`, and `extractionRequiresDeposit`) remain supported for older scenario content, but new authored buildings should prefer `extractions` so every extracted good can declare its own deposit and level rules.
 
+## Building Placement And Building Atlases
+
+New building construction requires a `targetHexId` chosen from a controlled region. Scenario-authored building definitions may add compact placement and adjacency fields:
+
+```json
+{
+  "id": "building:watermill",
+  "placement": {
+    "allowedTerrains": ["plain", "hill"],
+    "deniedWaterKinds": ["ocean"]
+  },
+  "adjacencyEffects": [
+    {
+      "id": "river_watermill_bonus",
+      "when": { "adjacentToRiver": true },
+      "modifier": { "target": "building.throughput", "operation": "multiply", "value": 1.1 }
+    }
+  ]
+}
+```
+
+`placement` can allow or deny terrain, features, and water kinds. One building or construction project occupies one building slot on a hex. `adjacencyEffects` are authored on the building and currently affect building throughput from adjacent terrain, features, rivers, or neighboring building ids.
+
+Building map visuals are not authored as URL fields in building JSON. Each scenario building must provide one PNG atlas at `scenarios/<scenarioId>/assets/buildings/<sanitizedBuildingId>.png`. Sanitization replaces every character except `a-z`, `A-Z`, `0-9`, `_`, and `-` with `_`, so `building:watermill` resolves to `assets/buildings/building_watermill.png`.
+
+The atlas must be `256x64` with four `64x64` frames from left to right: `underConstruction`, `working`, `burning`, and `ruins`. The scenario validator rejects missing, invalid, or incorrectly sized building atlases. Runtime loading failures use the client-owned fallback atlas only as a technical fallback.
+
 ## Decision Authoring
 
 Current decision content lives in `scenarios/<scenarioId>/common/decisions/*.json`. Scenario-authored decision `effects` must use the shared `GameEffect` slice used by events and journal lifecycle hooks. Legacy `resource_delta` is rejected in authored decision files; use `add_resource`, `spend_resource`, or `add_resource_flow` instead.

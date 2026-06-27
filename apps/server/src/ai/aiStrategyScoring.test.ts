@@ -14,6 +14,7 @@ const buildCandidate: AiEconomyOrderCandidate = {
     type: "BUILD",
     countryId: "country:alpha",
     regionId: "region:alpha",
+    targetHexId: "hex:0:0",
     payload: { buildingId: "building:farm", owner: { type: "state", countryId: "country:alpha" } },
   },
 };

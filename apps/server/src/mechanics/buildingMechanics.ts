@@ -3,6 +3,7 @@ import { Engine } from "json-rules-engine";
 import type {
   BuildingInstance,
   BuildingOwner,
+  HexId,
   Order,
   RegionConstructionProject,
   RegionResourceDeposit,
@@ -48,6 +49,8 @@ export type BuildingMechanicsContentEntry = {
   pollutionProductivityMode?: PollutionProductivityMode;
   countryBuildLimits?: BuildingCountryLimit[];
   globalBuildLimit?: number | null;
+  placement?: unknown;
+  adjacencyEffects?: unknown;
 };
 
 export type BuildingLevelRange = {
@@ -947,6 +950,7 @@ export function createBuildingConstructionProject(params: {
   queueId: string;
   requestedByCountryId: string;
   building: BuildingMechanicsContentEntry;
+  targetHexId: HexId;
   owner: BuildingOwner;
   turnId: number;
   costConstruction?: number;
@@ -959,6 +963,7 @@ export function createBuildingConstructionProject(params: {
     queueId: params.queueId,
     requestedByCountryId: params.requestedByCountryId,
     buildingId: params.building.id,
+    targetHexId: params.targetHexId,
     owner: params.owner,
     projectType: "build",
     progressConstruction: 0,
@@ -977,7 +982,7 @@ export function resolveBuildOrder<TBuilding extends BuildingMechanicsContentEntr
   parseRequestedBuildingId: (payload: Record<string, unknown>) => string;
   resolveBuildingOwner: (payload: Record<string, unknown>, requestedByCountryId: string) => BuildingOwner | null;
   isCountryAllowedForBuilding: (building: TBuilding, countryId: string) => boolean;
-  getHexBuildRestriction: (building: TBuilding, hexId: string) => string | null;
+  getHexBuildRestriction: (building: TBuilding, hexId: string, regionId: string, countryId: string) => string | null;
   isBuildingUnlockedForCountry: (buildingId: string, countryId: string) => boolean;
   countBuildingOccurrences: (buildingId: string, countryId: string) => BuildLimitCounts;
   resolveConstructionCost: (building: TBuilding, context: {
@@ -1000,6 +1005,10 @@ export function resolveBuildOrder<TBuilding extends BuildingMechanicsContentEntr
   }
 
   const payload = (params.order.payload ?? {}) as Record<string, unknown>;
+  const targetHexId = params.order.targetHexId;
+  if (!targetHexId) {
+    return reject("BUILD_TARGET_HEX_REQUIRED");
+  }
   const buildingId = params.parseRequestedBuildingId(payload);
   const building = params.buildingById.get(buildingId);
   const ownerForProject = params.resolveBuildingOwner(payload, params.order.countryId);
@@ -1009,8 +1018,8 @@ export function resolveBuildOrder<TBuilding extends BuildingMechanicsContentEntr
   if (!params.isCountryAllowedForBuilding(building, params.order.countryId)) {
     return reject("BUILD_INVALID");
   }
-  if (params.getHexBuildRestriction(building, params.order.regionId)) {
-    return reject("BUILD_INVALID");
+  if (params.getHexBuildRestriction(building, targetHexId, params.order.regionId, params.order.countryId)) {
+    return reject("BUILD_RESTRICTED");
   }
   if (!params.isBuildingUnlockedForCountry(building.id, params.order.countryId)) {
     return reject("BUILD_LOCKED_BY_TECH");
@@ -1031,11 +1040,12 @@ export function resolveBuildOrder<TBuilding extends BuildingMechanicsContentEntr
     queueId: params.createId(),
     requestedByCountryId: params.order.countryId,
     building,
+    targetHexId,
     owner: ownerForProject,
     turnId: params.turnId,
     costConstruction: params.resolveConstructionCost(building, {
       countryId: params.order.countryId,
-      hexId: params.order.regionId,
+      hexId: targetHexId,
       buildingId: building.id,
     }),
   });
@@ -1076,6 +1086,24 @@ export function finalizeRegionBuildingTurn(params: {
       .filter((row) => Number(row.amount) > 0)
       .sort((a, b) => a.goodId.localeCompare(b.goodId)),
   };
+}
+
+export function transferStateOwnedBuildingsToController(params: {
+  worldBase: Pick<WorldBase, "regionBuildingsByRegion">;
+  regionId: string;
+  controllerCountryId: string;
+}): void {
+  const instances = params.worldBase.regionBuildingsByRegion?.[params.regionId];
+  if (!Array.isArray(instances) || instances.length === 0) return;
+  let changed = false;
+  const next = instances.map((instance) => {
+    if (instance.owner.type !== "state" || instance.owner.countryId === params.controllerCountryId) return instance;
+    changed = true;
+    return { ...instance, owner: { type: "state" as const, countryId: params.controllerCountryId } };
+  });
+  if (changed) {
+    params.worldBase.regionBuildingsByRegion[params.regionId] = next;
+  }
 }
 
 export function getBuildingMaxLevel(building: BuildingMechanicsContentEntry | undefined): number {
@@ -1170,6 +1198,7 @@ export function enqueueBuildingAutoUpgradesTurn(params: {
         owner: instance.owner,
         projectType: "upgrade",
         targetInstanceId: instance.instanceId,
+        targetHexId: instance.targetHexId,
         progressConstruction: 0,
         costConstruction: upgradeCosts.costConstruction,
         costDucats: 0,
@@ -1329,6 +1358,9 @@ export function resolveBuildingConstructionQueuesTurn(params: {
             continue;
           }
           targetInstance.level = Math.min(maxLevel, currentLevel + 1);
+          if (project.targetHexId && !targetInstance.targetHexId) {
+            targetInstance.targetHexId = project.targetHexId;
+          }
           continue;
         }
         const startingDucats = Math.max(0, Number(building?.startingDucats ?? 0));
@@ -1336,6 +1368,7 @@ export function resolveBuildingConstructionQueuesTurn(params: {
         const instance: BuildingInstance = {
           instanceId: createId(),
           buildingId: project.buildingId,
+          targetHexId: project.targetHexId,
           owner: project.owner,
           createdTurnId: params.turnId,
           level: 1,

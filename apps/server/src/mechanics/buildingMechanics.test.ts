@@ -24,6 +24,7 @@ import {
   resolveBuildingOperationSettlement,
   resolveBuildingProductionTurn,
   resolveBuildingOwnerFromPayload,
+  transferStateOwnedBuildingsToController,
   type BuildingConstructionWorldState,
   type BuildingMechanicsContentEntry,
 } from "./buildingMechanics";
@@ -62,6 +63,7 @@ describe("buildingMechanics", () => {
         queueId: "queue:a",
         requestedByCountryId: "country:a",
         building,
+        targetHexId: "hex:0:0",
         owner: { type: "state", countryId: "country:a" },
         turnId: 9,
         costConstruction: 155.7,
@@ -74,6 +76,7 @@ describe("buildingMechanics", () => {
       costConstruction: 155,
       costDucats: 12.3456,
       createdTurnId: 9,
+      targetHexId: "hex:0:0",
     });
   });
 
@@ -226,11 +229,40 @@ describe("buildingMechanics", () => {
         queueId: "queue:a",
         buildingId: "building:mill",
         requestedByCountryId: "country:a",
+        targetHexId: "hex:0:0",
         costConstruction: 42,
         costDucats: 15,
       }),
     });
     expect(worldBase.regionConstructionQueueByRegion["region:a"]).toEqual([result.queuedProject]);
+  });
+
+  it("rejects build orders without a target hex", () => {
+    const order = makeOrder({ payload: { buildingId: "building:mill" } }) as Partial<Extract<Order, { type: "BUILD" }>>;
+    delete order.targetHexId;
+
+    const result = resolveBuildOrder({
+      order: order as Extract<Order, { type: "BUILD" }>,
+      playerId: "player:a",
+      worldBase: makeWorld({ regionOwner: { "region:a": "country:a" } }),
+      buildingById: new Map([["building:mill", { id: "building:mill" }]]),
+      turnId: 9,
+      parseRequestedBuildingId: (payload) => parseRequestedBuildingIdFromPayload(payload, ""),
+      resolveBuildingOwner: () => ({ type: "state", countryId: "country:a" }),
+      isCountryAllowedForBuilding: () => true,
+      getHexBuildRestriction: () => null,
+      isBuildingUnlockedForCountry: () => true,
+      countBuildingOccurrences: () => ({ byCountry: 0, global: 0 }),
+      resolveConstructionCost: () => 42,
+      createId: () => "queue:a",
+    });
+
+    expect(result.rejectedOrder).toEqual({
+      playerId: "player:a",
+      reason: "BUILD_TARGET_HEX_REQUIRED",
+      tempOrderId: "order:a",
+    });
+    expect(result.queuedProject).toBeNull();
   });
 
   it("rejects build orders for ownership conflicts, locked tech, and build limits", () => {
@@ -408,6 +440,7 @@ describe("buildingMechanics", () => {
           makeInstance({
             instanceId: "instance:a",
             buildingId: "building:mill",
+            targetHexId: "hex:0:0",
             level: 1,
             lastProductivity: 1,
             currentDurability: 100,
@@ -431,6 +464,7 @@ describe("buildingMechanics", () => {
         queueId: "queue:upgrade",
         projectType: "upgrade",
         targetInstanceId: "instance:a",
+        targetHexId: "hex:0:0",
         costConstruction: 50,
         costDucats: 0,
       }),
@@ -442,16 +476,23 @@ describe("buildingMechanics", () => {
       regionOwner: { "region:a": "country:a" },
       resourcesByCountry: { "country:a": makeResources({ construction: 200, ducats: 100 }) },
       regionBuildingsByRegion: {
-        "region:a": [makeInstance({ instanceId: "instance:a", buildingId: "building:mill", level: 1 })],
+        "region:a": [makeInstance({ instanceId: "instance:a", buildingId: "building:mill", targetHexId: "hex:0:0", level: 1 })],
       },
       regionConstructionQueueByRegion: {
         "region:a": [
-          makeProject({ queueId: "queue:build", buildingId: "building:mine", costConstruction: 50, costDucats: 20 }),
+          makeProject({
+            queueId: "queue:build",
+            buildingId: "building:mine",
+            targetHexId: "hex:1:0",
+            costConstruction: 50,
+            costDucats: 20,
+          }),
           makeProject({
             queueId: "queue:upgrade",
             buildingId: "building:mill",
             projectType: "upgrade",
             targetInstanceId: "instance:a",
+            targetHexId: "hex:0:0",
             costConstruction: 40,
             costDucats: 0,
           }),
@@ -472,8 +513,44 @@ describe("buildingMechanics", () => {
     expect(worldBase.resourcesByCountry["country:a"]).toMatchObject({ construction: 110, ducats: 80 });
     expect(worldBase.regionConstructionQueueByRegion["region:a"]).toEqual([]);
     expect(worldBase.regionBuildingsByRegion["region:a"]).toEqual([
-      expect.objectContaining({ instanceId: "instance:a", buildingId: "building:mill", level: 2 }),
-      expect.objectContaining({ instanceId: "instance:new", buildingId: "building:mine", currentDurability: 80, ducats: 4 }),
+      expect.objectContaining({ instanceId: "instance:a", buildingId: "building:mill", targetHexId: "hex:0:0", level: 2 }),
+      expect.objectContaining({
+        instanceId: "instance:new",
+        buildingId: "building:mine",
+        targetHexId: "hex:1:0",
+        currentDurability: 80,
+        ducats: 4,
+      }),
+    ]);
+  });
+
+  it("transfers only state-owned buildings when region control changes", () => {
+    const worldBase = makeWorld({
+      regionBuildingsByRegion: {
+        "region:a": [
+          makeInstance({
+            instanceId: "instance:state",
+            owner: { type: "state", countryId: "country:a" },
+            targetHexId: "hex:0:0",
+          }),
+          makeInstance({
+            instanceId: "instance:company",
+            owner: { type: "company", companyId: "company:a" },
+            targetHexId: "hex:1:0",
+          }),
+        ],
+      },
+    });
+
+    transferStateOwnedBuildingsToController({
+      worldBase,
+      regionId: "region:a",
+      controllerCountryId: "country:b",
+    });
+
+    expect(worldBase.regionBuildingsByRegion["region:a"]).toEqual([
+      expect.objectContaining({ instanceId: "instance:state", owner: { type: "state", countryId: "country:b" } }),
+      expect.objectContaining({ instanceId: "instance:company", owner: { type: "company", companyId: "company:a" } }),
     ]);
   });
 
@@ -803,6 +880,7 @@ function makeInstance(overrides?: Partial<BuildingInstance>): BuildingInstance {
   return {
     instanceId: "instance:default",
     buildingId: "building:default",
+    targetHexId: "hex:0:0",
     owner: { type: "state", countryId: "country:a" },
     createdTurnId: 1,
     level: 1,
@@ -815,9 +893,10 @@ function makeInstance(overrides?: Partial<BuildingInstance>): BuildingInstance {
 function makeProject(overrides?: Partial<BuildingConstructionWorldState["regionConstructionQueueByRegion"][string][number]>) {
   return {
     queueId: "queue:default",
-    requestedByCountryId: "country:a",
-    buildingId: "building:default",
-    owner: { type: "state" as const, countryId: "country:a" },
+      requestedByCountryId: "country:a",
+      buildingId: "building:default",
+      targetHexId: "hex:0:0",
+      owner: { type: "state" as const, countryId: "country:a" },
     projectType: "build" as const,
     progressConstruction: 0,
     costConstruction: 100,
@@ -834,6 +913,7 @@ function makeOrder(overrides?: Omit<Partial<Extract<Order, { type: "BUILD" }>>, 
     playerId: "player:a",
     countryId: "country:a",
     regionId: "region:a",
+    targetHexId: "hex:0:0",
     type: "BUILD",
     payload: {},
     createdAt: "now",

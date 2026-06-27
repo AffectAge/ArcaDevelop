@@ -4,6 +4,7 @@ import {
   removeOrderFromTurnIndexes,
   type TurnOrderIndexes,
 } from "./turnOrderIndexMechanics";
+import { transferStateOwnedBuildingsToController } from "./buildingMechanics";
 
 export const COLONIZATION_GOAL = 100;
 export const DEFAULT_REGION_COLONIZATION_COST = 100;
@@ -38,6 +39,7 @@ export type ColonizationTurnWorldState = Pick<
   | "hexOwner"
   | "resourcesByCountry"
   | "regionPopulationByRegion"
+  | "regionBuildingsByRegion"
 >;
 
 export type ColonizationLedgerFlowInput = {
@@ -468,6 +470,11 @@ export function resolveColonizationCapturesTurn(params: {
     const previousOwnerId = params.worldBase.regionOwner[regionId] ?? null;
     params.worldBase.regionOwner[regionId] = winnerCountryId;
     params.worldBase.regionController[regionId] = winnerCountryId;
+    transferStateOwnedBuildingsToController({
+      worldBase: params.worldBase,
+      regionId,
+      controllerCountryId: winnerCountryId,
+    });
     const settlementCreated = maybeCreateColonizationSettlement({
       regionId,
       winnerCountryId,

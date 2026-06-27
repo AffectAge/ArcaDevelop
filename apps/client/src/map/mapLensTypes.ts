@@ -19,6 +19,17 @@ export type MapLensId =
   | "infrastructure"
   | "military";
 
+export type MapLayerToggleId =
+  | "hexGrid"
+  | "countryFill"
+  | "countryBorders"
+  | "regionFill"
+  | "buildings"
+  | "armies"
+  | "countryLabels";
+
+export type MapLayerToggles = Record<MapLayerToggleId, boolean>;
+
 export type MapLensLegendTone = "muted" | "neutral" | "good" | "warn" | "bad" | "accent";
 
 export type MapLensLegendEntry = {

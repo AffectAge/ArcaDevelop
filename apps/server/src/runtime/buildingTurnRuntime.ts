@@ -361,6 +361,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     for (const instance of buildingInstances) {
       const building = buildingById.get(instance.buildingId);
       if (!building) continue;
+      const instanceHexId = instance.targetHexId ?? primaryHexId;
       const preparation = prepareBuildingInstanceForTurn({
         instance,
         maxDurability: getBuildingMaxDurability(building),
@@ -372,7 +373,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         indexes: sellerIndexes,
         slot: {
           regionId,
-          hexId: primaryHexId,
+          hexId: instanceHexId,
           countryId: ownerCountryId,
           marketId,
           instanceId: instance.instanceId,
@@ -455,6 +456,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     for (const instance of buildingInstances) {
       const building = buildingById.get(instance.buildingId);
       if (!building) continue;
+      const instanceHexId = instance.targetHexId ?? primaryHexId;
       if (instance.manualWorkEnabled === false) {
         instance.isInactive = true;
         instance.inactiveReason = "Отключено вручную";
@@ -464,10 +466,16 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
       const maxDurability = getBuildingMaxDurability(building);
       const currentDurability = round3(Math.max(0, Math.min(maxDurability, Number(instance.currentDurability ?? maxDurability))));
       instance.currentDurability = currentDurability;
-      const buildingThroughput = Math.max(0, resolveModifiedValue("building_throughput", buildingBaseThroughput, {
+      const baseThroughput = Math.max(0, resolveModifiedValue("building_throughput", buildingBaseThroughput, {
         countryId: ownerCountryId,
-        hexId: primaryHexId,
+        hexId: instanceHexId,
         buildingId: building.id,
+      }));
+      const buildingThroughput = round3(baseThroughput * resolveAdjacencyThroughputFactor({
+        building,
+        instance,
+        regionBuildingsByRegion: worldBase.regionBuildingsByRegion,
+        hexHexIndex,
       }));
       const warehouse = instance.warehouseByGoodId ?? {};
       const operationEconomics = prepareBuildingOperationEconomics({
@@ -482,13 +490,13 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         getBaseWageFallback: () => buildingBaseWagePerWorkerGold,
         resolveWage: (professionId, baseWage) => resolveModifiedValue("building_wage", baseWage, {
           countryId: ownerCountryId,
-          hexId: primaryHexId,
+          hexId: instanceHexId,
           buildingId: building.id,
           professionId,
         }),
         resolveInputAmount: (input) => resolveModifiedValue("building_input", input.amount, {
           countryId: ownerCountryId,
-          hexId: primaryHexId,
+          hexId: instanceHexId,
           buildingId: building.id,
           goodId: input.goodId,
           resourceCategoryId: getResourceCategoryId(input.goodId),
@@ -535,7 +543,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
       const purchase = purchaseBuildingInputs({
         buyerInstance: instance,
         inputNeeds,
-        buyerHexId: primaryHexId,
+        buyerHexId: instanceHexId,
         buyerCountryId: ownerCountryId,
         buyerMarketId: marketId,
         getDistributionType: getGoodDistributionType,
@@ -581,7 +589,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
       instance.lastPurchaseCostByGoodId = purchasedCostByGood;
       instance.lastInputCostDucats = round3(purchaseCost);
 
-      const pollutionProductivityFactor = getBuildingPollutionProductivityFactor(building, primaryHexId);
+      const pollutionProductivityFactor = getBuildingPollutionProductivityFactor(building, instanceHexId);
       const production = resolveBuildingProductionTurn({
         building,
         instanceLevel,
@@ -593,18 +601,18 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         currentDurability,
         maxDurability,
         buildingThroughput,
-        fertilityMultiplier: getHexFertilityMultiplier(primaryHexId),
+        fertilityMultiplier: getHexFertilityMultiplier(instanceHexId),
         pollutionProductivityFactor,
         resolveInputAmount: (input) => resolveModifiedValue("building_input", input.amount, {
           countryId: ownerCountryId,
-          hexId: primaryHexId,
+          hexId: instanceHexId,
           buildingId: building.id,
           goodId: input.goodId,
           resourceCategoryId: getResourceCategoryId(input.goodId),
         }),
         resolveOutputAmount: (goodId, baseAmount) => resolveModifiedValue("building_output", baseAmount, {
           countryId: ownerCountryId,
-          hexId: primaryHexId,
+          hexId: instanceHexId,
           buildingId: building.id,
           goodId,
           resourceCategoryId: getResourceCategoryId(goodId),
@@ -678,7 +686,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
           severity: "critical",
           kind: "building-inactive",
           message: settlement.inactiveAlert.message,
-          hexId: primaryHexId,
+          hexId: instanceHexId,
           buildingId: instance.buildingId,
           instanceId: instance.instanceId,
         });
@@ -810,4 +818,45 @@ function buildRegionTurnContexts(params: {
         hexIds,
       }];
     });
+}
+
+function resolveAdjacencyThroughputFactor(params: {
+  building: BuildingContentEntry;
+  instance: BuildingInstance;
+  regionBuildingsByRegion: WorldBase["regionBuildingsByRegion"];
+  hexHexIndex: HexMapIndexEntry[];
+}): number {
+  const effects = params.building.adjacencyEffects ?? [];
+  const targetHexId = params.instance.targetHexId;
+  if (!targetHexId || effects.length === 0) return 1;
+  const hexById = new Map(params.hexHexIndex.map((hex) => [hex.id, hex] as const));
+  const target = hexById.get(targetHexId);
+  if (!target) return 1;
+  const neighborHexes = target.neighbors.map((id) => hexById.get(id)).filter((hex): hex is HexMapIndexEntry => Boolean(hex));
+  let factor = 1;
+  for (const effect of effects) {
+    const modifier = effect.modifier;
+    if (modifier.target !== "building.throughput" || !Number.isFinite(modifier.value)) continue;
+    let matches = 0;
+    for (const neighbor of neighborHexes) {
+      const terrain = neighbor.landscape ?? neighbor.hexType ?? "";
+      const feature = neighbor.landscape ?? "";
+      if (effect.when.neighborTerrains?.length && !effect.when.neighborTerrains.some((item) => item === terrain)) continue;
+      if (effect.when.neighborFeatures?.length && !effect.when.neighborFeatures.some((item) => item === feature)) continue;
+      if (effect.when.neighborBuildingIds?.length) {
+        const instances = params.regionBuildingsByRegion[neighbor.regionId ?? ""] ?? [];
+        if (!instances.some((instance) => instance.targetHexId === neighbor.id && effect.when.neighborBuildingIds?.includes(instance.buildingId))) continue;
+      }
+      matches += 1;
+    }
+    const rawStacks = effect.perNeighbor ? matches : matches > 0 ? 1 : 0;
+    const stacks = Math.max(0, Math.min(Math.floor(effect.maxStacks ?? rawStacks), rawStacks));
+    if (stacks <= 0) continue;
+    if (modifier.operation === "multiply") {
+      factor *= Math.pow(modifier.value, stacks);
+    } else {
+      factor += modifier.value * stacks;
+    }
+  }
+  return Math.max(0, Number(factor.toFixed(3)));
 }

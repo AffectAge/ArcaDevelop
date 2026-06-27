@@ -67,7 +67,7 @@ type WebSocketRuntimeParams = {
   parseRequestedBuildingIdFromPayload: (payload: Record<string, unknown>) => string;
   resolveBuildingOwnerFromPayload: (payload: Record<string, unknown>, requestedByCountryId: string) => unknown;
   isCountryAllowedForBuildingWithEngine: (building: GameContentEntry, countryId: string) => Promise<boolean>;
-  getHexBuildRestriction: (building: GameContentEntry, hexId: string) => string | null;
+  getHexBuildRestriction: (building: GameContentEntry, hexId: string, regionId: string, countryId: string) => string | null;
   isBuildingUnlockedForCountry: (buildingId: string, countryId: string) => boolean;
   countBuildingOccurrences: (
     buildingId: string,
@@ -418,6 +418,10 @@ async function validateBuildOrder(input: {
 }): Promise<boolean> {
   const { params, delta, send, worldBase, gameSettings } = input;
   if (delta.order.type !== "BUILD") return true;
+  if (!delta.order.targetHexId) {
+    send({ type: "ERROR", code: "BUILD_TARGET_HEX_REQUIRED", message: "Target hex is required for building construction" });
+    return false;
+  }
   const owner = worldBase.regionController[delta.order.regionId] ?? worldBase.regionOwner[delta.order.regionId];
   if (!owner || owner !== delta.order.countryId) {
     send({ type: "ERROR", code: "BUILD_CONFLICT", message: "Регион не принадлежит вашей стране" });
@@ -440,7 +444,7 @@ async function validateBuildOrder(input: {
     send({ type: "ERROR", code: "BUILD_RESTRICTED", message: "Ваша страна не может строить это здание" });
     return false;
   }
-  const provinceRestriction = params.getHexBuildRestriction(building, delta.order.regionId);
+  const provinceRestriction = params.getHexBuildRestriction(building, delta.order.targetHexId, delta.order.regionId, delta.order.countryId);
   if (provinceRestriction) {
     send({ type: "ERROR", code: "BUILD_RESTRICTED", message: provinceRestriction });
     return false;

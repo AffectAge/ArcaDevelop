@@ -16,7 +16,6 @@ import { ClientSettingsModal } from "./components/ClientSettingsModal";
 import { CivilopediaModal } from "./components/CivilopediaModal";
 import { ContentPanel } from "./components/ContentPanel";
 import { PopulationStatsModal } from "./components/PopulationStatsModal";
-import { HexBuildingsModal } from "./components/ProvinceBuildingsModal";
 import { StateBudgetModal } from "./components/StateBudgetModal";
 import { MarketModal } from "./components/MarketModal";
 import { PoliticsModal } from "./components/PoliticsModal";
@@ -32,6 +31,8 @@ import { InAppNotificationTray, type InAppUiNotification } from "./components/In
 import { NotificationHistoryModal } from "./components/NotificationHistoryModal";
 import { RegistrationApprovalModal } from "./components/RegistrationApprovalModal";
 import { ElectionResultsModal } from "./components/ElectionResultsModal";
+import { BuildingAtlasIcon } from "./components/BuildingAtlasIcon";
+import { BuildingOverviewModal } from "./components/BuildingOverviewModal";
 import {
   adminReviewRegistration,
   apiBase,
@@ -46,6 +47,7 @@ import {
   fetchWorldSnapshot,
   markUiNotificationViewed,
   acceptDiplomacyProposal,
+  cancelCountryBuild,
   rejectDiplomacyProposal,
   type ContentEntry,
   type MarketOverviewResponse,
@@ -240,10 +242,8 @@ export default function App() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [contentPanelOpen, setContentPanelOpen] = useState(false);
   const [populationStatsOpen, setPopulationStatsOpen] = useState(false);
-  const [provinceBuildingsOpen, setHexBuildingsOpen] = useState(false);
-  const [provinceBuildingsInitialHexId, setHexBuildingsInitialHexId] = useState<string | null>(null);
-  const [provinceBuildingsConstructionRequestId, setHexBuildingsConstructionRequestId] = useState(0);
   const [stateBudgetOpen, setStateBudgetOpen] = useState(false);
+  const [buildingOverviewOpen, setBuildingOverviewOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
   const [globalMarketOpen, setGlobalMarketOpen] = useState(false);
   const [marketShellOverview, setMarketShellOverview] = useState<MarketOverviewResponse | null>(null);
@@ -300,6 +300,7 @@ export default function App() {
   });
   const [maxActiveColonizations, setMaxActiveColonizations] = useState(3);
   const [colonizationCostPer1000Km2, setColonizationCostPer1000Km2] = useState({ points: 5, ducats: 5 });
+  const [demolitionCostConstructionPercent, setDemolitionCostConstructionPercent] = useState(20);
   const [hexRenameDucatsCost, setHexRenameDucatsCost] = useState(25);
   const [provinceAreaKm2ById, setHexAreaKm2ById] = useState<Record<string, number>>({});
   const [showAntarctica, setShowAntarctica] = useState(false);
@@ -309,6 +310,7 @@ export default function App() {
   const [sortNotifications, setSortNotifications] = useState(true);
   const [hexIndexLoaded, setHexIndexLoaded] = useState(false);
   const [publicUiLoaded, setPublicUiLoaded] = useState(false);
+  const [activeScenarioId, setActiveScenarioId] = useState("default");
 
   const countryColorById = useMemo(
     () => Object.fromEntries(countries.map((item) => [item.id, item.color] as const)),
@@ -318,7 +320,24 @@ export default function App() {
     () => Object.fromEntries(countries.map((item) => [item.id, item.name] as const)),
     [countries],
   );
+  const countryById = useMemo(() => new Map(countries.map((item) => [item.id, item] as const)), [countries]);
   const [buildingEntries, setBuildingEntries] = useState<ContentEntry[]>([]);
+  const [companyEntries, setCompanyEntries] = useState<ContentEntry[]>([]);
+  const [industryEntries, setIndustryEntries] = useState<ContentEntry[]>([]);
+  const [sectorEntries, setSectorEntries] = useState<ContentEntry[]>([]);
+  const [cancelingConstructionQueueKey, setCancelingConstructionQueueKey] = useState<string | null>(null);
+  const [canceledConstructionQueueKeys, setCanceledConstructionQueueKeys] = useState<Set<string>>(() => new Set());
+  const [mapFocusRequest, setMapFocusRequest] = useState<{ hexId: HexId; nonce: number } | null>(null);
+  const [hexBuildPlacement, setHexBuildPlacement] = useState<{
+    building: ContentEntry;
+    owner: { type: "state"; countryId: string } | { type: "company"; companyId: string };
+  } | null>(null);
+  const [hexBuildConfirmTarget, setHexBuildConfirmTarget] = useState<{
+    hexId: HexId;
+    regionId: string;
+    building: ContentEntry;
+    owner: { type: "state"; countryId: string } | { type: "company"; companyId: string };
+  } | null>(null);
   const [technologyEntries, setTechnologyEntries] = useState<ContentEntry[]>([]);
   const [journalEntries, setJournalEntries] = useState<ContentEntry[]>([]);
   const [turnTimerUi, setTurnTimerUi] = useState<{ enabled: boolean; secondsPerTurn: number; startedAtMs: number | null }>({
@@ -336,6 +355,7 @@ export default function App() {
   const setWorldBase = useGameStore((s) => s.setWorldBase);
   const applyWorldDelta = useGameStore((s) => s.applyWorldDelta);
   const addOrder = useGameStore((s) => s.addOrder);
+  const removeOrder = useGameStore((s) => s.removeOrder);
   const setTurnOrders = useGameStore((s) => s.setTurnOrders);
   const setPresence = useGameStore((s) => s.setPresence);
   const resetOverlay = useGameStore((s) => s.resetOverlay);
@@ -466,6 +486,7 @@ export default function App() {
       }
 
       if (msg.type === "SCENARIO_APPLIED") {
+        setActiveScenarioId(msg.scenarioId);
         toast.success(t("shell.scenarioApplied"), { description: t("shell.scenarioAppliedDescription") });
         window.setTimeout(() => window.location.reload(), 500);
       }
@@ -663,6 +684,14 @@ export default function App() {
   }, [auth?.countryId]);
 
   useEffect(() => {
+    const blockContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+    };
+    document.addEventListener("contextmenu", blockContextMenu);
+    return () => document.removeEventListener("contextmenu", blockContextMenu);
+  }, []);
+
+  useEffect(() => {
     try {
       const key = `arc.ui.${auth?.countryId ?? "guest"}.notifications.sort`;
       const raw = localStorage.getItem(key);
@@ -679,6 +708,20 @@ export default function App() {
       // ignore storage failures
     }
   }, [auth?.countryId, sortNotifications]);
+
+  useEffect(() => {
+    if (!worldBase || canceledConstructionQueueKeys.size === 0) return;
+    const activeKeys = new Set<string>();
+    for (const [regionId, queue] of Object.entries(worldBase.regionConstructionQueueByRegion ?? {})) {
+      for (const project of queue ?? []) {
+        activeKeys.add(`${regionId}:${project.queueId}`);
+      }
+    }
+    setCanceledConstructionQueueKeys((current) => {
+      const next = new Set([...current].filter((key) => activeKeys.has(key)));
+      return next.size === current.size ? current : next;
+    });
+  }, [canceledConstructionQueueKeys.size, worldBase]);
 
   useEffect(() => {
     let cancelled = false;
@@ -720,7 +763,9 @@ export default function App() {
             points: ui.colonization.pointsCostPer1000Km2,
             ducats: ui.colonization.ducatsCostPer1000Km2,
           });
+          setDemolitionCostConstructionPercent(ui.economy.demolitionCostConstructionPercent ?? 20);
           setShowAntarctica(ui.map?.showAntarctica ?? true);
+          setActiveScenarioId(ui.activeScenarioId ?? "default");
           setUiBackgroundImageUrl(ui.map?.backgroundImageUrl ?? null);
           setHexRenameDucatsCost(ui.customization?.hexRenameDucats ?? 25);
           setTurnTimerUi({
@@ -746,12 +791,27 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchContentEntries("buildings")
-      .then((items) => {
-        if (!cancelled) setBuildingEntries(items);
+    Promise.all([
+      fetchContentEntries("buildings"),
+      fetchContentEntries("companies"),
+      fetchContentEntries("industries"),
+      fetchContentEntries("sectors"),
+    ])
+      .then(([buildings, companies, industries, sectors]) => {
+        if (!cancelled) {
+          setBuildingEntries(buildings);
+          setCompanyEntries(companies);
+          setIndustryEntries(industries);
+          setSectorEntries(sectors);
+        }
       })
       .catch(() => {
-        if (!cancelled) setBuildingEntries([]);
+        if (!cancelled) {
+          setBuildingEntries([]);
+          setCompanyEntries([]);
+          setIndustryEntries([]);
+          setSectorEntries([]);
+        }
       });
     return () => {
       cancelled = true;
@@ -1067,29 +1127,175 @@ export default function App() {
   const constructionQueuePreview = useMemo(() => {
     if (!auth || !worldBase) return [];
     const buildingById = new Map(buildingEntries.map((building) => [building.id, building] as const));
-    const rows: Array<{ regionId: string; buildingId: string; buildingName: string; progressPct: number; remainingConstruction: number; selected: boolean }> = [];
+    const rows: Array<{
+      id: string;
+      source: "queued" | "pending";
+      queueId?: string;
+      orderId?: string;
+      regionId: string;
+      targetHexId: HexId;
+      buildingId: string;
+      name: string;
+      ownerName: string;
+      ownerIconUrl?: string | null;
+      progressPct: number;
+      remainingConstruction: number;
+      industryId?: string | null;
+      sectorId?: string | null;
+      selected: boolean;
+    }> = [];
     for (const [regionId, queue] of Object.entries(worldBase.regionConstructionQueueByRegion ?? {})) {
       const controllingCountryId = worldBase.regionController?.[regionId] ?? worldBase.regionOwner?.[regionId] ?? "";
       if (controllingCountryId !== auth.countryId) continue;
       for (const project of queue ?? []) {
         if (!project || project.requestedByCountryId !== auth.countryId) continue;
+        if (canceledConstructionQueueKeys.has(`${regionId}:${project.queueId}`)) continue;
+        if (!isHexId(project.targetHexId)) continue;
+        const building = buildingById.get(project.buildingId);
+        let ownerName = "";
+        let ownerIconUrl: string | null = null;
+        if (project.owner.type === "company" && "companyId" in project.owner) {
+          const companyId = project.owner.companyId;
+          const ownerCompany = companyEntries.find((company) => company.id === companyId);
+          ownerName = ownerCompany?.name ?? companyId;
+          ownerIconUrl = ownerCompany?.logoUrl ?? null;
+        } else {
+          const ownerCountry = countryById.get(project.owner.countryId);
+          ownerName = countryNameById[project.owner.countryId] ?? project.owner.countryId;
+          ownerIconUrl = ownerCountry?.flagUrl ?? ownerCountry?.crestUrl ?? null;
+        }
         const cost = Math.max(1, Number(project.costConstruction ?? 0));
         const progress = Math.max(0, Number(project.progressConstruction ?? 0));
         const remainingConstruction = Math.max(0, cost - progress);
         if (remainingConstruction <= 0) continue;
         rows.push({
+          id: project.queueId,
+          source: "queued",
+          queueId: project.queueId,
           regionId,
+          targetHexId: project.targetHexId,
           buildingId: project.buildingId,
-          buildingName: getBuildingDisplayName(buildingById.get(project.buildingId), project.buildingId, t),
+          name: getBuildingDisplayName(building, project.buildingId, t),
+          ownerName,
+          ownerIconUrl,
           progressPct: Math.max(0, Math.min(100, (progress / cost) * 100)),
           remainingConstruction,
-          selected: selectedHexId === regionId,
+          industryId: typeof building?.industryId === "string" ? building.industryId : null,
+          sectorId: typeof building?.sectorId === "string" ? building.sectorId : null,
+          selected: selectedHexId === project.targetHexId,
         });
       }
     }
-    rows.sort((a, b) => Number(b.selected) - Number(a.selected) || b.remainingConstruction - a.remainingConstruction || a.regionId.localeCompare(b.regionId));
-    return rows.slice(0, 5).map(({ selected: _selected, ...row }) => row);
-  }, [auth, buildingEntries, selectedHexId, t, worldBase]);
+    const byPlayer = ordersByTurn.get(turnId);
+    const pendingByKey = new Map<string, (typeof rows)[number]>();
+    if (byPlayer) {
+      for (const playerOrders of byPlayer.values()) {
+        for (const order of playerOrders) {
+          if (order.type !== "BUILD" || order.countryId !== auth.countryId) continue;
+          const payload = (order.payload ?? {}) as Record<string, unknown>;
+          const buildingId =
+            typeof payload.buildingId === "string"
+              ? payload.buildingId
+              : typeof payload.building === "string"
+                ? payload.building
+                : "";
+          const building = buildingById.get(buildingId);
+          const owner = payload.owner as { type?: "state" | "company"; countryId?: string; companyId?: string } | undefined;
+          const ownerName =
+            owner?.type === "company"
+              ? companyEntries.find((company) => company.id === owner.companyId)?.name ?? owner.companyId ?? t("buildings.ownerCompany")
+              : countryNameById[owner?.countryId ?? auth.countryId] ?? owner?.countryId ?? auth.countryId;
+          const ownerIconUrl =
+            owner?.type === "company"
+              ? companyEntries.find((company) => company.id === owner.companyId)?.logoUrl ?? null
+              : countryById.get(owner?.countryId ?? auth.countryId)?.flagUrl ?? countryById.get(owner?.countryId ?? auth.countryId)?.crestUrl ?? null;
+          const key = `${order.regionId}:${order.targetHexId}:${buildingId}`;
+          const candidate = {
+            id: order.id,
+            source: "pending" as const,
+            orderId: order.id,
+            regionId: order.regionId,
+            targetHexId: order.targetHexId,
+            buildingId,
+            name: getBuildingDisplayName(building, buildingId, t),
+            ownerName,
+            ownerIconUrl,
+            progressPct: 0,
+            remainingConstruction: Math.max(0, Number(building?.costConstruction ?? 0)),
+            industryId: typeof building?.industryId === "string" ? building.industryId : null,
+            sectorId: typeof building?.sectorId === "string" ? building.sectorId : null,
+            selected: selectedHexId === order.targetHexId,
+          };
+          const existing = pendingByKey.get(key);
+          if (!existing || (existing.orderId?.startsWith("local:") && !order.id.startsWith("local:"))) {
+            pendingByKey.set(key, candidate);
+          }
+        }
+      }
+    }
+    rows.push(...pendingByKey.values());
+    rows.sort((a, b) => Number(b.selected) - Number(a.selected) || a.name.localeCompare(b.name, "ru") || a.regionId.localeCompare(b.regionId, "ru"));
+    return rows.map(({ selected: _selected, ...row }) => row);
+  }, [auth, buildingEntries, canceledConstructionQueueKeys, companyEntries, countryById, countryNameById, ordersByTurn, selectedHexId, t, turnId, worldBase]);
+  const cancelConstructionQueueProject = useCallback(
+    async (item: { source: "queued"; regionId: string; queueId: string; targetHexId: HexId; buildingId: string } | { source: "pending"; orderId: string }) => {
+      if (!auth?.token) return;
+      const key = item.source === "queued" ? `${item.regionId}:${item.queueId}` : item.orderId;
+      setCancelingConstructionQueueKey(key);
+      try {
+        const result =
+          item.source === "queued"
+            ? await cancelCountryBuild(auth.token, { regionId: item.regionId, queueId: item.queueId })
+            : await cancelCountryBuild(auth.token, { orderId: item.orderId });
+        if (item.source === "queued" && result.canceledQueuedProject) {
+          setCanceledConstructionQueueKeys((current) => {
+            const next = new Set(current);
+            next.add(key);
+            return next;
+          });
+          const byPlayer = ordersByTurn.get(turnId);
+          const currentCountryId = auth.countryId;
+          if (byPlayer) {
+            for (const orders of byPlayer.values()) {
+              for (const order of orders) {
+                const orderBuildingId = typeof order.payload?.buildingId === "string" ? order.payload.buildingId : "";
+                if (
+                  order.type === "BUILD" &&
+                  order.countryId === currentCountryId &&
+                  order.regionId === item.regionId &&
+                  order.targetHexId === item.targetHexId &&
+                  orderBuildingId === item.buildingId
+                ) {
+                  removeOrder(turnId, order.id);
+                }
+              }
+            }
+          }
+        }
+        if (item.source === "pending" && result.canceledPendingOrder) {
+          removeOrder(turnId, item.orderId);
+        }
+        toast.success(t("buildings.toastBuildCanceled"));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "BUILD_CANCEL_FAILED";
+        if (message === "BUILD_CANCEL_NOT_FOUND") {
+          toast.error(t("buildings.toastBuildNotFound"));
+        } else {
+          toast.error(t("buildings.toastBuildCancelFailed"));
+        }
+      } finally {
+        setCancelingConstructionQueueKey(null);
+      }
+    },
+    [auth?.countryId, auth?.token, ordersByTurn, removeOrder, t, turnId],
+  );
+  const focusConstructionHex = useCallback((hexId: HexId) => {
+    setMapFocusRequest((current) => ({ hexId, nonce: (current?.nonce ?? 0) + 1 }));
+  }, []);
+  const canceledConstructionQueueKeyList = useMemo(
+    () => [...canceledConstructionQueueKeys],
+    [canceledConstructionQueueKeys],
+  );
   const myTechnologyProjection = useMemo(() => {
     if (!auth || !worldBase) {
       return { activeCount: 0, predictedPointsSpend: 0 };
@@ -1433,38 +1639,12 @@ export default function App() {
   };
 
 
-  const queueColonizeOrder = (regionId?: string) => {
+  const queueBuildOrder = (regionId?: string, payload?: Record<string, unknown>, targetHexId?: HexId) => {
     if (!auth) {
       return;
     }
-
-    const delta: OrderDelta = {
-      type: "ORDER_DELTA",
-      order: {
-        turnId,
-        playerId: auth.playerId,
-        countryId: auth.countryId,
-        regionId: regionId ?? selectedHexId ?? "ARG-1309",
-        type: "COLONIZE",
-        payload: {},
-      },
-    };
-
-    send(delta);
-    toast(t("shell.orderSent"), { description: `COLONIZE -> ${regionId ?? selectedHexId ?? "ARG-1309"}` });
-    addEvent({
-      category: "colonization",
-      title: t("shell.orderSent"),
-      message: `COLONIZE -> ${regionId ?? selectedHexId ?? "ARG-1309"}`,
-      countryId: auth.countryId,
-      priority: "medium",
-      visibility: "private",
-      turn: turnId,
-    });
-  };
-
-  const queueBuildOrder = (regionId?: string, payload?: Record<string, unknown>) => {
-    if (!auth) {
+    if (!targetHexId) {
+      toast.error(t("buildings.hexPlacementRequired"));
       return;
     }
 
@@ -1484,21 +1664,27 @@ export default function App() {
         playerId: auth.playerId,
         countryId: auth.countryId,
         regionId: targetRegionId,
+        targetHexId,
         type: "BUILD",
         payload: normalizedPayload,
       },
     };
 
     send(delta);
+    addOrder({
+      ...delta.order,
+      id: `local:${turnId}:${targetHexId}:${payloadBuildingId ?? "building"}`,
+      createdAt: new Date().toISOString(),
+    });
     toast(t("shell.orderSent"), {
       description: payloadBuildingId
-        ? `BUILD -> ${targetRegionId} (${payloadBuildingId})`
-        : `BUILD -> ${targetRegionId}`,
+        ? `BUILD -> ${targetHexId} (${payloadBuildingId})`
+        : `BUILD -> ${targetHexId}`,
     });
     addEvent({
       category: "economy",
       title: t("shell.orderSent"),
-      message: payloadBuildingId ? `BUILD -> ${targetRegionId} (${payloadBuildingId})` : `BUILD -> ${targetRegionId}`,
+      message: payloadBuildingId ? `BUILD -> ${targetHexId} (${payloadBuildingId})` : `BUILD -> ${targetHexId}`,
       countryId: auth.countryId,
       priority: "medium",
       visibility: "private",
@@ -1537,11 +1723,78 @@ export default function App() {
     });
   };
 
-  const openHexBuildingsForHex = (hexId: string) => {
-    setHexBuildingsInitialHexId(hexId);
-    setHexBuildingsConstructionRequestId((value) => value + 1);
-    setHexBuildingsOpen(true);
+  const startHexBuildPlacement = (request: {
+    building: ContentEntry;
+    owner: { type: "state"; countryId: string } | { type: "company"; companyId: string };
+  }) => {
+    setHexBuildConfirmTarget(null);
+    setHexBuildPlacement(request);
+    setActiveStrategyMode("construction");
+    toast(t("buildings.hexPlacementStarted"), { description: request.building.name });
   };
+
+  const startHexBuildPlacementForBuilding = (buildingId: string) => {
+    if (!auth) {
+      toast.error(t("shell.buildings.noCountry"));
+      return;
+    }
+
+    const building = buildingEntries.find((entry) => entry.id === buildingId);
+    if (!building) {
+      toast.error(t("shell.buildings.empty"));
+      return;
+    }
+
+    startHexBuildPlacement({
+      building,
+      owner: { type: "state", countryId: auth.countryId },
+    });
+  };
+
+  const getHexBuildOwnerName = (owner: { type: "state"; countryId: string } | { type: "company"; companyId: string }): string => {
+    if (owner.type === "company") {
+      return companyEntries.find((company) => company.id === owner.companyId)?.name ?? owner.companyId;
+    }
+    return countryNameById[owner.countryId] ?? owner.countryId;
+  };
+
+  const getHexBuildOwnerIconUrl = (owner: { type: "state"; countryId: string } | { type: "company"; companyId: string }): string | null => {
+    if (owner.type === "company") {
+      return companyEntries.find((company) => company.id === owner.companyId)?.logoUrl ?? null;
+    }
+    const ownerCountry = countryById.get(owner.countryId);
+    return ownerCountry?.flagUrl ?? ownerCountry?.crestUrl ?? null;
+  };
+
+  const hexBuildOwnerToSelectValue = (owner: { type: "state"; countryId: string } | { type: "company"; companyId: string }): string =>
+    owner.type === "company" ? `company:${owner.companyId}` : `state:${owner.countryId}`;
+
+  const parseHexBuildOwnerSelectValue = (value: string): { type: "state"; countryId: string } | { type: "company"; companyId: string } | null => {
+    const separatorIndex = value.indexOf(":");
+    if (separatorIndex <= 0) return null;
+    const type = value.slice(0, separatorIndex);
+    const id = value.slice(separatorIndex + 1);
+    if (!id) return null;
+    if (type === "company") return { type: "company", companyId: id };
+    if (type === "state") return { type: "state", countryId: id };
+    return null;
+  };
+
+  const hexBuildOwnerOptions = useMemo(() => {
+    const stateCountryIds = new Set<string>();
+    if (auth?.countryId) stateCountryIds.add(auth.countryId);
+    if (hexBuildConfirmTarget?.owner.type === "state") stateCountryIds.add(hexBuildConfirmTarget.owner.countryId);
+    return [
+      ...[...stateCountryIds].map((countryId) => ({
+        value: `state:${countryId}`,
+        label: countryNameById[countryId] ?? country?.name ?? countryId,
+      })),
+      ...companyEntries.map((company) => ({
+        value: `company:${company.id}`,
+        label: company.name ?? company.id,
+      })),
+    ];
+  }, [auth?.countryId, companyEntries, country?.name, countryNameById, hexBuildConfirmTarget?.owner]);
 
   useEffect(() => {
     pruneLogEntries(turnId);
@@ -1790,8 +2043,8 @@ export default function App() {
     <div className="relative h-screen overflow-hidden bg-arc-bg text-[var(--arc-color-text)]">
       <MapView
         apiBase={apiBase}
-        onQueueBuildOrder={openHexBuildingsForHex}
-        onQueueColonizeOrder={queueColonizeOrder}
+        scenarioId={activeScenarioId}
+        focusHexRequest={mapFocusRequest}
         onQueueArmyMoveOrder={queueArmyMoveOrder}
         colonizationIconUrl={BASE_RESOURCE_ICON_URLS.colonization}
         ducatsIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
@@ -1804,6 +2057,22 @@ export default function App() {
         suggestedMapLens={resolveSuggestedMapLens(activeStrategyMode)}
         showMapControls={showMapControls}
         showAntarctica={showAntarctica}
+        buildingEntries={buildingEntries}
+        canceledConstructionQueueKeys={canceledConstructionQueueKeyList}
+        hexBuildPlacement={hexBuildPlacement}
+        onCancelHexBuildPlacement={() => {
+          setHexBuildPlacement(null);
+          setHexBuildConfirmTarget(null);
+        }}
+        onSelectHexBuildPlacementTarget={(target) => {
+          if (!hexBuildPlacement || !isHexId(target.hexId)) return;
+          setHexBuildConfirmTarget({
+            hexId: target.hexId,
+            regionId: target.regionId,
+            building: hexBuildPlacement.building,
+            owner: hexBuildPlacement.owner,
+          });
+        }}
         onOpenAdminHexEditor={(hexId) => {
           setAdminInitialHexId(hexId);
           setAdminOpen(true);
@@ -1960,6 +2229,9 @@ export default function App() {
             constructionProjection={myConstructionProjection}
             technologyProjection={myTechnologyProjection}
             constructionQueuePreview={constructionQueuePreview}
+            cancelingConstructionQueueKey={cancelingConstructionQueueKey}
+            onCancelConstructionProject={cancelConstructionQueueProject}
+            onFocusConstructionHex={focusConstructionHex}
             populationPreview={populationPreview}
             marketPreview={marketPreview}
             marketTradeRows={marketTradeRows}
@@ -1992,10 +2264,12 @@ export default function App() {
             activeJournalCount={activeJournalCount}
             onOpenNotifications={() => setNotificationHistoryOpen(true)}
             onOpenBudget={() => setStateBudgetOpen(true)}
-            onOpenBuildings={() => {
-              setHexBuildingsInitialHexId(null);
-              setHexBuildingsOpen(true);
-            }}
+            onOpenBuildingOverview={() => setBuildingOverviewOpen(true)}
+            scenarioId={activeScenarioId}
+            buildingEntries={buildingEntries}
+            industryEntries={industryEntries}
+            sectorEntries={sectorEntries}
+            onOpenBuildingConstruction={startHexBuildPlacementForBuilding}
             onOpenPopulation={() => setPopulationStatsOpen(true)}
             onOpenMarket={() => setMarketOpen(true)}
             onOpenGlobalMarket={() => setGlobalMarketOpen(true)}
@@ -2039,6 +2313,29 @@ export default function App() {
       )}
 
       {auth && (
+        <BuildingOverviewModal
+          open={buildingOverviewOpen}
+          onClose={() => setBuildingOverviewOpen(false)}
+          token={auth.token}
+          countryId={auth.countryId}
+          scenarioId={activeScenarioId}
+          worldBase={worldBase}
+          turnId={turnId}
+          ordersByTurn={ordersByTurn}
+          buildings={buildingEntries}
+          industries={industryEntries}
+          sectors={sectorEntries}
+          companies={companyEntries}
+          countries={countries}
+          demolitionCostConstructionPercent={demolitionCostConstructionPercent}
+          canceledConstructionQueueKeys={canceledConstructionQueueKeyList}
+          cancelingConstructionQueueKey={cancelingConstructionQueueKey}
+          onCancelConstructionProject={cancelConstructionQueueProject}
+          onFocusHex={focusConstructionHex}
+        />
+      )}
+
+      {auth && (
         <PopulationStatsModal
           open={populationStatsOpen}
           onClose={() => setPopulationStatsOpen(false)}
@@ -2048,18 +2345,111 @@ export default function App() {
         />
       )}
 
-      {auth && (
-        <HexBuildingsModal
-          open={provinceBuildingsOpen}
-          onClose={() => setHexBuildingsOpen(false)}
-          worldBase={worldBase}
-          countryId={auth.countryId}
-          countryName={country?.name ?? auth.countryId}
-          initialRegionId={provinceBuildingsInitialHexId}
-          constructionRequestId={provinceBuildingsConstructionRequestId}
-          onQueueBuildOrder={queueBuildOrder}
-        />
-      )}
+      <AnimatePresence>
+        {auth && hexBuildConfirmTarget ? (
+          <Dialog
+            open
+            onClose={() => setHexBuildConfirmTarget(null)}
+            className="relative z-[214]"
+          >
+            <motion.div
+              aria-hidden="true"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[var(--arc-modal-backdrop)]"
+            />
+            <div className="fixed inset-0 z-[215] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                className="arc-hex-build-confirm"
+              >
+                <div className="arc-hex-build-confirm__header">
+                  <Dialog.Title className="arc-hex-build-confirm__title">
+                    {t("buildings.hexPlacementConfirmTitle")}
+                  </Dialog.Title>
+                </div>
+                <div className="arc-hex-build-confirm__body">
+                  <div className="arc-hex-build-confirm__row">
+                    <span>{t("buildings.buildingLabel")}</span>
+                    <strong className="arc-hex-build-confirm__building">
+                      <BuildingAtlasIcon
+                        scenarioId={activeScenarioId}
+                        buildingId={hexBuildConfirmTarget.building.id}
+                        state="working"
+                        className="arc-hex-build-confirm__building-icon"
+                      />
+                      <span>{hexBuildConfirmTarget.building.name}</span>
+                    </strong>
+                  </div>
+                  <div className="arc-hex-build-confirm__row">
+                    <span>{t("hexMap.hex")}</span>
+                    <strong>{hexBuildConfirmTarget.hexId}</strong>
+                  </div>
+                  <div className="arc-hex-build-confirm__row">
+                    <span>{t("buildings.owner")}</span>
+                    <strong className="arc-hex-build-confirm__owner">
+                      <span className="arc-hex-build-confirm__owner-current">
+                        <span className="arc-hex-build-confirm__owner-flag" aria-hidden="true">
+                          {getHexBuildOwnerIconUrl(hexBuildConfirmTarget.owner) ? (
+                            <img src={getHexBuildOwnerIconUrl(hexBuildConfirmTarget.owner) ?? undefined} alt="" />
+                          ) : (
+                            getHexBuildOwnerName(hexBuildConfirmTarget.owner).slice(0, 1).toUpperCase()
+                          )}
+                        </span>
+                        <span>{getHexBuildOwnerName(hexBuildConfirmTarget.owner)}</span>
+                      </span>
+                      <select
+                        className="arc-hex-build-confirm__owner-select"
+                        aria-label={t("buildings.owner")}
+                        value={hexBuildOwnerToSelectValue(hexBuildConfirmTarget.owner)}
+                        onChange={(event) => {
+                          const owner = parseHexBuildOwnerSelectValue(event.target.value);
+                          if (!owner) return;
+                          setHexBuildConfirmTarget((current) => current ? { ...current, owner } : current);
+                        }}
+                      >
+                        {hexBuildOwnerOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </strong>
+                  </div>
+                </div>
+                <div className="arc-hex-build-confirm__actions">
+                  <button
+                    type="button"
+                    className="arc-strategy-workspace-action arc-hex-build-confirm__action arc-hex-build-confirm__action--cancel"
+                    onClick={() => setHexBuildConfirmTarget(null)}
+                  >
+                    <span>{t("buildings.hexPlacementCancelAction")}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="arc-strategy-workspace-action arc-strategy-workspace-action--primary arc-hex-build-confirm__action"
+                    onClick={() => {
+                      const target = hexBuildConfirmTarget;
+                      if (!target) return;
+                      queueBuildOrder(
+                        target.regionId,
+                        { buildingId: target.building.id, owner: target.owner },
+                        target.hexId,
+                      );
+                      setHexBuildConfirmTarget(null);
+                    }}
+                  >
+                    <span>{t("buildings.hexPlacementConfirmAction")}</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </Dialog>
+        ) : null}
+      </AnimatePresence>
       {auth?.token && (
         <MarketModal
           open={marketOpen}

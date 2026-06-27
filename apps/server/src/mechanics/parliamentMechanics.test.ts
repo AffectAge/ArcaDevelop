@@ -238,6 +238,7 @@ describe("parliamentMechanics", () => {
           {
             instanceId: "building-instance:a",
             buildingId: "building:factory",
+            targetHexId: "hex:0:0",
             owner: { type: "state", countryId: "country:a" },
             createdTurnId: 1,
             level: 2,

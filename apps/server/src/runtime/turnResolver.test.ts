@@ -223,7 +223,7 @@ function makeOrder(type: Order["type"], targetId: string): Order {
     createdAt: "2026-01-01T00:00:00.000Z",
   };
   if (type === "ARMY_MOVE") return { ...base, type, targetHexId: targetId as `hex:${number}:${number}` };
-  if (type === "BUILD") return { ...base, type, regionId: targetId };
+  if (type === "BUILD") return { ...base, type, regionId: targetId, targetHexId: "hex:0:0" };
   if (type === "COLONIZE") return { ...base, type, regionId: targetId };
   return { ...base, type };
 }

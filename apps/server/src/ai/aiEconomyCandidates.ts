@@ -22,6 +22,7 @@ export type AiEconomyBuildCandidate = {
     type: "BUILD";
     countryId: string;
     regionId: string;
+    targetHexId: string;
     payload: {
       buildingId: string;
       owner: { type: "state"; countryId: string };
@@ -67,6 +68,7 @@ export type AiEconomyCandidateParams<
   maxBuildCompletionTurns?: number;
   isBuildingUnlockedForCountry?: (buildingId: string, countryId: string) => boolean;
   getRegionBuildRestriction?: (building: TBuilding, regionId: string) => string | null;
+  selectBuildTargetHexId?: (building: TBuilding, regionId: string, countryId: string) => string | null;
 };
 
 export function selectAiEconomyOrderCandidates<TBuilding extends BuildingMechanicsContentEntry>(
@@ -88,6 +90,8 @@ function selectAiBuildCandidates<TBuilding extends BuildingMechanicsContentEntry
     if (!isRegionControlledByCountry(params.world, params.context.countryId, regionId)) continue;
     for (const building of buildings) {
       if (!canAiBuildInRegion(params, building, regionId)) continue;
+      const targetHexId = params.selectBuildTargetHexId?.(building, regionId, params.context.countryId) ?? null;
+      if (!targetHexId) continue;
       candidates.push({
         kind: "build",
         countryId: params.context.countryId,
@@ -97,6 +101,7 @@ function selectAiBuildCandidates<TBuilding extends BuildingMechanicsContentEntry
           type: "BUILD",
           countryId: params.context.countryId,
           regionId,
+          targetHexId,
           payload: {
             buildingId: building.id,
             owner: { type: "state", countryId: params.context.countryId },

@@ -21,6 +21,7 @@ function createBuildCandidate(countryId: string): AiEconomyOrderCandidate {
       type: "BUILD",
       countryId,
       regionId: "region:alpha-core",
+      targetHexId: "hex:0:0",
       payload: { buildingId: "building:farm", owner: { type: "state", countryId } },
     },
   };
@@ -107,6 +108,7 @@ describe("createAiBuildOrderDraftsFromPlan", () => {
           playerId: "ai:country:alpha",
           countryId: "country:alpha",
           regionId: "region:alpha-core",
+          targetHexId: "hex:0:0",
           payload: {
             buildingId: "building:farm",
             owner: { type: "state", countryId: "country:alpha" },

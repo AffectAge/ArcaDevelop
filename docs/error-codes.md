@@ -33,3 +33,15 @@ Error responses should include:
 - localized client mapping key or namespace,
 - optional safe metadata,
 - debug details only when permission-gated.
+
+## Build Placement Codes
+
+- `BUILD_TARGET_HEX_REQUIRED`: a new `BUILD` order did not provide `targetHexId`.
+- `BUILD_RESTRICTED`: the selected hex failed building placement validation.
+- `BUILD_PLACEMENT_HEX_NOT_FOUND`: the requested `targetHexId` does not exist in the active hex map.
+- `BUILD_PLACEMENT_HEX_REGION_MISMATCH`: the requested `targetHexId` is not part of the requested `regionId`.
+- `BUILD_PLACEMENT_REGION_NOT_CONTROLLED`: the requester does not control the target region.
+- `BUILD_PLACEMENT_OCCUPIED`: the target hex already has a building instance or construction project.
+- `BUILD_PLACEMENT_TERRAIN_DENIED` and `BUILD_PLACEMENT_TERRAIN_NOT_ALLOWED`: terrain rules reject the target hex.
+- `BUILD_PLACEMENT_FEATURE_DENIED` and `BUILD_PLACEMENT_FEATURE_NOT_ALLOWED`: feature rules reject the target hex.
+- `BUILD_PLACEMENT_WATER_DENIED` and `BUILD_PLACEMENT_WATER_NOT_ALLOWED`: water rules reject the target hex.

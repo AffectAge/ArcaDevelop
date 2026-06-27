@@ -1,4 +1,6 @@
 import type {
+  BuildingAdjacencyEffect,
+  BuildingPlacementRules,
   DecisionDefinition,
   DivisionStats,
   GameEventDefinition,
@@ -109,6 +111,8 @@ export type BuildingContentEntry = GameContentEntry & {
   pollutionProductivityMode?: PollutionProductivityMode;
   countryBuildLimits?: BuildingCountryLimit[];
   globalBuildLimit?: number | null;
+  placement?: BuildingPlacementRules | null;
+  adjacencyEffects?: BuildingAdjacencyEffect[] | null;
 };
 
 export type BattalionContentEntry = GameContentEntry & DivisionStats & {

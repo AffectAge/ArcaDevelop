@@ -32,6 +32,10 @@ export function normalizeRegionBuildingsMap(params: HexStateNormalizerParams): R
           const source = item as Partial<BuildingInstance>;
           const buildingId = typeof source.buildingId === "string" ? source.buildingId.trim() : "";
           if (!buildingId) continue;
+          const targetHexId = typeof source.targetHexId === "string" && source.targetHexId.trim().length > 0
+            ? source.targetHexId.trim()
+            : "";
+          if (!targetHexId) continue;
           const createdTurnId =
             typeof source.createdTurnId === "number" && Number.isFinite(source.createdTurnId)
               ? Math.max(1, Math.floor(source.createdTurnId))
@@ -46,6 +50,7 @@ export function normalizeRegionBuildingsMap(params: HexStateNormalizerParams): R
                 ? source.instanceId.trim()
                 : params.createId(),
             buildingId,
+            targetHexId,
             customName:
               typeof source.customName === "string"
                 ? source.customName.trim().slice(0, 80) || null
@@ -215,48 +220,6 @@ export function normalizeRegionBuildingsMap(params: HexStateNormalizerParams): R
                 : null,
           });
         }
-      } else if (raw && typeof raw === "object") {
-        // shape normalization: { [buildingId]: level } -> single instance with level.
-        for (const [buildingId, levelRaw] of Object.entries(raw as Record<string, unknown>)) {
-          const level =
-            typeof levelRaw === "number" && Number.isFinite(levelRaw) ? Math.max(0, Math.floor(levelRaw)) : 0;
-          if (!buildingId || level <= 0) continue;
-          instances.push({
-            instanceId: params.createId(),
-            buildingId,
-            customName: null,
-            owner: { type: "state", countryId: fallbackCountryId },
-            createdTurnId: params.turnId,
-            level,
-            currentDurability: params.defaultBuildingDurabilityMax,
-            autoUpgradeEnabled: true,
-            stateSubsidiesEnabled: true,
-            manualWorkEnabled: true,
-            ducats: 0,
-            warehouseByGoodId: {},
-            lastLaborCoverage: 0,
-            lastInfraCoverage: 0,
-            lastInputCoverage: 0,
-            lastFinanceCoverage: 0,
-            lastExtractionCoverage: 0,
-            lastDurabilityCoverage: 0,
-            lastProductivity: 0,
-            lastPurchaseByGoodId: {},
-            lastPurchaseCostByGoodId: {},
-            lastSalesByGoodId: {},
-            lastSalesRevenueByGoodId: {},
-            lastConsumptionByGoodId: {},
-            lastProductionByGoodId: {},
-            lastExtractionByGoodId: {},
-            lastRevenueDucats: 0,
-            lastInputCostDucats: 0,
-            lastWagesDucats: 0,
-            lastStateSubsidyDucats: 0,
-            lastNetDucats: 0,
-            isInactive: false,
-            inactiveReason: null,
-          });
-        }
       }
       normalized[hexId] = instances;
     }
@@ -339,6 +302,10 @@ export function normalizeRegionConstructionQueueMap(params: HexStateNormalizerPa
         const buildingId = typeof source.buildingId === "string" ? source.buildingId.trim() : "";
         if (!buildingId) continue;
         const projectType = source.projectType === "upgrade" ? "upgrade" : "build";
+        const targetHexId = typeof source.targetHexId === "string" && source.targetHexId.trim().length > 0
+          ? source.targetHexId.trim()
+          : "";
+        if (!targetHexId) continue;
         const targetInstanceId =
           projectType === "upgrade" && typeof source.targetInstanceId === "string" && source.targetInstanceId.trim().length > 0
             ? source.targetInstanceId.trim()
@@ -363,6 +330,7 @@ export function normalizeRegionConstructionQueueMap(params: HexStateNormalizerPa
           queueId,
           requestedByCountryId,
           buildingId,
+          targetHexId,
           owner: normalizeBuildingOwner(source.owner, fallbackCountryId),
           projectType,
           targetInstanceId,

@@ -97,7 +97,7 @@ type TurnRuntimeParams = {
   parseRequestedBuildingIdFromPayload: (payload: Record<string, unknown>) => string;
   resolveBuildingOwnerFromPayload: (payload: Record<string, unknown>, requestedByCountryId: string) => BuildingOwner | null;
   isCountryAllowedForBuildingSync: (building: GameContentEntry, countryId: string) => boolean;
-  getHexBuildRestriction: (building: GameContentEntry, hexId: string) => string | null;
+  getHexBuildRestriction: (building: GameContentEntry, hexId: string, regionId: string, countryId: string) => string | null;
   isBuildingUnlockedForCountry: (buildingId: string, countryId: string) => boolean;
   countBuildingOccurrences: (
     buildingId: string,
@@ -226,7 +226,7 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           resolveConstructionCost: (building) =>
             params.resolveModifiedValue("building_construction_cost", Number(building.costConstruction ?? 100), {
               countryId: order.countryId,
-              hexId: order.type === "BUILD" ? order.regionId : "",
+              hexId: order.type === "BUILD" ? order.targetHexId : "",
               buildingId: building.id,
             }),
           createId: randomUUID,

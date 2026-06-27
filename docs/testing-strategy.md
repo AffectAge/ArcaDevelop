@@ -15,6 +15,8 @@ Arcanorum needs layered tests because it is an online strategy game with authori
 
 New mechanics need tests at the lowest practical layer plus at least one scenario/flow test when the behavior crosses systems.
 
+Hex building placement needs shared pure evaluator coverage for terrain, feature, water, control, slot occupation, adjacency throughput, and structured reason output. Server tests must cover `BUILD.targetHexId` validation, queue creation, construction completion, upgrade preservation, and controller-change ownership transfer. Client tests or manual QA must cover placement mode, viewport overlays, invalid-click reasons, confirmation, and map-visible projects/buildings.
+
 ## Current Gap
 
 The project does not yet have the full test stack. Agents must not pretend missing commands exist; add or propose them intentionally.

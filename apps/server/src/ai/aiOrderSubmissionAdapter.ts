@@ -78,6 +78,7 @@ function createBuildOrderInput(
     playerId: `${playerIdPrefix}:${candidate.countryId}`,
     countryId: candidate.countryId,
     regionId: candidate.regionId,
+    targetHexId: candidate.orderDraft.targetHexId as Extract<OrderInput, { type: "BUILD" }>["targetHexId"],
     payload: candidate.orderDraft.payload,
   };
 }

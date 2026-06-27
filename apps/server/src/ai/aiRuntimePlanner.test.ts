@@ -27,6 +27,7 @@ function createBuildCandidate(countryId: string, regionId = "region:alpha-core")
       type: "BUILD",
       countryId,
       regionId,
+      targetHexId: "hex:0:0",
       payload: { buildingId: "building:farm", owner: { type: "state", countryId } },
     },
   };

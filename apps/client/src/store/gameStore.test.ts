@@ -32,7 +32,17 @@ describe("gameStore region world deltas", () => {
         WORLD_DELTA_MASK.regionPopulationTreasuryByRegion |
         WORLD_DELTA_MASK.regionConstructionQueueByRegion,
       u: { "region:a": { pops: [makePop({ id: "pop:a", size: 25 })] } },
-      b: { "region:a": [{ instanceId: "instance:a", buildingId: "building:a", owner: { type: "state", countryId: "country:a" }, createdTurnId: 1 }] },
+      b: {
+        "region:a": [
+          {
+            instanceId: "instance:a",
+            buildingId: "building:a",
+            targetHexId: "hex:0:0",
+            owner: { type: "state", countryId: "country:a" },
+            createdTurnId: 1,
+          },
+        ],
+      },
       q: { "region:a": { "building:a": 7 } },
       y: { "region:a": 13 },
       r: { "region:a": [project] },
@@ -55,7 +65,17 @@ describe("gameStore region world deltas", () => {
     useGameStore.getState().setWorldBase(
       makeWorldBase({
         regionPopulationByRegion: { "region:a": { pops: [makePop({ id: "pop:a", size: 25 })] } },
-        regionBuildingsByRegion: { "region:a": [{ instanceId: "instance:a", buildingId: "building:a", owner: { type: "state", countryId: "country:a" }, createdTurnId: 1 }] },
+        regionBuildingsByRegion: {
+          "region:a": [
+            {
+              instanceId: "instance:a",
+              buildingId: "building:a",
+              targetHexId: "hex:0:0",
+              owner: { type: "state", countryId: "country:a" },
+              createdTurnId: 1,
+            },
+          ],
+        },
         regionBuildingDucatsByRegion: { "region:a": { "building:a": 7 } },
         regionPopulationTreasuryByRegion: { "region:a": 13 },
         regionConstructionQueueByRegion: { "region:a": [makeProject()] },
@@ -207,6 +227,7 @@ function makeProject(overrides?: Partial<RegionConstructionProject>): RegionCons
     queueId: "queue:a",
     requestedByCountryId: "country:a",
     buildingId: "building:a",
+    targetHexId: "hex:0:0",
     owner: { type: "state", countryId: "country:a" },
     projectType: "build",
     progressConstruction: 0,

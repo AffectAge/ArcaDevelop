@@ -59,6 +59,32 @@ const extractionFlowPayloadSchema = z
     path: ["maxLevel"],
   });
 
+const buildingPlacementPayloadSchema = z.object({
+  allowedTerrains: z.array(z.string().trim().min(1).max(80)).optional(),
+  deniedTerrains: z.array(z.string().trim().min(1).max(80)).optional(),
+  allowedFeatures: z.array(z.string().trim().min(1).max(80)).optional(),
+  deniedFeatures: z.array(z.string().trim().min(1).max(80)).optional(),
+  allowedWaterKinds: z.array(z.string().trim().min(1).max(80)).optional(),
+  deniedWaterKinds: z.array(z.string().trim().min(1).max(80)).optional(),
+}).optional();
+
+const buildingAdjacencyEffectPayloadSchema = z.object({
+  id: z.string().trim().min(1).max(120),
+  when: z.object({
+    neighborTerrains: z.array(z.string().trim().min(1).max(80)).optional(),
+    neighborFeatures: z.array(z.string().trim().min(1).max(80)).optional(),
+    neighborBuildingIds: z.array(z.string().trim().min(1).max(120)).optional(),
+    adjacentToRiver: z.boolean().optional(),
+  }),
+  perNeighbor: z.boolean().optional(),
+  maxStacks: z.number().int().min(1).nullable().optional(),
+  modifier: z.object({
+    target: z.literal("building.throughput"),
+    operation: z.enum(["add", "multiply"]),
+    value: z.number().finite(),
+  }),
+});
+
 function normalizeExtractionFlows(input: unknown): Array<{ goodId: string; amount: number; requiresDeposit?: boolean; minLevel?: number; maxLevel?: number }> {
   if (!Array.isArray(input)) return [];
   const items: Array<{ goodId: string; amount: number; requiresDeposit?: boolean; minLevel?: number; maxLevel?: number }> = [];
@@ -538,6 +564,8 @@ export const culturePayloadSchema = z.object({
   pollutionProductivityMode: z.enum(["penalty", "bonus", "ignore"]).optional(),
   countryBuildLimits: z.array(z.object({ countryId: z.string().trim().min(1).max(120), limit: z.number().int().min(1).nullable() })).optional(),
   globalBuildLimit: z.number().int().min(0).nullable().optional(),
+  placement: buildingPlacementPayloadSchema,
+  adjacencyEffects: z.array(buildingAdjacencyEffectPayloadSchema).max(64).optional(),
   manpower: z.number().finite().min(0).optional(),
   attack: z.number().finite().min(0).optional(),
   defense: z.number().finite().min(0).optional(),
@@ -890,6 +918,8 @@ export function sanitizeContentEntryByKind(
       pollutionProductivityMode: normalizePollutionProductivityMode(payload.pollutionProductivityMode),
       countryBuildLimits: normalizeBuildingCountryLimits(payload.countryBuildLimits),
       globalBuildLimit: payload.globalBuildLimit == null || Number(payload.globalBuildLimit) <= 0 ? null : Math.max(1, Math.floor(Number(payload.globalBuildLimit))),
+      placement: payload.placement ?? null,
+      adjacencyEffects: payload.adjacencyEffects ?? [],
     };
   }
   return {};

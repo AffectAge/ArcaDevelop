@@ -1022,6 +1022,7 @@ export function isEqualConstructionQueue(
       (prev.owner.type === "company" && next.owner.type === "company" && prev.owner.companyId !== next.owner.companyId) ||
       (prev.projectType ?? "build") !== (next.projectType ?? "build") ||
       (prev.targetInstanceId ?? "") !== (next.targetInstanceId ?? "") ||
+      (prev.targetHexId ?? "") !== (next.targetHexId ?? "") ||
       prev.progressConstruction !== next.progressConstruction ||
       prev.costConstruction !== next.costConstruction ||
       prev.costDucats !== next.costDucats ||
@@ -1090,6 +1091,7 @@ export function isEqualBuildingInstances(
     if (
       prev.instanceId !== next.instanceId ||
       prev.buildingId !== next.buildingId ||
+      (prev.targetHexId ?? "") !== (next.targetHexId ?? "") ||
       (typeof prev.customName === "string" ? prev.customName : null) !==
         (typeof next.customName === "string" ? next.customName : null) ||
       prev.createdTurnId !== next.createdTurnId ||

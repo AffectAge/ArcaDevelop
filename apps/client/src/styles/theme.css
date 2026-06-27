@@ -225,6 +225,11 @@
   --arc-construction-link-hover-border: rgb(232 204 139 / 0.88);
   --arc-construction-link-hover-text: #fff7d6;
   --arc-construction-link-opacity: 1;
+  --arc-map-build-placement-fill: #3a155e;
+  --arc-map-build-placement-border: #b56cff;
+  --arc-map-building-marker-working: #d8c27a;
+  --arc-map-building-marker-construction: #7e4cc2;
+  --arc-map-building-marker-stroke: #261433;
   --arc-building-card-built-bg: #1C252B;
   --arc-building-card-built-border: rgb(200 169 107 / 0.26);
   --arc-building-card-built-hover-border: rgb(232 204 139 / 0.58);

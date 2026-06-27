@@ -1,5 +1,14 @@
 import { randomUUID } from "node:crypto";
-import type { BuildingOwner, Order, WorldBase } from "@arcanorum/shared";
+import {
+  evaluateBuildingPlacement,
+  type BuildingOwner,
+  type HexFeature,
+  type HexTerrain,
+  type HexTile,
+  type HexWaterKind,
+  type Order,
+  type WorldBase,
+} from "@arcanorum/shared";
 import {
   countBuildingOccurrences as countBuildingOccurrencesInState,
   enqueueBuildingAutoUpgradesTurn as enqueueBuildingAutoUpgradesTurnInState,
@@ -36,25 +45,37 @@ export function createBuildingRuntime(params: BuildingRuntimeParams) {
   const parseRequestedBuildingIdFromPayloadForRuntime = (payload: Record<string, unknown>): string =>
     parseRequestedBuildingIdFromPayload(payload, params.getGameSettings().content.buildings[0]?.id || "");
 
-  const getHexBuildRestrictionForRuntime = (building: BuildingContentEntry, provinceOrRegionId: string): string | null => {
+  const getHexBuildRestrictionForRuntime = (
+    building: BuildingContentEntry,
+    targetHexId: string,
+    regionId?: string,
+    countryId?: string,
+  ): string | null => {
     const hexById = params.getHexById();
-    const exactHex = hexById.get(provinceOrRegionId);
-    if (exactHex) {
-      return getHexBuildRestriction(building, exactHex);
+    const exactHex = hexById.get(targetHexId);
+    if (!exactHex) {
+      return "BUILD_PLACEMENT_HEX_NOT_FOUND";
     }
-
-    const regionHexes = [...hexById.values()].filter((province) => province.regionId === provinceOrRegionId);
-    if (regionHexes.length === 0) {
-      return "Регион не найден в индексе карты";
+    if (regionId && exactHex.regionId !== regionId) {
+      return "BUILD_PLACEMENT_HEX_REGION_MISMATCH";
     }
-
-    let firstRestriction: string | null = null;
-    for (const province of regionHexes) {
-      const restriction = getHexBuildRestriction(building, province);
-      if (!restriction) return null;
-      firstRestriction ??= restriction;
+    const legacyRestriction = getHexBuildRestriction(building, exactHex);
+    if (legacyRestriction) return legacyRestriction;
+    const hex = toPlacementHexTile(exactHex);
+    if (!hex || !countryId) {
+      return "BUILD_PLACEMENT_HEX_NOT_FOUND";
     }
-    return firstRestriction;
+    const neighborHexes = exactHex.neighbors
+      .map((neighborId) => toPlacementHexTile(hexById.get(neighborId)))
+      .filter((tile): tile is HexTile => Boolean(tile));
+    const evaluation = evaluateBuildingPlacement({
+      building,
+      countryId,
+      hex,
+      neighborHexes,
+      world: params.getWorldBase(),
+    });
+    return evaluation.valid ? null : evaluation.reason.code;
   };
 
   const getHexFertilityMultiplier = (hexId: string): number => {
@@ -135,4 +156,43 @@ export function createBuildingRuntime(params: BuildingRuntimeParams) {
     enqueueBuildingAutoUpgradesTurn,
     resolveBuildingConstructionQueuesTurn,
   };
+}
+
+function toPlacementHexTile(input: HexMapIndexEntry | undefined): HexTile | null {
+  if (!input?.id || !input.regionId) return null;
+  const terrain = normalizePlacementTerrain(input.landscape ?? input.hexType);
+  const waterKind = normalizePlacementWaterKind(input.landscape ?? input.hexType);
+  return {
+    id: input.id as HexTile["id"],
+    q: 0,
+    r: 0,
+    chunkId: "hex-chunk:0:0",
+    regionId: input.regionId as HexTile["regionId"],
+    terrain,
+    biome: waterKind === "ocean" || waterKind === "sea" ? "coastal_water" : terrain === "desert" ? "arid" : "temperate",
+    feature: normalizePlacementFeature(input.landscape),
+    waterKind,
+    elevation: 0,
+    moisture: 0,
+    temperature: 0,
+    movementCost: 1,
+    passable: true,
+  };
+}
+
+function normalizePlacementTerrain(value: string | null | undefined): HexTerrain {
+  const normalized = String(value ?? "").trim();
+  const allowed = new Set<HexTerrain>(["ocean", "sea", "lake", "coast", "plains", "grassland", "forest", "hills", "mountains", "desert", "tundra", "snow", "wetland"]);
+  return allowed.has(normalized as HexTerrain) ? normalized as HexTerrain : "plains";
+}
+
+function normalizePlacementFeature(value: string | null | undefined): HexFeature {
+  const normalized = String(value ?? "").trim();
+  const allowed = new Set<HexFeature>(["none", "forest", "dense_forest", "jungle", "marsh", "scrub", "snowcap"]);
+  return allowed.has(normalized as HexFeature) ? normalized as HexFeature : "none";
+}
+
+function normalizePlacementWaterKind(value: string | null | undefined): HexWaterKind {
+  const normalized = String(value ?? "").trim();
+  return normalized === "ocean" || normalized === "sea" || normalized === "lake" ? normalized : null;
 }

@@ -107,6 +107,26 @@ export type ContentCulture = {
   pollutionProductivityMode?: "penalty" | "bonus" | "ignore";
   countryBuildLimits?: Array<{ countryId: string; limit: number | null }> | null;
   globalBuildLimit?: number | null;
+  placement?: {
+    allowedTerrains?: string[];
+    deniedTerrains?: string[];
+    allowedFeatures?: string[];
+    deniedFeatures?: string[];
+    allowedWaterKinds?: string[];
+    deniedWaterKinds?: string[];
+  } | null;
+  adjacencyEffects?: Array<{
+    id: string;
+    when: {
+      neighborTerrains?: string[];
+      neighborFeatures?: string[];
+      neighborBuildingIds?: string[];
+      adjacentToRiver?: boolean;
+    };
+    perNeighbor?: boolean;
+    maxStacks?: number | null;
+    modifier: { target: "building.throughput"; operation: "add" | "multiply"; value: number };
+  }> | null;
   manpower?: number | null;
   attack?: number | null;
   defense?: number | null;
@@ -234,6 +254,8 @@ type ContentEntryUpsertPayload = {
   pollutionProductivityMode?: "penalty" | "bonus" | "ignore";
   countryBuildLimits?: Array<{ countryId: string; limit: number | null }>;
   globalBuildLimit?: number | null;
+  placement?: ContentCulture["placement"];
+  adjacencyEffects?: ContentCulture["adjacencyEffects"];
   manpower?: number | null;
   attack?: number | null;
   defense?: number | null;
@@ -2024,12 +2046,16 @@ export async function fetchHexIndex(): Promise<HexIndexItem[]> {
   return data.hexes;
 }
 
-export async function fetchPublicGameUiSettings(): Promise<Pick<GameSettings, "economy" | "colonization" | "customization" | "eventLog" | "turnTimer" | "map">> {
+export type PublicGameUiSettings = Pick<GameSettings, "economy" | "colonization" | "customization" | "eventLog" | "turnTimer" | "map"> & {
+  activeScenarioId?: string;
+};
+
+export async function fetchPublicGameUiSettings(): Promise<PublicGameUiSettings> {
   const response = await fetch(`${API}/game-settings/public`);
   if (!response.ok) {
     throw new Error("PUBLIC_GAME_SETTINGS_FAILED");
   }
-  const data = (await response.json()) as Pick<GameSettings, "economy" | "colonization" | "customization" | "eventLog" | "turnTimer" | "map">;
+  const data = (await response.json()) as PublicGameUiSettings;
   return {
     ...data,
     map: normalizeMapSettings(data.map),
