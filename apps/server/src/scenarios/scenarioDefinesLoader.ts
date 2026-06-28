@@ -52,6 +52,7 @@ export type ScenarioDefines = {
   };
   military?: {
     militaryFormationSpeed?: unknown;
+    landDivisionStackLimitPerHex?: unknown;
   };
   registration?: {
     requireAdminApproval?: unknown;
@@ -133,6 +134,7 @@ export const SCENARIO_DEFINES_SUPPORTED_SECTIONS = {
   },
   military: {
     militaryFormationSpeed: { type: "number", min: 1, max: 1_000_000_000_000 },
+    landDivisionStackLimitPerHex: { type: "integer", min: 1, max: 100 },
   },
   registration: {
     requireAdminApproval: { type: "boolean" },
@@ -218,6 +220,7 @@ export type CustomizationSettings = {
 
 export type MilitarySettings = {
   militaryFormationSpeed: number;
+  landDivisionStackLimitPerHex: number;
 };
 
 export type RegistrationSettings = {
@@ -306,6 +309,7 @@ const scenarioDefinesShapeSchema = z
     military: z
       .object({
         militaryFormationSpeed: z.unknown().optional(),
+        landDivisionStackLimitPerHex: z.unknown().optional(),
       })
       .strict()
       .optional(),
@@ -739,6 +743,13 @@ export function normalizeScenarioMilitaryDefines(
       1,
       options.maxSettingNumber,
       "INVALID_SCENARIO_MILITARY_FORMATION_SPEED",
+    ),
+    landDivisionStackLimitPerHex: normalizeIntegerInRange(
+      militaryDefines.landDivisionStackLimitPerHex,
+      defaults.landDivisionStackLimitPerHex,
+      1,
+      100,
+      "INVALID_SCENARIO_MILITARY_LAND_DIVISION_STACK_LIMIT",
     ),
   };
 }

@@ -4,11 +4,13 @@ import type {
   DecisionDefinition,
   DivisionStats,
   EquipmentClass,
+  EquipmentFrame,
   EquipmentModule,
   GameEventDefinition,
   JournalEntryDefinition,
   IdeologyAttractionRule,
   LawParliamentPowerEffect,
+  MilitaryBranch,
   ModifierDefinition,
   TreatyConstructionExpirationPolicy,
 } from "@arcanorum/shared";
@@ -115,6 +117,11 @@ export type BuildingContentEntry = GameContentEntry & {
   globalBuildLimit?: number | null;
   placement?: BuildingPlacementRules | null;
   adjacencyEffects?: BuildingAdjacencyEffect[] | null;
+  deployment?: {
+    branches: MilitaryBranch[];
+    capacity?: number | null;
+    requiresActive?: boolean | null;
+  } | null;
 };
 
 export type BattalionContentEntry = GameContentEntry & DivisionStats & {
@@ -262,6 +269,7 @@ export type GameSettings = {
     shipTypes: MilitaryContentEntry[];
     aircraftTypes: MilitaryContentEntry[];
     equipmentClasses: EquipmentClass[];
+    equipmentFrames: EquipmentFrame[];
     equipmentModules: EquipmentModule[];
   };
   ai: {
@@ -365,6 +373,7 @@ export type GameSettings = {
   };
   military: {
     militaryFormationSpeed: number;
+    landDivisionStackLimitPerHex: number;
   };
   registration: {
     requireAdminApproval: boolean;

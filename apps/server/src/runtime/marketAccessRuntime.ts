@@ -121,11 +121,8 @@ export function createMarketAccessRuntime(params: MarketAccessRuntimeParams) {
     }
   }
 
-  function getTransportCorridorCapacity(corridor: TransportCorridorEntry, categoryId: string | null): number {
+  function getTransportCorridorCapacity(corridor: TransportCorridorEntry): number {
     if (corridor.status !== "active") return 0;
-    if (categoryId && corridor.transportMode === "pipeline" && categoryId !== "energy" && categoryId !== "fuel") {
-      return 0;
-    }
     return params.round3(getTransportCorridorBaseCapacity(corridor.transportMode) * Math.max(1, Math.floor(corridor.level || 1)));
   }
 

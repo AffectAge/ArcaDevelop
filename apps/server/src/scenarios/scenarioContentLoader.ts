@@ -32,6 +32,7 @@ export const scenarioContentFileNames = [
   ["shipTypes", ["ship_types.json", "shipTypes.json"]],
   ["aircraftTypes", ["aircraft_types.json", "aircraftTypes.json"]],
   ["equipmentClasses", ["equipment_classes.json", "equipmentClasses.json"]],
+  ["equipmentFrames", ["equipment_frames.json", "equipmentFrames.json"]],
   ["equipmentModules", ["equipment_modules.json", "equipmentModules.json"]],
 ] as const;
 

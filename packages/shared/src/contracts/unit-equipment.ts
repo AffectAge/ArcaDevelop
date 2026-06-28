@@ -94,22 +94,40 @@ export type EquipmentClass = {
   baseStats?: EquipmentStats;
 };
 
+export type EquipmentFrame = {
+  id: string;
+  classId: string;
+  branch: EquipmentBranch;
+  slotIds: string[];
+  baseStats?: EquipmentStats;
+  goodsCost?: EquipmentGoodsCost;
+  manpowerCrew?: number;
+  productionCost?: number;
+  era?: string | null;
+  unlockTechnologyId?: string | null;
+};
+
 export type EquipmentModule = {
   id: string;
   classId?: string | null;
   slotId: string;
   stats: EquipmentStats;
   goodsCost: EquipmentGoodsCost;
+  manpowerCrew?: number;
+  productionCost?: number;
 };
 
 export type EquipmentVariant = {
   id: string;
   countryId?: string | null;
   classId: string;
+  frameId?: string | null;
   name: string;
   moduleIdsBySlotId: Record<string, string>;
   stats: EquipmentStats;
   goodsCost: EquipmentGoodsCost;
+  manpowerCrew?: number;
+  productionCost?: number;
   createdTurnId: number;
   scenarioAuthored?: boolean;
 };
@@ -121,6 +139,9 @@ export type EquipmentProductionLine = {
   assignedCapacity: number;
   progress: number;
   active: boolean;
+  lastStatus?: "active" | "idle" | "stalled" | "invalid";
+  lastProduced?: number;
+  lastMissingGoods?: Array<{ goodId: string; required: number; available: number; missing: number }>;
   createdTurnId: number;
 };
 

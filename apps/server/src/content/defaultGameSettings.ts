@@ -2,6 +2,7 @@ import { defaultCivilopediaCategories, defaultCivilopediaEntries } from "./civil
 import {
   DEFAULT_AIRCRAFT_TYPES,
   DEFAULT_EQUIPMENT_CLASSES,
+  DEFAULT_EQUIPMENT_FRAMES,
   DEFAULT_EQUIPMENT_MODULES,
   DEFAULT_SHIP_TYPES,
   ensureDefaultBattalions,
@@ -58,6 +59,7 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
       shipTypes: ensureDefaultMilitaryContent([], DEFAULT_SHIP_TYPES),
       aircraftTypes: ensureDefaultMilitaryContent([], DEFAULT_AIRCRAFT_TYPES),
       equipmentClasses: DEFAULT_EQUIPMENT_CLASSES,
+      equipmentFrames: DEFAULT_EQUIPMENT_FRAMES,
       equipmentModules: DEFAULT_EQUIPMENT_MODULES,
     },
     ai: {
@@ -118,6 +120,7 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
     },
     military: {
       militaryFormationSpeed: 10,
+      landDivisionStackLimitPerHex: 4,
     },
     registration: {
       requireAdminApproval: false,

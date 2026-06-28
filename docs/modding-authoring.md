@@ -115,7 +115,8 @@ Currently supported runtime defines:
     "hexRenameDucats": 25
   },
   "military": {
-    "militaryFormationSpeed": 10
+    "militaryFormationSpeed": 10,
+    "landDivisionStackLimitPerHex": 4
   },
   "registration": {
     "requireAdminApproval": false
@@ -211,6 +212,20 @@ New building construction requires a `targetHexId` chosen from a controlled regi
 ```
 
 `placement` can allow or deny terrain, features, and water kinds. One building or construction project occupies one building slot on a hex. `adjacencyEffects` are authored on the building and currently affect building throughput from adjacent terrain, features, rivers, or neighboring building ids.
+
+Buildings may also define military deployment capability used by `Армия -> Формирование`. This is data-driven; core code does not hardcode barracks, ports, or airbases:
+
+```json
+{
+  "deployment": {
+    "branches": ["land", "naval", "air"],
+    "capacity": 3,
+    "requiresActive": true
+  }
+}
+```
+
+`branches` may contain `land`, `naval`, and `air`. `capacity` is optional and counts existing units plus queued formations for the same branch on that hex. `requiresActive` defaults to true; inactive buildings do not allow deployment unless a scenario explicitly sets it to false.
 
 Building map visuals are not authored as URL fields in building JSON. Each scenario building must provide one PNG atlas at `scenarios/<scenarioId>/assets/buildings/<sanitizedBuildingId>.png`. Sanitization replaces every character except `a-z`, `A-Z`, `0-9`, `_`, and `-` with `_`, so `building:watermill` resolves to `assets/buildings/building_watermill.png`.
 
@@ -486,3 +501,13 @@ Arcawiki should explain gameplay to players, not implementation internals.
 Scenario defines may include `resourceLedger.retentionTurns` and `resourceLedger.maxEntriesPerTurn`. Retention controls how many recent turns of country resource flow history are persisted for explanations; max entries bounds one turn's ledger size. Invalid values fail scenario validation.
 
 Scenario-authored mechanics and content that produce country resource income or expenses should be designed around ledger categories and localized source labels rather than hidden direct balance changes.
+
+## Military Equipment Frames
+
+Scenario military equipment is authored as a chain:
+
+- `equipment_classes.json`: broad class and tactical roles, such as infantry kit, field vehicle, aircraft, or warship.
+- `equipment_frames.json`: concrete base chassis/airframe/hull/frame for a class. A frame defines branch, module slot ids, base stats, goods cost, optional crew manpower, optional production cost, era, and unlock metadata.
+- `equipment_modules.json`: modules that fill frame slots and add stats, goods cost, crew manpower, or production cost.
+
+If a scenario omits `equipment_frames.json`, runtime creates a basic frame for each equipment class so older class/module content remains loadable during the new-game-only military transition. New authored scenarios should provide frames explicitly.

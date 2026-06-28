@@ -1,9 +1,11 @@
 import type express from "express";
 import type {
+  AirWing,
   Division,
   DivisionStats,
   EquipmentClass,
   EquipmentClassRole,
+  EquipmentFrame,
   EquipmentModule,
   EquipmentProductionLine,
   EquipmentVariant,
@@ -58,14 +60,23 @@ export type MilitaryRoutesDependencies = {
   getCountryDivisionTemplates: (countryId: string) => DivisionTemplate[];
   setCountryDivisionTemplates: (countryId: string, templates: DivisionTemplate[]) => void;
   getCountryDivisionsById: () => Record<string, Division>;
+  getCountryAirWingsById: () => Record<string, AirWing>;
+  getKnownRegionIds: () => string[];
   getCountryMilitaryQueue: (countryId: string) => MilitaryFormationQueueItem[];
   setCountryMilitaryQueue: (countryId: string, queue: MilitaryFormationQueueItem[]) => void;
   getEquipmentClasses: () => EquipmentClass[];
+  getEquipmentFrames: () => EquipmentFrame[];
   getEquipmentModules: () => EquipmentModule[];
   getEquipmentVariantsById: () => Record<string, EquipmentVariant>;
+  getCountryEquipmentStockpile: (countryId: string) => Record<string, number>;
   getCountryEquipmentProductionLines: (countryId: string) => EquipmentProductionLine[];
   setCountryEquipmentProductionLines: (countryId: string, lines: EquipmentProductionLine[]) => void;
   getHexOwner: (hexId: string) => string | null;
+  validateFormationDeployment: (
+    countryId: string,
+    kind: MilitaryBranch,
+    hexId: HexId,
+  ) => { ok: true } | { ok: false; error: string };
   normalizeMilitaryTemplateComponents: (
     input: unknown,
     kind: MilitaryBranch,
@@ -81,6 +92,8 @@ export type MilitaryRoutesDependencies = {
     components: MilitaryTemplateComponent[],
   ) => MilitaryFormationCost;
   calculateDivisionTrainingCost: (battalions: DivisionTemplateBattalion[]) => MilitaryFormationCost;
+  refreshDivisionStatsFromTemplates: () => void;
+  refreshCountryDivisionEquipmentState: (countryId: string) => void;
   calculateFormationTurns: (cost: MilitaryFormationCost) => number;
   spendMilitaryFormationCost: (
     countryId: string,
@@ -150,10 +163,14 @@ const createMilitaryFormationInputSchema = z.object({
   templateId: z.string().trim().min(1).max(120),
   hexId: z.string().trim().regex(/^hex:-?\d+:-?\d+$/).max(120),
   name: z.string().trim().min(1).max(80).optional(),
+  quantity: z.coerce.number().int().min(1).max(99).default(1),
+  priority: z.enum(["high", "normal", "low"]).default("normal"),
+  repeat: z.coerce.boolean().default(false),
 });
 
 const createEquipmentVariantInputSchema = z.object({
-  classId: z.string().trim().min(1).max(160),
+  frameId: z.string().trim().min(1).max(180).optional(),
+  classId: z.string().trim().min(1).max(160).optional(),
   name: z.string().trim().min(1).max(120),
   moduleIdsBySlotId: z.record(z.string().trim().min(1).max(80), z.string().trim().min(1).max(160)).default({}),
 });
@@ -164,7 +181,57 @@ const createEquipmentProductionLineInputSchema = z.object({
   active: z.boolean().optional(),
 });
 
+const updateEquipmentProductionLineInputSchema = z.object({
+  assignedCapacity: z.coerce.number().min(0).max(1_000).optional(),
+  active: z.boolean().optional(),
+});
+
+const divisionSupplyPriorityInputSchema = z.object({
+  supplyPriority: z.enum(["low", "normal", "high"]),
+});
+
+const airWingMissionInputSchema = z.object({
+  mission: z.enum(["none", "air_superiority", "ground_support", "interception", "naval_patrol"]),
+  targetRegionId: z.string().trim().min(1).max(160).nullable().optional(),
+});
+
 export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoutesDependencies): void {
+  const disbandDivision = (divisionId: string, countryId: string): boolean => {
+    const divisions = deps.getCountryDivisionsById();
+    const division = divisions[divisionId];
+    if (!division || division.countryId !== countryId) return false;
+    const stockpile = deps.getCountryEquipmentStockpile(countryId);
+    for (const [variantId, amount] of Object.entries(division.equipmentByVariantId ?? {})) {
+      const normalizedAmount = Math.max(0, Number(amount) || 0);
+      if (normalizedAmount <= 0) continue;
+      stockpile[variantId] = Number(((stockpile[variantId] ?? 0) + normalizedAmount).toFixed(3));
+    }
+    delete divisions[divisionId];
+    return true;
+  };
+
+  const setDivisionSupplyPriority = (divisionId: string, countryId: string, supplyPriority: Division["supplyPriority"]): boolean => {
+    const division = deps.getCountryDivisionsById()[divisionId];
+    if (!division || division.countryId !== countryId) return false;
+    division.supplyPriority = supplyPriority ?? "normal";
+    deps.refreshCountryDivisionEquipmentState(countryId);
+    return true;
+  };
+
+  const setAirWingMission = (
+    airWingId: string,
+    countryId: string,
+    mission: NonNullable<AirWing["mission"]>,
+    targetRegionId: string | null,
+  ): boolean => {
+    const airWing = deps.getCountryAirWingsById()[airWingId];
+    if (!airWing || airWing.countryId !== countryId) return false;
+    airWing.mission = mission;
+    airWing.status = mission === "none" ? "idle" : "mission";
+    airWing.targetRegionId = mission === "none" ? null : targetRegionId;
+    return true;
+  };
+
   app.get("/army/overview", async (req, res) => {
     const auth = deps.routeAuth.requireAuth(req, res);
     if (!auth) return;
@@ -241,13 +308,7 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
         : [...existing, template],
     );
 
-    for (const unit of Object.values(deps.getCountryDivisionsById())) {
-      if (unit.countryId === auth.countryId && unit.templateId === template.id) {
-        unit.kind = template.kind;
-        unit.stats = template.stats;
-        unit.organization = Math.min(unit.organization, template.stats.organization);
-      }
-    }
+    deps.refreshDivisionStatsFromTemplates();
 
     deps.savePersistentState();
     deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
@@ -295,16 +356,19 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
       return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
     }
     deps.ensureCountryInWorldBase(auth.countryId);
-    if (deps.getHexOwner(parsed.data.hexId) !== auth.countryId) {
-      return res.status(403).json({ error: "HEX_NOT_OWNED" });
-    }
     const template = deps.getCountryDivisionTemplates(auth.countryId).find((entry) => entry.id === parsed.data.templateId);
     if (!template) {
-      return res.status(404).json({ error: "TEMPLATE_NOT_FOUND" });
+      return res.status(404).json({ error: "FORMATION_TEMPLATE_NOT_FOUND" });
     }
     const kind = template.kind ?? "land";
+    const deployment = deps.validateFormationDeployment(auth.countryId, kind, parsed.data.hexId as HexId);
+    if (!deployment.ok) {
+      const status = deployment.error === "FORMATION_DEPLOYMENT_BRANCH_UNSUPPORTED" ? 409 : 400;
+      return res.status(status).json({ error: deployment.error });
+    }
     const components = deps.normalizeMilitaryTemplateComponents(template.components, kind, template.battalions);
-    const formationCost = deps.calculateMilitaryFormationCost(kind, components);
+    const unitFormationCost = deps.calculateMilitaryFormationCost(kind, components);
+    const formationCost = multiplyFormationCost(unitFormationCost, parsed.data.quantity);
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
       deps.masks.resourcesByCountry | deps.masks.militaryFormationQueueByCountry,
     );
@@ -312,7 +376,7 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
     if (!spend.ok) {
       return res.status(409).json({ error: spend.error, ...(isRecord(spend.details) ? spend.details : {}) });
     }
-    const turnsTotal = deps.calculateFormationTurns(formationCost);
+    const turnsTotal = deps.calculateFormationTurns(unitFormationCost);
     const item: MilitaryFormationQueueItem = {
       id: deps.createId(),
       countryId: auth.countryId,
@@ -320,6 +384,11 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
       templateId: template.id,
       name: parsed.data.name ?? template.name,
       hexId: parsed.data.hexId as HexId,
+      quantity: parsed.data.quantity,
+      remainingQuantity: parsed.data.quantity,
+      priority: parsed.data.priority,
+      repeat: parsed.data.repeat,
+      stalledReasonCode: null,
       progress: 0,
       turnsTotal,
       turnsRemaining: turnsTotal,
@@ -340,12 +409,19 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
       return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
     }
     deps.ensureCountryInWorldBase(auth.countryId);
-    const equipmentClass = deps.getEquipmentClasses().find((entry) => entry.id === parsed.data.classId);
+    const frames = deps.getEquipmentFrames();
+    const equipmentFrame =
+      (parsed.data.frameId ? frames.find((entry) => entry.id === parsed.data.frameId) : null) ??
+      (parsed.data.classId ? frames.find((entry) => entry.classId === parsed.data.classId) : null);
+    if (!equipmentFrame) {
+      return res.status(404).json({ error: "EQUIPMENT_FRAME_NOT_FOUND" });
+    }
+    const equipmentClass = deps.getEquipmentClasses().find((entry) => entry.id === equipmentFrame.classId);
     if (!equipmentClass) {
       return res.status(404).json({ error: "EQUIPMENT_CLASS_NOT_FOUND" });
     }
     const modulesById = Object.fromEntries(deps.getEquipmentModules().map((entry) => [entry.id, entry]));
-    for (const slotId of equipmentClass.slotIds) {
+    for (const slotId of equipmentFrame.slotIds) {
       const moduleId = parsed.data.moduleIdsBySlotId[slotId];
       if (!moduleId) {
         return res.status(400).json({ error: "EQUIPMENT_SLOT_EMPTY", slotId });
@@ -361,11 +437,72 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
       id,
       countryId: auth.countryId,
       equipmentClass,
+      equipmentFrame,
       modulesById,
       moduleIdsBySlotId: parsed.data.moduleIdsBySlotId,
       name: parsed.data.name,
       createdTurnId: deps.getTurnId(),
     });
+    deps.savePersistentState();
+    deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
+    return res.json(deps.buildMilitaryOverview(auth.countryId));
+  });
+
+  app.delete("/military/divisions/:divisionId", async (req, res) => {
+    const auth = deps.routeAuth.requireAuth(req, res);
+    if (!auth) return;
+    deps.ensureCountryInWorldBase(auth.countryId);
+    const divisionId = String(req.params.divisionId ?? "").trim();
+    if (!divisionId) return res.status(400).json({ error: "INVALID_DIVISION_ID" });
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.divisionsById | deps.masks.unitEquipmentState);
+    if (!disbandDivision(divisionId, auth.countryId)) {
+      return res.status(404).json({ error: "DIVISION_NOT_FOUND" });
+    }
+    deps.savePersistentState();
+    deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
+    return res.json(deps.buildMilitaryOverview(auth.countryId));
+  });
+
+  app.patch("/military/divisions/:divisionId/supply-priority", async (req, res) => {
+    const auth = deps.routeAuth.requireAuth(req, res);
+    if (!auth) return;
+    const parsed = divisionSupplyPriorityInputSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
+    }
+    deps.ensureCountryInWorldBase(auth.countryId);
+    const divisionId = String(req.params.divisionId ?? "").trim();
+    if (!divisionId) return res.status(400).json({ error: "INVALID_DIVISION_ID" });
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.divisionsById | deps.masks.unitEquipmentState);
+    if (!setDivisionSupplyPriority(divisionId, auth.countryId, parsed.data.supplyPriority)) {
+      return res.status(404).json({ error: "DIVISION_NOT_FOUND" });
+    }
+    deps.savePersistentState();
+    deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
+    return res.json(deps.buildMilitaryOverview(auth.countryId));
+  });
+
+  app.patch("/military/air-wings/:airWingId/mission", async (req, res) => {
+    const auth = deps.routeAuth.requireAuth(req, res);
+    if (!auth) return;
+    const parsed = airWingMissionInputSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
+    }
+    deps.ensureCountryInWorldBase(auth.countryId);
+    const airWingId = String(req.params.airWingId ?? "").trim();
+    if (!airWingId) return res.status(400).json({ error: "INVALID_AIR_WING_ID" });
+    const targetRegionId = parsed.data.mission === "none" ? null : parsed.data.targetRegionId?.trim() || null;
+    if (parsed.data.mission !== "none" && !targetRegionId) {
+      return res.status(400).json({ error: "AIR_WING_TARGET_REGION_REQUIRED" });
+    }
+    if (targetRegionId && !deps.getKnownRegionIds().includes(targetRegionId)) {
+      return res.status(404).json({ error: "AIR_WING_TARGET_REGION_NOT_FOUND" });
+    }
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.unitEquipmentState);
+    if (!setAirWingMission(airWingId, auth.countryId, parsed.data.mission, targetRegionId)) {
+      return res.status(404).json({ error: "AIR_WING_NOT_FOUND" });
+    }
     deps.savePersistentState();
     deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
     return res.json(deps.buildMilitaryOverview(auth.countryId));
@@ -394,6 +531,57 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
       createdTurnId: deps.getTurnId(),
     };
     deps.setCountryEquipmentProductionLines(auth.countryId, [...deps.getCountryEquipmentProductionLines(auth.countryId), line]);
+    deps.savePersistentState();
+    deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
+    return res.json(deps.buildMilitaryOverview(auth.countryId));
+  });
+
+  app.patch("/military/equipment/production-lines/:lineId", async (req, res) => {
+    const auth = deps.routeAuth.requireAuth(req, res);
+    if (!auth) return;
+    const parsed = updateEquipmentProductionLineInputSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
+    }
+    deps.ensureCountryInWorldBase(auth.countryId);
+    const lineId = String(req.params.lineId ?? "").trim();
+    const lines = deps.getCountryEquipmentProductionLines(auth.countryId);
+    const existing = lines.find((line) => line.id === lineId);
+    if (!existing) {
+      return res.status(404).json({ error: "EQUIPMENT_PRODUCTION_LINE_NOT_FOUND" });
+    }
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.unitEquipmentState);
+    deps.setCountryEquipmentProductionLines(
+      auth.countryId,
+      lines.map((line) =>
+        line.id === lineId
+          ? {
+              ...line,
+              assignedCapacity:
+                typeof parsed.data.assignedCapacity === "number"
+                  ? Number(parsed.data.assignedCapacity.toFixed(3))
+                  : line.assignedCapacity,
+              active: typeof parsed.data.active === "boolean" ? parsed.data.active : line.active,
+            }
+          : line,
+      ),
+    );
+    deps.savePersistentState();
+    deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
+    return res.json(deps.buildMilitaryOverview(auth.countryId));
+  });
+
+  app.delete("/military/equipment/production-lines/:lineId", async (req, res) => {
+    const auth = deps.routeAuth.requireAuth(req, res);
+    if (!auth) return;
+    deps.ensureCountryInWorldBase(auth.countryId);
+    const lineId = String(req.params.lineId ?? "").trim();
+    const lines = deps.getCountryEquipmentProductionLines(auth.countryId);
+    if (!lines.some((line) => line.id === lineId)) {
+      return res.status(404).json({ error: "EQUIPMENT_PRODUCTION_LINE_NOT_FOUND" });
+    }
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.unitEquipmentState);
+    deps.setCountryEquipmentProductionLines(auth.countryId, lines.filter((line) => line.id !== lineId));
     deps.savePersistentState();
     deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
     return res.json(deps.buildMilitaryOverview(auth.countryId));
@@ -539,6 +727,40 @@ export function registerMilitaryRoutes(app: express.Express, deps: MilitaryRoute
     deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
     return res.json(deps.buildArmyOverview(auth.countryId));
   });
+
+  app.delete("/army/divisions/:divisionId", async (req, res) => {
+    const auth = deps.routeAuth.requireAuth(req, res);
+    if (!auth) return;
+    deps.ensureCountryInWorldBase(auth.countryId);
+    const divisionId = String(req.params.divisionId ?? "").trim();
+    if (!divisionId) return res.status(400).json({ error: "INVALID_DIVISION_ID" });
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.divisionsById | deps.masks.unitEquipmentState);
+    if (!disbandDivision(divisionId, auth.countryId)) {
+      return res.status(404).json({ error: "DIVISION_NOT_FOUND" });
+    }
+    deps.savePersistentState();
+    deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
+    return res.json(deps.buildArmyOverview(auth.countryId));
+  });
+
+  app.patch("/army/divisions/:divisionId/supply-priority", async (req, res) => {
+    const auth = deps.routeAuth.requireAuth(req, res);
+    if (!auth) return;
+    const parsed = divisionSupplyPriorityInputSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
+    }
+    deps.ensureCountryInWorldBase(auth.countryId);
+    const divisionId = String(req.params.divisionId ?? "").trim();
+    if (!divisionId) return res.status(400).json({ error: "INVALID_DIVISION_ID" });
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.divisionsById | deps.masks.unitEquipmentState);
+    if (!setDivisionSupplyPriority(divisionId, auth.countryId, parsed.data.supplyPriority)) {
+      return res.status(404).json({ error: "DIVISION_NOT_FOUND" });
+    }
+    deps.savePersistentState();
+    deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
+    return res.json(deps.buildArmyOverview(auth.countryId));
+  });
 }
 
 function handleTemplateIconUpload(
@@ -578,4 +800,16 @@ function handleTemplateIconUpload(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function multiplyFormationCost(cost: MilitaryFormationCost, quantity: number): MilitaryFormationCost {
+  const multiplier = Math.max(1, Math.floor(Number(quantity) || 1));
+  return {
+    ducats: Number((Math.max(0, Number(cost.ducats) || 0) * multiplier).toFixed(3)),
+    manpower: Number((Math.max(0, Number(cost.manpower) || 0) * multiplier).toFixed(3)),
+    equipmentNeeds: cost.equipmentNeeds.map((need) => ({
+      goodId: need.goodId,
+      amount: Number((Math.max(0, Number(need.amount) || 0) * multiplier).toFixed(3)),
+    })),
+  };
 }

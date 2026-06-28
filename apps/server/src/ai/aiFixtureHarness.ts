@@ -83,6 +83,8 @@ export function createAiFixtureWorld(overrides: AiFixtureWorldOverrides = {}): W
     journalEntriesByCountryId: {},
     divisionTemplatesByCountry: {},
     divisionsById: {},
+    fleetsById: {},
+    airWingsById: {},
     militaryFormationQueueByCountry: {},
     civilianUnitsById: {},
     civilianUnitQueueByCountry: {},

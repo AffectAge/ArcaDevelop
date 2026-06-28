@@ -18,6 +18,8 @@ import {
   LogOut,
   Menu,
   Network,
+  Package,
+  PlusCircle,
   ScrollText,
   Shield,
   SkipForward,
@@ -26,16 +28,18 @@ import {
   Sparkles,
   Users,
   Wallet,
+  Wrench,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { HexId, ResourceFlow } from "@arcanorum/shared";
+import type { DivisionTemplate, HexId, MilitaryBranch, MilitaryFormationQueueItem, ResourceFlow } from "@arcanorum/shared";
 import { BASE_RESOURCE_ICON_URLS } from "../../assets/baseResourceIcons";
 import type { UiTextKey } from "../../i18n/uiText";
 import { useUiText } from "../../i18n/useUiText";
 import { Tooltip, type TooltipStructuredContent } from "../Tooltip";
 import { BuildingAtlasIcon } from "../BuildingAtlasIcon";
+import type { ArmyLogisticsRow } from "./armyLogistics";
 
 export type StrategyMode = "overview" | "construction" | "colonization" | "population" | "market" | "diplomacy" | "army" | "governance";
 
@@ -68,7 +72,7 @@ type ActionItem = {
   tone?: "primary" | "danger";
 };
 
-type WorkspaceTabKey = "actions" | "summary" | "records" | "trade" | "buildings";
+type WorkspaceTabKey = "actions" | "summary" | "records" | "trade" | "buildings" | "warehouses" | "formation";
 
 type BuildingListEntry = {
   id: string;
@@ -193,6 +197,11 @@ type Props = {
   sectorEntries?: BuildingCategoryEntry[];
   diplomacyPreview?: GenericPreviewItem[];
   armyPreview?: GenericPreviewItem[];
+  armyLogisticsRows?: ArmyLogisticsRow[];
+  militaryFormationTemplates?: DivisionTemplate[];
+  militaryFormationQueue?: MilitaryFormationQueueItem[];
+  activeMilitaryFormationTemplateId?: string | null;
+  cancelingMilitaryFormationQueueId?: string | null;
   governancePreview?: GenericPreviewItem[];
   storyPreview?: Array<{
     id: string;
@@ -228,11 +237,21 @@ type Props = {
   onCancelConstructionProject?: (item: ConstructionCancelPayload) => void;
   onFocusConstructionHex?: (hexId: HexId) => void;
   onFocusHex?: (hexId: HexId) => void;
+  onStartMilitaryFormationPlacement?: (
+    template: DivisionTemplate,
+    options: { quantity: number; priority: "high" | "normal" | "low"; repeat: boolean },
+  ) => void;
+  onCancelMilitaryFormationQueue?: (queueId: string) => void;
   onOpenPopulation: () => void;
   onOpenMarket: () => void;
   onOpenGlobalMarket: () => void;
   onOpenDiplomacy: () => void;
-  onOpenArmy: () => void;
+  onOpenDivisionDesigner: () => void;
+  onOpenAirWingDesigner: () => void;
+  onOpenFleetDesigner: () => void;
+  onOpenLandEquipmentDesigner: () => void;
+  onOpenAirEquipmentDesigner: () => void;
+  onOpenNavalEquipmentDesigner: () => void;
   onOpenPolitics: () => void;
   onOpenTechnology: () => void;
   onOpenModifiers: () => void;
@@ -268,6 +287,8 @@ const workspaceTabDescriptors: Array<{ key: WorkspaceTabKey; labelKey: UiTextKey
   { key: "records", labelKey: "shell.workspaceTab.records", icon: ClipboardList },
   { key: "trade", labelKey: "shell.workspaceTab.trade", icon: ArrowDownUp },
   { key: "buildings", labelKey: "shell.workspaceTab.buildings", icon: Building2 },
+  { key: "formation", labelKey: "shell.workspaceTab.formation", icon: PlusCircle },
+  { key: "warehouses", labelKey: "shell.workspaceTab.warehouses", icon: Package },
 ];
 
 type ResourceLedgerChipSummary = {
@@ -305,6 +326,8 @@ export function StrategyShell(props: Props) {
     if (tab.key === "summary") return props.activeMode === "overview";
     if (tab.key === "trade") return props.activeMode === "market";
     if (tab.key === "buildings") return props.activeMode === "construction";
+    if (tab.key === "formation") return props.activeMode === "army";
+    if (tab.key === "warehouses") return props.activeMode === "army";
     return true;
   });
   const activeWorkspaceTab = availableWorkspaceTabs.find((tab) => tab.key === workspaceTab) ?? availableWorkspaceTabs[0] ?? workspaceTabDescriptors[0];
@@ -521,6 +544,26 @@ export function StrategyShell(props: Props) {
                     />
                   </div>
                 ) : null}
+
+                {workspaceTab === "warehouses" && props.activeMode === "army" ? (
+                  <div className="arc-strategy-tab-panel">
+                    <ArmyWarehouseList rows={props.armyLogisticsRows ?? []} />
+                  </div>
+                ) : null}
+
+                {workspaceTab === "formation" && props.activeMode === "army" ? (
+                  <div className="arc-strategy-tab-panel">
+                    <MilitaryFormationPanel
+                      templates={props.militaryFormationTemplates ?? []}
+                      queue={props.militaryFormationQueue ?? []}
+                      activeTemplateId={props.activeMilitaryFormationTemplateId ?? null}
+                      cancelingQueueId={props.cancelingMilitaryFormationQueueId ?? null}
+                      onStartPlacement={props.onStartMilitaryFormationPlacement}
+                      onCancelQueue={props.onCancelMilitaryFormationQueue}
+                      onFocusHex={props.onFocusHex}
+                    />
+                  </div>
+                ) : null}
               </div>
             </aside>
           </motion.div>
@@ -603,7 +646,7 @@ function ModePreview({ mode, props }: { mode: StrategyMode; props: Props }) {
       <GenericPreview
         title={t("shell.preview.armyLedger")}
         openLabel={t("shell.preview.open")}
-        onOpen={props.onOpenArmy}
+        onOpen={props.onOpenDivisionDesigner}
         emptyText={t("shell.preview.noArmy")}
         rows={props.armyPreview ?? []}
       />
@@ -1249,6 +1292,393 @@ function ConstructionQueueList(props: {
   );
 }
 
+function MilitaryFormationPanel(props: {
+  templates: DivisionTemplate[];
+  queue: MilitaryFormationQueueItem[];
+  activeTemplateId: string | null;
+  cancelingQueueId: string | null;
+  onStartPlacement?: (
+    template: DivisionTemplate,
+    options: { quantity: number; priority: "high" | "normal" | "low"; repeat: boolean },
+  ) => void;
+  onCancelQueue?: (queueId: string) => void;
+  onFocusHex?: (hexId: HexId) => void;
+}) {
+  const { t } = useUiText();
+  const [controlsByTemplateId, setControlsByTemplateId] = useState<Record<string, { quantity: number; priority: "high" | "normal" | "low"; repeat: boolean }>>({});
+  const [cancelTarget, setCancelTarget] = useState<MilitaryFormationQueueItem | null>(null);
+  const groupedTemplates = groupTemplatesByBranch(props.templates);
+  const getControls = (templateId: string) => controlsByTemplateId[templateId] ?? { quantity: 1, priority: "normal", repeat: false };
+  const updateControls = (templateId: string, patch: Partial<{ quantity: number; priority: "high" | "normal" | "low"; repeat: boolean }>) => {
+    setControlsByTemplateId((current) => ({ ...current, [templateId]: { ...getControls(templateId), ...patch } }));
+  };
+  return (
+    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.workspaceTab.formation")}>
+      {groupedTemplates.length === 0 ? <EmptyPreview text={t("army.formationNoTemplates")} /> : null}
+      {groupedTemplates.map((group) => (
+        <div key={group.kind} className="arc-strategy-building-category">
+          <div className="arc-strategy-building-category-header arc-strategy-building-category-header--static">
+            <span className="arc-strategy-building-category-title">
+              <Shield size={15} />
+              <span>{t(getMilitaryBranchLabelKey(group.kind))}</span>
+            </span>
+            <span className="arc-strategy-building-category-count">{group.templates.length}</span>
+          </div>
+          <div className="arc-strategy-building-category-body">
+            <div className="arc-strategy-building-category-rows">
+              {group.templates.map((template, index) => {
+                const controls = getControls(template.id);
+                const active = props.activeTemplateId === template.id;
+                return (
+                  <motion.div
+                    key={template.id}
+                    className={`arc-strategy-construction-row arc-strategy-formation-row ${active ? "arc-strategy-formation-row--active" : ""}`}
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ y: -2 }}
+                    transition={{ duration: 0.14, delay: Math.min(index * 0.025, 0.12) }}
+                  >
+                    <span className="arc-strategy-building-list-icon arc-strategy-formation-icon">
+                      <Shield size={22} />
+                    </span>
+                    <span className="arc-strategy-building-list-main">
+                      <span className="arc-strategy-building-list-name">{template.name}</span>
+                      <span className="arc-strategy-building-list-effects">
+                        {t("army.formationComposition", { count: template.components?.length ?? template.battalions?.length ?? 0 })}
+                      </span>
+                    </span>
+                    <span className="arc-strategy-formation-controls">
+                      <input
+                        type="number"
+                        min={1}
+                        max={99}
+                        value={controls.quantity}
+                        aria-label={t("army.formationQuantity")}
+                        onChange={(event) => updateControls(template.id, { quantity: Math.max(1, Math.min(99, Math.floor(Number(event.target.value) || 1))) })}
+                      />
+                      <select
+                        value={controls.priority}
+                        aria-label={t("army.formationPriority")}
+                        onChange={(event) => updateControls(template.id, { priority: event.target.value as "high" | "normal" | "low" })}
+                      >
+                        <option value="high">{t("army.formationPriority.high")}</option>
+                        <option value="normal">{t("army.formationPriority.normal")}</option>
+                        <option value="low">{t("army.formationPriority.low")}</option>
+                      </select>
+                      <label className="arc-strategy-formation-repeat">
+                        <input
+                          type="checkbox"
+                          checked={controls.repeat}
+                          onChange={(event) => updateControls(template.id, { repeat: event.target.checked })}
+                        />
+                        <span>{t("army.formationRepeatShort")}</span>
+                      </label>
+                    </span>
+                    <div className="arc-strategy-construction-row-actions">
+                      <Tooltip content={t("army.formationSelectHexTooltip")} placement="top">
+                        <button
+                          type="button"
+                          className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary"
+                          onClick={() => props.onStartPlacement?.(template, controls)}
+                          disabled={!props.onStartPlacement}
+                          aria-label={t("army.formationSelectHexTooltip")}
+                        >
+                          <Crosshair size={13} aria-hidden="true" />
+                        </button>
+                      </Tooltip>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ))}
+      <div className="arc-strategy-building-category">
+        <div className="arc-strategy-building-category-header arc-strategy-building-category-header--static">
+          <span className="arc-strategy-building-category-title">
+            <ClipboardList size={15} />
+            <span>{t("army.formationQueue")}</span>
+          </span>
+          <span className="arc-strategy-building-category-count">{props.queue.length}</span>
+        </div>
+        <div className="arc-strategy-building-category-body">
+          <div className="arc-strategy-building-category-rows">
+            {props.queue.length === 0 ? <EmptyPreview text={t("army.formationQueueEmpty")} /> : null}
+            {props.queue.map((item) => (
+              <MilitaryFormationQueueRow
+                key={item.id}
+                item={item}
+                canceling={props.cancelingQueueId === item.id}
+                onCancel={() => setCancelTarget(item)}
+                onFocusHex={props.onFocusHex}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+      {typeof document !== "undefined"
+        ? createPortal(
+            <AnimatePresence>
+              {cancelTarget ? (
+                <motion.div className="arc-strategy-cancel-confirm-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <motion.div
+                    className="arc-hex-build-confirm"
+                    initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                    role="dialog"
+                    aria-modal="true"
+                  >
+                    <div className="arc-hex-build-confirm__header">
+                      <h2 className="arc-hex-build-confirm__title">{t("army.formationCancelTitle")}</h2>
+                    </div>
+                    <div className="arc-hex-build-confirm__body">
+                      <div className="arc-hex-build-confirm__row">
+                        <span>{t("army.template")}</span>
+                        <strong>{cancelTarget.name}</strong>
+                      </div>
+                      <div className="arc-hex-build-confirm__row">
+                        <span>{t("hexMap.hex")}</span>
+                        <strong>{cancelTarget.hexId}</strong>
+                      </div>
+                    </div>
+                    <div className="arc-hex-build-confirm__actions">
+                      <button type="button" className="arc-strategy-workspace-action arc-strategy-workspace-action--primary arc-hex-build-confirm__action" onClick={() => setCancelTarget(null)}>
+                        <span>{t("common.cancel")}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="arc-strategy-workspace-action arc-hex-build-confirm__action arc-hex-build-confirm__action--cancel"
+                        onClick={() => {
+                          props.onCancelQueue?.(cancelTarget.id);
+                          setCancelTarget(null);
+                        }}
+                        disabled={!props.onCancelQueue || props.cancelingQueueId === cancelTarget.id}
+                      >
+                        <span>{t("common.confirm")}</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>,
+            document.body,
+          )
+        : null}
+    </section>
+  );
+}
+
+function MilitaryFormationQueueRow(props: {
+  item: MilitaryFormationQueueItem;
+  canceling: boolean;
+  onCancel: () => void;
+  onFocusHex?: (hexId: HexId) => void;
+}) {
+  const { t } = useUiText();
+  const pct = Math.round(Math.max(0, Math.min(1, Number(props.item.progress) || 0)) * 100);
+  return (
+    <motion.div className="arc-strategy-construction-row arc-strategy-formation-row" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -2 }} transition={{ duration: 0.14 }}>
+      <span className="arc-strategy-building-list-icon arc-strategy-formation-icon">
+        <Shield size={22} />
+      </span>
+      <span className="arc-strategy-building-list-main">
+        <span className="arc-strategy-building-list-name">{props.item.name}</span>
+        <span className="arc-strategy-building-list-effects">
+          {t(getMilitaryBranchLabelKey(props.item.kind))} · {props.item.hexId}
+        </span>
+        <span className="arc-strategy-building-list-effects">
+          {t("army.formationQueueMeta", {
+            quantity: Math.max(1, props.item.remainingQuantity ?? props.item.quantity ?? 1),
+            priority: t(getFormationPriorityLabelKey(props.item.priority ?? "normal")),
+            repeat: props.item.repeat ? t("army.formationRepeatOn") : t("army.formationRepeatOff"),
+          })}
+        </span>
+      </span>
+      <div className="arc-strategy-construction-row-progress">
+        <div className="flex justify-between text-[10px] text-[var(--arc-color-atlas-muted)]">
+          <span>{pct}%</span>
+          <span>{props.item.turnsRemaining}</span>
+        </div>
+        <div className="mt-1 h-1.5 overflow-hidden bg-[var(--arc-color-atlas-paper-deep)]">
+          <div className="h-full bg-[var(--arc-color-atlas-primary)]" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+      <div className="arc-strategy-construction-row-actions">
+        <Tooltip content={t("army.formationCancelTooltip")} placement="top">
+          <button type="button" className="arc-strategy-construction-row-action arc-strategy-construction-row-action--danger" onClick={props.onCancel} disabled={props.canceling} aria-label={t("army.formationCancelTooltip")}>
+            <X size={13} aria-hidden="true" />
+          </button>
+        </Tooltip>
+        <Tooltip content={t("army.formationFocusTooltip")} placement="top">
+          <button type="button" className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary" onClick={() => props.onFocusHex?.(props.item.hexId)} disabled={!props.onFocusHex} aria-label={t("army.formationFocusTooltip")}>
+            <Crosshair size={13} aria-hidden="true" />
+          </button>
+        </Tooltip>
+      </div>
+    </motion.div>
+  );
+}
+
+function groupTemplatesByBranch(templates: DivisionTemplate[]): Array<{ kind: MilitaryBranch; templates: DivisionTemplate[] }> {
+  const order: MilitaryBranch[] = ["land", "naval", "air"];
+  return order
+    .map((kind) => ({
+      kind,
+      templates: templates.filter((template) => (template.kind ?? "land") === kind).sort((a, b) => a.name.localeCompare(b.name, "ru") || a.id.localeCompare(b.id)),
+    }))
+    .filter((group) => group.templates.length > 0);
+}
+
+function getMilitaryBranchLabelKey(kind: MilitaryBranch): UiTextKey {
+  if (kind === "naval") return "army.branch.naval";
+  if (kind === "air") return "army.branch.air";
+  return "army.branch.land";
+}
+
+function getFormationPriorityLabelKey(priority: "high" | "normal" | "low"): UiTextKey {
+  if (priority === "high") return "army.formationPriority.high";
+  if (priority === "low") return "army.formationPriority.low";
+  return "army.formationPriority.normal";
+}
+
+function ArmyWarehouseList({ rows }: { rows: ArmyLogisticsRow[] }) {
+  const { t } = useUiText();
+  if (rows.length === 0) {
+    return <EmptyPreview text={t("shell.warehouses.empty")} />;
+  }
+  return (
+    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.workspaceTab.warehouses")}>
+      <div className="arc-strategy-building-category">
+        <div className="arc-strategy-building-category-header arc-strategy-building-category-header--static">
+          <span className="arc-strategy-building-category-title">
+            <Package size={15} />
+            <span>{t("shell.warehouses.militaryStockpiles")}</span>
+          </span>
+          <span className="arc-strategy-building-category-count">{rows.length}</span>
+        </div>
+        <div className="arc-strategy-building-category-body">
+          <div className="arc-strategy-building-category-rows">
+            {rows.map((row, index) => (
+              <ArmyWarehouseRow key={row.variantId} row={row} index={index} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ArmyWarehouseRow({ row, index }: { row: ArmyLogisticsRow; index: number }) {
+  const { t } = useUiText();
+  const tooltip: TooltipStructuredContent = {
+    title: row.name,
+    rows: [
+      { id: "stockpile", label: t("shell.warehouses.stockpile"), value: formatCompact(row.stockpile), tone: row.stockpile > 0 ? "positive" : "muted" },
+      { id: "assigned", label: t("shell.warehouses.assigned"), value: formatCompact(row.assigned), tone: "info" },
+      { id: "required", label: t("shell.warehouses.required"), value: formatCompact(row.required), tone: row.missingEquipment > 0 ? "negative" : "muted" },
+      { id: "produced", label: t("shell.warehouses.production"), value: formatCompact(row.produced), tone: row.produced > 0 ? "positive" : "muted" },
+      { id: "balance", label: t("shell.warehouses.balance"), value: formatSignedCompact(row.balance), tone: row.balance < 0 ? "negative" : "positive" },
+      { id: "lines", label: t("shell.warehouses.productionLines"), value: `${formatCompact(row.activeLineCount)}/${formatCompact(row.lineCount)}`, tone: row.activeLineCount > 0 ? "positive" : "muted" },
+    ],
+    sections: [
+      {
+        title: t("shell.warehouses.goodsCost"),
+        rows:
+          row.goodsCost.length > 0
+            ? row.goodsCost.map((good) => ({
+                id: good.goodId,
+                label: formatWarehouseGoodLabel(good.goodId),
+                value: formatCompact(good.amount),
+                tone: "info",
+              }))
+            : [{ id: "none", label: t("shell.warehouses.noGoodsCost"), value: "" }],
+      },
+      {
+        title: t("shell.warehouses.missingGoods"),
+        rows:
+          row.missingGoods.length > 0
+            ? row.missingGoods.map((good) => ({
+                id: good.goodId,
+                label: formatWarehouseGoodLabel(good.goodId),
+                value: t("shell.warehouses.missingGoodsValue", {
+                  required: formatCompact(good.amount),
+                  missing: formatCompact(good.missing),
+                }),
+                tone: good.missing > 0 ? "negative" : "muted",
+              }))
+            : [{ id: "none", label: t("shell.warehouses.noMissingGoods"), value: "" }],
+      },
+    ],
+    tone: row.tone === "negative" ? "negative" : row.tone === "warning" ? "warning" : "positive",
+  };
+  return (
+    <Tooltip content={tooltip} placement="top" variant="rich" referenceClassName="block">
+      <motion.div
+        className={`arc-strategy-warehouse-row arc-strategy-warehouse-row--${row.tone}`}
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -2 }}
+        transition={{ duration: 0.14, delay: Math.min(index * 0.02, 0.1) }}
+      >
+        <span className="arc-strategy-warehouse-icon" aria-hidden="true">
+          <Package size={18} />
+        </span>
+        <span className="arc-strategy-warehouse-main">
+          <span className="arc-strategy-warehouse-name">{row.name}</span>
+          <span className="arc-strategy-warehouse-subtitle">
+            {row.balance < 0
+              ? t("shell.warehouses.statusDeficit")
+              : row.stockpile <= 0 && row.produced <= 0
+                ? t("shell.warehouses.statusNoStock")
+                : t("shell.warehouses.statusSurplus")}
+          </span>
+        </span>
+        <span className="arc-strategy-warehouse-metrics">
+          <WarehouseMetric label={t("shell.warehouses.stockpileShort")} value={formatCompact(row.stockpile)} />
+          <WarehouseMetric label={t("shell.warehouses.requiredShort")} value={formatCompact(row.missingEquipment)} tone={row.missingEquipment > 0 ? "negative" : "muted"} />
+          <WarehouseMetric label={t("shell.warehouses.productionShort")} value={formatCompact(row.produced)} tone={row.produced > 0 ? "positive" : "muted"} />
+          <WarehouseMetric label={t("shell.warehouses.balanceShort")} value={formatSignedCompact(row.balance)} tone={row.balance < 0 ? "negative" : "positive"} />
+        </span>
+        <span className="arc-strategy-warehouse-goods" aria-label={t("shell.warehouses.goodsCost")}>
+          {row.goodsCost.slice(0, 4).map((good) => {
+            const iconUrl = getWarehouseGoodIconUrl(good.goodId);
+            return (
+              <span key={good.goodId} className="arc-strategy-warehouse-good">
+                {iconUrl ? <img src={iconUrl} alt="" /> : <span>{formatWarehouseGoodLabel(good.goodId).slice(0, 1).toUpperCase()}</span>}
+              </span>
+            );
+          })}
+        </span>
+      </motion.div>
+    </Tooltip>
+  );
+}
+
+function WarehouseMetric(props: { label: string; value: string; tone?: "positive" | "negative" | "muted" }) {
+  return (
+    <span className={`arc-strategy-warehouse-metric ${props.tone ? `arc-strategy-warehouse-metric--${props.tone}` : ""}`}>
+      <span>{props.label}</span>
+      <strong>{props.value}</strong>
+    </span>
+  );
+}
+
+function getWarehouseGoodIconUrl(goodId: string): string | null {
+  const key = goodId.includes(":") ? goodId.slice(goodId.indexOf(":") + 1) : goodId;
+  return BASE_RESOURCE_ICON_URLS[key as keyof typeof BASE_RESOURCE_ICON_URLS] ?? null;
+}
+
+function formatWarehouseGoodLabel(goodId: string): string {
+  const withoutPrefix = goodId.includes(":") ? goodId.slice(goodId.indexOf(":") + 1) : goodId;
+  return withoutPrefix
+    .split(/[_-]+/g)
+    .filter(Boolean)
+    .map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
 function buildBuildingCategoryGroups<T extends { id: string; name: string; industryId?: string | null; sectorId?: string | null }>(
   buildings: T[],
   industries: BuildingCategoryEntry[],
@@ -1591,7 +2021,7 @@ function getModeActions(mode: StrategyMode, props: Props, openBuildingsTab: () =
   }
   if (mode === "colonization") {
     return [
-      { key: "army", labelKey: "shell.action.openArmy", descriptionKey: "shell.action.openArmyDescription", icon: Shield, onClick: props.onOpenArmy, tone: "primary" },
+      { key: "army", labelKey: "shell.action.divisionDesigner", descriptionKey: "shell.action.divisionDesignerDescription", icon: Shield, onClick: props.onOpenDivisionDesigner, tone: "primary" },
       { key: "colonization-records", labelKey: "shell.action.colonizationRecords", descriptionKey: "shell.action.colonizationRecordsDescription", icon: ClipboardList, onClick: openRecordsTab },
     ];
   }
@@ -1613,7 +2043,12 @@ function getModeActions(mode: StrategyMode, props: Props, openBuildingsTab: () =
   }
   if (mode === "army") {
     return [
-      { key: "army", labelKey: "shell.action.army", descriptionKey: "shell.action.armyDescription", icon: Shield, onClick: props.onOpenArmy, tone: "primary" },
+      { key: "division-designer", labelKey: "shell.action.divisionDesigner", descriptionKey: "shell.action.divisionDesignerDescription", icon: Shield, onClick: props.onOpenDivisionDesigner, tone: "primary" },
+      { key: "air-wing-designer", labelKey: "shell.action.airWingDesigner", descriptionKey: "shell.action.airWingDesignerDescription", icon: Sparkles, onClick: props.onOpenAirWingDesigner },
+      { key: "fleet-designer", labelKey: "shell.action.fleetDesigner", descriptionKey: "shell.action.fleetDesignerDescription", icon: Flag, onClick: props.onOpenFleetDesigner },
+      { key: "land-equipment-designer", labelKey: "shell.action.landEquipmentDesigner", descriptionKey: "shell.action.landEquipmentDesignerDescription", icon: Wrench, onClick: props.onOpenLandEquipmentDesigner },
+      { key: "air-equipment-designer", labelKey: "shell.action.airEquipmentDesigner", descriptionKey: "shell.action.airEquipmentDesignerDescription", icon: FlaskConical, onClick: props.onOpenAirEquipmentDesigner },
+      { key: "naval-equipment-designer", labelKey: "shell.action.navalEquipmentDesigner", descriptionKey: "shell.action.navalEquipmentDesignerDescription", icon: Package, onClick: props.onOpenNavalEquipmentDesigner },
     ];
   }
   return [

@@ -55,6 +55,7 @@ export function registerMilitaryRouteComposition(params: MilitaryRouteCompositio
     calculateDivisionStats: params.militaryRuntimeFacade.calculateDivisionStats,
     calculateMilitaryFormationCost: params.militaryRuntimeFacade.calculateMilitaryFormationCost,
     calculateDivisionTrainingCost: params.militaryRuntimeFacade.calculateDivisionTrainingCost,
+    refreshDivisionStatsFromTemplates: params.militaryRuntimeFacade.refreshDivisionStatsFromTemplates,
     cloneWorldBaseSectionSnapshot: params.worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot,
     savePersistentState: params.savePersistentState,
     broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase) =>

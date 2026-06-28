@@ -20,14 +20,17 @@ Proposed
 
 - Chosen option: Option C, implemented incrementally behind a new-game-only contract.
 - Why: the target design depends on shared IDs and WS-visible state. Adding the contracts first prevents UI/server implementations from inventing incompatible local shapes.
+- Equipment constructor update: equipment variants are now based on authored frames (`EquipmentFrame`) plus selected modules. Frames represent chassis, airframes, hulls, or other base bodies and carry branch/class, slot ids, base stats, crew manpower, goods cost, production cost, and unlock metadata.
+- Assignment update: templates store requirements by equipment class, role, and count. Divisions do not pin one variant by default; the server scores stockpiled variants and may assign a mixed loadout to one requirement. Weighted variant stats contribute to effective unit stats, and speed is limited by the slowest assigned variant.
+- UI update: the old large army modal is no longer the player-facing command surface. The army workspace opens separate designer modals for division templates, air-wing templates, fleet templates, land equipment, aircraft, and ships.
 
 ## Consequences
 
-- Benefits: client, server, AI, and scenario tooling can converge on one model for colonizers, city markers, equipment variants, production lines, and stockpiles.
+- Benefits: client, server, AI, and scenario tooling can converge on one model for colonizers, city markers, equipment frames, equipment variants, production lines, templates, mixed loadouts, and stockpiles.
 - Risks: the current delta mask is a 32-bit number with limited remaining bits. The first contract slice uses one grouped `unitEquipmentState` mask for the new unit/equipment state sections instead of one bit per section.
 - Migration/removal work: existing saves are incompatible with the complete feature. During the contract transition, missing new fields restore to empty maps; once runtime mechanics are enabled, old saves must be rejected or reset rather than migrated.
 - Compatibility decision: `COLONIZE` remains in the shared union as legacy/internal compatibility, but player UI should move to `FOUND_CITY` with a `colonizer` civilian unit.
-- Follow-up tasks: implement server validation and turn resolution, settlement progress through the resource ledger, city atlas validation, equipment stat derivation, military template auto-equipping, combat resolution, AI orders, player UI, Arcawiki, and scenario authoring validation.
+- Follow-up tasks: expand designer UX beyond the MVP forms, add richer role-score tooltips, implement AI use of designer/production choices, finish combat/air/naval mechanics, add Arcawiki player explanations, and add stricter scenario validation for authored equipment frames and module coverage.
 
 ## Verification
 

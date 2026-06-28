@@ -1,6 +1,9 @@
 import type {
   Division,
+  DivisionEquipmentAssignment,
+  DivisionEquipmentSupplyReport,
   DivisionStats,
+  DivisionSupplyPriority,
   DivisionTemplate,
   DivisionTemplateBattalion,
   HexId,
@@ -18,9 +21,15 @@ import {
   isMilitaryBranch,
   normalizeDivisionBattalions,
   normalizeMilitaryTemplateComponents,
+  refreshCountryDivisionEquipmentState,
   type MilitaryContentEntry,
 } from "../mechanics/militaryMechanics";
 import { normalizeGoodFlows, type GoodFlow } from "../mechanics/contentFieldNormalizers";
+import {
+  applyEquipmentCoverageToDivisionStats,
+  assignEquipmentVariantsForRequirements,
+  calculateEquipmentCoverage,
+} from "../mechanics/equipmentMechanics";
 import type { DefaultBattalionKind, GameSettings } from "./gameSettingsTypes";
 
 type MilitaryContent = GameSettings["content"];
@@ -28,6 +37,58 @@ type CreateId = () => string;
 
 function round3(value: number): number {
   return Number((Number.isFinite(value) ? value : 0).toFixed(3));
+}
+
+function normalizeDivisionEquipmentAssignments(input: unknown): DivisionEquipmentAssignment[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((raw): DivisionEquipmentAssignment | null => {
+      if (!raw || typeof raw !== "object") return null;
+      const row = raw as Partial<DivisionEquipmentAssignment>;
+      const requirementId = typeof row.requirementId === "string" && row.requirementId.trim() ? row.requirementId.trim().slice(0, 120) : "";
+      if (!requirementId) return null;
+      const equipmentVariantId =
+        typeof row.equipmentVariantId === "string" && row.equipmentVariantId.trim() ? row.equipmentVariantId.trim().slice(0, 120) : null;
+      const requiredCount = round3(Math.max(0, Number(row.requiredCount ?? 0) || 0));
+      const assignedCount = round3(Math.max(0, Number(row.assignedCount ?? 0) || 0));
+      return {
+        requirementId,
+        equipmentVariantId,
+        score: round3(Number(row.score ?? 0) || 0),
+        requiredCount,
+        assignedCount,
+        coverage: requiredCount > 0 ? round3(Math.min(1, assignedCount / requiredCount)) : 1,
+      };
+    })
+    .filter((row): row is DivisionEquipmentAssignment => Boolean(row))
+    .slice(0, 64);
+}
+
+function normalizeEquipmentByVariantId(input: unknown): Record<string, number> {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
+  const next: Record<string, number> = {};
+  for (const [variantId, amount] of Object.entries(input as Record<string, unknown>)) {
+    const normalizedVariantId = variantId.trim().slice(0, 120);
+    if (!normalizedVariantId) continue;
+    const normalizedAmount = round3(Math.max(0, Number(amount) || 0));
+    if (normalizedAmount > 0) next[normalizedVariantId] = normalizedAmount;
+  }
+  return next;
+}
+
+function normalizeDivisionEquipmentSupplyReport(input: unknown): DivisionEquipmentSupplyReport | undefined {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return undefined;
+  const row = input as Partial<DivisionEquipmentSupplyReport>;
+  const turnId = typeof row.turnId === "number" && Number.isFinite(row.turnId) ? Math.max(1, Math.floor(row.turnId)) : null;
+  return {
+    turnId,
+    receivedByVariantId: normalizeEquipmentByVariantId(row.receivedByVariantId),
+    returnedByVariantId: normalizeEquipmentByVariantId(row.returnedByVariantId),
+  };
+}
+
+function normalizeDivisionSupplyPriority(input: unknown): DivisionSupplyPriority {
+  return input === "low" || input === "high" || input === "normal" ? input : "normal";
 }
 
 function getFallbackBattalionTypeId(content: MilitaryContent, defaultBattalions: Array<{ id: DefaultBattalionKind | string }>): string {
@@ -135,6 +196,7 @@ export function refreshDivisionStatsFromTemplatesForRuntime(params: {
   content: MilitaryContent;
   defaultBattalions: Array<{ id: DefaultBattalionKind | string }>;
   createId: CreateId;
+  turnId?: number | null;
 }): void {
   for (const [countryId, templates] of Object.entries(params.worldBase.divisionTemplatesByCountry)) {
     params.worldBase.divisionTemplatesByCountry[countryId] = templates.map((template) => {
@@ -162,13 +224,24 @@ export function refreshDivisionStatsFromTemplatesForRuntime(params: {
       };
     });
   }
-  for (const division of Object.values(params.worldBase.divisionsById)) {
-    const template = (params.worldBase.divisionTemplatesByCountry[division.countryId] ?? []).find((entry) => entry.id === division.templateId);
-    if (!template) continue;
-    division.kind = template.kind ?? "land";
-    division.stats = template.stats;
-    division.organization = Math.min(division.organization, template.stats.organization);
+  for (const countryId of Object.keys(params.worldBase.divisionTemplatesByCountry)) {
+    refreshCountryDivisionEquipmentState({ countryId, worldBase: params.worldBase, turnId: params.turnId ?? null });
   }
+}
+
+function calculateTemplateEquipmentCoverage(worldBase: WorldBase, template: DivisionTemplate): number {
+  const requirements = template.equipmentRequirements ?? [];
+  if (requirements.length === 0) return 1;
+  const stockpile = worldBase.equipmentStockpileByCountry[template.countryId] ?? {};
+  const variants = Object.values(worldBase.equipmentVariantsById).filter(
+    (variant) => variant.countryId == null || variant.countryId === template.countryId,
+  );
+  const choices = assignEquipmentVariantsForRequirements({
+    requirements,
+    variants,
+    stockpileByVariantId: stockpile,
+  });
+  return calculateEquipmentCoverage(choices);
 }
 
 export function normalizeDivisionTemplateForRuntime(params: {
@@ -251,7 +324,7 @@ export function normalizeDivisionForRuntime(params: {
   const hexId = /^hex:-?\d+:-?\d+$/.test(rawHexId) ? (rawHexId as HexId) : null;
   if (!countryId || !templateId || !hexId) return null;
   const template = (params.worldBase.divisionTemplatesByCountry?.[countryId] ?? []).find((entry) => entry.id === templateId);
-  const stats = template?.stats ?? {
+  const baseStats = template?.stats ?? {
     manpower: Math.max(0, Math.floor(Number(row.stats?.manpower ?? 1000) || 1000)),
     attack: round3(Number(row.stats?.attack ?? 6) || 6),
     defense: round3(Number(row.stats?.defense ?? 10) || 10),
@@ -261,6 +334,8 @@ export function normalizeDivisionForRuntime(params: {
     speed: round3(Math.max(0.1, Number(row.stats?.speed ?? 1) || 1)),
     supplyUse: round3(Math.max(0, Number(row.stats?.supplyUse ?? 1) || 1)),
   };
+  const equipmentCoverage = template ? calculateTemplateEquipmentCoverage(params.worldBase, template) : round3(Math.max(0, Math.min(1, Number(row.equipmentCoverage ?? 1) || 1)));
+  const stats = applyEquipmentCoverageToDivisionStats(baseStats, equipmentCoverage);
   const status = row.status === "moving" || row.status === "fighting" || row.status === "retreating" ? row.status : "idle";
   return {
     id,
@@ -272,6 +347,11 @@ export function normalizeDivisionForRuntime(params: {
     strength: round3(Math.max(0, Math.min(1, Number(row.strength ?? 1) || 1))),
     organization: round3(Math.max(0, Math.min(stats.organization, Number(row.organization ?? stats.organization) || stats.organization))),
     stats,
+    equipmentCoverage,
+    equipmentAssignments: normalizeDivisionEquipmentAssignments(row.equipmentAssignments),
+    equipmentByVariantId: normalizeEquipmentByVariantId(row.equipmentByVariantId),
+    equipmentSupplyReport: normalizeDivisionEquipmentSupplyReport(row.equipmentSupplyReport),
+    supplyPriority: normalizeDivisionSupplyPriority(row.supplyPriority),
     status,
     path: Array.isArray(row.path)
       ? row.path.filter((value): value is HexId => typeof value === "string" && /^hex:-?\d+:-?\d+$/.test(value)).slice(0, 64)
@@ -321,6 +401,12 @@ export function normalizeMilitaryFormationQueueByCountryForRuntime(params: {
         const costRaw = row.cost && typeof row.cost === "object" ? row.cost : {};
         const turnsTotal = Math.max(1, Math.floor(Number(row.turnsTotal) || 1));
         const turnsRemaining = Math.max(0, Math.min(turnsTotal, Math.floor(Number(row.turnsRemaining) || turnsTotal)));
+        const quantity = Math.max(1, Math.floor(Number(row.quantity) || 1));
+        const remainingQuantity = Math.max(
+          1,
+          Math.min(quantity, Math.floor(Number(row.remainingQuantity ?? quantity) || quantity)),
+        );
+        const priority = row.priority === "high" || row.priority === "low" ? row.priority : "normal";
         return {
           id,
           countryId,
@@ -328,6 +414,13 @@ export function normalizeMilitaryFormationQueueByCountryForRuntime(params: {
           templateId,
           name: typeof row.name === "string" && row.name.trim() ? row.name.trim().slice(0, 80) : "Формирование",
           hexId,
+          quantity,
+          remainingQuantity,
+          priority,
+          repeat: row.repeat === true,
+          stalledReasonCode: typeof row.stalledReasonCode === "string" && row.stalledReasonCode.trim()
+            ? row.stalledReasonCode.trim().slice(0, 120)
+            : null,
           progress: round3(Math.max(0, Math.min(1, Number(row.progress ?? (turnsTotal - turnsRemaining) / turnsTotal) || 0))),
           turnsTotal,
           turnsRemaining,

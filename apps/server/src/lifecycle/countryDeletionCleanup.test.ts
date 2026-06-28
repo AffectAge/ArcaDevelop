@@ -66,6 +66,8 @@ describe("country deletion cleanup", () => {
     expect(worldBase.journalEntriesByCountryId["country:a"]).toBeUndefined();
     expect(worldBase.countryModifiersByCountryId["country:a"]).toBeUndefined();
     expect(worldBase.divisionsById).toEqual({});
+    expect(worldBase.fleetsById).toEqual({});
+    expect(worldBase.airWingsById).toEqual({});
     expect(worldBase.divisionTemplatesByCountry["country:a"]).toBeUndefined();
     expect(worldBase.militaryFormationQueueByCountry["country:a"]).toBeUndefined();
     expect(removedEconomyCountries).toEqual(["country:a"]);
@@ -155,6 +157,35 @@ function createWorldBase(): WorldBase {
         stats: { manpower: 1, attack: 1, defense: 1, breakthrough: 1, organization: 1, hp: 1, speed: 1, supplyUse: 1 },
         status: "idle",
         path: [],
+        createdTurnId: 1,
+      },
+    },
+    fleetsById: {
+      "fleet:a": {
+        id: "fleet:a",
+        countryId: "country:a",
+        templateId: "template:navy",
+        name: "Fleet A",
+        hexId: "hex:0:0",
+        strength: 1,
+        organization: 1,
+        stats: { manpower: 1, attack: 1, defense: 1, breakthrough: 1, organization: 1, hp: 1, speed: 1, supplyUse: 1 },
+        status: "idle",
+        path: [],
+        createdTurnId: 1,
+      },
+    },
+    airWingsById: {
+      "air-wing:a": {
+        id: "air-wing:a",
+        countryId: "country:a",
+        templateId: "template:air",
+        name: "Air Wing A",
+        baseHexId: "hex:0:0",
+        strength: 1,
+        organization: 1,
+        stats: { manpower: 1, attack: 1, defense: 1, breakthrough: 1, organization: 1, hp: 1, speed: 1, supplyUse: 1 },
+        status: "idle",
         createdTurnId: 1,
       },
     },

@@ -76,6 +76,7 @@ const baseCustomization: CustomizationSettings = {
 };
 const baseMilitary: MilitarySettings = {
   militaryFormationSpeed: 10,
+  landDivisionStackLimitPerHex: 4,
 };
 const baseRegistration: RegistrationSettings = {
   requireAdminApproval: false,
@@ -264,6 +265,10 @@ describe("scenarioDefinesLoader", () => {
       ducatsCostPer1000Km2: 7,
       settlementEnabled: false,
       settlementPopulationOnCapture: 2_500,
+      colonizerTurns: 2,
+      colonizerCostColonization: 20,
+      colonizerCostDucats: 10,
+      colonizerMovementPoints: 2,
     });
 
     expect(
@@ -312,11 +317,11 @@ describe("scenarioDefinesLoader", () => {
   it("normalizes military, registration, event log, and turn timer defines", () => {
     expect(
       normalizeScenarioMilitaryDefines(
-        { militaryFormationSpeed: 12.5 },
+        { militaryFormationSpeed: 12.5, landDivisionStackLimitPerHex: 6 },
         baseMilitary,
         options,
       ),
-    ).toEqual({ militaryFormationSpeed: 12.5 });
+    ).toEqual({ militaryFormationSpeed: 12.5, landDivisionStackLimitPerHex: 6 });
 
     expect(
       normalizeScenarioRegistrationDefines(
@@ -348,6 +353,14 @@ describe("scenarioDefinesLoader", () => {
         options,
       ),
     ).toThrow("INVALID_SCENARIO_MILITARY_FORMATION_SPEED");
+
+    expect(() =>
+      normalizeScenarioMilitaryDefines(
+        { landDivisionStackLimitPerHex: 0 },
+        baseMilitary,
+        options,
+      ),
+    ).toThrow("INVALID_SCENARIO_MILITARY_LAND_DIVISION_STACK_LIMIT");
 
     expect(() =>
       normalizeScenarioRegistrationDefines(
@@ -395,7 +408,7 @@ describe("scenarioDefinesLoader", () => {
           auditLog: { maxEntries: 25, retentionTurns: 4 },
           colonization: { pointsPerTurn: 60 },
           customization: { flagDucats: 0 },
-          military: { militaryFormationSpeed: 15 },
+          military: { militaryFormationSpeed: 15, landDivisionStackLimitPerHex: 5 },
           registration: { requireAdminApproval: true },
           eventLog: { retentionTurns: 9 },
           turnTimer: { secondsPerTurn: 30 },
@@ -408,7 +421,7 @@ describe("scenarioDefinesLoader", () => {
       auditLog: { maxEntries: 25, retentionTurns: 4 },
       colonization: { pointsPerTurn: 60, maxActiveColonizations: 3 },
       customization: { flagDucats: 0, renameDucats: 20 },
-      military: { militaryFormationSpeed: 15 },
+      military: { militaryFormationSpeed: 15, landDivisionStackLimitPerHex: 5 },
       registration: { requireAdminApproval: true },
       eventLog: { retentionTurns: 9 },
       turnTimer: { secondsPerTurn: 30, enabled: true },

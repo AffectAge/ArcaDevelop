@@ -191,6 +191,8 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     journalEntriesByCountryId: {},
     divisionTemplatesByCountry: {},
     divisionsById: {},
+    fleetsById: {},
+    airWingsById: {},
     militaryFormationQueueByCountry: {},
     civilianUnitsById: {},
     civilianUnitQueueByCountry: {},

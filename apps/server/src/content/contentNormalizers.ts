@@ -5,6 +5,7 @@ import type {
   EquipmentBranch,
   EquipmentClass,
   EquipmentClassRole,
+  EquipmentFrame,
   EquipmentModule,
   EquipmentStats,
   EquipmentStatKey,
@@ -38,6 +39,7 @@ import {
 } from "../mechanics/marketTurnMechanics";
 import type {
   BattalionContentEntry,
+  BuildingContentEntry,
   DefaultBattalionKind,
   GameContentEntry,
   GameSettings,
@@ -341,6 +343,19 @@ export const DEFAULT_EQUIPMENT_CLASSES: EquipmentClass[] = [
     baseStats: { attack: 2, defense: 2, range: 1, reliability: 0.75, supplyUse: 1.2, fuelUse: 0.5 },
   },
 ];
+
+export const DEFAULT_EQUIPMENT_FRAMES: EquipmentFrame[] = DEFAULT_EQUIPMENT_CLASSES.map((equipmentClass) => ({
+  id: `equipment_frame:${equipmentClass.id.replace(/[^a-zA-Z0-9_-]/g, "_")}:basic`,
+  classId: equipmentClass.id,
+  branch: equipmentClass.branch,
+  slotIds: equipmentClass.slotIds,
+  baseStats: equipmentClass.baseStats,
+  goodsCost: [],
+  manpowerCrew: equipmentClass.branch === "air" ? 1 : equipmentClass.branch === "naval" ? 50 : 0,
+  productionCost: 0,
+  era: "ageless",
+  unlockTechnologyId: null,
+}));
 
 export const DEFAULT_EQUIPMENT_MODULES: EquipmentModule[] = [
   { id: "equipment_module:spears", classId: "equipment_class:infantry_kit", slotId: "weapon", stats: { attack: 2, piercing: 1 }, goodsCost: [{ goodId: "good:wood", amount: 1 }] },
@@ -716,6 +731,7 @@ export function normalizeContentBuildings(input: unknown): GameSettings["content
       globalBuildLimit?: unknown;
       placement?: unknown;
       adjacencyEffects?: unknown;
+      deployment?: unknown;
     }> | undefined;
     const costConstruction =
       typeof raw?.costConstruction === "number" && Number.isFinite(raw.costConstruction)
@@ -801,8 +817,27 @@ export function normalizeContentBuildings(input: unknown): GameSettings["content
       globalBuildLimit,
       placement: normalizeBuildingPlacement(raw?.placement),
       adjacencyEffects: normalizeBuildingAdjacencyEffects(raw?.adjacencyEffects),
+      deployment: normalizeBuildingDeployment(raw?.deployment),
     };
   });
+}
+
+function normalizeBuildingDeployment(input: unknown): BuildingContentEntry["deployment"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const raw = input as { branches?: unknown; capacity?: unknown; requiresActive?: unknown };
+  const branches = normalizeStringList(raw.branches).filter((branch): branch is "land" | "naval" | "air" =>
+    branch === "land" || branch === "naval" || branch === "air",
+  );
+  if (branches.length === 0) return null;
+  const capacity =
+    typeof raw.capacity === "number" && Number.isFinite(raw.capacity) && raw.capacity > 0
+      ? Math.max(1, Math.floor(raw.capacity))
+      : null;
+  return {
+    branches: [...new Set(branches)],
+    capacity,
+    requiresActive: typeof raw.requiresActive === "boolean" ? raw.requiresActive : true,
+  };
 }
 
 export function normalizeContentMilitaryEntries<T extends MilitaryContentEntry>(input: unknown, fallbacks: T[]): T[] {
@@ -814,10 +849,15 @@ export function normalizeContentMilitaryEntries<T extends MilitaryContentEntry>(
       attack?: unknown;
       defense?: unknown;
       breakthrough?: unknown;
+      armor?: unknown;
+      piercing?: unknown;
       organization?: unknown;
       hp?: unknown;
       speed?: unknown;
+      range?: unknown;
+      reliability?: unknown;
       supplyUse?: unknown;
+      fuelUse?: unknown;
       trainingCostDucats?: unknown;
       trainingCostManpower?: unknown;
       equipmentNeeds?: unknown;
@@ -833,10 +873,15 @@ export function normalizeContentMilitaryEntries<T extends MilitaryContentEntry>(
       attack: stat("attack", fallback?.attack ?? 6),
       defense: stat("defense", fallback?.defense ?? 6),
       breakthrough: stat("breakthrough", fallback?.breakthrough ?? 2),
+      armor: stat("armor", fallback?.armor ?? 0),
+      piercing: stat("piercing", fallback?.piercing ?? 0),
       organization: stat("organization", fallback?.organization ?? 8, 1),
       hp: stat("hp", fallback?.hp ?? 20, 1),
       speed: stat("speed", fallback?.speed ?? 1, 0.1),
+      range: stat("range", fallback?.range ?? 0),
+      reliability: stat("reliability", fallback?.reliability ?? 0),
       supplyUse: stat("supplyUse", fallback?.supplyUse ?? 1),
+      fuelUse: stat("fuelUse", fallback?.fuelUse ?? 0),
       trainingCostDucats:
         typeof raw?.trainingCostDucats === "number" && Number.isFinite(raw.trainingCostDucats)
           ? Number(Math.max(0, raw.trainingCostDucats).toFixed(3))
@@ -922,9 +967,51 @@ export function normalizeContentEquipmentModules(input: unknown): GameSettings["
       slotId,
       stats: normalizeEquipmentStats(entry.stats),
       goodsCost: normalizeGoodFlows(entry.goodsCost),
+      manpowerCrew: normalizeOptionalNonNegativeNumber(entry.manpowerCrew),
+      productionCost: normalizeOptionalNonNegativeNumber(entry.productionCost),
     });
   }
   return ensureDefaultEquipmentModules(normalized);
+}
+
+export function normalizeContentEquipmentFrames(
+  input: unknown,
+  equipmentClasses: EquipmentClass[],
+): GameSettings["content"]["equipmentFrames"] {
+  const rows = Array.isArray(input) ? input : [];
+  const classesById = new Map(equipmentClasses.map((entry) => [entry.id, entry]));
+  const normalized: EquipmentFrame[] = [];
+  for (const raw of rows) {
+    if (!raw || typeof raw !== "object") continue;
+    const entry = raw as Record<string, unknown>;
+    const id = typeof entry.id === "string" ? entry.id.trim() : "";
+    const classId = typeof entry.classId === "string" ? entry.classId.trim() : "";
+    const equipmentClass = classesById.get(classId);
+    if (!id || !equipmentClass) continue;
+    const branch =
+      typeof entry.branch === "string" && EQUIPMENT_BRANCHES.has(entry.branch as EquipmentBranch)
+        ? (entry.branch as EquipmentBranch)
+        : equipmentClass.branch;
+    const slotIds = Array.isArray(entry.slotIds)
+      ? entry.slotIds.map((slotId) => (typeof slotId === "string" ? slotId.trim() : "")).filter(Boolean)
+      : equipmentClass.slotIds;
+    normalized.push({
+      id,
+      classId,
+      branch,
+      slotIds: [...new Set(slotIds)].filter((slotId) => equipmentClass.slotIds.includes(slotId)).slice(0, 12),
+      baseStats: normalizeEquipmentStats(entry.baseStats),
+      goodsCost: normalizeGoodFlows(entry.goodsCost),
+      manpowerCrew: normalizeOptionalNonNegativeNumber(entry.manpowerCrew),
+      productionCost: normalizeOptionalNonNegativeNumber(entry.productionCost),
+      era: typeof entry.era === "string" && entry.era.trim() ? entry.era.trim().slice(0, 80) : null,
+      unlockTechnologyId:
+        typeof entry.unlockTechnologyId === "string" && entry.unlockTechnologyId.trim()
+          ? entry.unlockTechnologyId.trim().slice(0, 120)
+          : null,
+    });
+  }
+  return ensureDefaultEquipmentFrames(normalized, equipmentClasses);
 }
 
 export function ensureDefaultEquipmentClasses(classes: EquipmentClass[]): EquipmentClass[] {
@@ -935,12 +1022,42 @@ export function ensureDefaultEquipmentClasses(classes: EquipmentClass[]): Equipm
   return [...byId.values()];
 }
 
+export function ensureDefaultEquipmentFrames(frames: EquipmentFrame[], equipmentClasses: EquipmentClass[]): EquipmentFrame[] {
+  const byId = new Map(frames.map((entry) => [entry.id, entry]));
+  const authoredClassIds = new Set(frames.map((entry) => entry.classId));
+  for (const fallback of DEFAULT_EQUIPMENT_FRAMES) {
+    if (!byId.has(fallback.id)) byId.set(fallback.id, fallback);
+    authoredClassIds.add(fallback.classId);
+  }
+  for (const equipmentClass of equipmentClasses) {
+    if (authoredClassIds.has(equipmentClass.id)) continue;
+    const frame: EquipmentFrame = {
+      id: `equipment_frame:${equipmentClass.id.replace(/[^a-zA-Z0-9_-]/g, "_")}:basic`,
+      classId: equipmentClass.id,
+      branch: equipmentClass.branch,
+      slotIds: equipmentClass.slotIds,
+      baseStats: equipmentClass.baseStats,
+      goodsCost: [],
+      manpowerCrew: 0,
+      productionCost: 0,
+      era: "ageless",
+      unlockTechnologyId: null,
+    };
+    byId.set(frame.id, frame);
+  }
+  return [...byId.values()];
+}
+
 export function ensureDefaultEquipmentModules(modules: EquipmentModule[]): EquipmentModule[] {
   const byId = new Map(modules.map((entry) => [entry.id, entry]));
   for (const fallback of DEFAULT_EQUIPMENT_MODULES) {
     if (!byId.has(fallback.id)) byId.set(fallback.id, fallback);
   }
   return [...byId.values()];
+}
+
+function normalizeOptionalNonNegativeNumber(input: unknown): number | undefined {
+  return typeof input === "number" && Number.isFinite(input) ? Number(Math.max(0, input).toFixed(3)) : undefined;
 }
 
 function normalizeEquipmentStats(input: unknown): EquipmentStats {

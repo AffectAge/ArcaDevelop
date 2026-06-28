@@ -1,7 +1,10 @@
 import type { EquipmentClass, EquipmentModule, WorldBase } from "@arcanorum/shared";
 import { describe, expect, it } from "vitest";
 import {
+  assignEquipmentVariantsForRequirements,
   calculateEquipmentCoverage,
+  applyEquipmentCoverageToDivisionStats,
+  applyEquipmentLossesForRequirements,
   deriveEquipmentVariant,
   getEquipmentUnitWork,
   resolveEquipmentProductionLinesTurn,
@@ -83,7 +86,12 @@ describe("equipmentMechanics", () => {
       stalledLineIds: [],
     });
     expect(worldBase.equipmentStockpileByCountry["country:a"]).toEqual({ "equipment:rifle": 2 });
-    expect(worldBase.equipmentProductionLinesByCountry["country:a"]?.[0]?.progress).toBe(0);
+    expect(worldBase.equipmentProductionLinesByCountry["country:a"]?.[0]).toMatchObject({
+      progress: 0,
+      lastStatus: "active",
+      lastProduced: 2,
+      lastMissingGoods: [],
+    });
   });
 
   it("stalls lines when progress is ready but goods are missing", () => {
@@ -99,7 +107,15 @@ describe("equipmentMechanics", () => {
 
     expect(result.stalledLineIds).toEqual(["line:a"]);
     expect(worldBase.equipmentStockpileByCountry["country:a"]).toBeUndefined();
-    expect(worldBase.equipmentProductionLinesByCountry["country:a"]?.[0]?.progress).toBe(6);
+    expect(worldBase.equipmentProductionLinesByCountry["country:a"]?.[0]).toMatchObject({
+      progress: 6,
+      lastStatus: "stalled",
+      lastProduced: 0,
+      lastMissingGoods: [
+        { goodId: "good:steel", required: 2, available: 1, missing: 1 },
+        { goodId: "good:tools", required: 1, available: 0, missing: 1 },
+      ],
+    });
   });
 
   it("selects the highest scoring available equipment for a tactical role", () => {
@@ -156,6 +172,151 @@ describe("equipmentMechanics", () => {
         { requirementId: "guns", equipmentVariantId: "equipment:gun", score: 1, requiredCount: 20, availableCount: 20, assignedCount: 20, coverage: 1 },
       ]),
     ).toBe(0.583);
+  });
+
+  it("assigns equipment requirements without double-counting the same stockpile", () => {
+    const choices = assignEquipmentVariantsForRequirements({
+      requirements: [
+        { id: "frontline", equipmentClassId: "equipment-class:infantry", role: "attack", count: 70 },
+        { id: "reserve", equipmentClassId: "equipment-class:infantry", role: "defense", count: 50 },
+      ],
+      stockpileByVariantId: {
+        "equipment:rifle": 100,
+      },
+      variants: [
+        {
+          id: "equipment:rifle",
+          countryId: "country:a",
+          classId: "equipment-class:infantry",
+          name: "Rifle",
+          moduleIdsBySlotId: {},
+          stats: { attack: 4, defense: 4 },
+          goodsCost: [],
+          createdTurnId: 1,
+        },
+      ],
+    });
+
+    expect(choices).toEqual([
+      expect.objectContaining({ requirementId: "frontline", equipmentVariantId: "equipment:rifle", availableCount: 100, assignedCount: 70, coverage: 1 }),
+      expect.objectContaining({ requirementId: "reserve", equipmentVariantId: "equipment:rifle", availableCount: 30, assignedCount: 30, coverage: 0.6 }),
+    ]);
+    expect(calculateEquipmentCoverage(choices)).toBe(0.833);
+  });
+
+  it("mixes variants and applies weighted equipment stats", () => {
+    const choices = assignEquipmentVariantsForRequirements({
+      requirements: [{ id: "tank:breakthrough", equipmentClassId: "equipment-class:tank", role: "breakthrough", count: 100 }],
+      stockpileByVariantId: { "tank:a": 60, "tank:b": 30 },
+      variants: [
+        {
+          id: "tank:a",
+          classId: "equipment-class:tank",
+          name: "Tank A",
+          moduleIdsBySlotId: {},
+          stats: { attack: 10, breakthrough: 8, armor: 6, piercing: 5, speed: 3, supplyUse: 1, fuelUse: 2 },
+          goodsCost: [],
+          manpowerCrew: 4,
+          createdTurnId: 2,
+        },
+        {
+          id: "tank:b",
+          classId: "equipment-class:tank",
+          name: "Tank B",
+          moduleIdsBySlotId: {},
+          stats: { attack: 6, breakthrough: 4, armor: 3, piercing: 2, speed: 2, supplyUse: 0.5, fuelUse: 1 },
+          goodsCost: [],
+          manpowerCrew: 3,
+          createdTurnId: 1,
+        },
+      ],
+    });
+
+    expect(choices[0]).toMatchObject({
+      assignedCount: 90,
+      coverage: 0.9,
+      variants: [
+        expect.objectContaining({ equipmentVariantId: "tank:a", amount: 60 }),
+        expect.objectContaining({ equipmentVariantId: "tank:b", amount: 30 }),
+      ],
+    });
+    expect(
+      applyEquipmentCoverageToDivisionStats(
+        { manpower: 100, attack: 0, defense: 0, breakthrough: 0, organization: 10, hp: 10, speed: 5, supplyUse: 0 },
+        calculateEquipmentCoverage(choices),
+        choices,
+      ),
+    ).toMatchObject({
+      attack: 7.8,
+      breakthrough: 6,
+      armor: 4.5,
+      piercing: 3.6,
+      speed: 1.87,
+      supplyUse: 0.75,
+      fuelUse: 1.5,
+    });
+  });
+
+  it("applies equipment losses through allocated requirements without double-counting stockpile", () => {
+    const stockpileByVariantId = {
+      "equipment:rifle": 100,
+    };
+
+    const losses = applyEquipmentLossesForRequirements({
+      requirements: [
+        { id: "frontline", equipmentClassId: "equipment-class:infantry", role: "attack", count: 70 },
+        { id: "reserve", equipmentClassId: "equipment-class:infantry", role: "defense", count: 50 },
+      ],
+      stockpileByVariantId,
+      lossRatio: 0.5,
+      variants: [
+        {
+          id: "equipment:rifle",
+          countryId: "country:a",
+          classId: "equipment-class:infantry",
+          name: "Rifle",
+          moduleIdsBySlotId: {},
+          stats: { attack: 4, defense: 4 },
+          goodsCost: [],
+          createdTurnId: 1,
+        },
+      ],
+    });
+
+    expect(losses).toEqual({ "equipment:rifle": 50 });
+    expect(stockpileByVariantId).toEqual({ "equipment:rifle": 50 });
+  });
+
+  it("reduces effective division stats when equipment coverage is short", () => {
+    expect(
+      applyEquipmentCoverageToDivisionStats(
+        {
+          manpower: 1000,
+          attack: 10,
+          defense: 20,
+          breakthrough: 5,
+          organization: 10,
+          hp: 30,
+          speed: 4,
+          supplyUse: 2,
+        },
+        0.5,
+      ),
+    ).toEqual({
+      manpower: 1000,
+      attack: 5.75,
+      defense: 11.5,
+      breakthrough: 2.875,
+      armor: 0,
+      piercing: 0,
+      organization: 7.5,
+      hp: 17.25,
+      speed: 2.7,
+      range: 0,
+      reliability: 0,
+      supplyUse: 2,
+      fuelUse: 0,
+    });
   });
 });
 

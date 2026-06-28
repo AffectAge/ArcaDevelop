@@ -1324,6 +1324,15 @@ export type UiTextKey =
   | "elections.tooltipVotes"
   | "elections.voteShare"
   | "army.air"
+  | "army.airWingMission"
+  | "army.airWingMission.air_superiority"
+  | "army.airWingMission.ground_support"
+  | "army.airWingMission.interception"
+  | "army.airWingMission.naval_patrol"
+  | "army.airWingMission.none"
+  | "army.airWingMissionRegion"
+  | "army.airWingMissionRegionTooltip"
+  | "army.airWingMissionTooltip"
   | "army.attack"
   | "army.baseHex"
   | "army.battleSlots"
@@ -1337,15 +1346,25 @@ export type UiTextKey =
   | "army.defaultLand"
   | "army.defaultNaval"
   | "army.delete"
+  | "army.deleteProductionLine"
   | "army.defense"
   | "army.description"
+  | "army.disbandConfirmDescription"
+  | "army.disbandConfirmTitle"
   | "army.disbandDivision"
+  | "army.disbandEquipmentReturn"
   | "army.emptyQueue"
   | "army.emptyQueueDescription"
   | "army.equipment"
   | "army.equipmentClass"
   | "army.equipmentConstructor"
+  | "army.equipmentFrame"
   | "army.equipmentCoverage"
+  | "army.equipmentCoverageTooltip"
+  | "army.equipmentCoverageTooltipTitle"
+  | "army.divisionEquipmentLoadout"
+  | "army.divisionEquipmentLoadoutTooltip"
+  | "army.noDivisionEquipmentLoadout"
   | "army.equipmentCost"
   | "army.equipmentLines"
   | "army.equipmentProduction"
@@ -1353,10 +1372,68 @@ export type UiTextKey =
   | "army.equipmentStats"
   | "army.equipmentVariant"
   | "army.equipmentVariantName"
+  | "army.designerDivision"
+  | "army.designerAirWing"
+  | "army.designerFleet"
+  | "army.createLandEquipment"
+  | "army.createPlane"
+  | "army.createShip"
+  | "army.designerTemplatesDescription"
+  | "army.designerEquipmentDescription"
+  | "army.moduleSlots"
+  | "army.previewStats"
+  | "army.saveVariant"
+  | "army.noFrames"
+  | "army.requirementCount"
+  | "army.componentCount"
+  | "army.productionCost"
+  | "army.manpowerCrew"
+  | "army.statTooltip"
+  | "army.assignedEquipment"
+  | "army.equipmentRequired"
+  | "army.equipmentAvailable"
+  | "army.equipmentAssigned"
+  | "army.equipmentScore"
+  | "army.equipmentRequiredShort"
+  | "army.equipmentAvailableShort"
+  | "army.equipmentAssignedShort"
   | "army.form"
   | "army.formation"
+  | "army.formationCancelSuccess"
+  | "army.formationCancelTitle"
+  | "army.formationCancelTooltip"
+  | "army.formationComposition"
+  | "army.formationConfirmAction"
+  | "army.formationConfirmTitle"
+  | "army.formationError.branchUnsupported"
+  | "army.formationError.buildingRequired"
+  | "army.formationError.generic"
+  | "army.formationError.hexInvalid"
+  | "army.formationError.hexRequired"
+  | "army.formationError.notEnoughDucats"
+  | "army.formationError.notEnoughEquipment"
+  | "army.formationError.templateNotFound"
+  | "army.formationFocusTooltip"
+  | "army.formationNoTemplates"
+  | "army.formationPriority"
+  | "army.formationPriority.high"
+  | "army.formationPriority.low"
+  | "army.formationPriority.normal"
   | "army.formationQueue"
+  | "army.formationQueueEmpty"
+  | "army.formationQueueMeta"
+  | "army.formationQuantity"
+  | "army.formationQueued"
+  | "army.formationRepeat"
+  | "army.formationRepeatOff"
+  | "army.formationRepeatOn"
+  | "army.formationRepeatShort"
+  | "army.formationSelectHexTooltip"
   | "army.formationSpeed"
+  | "army.branch"
+  | "army.branch.air"
+  | "army.branch.land"
+  | "army.branch.naval"
   | "army.icon64"
   | "army.iconInvalid64"
   | "army.iconUploadFailed"
@@ -1375,15 +1452,27 @@ export type UiTextKey =
   | "army.noDataDescription"
   | "army.noReadyUnits"
   | "army.noReadyUnitsDescription"
+  | "army.none"
   | "army.noEquipmentCost"
   | "army.noEquipmentLines"
   | "army.noEquipmentLinesDescription"
   | "army.noEquipmentRequirements"
   | "army.noEquipmentStats"
   | "army.noAssignedEquipment"
+  | "army.noMissionRegions"
   | "army.organizationShort"
   | "army.productionCapacity"
   | "army.productionCapacityValue"
+  | "army.productionLineProgress"
+  | "army.productionLineMissingGoods"
+  | "army.productionLineMissingValue"
+  | "army.productionLineProduced"
+  | "army.productionLineStatus"
+  | "army.productionLineStatusActive"
+  | "army.productionLineStatusIdle"
+  | "army.productionLineStatusInvalid"
+  | "army.productionLineStatusStalled"
+  | "army.productionLineStatusTooltip"
   | "army.queue"
   | "army.readyUnits"
   | "army.active"
@@ -1392,12 +1481,27 @@ export type UiTextKey =
   | "army.addEquipmentRequirement"
   | "army.strengthShort"
   | "army.support"
+  | "army.supplyPriority"
+  | "army.supplyPriorityHigh"
+  | "army.supplyPriorityLow"
+  | "army.supplyPriorityNormal"
+  | "army.supplyPriorityTooltip"
+  | "army.supplyReceived"
+  | "army.supplyReportDescription"
+  | "army.supplyReportTitle"
+  | "army.supplyReturned"
+  | "army.supplySummaryDescription"
+  | "army.supplySummaryTitle"
+  | "army.supplySummaryValue"
   | "army.supplyShort"
   | "army.totalBattalions"
   | "army.totalSoldiers"
   | "army.templateDeleted"
   | "army.templateName"
   | "army.templateEquipmentCoverage"
+  | "army.templateEquipmentCoverageTitle"
+  | "army.templateEquipmentCoverageValue"
+  | "army.templateEquipmentCoverageTooltip"
   | "army.unknownBattalion"
   | "army.unknownTemplate"
   | "army.title"
@@ -1501,6 +1605,35 @@ export type UiTextKey =
   | "hexMap.buildingStatusInactive"
   | "hexMap.buildingStatusRuins"
   | "hexMap.buildingStatusWorking"
+  | "hexMap.divisions"
+  | "hexMap.divisionStack"
+  | "hexMap.divisionStackValue"
+  | "hexMap.divisionStackTooltip"
+  | "hexMap.divisionEquipmentCoverage"
+  | "hexMap.divisionStatus"
+  | "hexMap.divisionMove"
+  | "hexMap.divisionMoveTooltipCan"
+  | "hexMap.divisionMoveTooltipCannot"
+  | "hexMap.divisionMoveUnavailable"
+  | "hexMap.divisionMoveSelectTarget"
+  | "hexMap.divisionMoveNoPath"
+  | "hexMap.divisionMoveOrderSent"
+  | "hexMap.divisionAttack"
+  | "hexMap.divisionAttackTooltipCan"
+  | "hexMap.divisionAttackTooltipCannot"
+  | "hexMap.divisionAttackUnavailable"
+  | "hexMap.divisionAttackSelectTarget"
+  | "hexMap.divisionAttackNoTarget"
+  | "hexMap.divisionAttackOrderSent"
+  | "hexMap.fleets"
+  | "hexMap.fleetStatus"
+  | "hexMap.fleetMove"
+  | "hexMap.fleetMoveTooltipCan"
+  | "hexMap.fleetMoveTooltipCannot"
+  | "hexMap.fleetMoveUnavailable"
+  | "hexMap.fleetMoveSelectTarget"
+  | "hexMap.fleetMoveNoPath"
+  | "hexMap.fleetMoveOrderSent"
   | "hexMap.civilianUnits"
   | "hexMap.civilianQueue"
   | "hexMap.civilianColonizer"
@@ -1510,6 +1643,8 @@ export type UiTextKey =
   | "hexMap.civilianMoveTooltipCannot"
   | "hexMap.civilianMoveUnavailable"
   | "hexMap.civilianMoveSelectTarget"
+  | "hexMap.formationPlacementHud"
+  | "hexMap.formationPlacementInvalid"
   | "hexMap.civilianMovePreview"
   | "hexMap.civilianMoveNoPath"
   | "hexMap.civilianMoveTooFar"
@@ -2669,6 +2804,18 @@ export type UiTextKey =
   | "provinceContext.openAdminEditor"
   | "shell.action.army"
   | "shell.action.armyDescription"
+  | "shell.action.divisionDesigner"
+  | "shell.action.divisionDesignerDescription"
+  | "shell.action.airWingDesigner"
+  | "shell.action.airWingDesignerDescription"
+  | "shell.action.fleetDesigner"
+  | "shell.action.fleetDesignerDescription"
+  | "shell.action.landEquipmentDesigner"
+  | "shell.action.landEquipmentDesignerDescription"
+  | "shell.action.airEquipmentDesigner"
+  | "shell.action.airEquipmentDesignerDescription"
+  | "shell.action.navalEquipmentDesigner"
+  | "shell.action.navalEquipmentDesignerDescription"
   | "shell.action.budget"
   | "shell.action.budgetDescription"
   | "shell.action.buildings"
@@ -2971,10 +3118,32 @@ export type UiTextKey =
   | "shell.workspaceTab.actions"
   | "shell.workspaceTab.buildings"
   | "shell.workspaceTab.constructionQueue"
+  | "shell.workspaceTab.formation"
   | "shell.workspaceTab.records"
   | "shell.workspaceTab.summary"
   | "shell.workspaceTab.trade"
+  | "shell.workspaceTab.warehouses"
   | "shell.workspaceTabs"
+  | "shell.warehouses.assigned"
+  | "shell.warehouses.balance"
+  | "shell.warehouses.balanceShort"
+  | "shell.warehouses.empty"
+  | "shell.warehouses.goodsCost"
+  | "shell.warehouses.militaryStockpiles"
+  | "shell.warehouses.missingGoods"
+  | "shell.warehouses.missingGoodsValue"
+  | "shell.warehouses.noGoodsCost"
+  | "shell.warehouses.noMissingGoods"
+  | "shell.warehouses.production"
+  | "shell.warehouses.productionLines"
+  | "shell.warehouses.productionShort"
+  | "shell.warehouses.required"
+  | "shell.warehouses.requiredShort"
+  | "shell.warehouses.statusDeficit"
+  | "shell.warehouses.statusNoStock"
+  | "shell.warehouses.statusSurplus"
+  | "shell.warehouses.stockpile"
+  | "shell.warehouses.stockpileShort"
   | "shell.buildings.empty"
   | "shell.buildings.noCountry"
   | "shell.buildings.uncategorized"
@@ -4368,6 +4537,15 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "elections.tooltipVotes": "Votes: {value}",
     "elections.voteShare": "Votes: {value}",
     "army.air": "Air wings",
+    "army.airWingMission": "Air mission",
+    "army.airWingMission.air_superiority": "Air superiority",
+    "army.airWingMission.ground_support": "Ground support",
+    "army.airWingMission.interception": "Interception",
+    "army.airWingMission.naval_patrol": "Naval patrol",
+    "army.airWingMission.none": "No mission",
+    "army.airWingMissionRegion": "Mission region",
+    "army.airWingMissionRegionTooltip": "Sets the region where this air wing is assigned to operate. Range and base validation will be enforced by later air-system slices.",
+    "army.airWingMissionTooltip": "Sets the current mission for this air wing. Mission effects are applied by future air-combat and modifier systems.",
     "army.attack": "Attack",
     "army.baseHex": "Base hex",
     "army.battleSlots": "Combat slots",
@@ -4381,15 +4559,24 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.defaultLand": "New division",
     "army.defaultNaval": "New fleet",
     "army.delete": "Delete",
+    "army.deleteProductionLine": "Delete production line",
     "army.defense": "Defense",
     "army.description": "Templates, formation, and basing for divisions, fleets, and air wings",
+    "army.disbandConfirmDescription": "Disband {name}? The division will be removed from the map.",
+    "army.disbandConfirmTitle": "Disband division",
     "army.disbandDivision": "Disband division",
+    "army.disbandEquipmentReturn": "Assigned equipment will return to the country stockpile.",
     "army.emptyQueue": "Queue is empty",
     "army.emptyQueueDescription": "New units appear here after a formation command.",
     "army.equipment": "Equipment",
     "army.equipmentClass": "Class",
     "army.equipmentConstructor": "Equipment constructor",
     "army.equipmentCoverage": "Coverage {value}%",
+    "army.equipmentCoverageTooltip": "Required: {required}. Available in stockpile: {available}. Assigned by current best-variant scoring: {assigned}. Coverage {coverage}% scales the division's effective combat stats.",
+    "army.equipmentCoverageTooltipTitle": "Equipment coverage",
+    "army.divisionEquipmentLoadout": "Division equipment",
+    "army.divisionEquipmentLoadoutTooltip": "This division has {assigned} of {required} required equipment assigned. Coverage {coverage}% affects its effective combat stats.",
+    "army.noDivisionEquipmentLoadout": "No equipment requirements",
     "army.equipmentCost": "Goods cost",
     "army.equipmentLines": "Production lines",
     "army.equipmentProduction": "Equipment production",
@@ -4397,10 +4584,51 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.equipmentStats": "Stats",
     "army.equipmentVariant": "Variant",
     "army.equipmentVariantName": "Variant name",
+    "army.assignedEquipment": "Assigned equipment",
+    "army.equipmentRequired": "Required",
+    "army.equipmentAvailable": "Available",
+    "army.equipmentAssigned": "Assigned",
+    "army.equipmentScore": "Role score",
+    "army.equipmentRequiredShort": "Need {value}",
+    "army.equipmentAvailableShort": "Stock {value}",
+    "army.equipmentAssignedShort": "Assigned {value}",
     "army.form": "Form",
     "army.formation": "Formation",
+    "army.formationCancelSuccess": "Formation canceled",
+    "army.formationCancelTitle": "Cancel formation",
+    "army.formationCancelTooltip": "Cancel formation",
+    "army.formationComposition": "{count} components",
+    "army.formationConfirmAction": "Confirm",
+    "army.formationConfirmTitle": "Confirm formation",
+    "army.formationError.branchUnsupported": "This deployment building cannot form this branch.",
+    "army.formationError.buildingRequired": "A suitable active deployment building is required on the hex.",
+    "army.formationError.generic": "Failed to create formation.",
+    "army.formationError.hexInvalid": "This hex cannot deploy the selected formation.",
+    "army.formationError.hexRequired": "Select a deployment hex.",
+    "army.formationError.notEnoughDucats": "Not enough ducats.",
+    "army.formationError.notEnoughEquipment": "Not enough equipment.",
+    "army.formationError.templateNotFound": "Formation template was not found.",
+    "army.formationFocusTooltip": "Center camera on deployment hex",
+    "army.formationNoTemplates": "No formation templates",
+    "army.formationPriority": "Priority",
+    "army.formationPriority.high": "High",
+    "army.formationPriority.low": "Low",
+    "army.formationPriority.normal": "Normal",
     "army.formationQueue": "Formation queue",
+    "army.formationQueueEmpty": "Formation queue is empty",
+    "army.formationQueueMeta": "{quantity} left · {priority} · {repeat}",
+    "army.formationQuantity": "Quantity",
+    "army.formationQueued": "Formation queued",
+    "army.formationRepeat": "Repeat",
+    "army.formationRepeatOff": "No repeat",
+    "army.formationRepeatOn": "Repeat",
+    "army.formationRepeatShort": "Repeat",
+    "army.formationSelectHexTooltip": "Choose deployment hex on map",
     "army.formationSpeed": "Formation speed: {speed}",
+    "army.branch": "Branch",
+    "army.branch.air": "Air wings",
+    "army.branch.land": "Divisions",
+    "army.branch.naval": "Fleets",
     "army.icon64": "Logo 64x64",
     "army.iconInvalid64": "Logo must be exactly 64x64.",
     "army.iconUploadFailed": "Failed to upload logo.",
@@ -4423,24 +4651,69 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.noEquipmentRequirements": "This template does not require equipment yet.",
     "army.noEquipmentStats": "No stats.",
     "army.noAssignedEquipment": "No suitable equipment in stockpile",
+    "army.noMissionRegions": "No known regions",
+    "army.noFrames": "No frames are available for this branch.",
     "army.noReadyUnits": "No ready units",
     "army.noReadyUnitsDescription": "Put a unit formation in the queue.",
+    "army.none": "None",
     "army.organizationShort": "Org.",
     "army.productionCapacity": "Capacity",
     "army.productionCapacityValue": "Capacity {value}",
+    "army.productionLineProgress": "Progress {value}",
+    "army.productionLineMissingGoods": "Missing goods",
+    "army.productionLineMissingValue": "{available}/{required}, missing {missing}",
+    "army.productionLineProduced": "Produced {value}",
+    "army.productionLineStatus": "Line status",
+    "army.productionLineStatusActive": "Working",
+    "army.productionLineStatusIdle": "Paused",
+    "army.productionLineStatusInvalid": "Invalid variant",
+    "army.productionLineStatusStalled": "Stalled",
+    "army.productionLineStatusTooltip": "Current status: {status}. Last turn production: {produced}. Missing goods explain why the line cannot finish equipment.",
     "army.queue": "Queue ({count})",
     "army.readyUnits": "Ready units: {branch}",
     "army.active": "Active",
     "army.inactive": "Inactive",
     "army.saveTemplate": "Save template",
+    "army.saveVariant": "Save variant",
+    "army.designerDivision": "Division designer",
+    "army.designerAirWing": "Air wing designer",
+    "army.designerFleet": "Fleet designer",
+    "army.createLandEquipment": "Create equipment",
+    "army.createPlane": "Create aircraft",
+    "army.createShip": "Create ship",
+    "army.designerTemplatesDescription": "Build a template from components and equipment requirements. Variants are selected automatically from stockpile.",
+    "army.designerEquipmentDescription": "Choose a frame, fill module slots, then save a concrete equipment variant for production.",
+    "army.equipmentFrame": "Frame",
+    "army.moduleSlots": "Module slots",
+    "army.previewStats": "Preview stats",
+    "army.requirementCount": "Required amount",
+    "army.componentCount": "Component count",
+    "army.productionCost": "Production cost",
+    "army.manpowerCrew": "Crew",
+    "army.statTooltip": "This value is derived from the selected frame, modules, and template composition.",
     "army.addEquipmentRequirement": "Add need",
     "army.strengthShort": "Strength",
     "army.support": "Support",
+    "army.supplyPriority": "Supply priority",
+    "army.supplyPriorityHigh": "High supply",
+    "army.supplyPriorityLow": "Low supply",
+    "army.supplyPriorityNormal": "Normal supply",
+    "army.supplyPriorityTooltip": "Higher priority divisions receive scarce equipment before normal and low priority divisions.",
+    "army.supplyReceived": "Received",
+    "army.supplyReportDescription": "Turn {turn}: received {received}, returned {returned}. These changes explain the latest loadout refresh for this division.",
+    "army.supplyReportTitle": "Supply update",
+    "army.supplyReturned": "Returned",
+    "army.supplySummaryDescription": "Turn {turn}: {divisions} divisions changed loadout, received {received}, returned {returned}.",
+    "army.supplySummaryTitle": "Army supply summary",
+    "army.supplySummaryValue": "+{received} / -{returned} · {divisions} divisions",
     "army.supplyShort": "Supply",
     "army.totalBattalions": "{count} battalions",
     "army.totalSoldiers": "{count} soldiers",
     "army.templateDeleted": "Template deleted",
     "army.templateEquipmentCoverage": "Template equipment coverage: {value}%",
+    "army.templateEquipmentCoverageTitle": "Template equipment coverage",
+    "army.templateEquipmentCoverageValue": "Template equipment coverage: {value}%",
+    "army.templateEquipmentCoverageTooltip": "Overall equipment coverage is {value}%. The server applies this coverage to divisions using this template when calculating effective stats.",
     "army.templateName": "Template name",
     "army.unknownBattalion": "Battalion {number}",
     "army.unknownTemplate": "Unknown template",
@@ -4545,6 +4818,35 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.buildingStatusInactive": "Inactive",
     "hexMap.buildingStatusRuins": "Ruins",
     "hexMap.buildingStatusWorking": "Working",
+    "hexMap.divisions": "Divisions",
+    "hexMap.divisionStack": "Division stack",
+    "hexMap.divisionStackValue": "{current}/{max}",
+    "hexMap.divisionStackTooltip": "Your land divisions on this hex: {current}/{max}. The scenario stack limit blocks peaceful movement into a full hex, pauses stored routes at the next full hex, and keeps completed formations in the queue until space is available.",
+    "hexMap.divisionEquipmentCoverage": "equipment {value}%",
+    "hexMap.divisionStatus": "Strength {strength}% · organization {organization}",
+    "hexMap.divisionMove": "Move",
+    "hexMap.divisionMoveTooltipCan": "Choose a target hex for this division.",
+    "hexMap.divisionMoveTooltipCannot": "This division cannot receive a movement order now.",
+    "hexMap.divisionMoveUnavailable": "This division cannot move now.",
+    "hexMap.divisionMoveSelectTarget": "Select a target hex for the division.",
+    "hexMap.divisionMoveNoPath": "No valid route for this division.",
+    "hexMap.divisionMoveOrderSent": "Division movement order sent",
+    "hexMap.divisionAttack": "Attack",
+    "hexMap.divisionAttackTooltipCan": "Choose an adjacent enemy or enemy-controlled hex to attack.",
+    "hexMap.divisionAttackTooltipCannot": "This division has no adjacent attack target or already has an order.",
+    "hexMap.divisionAttackUnavailable": "This division cannot attack now.",
+    "hexMap.divisionAttackSelectTarget": "Select an adjacent enemy hex to attack.",
+    "hexMap.divisionAttackNoTarget": "No adjacent attackable target on that hex.",
+    "hexMap.divisionAttackOrderSent": "Division attack order sent",
+    "hexMap.fleets": "Fleets",
+    "hexMap.fleetStatus": "Strength {strength}% · organization {organization}",
+    "hexMap.fleetMove": "Move",
+    "hexMap.fleetMoveTooltipCan": "Choose a water target hex for this fleet.",
+    "hexMap.fleetMoveTooltipCannot": "This fleet cannot receive a movement order now.",
+    "hexMap.fleetMoveUnavailable": "This fleet cannot move now.",
+    "hexMap.fleetMoveSelectTarget": "Select a water target hex for the fleet.",
+    "hexMap.fleetMoveNoPath": "No valid water route for this fleet.",
+    "hexMap.fleetMoveOrderSent": "Fleet movement order sent",
     "hexMap.civilianUnits": "Civilian units",
     "hexMap.civilianQueue": "Civilian queue",
     "hexMap.civilianColonizer": "Colonizer",
@@ -4554,6 +4856,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.civilianMoveTooltipCannot": "This civilian unit cannot move now.",
     "hexMap.civilianMoveUnavailable": "This civilian unit cannot move now.",
     "hexMap.civilianMoveSelectTarget": "Select a target hex for the colonizer.",
+    "hexMap.formationPlacementHud": "Select a deployment hex.",
+    "hexMap.formationPlacementInvalid": "The selected formation cannot deploy on this hex.",
     "hexMap.civilianMovePreview": "Route cost {cost}; this turn {points}",
     "hexMap.civilianMoveNoPath": "No valid route to that hex.",
     "hexMap.civilianMoveTooFar": "Route is too long: {cost}/{points} movement points.",
@@ -5713,6 +6017,18 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "provinceContext.openAdminEditor": "Hex management",
     "shell.action.army": "Command army",
     "shell.action.armyDescription": "Open formations, routes, and military orders.",
+    "shell.action.divisionDesigner": "Division designer",
+    "shell.action.divisionDesignerDescription": "Create and edit land division templates from combat and support components.",
+    "shell.action.airWingDesigner": "Air wing designer",
+    "shell.action.airWingDesignerDescription": "Create air wing templates and their equipment requirements.",
+    "shell.action.fleetDesigner": "Fleet designer",
+    "shell.action.fleetDesignerDescription": "Create fleet templates and their ship requirements.",
+    "shell.action.landEquipmentDesigner": "Create equipment",
+    "shell.action.landEquipmentDesignerDescription": "Design land equipment variants from frames and modules.",
+    "shell.action.airEquipmentDesigner": "Create aircraft",
+    "shell.action.airEquipmentDesignerDescription": "Design aircraft variants from airframes and modules.",
+    "shell.action.navalEquipmentDesigner": "Create ship",
+    "shell.action.navalEquipmentDesignerDescription": "Design ship variants from hulls and modules.",
     "shell.action.budget": "State budget",
     "shell.action.budgetDescription": "Review treasury pressure, subsidies, and current-turn expenses.",
     "shell.action.buildings": "Regional construction",
@@ -6046,10 +6362,32 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.workspaceTab.actions": "Available actions",
     "shell.workspaceTab.buildings": "Building construction",
     "shell.workspaceTab.constructionQueue": "Construction queue",
+    "shell.workspaceTab.formation": "Formation",
     "shell.workspaceTab.records": "Records",
     "shell.workspaceTab.summary": "Country summary",
     "shell.workspaceTab.trade": "Trade",
+    "shell.workspaceTab.warehouses": "Warehouses",
     "shell.workspaceTabs": "Workspace tabs",
+    "shell.warehouses.assigned": "Assigned to units",
+    "shell.warehouses.balance": "Balance",
+    "shell.warehouses.balanceShort": "Bal.",
+    "shell.warehouses.empty": "Warehouses are empty",
+    "shell.warehouses.goodsCost": "Production resources",
+    "shell.warehouses.militaryStockpiles": "Military stockpiles",
+    "shell.warehouses.missingGoods": "Missing resources",
+    "shell.warehouses.missingGoodsValue": "Need {required}, missing {missing}",
+    "shell.warehouses.noGoodsCost": "No resource cost",
+    "shell.warehouses.noMissingGoods": "No missing resources",
+    "shell.warehouses.production": "Production",
+    "shell.warehouses.productionLines": "Production lines",
+    "shell.warehouses.productionShort": "Prod.",
+    "shell.warehouses.required": "Required by units",
+    "shell.warehouses.requiredShort": "Need",
+    "shell.warehouses.statusDeficit": "Deficit",
+    "shell.warehouses.statusNoStock": "No stockpile",
+    "shell.warehouses.statusSurplus": "Surplus",
+    "shell.warehouses.stockpile": "Stockpile",
+    "shell.warehouses.stockpileShort": "Stock",
     "shell.buildings.empty": "No buildings are available.",
     "shell.buildings.noCountry": "Choose a country before construction.",
     "shell.buildings.uncategorized": "Other buildings",
@@ -7411,6 +7749,15 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "elections.tooltipVotes": "Голоса: {value}",
     "elections.voteShare": "Голоса: {value}",
     "army.air": "Авиакрылья",
+    "army.airWingMission": "Миссия авиакрыла",
+    "army.airWingMission.air_superiority": "Превосходство в воздухе",
+    "army.airWingMission.ground_support": "Поддержка войск",
+    "army.airWingMission.interception": "Перехват",
+    "army.airWingMission.naval_patrol": "Морское патрулирование",
+    "army.airWingMission.none": "Без миссии",
+    "army.airWingMissionRegion": "Регион миссии",
+    "army.airWingMissionRegionTooltip": "Задаёт регион, где авиакрыло должно действовать. Проверка дальности и базирования будет добавлена в следующих срезах авиационной системы.",
+    "army.airWingMissionTooltip": "Задаёт текущую миссию авиакрыла. Эффекты миссий применят будущие системы воздушного боя и модификаторов.",
     "army.attack": "Атака",
     "army.baseHex": "Гекс базирования",
     "army.battleSlots": "Боевые слоты",
@@ -7424,15 +7771,24 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.defaultLand": "Новая дивизия",
     "army.defaultNaval": "Новый флот",
     "army.delete": "Удалить",
+    "army.deleteProductionLine": "Удалить производственную линию",
     "army.defense": "Защита",
     "army.description": "Шаблоны, формирование и базирование дивизий, флотов и авиакрыльев",
+    "army.disbandConfirmDescription": "Расформировать {name}? Дивизия будет удалена с карты.",
+    "army.disbandConfirmTitle": "Расформировать дивизию",
     "army.disbandDivision": "Расформировать дивизию",
+    "army.disbandEquipmentReturn": "Назначенная техника вернётся на склад страны.",
     "army.emptyQueue": "Очередь пуста",
     "army.emptyQueueDescription": "Новые части появляются здесь после команды сформировать.",
     "army.equipment": "Техника",
     "army.equipmentClass": "Класс",
     "army.equipmentConstructor": "Конструктор техники",
     "army.equipmentCoverage": "Покрытие {value}%",
+    "army.equipmentCoverageTooltip": "Требуется: {required}. Доступно на складе: {available}. Назначено по текущей оценке лучшего варианта: {assigned}. Покрытие {coverage}% масштабирует эффективные боевые показатели дивизии.",
+    "army.equipmentCoverageTooltipTitle": "Покрытие техникой",
+    "army.divisionEquipmentLoadout": "Техника дивизии",
+    "army.divisionEquipmentLoadoutTooltip": "Этой дивизии назначено {assigned} из {required} требуемой техники. Покрытие {coverage}% влияет на её эффективные боевые показатели.",
+    "army.noDivisionEquipmentLoadout": "Нет требований к технике",
     "army.equipmentCost": "Стоимость товарами",
     "army.equipmentLines": "Производственные линии",
     "army.equipmentProduction": "Производство техники",
@@ -7440,10 +7796,51 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.equipmentStats": "Показатели",
     "army.equipmentVariant": "Вариант",
     "army.equipmentVariantName": "Название варианта",
+    "army.assignedEquipment": "Назначенная техника",
+    "army.equipmentRequired": "Требуется",
+    "army.equipmentAvailable": "Доступно",
+    "army.equipmentAssigned": "Назначено",
+    "army.equipmentScore": "Оценка роли",
+    "army.equipmentRequiredShort": "Нужно {value}",
+    "army.equipmentAvailableShort": "Склад {value}",
+    "army.equipmentAssignedShort": "Назначено {value}",
     "army.form": "Формирование",
     "army.formation": "Формирование",
+    "army.formationCancelSuccess": "Формирование отменено",
+    "army.formationCancelTitle": "Отменить формирование",
+    "army.formationCancelTooltip": "Отменить формирование",
+    "army.formationComposition": "{count} компонентов",
+    "army.formationConfirmAction": "Подтвердить",
+    "army.formationConfirmTitle": "Подтвердить формирование",
+    "army.formationError.branchUnsupported": "Это здание развёртывания не может формировать эту ветку.",
+    "army.formationError.buildingRequired": "На гексе нужно подходящее активное здание развёртывания.",
+    "army.formationError.generic": "Не удалось создать формирование.",
+    "army.formationError.hexInvalid": "На этом гексе нельзя разместить выбранное формирование.",
+    "army.formationError.hexRequired": "Выберите гекс развёртывания.",
+    "army.formationError.notEnoughDucats": "Недостаточно дукатов.",
+    "army.formationError.notEnoughEquipment": "Недостаточно техники.",
+    "army.formationError.templateNotFound": "Шаблон формирования не найден.",
+    "army.formationFocusTooltip": "Центрировать камеру на гексе развёртывания",
+    "army.formationNoTemplates": "Нет шаблонов формирования",
+    "army.formationPriority": "Приоритет",
+    "army.formationPriority.high": "Высокий",
+    "army.formationPriority.low": "Низкий",
+    "army.formationPriority.normal": "Обычный",
     "army.formationQueue": "Очередь формирования",
+    "army.formationQueueEmpty": "Очередь формирования пуста",
+    "army.formationQueueMeta": "Осталось {quantity} · {priority} · {repeat}",
+    "army.formationQuantity": "Количество",
+    "army.formationQueued": "Формирование добавлено в очередь",
+    "army.formationRepeat": "Повтор",
+    "army.formationRepeatOff": "Без повтора",
+    "army.formationRepeatOn": "Повтор",
+    "army.formationRepeatShort": "Повтор",
+    "army.formationSelectHexTooltip": "Выбрать гекс развёртывания на карте",
     "army.formationSpeed": "Скорость формирования: {speed}",
+    "army.branch": "Ветка",
+    "army.branch.air": "Авиакрылья",
+    "army.branch.land": "Дивизии",
+    "army.branch.naval": "Флоты",
     "army.icon64": "Логотип 64x64",
     "army.iconInvalid64": "Логотип должен быть строго 64x64.",
     "army.iconUploadFailed": "Не удалось загрузить логотип.",
@@ -7466,24 +7863,69 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.noEquipmentRequirements": "Этот шаблон пока не требует технику.",
     "army.noEquipmentStats": "Нет показателей.",
     "army.noAssignedEquipment": "Нет подходящей техники на складе",
+    "army.noMissionRegions": "Нет известных регионов",
+    "army.noFrames": "Для этой ветки нет доступных основ техники.",
     "army.noReadyUnits": "Нет готовых частей",
     "army.noReadyUnitsDescription": "Поставьте формирование в очередь.",
+    "army.none": "Нет",
     "army.organizationShort": "Орг.",
     "army.productionCapacity": "Мощность",
     "army.productionCapacityValue": "Мощность {value}",
+    "army.productionLineProgress": "Прогресс {value}",
+    "army.productionLineMissingGoods": "Нехватка товаров",
+    "army.productionLineMissingValue": "{available}/{required}, не хватает {missing}",
+    "army.productionLineProduced": "Произведено {value}",
+    "army.productionLineStatus": "Статус линии",
+    "army.productionLineStatusActive": "Работает",
+    "army.productionLineStatusIdle": "Остановлена",
+    "army.productionLineStatusInvalid": "Некорректный вариант",
+    "army.productionLineStatusStalled": "Нет ресурсов",
+    "army.productionLineStatusTooltip": "Текущий статус: {status}. Производство за прошлый ход: {produced}. Нехватка товаров объясняет, почему линия не может завершить технику.",
     "army.queue": "Очередь ({count})",
     "army.readyUnits": "Готовые части: {branch}",
     "army.active": "Активна",
     "army.inactive": "Неактивна",
     "army.saveTemplate": "Сохранить шаблон",
+    "army.saveVariant": "Сохранить вариант",
+    "army.designerDivision": "Конструктор дивизий",
+    "army.designerAirWing": "Конструктор авиакрыльев",
+    "army.designerFleet": "Конструктор флотов",
+    "army.createLandEquipment": "Создать технику",
+    "army.createPlane": "Создать самолёт",
+    "army.createShip": "Создать корабль",
+    "army.designerTemplatesDescription": "Соберите шаблон из компонентов и требований техники. Конкретные варианты будут подбираться автоматически со склада.",
+    "army.designerEquipmentDescription": "Выберите основу, заполните слоты модулей и сохраните конкретный вариант для производства.",
+    "army.equipmentFrame": "Основа",
+    "army.moduleSlots": "Слоты модулей",
+    "army.previewStats": "Итоговые показатели",
+    "army.requirementCount": "Требуемое количество",
+    "army.componentCount": "Количество компонентов",
+    "army.productionCost": "Стоимость производства",
+    "army.manpowerCrew": "Экипаж",
+    "army.statTooltip": "Значение рассчитывается из выбранной основы, модулей и состава шаблона.",
     "army.addEquipmentRequirement": "Добавить потребность",
     "army.strengthShort": "Сила",
     "army.support": "Поддержка",
+    "army.supplyPriority": "Приоритет снабжения",
+    "army.supplyPriorityHigh": "Высокое снабжение",
+    "army.supplyPriorityLow": "Низкое снабжение",
+    "army.supplyPriorityNormal": "Обычное снабжение",
+    "army.supplyPriorityTooltip": "Дивизии с высоким приоритетом получают дефицитную технику раньше обычных и низкоприоритетных дивизий.",
+    "army.supplyReceived": "Получено",
+    "army.supplyReportDescription": "Ход {turn}: получено {received}, возвращено {returned}. Эти изменения объясняют последнее обновление оснащения дивизии.",
+    "army.supplyReportTitle": "Обновление снабжения",
+    "army.supplyReturned": "Возвращено",
+    "army.supplySummaryDescription": "Ход {turn}: у {divisions} дивизий изменилось оснащение, получено {received}, возвращено {returned}.",
+    "army.supplySummaryTitle": "Сводка снабжения армии",
+    "army.supplySummaryValue": "+{received} / -{returned} · {divisions} дивиз.",
     "army.supplyShort": "Снабж.",
     "army.totalBattalions": "{count} батальонов",
     "army.totalSoldiers": "{count} солдат",
     "army.templateDeleted": "Шаблон удалён",
     "army.templateEquipmentCoverage": "Покрытие шаблона техникой: {value}%",
+    "army.templateEquipmentCoverageTitle": "Покрытие шаблона техникой",
+    "army.templateEquipmentCoverageValue": "Покрытие шаблона техникой: {value}%",
+    "army.templateEquipmentCoverageTooltip": "Общее покрытие техникой: {value}%. Сервер применяет это покрытие к дивизиям с этим шаблоном при расчёте эффективных показателей.",
     "army.templateName": "Название шаблона",
     "army.unknownBattalion": "Батальон {number}",
     "army.unknownTemplate": "Неизвестный шаблон",
@@ -7588,6 +8030,35 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.buildingStatusInactive": "Неактивно",
     "hexMap.buildingStatusRuins": "Руины",
     "hexMap.buildingStatusWorking": "Работает",
+    "hexMap.divisions": "Дивизии",
+    "hexMap.divisionStack": "Стак дивизий",
+    "hexMap.divisionStackValue": "{current}/{max}",
+    "hexMap.divisionStackTooltip": "Ваши сухопутные дивизии на этом гексе: {current}/{max}. Сценарный лимит стака блокирует мирный вход в полный гекс, останавливает сохранённый маршрут перед заполненным гексом и оставляет завершённое формирование в очереди, пока не появится место.",
+    "hexMap.divisionEquipmentCoverage": "техника {value}%",
+    "hexMap.divisionStatus": "Сила {strength}% · организация {organization}",
+    "hexMap.divisionMove": "Переместить",
+    "hexMap.divisionMoveTooltipCan": "Выбрать целевой гекс для этой дивизии.",
+    "hexMap.divisionMoveTooltipCannot": "Эта дивизия сейчас не может получить приказ движения.",
+    "hexMap.divisionMoveUnavailable": "Эта дивизия сейчас не может двигаться.",
+    "hexMap.divisionMoveSelectTarget": "Выберите целевой гекс для дивизии.",
+    "hexMap.divisionMoveNoPath": "Нет допустимого маршрута для этой дивизии.",
+    "hexMap.divisionMoveOrderSent": "Приказ движения дивизии отправлен",
+    "hexMap.divisionAttack": "Атаковать",
+    "hexMap.divisionAttackTooltipCan": "Выбрать соседний вражеский или контролируемый врагом гекс для атаки.",
+    "hexMap.divisionAttackTooltipCannot": "У этой дивизии нет соседней цели для атаки или уже есть приказ.",
+    "hexMap.divisionAttackUnavailable": "Эта дивизия сейчас не может атаковать.",
+    "hexMap.divisionAttackSelectTarget": "Выберите соседний вражеский гекс для атаки.",
+    "hexMap.divisionAttackNoTarget": "На этом гексе нет соседней цели для атаки.",
+    "hexMap.divisionAttackOrderSent": "Приказ атаки дивизии отправлен",
+    "hexMap.fleets": "Флоты",
+    "hexMap.fleetStatus": "Сила {strength}% · организация {organization}",
+    "hexMap.fleetMove": "Переместить",
+    "hexMap.fleetMoveTooltipCan": "Выбрать водный целевой гекс для этого флота.",
+    "hexMap.fleetMoveTooltipCannot": "Этот флот сейчас не может получить приказ движения.",
+    "hexMap.fleetMoveUnavailable": "Этот флот сейчас не может двигаться.",
+    "hexMap.fleetMoveSelectTarget": "Выберите водный целевой гекс для флота.",
+    "hexMap.fleetMoveNoPath": "Нет допустимого водного маршрута для этого флота.",
+    "hexMap.fleetMoveOrderSent": "Приказ движения флота отправлен",
     "hexMap.civilianUnits": "Гражданские юниты",
     "hexMap.civilianQueue": "Очередь гражданских юнитов",
     "hexMap.civilianColonizer": "Колонизатор",
@@ -7597,6 +8068,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.civilianMoveTooltipCannot": "Этот гражданский юнит сейчас не может двигаться.",
     "hexMap.civilianMoveUnavailable": "Этот гражданский юнит сейчас не может двигаться.",
     "hexMap.civilianMoveSelectTarget": "Выберите целевой гекс для колонизатора.",
+    "hexMap.formationPlacementHud": "Выберите гекс развёртывания.",
+    "hexMap.formationPlacementInvalid": "Выбранное формирование нельзя разместить на этом гексе.",
     "hexMap.civilianMovePreview": "Стоимость пути {cost}; на этот ход {points}",
     "hexMap.civilianMoveNoPath": "Нет допустимого маршрута до этого гекса.",
     "hexMap.civilianMoveTooFar": "Маршрут слишком длинный: {cost}/{points} очков хода.",
@@ -8756,6 +9229,18 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "provinceContext.openAdminEditor": "Управление провинцией",
     "shell.action.army": "Командовать армией",
     "shell.action.armyDescription": "Открыть соединения, маршруты и военные приказы.",
+    "shell.action.divisionDesigner": "Конструктор дивизий",
+    "shell.action.divisionDesignerDescription": "Создать и изменить шаблоны сухопутных дивизий из боевых и поддерживающих компонентов.",
+    "shell.action.airWingDesigner": "Конструктор авиакрыльев",
+    "shell.action.airWingDesignerDescription": "Создать шаблоны авиакрыльев и их требования техники.",
+    "shell.action.fleetDesigner": "Конструктор флотов",
+    "shell.action.fleetDesignerDescription": "Создать шаблоны флотов и их требования кораблей.",
+    "shell.action.landEquipmentDesigner": "Создать технику",
+    "shell.action.landEquipmentDesignerDescription": "Собрать вариант сухопутной техники из основы и модулей.",
+    "shell.action.airEquipmentDesigner": "Создать самолёт",
+    "shell.action.airEquipmentDesignerDescription": "Собрать вариант самолёта из планера и модулей.",
+    "shell.action.navalEquipmentDesigner": "Создать корабль",
+    "shell.action.navalEquipmentDesignerDescription": "Собрать вариант корабля из корпуса и модулей.",
     "shell.action.budget": "Бюджет страны",
     "shell.action.budgetDescription": "Проверить казну, субсидии и расходы текущего хода.",
     "shell.action.buildings": "Строительство региона",
@@ -9089,10 +9574,32 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.workspaceTab.actions": "Доступные действия",
     "shell.workspaceTab.buildings": "Строительство зданий",
     "shell.workspaceTab.constructionQueue": "Очередь строительства",
+    "shell.workspaceTab.formation": "Формирование",
     "shell.workspaceTab.records": "Записи",
     "shell.workspaceTab.summary": "Сводка страны",
     "shell.workspaceTab.trade": "Торговля",
+    "shell.workspaceTab.warehouses": "Склады",
     "shell.workspaceTabs": "Вкладки рабочей области",
+    "shell.warehouses.assigned": "Назначено частям",
+    "shell.warehouses.balance": "Баланс",
+    "shell.warehouses.balanceShort": "Бал.",
+    "shell.warehouses.empty": "Склады пусты",
+    "shell.warehouses.goodsCost": "Ресурсы производства",
+    "shell.warehouses.militaryStockpiles": "Военные склады",
+    "shell.warehouses.missingGoods": "Нехватка ресурсов",
+    "shell.warehouses.missingGoodsValue": "Нужно {required}, не хватает {missing}",
+    "shell.warehouses.noGoodsCost": "Нет стоимости ресурсами",
+    "shell.warehouses.noMissingGoods": "Нет нехватки ресурсов",
+    "shell.warehouses.production": "Производство",
+    "shell.warehouses.productionLines": "Производственные линии",
+    "shell.warehouses.productionShort": "Произв.",
+    "shell.warehouses.required": "Требуется частям",
+    "shell.warehouses.requiredShort": "Нужно",
+    "shell.warehouses.statusDeficit": "Дефицит",
+    "shell.warehouses.statusNoStock": "Нет запаса",
+    "shell.warehouses.statusSurplus": "Профицит",
+    "shell.warehouses.stockpile": "Запас",
+    "shell.warehouses.stockpileShort": "Запас",
     "shell.buildings.empty": "Нет доступных построек.",
     "shell.buildings.noCountry": "Выберите страну перед строительством.",
     "shell.buildings.uncategorized": "Прочие здания",

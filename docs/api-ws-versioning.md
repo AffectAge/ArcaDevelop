@@ -24,7 +24,7 @@ World delta changes must:
 
 Current compact world-delta fields include `j` for full-list `diplomacyProposals` replacement, `s` for `countryScheduledEventsByCountryId`, `xg` for `countryEventFlagsByCountryId`, `jo` for `journalEntriesByCountryId`, and `xr` for `explanationRecordsByTurn`. Any new compact field must be documented here with its shared mask, server producer, and client consumer.
 
-The Civ-like units/equipment contract introduces grouped mask `WORLD_DELTA_MASK.unitEquipmentState` because the current numeric bitmask is near its 32-bit limit. The grouped mask carries compact fields `cu` (`civilianUnitsById`), `sp` (`settlementProjectsById`), `ci` (`cityMarkersById`), `ev` (`equipmentVariantsById`), `el` (`equipmentProductionLinesByCountry`), and `es` (`equipmentStockpileByCountry`). Server producer: `apps/server/src/runtime/worldDeltaDiff.ts`. Client consumer: `apps/client/src/store/gameStore.ts`. A future protocol version can split this grouped mask into per-section masks after replacing the 32-bit mask constraint.
+The Civ-like units/equipment contract introduces grouped mask `WORLD_DELTA_MASK.unitEquipmentState` because the current numeric bitmask is near its 32-bit limit. The grouped mask carries compact fields `cu` (`civilianUnitsById`), `fl` (`fleetsById`), `aw` (`airWingsById`), `sp` (`settlementProjectsById`), `ci` (`cityMarkersById`), `ev` (`equipmentVariantsById`), `el` (`equipmentProductionLinesByCountry`), and `es` (`equipmentStockpileByCountry`). Server producer: `apps/server/src/runtime/worldDeltaDiff.ts`. Client consumer: `apps/client/src/store/gameStore.ts`. A future protocol version can split this grouped mask into per-section masks after replacing the 32-bit mask constraint.
 
 ## Error Codes
 
@@ -34,7 +34,7 @@ Do not rely on raw human-readable server messages. Use machine-readable `code` v
 
 The shared order union reserves player-facing target orders for the new model:
 
-- `UNIT_MOVE`: moves a civilian unit, land division, or fleet toward a server-validated target hex. Civilian units store the target and recalculate their route each turn; routes may exceed current movement points.
+- `UNIT_MOVE`: moves a civilian unit, land division, or fleet toward a server-validated target hex. Civilian units, land divisions, and fleets store the target and recalculate their route each turn where their resolver supports long routes; routes may exceed current movement points or per-turn speed. Fleets are water-only in the current server slice.
 - `UNIT_ATTACK`: requests a manual Civ-like attack against a target hex/unit.
 - `FOUND_CITY`: consumes a `colonizer` civilian unit and starts a region-owned settlement project at the unit hex when the target region is neutral and eligible.
 - `EQUIPMENT_VARIANT`: creates or updates a country/scenario equipment variant from module slots.
@@ -43,6 +43,44 @@ The shared order union reserves player-facing target orders for the new model:
 `COLONIZE` remains a legacy/internal compatibility order while the player UI transitions away from button colonization. New player-facing colonization should use `FOUND_CITY`.
 
 `FOUND_CITY` is validated both on order submission and during turn resolution. The server requires a trimmed city `name` from 1 to 32 characters, the referenced colonizer to belong to the order country, stand on `targetHexId`, and target a hex inside `regionId`. The region must be neutral, colonization must not be disabled, and there must be no active/stalled settlement project for that region. On acceptance during turn resolution, the colonizer is removed immediately and a named `SettlementProject` is created. Settlement progress spends colonization points through the resource ledger with `resourceLedger.source.settlement.progress`; the region owner/controller changes only when the project completes, at which point the server creates a named `CityMarker`.
+
+Player-facing colonization UI must use colonizer units, pending `FOUND_CITY` orders, and `SettlementProject` state. The legacy `COLONIZE` order may still be present in compatibility/admin paths, but the map client should not create pending colony overlays or resource-spend forecasts from player `COLONIZE` orders.
+
+Land division movement now accepts player-facing `UNIT_MOVE` orders with `unitKind: "division"`. Legacy `ARMY_MOVE` remains accepted as compatibility while older AI/admin flows migrate. The server stores `Division.targetHexId` for distant goals. Submit validation and turn resolution can derive a server route from the current hex graph, so the route may be longer than the division's current per-turn speed. On each turn the army resolver recalculates the route from the division's current hex to `targetHexId`, advances up to its speed, and clears the target when the route completes or becomes invalid.
+
+`POST /military/formations` queues a formation from the selected template branch. Payload fields are `templateId`, `hexId`, optional `name`, `quantity`, `priority`, and `repeat`. Missing optional queue controls default to `quantity: 1`, `priority: "normal"`, and `repeat: false`. The server validates the deployment hex against controlled region state and scenario-authored building `deployment.branches`; client map highlighting is preview only. Completed land templates create `Division` records in `divisionsById`, naval templates create `Fleet` records in `fleetsById`, and air templates create `AirWing` records in `airWingsById`. Queue items keep `quantity`, `remainingQuantity`, `priority`, `repeat`, and optional `stalledReasonCode`. Fleet repair/combat and full air-wing basing remain follow-up route slices.
+
+`WorldBase` includes dedicated `fleetsById` and `airWingsById` containers. They persist, restore, diff, and apply through `WORLD_DELTA_MASK.unitEquipmentState`; formation queue completion is the first server producer for those containers.
+
+`UNIT_ATTACK` currently supports the first land-division melee slice. The attacker must be an owned land division that has not already acted this turn, and the target hex must be adjacent and contain an enemy land division or be controlled by another country. `targetUnitId`, when provided, must point to an enemy division on the target hex. Resolution uses the same server battle resolver as move-into-enemy-hex combat, consumes the division action through `movedDivisionIds`, and blocks stored route advancement for that division in the same turn. Ranged attacks, fleets, air wings, and non-adjacent targeting remain reserved for later slices.
+
+Land division movement uses the scenario `military.landDivisionStackLimitPerHex` setting for friendly/non-hostile hexes. Submit validation can reject the first peaceful step with `DIVISION_STACK_LIMIT_REACHED`; turn resolution also stops stored routes and completed formation output when the next or spawn hex is full.
+
+`GET /game-settings/public` includes the public `military` settings needed by map UI, including `landDivisionStackLimitPerHex`, so the selected-hex panel can explain the same stacking rule the server validates.
+
+`Division` records may include `equipmentCoverage`, `equipmentByVariantId`, `equipmentAssignments`, and `equipmentSupplyReport` in WS snapshots and deltas. `stats` on a division are effective stats after template equipment coverage; template `stats` remain the base design stats. `equipmentByVariantId` is the persisted physical loadout currently held by the division. `equipmentAssignments` stores the current per-requirement variant assignment/explanation snapshot for that loadout. `equipmentSupplyReport` stores the latest received/returned equipment by variant for player-facing tooltips.
+
+Land combat and division refresh can change both `equipmentStockpileByCountry` and `divisionsById` through the grouped `WORLD_DELTA_MASK.unitEquipmentState` mask plus normal division deltas. Refresh moves equipment from stockpile into division `equipmentByVariantId` and returns no-longer-needed loadout equipment to stockpile. When battle damage lowers a division's `strength`, the server removes proportional assigned equipment from the division loadout, then refreshes that country's division `equipmentCoverage`, `equipmentAssignments`, and effective `stats` in the same world update.
+
+`DELETE /military/divisions/:divisionId` disbands an owned division. The server returns the division's `equipmentByVariantId` loadout to `equipmentStockpileByCountry`, deletes the division from `divisionsById`, persists state, and broadcasts deltas for both division state and grouped unit/equipment state. The legacy `/army/divisions/:divisionId` route is kept as a compatibility alias during the army UI migration.
+
+`PATCH /military/divisions/:divisionId/supply-priority` updates an owned division's `supplyPriority` to `high`, `normal`, or `low`, refreshes country division equipment state, and broadcasts division/equipment deltas. This controls which divisions receive scarce equipment first. The legacy `/army/divisions/:divisionId/supply-priority` route remains as a compatibility alias.
+
+`PATCH /military/air-wings/:airWingId/mission` updates an owned air wing's `mission` to `none`, `air_superiority`, `ground_support`, `interception`, or `naval_patrol`. Active missions require `targetRegionId`; `none` clears it. The first slice validates that the target region is known to the active world, stores the mission and target in `airWingsById`, changes status to `mission` or `idle`, persists state, and broadcasts the grouped unit/equipment delta. Combat, range, basing, and modifier effects for these missions are reserved for later air-system slices.
+
+`GET /military/overview` includes `regionOptions` so the army workspace can assign air-wing mission targets without reading a full world snapshot. It also includes `equipmentSupplySummary`, aggregating the latest per-division `equipmentSupplyReport` for the requesting country. The summary includes the latest report turn, affected division count, received equipment by variant, and returned equipment by variant for the army workspace overview.
+
+Turn resolution emits private `military` news when division equipment refresh changes loadouts for a country. The news summarizes affected division count and total received/returned equipment for the current turn; detailed per-variant inspection remains in `equipmentSupplySummary` and per-division `equipmentSupplyReport`.
+
+Equipment production lines are managed through `/military/equipment/production-lines`. `POST` creates a line, `PATCH /:lineId` updates `assignedCapacity` and/or `active`, and `DELETE /:lineId` removes the line. All three operations are country-scoped, persist state, and broadcast grouped unit/equipment deltas.
+
+Equipment variants are created through `/military/equipment/variants`. New clients should submit `frameId`, `name`, and `moduleIdsBySlotId`; the server finds the frame's equipment class, validates that every frame slot has a compatible module, and recalculates stats, goods cost, crew manpower, and production cost authoritatively. A legacy `classId` payload may resolve to that class's first frame during the transition, but player-facing UI should use `frameId`.
+
+Division, fleet, and air-wing templates keep equipment requirements by `equipmentClassId`, tactical `role`, and `count`. The server does not pin a concrete variant by default. During equipment refresh it scores available variants, can assign multiple variants to one requirement, stores the mixed loadout in `equipmentByVariantId`, and exposes weighted `equipmentAssignments` for tooltips/debug UI.
+
+`EquipmentProductionLine` may include `lastStatus`, `lastProduced`, and `lastMissingGoods` after turn resolution. `lastStatus` is `active`, `idle`, `stalled`, or `invalid`; `lastMissingGoods` lists required, available, and missing amounts for goods that prevented completion. The army workspace uses these fields for production-line tooltips.
+
+Land division movement also applies the first civilian-capture slice. When a land division successfully enters a hex containing foreign non-captured civilian units, those civilian units become `captured`, clear their current route/target, and record `capturedByCountryId`. Friendly civilian units on the same hex are not captured. This currently runs inside the server military movement/battle resolver and is visible through normal `civilianUnitsById` world deltas.
 
 ## Build Order Contract
 
@@ -59,6 +97,14 @@ Building visual URLs are not part of the building content contract. Clients deri
 The server statically serves `/scenario-assets/:scenarioId/assets/buildings/*` from `scenarios/<scenarioId>/assets/buildings/`; unsafe scenario ids return 404. Scenario validation requires each building atlas to be a readable PNG sized `256x64`.
 
 City marker visuals use the same atlas convention with culture ids. Clients derive city atlas URLs as `/scenario-assets/<scenarioId>/assets/cities/<sanitizedCultureId>.png`, and the server statically serves `/scenario-assets/:scenarioId/assets/cities/*` from `scenarios/<scenarioId>/assets/cities/`. Scenario validation requires each culture's city atlas to be a readable PNG sized `256x64`.
+
+## Unit Movement Orders
+
+`UNIT_MOVE` supports `unitKind: "civilian"`, `"division"`, and `"fleet"`. Civilian units and fleets keep `targetHexId` as the long-route source of truth; the server can recompute a route from the current hex on later turns and advances only as far as movement budget allows. Land divisions continue to use the army movement resolver.
+
+Fleet movement is server-authoritative and water-only. Submit validation and turn resolution both reject fleet routes that include non-water hexes, using `FLEET_TARGET_NOT_WATER` for authored/payload route violations and `UNIT_MOVE_TARGET_INVALID` when no valid water route exists.
+
+Client map UI may send fleet movement through the same `UNIT_MOVE unitKind: "fleet"` order used by the army workspace. The map preview filters routes to water hexes for player clarity, but server validation remains authoritative.
 ## Resource Ledger Deltas
 
 `WorldBase.resourceLedgerByTurn` stores bounded persisted `ResourceFlow[]` history. World deltas use the compact `resourceLedgerByTurn` delta field for newly changed or pruned ledger turns. Bootstrap/resync may include the bounded snapshot, but normal turn deltas must not rebroadcast full history.

@@ -92,6 +92,7 @@ export function createMilitaryRuntimeFacade(params: MilitaryRuntimeFacadeParams)
       content: getContent(),
       defaultBattalions: params.defaultBattalions,
       createId: randomUUID,
+      turnId: params.getTurnId(),
     });
   }
 

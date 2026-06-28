@@ -95,6 +95,8 @@ function makeWorld(): WorldBase {
     countryModifiersByCountryId: {},
     divisionTemplatesByCountry: {},
     divisionsById: {},
+    fleetsById: {},
+    airWingsById: {},
     militaryFormationQueueByCountry: {},
     civilianUnitsById: {},
     civilianUnitQueueByCountry: {},

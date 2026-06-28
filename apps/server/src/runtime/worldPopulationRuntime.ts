@@ -72,7 +72,7 @@ type WorldPopulationRuntimeParams = {
   ) => Set<string>;
   getMarketById: (marketId: string) => GameSettings["markets"]["marketById"][string] | null;
   getHexFertilityMultiplier: (hexId: string) => number;
-  getTransportCorridorCapacity: (corridor: TransportCorridorEntry, categoryId: string | null) => number;
+  getTransportCorridorCapacity: (corridor: TransportCorridorEntry) => number;
   normalizeHexIdList: (input: unknown) => string[];
   resolveModifiedValue: (
     stat: ModifierStat,
@@ -400,6 +400,8 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       countryModifiersByCountryId: {},
       divisionTemplatesByCountry: {},
       divisionsById: {},
+      fleetsById: {},
+      airWingsById: {},
       militaryFormationQueueByCountry: {},
       civilianUnitsById: {},
       civilianUnitQueueByCountry: {},

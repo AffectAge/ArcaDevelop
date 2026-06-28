@@ -67,7 +67,7 @@ export type MarketReadRoutesDependencies = {
   getGlobalGoodProductionMaxHistoryByResourceId: () => Record<string, number[]>;
   getHexOwner: (hexId: string) => string | null;
   getMarketTransportCorridors: (marketId: string, options?: { includeDisabled?: boolean }) => MarketCorridorEntry[];
-  getTransportCorridorCapacity: (corridor: MarketCorridorEntry, categoryId: string | null) => number;
+  getTransportCorridorCapacity: (corridor: MarketCorridorEntry) => number;
   getTransportModes: () => MarketCorridorTransportMode[];
   round3: (value: number) => number;
   ensureMarketModelReady: () => void;
@@ -220,7 +220,7 @@ export function buildMarketOverviewResponse(countryId: string, deps: MarketReadR
     ),
   );
   const corridorServiceAreas = deps.getMarketTransportCorridors(marketId, { includeDisabled: true }).map((corridor) => {
-    const capacity = Math.max(0, Number(corridor.lastCapacityByMode?.[corridor.transportMode] ?? deps.getTransportCorridorCapacity(corridor, null)));
+    const capacity = Math.max(0, Number(corridor.lastCapacityByMode?.[corridor.transportMode] ?? deps.getTransportCorridorCapacity(corridor)));
     const load = Math.max(0, Number(corridor.lastLoadByMode?.[corridor.transportMode] ?? 0));
     return {
       corridorId: corridor.id,

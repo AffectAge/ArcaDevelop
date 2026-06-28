@@ -1,4 +1,4 @@
-import type { CivilianUnit, Order } from "@arcanorum/shared";
+import type { CivilianUnit, Fleet, Order } from "@arcanorum/shared";
 import { describe, expect, it } from "vitest";
 import {
   advanceStoredCivilianUnitRoutesTurn,
@@ -223,10 +223,81 @@ describe("unitMovementMechanics", () => {
       lastMovedTurnId: 6,
     });
   });
+
+  it("moves a fleet along a water route using fleet speed", () => {
+    const worldBase = makeWorld(
+      {},
+      {
+        "fleet:a": makeFleet({ stats: makeStats({ speed: 2 }) }),
+      },
+    );
+    const movedFleetIds = new Set<string>();
+
+    const result = resolveUnitMoveOrder({
+      order: makeMoveOrder({
+        unitId: "fleet:a",
+        unitKind: "fleet",
+        targetHexId: "hex:3:0",
+        payload: {},
+      }),
+      playerId: "player:a",
+      worldBase,
+      turnId: 5,
+      movedCivilianUnitIds: new Set(),
+      movedFleetIds,
+      areHexIdsAdjacentOrSame,
+      getNeighborHexIds,
+      isFleetPassableHex: (hexId) => hexId !== "hex:0:1",
+    });
+
+    expect(result).toEqual({ moved: true, rejectedOrder: null });
+    expect(worldBase.fleetsById["fleet:a"]).toMatchObject({
+      hexId: "hex:2:0",
+      targetHexId: "hex:3:0",
+      path: ["hex:3:0"],
+      status: "moving",
+      lastMovedTurnId: 5,
+    });
+    expect(movedFleetIds.has("fleet:a")).toBe(true);
+  });
+
+  it("rejects a fleet move to a non-water hex", () => {
+    const worldBase = makeWorld(
+      {},
+      {
+        "fleet:a": makeFleet(),
+      },
+    );
+
+    const result = resolveUnitMoveOrder({
+      order: makeMoveOrder({
+        unitId: "fleet:a",
+        unitKind: "fleet",
+        targetHexId: "hex:1:0",
+        payload: { path: ["hex:1:0"] },
+      }),
+      playerId: "player:a",
+      worldBase,
+      turnId: 5,
+      movedCivilianUnitIds: new Set(),
+      movedFleetIds: new Set(),
+      areHexIdsAdjacentOrSame,
+      isFleetPassableHex: () => false,
+    });
+
+    expect(result.rejectedOrder).toEqual({
+      playerId: "player:a",
+      reason: "UNIT_MOVE_TARGET_INVALID",
+      tempOrderId: "order:move",
+    });
+  });
 });
 
-function makeWorld(civilianUnitsById: Record<string, CivilianUnit>): UnitMovementWorldState {
-  return { civilianUnitsById };
+function makeWorld(
+  civilianUnitsById: Record<string, CivilianUnit>,
+  fleetsById: Record<string, Fleet> = {},
+): UnitMovementWorldState {
+  return { civilianUnitsById, fleetsById };
 }
 
 function makeColonizer(overrides: Partial<CivilianUnit> = {}): CivilianUnit {
@@ -241,6 +312,38 @@ function makeColonizer(overrides: Partial<CivilianUnit> = {}): CivilianUnit {
     path: [],
     createdTurnId: 1,
     lastMovedTurnId: null,
+    ...overrides,
+  };
+}
+
+function makeFleet(overrides: Partial<Fleet> = {}): Fleet {
+  return {
+    id: "fleet:a",
+    countryId: "country:a",
+    templateId: "template:naval",
+    name: "Fleet A",
+    hexId: "hex:0:0",
+    strength: 1,
+    organization: 100,
+    stats: makeStats(),
+    status: "idle",
+    path: [],
+    createdTurnId: 1,
+    lastMovedTurnId: null,
+    ...overrides,
+  };
+}
+
+function makeStats(overrides: Partial<Fleet["stats"]> = {}): Fleet["stats"] {
+  return {
+    manpower: 0,
+    attack: 0,
+    defense: 0,
+    breakthrough: 0,
+    organization: 100,
+    hp: 100,
+    speed: 1,
+    supplyUse: 0,
     ...overrides,
   };
 }

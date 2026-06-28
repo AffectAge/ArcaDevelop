@@ -3,10 +3,11 @@ import { Dialog } from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import type { Country, DiplomacyProposal, HexId, OrderDelta, WsOutMessage } from "@arcanorum/shared";
+import type { Country, DiplomacyProposal, DivisionTemplate, HexId, MilitaryBranch, MilitaryFormationQueueItem, OrderDelta, WsOutMessage } from "@arcanorum/shared";
 import { AuthPanel, type AuthSuccess } from "./components/AuthPanel";
 import { MapView } from "./components/MapView";
 import { StrategyShell, type MarketTradeOverviewRow, type StrategyMode } from "./components/strategy-shell/StrategyShell";
+import { buildArmyLogisticsRows } from "./components/strategy-shell/armyLogistics";
 import { CommandPalette } from "./components/CommandPalette";
 import { AdminPanel } from "./components/AdminPanel";
 import { TurnStatusModal } from "./components/TurnStatusModal";
@@ -26,7 +27,7 @@ import { CountryEventsModal } from "./components/CountryEventsModal";
 import { CountryJournalModal } from "./components/CountryJournalModal";
 import { DiplomacyModal } from "./components/DiplomacyModal";
 import { DiplomacyProposalStoryModal } from "./components/DiplomacyProposalStoryModal";
-import { ArmyModal } from "./components/ArmyModal";
+import { ArmyDesignerModal, type ArmyDesignerModalKind } from "./components/ArmyDesignerModals";
 import { InAppNotificationTray, type InAppUiNotification } from "./components/InAppNotificationTray";
 import { NotificationHistoryModal } from "./components/NotificationHistoryModal";
 import { RegistrationApprovalModal } from "./components/RegistrationApprovalModal";
@@ -47,7 +48,9 @@ import {
   fetchWorldSnapshot,
   markUiNotificationViewed,
   acceptDiplomacyProposal,
+  cancelMilitaryFormation,
   cancelCountryBuild,
+  createMilitaryFormation,
   queueCountryColonizer,
   rejectDiplomacyProposal,
   type ContentEntry,
@@ -93,6 +96,39 @@ function resolveSuggestedMapLens(strategyMode: StrategyMode): MapLensId {
   if (strategyMode === "population") return "population";
   if (strategyMode === "diplomacy" || strategyMode === "governance") return "political";
   return "terrain";
+}
+
+function getFormationErrorKey(code: string): UiTextKey {
+  switch (code) {
+    case "FORMATION_DEPLOYMENT_HEX_REQUIRED":
+      return "army.formationError.hexRequired";
+    case "FORMATION_DEPLOYMENT_HEX_INVALID":
+      return "army.formationError.hexInvalid";
+    case "FORMATION_DEPLOYMENT_BUILDING_REQUIRED":
+      return "army.formationError.buildingRequired";
+    case "FORMATION_DEPLOYMENT_BRANCH_UNSUPPORTED":
+      return "army.formationError.branchUnsupported";
+    case "FORMATION_TEMPLATE_NOT_FOUND":
+      return "army.formationError.templateNotFound";
+    case "NOT_ENOUGH_DUCATS":
+      return "army.formationError.notEnoughDucats";
+    case "NOT_ENOUGH_EQUIPMENT":
+      return "army.formationError.notEnoughEquipment";
+    default:
+      return "army.formationError.generic";
+  }
+}
+
+function getMilitaryBranchLabelKey(kind: MilitaryBranch): UiTextKey {
+  if (kind === "naval") return "army.branch.naval";
+  if (kind === "air") return "army.branch.air";
+  return "army.branch.land";
+}
+
+function getFormationPriorityLabelKey(priority: "high" | "normal" | "low"): UiTextKey {
+  if (priority === "high") return "army.formationPriority.high";
+  if (priority === "low") return "army.formationPriority.low";
+  return "army.formationPriority.normal";
 }
 
 function sumPositiveRecord(input: Record<string, number> | undefined): number {
@@ -277,7 +313,7 @@ export default function App() {
   const [eventsOpen, setEventsOpen] = useState(false);
   const [focusedEventPendingId, setFocusedEventPendingId] = useState<string | null>(null);
   const [diplomacyOpen, setDiplomacyOpen] = useState(false);
-  const [armyOpen, setArmyOpen] = useState(false);
+  const [armyDesignerKind, setArmyDesignerKind] = useState<ArmyDesignerModalKind | null>(null);
   const [adminInitialHexId, setAdminInitialHexId] = useState<string | null>(null);
   const [turnStatusOpen, setTurnStatusOpen] = useState(false);
   const [gameSettingsOpen, setGameSettingsOpen] = useState(false);
@@ -317,6 +353,7 @@ export default function App() {
   });
   const [maxActiveColonizations, setMaxActiveColonizations] = useState(3);
   const [colonizationCostPer1000Km2, setColonizationCostPer1000Km2] = useState({ points: 5, ducats: 5 });
+  const [landDivisionStackLimitPerHex, setLandDivisionStackLimitPerHex] = useState(4);
   const [demolitionCostConstructionPercent, setDemolitionCostConstructionPercent] = useState(20);
   const [hexRenameDucatsCost, setHexRenameDucatsCost] = useState(25);
   const [provinceAreaKm2ById, setHexAreaKm2ById] = useState<Record<string, number>>({});
@@ -356,6 +393,22 @@ export default function App() {
     building: ContentEntry;
     owner: { type: "state"; countryId: string } | { type: "company"; companyId: string };
   } | null>(null);
+  const [formationPlacement, setFormationPlacement] = useState<{
+    template: DivisionTemplate;
+    quantity: number;
+    priority: "high" | "normal" | "low";
+    repeat: boolean;
+  } | null>(null);
+  const [formationConfirmTarget, setFormationConfirmTarget] = useState<{
+    hexId: HexId;
+    regionId: string;
+    template: DivisionTemplate;
+    quantity: number;
+    priority: "high" | "normal" | "low";
+    repeat: boolean;
+  } | null>(null);
+  const [formationRequestPending, setFormationRequestPending] = useState(false);
+  const [cancelingFormationQueueId, setCancelingFormationQueueId] = useState<string | null>(null);
   const [technologyEntries, setTechnologyEntries] = useState<ContentEntry[]>([]);
   const [journalEntries, setJournalEntries] = useState<ContentEntry[]>([]);
   const [turnTimerUi, setTurnTimerUi] = useState<{ enabled: boolean; secondsPerTurn: number; startedAtMs: number | null }>({
@@ -785,6 +838,7 @@ export default function App() {
             points: ui.colonization.pointsCostPer1000Km2,
             ducats: ui.colonization.ducatsCostPer1000Km2,
           });
+          setLandDivisionStackLimitPerHex(ui.military?.landDivisionStackLimitPerHex ?? 4);
           setDemolitionCostConstructionPercent(ui.economy.demolitionCostConstructionPercent ?? 20);
           setShowAntarctica(ui.map?.showAntarctica ?? true);
           setActiveScenarioId(ui.activeScenarioId ?? "default");
@@ -992,69 +1046,53 @@ export default function App() {
       return { activeCount: 0, predictedPointsSpend: 0, predictedSupportDucatSpend: 0 };
     }
 
-    const targetIds = new Set<string>();
-    for (const [regionId, byCountry] of Object.entries(worldBase.colonyProgressByRegion ?? {})) {
-      if (worldBase.regionOwner[regionId]) continue;
-      if (worldBase.regionColonizationByRegion?.[regionId]?.disabled) continue;
-      if (byCountry[auth.countryId] != null) {
-        targetIds.add(regionId);
-      }
-    }
+    const activeProjects = Object.values(worldBase.settlementProjectsById ?? {})
+      .filter((project) => project.countryId === auth.countryId && (project.state === "active" || project.state === "stalled"))
+      .map((project) => ({
+        remainingColonization: Math.max(
+          0,
+          Math.max(1, Number(project.costColonization ?? 0)) - Math.max(0, Number(project.progressColonization ?? 0)),
+        ),
+      }))
+      .filter((project) => project.remainingColonization > 0);
 
-    const myOrders = ordersByTurn.get(turnId)?.get(auth.playerId) ?? [];
-    for (const order of myOrders) {
-      if (order.type !== "COLONIZE") continue;
-      if (worldBase.regionOwner[order.regionId]) continue;
-      if (worldBase.regionColonizationByRegion?.[order.regionId]?.disabled) continue;
-      targetIds.add(order.regionId);
-    }
-
-    const activeCount = targetIds.size;
+    const activeCount = activeProjects.length;
     if (activeCount === 0) {
       return { activeCount, predictedPointsSpend: 0, predictedSupportDucatSpend: 0 };
     }
 
-    const availablePoints = Math.max(0, Math.floor(currentResources.colonization ?? 0));
-    if (availablePoints <= 0) {
+    let remainingColonizationBudget = Math.max(0, Math.floor(currentResources.colonization ?? 0));
+    if (remainingColonizationBudget <= 0) {
       return { activeCount, predictedPointsSpend: 0, predictedSupportDucatSpend: 0 };
     }
 
-    const gainPerRegion = availablePoints / activeCount;
+    let active = activeProjects.map((project) => ({ ...project }));
     let predictedPointsSpend = 0;
-    let predictedSupportDucatSpend = 0;
-    let remainingSupportDucats = Math.max(0, Number(currentResources.ducats ?? 0));
-
-    for (const regionId of targetIds) {
-      const regionCfg = worldBase.regionColonizationByRegion?.[regionId];
-      const areaKm2 = Math.max(1, Number(provinceAreaKm2ById[regionId] ?? 1000));
-      const areaFactor = Math.max(0.001, areaKm2 / 1000);
-      const derivedPointsCost = Math.max(1, Math.round(colonizationCostPer1000Km2.points * areaFactor));
-      const derivedDucatsCost = Math.max(0, Math.round(colonizationCostPer1000Km2.ducats * areaFactor));
-      const regionCost = Math.max(1, Math.floor(regionCfg?.cost ?? derivedPointsCost));
-      const currentProgress = Math.max(
-        0,
-        Number(worldBase.colonyProgressByRegion?.[regionId]?.[auth.countryId] ?? 0),
-      );
-      const remainingPoints = Math.max(0, regionCost - currentProgress);
-      const ducatRatio = regionCost > 0 ? derivedDucatsCost / regionCost : 0;
-      const spentDucatsForCurrentProgress = currentProgress * ducatRatio;
-      const remainingRegionDucats = Math.max(0, derivedDucatsCost - spentDucatsForCurrentProgress);
-      const maxGainByCountryDucats = ducatRatio > 0 ? remainingSupportDucats / ducatRatio : Number.POSITIVE_INFINITY;
-      const maxGainByRegionDucats = ducatRatio > 0 ? remainingRegionDucats / ducatRatio : Number.POSITIVE_INFINITY;
-      const appliedPoints = Math.min(gainPerRegion, remainingPoints, maxGainByCountryDucats, maxGainByRegionDucats);
-      if (appliedPoints <= 0) continue;
-      const appliedDucats = ducatRatio > 0 ? Math.min(remainingSupportDucats, remainingRegionDucats, appliedPoints * ducatRatio) : 0;
-      predictedPointsSpend += appliedPoints;
-      predictedSupportDucatSpend += appliedDucats;
-      remainingSupportDucats = Math.max(0, remainingSupportDucats - appliedDucats);
+    while (remainingColonizationBudget > 0 && active.length > 0) {
+      const equalShare = remainingColonizationBudget / active.length;
+      let progressedInRound = 0;
+      const nextActive: typeof active = [];
+      for (const project of active) {
+        const applied = Math.min(equalShare, project.remainingColonization);
+        if (applied <= 0) continue;
+        project.remainingColonization = Math.max(0, project.remainingColonization - applied);
+        remainingColonizationBudget = Math.max(0, remainingColonizationBudget - applied);
+        predictedPointsSpend += applied;
+        progressedInRound += applied;
+        if (project.remainingColonization > 0) {
+          nextActive.push(project);
+        }
+      }
+      if (progressedInRound <= 0) break;
+      active = nextActive;
     }
 
     return {
       activeCount,
       predictedPointsSpend: Math.max(0, Math.floor(predictedPointsSpend)),
-      predictedSupportDucatSpend: Math.max(0, Math.floor(predictedSupportDucatSpend)),
+      predictedSupportDucatSpend: 0,
     };
-  }, [auth, colonizationCostPer1000Km2.ducats, colonizationCostPer1000Km2.points, currentResources.colonization, currentResources.ducats, ordersByTurn, provinceAreaKm2ById, turnId, worldBase]);
+  }, [auth, currentResources.colonization, worldBase]);
   const colonizerQueuePreview = useMemo(() => {
     if (!auth || !worldBase) return [];
     return (worldBase.civilianUnitQueueByCountry?.[auth.countryId] ?? [])
@@ -1108,10 +1146,7 @@ export default function App() {
       .sort((a, b) => Number(a.state === "stalled") - Number(b.state === "stalled") || a.regionId.localeCompare(b.regionId, "ru"));
   }, [auth, worldBase]);
 
-  const activeColonizationCount = Math.max(
-    myColonizationProjection.activeCount,
-    settlementProjectPreview.filter((project) => project.state === "active" || project.state === "stalled").length,
-  );
+  const activeColonizationCount = myColonizationProjection.activeCount;
   const myConstructionProjection = useMemo(() => {
     if (!auth || !worldBase) {
       return { activeCount: 0, predictedPointsSpend: 0, predictedDucatSpend: 0 };
@@ -1514,6 +1549,42 @@ export default function App() {
       { labelKey: "shell.preview.averageOrganization" as const, value: Math.floor(divisions.reduce((sum, division) => sum + Number(division.organization ?? 0), 0) / Math.max(1, divisions.length)), detailKey: "shell.preview.averageOrganizationDetail" as const },
     ];
   }, [auth, worldBase]);
+  const armyLogisticsRows = useMemo(() => {
+    if (!auth || !worldBase) return [];
+    const divisions = Object.values(worldBase.divisionsById ?? {}).filter((division) => division.countryId === auth.countryId);
+    return buildArmyLogisticsRows({
+      variantsById: worldBase.equipmentVariantsById ?? {},
+      stockpileByVariantId: worldBase.equipmentStockpileByCountry?.[auth.countryId] ?? {},
+      productionLines: worldBase.equipmentProductionLinesByCountry?.[auth.countryId] ?? [],
+      divisions,
+    });
+  }, [auth, worldBase]);
+  const militaryFormationTemplates = useMemo(
+    () => (auth && worldBase ? worldBase.divisionTemplatesByCountry?.[auth.countryId] ?? [] : []),
+    [auth, worldBase],
+  );
+  const militaryFormationQueue = useMemo(
+    () => (auth && worldBase ? worldBase.militaryFormationQueueByCountry?.[auth.countryId] ?? [] : []),
+    [auth, worldBase],
+  );
+  const formationDeploymentHexIds = useMemo(() => {
+    if (!auth || !worldBase || !formationPlacement) return [];
+    const buildingById = new Map(buildingEntries.map((building) => [building.id, building] as const));
+    const ids: HexId[] = [];
+    for (const [regionId, instances] of Object.entries(worldBase.regionBuildingsByRegion ?? {})) {
+      const controller = worldBase.regionController?.[regionId] ?? worldBase.regionOwner?.[regionId] ?? null;
+      if (controller !== auth.countryId) continue;
+      for (const instance of instances ?? []) {
+        if (!isHexId(instance.targetHexId)) continue;
+        const building = buildingById.get(instance.buildingId);
+        const deployment = building?.deployment;
+        if (!deployment?.branches?.includes(formationPlacement.template.kind ?? "land")) continue;
+        if (deployment.requiresActive !== false && instance.isInactive) continue;
+        ids.push(instance.targetHexId);
+      }
+    }
+    return [...new Set(ids)];
+  }, [auth, buildingEntries, formationPlacement, worldBase]);
   const governancePreview = useMemo(() => {
     if (!auth || !worldBase) return [];
     const parliament = worldBase.parliamentByCountry?.[auth.countryId] ?? null;
@@ -1783,13 +1854,16 @@ export default function App() {
         playerId: auth.playerId,
         countryId: auth.countryId,
         targetHexId: hexId,
-        type: "ARMY_MOVE",
+        type: "UNIT_MOVE",
+        unitId: divisionId,
+        unitKind: "division",
+        path: routePath.filter(isHexId),
         payload: routePath.length > 0 ? { divisionId, path: routePath } : { divisionId },
       },
     };
 
     send(delta);
-    toast(t("shell.orderSent"), { description: routePath.length > 1 ? `ARMY_MOVE: ${routePath.length}` : `ARMY_MOVE -> ${hexId}` });
+    toast(t("shell.orderSent"), { description: routePath.length > 1 ? `UNIT_MOVE: ${routePath.length}` : `UNIT_MOVE -> ${hexId}` });
     addEvent({
       category: "military",
       title: t("shell.orderSent"),
@@ -1799,6 +1873,121 @@ export default function App() {
       visibility: "private",
       turn: turnId,
     });
+  };
+
+  const queueFleetMoveOrder = (fleetId: string, hexId: string, path?: string[]) => {
+    if (!auth || !fleetId || !isHexId(hexId)) {
+      return;
+    }
+    const routePath = Array.isArray(path) ? path.filter((value) => typeof value === "string" && value.trim().length > 0) : [];
+
+    const delta: OrderDelta = {
+      type: "ORDER_DELTA",
+      order: {
+        turnId,
+        playerId: auth.playerId,
+        countryId: auth.countryId,
+        targetHexId: hexId,
+        type: "UNIT_MOVE",
+        unitId: fleetId,
+        unitKind: "fleet",
+        path: routePath.filter(isHexId),
+        payload: routePath.length > 0 ? { fleetId, path: routePath } : { fleetId },
+      },
+    };
+
+    send(delta);
+    toast(t("shell.orderSent"), { description: routePath.length > 1 ? `UNIT_MOVE: ${routePath.length}` : `UNIT_MOVE -> ${hexId}` });
+    addEvent({
+      category: "military",
+      title: t("shell.orderSent"),
+      message: t("shell.orderArmyMoveMessage", { division: fleetId, province: hexId }),
+      countryId: auth.countryId,
+      priority: "medium",
+      visibility: "private",
+      turn: turnId,
+    });
+  };
+
+  const queueUnitAttackOrder = (divisionId: string, targetHexId: HexId, targetUnitId?: string | null) => {
+    if (!auth || !divisionId || !isHexId(targetHexId)) {
+      return;
+    }
+
+    const delta: OrderDelta = {
+      type: "ORDER_DELTA",
+      order: {
+        turnId,
+        playerId: auth.playerId,
+        countryId: auth.countryId,
+        type: "UNIT_ATTACK",
+        attackerUnitId: divisionId,
+        targetHexId,
+        ...(targetUnitId ? { targetUnitId } : {}),
+        payload: {},
+      },
+    };
+
+    send(delta);
+    addOrder({
+      ...delta.order,
+      id: `local:${turnId}:${divisionId}:unit-attack`,
+      createdAt: new Date().toISOString(),
+    });
+    toast(t("hexMap.divisionAttackOrderSent"), { description: `${divisionId} -> ${targetHexId}` });
+    addEvent({
+      category: "military",
+      title: t("hexMap.divisionAttackOrderSent"),
+      message: `${divisionId} -> ${targetHexId}`,
+      countryId: auth.countryId,
+      priority: "medium",
+      visibility: "private",
+      turn: turnId,
+    });
+  };
+
+  const confirmMilitaryFormation = async () => {
+    if (!auth?.token || !formationConfirmTarget) return;
+    setFormationRequestPending(true);
+    try {
+      await createMilitaryFormation(auth.token, {
+        templateId: formationConfirmTarget.template.id,
+        hexId: formationConfirmTarget.hexId,
+        quantity: formationConfirmTarget.quantity,
+        priority: formationConfirmTarget.priority,
+        repeat: formationConfirmTarget.repeat,
+      });
+      toast.success(t("army.formationQueued"));
+      setFormationConfirmTarget(null);
+      setFormationPlacement((current) =>
+        current
+          ? {
+              ...current,
+              template: formationConfirmTarget.template,
+              quantity: formationConfirmTarget.quantity,
+              priority: formationConfirmTarget.priority,
+              repeat: formationConfirmTarget.repeat,
+            }
+          : current,
+      );
+    } catch (error) {
+      toast.error(t(getFormationErrorKey(error instanceof Error ? error.message : "FORMATION_CREATE_FAILED")));
+    } finally {
+      setFormationRequestPending(false);
+    }
+  };
+
+  const cancelMilitaryFormationQueueItem = async (queueId: string) => {
+    if (!auth?.token) return;
+    setCancelingFormationQueueId(queueId);
+    try {
+      await cancelMilitaryFormation(auth.token, queueId);
+      toast.success(t("army.formationCancelSuccess"));
+    } catch (error) {
+      toast.error(t(getFormationErrorKey(error instanceof Error ? error.message : "FORMATION_CANCEL_FAILED")));
+    } finally {
+      setCancelingFormationQueueId(null);
+    }
   };
 
   const startHexBuildPlacement = (request: {
@@ -2229,6 +2418,8 @@ export default function App() {
         scenarioId={activeScenarioId}
         focusHexRequest={mapFocusRequest}
         onQueueArmyMoveOrder={queueArmyMoveOrder}
+        onQueueFleetMoveOrder={queueFleetMoveOrder}
+        onQueueUnitAttackOrder={queueUnitAttackOrder}
         onQueueCivilianUnitMoveOrder={queueCivilianUnitMoveOrder}
         onFoundCityOrder={queueFoundCityOrder}
         onQueueColonizer={queueColonizerOnHex}
@@ -2236,7 +2427,7 @@ export default function App() {
         colonizationIconUrl={BASE_RESOURCE_ICON_URLS.colonization}
         ducatsIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
         maxActiveColonizations={maxActiveColonizations}
-        colonizationCostPer1000Km2={colonizationCostPer1000Km2}
+        landDivisionStackLimitPerHex={landDivisionStackLimitPerHex}
         hexRenameDucatsCost={hexRenameDucatsCost}
         countryColorById={countryColorById}
         countryNameById={countryNameById}
@@ -2268,6 +2459,26 @@ export default function App() {
             regionId: target.regionId,
             building: hexBuildPlacement.building,
             owner: hexBuildPlacement.owner,
+          });
+        }}
+        militaryFormationPlacement={formationPlacement ? {
+          templateName: formationPlacement.template.name,
+          kind: formationPlacement.template.kind ?? "land",
+          validHexIds: formationDeploymentHexIds,
+        } : null}
+        onCancelMilitaryFormationPlacement={() => {
+          setFormationPlacement(null);
+          setFormationConfirmTarget(null);
+        }}
+        onSelectMilitaryFormationPlacementTarget={(target) => {
+          if (!formationPlacement || !isHexId(target.hexId)) return;
+          setFormationConfirmTarget({
+            hexId: target.hexId,
+            regionId: target.regionId,
+            template: formationPlacement.template,
+            quantity: formationPlacement.quantity,
+            priority: formationPlacement.priority,
+            repeat: formationPlacement.repeat,
           });
         }}
         onOpenAdminHexEditor={(hexId) => {
@@ -2436,6 +2647,18 @@ export default function App() {
             marketTradeLoading={marketShellLoading}
             diplomacyPreview={diplomacyPreview}
             armyPreview={armyPreview}
+            armyLogisticsRows={armyLogisticsRows}
+            militaryFormationTemplates={militaryFormationTemplates}
+            militaryFormationQueue={militaryFormationQueue}
+            activeMilitaryFormationTemplateId={formationPlacement?.template.id ?? null}
+            cancelingMilitaryFormationQueueId={cancelingFormationQueueId}
+            onStartMilitaryFormationPlacement={(template, options) => {
+              setActiveStrategyMode("army");
+              setStrategyWorkspaceOpen(true);
+              setFormationConfirmTarget(null);
+              setFormationPlacement({ template, ...options });
+            }}
+            onCancelMilitaryFormationQueue={cancelMilitaryFormationQueueItem}
             governancePreview={governancePreview}
             storyPreview={storyPreview}
             onOpenTurnStatus={() => setTurnStatusOpen(true)}
@@ -2475,7 +2698,12 @@ export default function App() {
             onOpenMarket={() => setMarketOpen(true)}
             onOpenGlobalMarket={() => setGlobalMarketOpen(true)}
             onOpenDiplomacy={() => setDiplomacyOpen(true)}
-            onOpenArmy={() => setArmyOpen(true)}
+            onOpenDivisionDesigner={() => setArmyDesignerKind("division-template")}
+            onOpenAirWingDesigner={() => setArmyDesignerKind("air-template")}
+            onOpenFleetDesigner={() => setArmyDesignerKind("fleet-template")}
+            onOpenLandEquipmentDesigner={() => setArmyDesignerKind("land-equipment")}
+            onOpenAirEquipmentDesigner={() => setArmyDesignerKind("air-equipment")}
+            onOpenNavalEquipmentDesigner={() => setArmyDesignerKind("naval-equipment")}
             onOpenPolitics={() => setPoliticsOpen(true)}
             onOpenTechnology={() => setTechnologyOpen(true)}
             onOpenModifiers={() => setModifiersOpen(true)}
@@ -2651,6 +2879,81 @@ export default function App() {
           </Dialog>
         ) : null}
       </AnimatePresence>
+      <AnimatePresence>
+        {auth && formationConfirmTarget ? (
+          <Dialog
+            open
+            onClose={() => setFormationConfirmTarget(null)}
+            className="relative z-[214]"
+          >
+            <motion.div
+              aria-hidden="true"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[var(--arc-modal-backdrop)]"
+            />
+            <div className="fixed inset-0 z-[215] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                className="arc-hex-build-confirm"
+              >
+                <div className="arc-hex-build-confirm__header">
+                  <Dialog.Title className="arc-hex-build-confirm__title">
+                    {t("army.formationConfirmTitle")}
+                  </Dialog.Title>
+                </div>
+                <div className="arc-hex-build-confirm__body">
+                  <div className="arc-hex-build-confirm__row">
+                    <span>{t("army.template")}</span>
+                    <strong>{formationConfirmTarget.template.name}</strong>
+                  </div>
+                  <div className="arc-hex-build-confirm__row">
+                    <span>{t("army.branch")}</span>
+                    <strong>{t(getMilitaryBranchLabelKey(formationConfirmTarget.template.kind ?? "land"))}</strong>
+                  </div>
+                  <div className="arc-hex-build-confirm__row">
+                    <span>{t("hexMap.hex")}</span>
+                    <strong>{formationConfirmTarget.hexId}</strong>
+                  </div>
+                  <div className="arc-hex-build-confirm__row">
+                    <span>{t("army.formationQuantity")}</span>
+                    <strong>{formationConfirmTarget.quantity}</strong>
+                  </div>
+                  <div className="arc-hex-build-confirm__row">
+                    <span>{t("army.formationPriority")}</span>
+                    <strong>{t(getFormationPriorityLabelKey(formationConfirmTarget.priority))}</strong>
+                  </div>
+                  <div className="arc-hex-build-confirm__row">
+                    <span>{t("army.formationRepeat")}</span>
+                    <strong>{formationConfirmTarget.repeat ? t("common.yes") : t("common.no")}</strong>
+                  </div>
+                </div>
+                <div className="arc-hex-build-confirm__actions">
+                  <button
+                    type="button"
+                    className="arc-strategy-workspace-action arc-hex-build-confirm__action arc-hex-build-confirm__action--cancel"
+                    onClick={() => setFormationConfirmTarget(null)}
+                    disabled={formationRequestPending}
+                  >
+                    <span>{t("buildings.hexPlacementCancelAction")}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="arc-strategy-workspace-action arc-strategy-workspace-action--primary arc-hex-build-confirm__action"
+                    onClick={confirmMilitaryFormation}
+                    disabled={formationRequestPending}
+                  >
+                    <span>{formationRequestPending ? t("army.loading") : t("army.formationConfirmAction")}</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </Dialog>
+        ) : null}
+      </AnimatePresence>
       {auth?.token && (
         <MarketModal
           open={marketOpen}
@@ -2772,11 +3075,11 @@ export default function App() {
         />
       )}
       {auth?.token && (
-        <ArmyModal
-          open={armyOpen}
+        <ArmyDesignerModal
+          open={Boolean(armyDesignerKind)}
+          kind={armyDesignerKind}
           token={auth.token}
-          onClose={() => setArmyOpen(false)}
-          onQueueArmyMove={queueArmyMoveOrder}
+          onClose={() => setArmyDesignerKind(null)}
         />
       )}
 

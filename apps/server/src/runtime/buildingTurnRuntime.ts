@@ -93,7 +93,7 @@ export type ResolveBuildingsTurnRuntimeDeps = {
   getMarketById: (marketId: string) => GameSettings["markets"]["marketById"][string] | null;
   getPopulationDomainKeys: () => PopulationDomainKeys;
   getHexFertilityMultiplier: (hexId: string) => number;
-  getTransportCorridorCapacity: (corridor: TransportCorridorEntry, categoryId: string | null) => number;
+  getTransportCorridorCapacity: (corridor: TransportCorridorEntry) => number;
   globalGoodDemandHistoryByResourceId: Record<string, number[]>;
   globalGoodOfferHistoryByResourceId: Record<string, number[]>;
   globalGoodPriceHistoryByResourceId: Record<string, number[]>;
@@ -267,7 +267,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   const corridorRoutePlanner = createCorridorRoutePlanner<GoodTransportMode, TransportCorridorEntry>({
     corridorsById: gameSettings.markets.transportCorridorsById,
     hexOwnerById: worldBase.hexOwner,
-    getCorridorCapacity: (corridor) => getTransportCorridorCapacity(corridor, null),
+    getCorridorCapacity: (corridor) => getTransportCorridorCapacity(corridor),
     getCorridorLoad,
     getMarketMemberCountryIds: (marketId) => getMarketById(marketId)?.memberCountryIds ?? [],
     getTransitAllowedCountries: getInfrastructureTransitAgreementAllowedCountries,
@@ -303,7 +303,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   };
   for (const corridor of Object.values(gameSettings.markets.transportCorridorsById ?? {})) {
     corridor.lastLoadByMode = {};
-    corridor.lastCapacityByMode = { [corridor.transportMode]: getTransportCorridorCapacity(corridor, null) };
+    corridor.lastCapacityByMode = { [corridor.transportMode]: getTransportCorridorCapacity(corridor) };
   }
   const resolveTradePolicyLayer = resolveTradePolicyLayerFromMarketTurn;
   const getRemainingByPolicyLimit = (
@@ -780,7 +780,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     getGlobalGoodPrice,
     getPriceMeta,
     updatePrice,
-    getTransportCorridorCapacity: (corridor) => getTransportCorridorCapacity(corridor, null),
+    getTransportCorridorCapacity: (corridor) => getTransportCorridorCapacity(corridor),
     pushCountryAlert,
   });
   return { latestMarketOverview, nextProfessionsByPopIdByHex };

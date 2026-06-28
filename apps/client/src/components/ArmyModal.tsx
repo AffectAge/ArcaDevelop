@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Factory, Plane, Plus, Shield, Ship, Trash2, Upload, Wrench } from "lucide-react";
 import type {
+  AirWing,
   DivisionTemplate,
   EquipmentClass,
   EquipmentClassRole,
@@ -15,9 +16,15 @@ import {
   createEquipmentProductionLine,
   createEquipmentVariant,
   createMilitaryFormation,
+  deleteEquipmentProductionLine,
   deleteMilitaryTemplate,
+  disbandMilitaryDivision,
+  fetchContentEntries,
   fetchMilitaryOverview,
   saveMilitaryTemplate,
+  updateEquipmentProductionLine,
+  updateDivisionSupplyPriority,
+  updateAirWingMission,
   uploadMilitaryTemplateIcon,
   type ContentEntry,
   type MilitaryOverview,
@@ -27,12 +34,14 @@ import { AppCard, AppEmptyState, AppSection, AppSectionHeader } from "./ui/AppSu
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { useUiText } from "../i18n/useUiText";
 import type { UiTextKey } from "../i18n/uiText";
+import { Tooltip } from "./Tooltip";
 
 type Props = {
   open: boolean;
   token: string | null;
   onClose: () => void;
   onQueueArmyMove: (divisionId: string, targetHexId: string) => void;
+  onQueueFleetMove: (fleetId: string, targetHexId: string) => void;
 };
 
 const BRANCH_LABEL_KEY: Record<MilitaryBranch, UiTextKey> = {
@@ -48,9 +57,32 @@ const BRANCH_ICON: Record<MilitaryBranch, typeof Shield> = {
 };
 
 const EQUIPMENT_ROLE_OPTIONS: EquipmentClassRole[] = ["attack", "defense", "breakthrough", "speed", "range", "support"];
+const AIR_WING_MISSION_OPTIONS: Array<NonNullable<AirWing["mission"]>> = [
+  "none",
+  "air_superiority",
+  "ground_support",
+  "interception",
+  "naval_patrol",
+];
 
 function formatNumber(value: number, digits = 0) {
   return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: digits }).format(value);
+}
+
+function formatPercent(value: number, digits = 0) {
+  return formatNumber(Math.max(0, Math.min(1, Number(value) || 0)) * 100, digits);
+}
+
+function sumEquipmentMap(input: Record<string, number> | undefined): number {
+  return Object.values(input ?? {}).reduce((sum, amount) => sum + Math.max(0, Number(amount) || 0), 0);
+}
+
+function getEntryNameById(entries: Map<string, ContentEntry>, id: string): string {
+  return entries.get(id)?.name || id;
+}
+
+function getMilitaryUnitHexId(unit: NonNullable<MilitaryOverview["units"][number] | MilitaryOverview["fleets"][number] | MilitaryOverview["airWings"][number]>): string {
+  return "baseHexId" in unit ? unit.baseHexId : unit.hexId;
 }
 
 function validateIcon64(file: File): Promise<boolean> {
@@ -171,7 +203,7 @@ function calculateEquipmentPreview(
   };
 }
 
-export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
+export function ArmyModal({ open, token, onClose, onQueueArmyMove, onQueueFleetMove }: Props) {
   const { t } = useUiText();
   const [overview, setOverview] = useState<MilitaryOverview | null>(null);
   const [activeTab, setActiveTab] = useState<MilitaryBranch | "queue" | "equipment">("land");
@@ -190,6 +222,8 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
   const [equipmentModuleIdsBySlotId, setEquipmentModuleIdsBySlotId] = useState<Record<string, string>>({});
   const [equipmentProductionVariantId, setEquipmentProductionVariantId] = useState("");
   const [equipmentProductionCapacity, setEquipmentProductionCapacity] = useState(1);
+  const [disbandDivisionId, setDisbandDivisionId] = useState<string | null>(null);
+  const [goodsEntries, setGoodsEntries] = useState<ContentEntry[]>([]);
 
   const activeKind: MilitaryBranch = activeTab === "queue" || activeTab === "equipment" ? "land" : activeTab;
   const catalog = useMemo(() => getCatalog(overview, activeKind), [activeKind, overview]);
@@ -212,6 +246,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
     () => calculateEquipmentPreview(selectedEquipmentClass, equipmentModulesForClass, equipmentModuleIdsBySlotId),
     [equipmentModuleIdsBySlotId, equipmentModulesForClass, selectedEquipmentClass],
   );
+  const goodsById = useMemo(() => new Map(goodsEntries.map((entry) => [entry.id, entry] as const)), [goodsEntries]);
 
   const applyOverview = (data: MilitaryOverview) => {
     setOverview(data);
@@ -261,6 +296,21 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
       cancelled = true;
     };
   }, [open, token, t]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    fetchContentEntries("goods")
+      .then((items) => {
+        if (!cancelled) setGoodsEntries(items);
+      })
+      .catch(() => {
+        if (!cancelled) setGoodsEntries([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (activeTab === "queue" || activeTab === "equipment") return;
@@ -445,8 +495,76 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
     }
   };
 
+  const handleUpdateEquipmentProductionLine = async (
+    lineId: string,
+    payload: { assignedCapacity?: number; active?: boolean },
+  ) => {
+    if (!token) return;
+    setPending(true);
+    try {
+      applyOverview(await updateEquipmentProductionLine(token, lineId, payload));
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const handleDeleteEquipmentProductionLine = async (lineId: string) => {
+    if (!token) return;
+    setPending(true);
+    try {
+      applyOverview(await deleteEquipmentProductionLine(token, lineId));
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const handleDisbandDivision = async () => {
+    if (!token || !disbandDivisionId) return;
+    setPending(true);
+    try {
+      applyOverview(await disbandMilitaryDivision(token, disbandDivisionId));
+      setDisbandDivisionId(null);
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const handleSupplyPriorityChange = async (divisionId: string, supplyPriority: "low" | "normal" | "high") => {
+    if (!token) return;
+    setPending(true);
+    try {
+      applyOverview(await updateDivisionSupplyPriority(token, divisionId, supplyPriority));
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const handleAirWingMissionChange = async (
+    airWingId: string,
+    mission: NonNullable<AirWing["mission"]>,
+    targetRegionId?: string | null,
+  ) => {
+    if (!token) return;
+    setPending(true);
+    try {
+      applyOverview(await updateAirWingMission(token, airWingId, mission, targetRegionId));
+    } finally {
+      setPending(false);
+    }
+  };
+
   const templatesForTab = overview?.templates.filter((template) => (template.kind ?? "land") === activeKind) ?? [];
-  const unitsForTab = overview?.units.filter((unit) => (unit.kind ?? "land") === activeKind) ?? [];
+  const unitsForTab =
+    activeKind === "naval"
+      ? overview?.fleets ?? []
+      : activeKind === "air"
+        ? overview?.airWings ?? []
+        : overview?.units.filter((unit) => (unit.kind ?? "land") === "land") ?? [];
+  const disbandDivision = disbandDivisionId ? overview?.units.find((unit) => unit.id === disbandDivisionId) ?? null : null;
+  const equipmentVariantById = useMemo(
+    () => new Map((overview?.equipmentVariants ?? []).map((variant) => [variant.id, variant] as const)),
+    [overview?.equipmentVariants],
+  );
   const equipmentClassesForTemplate = overview?.equipmentClasses.filter((entry) => entry.branch === activeKind) ?? [];
   const selectedTemplateAssignment = selectedTemplateId ? overview?.templateEquipmentAssignments[selectedTemplateId] : null;
 
@@ -572,7 +690,7 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                         <div className="grid gap-1">
                           {equipmentPreview.goodsCost.map((cost) => (
                             <div key={cost.goodId} className="flex justify-between gap-2">
-                              <span className="arc-pop-muted">{cost.goodId}</span>
+                              <span className="arc-pop-muted">{getEntryNameById(goodsById, cost.goodId)}</span>
                               <span className="text-[var(--arc-color-atlas-ink)]">{formatNumber(cost.amount, 2)}</span>
                             </div>
                           ))}
@@ -628,15 +746,96 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                     )}
                     {overview.equipmentProductionLines.map((line) => {
                       const variant = overview.equipmentVariants.find((entry) => entry.id === line.equipmentVariantId);
+                      const lineStatus = line.lastStatus ?? (line.active ? "active" : "idle");
+                      const missingRows = (line.lastMissingGoods ?? []).map((missing) => ({
+                        label: getEntryNameById(goodsById, missing.goodId),
+                        value: t("army.productionLineMissingValue", {
+                          available: formatNumber(missing.available, 2),
+                          required: formatNumber(missing.required, 2),
+                          missing: formatNumber(missing.missing, 2),
+                        }),
+                      }));
                       return (
                         <AppCard key={line.id} className="arc-pop-card">
-                          <div className="flex items-center justify-between gap-3 text-xs">
+                          <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
                             <div>
                               <div className="text-sm font-semibold text-[var(--arc-color-atlas-ink)]">{variant?.name ?? line.equipmentVariantId}</div>
-                              <div className="arc-pop-muted">{t("army.productionCapacityValue", { value: formatNumber(line.assignedCapacity, 2) })}</div>
+                              <div className="arc-pop-muted">
+                                {t("army.productionLineProgress", { value: formatNumber(line.progress, 2) })}
+                              </div>
+                              <Tooltip
+                                variant="rich"
+                                content={{
+                                  title: t("army.productionLineStatus"),
+                                  description: t("army.productionLineStatusTooltip", {
+                                    status: t(
+                                      lineStatus === "stalled"
+                                        ? "army.productionLineStatusStalled"
+                                        : lineStatus === "idle"
+                                          ? "army.productionLineStatusIdle"
+                                          : lineStatus === "invalid"
+                                            ? "army.productionLineStatusInvalid"
+                                            : "army.productionLineStatusActive",
+                                    ),
+                                    produced: formatNumber(line.lastProduced ?? 0),
+                                  }),
+                                  rows: missingRows.length > 0 ? missingRows : [{ label: t("army.productionLineMissingGoods"), value: t("army.none") }],
+                                  tone: lineStatus === "stalled" || lineStatus === "invalid" ? "negative" : lineStatus === "idle" ? "warning" : "positive",
+                                }}
+                                placement="top"
+                              >
+                                <div className={lineStatus === "stalled" || lineStatus === "invalid" ? "text-[var(--arc-color-danger-text)]" : "text-[var(--arc-color-success-text)]"}>
+                                  {t(
+                                    lineStatus === "stalled"
+                                      ? "army.productionLineStatusStalled"
+                                      : lineStatus === "idle"
+                                        ? "army.productionLineStatusIdle"
+                                        : lineStatus === "invalid"
+                                          ? "army.productionLineStatusInvalid"
+                                          : "army.productionLineStatusActive",
+                                  )}
+                                  {" · "}
+                                  {t("army.productionLineProduced", { value: formatNumber(line.lastProduced ?? 0) })}
+                                </div>
+                              </Tooltip>
                             </div>
-                            <div className={line.active ? "text-[var(--arc-color-success-text)]" : "text-[var(--arc-color-danger-text)]"}>
-                              {line.active ? t("army.active") : t("army.inactive")}
+                            <div className="flex flex-wrap items-center gap-2">
+                              <label className="arc-pop-muted text-[11px]">
+                                {t("army.productionCapacity")}
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={1000}
+                                  value={line.assignedCapacity}
+                                  disabled={pending}
+                                  onChange={(event) =>
+                                    void handleUpdateEquipmentProductionLine(line.id, {
+                                      assignedCapacity: Math.max(0, Number(event.target.value) || 0),
+                                    })
+                                  }
+                                  className="ml-2 h-8 w-24 rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-xs text-[var(--arc-color-atlas-ink)]"
+                                />
+                              </label>
+                              <AppButton
+                                type="button"
+                                size="sm"
+                                variant={line.active ? "secondary" : "ghost"}
+                                disabled={pending}
+                                onClick={() => void handleUpdateEquipmentProductionLine(line.id, { active: !line.active })}
+                              >
+                                {line.active ? t("army.active") : t("army.inactive")}
+                              </AppButton>
+                              <Tooltip content={t("army.deleteProductionLine")} placement="top">
+                                <AppButton
+                                  type="button"
+                                  size="sm"
+                                  variant="danger"
+                                  icon={<Trash2 size={14} />}
+                                  disabled={pending}
+                                  onClick={() => void handleDeleteEquipmentProductionLine(line.id)}
+                                  aria-label={t("army.deleteProductionLine")}
+                                />
+                              </Tooltip>
                             </div>
                           </div>
                         </AppCard>
@@ -777,10 +976,40 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                                 <Trash2 size={14} />
                               </button>
                               <div className="md:col-span-4">
-                                <div className="arc-pop-muted flex justify-between text-[11px]">
-                                  <span>{variant?.name ?? t("army.noAssignedEquipment")}</span>
-                                  <span>{t("army.equipmentCoverage", { value: formatNumber((assignment?.coverage ?? 0) * 100, 0) })}</span>
-                                </div>
+                                <Tooltip
+                                  variant="rich"
+                                  content={{
+                                    title: t("army.equipmentCoverageTooltipTitle"),
+                                    description: t("army.equipmentCoverageTooltip", {
+                                      required: formatNumber(assignment?.requiredCount ?? requirement.count),
+                                      available: formatNumber(assignment?.availableCount ?? 0),
+                                      assigned: formatNumber(assignment?.assignedCount ?? 0),
+                                      coverage: formatPercent(assignment?.coverage ?? 0),
+                                    }),
+                                    rows: [
+                                      { label: t("army.assignedEquipment"), value: variant?.name ?? t("army.noAssignedEquipment") },
+                                      { label: t("army.equipmentRequired"), value: formatNumber(assignment?.requiredCount ?? requirement.count) },
+                                      { label: t("army.equipmentAvailable"), value: formatNumber(assignment?.availableCount ?? 0) },
+                                      { label: t("army.equipmentAssigned"), value: formatNumber(assignment?.assignedCount ?? 0) },
+                                      { label: t("army.equipmentScore"), value: formatNumber(assignment?.score ?? 0, 2) },
+                                    ],
+                                    tone: (assignment?.coverage ?? 0) >= 1 ? "positive" : (assignment?.coverage ?? 0) > 0 ? "warning" : "negative",
+                                  }}
+                                  placement="top"
+                                  referenceClassName="block"
+                                >
+                                  <div>
+                                    <div className="arc-pop-muted flex justify-between gap-2 text-[11px]">
+                                      <span>{variant?.name ?? t("army.noAssignedEquipment")}</span>
+                                      <span>{t("army.equipmentCoverage", { value: formatPercent(assignment?.coverage ?? 0) })}</span>
+                                    </div>
+                                    <div className="arc-pop-muted mt-1 grid gap-1 text-[11px] sm:grid-cols-3">
+                                      <span>{t("army.equipmentRequiredShort", { value: formatNumber(assignment?.requiredCount ?? requirement.count) })}</span>
+                                      <span>{t("army.equipmentAvailableShort", { value: formatNumber(assignment?.availableCount ?? 0) })}</span>
+                                      <span>{t("army.equipmentAssignedShort", { value: formatNumber(assignment?.assignedCount ?? 0) })}</span>
+                                    </div>
+                                  </div>
+                                </Tooltip>
                                 <div className="mt-1 h-1.5 overflow-hidden rounded bg-[var(--arc-color-atlas-line)]">
                                   <div
                                     className="h-full bg-[var(--arc-color-atlas-primary)]"
@@ -794,9 +1023,19 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
                       </div>
                     )}
                     {selectedTemplateAssignment && equipmentRequirements.length > 0 && (
-                      <div className="arc-pop-muted mt-2 text-[11px]">
-                        {t("army.templateEquipmentCoverage", { value: formatNumber(selectedTemplateAssignment.coverage * 100, 0) })}
-                      </div>
+                      <Tooltip
+                        variant="rich"
+                        content={{
+                          title: t("army.templateEquipmentCoverageTitle"),
+                          description: t("army.templateEquipmentCoverageTooltip", { value: formatPercent(selectedTemplateAssignment.coverage) }),
+                          tone: selectedTemplateAssignment.coverage >= 1 ? "positive" : selectedTemplateAssignment.coverage > 0 ? "warning" : "negative",
+                        }}
+                        placement="top"
+                      >
+                        <div className="arc-pop-muted mt-2 text-[11px]">
+                          {t("army.templateEquipmentCoverageValue", { value: formatPercent(selectedTemplateAssignment.coverage) })}
+                        </div>
+                      </Tooltip>
                     )}
                   </div>
 
@@ -878,74 +1117,286 @@ export function ArmyModal({ open, token, onClose, onQueueArmyMove }: Props) {
 
               <div className="grid gap-3">
                 <AppSection>
-                  <AppSectionHeader title={t("army.formation")} icon={<Upload size={15} />} />
-                  <div className="grid gap-2">
-                    <label className="arc-pop-muted text-xs">
-                      {t("army.unitName")}
-                      <input
-                        value={formationName}
-                        onChange={(event) => setFormationName(event.target.value)}
-                        placeholder={selectedTemplate?.name ?? t(branchDefaultNameKey(activeKind))}
-                        className="mt-1 h-9 w-full rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
-                      />
-                    </label>
-                    <label className="arc-pop-muted text-xs">
-                      {t("army.baseHex")}
-                      <select
-                        value={formationHexId}
-                        onChange={(event) => setFormationHexId(event.target.value)}
-                        className="mt-1 h-9 w-full rounded-lg border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-sm text-[var(--arc-color-atlas-ink)] outline-none focus:border-[var(--arc-color-atlas-primary)]"
-                      >
-                        {overview.hexOptions.map((hex) => <option key={hex.id} value={hex.id}>{hex.name}</option>)}
-                      </select>
-                    </label>
-                    <div className="arc-pop-card p-2 text-xs">
-                      {t("army.formationSpeed", { speed: formatNumber(overview.formationSpeed, 1) })}
-                    </div>
-                    <AppButton type="button" disabled={pending || !selectedTemplateId || !formationHexId} onClick={() => void handleCreateFormation()}>
-                      {t("army.createFormation")}
-                    </AppButton>
-                  </div>
-                </AppSection>
-
-                <AppSection>
                   <AppSectionHeader title={t("army.readyUnits", { branch: t(BRANCH_LABEL_KEY[activeKind]) })} icon={<Shield size={15} />} />
                   <div className="grid gap-2">
+                    {overview.equipmentSupplySummary.divisionCount > 0 && (
+                      <Tooltip
+                        variant="rich"
+                        content={{
+                          title: t("army.supplySummaryTitle"),
+                          description: t("army.supplySummaryDescription", {
+                            turn: overview.equipmentSupplySummary.turnId ? formatNumber(overview.equipmentSupplySummary.turnId) : "—",
+                            divisions: formatNumber(overview.equipmentSupplySummary.divisionCount),
+                            received: formatNumber(sumEquipmentMap(overview.equipmentSupplySummary.receivedByVariantId)),
+                            returned: formatNumber(sumEquipmentMap(overview.equipmentSupplySummary.returnedByVariantId)),
+                          }),
+                          rows: [
+                            ...Object.entries(overview.equipmentSupplySummary.receivedByVariantId).map(([variantId, amount]) => ({
+                              label: `${t("army.supplyReceived")}: ${equipmentVariantById.get(variantId)?.name ?? variantId}`,
+                              value: formatNumber(amount),
+                            })),
+                            ...Object.entries(overview.equipmentSupplySummary.returnedByVariantId).map(([variantId, amount]) => ({
+                              label: `${t("army.supplyReturned")}: ${equipmentVariantById.get(variantId)?.name ?? variantId}`,
+                              value: formatNumber(amount),
+                            })),
+                          ],
+                          tone: sumEquipmentMap(overview.equipmentSupplySummary.receivedByVariantId) > 0 ? "positive" : "warning",
+                        }}
+                        placement="top"
+                        referenceClassName="block"
+                      >
+                        <div className="arc-pop-card flex flex-wrap items-center justify-between gap-2 p-2 text-xs">
+                          <span className="arc-pop-label">{t("army.supplySummaryTitle")}</span>
+                          <span className="text-[var(--arc-color-atlas-ink)]">
+                            {t("army.supplySummaryValue", {
+                              received: formatNumber(sumEquipmentMap(overview.equipmentSupplySummary.receivedByVariantId)),
+                              returned: formatNumber(sumEquipmentMap(overview.equipmentSupplySummary.returnedByVariantId)),
+                              divisions: formatNumber(overview.equipmentSupplySummary.divisionCount),
+                            })}
+                          </span>
+                        </div>
+                      </Tooltip>
+                    )}
                     {unitsForTab.length === 0 && <AppEmptyState title={t("army.noReadyUnits")}>{t("army.noReadyUnitsDescription")}</AppEmptyState>}
-                    {unitsForTab.map((unit) => (
+                    {unitsForTab.map((unit) => {
+                      const unitHexId = getMilitaryUnitHexId(unit);
+                      const supplyReport = unit.equipmentSupplyReport;
+                      const receivedTotal = sumEquipmentMap(supplyReport?.receivedByVariantId);
+                      const returnedTotal = sumEquipmentMap(supplyReport?.returnedByVariantId);
+                      const airWing = activeKind === "air" && "baseHexId" in unit ? unit : null;
+                      const airWingMission = airWing?.mission ?? "none";
+                      const selectedMissionRegionId = airWing?.targetRegionId ?? overview.regionOptions[0]?.id ?? "";
+                      const reportRows = [
+                        ...Object.entries(supplyReport?.receivedByVariantId ?? {}).map(([variantId, amount]) => ({
+                          label: `${t("army.supplyReceived")}: ${equipmentVariantById.get(variantId)?.name ?? variantId}`,
+                          value: formatNumber(amount),
+                        })),
+                        ...Object.entries(supplyReport?.returnedByVariantId ?? {}).map(([variantId, amount]) => ({
+                          label: `${t("army.supplyReturned")}: ${equipmentVariantById.get(variantId)?.name ?? variantId}`,
+                          value: formatNumber(amount),
+                        })),
+                      ];
+                      return (
                       <AppCard key={unit.id} className="arc-pop-card">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <div className="text-sm font-semibold text-[var(--arc-color-atlas-ink)]">{unit.name}</div>
-                            <div className="arc-pop-muted text-xs">{hexById.get(unit.hexId)?.name ?? unit.hexId}</div>
+                            <div className="arc-pop-muted text-xs">{hexById.get(unitHexId)?.name ?? unitHexId}</div>
                             <div className="arc-pop-muted mt-1 text-[11px]">
                               {t("army.strengthShort")} {formatNumber(unit.strength * 100)}% · {t("army.organizationShort")} {formatNumber(unit.organization, 1)}
+                              {typeof unit.equipmentCoverage === "number" ? ` · ${t("army.equipmentCoverage", { value: formatPercent(unit.equipmentCoverage) })}` : ""}
                             </div>
                           </div>
-                          {activeKind === "land" && (
-                            <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2">
+                            {activeKind === "air" && (
+                              <Tooltip content={t("army.airWingMissionTooltip")} placement="top">
+                                <select
+                                  value={airWingMission}
+                                  disabled={pending}
+                                  onChange={(event) =>
+                                    void handleAirWingMissionChange(
+                                      unit.id,
+                                      event.target.value as NonNullable<AirWing["mission"]>,
+                                      event.target.value === "none" ? null : selectedMissionRegionId,
+                                    )
+                                  }
+                                  className="h-8 max-w-[190px] rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-xs text-[var(--arc-color-atlas-ink)]"
+                                  aria-label={t("army.airWingMission")}
+                                >
+                                  {AIR_WING_MISSION_OPTIONS.map((mission) => (
+                                    <option key={mission} value={mission}>
+                                      {t(`army.airWingMission.${mission}` as UiTextKey)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </Tooltip>
+                            )}
+                            {activeKind === "air" && (
+                              <Tooltip content={t("army.airWingMissionRegionTooltip")} placement="top">
+                                <select
+                                  value={selectedMissionRegionId}
+                                  disabled={pending || airWingMission === "none" || overview.regionOptions.length === 0}
+                                  onChange={(event) =>
+                                    void handleAirWingMissionChange(unit.id, airWingMission, event.target.value)
+                                  }
+                                  className="h-8 max-w-[190px] rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-xs text-[var(--arc-color-atlas-ink)] disabled:opacity-60"
+                                  aria-label={t("army.airWingMissionRegion")}
+                                >
+                                  {overview.regionOptions.length === 0 ? (
+                                    <option value="">{t("army.noMissionRegions")}</option>
+                                  ) : (
+                                    overview.regionOptions.map((region) => (
+                                      <option key={region.id} value={region.id}>
+                                        {region.name}
+                                      </option>
+                                    ))
+                                  )}
+                                </select>
+                              </Tooltip>
+                            )}
+                            {activeKind !== "air" && (
+                              <>
+                              {activeKind === "land" && (
+                                <Tooltip content={t("army.supplyPriorityTooltip")} placement="top">
+                                  <select
+                                    value={unit.supplyPriority ?? "normal"}
+                                    disabled={pending}
+                                    onChange={(event) => void handleSupplyPriorityChange(unit.id, event.target.value as "low" | "normal" | "high")}
+                                    className="h-8 max-w-[150px] rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-xs text-[var(--arc-color-atlas-ink)]"
+                                    aria-label={t("army.supplyPriority")}
+                                  >
+                                    <option value="high">{t("army.supplyPriorityHigh")}</option>
+                                    <option value="normal">{t("army.supplyPriorityNormal")}</option>
+                                    <option value="low">{t("army.supplyPriorityLow")}</option>
+                                  </select>
+                                </Tooltip>
+                              )}
                               <select
-                                value={moveTargetsByUnitId[unit.id] ?? unit.hexId}
+                                value={moveTargetsByUnitId[unit.id] ?? unitHexId}
                                 onChange={(event) => setMoveTargetsByUnitId((current) => ({ ...current, [unit.id]: event.target.value }))}
                                 className="h-8 max-w-[170px] rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] px-2 text-xs text-[var(--arc-color-atlas-ink)]"
                               >
-                                {(hexById.get(unit.hexId)?.neighbors ?? []).map((hexId) => (
+                                {(hexById.get(unitHexId)?.neighbors ?? []).map((hexId) => (
                                   <option key={hexId} value={hexId}>{hexById.get(hexId)?.name ?? hexId}</option>
                                 ))}
                               </select>
-                              <AppButton type="button" size="sm" variant="secondary" onClick={() => onQueueArmyMove(unit.id, moveTargetsByUnitId[unit.id] ?? unit.hexId)}>
+                              <AppButton
+                                type="button"
+                                size="sm"
+                                variant="secondary"
+                                onClick={() =>
+                                  activeKind === "naval"
+                                    ? onQueueFleetMove(unit.id, moveTargetsByUnitId[unit.id] ?? unitHexId)
+                                    : onQueueArmyMove(unit.id, moveTargetsByUnitId[unit.id] ?? unitHexId)
+                                }
+                              >
                                 {t("army.march")}
                               </AppButton>
+                              {activeKind === "land" && (
+                                <Tooltip content={t("army.disbandDivision")} placement="top">
+                                  <AppButton
+                                    type="button"
+                                    size="sm"
+                                    variant="danger"
+                                    icon={<Trash2 size={14} />}
+                                    disabled={pending}
+                                    onClick={() => setDisbandDivisionId(unit.id)}
+                                    aria-label={t("army.disbandDivision")}
+                                  />
+                                </Tooltip>
+                              )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        {supplyReport && (receivedTotal > 0 || returnedTotal > 0) && (
+                          <Tooltip
+                            variant="rich"
+                            content={{
+                              title: t("army.supplyReportTitle"),
+                              description: t("army.supplyReportDescription", {
+                                turn: supplyReport.turnId ? formatNumber(supplyReport.turnId) : "—",
+                                received: formatNumber(receivedTotal),
+                                returned: formatNumber(returnedTotal),
+                              }),
+                              rows: reportRows,
+                              tone: receivedTotal > 0 ? "positive" : "warning",
+                            }}
+                            placement="top"
+                            referenceClassName="block"
+                          >
+                            <div className="arc-pop-panel mt-2 flex items-center justify-between gap-2 px-2 py-1.5 text-[11px]">
+                              <span className="arc-pop-label">{t("army.supplyReportTitle")}</span>
+                              <span className="text-[var(--arc-color-atlas-ink)]">
+                                +{formatNumber(receivedTotal)} / -{formatNumber(returnedTotal)}
+                              </span>
                             </div>
+                          </Tooltip>
+                        )}
+                        <div className="mt-3 grid gap-1">
+                          <div className="arc-pop-label">{t("army.divisionEquipmentLoadout")}</div>
+                          {(unit.equipmentAssignments ?? []).length === 0 ? (
+                            <div className="arc-pop-muted text-[11px]">{t("army.noDivisionEquipmentLoadout")}</div>
+                          ) : (
+                            (unit.equipmentAssignments ?? []).map((assignment) => {
+                              const variant = assignment.equipmentVariantId ? equipmentVariantById.get(assignment.equipmentVariantId) : null;
+                              return (
+                                <Tooltip
+                                  key={assignment.requirementId}
+                                  variant="rich"
+                                  content={{
+                                    title: variant?.name ?? t("army.noAssignedEquipment"),
+                                    description: t("army.divisionEquipmentLoadoutTooltip", {
+                                      required: formatNumber(assignment.requiredCount),
+                                      assigned: formatNumber(assignment.assignedCount),
+                                      coverage: formatPercent(assignment.coverage),
+                                    }),
+                                    rows: [
+                                      { label: t("army.equipmentRequired"), value: formatNumber(assignment.requiredCount) },
+                                      { label: t("army.equipmentAssigned"), value: formatNumber(assignment.assignedCount) },
+                                      { label: t("army.equipmentScore"), value: formatNumber(assignment.score, 2) },
+                                    ],
+                                    tone: assignment.coverage >= 1 ? "positive" : assignment.coverage > 0 ? "warning" : "negative",
+                                  }}
+                                  placement="top"
+                                  referenceClassName="block"
+                                >
+                                  <div className="arc-pop-panel px-2 py-1.5 text-[11px]">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="truncate text-[var(--arc-color-atlas-ink)]">{variant?.name ?? assignment.equipmentVariantId ?? t("army.noAssignedEquipment")}</span>
+                                      <span className="shrink-0 text-[var(--arc-color-atlas-ink)]">
+                                        {formatNumber(assignment.assignedCount)}/{formatNumber(assignment.requiredCount)}
+                                      </span>
+                                    </div>
+                                    <div className="mt-1 h-1 overflow-hidden rounded bg-[var(--arc-color-atlas-line)]">
+                                      <div
+                                        className="h-full bg-[var(--arc-color-atlas-primary)]"
+                                        style={{ width: `${Math.max(0, Math.min(100, assignment.coverage * 100))}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                </Tooltip>
+                              );
+                            })
                           )}
                         </div>
                       </AppCard>
-                    ))}
+                    );
+                    })}
                   </div>
                 </AppSection>
               </div>
             </div>
           )}
+        </div>
+      )}
+      {disbandDivision && (
+        <div className="fixed inset-0 z-[70] grid place-items-center bg-[var(--arc-modal-backdrop)] px-4">
+          <AppCard className="arc-pop-panel w-full max-w-md border-2 border-[var(--arc-color-atlas-danger)] p-4">
+            <div className="mb-3">
+              <div className="text-center text-base font-semibold text-[var(--arc-color-atlas-ink)]">{t("army.disbandConfirmTitle")}</div>
+              <div className="arc-pop-muted mt-2 text-center text-xs">
+                {t("army.disbandConfirmDescription", { name: disbandDivision.name })}
+              </div>
+            </div>
+            <div className="arc-pop-card mb-3 p-2 text-xs">
+              <div className="flex items-center justify-between gap-2">
+                <span className="arc-pop-label">{t("army.divisionEquipmentLoadout")}</span>
+                <span className="text-[var(--arc-color-atlas-ink)]">
+                  {formatNumber(Object.values(disbandDivision.equipmentByVariantId ?? {}).reduce((sum, amount) => sum + Math.max(0, Number(amount) || 0), 0))}
+                </span>
+              </div>
+              <div className="arc-pop-muted mt-1">{t("army.disbandEquipmentReturn")}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <AppButton type="button" variant="secondary" disabled={pending} onClick={() => setDisbandDivisionId(null)}>
+                {t("common.cancel")}
+              </AppButton>
+              <AppButton type="button" variant="danger" disabled={pending} onClick={() => void handleDisbandDivision()}>
+                {t("army.disbandDivision")}
+              </AppButton>
+            </div>
+          </AppCard>
         </div>
       )}
     </AppModal>

@@ -143,6 +143,7 @@ export function registerCoreRouteComposition(params: CoreRouteCompositionParams)
         economy: gameSettings.economy,
         colonization: gameSettings.colonization,
         customization: gameSettings.customization,
+        military: gameSettings.military,
         registration: gameSettings.registration,
         eventLog: gameSettings.eventLog,
         turnTimer: {

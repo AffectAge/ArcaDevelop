@@ -128,6 +128,12 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
       (candidate as Partial<WorldBase> & { divisionTemplatesByCountry?: unknown }).divisionTemplatesByCountry,
     ),
     divisionsById: {},
+    fleetsById: normalizeRecord(
+      (candidate as Partial<WorldBase> & { fleetsById?: unknown }).fleetsById,
+    ) as WorldBase["fleetsById"],
+    airWingsById: normalizeRecord(
+      (candidate as Partial<WorldBase> & { airWingsById?: unknown }).airWingsById,
+    ) as WorldBase["airWingsById"],
     militaryFormationQueueByCountry: params.normalizeMilitaryFormationQueueByCountry(
       (candidate as Partial<WorldBase> & { militaryFormationQueueByCountry?: unknown }).militaryFormationQueueByCountry,
     ),

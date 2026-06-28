@@ -571,6 +571,11 @@ export const culturePayloadSchema = z.object({
   globalBuildLimit: z.number().int().min(0).nullable().optional(),
   placement: buildingPlacementPayloadSchema,
   adjacencyEffects: z.array(buildingAdjacencyEffectPayloadSchema).max(64).optional(),
+  deployment: z.object({
+    branches: z.array(z.enum(["land", "naval", "air"])).min(1).max(3),
+    capacity: z.number().int().min(1).nullable().optional(),
+    requiresActive: z.boolean().optional(),
+  }).nullable().optional(),
   manpower: z.number().finite().min(0).optional(),
   attack: z.number().finite().min(0).optional(),
   defense: z.number().finite().min(0).optional(),
@@ -925,6 +930,7 @@ export function sanitizeContentEntryByKind(
       globalBuildLimit: payload.globalBuildLimit == null || Number(payload.globalBuildLimit) <= 0 ? null : Math.max(1, Math.floor(Number(payload.globalBuildLimit))),
       placement: payload.placement ?? null,
       adjacencyEffects: payload.adjacencyEffects ?? [],
+      deployment: payload.deployment ?? null,
     };
   }
   return {};

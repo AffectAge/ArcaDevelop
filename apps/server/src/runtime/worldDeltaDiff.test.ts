@@ -185,6 +185,38 @@ describe("worldDeltaDiff", () => {
         ],
       },
       equipmentStockpileByCountry: { "country:a": { "equipment:a": 3 } },
+      fleetsById: {
+        "fleet:a": {
+          id: "fleet:a",
+          countryId: "country:a",
+          templateId: "template:navy",
+          name: "First Fleet",
+          hexId: "hex:0:0",
+          strength: 1,
+          organization: 10,
+          stats: { manpower: 100, attack: 1, defense: 1, breakthrough: 0, organization: 10, hp: 10, speed: 3, supplyUse: 1 },
+          status: "idle",
+          path: [],
+          targetHexId: null,
+          createdTurnId: 1,
+        },
+      },
+      airWingsById: {
+        "air-wing:a": {
+          id: "air-wing:a",
+          countryId: "country:a",
+          templateId: "template:air",
+          name: "First Air Wing",
+          baseHexId: "hex:0:0",
+          strength: 1,
+          organization: 10,
+          stats: { manpower: 100, attack: 1, defense: 1, breakthrough: 0, organization: 10, hp: 10, speed: 3, supplyUse: 1 },
+          status: "idle",
+          mission: "none",
+          targetRegionId: null,
+          createdTurnId: 1,
+        },
+      },
     });
 
     const compact = buildCompactWorldDelta({
@@ -200,6 +232,8 @@ describe("worldDeltaDiff", () => {
     expect(compact.ev?.["equipment:a"]?.stats.attack).toBe(1);
     expect(compact.el?.["country:a"]?.[0]?.equipmentVariantId).toBe("equipment:a");
     expect(compact.es?.["country:a"]).toEqual({ "equipment:a": 3 });
+    expect(compact.fl?.["fleet:a"]?.name).toBe("First Fleet");
+    expect(compact.aw?.["air-wing:a"]?.baseHexId).toBe("hex:0:0");
   });
 
   it("diffs explanation records by turn with compact xr payload", () => {
@@ -575,6 +609,8 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     journalEntriesByCountryId: {},
     divisionTemplatesByCountry: {},
     divisionsById: {},
+    fleetsById: {},
+    airWingsById: {},
     militaryFormationQueueByCountry: {},
     civilianUnitsById: {},
     civilianUnitQueueByCountry: {},

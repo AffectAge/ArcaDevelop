@@ -192,6 +192,7 @@ const VALIDATION_CUSTOMIZATION_DEFAULTS = {
 };
 const VALIDATION_MILITARY_DEFAULTS = {
   militaryFormationSpeed: 10,
+  landDivisionStackLimitPerHex: 4,
 };
 const VALIDATION_REGISTRATION_DEFAULTS = {
   requireAdminApproval: false,

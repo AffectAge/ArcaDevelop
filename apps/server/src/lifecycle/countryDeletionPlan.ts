@@ -15,6 +15,8 @@ export type CountryDeletionPlan = {
   constructionProjectIds: string[];
   diplomacyProposalIds: string[];
   divisionIds: string[];
+  fleetIds: string[];
+  airWingIds: string[];
   divisionTemplateCountryEntry: boolean;
   militaryFormationQueueEntry: boolean;
   militaryFormationQueueItemIds: string[];
@@ -78,6 +80,14 @@ export function planCountryDeletion(params: {
     divisionIds: Object.values(worldBase.divisionsById)
       .filter((division) => division.countryId === countryId)
       .map((division) => division.id)
+      .sort((a, b) => a.localeCompare(b, "en")),
+    fleetIds: Object.values(worldBase.fleetsById)
+      .filter((fleet) => fleet.countryId === countryId)
+      .map((fleet) => fleet.id)
+      .sort((a, b) => a.localeCompare(b, "en")),
+    airWingIds: Object.values(worldBase.airWingsById)
+      .filter((airWing) => airWing.countryId === countryId)
+      .map((airWing) => airWing.id)
       .sort((a, b) => a.localeCompare(b, "en")),
     divisionTemplateCountryEntry: countryId in worldBase.divisionTemplatesByCountry,
     militaryFormationQueueEntry: countryId in worldBase.militaryFormationQueueByCountry,

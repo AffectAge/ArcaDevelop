@@ -13,6 +13,8 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
   setWorldBaseTurnId: (turnId: number) => void;
   cloneWorldBaseSectionSnapshot: (mask: number) => TSnapshot;
   getCurrentOrders: (turnId: number) => Map<string, Order[]> | undefined;
+  refreshDivisionStatsFromTemplates: () => void;
+  emitMilitarySupplyNews: (news: EventLogEntry[]) => void;
   getActiveColonizeRegionsByCountry: () => Map<string, Iterable<string>>;
   resolveArmyMoveOrder: (params: {
     order: Order;
@@ -24,7 +26,16 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
   resolveUnitMoveOrder: (params: {
     order: Order;
     playerId: string;
+    movedDivisionIds: Set<string>;
     movedCivilianUnitIds: Set<string>;
+    movedFleetIds: Set<string>;
+    rejectedOrders: WorldDelta["rejectedOrders"];
+    news: EventLogEntry[];
+  }) => void;
+  resolveUnitAttackOrder: (params: {
+    order: Order;
+    playerId: string;
+    movedDivisionIds: Set<string>;
     rejectedOrders: WorldDelta["rejectedOrders"];
     news: EventLogEntry[];
   }) => void;
@@ -46,7 +57,11 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
     rejectedOrders: WorldDelta["rejectedOrders"];
   }) => void;
   advanceStoredArmyRoutesTurn: (params: { movedDivisionIds: Set<string>; news: EventLogEntry[] }) => void;
-  advanceStoredUnitRoutesTurn: (params: { movedCivilianUnitIds: Set<string>; news: EventLogEntry[] }) => void;
+  advanceStoredUnitRoutesTurn: (params: {
+    movedCivilianUnitIds: Set<string>;
+    movedFleetIds: Set<string>;
+    news: EventLogEntry[];
+  }) => void;
   advanceMilitaryFormationQueue: (news: EventLogEntry[]) => void;
   advanceCivilianUnitQueue: () => void;
   resolveEquipmentProductionLinesTurn: (news: EventLogEntry[]) => void;
@@ -88,12 +103,15 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
 ): TurnResolverResult<TSnapshot, TUiNotification> {
   const turnId = deps.getTurnId();
   const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.fullSnapshotMask);
-  const currentOrders = deps.getCurrentOrders(turnId) ?? new Map<string, Order[]>();
   const rejectedOrders: WorldDelta["rejectedOrders"] = [];
   const news: EventLogEntry[] = [];
   const uiNotifications: TUiNotification[] = [];
   const movedDivisionIds = new Set<string>();
   const movedCivilianUnitIds = new Set<string>();
+  const movedFleetIds = new Set<string>();
+  deps.refreshDivisionStatsFromTemplates();
+  deps.emitMilitarySupplyNews(news);
+  const currentOrders = deps.getCurrentOrders(turnId) ?? new Map<string, Order[]>();
 
   const colonizeTargetsByCountry = new Map<string, Set<string>>();
   const touchedRegionIds = new Set<string>();
@@ -110,7 +128,10 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
         deps.resolveArmyMoveOrder({ order, playerId, movedDivisionIds, rejectedOrders, news });
       }
       if (order.type === "UNIT_MOVE") {
-        deps.resolveUnitMoveOrder({ order, playerId, movedCivilianUnitIds, rejectedOrders, news });
+        deps.resolveUnitMoveOrder({ order, playerId, movedDivisionIds, movedCivilianUnitIds, movedFleetIds, rejectedOrders, news });
+      }
+      if (order.type === "UNIT_ATTACK") {
+        deps.resolveUnitAttackOrder({ order, playerId, movedDivisionIds, rejectedOrders, news });
       }
       if (order.type === "BUILD") {
         deps.resolveBuildOrder({ order, playerId, rejectedOrders });
@@ -125,10 +146,12 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
   });
 
   deps.advanceStoredArmyRoutesTurn({ movedDivisionIds, news });
-  deps.advanceStoredUnitRoutesTurn({ movedCivilianUnitIds, news });
+  deps.advanceStoredUnitRoutesTurn({ movedCivilianUnitIds, movedFleetIds, news });
   deps.advanceMilitaryFormationQueue(news);
   deps.advanceCivilianUnitQueue();
   deps.resolveEquipmentProductionLinesTurn(news);
+  deps.refreshDivisionStatsFromTemplates();
+  deps.emitMilitarySupplyNews(news);
   deps.resolveColonizationSupportTurn({ colonizeTargetsByCountry, touchedRegionIds });
   deps.resolveSettlementProjectsTurn(news);
   deps.flushResourceLedger();

@@ -1,4 +1,4 @@
-import type { ActiveModifierRow, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionAvailabilityReason, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, EquipmentClass, EquipmentModule, EquipmentProductionLine, EquipmentVariant, EventResolvedScope, EventTriggerExplanation, GameEventDefinition, IdeologyAttractionRule, JournalEntryDefinition, LawParliamentPowerEffect, LoginPayload, MilitaryBranch, MilitaryEquipmentRequirement, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import type { ActiveModifierRow, AirWing, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionAvailabilityReason, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, EquipmentClass, EquipmentFrame, EquipmentModule, EquipmentProductionLine, EquipmentVariant, EventResolvedScope, EventTriggerExplanation, Fleet, GameEventDefinition, IdeologyAttractionRule, JournalEntryDefinition, LawParliamentPowerEffect, LoginPayload, MilitaryBranch, MilitaryEquipmentRequirement, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, WorldBase, WsOutMessage } from "@arcanorum/shared";
 
 const API = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
@@ -130,6 +130,11 @@ export type ContentCulture = {
     maxStacks?: number | null;
     modifier: { target: "building.throughput"; operation: "add" | "multiply"; value: number };
   }> | null;
+  deployment?: {
+    branches: MilitaryBranch[];
+    capacity?: number | null;
+    requiresActive?: boolean | null;
+  } | null;
   manpower?: number | null;
   attack?: number | null;
   defense?: number | null;
@@ -259,6 +264,7 @@ type ContentEntryUpsertPayload = {
   globalBuildLimit?: number | null;
   placement?: ContentCulture["placement"];
   adjacencyEffects?: ContentCulture["adjacencyEffects"];
+  deployment?: ContentCulture["deployment"];
   manpower?: number | null;
   attack?: number | null;
   defense?: number | null;
@@ -363,15 +369,27 @@ export type MilitaryOverview = {
   templates: DivisionTemplate[];
   units: Division[];
   divisions: Division[];
+  fleets: Fleet[];
+  airWings: AirWing[];
   queue: MilitaryFormationQueueItem[];
   hexOptions: Array<{ id: string; name: string; neighbors: string[] }>;
+  regionOptions: Array<{ id: string; name: string }>;
   formationSpeed: number;
   equipmentClasses: EquipmentClass[];
+  equipmentFrames: EquipmentFrame[];
   equipmentModules: EquipmentModule[];
   equipmentVariants: EquipmentVariant[];
   equipmentProductionLines: EquipmentProductionLine[];
   equipmentStockpile: Record<string, number>;
+  equipmentSupplySummary: EquipmentSupplySummary;
   templateEquipmentAssignments: Record<string, { choices: EquipmentAssignmentChoiceRow[]; coverage: number }>;
+};
+
+export type EquipmentSupplySummary = {
+  turnId: number | null;
+  divisionCount: number;
+  receivedByVariantId: Record<string, number>;
+  returnedByVariantId: Record<string, number>;
 };
 
 export type EquipmentAssignmentChoiceRow = {
@@ -435,7 +453,14 @@ export async function uploadMilitaryTemplateIcon(token: string, templateId: stri
 
 export async function createMilitaryFormation(
   token: string,
-  payload: { templateId: string; hexId: string; name?: string },
+  payload: {
+    templateId: string;
+    hexId: string;
+    name?: string;
+    quantity?: number;
+    priority?: "high" | "normal" | "low";
+    repeat?: boolean;
+  },
 ): Promise<MilitaryOverview> {
   const response = await fetch(`${API}/military/formations`, {
     method: "POST",
@@ -510,6 +535,53 @@ export async function createDivisionFromTemplate(
     throw new Error(err?.error ?? "CREATE_DIVISION_FAILED");
   }
   return (await response.json()) as ArmyOverview;
+}
+
+export async function disbandMilitaryDivision(token: string, divisionId: string): Promise<MilitaryOverview> {
+  const response = await fetch(`${API}/military/divisions/${encodeURIComponent(divisionId)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err?.error ?? "DISBAND_DIVISION_FAILED");
+  }
+  return (await response.json()) as MilitaryOverview;
+}
+
+export async function updateDivisionSupplyPriority(
+  token: string,
+  divisionId: string,
+  supplyPriority: "low" | "normal" | "high",
+): Promise<MilitaryOverview> {
+  const response = await fetch(`${API}/military/divisions/${encodeURIComponent(divisionId)}/supply-priority`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ supplyPriority }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err?.error ?? "UPDATE_DIVISION_SUPPLY_PRIORITY_FAILED");
+  }
+  return (await response.json()) as MilitaryOverview;
+}
+
+export async function updateAirWingMission(
+  token: string,
+  airWingId: string,
+  mission: NonNullable<AirWing["mission"]>,
+  targetRegionId?: string | null,
+): Promise<MilitaryOverview> {
+  const response = await fetch(`${API}/military/air-wings/${encodeURIComponent(airWingId)}/mission`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ mission, targetRegionId: mission === "none" ? null : targetRegionId ?? null }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err?.error ?? "UPDATE_AIR_WING_MISSION_FAILED");
+  }
+  return (await response.json()) as MilitaryOverview;
 }
 
 export type PoliticsResponse = {
@@ -1979,6 +2051,10 @@ export type GameSettings = {
     settlementEnabled: boolean;
     settlementPopulationOnCapture: number;
   };
+  military?: {
+    militaryFormationSpeed?: number;
+    landDivisionStackLimitPerHex?: number;
+  };
   customization: {
     renameDucats: number;
     recolorDucats: number;
@@ -2065,7 +2141,7 @@ export async function fetchHexIndex(): Promise<HexIndexItem[]> {
   return data.hexes;
 }
 
-export type PublicGameUiSettings = Pick<GameSettings, "economy" | "colonization" | "customization" | "eventLog" | "turnTimer" | "map"> & {
+export type PublicGameUiSettings = Pick<GameSettings, "economy" | "colonization" | "customization" | "eventLog" | "turnTimer" | "map" | "military"> & {
   activeScenarioId?: string;
 };
 
@@ -2077,6 +2153,11 @@ export async function fetchPublicGameUiSettings(): Promise<PublicGameUiSettings>
   const data = (await response.json()) as PublicGameUiSettings;
   return {
     ...data,
+    military: {
+      militaryFormationSpeed: typeof data.military?.militaryFormationSpeed === "number" ? data.military.militaryFormationSpeed : 10,
+      landDivisionStackLimitPerHex:
+        typeof data.military?.landDivisionStackLimitPerHex === "number" ? Math.max(1, Math.floor(data.military.landDivisionStackLimitPerHex)) : 4,
+    },
     map: normalizeMapSettings(data.map),
   };
 }
@@ -2681,7 +2762,7 @@ export async function cancelCountryColonization(token: string, regionId: string)
 
 export async function createEquipmentVariant(
   token: string,
-  payload: { classId: string; name: string; moduleIdsBySlotId: Record<string, string> },
+  payload: { frameId?: string; classId?: string; name: string; moduleIdsBySlotId: Record<string, string> },
 ): Promise<MilitaryOverview> {
   const response = await fetch(`${API}/military/equipment/variants`, {
     method: "POST",
@@ -2699,6 +2780,27 @@ export async function createEquipmentProductionLine(
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify(payload),
+  });
+  return handleJson<MilitaryOverview>(response);
+}
+
+export async function updateEquipmentProductionLine(
+  token: string,
+  lineId: string,
+  payload: { assignedCapacity?: number; active?: boolean },
+): Promise<MilitaryOverview> {
+  const response = await fetch(`${API}/military/equipment/production-lines/${encodeURIComponent(lineId)}`, {
+    method: "PATCH",
+    headers: authHeaders(token),
+    body: JSON.stringify(payload),
+  });
+  return handleJson<MilitaryOverview>(response);
+}
+
+export async function deleteEquipmentProductionLine(token: string, lineId: string): Promise<MilitaryOverview> {
+  const response = await fetch(`${API}/military/equipment/production-lines/${encodeURIComponent(lineId)}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
   });
   return handleJson<MilitaryOverview>(response);
 }

@@ -544,6 +544,7 @@ const turnRuntime = createTurnRuntime({
   getOrdersByTurn: () => turnStateRuntime.ordersByTurn,
   getResolveReadyByTurn: () => turnStateRuntime.resolveReadyByTurn,
   getActiveColonizeRegionsByCountry: () => turnStateRuntime.activeColonizeRegionsByCountry,
+  refreshDivisionStatsFromTemplates: militaryRuntimeFacade.refreshDivisionStatsFromTemplates,
   getHexIndex: mapRuntime.getHexIndex,
   getEconomyTickCountryIds: () => economyTickCountryIds,
   fullSnapshotMask: TURN_RESOLVE_WORLD_DELTA_MASK,

@@ -385,6 +385,26 @@ export const useGameStore = create<GameState>((set) => ({
       }
 
       if ((delta.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0) {
+        if (delta.fl) {
+          nextWorldBase.fleetsById = { ...nextWorldBase.fleetsById };
+          for (const [fleetId, value] of Object.entries(delta.fl)) {
+            if (!value) {
+              delete nextWorldBase.fleetsById[fleetId];
+              continue;
+            }
+            nextWorldBase.fleetsById[fleetId] = value;
+          }
+        }
+        if (delta.aw) {
+          nextWorldBase.airWingsById = { ...nextWorldBase.airWingsById };
+          for (const [airWingId, value] of Object.entries(delta.aw)) {
+            if (!value) {
+              delete nextWorldBase.airWingsById[airWingId];
+              continue;
+            }
+            nextWorldBase.airWingsById[airWingId] = value;
+          }
+        }
         if (delta.cu) {
           nextWorldBase.civilianUnitsById = { ...nextWorldBase.civilianUnitsById };
           for (const [unitId, value] of Object.entries(delta.cu)) {

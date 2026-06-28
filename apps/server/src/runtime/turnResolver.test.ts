@@ -66,6 +66,7 @@ describe("turnResolver", () => {
         "player:a",
         [
           makeOrder("ARMY_MOVE", "province:a"),
+          makeUnitAttackOrder("division:a", "hex:1:0"),
           makeOrder("BUILD", "province:b"),
           makeOrder("COLONIZE", "region:c"),
         ],
@@ -92,6 +93,8 @@ describe("turnResolver", () => {
         calls.push(`orders:${currentTurnId}`);
         return currentOrders;
       },
+      refreshDivisionStatsFromTemplates: () => calls.push("refresh-divisions"),
+      emitMilitarySupplyNews: () => calls.push("supply-news"),
       getActiveColonizeRegionsByCountry: () => new Map([["country:a", new Set(["region:active"])]]),
       resolveArmyMoveOrder: ({ movedDivisionIds, rejectedOrders, news }) => {
         movedDivisionIds.add("division:a");
@@ -101,6 +104,9 @@ describe("turnResolver", () => {
       },
       resolveUnitMoveOrder: () => {
         calls.push("order:unit-move");
+      },
+      resolveUnitAttackOrder: () => {
+        calls.push("order:unit-attack");
       },
       resolveBuildOrder: ({ rejectedOrders }) => {
         rejectedOrders.push({ playerId: "player:a", reason: "BUILD_REJECTED" });
@@ -189,8 +195,11 @@ describe("turnResolver", () => {
     expect(cleanupTurnId).toBe(3);
     expect(calls).toEqual([
       "snapshot:7",
+      "refresh-divisions",
+      "supply-news",
       "orders:3",
       "order:army",
+      "order:unit-attack",
       "order:build",
       "order:colonize",
       "stored-routes",
@@ -198,6 +207,8 @@ describe("turnResolver", () => {
       "military-queue",
       "civilian-unit-queue",
       "equipment-production",
+      "refresh-divisions",
+      "supply-news",
       "colonization-support",
       "settlement-projects",
       "ledger-flush",
@@ -230,6 +241,78 @@ describe("turnResolver", () => {
       "flush",
     ]);
   });
+
+  it("passes division, civilian, and fleet movement state into UNIT_MOVE resolution", () => {
+    const calls: string[] = [];
+    const currentOrders = new Map<string, Order[]>([["player:a", [makeOrder("ARMY_MOVE", "hex:1:0"), makeUnitMoveOrder("division:a", "hex:2:0")]]]);
+
+    resolveTurnWithPipeline<{ id: string }, never>({
+      ...makeNoopTurnResolverDeps({
+        currentOrders,
+        calls,
+      }),
+      resolveArmyMoveOrder: ({ movedDivisionIds }) => {
+        movedDivisionIds.add("division:a");
+        calls.push("order:army");
+      },
+      resolveUnitMoveOrder: ({ movedDivisionIds, movedCivilianUnitIds, movedFleetIds }) => {
+        expect([...movedDivisionIds]).toEqual(["division:a"]);
+        expect([...movedCivilianUnitIds]).toEqual([]);
+        expect([...movedFleetIds]).toEqual([]);
+        movedDivisionIds.add("division:b");
+        movedCivilianUnitIds.add("civilian:a");
+        movedFleetIds.add("fleet:a");
+        calls.push("order:unit-move");
+      },
+      advanceStoredArmyRoutesTurn: ({ movedDivisionIds }) => {
+        expect([...movedDivisionIds].sort()).toEqual(["division:a", "division:b"]);
+        calls.push("stored-routes");
+      },
+      advanceStoredUnitRoutesTurn: ({ movedCivilianUnitIds, movedFleetIds }) => {
+        expect([...movedCivilianUnitIds]).toEqual(["civilian:a"]);
+        expect([...movedFleetIds]).toEqual(["fleet:a"]);
+        calls.push("stored-unit-routes");
+      },
+    });
+
+    expect(calls.filter((call) => call.startsWith("order:") || call.startsWith("stored-")).slice(0, 4)).toEqual([
+      "order:army",
+      "order:unit-move",
+      "stored-routes",
+      "stored-unit-routes",
+    ]);
+  });
+
+  it("passes moved division state into UNIT_ATTACK resolution before stored routes", () => {
+    const calls: string[] = [];
+    const currentOrders = new Map<string, Order[]>([["player:a", [makeOrder("ARMY_MOVE", "hex:1:0"), makeUnitAttackOrder("division:b", "hex:2:0")]]]);
+
+    resolveTurnWithPipeline<{ id: string }, never>({
+      ...makeNoopTurnResolverDeps({
+        currentOrders,
+        calls,
+      }),
+      resolveArmyMoveOrder: ({ movedDivisionIds }) => {
+        movedDivisionIds.add("division:a");
+        calls.push("order:army");
+      },
+      resolveUnitAttackOrder: ({ movedDivisionIds }) => {
+        expect([...movedDivisionIds]).toEqual(["division:a"]);
+        movedDivisionIds.add("division:b");
+        calls.push("order:unit-attack");
+      },
+      advanceStoredArmyRoutesTurn: ({ movedDivisionIds }) => {
+        expect([...movedDivisionIds].sort()).toEqual(["division:a", "division:b"]);
+        calls.push("stored-routes");
+      },
+    });
+
+    expect(calls.filter((call) => call.startsWith("order:") || call === "stored-routes").slice(0, 3)).toEqual([
+      "order:army",
+      "order:unit-attack",
+      "stored-routes",
+    ]);
+  });
 });
 
 function makeOrder(type: "ARMY_MOVE" | "BUILD" | "COLONIZE", targetId: string): Order {
@@ -245,6 +328,85 @@ function makeOrder(type: "ARMY_MOVE" | "BUILD" | "COLONIZE", targetId: string): 
   if (type === "BUILD") return { ...base, type, regionId: targetId, targetHexId: "hex:0:0" };
   if (type === "COLONIZE") return { ...base, type, regionId: targetId };
   return { ...base, type };
+}
+
+function makeUnitMoveOrder(unitId: string, targetHexId: string): Order {
+  return {
+    id: `order:UNIT_MOVE:${unitId}`,
+    turnId: 3,
+    playerId: "player:a",
+    countryId: "country:a",
+    type: "UNIT_MOVE",
+    unitId,
+    unitKind: "division",
+    targetHexId: targetHexId as `hex:${number}:${number}`,
+    path: [],
+    payload: {},
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
+}
+
+function makeUnitAttackOrder(attackerUnitId: string, targetHexId: string): Order {
+  return {
+    id: `order:UNIT_ATTACK:${attackerUnitId}`,
+    turnId: 3,
+    playerId: "player:a",
+    countryId: "country:a",
+    type: "UNIT_ATTACK",
+    attackerUnitId,
+    targetHexId: targetHexId as `hex:${number}:${number}`,
+    payload: {},
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
+}
+
+function makeNoopTurnResolverDeps(input: { currentOrders: Map<string, Order[]>; calls: string[] }) {
+  let turnId = 3;
+  return {
+    fullSnapshotMask: 7,
+    getTurnId: () => turnId,
+    setTurnId: (nextTurnId: number) => {
+      turnId = nextTurnId;
+    },
+    setWorldBaseTurnId: () => undefined,
+    cloneWorldBaseSectionSnapshot: () => ({ id: "snapshot" }),
+    getCurrentOrders: () => input.currentOrders,
+    refreshDivisionStatsFromTemplates: () => input.calls.push("refresh-divisions"),
+    emitMilitarySupplyNews: () => input.calls.push("supply-news"),
+    getActiveColonizeRegionsByCountry: () => new Map(),
+    resolveArmyMoveOrder: () => undefined,
+    resolveUnitMoveOrder: () => undefined,
+    resolveUnitAttackOrder: () => undefined,
+    resolveBuildOrder: () => undefined,
+    resolveColonizeOrder: () => undefined,
+    resolveFoundCityOrder: () => undefined,
+    advanceStoredArmyRoutesTurn: () => input.calls.push("stored-routes"),
+    advanceStoredUnitRoutesTurn: () => input.calls.push("stored-unit-routes"),
+    advanceMilitaryFormationQueue: () => undefined,
+    advanceCivilianUnitQueue: () => undefined,
+    resolveEquipmentProductionLinesTurn: () => undefined,
+    resolveColonizationSupportTurn: () => undefined,
+    resolveSettlementProjectsTurn: () => undefined,
+    flushResourceLedger: () => undefined,
+    enqueueBuildingAutoUpgradesTurn: () => undefined,
+    resolveBuildingConstructionQueuesTurn: () => undefined,
+    resolveResourceExplorationTurn: () => undefined,
+    resolveTransportCorridorConstructionTurn: () => undefined,
+    resolveColonizationCapturesTurn: () => [],
+    makeColonizationCaptureNews: () => makeNews("capture"),
+    applyCountryResourceIncomeTurn: () => undefined,
+    applyPerTurnTreatyMoneyTransfers: () => undefined,
+    rechargeDecisionCharges: () => undefined,
+    resolveTechnologyTurn: () => undefined,
+    autoResolveExpiredCountryEvents: () => undefined,
+    resolveJournalEntriesTurn: () => undefined,
+    maybeGenerateCountryEvents: () => undefined,
+    resolvePopulationTurn: () => undefined,
+    resolveParliamentTurn: () => undefined,
+    resetTurnTimerAnchor: () => undefined,
+    cleanupResolvedTurn: () => undefined,
+    flushPersistentStateNow: () => undefined,
+  };
 }
 
 function makeNews(title: string): EventLogEntry {

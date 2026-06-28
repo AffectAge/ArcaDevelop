@@ -228,6 +228,8 @@ function makeDeletionPlan(): CountryDeletionPlan {
     constructionProjectIds: [],
     diplomacyProposalIds: [],
     divisionIds: [],
+    fleetIds: [],
+    airWingIds: [],
     divisionTemplateCountryEntry: false,
     militaryFormationQueueEntry: false,
     militaryFormationQueueItemIds: [],

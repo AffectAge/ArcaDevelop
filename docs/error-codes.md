@@ -60,7 +60,25 @@ Error responses should include:
 
 ## Unit Movement Codes
 
-- `UNIT_MOVE_KIND_UNSUPPORTED`: the current `UNIT_MOVE` server slice supports only civilian units.
+- `DIVISION_NOT_FOUND`: the `ARMY_MOVE` order or division disband route references a missing division, a division owned by another country, or a non-land unit in the current movement slice.
+- `DIVISION_ALREADY_MOVED`: the referenced division already moved during the current turn.
+- `DIVISION_ALREADY_QUEUED`: the player already queued a movement order for this division this turn.
+- `DIVISION_TARGET_INVALID`: the target hex is empty, invalid, or unreachable during turn resolution.
+- `DIVISION_TARGET_NOT_ADJACENT`: legacy name for an invalid, non-contiguous, or unreachable division route during submit validation.
+- `DIVISION_STACK_LIMIT_REACHED`: a land division tried to enter a friendly/non-hostile hex where the scenario `military.landDivisionStackLimitPerHex` limit is already reached.
+- `UNIT_ATTACK_ATTACKER_NOT_FOUND`: the `UNIT_ATTACK` order references a missing, foreign, or unsupported attacker unit.
+- `UNIT_ATTACK_ALREADY_ACTED`: the attacker already moved or attacked during the current turn.
+- `UNIT_ATTACK_ALREADY_QUEUED`: the player already queued a movement or attack order for this attacker this turn.
+- `UNIT_ATTACK_TARGET_INVALID`: the attack target is missing, friendly, not adjacent, or otherwise not attackable by the current server slice.
+- `FLEET_NOT_FOUND`: the `UNIT_MOVE` order references a missing fleet or a fleet owned by another country.
+- `FLEET_ALREADY_MOVED`: the referenced fleet already moved during the current turn.
+- `FLEET_ALREADY_QUEUED`: the player already queued a movement order for this fleet this turn.
+- `FLEET_TARGET_NOT_WATER`: the requested fleet route contains a non-water hex.
+- `INVALID_AIR_WING_ID`: an air-wing route request did not include a usable air-wing id.
+- `AIR_WING_NOT_FOUND`: the air-wing route request references a missing air wing or an air wing owned by another country.
+- `AIR_WING_TARGET_REGION_REQUIRED`: an active air-wing mission was submitted without a target region.
+- `AIR_WING_TARGET_REGION_NOT_FOUND`: an air-wing mission target references a region unknown to the active world.
+- `UNIT_MOVE_KIND_UNSUPPORTED`: the current `UNIT_MOVE` server slice supports civilian units, land divisions, and fleets; any other unit kind is rejected.
 - `CIVILIAN_UNIT_NOT_FOUND`: the referenced civilian unit does not exist, is not owned by the order country, or is not available to the player.
 - `CIVILIAN_UNIT_CAPTURED`: the referenced civilian unit is captured and cannot move.
 - `CIVILIAN_UNIT_ALREADY_MOVED`: the civilian unit already moved during the current turn.
@@ -68,3 +86,18 @@ Error responses should include:
 - `UNIT_MOVE_TARGET_INVALID`: the movement target is empty, invalid, or unreachable.
 - `UNIT_MOVE_PATH_NOT_CONTIGUOUS`: the submitted route is not a contiguous hex route.
 - `CIVILIAN_UNIT_HEX_OCCUPIED`: another civilian unit already occupies a target hex in the route.
+
+## Military Formation Codes
+
+- `FORMATION_DEPLOYMENT_HEX_REQUIRED`: the formation request did not include a deployment `hexId`.
+- `FORMATION_DEPLOYMENT_HEX_INVALID`: the selected deployment hex is not valid for the requester, is outside controlled deployment state, or exceeds authored deployment capacity.
+- `FORMATION_DEPLOYMENT_BUILDING_REQUIRED`: the selected hex does not have a suitable active building with deployment capability.
+- `FORMATION_DEPLOYMENT_BRANCH_UNSUPPORTED`: the selected deployment building exists but does not support the requested branch.
+- `FORMATION_TEMPLATE_NOT_FOUND`: the selected formation template is missing or not owned by the requester.
+
+## Military Equipment Codes
+
+- `EQUIPMENT_FRAME_NOT_FOUND`: an equipment variant creation request did not reference a known frame, and no compatible legacy class frame could be resolved.
+- `EQUIPMENT_CLASS_NOT_FOUND`: the resolved equipment frame points to a missing equipment class.
+- `EQUIPMENT_SLOT_EMPTY`: a required frame slot did not receive a module selection.
+- `EQUIPMENT_MODULE_INVALID`: the selected module does not exist, does not match the requested slot, or is incompatible with the frame's equipment class.

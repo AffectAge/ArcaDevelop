@@ -1,6 +1,6 @@
 import express from "express";
 import { describe, expect, it, vi } from "vitest";
-import type { Division, DivisionStats, DivisionTemplate, EquipmentVariant } from "@arcanorum/shared";
+import type { AirWing, Division, DivisionStats, DivisionTemplate, EquipmentProductionLine, EquipmentVariant } from "@arcanorum/shared";
 import type { RouteAuth } from "../security/routeAuth";
 import { registerMilitaryRoutes, type MilitaryRoutesDependencies } from "./militaryRoutes";
 
@@ -84,6 +84,7 @@ describe("militaryRoutes", () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         classId: "equipment_class:test",
+        frameId: "equipment_frame:test",
         name: "Test Spear Kit",
         moduleIdsBySlotId: { weapon: "equipment_module:spear" },
       }),
@@ -98,6 +99,7 @@ describe("militaryRoutes", () => {
         name: "Test Spear Kit",
         stats: { attack: 3 },
         goodsCost: [{ goodId: "good:wood", amount: 1 }],
+        frameId: "equipment_frame:test",
       }),
     ]);
     expect(deps.savePersistentState).toHaveBeenCalledOnce();
@@ -140,6 +142,247 @@ describe("militaryRoutes", () => {
       ],
     );
   });
+
+  it("queues non-land formation now that fleets and air wings have dedicated entities", async () => {
+    const deps = makeDeps({
+      templates: {
+        "country-a": [makeTemplate({ id: "template-naval", kind: "naval", components: [{ id: "ship", typeId: "ship", count: 1 }] })],
+      },
+    });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/formations", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        templateId: "template-naval",
+        hexId: "hex:0:0",
+        quantity: 3,
+        priority: "high",
+        repeat: true,
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(deps.setCountryMilitaryQueue).toHaveBeenCalledWith(
+      "country-a",
+      [
+        expect.objectContaining({
+          countryId: "country-a",
+          kind: "naval",
+          templateId: "template-naval",
+          hexId: "hex:0:0",
+          quantity: 3,
+          remainingQuantity: 3,
+          priority: "high",
+          repeat: true,
+        }),
+      ],
+    );
+  });
+
+  it("rejects formation deployment when server deployment validation fails", async () => {
+    const deps = makeDeps({
+      templates: {
+        "country-a": [makeTemplate({ id: "template-land", kind: "land" })],
+      },
+    });
+    deps.validateFormationDeployment = vi.fn(() => ({ ok: false, error: "FORMATION_DEPLOYMENT_BUILDING_REQUIRED" }));
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/formations", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        templateId: "template-land",
+        hexId: "hex:0:0",
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "FORMATION_DEPLOYMENT_BUILDING_REQUIRED" });
+  });
+
+  it("disbands a division and returns its equipment loadout to stockpile", async () => {
+    const deps = makeDeps({
+      divisions: {
+        "division-a": makeDivision({
+          id: "division-a",
+          equipmentByVariantId: { "equipment:rifle": 12 },
+        }),
+      },
+      stockpile: {
+        "country-a": { "equipment:rifle": 3 },
+      },
+    });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/divisions/division-a", { method: "DELETE" });
+
+    expect(response.status).toBe(200);
+    expect(deps.getCountryDivisionsById()["division-a"]).toBeUndefined();
+    expect(deps.getCountryEquipmentStockpile("country-a")).toEqual({ "equipment:rifle": 15 });
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledOnce();
+  });
+
+  it("updates division supply priority through military route", async () => {
+    const deps = makeDeps({
+      divisions: {
+        "division-a": makeDivision({ id: "division-a", supplyPriority: "normal" }),
+      },
+    });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/divisions/division-a/supply-priority", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ supplyPriority: "high" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(deps.getCountryDivisionsById()["division-a"]?.supplyPriority).toBe("high");
+    expect(deps.refreshCountryDivisionEquipmentState).toHaveBeenCalledWith("country-a");
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledOnce();
+  });
+
+  it("updates an owned air wing mission through military route", async () => {
+    const deps = makeDeps({
+      airWings: {
+        "air-wing-a": makeAirWing({ id: "air-wing-a", mission: "none", status: "idle" }),
+      },
+    });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/air-wings/air-wing-a/mission", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mission: "air_superiority", targetRegionId: "region:a" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(deps.getCountryAirWingsById()["air-wing-a"]).toMatchObject({
+      mission: "air_superiority",
+      status: "mission",
+      targetRegionId: "region:a",
+    });
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledOnce();
+  });
+
+  it("requires a target region for active air wing missions", async () => {
+    const deps = makeDeps({
+      airWings: {
+        "air-wing-a": makeAirWing({ id: "air-wing-a", mission: "none", status: "idle" }),
+      },
+    });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/air-wings/air-wing-a/mission", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mission: "ground_support" }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "AIR_WING_TARGET_REGION_REQUIRED" });
+    expect(deps.getCountryAirWingsById()["air-wing-a"]?.mission).toBe("none");
+    expect(deps.savePersistentState).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown target regions for air wing missions", async () => {
+    const deps = makeDeps({
+      airWings: {
+        "air-wing-a": makeAirWing({ id: "air-wing-a", mission: "none", status: "idle" }),
+      },
+    });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/air-wings/air-wing-a/mission", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mission: "naval_patrol", targetRegionId: "region:missing" }),
+    });
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "AIR_WING_TARGET_REGION_NOT_FOUND" });
+    expect(deps.getCountryAirWingsById()["air-wing-a"]?.mission).toBe("none");
+    expect(deps.savePersistentState).not.toHaveBeenCalled();
+  });
+
+  it("rejects air wing mission updates for missing or foreign air wings", async () => {
+    const deps = makeDeps({
+      airWings: {
+        "air-wing-foreign": makeAirWing({ id: "air-wing-foreign", countryId: "country-b", mission: "none" }),
+      },
+    });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/air-wings/air-wing-foreign/mission", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mission: "interception", targetRegionId: "region:a" }),
+    });
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "AIR_WING_NOT_FOUND" });
+    expect(deps.getCountryAirWingsById()["air-wing-foreign"]?.mission).toBe("none");
+    expect(deps.savePersistentState).not.toHaveBeenCalled();
+  });
+
+  it("updates an equipment production line", async () => {
+    const deps = makeDeps({
+      productionLines: {
+        "country-a": [
+          {
+            id: "line-a",
+            countryId: "country-a",
+            equipmentVariantId: "equipment:rifle",
+            assignedCapacity: 1,
+            progress: 0.25,
+            active: true,
+            createdTurnId: 1,
+          },
+        ],
+      },
+    });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/equipment/production-lines/line-a", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ assignedCapacity: 4.25, active: false }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(deps.getCountryEquipmentProductionLines("country-a")).toEqual([
+      expect.objectContaining({ id: "line-a", assignedCapacity: 4.25, active: false, progress: 0.25 }),
+    ]);
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledOnce();
+  });
+
+  it("deletes an equipment production line", async () => {
+    const deps = makeDeps({
+      productionLines: {
+        "country-a": [
+          {
+            id: "line-a",
+            countryId: "country-a",
+            equipmentVariantId: "equipment:rifle",
+            assignedCapacity: 1,
+            progress: 0,
+            active: true,
+            createdTurnId: 1,
+          },
+        ],
+      },
+    });
+    const app = makeApp(deps);
+
+    const response = await request(app, "/military/equipment/production-lines/line-a", { method: "DELETE" });
+
+    expect(response.status).toBe(200);
+    expect(deps.getCountryEquipmentProductionLines("country-a")).toEqual([]);
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledOnce();
+  });
 });
 
 function makeApp(deps: MilitaryRoutesDependencies): express.Express {
@@ -152,9 +395,15 @@ function makeApp(deps: MilitaryRoutesDependencies): express.Express {
 function makeDeps(overrides?: {
   templates?: Record<string, DivisionTemplate[]>;
   divisions?: Record<string, Division>;
+  airWings?: Record<string, AirWing>;
+  stockpile?: Record<string, Record<string, number>>;
+  productionLines?: Record<string, EquipmentProductionLine[]>;
 }): MilitaryRoutesDependencies {
   const templates = overrides?.templates ?? {};
   const divisions = overrides?.divisions ?? {};
+  const airWings = overrides?.airWings ?? {};
+  const stockpile = overrides?.stockpile ?? {};
+  const productionLines = overrides?.productionLines ?? {};
   const equipmentVariants: Record<string, EquipmentVariant> = {};
   let nextId = 1;
   return {
@@ -177,10 +426,24 @@ function makeDeps(overrides?: {
       templates[countryId] = nextTemplates;
     }),
     getCountryDivisionsById: () => divisions,
+    getCountryAirWingsById: () => airWings,
+    getKnownRegionIds: () => ["region:a", "region:b"],
     getCountryMilitaryQueue: () => [],
     setCountryMilitaryQueue: vi.fn(),
     getEquipmentClasses: () => [
       { id: "equipment_class:test", branch: "land", slotIds: ["weapon"], roles: ["attack"], baseStats: { attack: 1 } },
+    ],
+    getEquipmentFrames: () => [
+      {
+        id: "equipment_frame:test",
+        classId: "equipment_class:test",
+        branch: "land",
+        slotIds: ["weapon"],
+        baseStats: {},
+        goodsCost: [],
+        manpowerCrew: 0,
+        productionCost: 0,
+      },
     ],
     getEquipmentModules: () => [
       {
@@ -192,9 +455,16 @@ function makeDeps(overrides?: {
       },
     ],
     getEquipmentVariantsById: () => equipmentVariants,
-    getCountryEquipmentProductionLines: () => [],
-    setCountryEquipmentProductionLines: vi.fn(),
+    getCountryEquipmentStockpile: (countryId) => {
+      stockpile[countryId] ??= {};
+      return stockpile[countryId];
+    },
+    getCountryEquipmentProductionLines: (countryId) => productionLines[countryId] ?? [],
+    setCountryEquipmentProductionLines: vi.fn((countryId, lines) => {
+      productionLines[countryId] = lines;
+    }),
     getHexOwner: () => "country-a",
+    validateFormationDeployment: () => ({ ok: true }),
     normalizeMilitaryTemplateComponents: (_input, _kind, fallbackBattalions) =>
       fallbackBattalions?.map((battalion) => ({
         id: battalion.id,
@@ -214,6 +484,8 @@ function makeDeps(overrides?: {
     calculateDivisionStats: () => stats,
     calculateMilitaryFormationCost: () => ({ ducats: 0, manpower: 1000, equipmentNeeds: [] }),
     calculateDivisionTrainingCost: () => ({ ducats: 0, manpower: 1000, equipmentNeeds: [] }),
+    refreshDivisionStatsFromTemplates: vi.fn(),
+    refreshCountryDivisionEquipmentState: vi.fn(),
     calculateFormationTurns: () => 1,
     spendMilitaryFormationCost: () => ({ ok: true }),
     spendDivisionTrainingCost: () => ({ ok: true }),
@@ -264,6 +536,24 @@ function makeDivision(overrides?: Partial<Division>): Division {
     path: [],
     createdTurnId: 1,
     lastMovedTurnId: null,
+    ...overrides,
+  };
+}
+
+function makeAirWing(overrides?: Partial<AirWing>): AirWing {
+  return {
+    id: "air-wing",
+    countryId: "country-a",
+    templateId: "template",
+    name: "Air Wing",
+    baseHexId: "hex:0:0",
+    strength: 1,
+    organization: 10,
+    stats,
+    status: "idle",
+    mission: "none",
+    targetRegionId: null,
+    createdTurnId: 1,
     ...overrides,
   };
 }

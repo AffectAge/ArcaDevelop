@@ -11,6 +11,7 @@ import {
   normalizeContentCultures,
   normalizeContentGoods,
   normalizeContentEquipmentClasses,
+  normalizeContentEquipmentFrames,
   normalizeContentEquipmentModules,
   normalizeContentRaces,
   normalizeContentShipTypes,
@@ -46,6 +47,7 @@ export type BuildWorldBaseFromScenarioRuntimeDeps = {
 
 export function normalizeScenarioContentForRuntime(source: unknown): GameSettings["content"] {
   const contentSource = source && typeof source === "object" ? (source as Record<string, unknown>) : {};
+  const equipmentClasses = normalizeContentEquipmentClasses(contentSource.equipmentClasses ?? contentSource.equipment_classes);
   return {
     races: ensureDefaultRace(normalizeContentRaces(contentSource.races)),
     resourceCategories: normalizeContentCultures(contentSource.resourceCategories ?? contentSource.resource_categories).map((entry) => ({
@@ -78,7 +80,8 @@ export function normalizeScenarioContentForRuntime(source: unknown): GameSetting
     battalions: normalizeContentBattalions(contentSource.battalions),
     shipTypes: normalizeContentShipTypes(contentSource.shipTypes ?? contentSource.ship_types),
     aircraftTypes: normalizeContentAircraftTypes(contentSource.aircraftTypes ?? contentSource.aircraft_types),
-    equipmentClasses: normalizeContentEquipmentClasses(contentSource.equipmentClasses ?? contentSource.equipment_classes),
+    equipmentClasses,
+    equipmentFrames: normalizeContentEquipmentFrames(contentSource.equipmentFrames ?? contentSource.equipment_frames, equipmentClasses),
     equipmentModules: normalizeContentEquipmentModules(contentSource.equipmentModules ?? contentSource.equipment_modules),
   };
 }
