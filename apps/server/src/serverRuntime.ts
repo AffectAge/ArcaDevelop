@@ -536,6 +536,7 @@ const turnRuntime = createTurnRuntime({
   setWorldBase: (nextWorldBase) => {
     worldBase = nextWorldBase;
   },
+  getHexMovementCost,
   getGameSettings: () => gameSettings,
   getTurnId: () => turnId,
   setTurnId: (nextTurnId) => {
@@ -668,7 +669,6 @@ const turnRuntime = createTurnRuntime({
   getRegionDerivedColonizationCosts: colonizationRuntime.getRegionDerivedColonizationCosts,
   buildColonizationSettlementPopulation: worldPopulationRuntime.buildColonizationSettlementPopulation,
   areHexIdsAdjacentOrSame: marketAccessRuntime.areHexIdsAdjacentOrSame,
-  getHexMovementCost,
   enqueueBuildingAutoUpgradesTurn: buildingRuntime.enqueueBuildingAutoUpgradesTurn,
   resolveBuildingConstructionQueuesTurn: buildingRuntime.resolveBuildingConstructionQueuesTurn,
   addResourceLedgerIncome: resourceLedgerRuntime.addIncome,
@@ -769,6 +769,7 @@ registerServerMainRouteRuntime({
   setWorldBase: (nextWorldBase) => {
     worldBase = nextWorldBase;
   },
+  getHexMovementCost,
   getGameSettings: () => gameSettings,
   setGameSettings: (settings) => {
     gameSettings = settings;

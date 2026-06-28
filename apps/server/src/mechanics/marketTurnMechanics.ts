@@ -673,6 +673,7 @@ export function purchaseBuildingInputs<
   buyerInstance: BuildingInputPurchaseBuyerInstance;
   inputNeeds: BuildingInputNeed[];
   buyerHexId: string;
+  buyerRegionId: string;
   buyerCountryId: string;
   buyerMarketId: string;
   getDistributionType: (goodId: string) => GoodDistributionType;
@@ -710,6 +711,7 @@ export function purchaseBuildingInputs<
   ) => void;
   getInfraPerUnit: (goodId: string) => number;
   getTransportModes: (goodId: string) => TMode[];
+  getRegionTradeEndpointHexId?: (regionId: string, transportMode: TMode) => string | null;
   getCorridorRoutesForTransfer: (params: {
     buyerMarketId: string;
     buyerHexId: string;
@@ -880,16 +882,24 @@ export function purchaseBuildingInputs<
         const infraPerUnit = params.getInfraPerUnit(input.goodId);
         const transportModes = params.getTransportModes(input.goodId);
         if (transportModes.length > 0) {
-          if (params.buyerHexId !== seller.hexId) {
+          const routeMode = transportModes.find((mode) => {
+            const buyerEndpoint = params.getRegionTradeEndpointHexId?.(params.buyerRegionId, mode) ?? params.buyerHexId;
+            const sellerEndpoint = params.getRegionTradeEndpointHexId?.(seller.regionId, mode) ?? seller.hexId;
+            return buyerEndpoint !== sellerEndpoint;
+          });
+          const routeBuyerHexId = routeMode ? params.getRegionTradeEndpointHexId?.(params.buyerRegionId, routeMode) ?? params.buyerHexId : params.buyerHexId;
+          const routeSellerHexId = routeMode ? params.getRegionTradeEndpointHexId?.(seller.regionId, routeMode) ?? seller.hexId : seller.hexId;
+          const routeTransportModes = routeMode ? [routeMode] : transportModes;
+          if (routeBuyerHexId !== routeSellerHexId) {
             const requestedByCorridor = Math.min(remainingNeed, transferCap, maxAffordableNow, maxByPolicy, maxBySanctions);
             routesForTransfer = params.getCorridorRoutesForTransfer({
               buyerMarketId: params.buyerMarketId,
-              buyerHexId: params.buyerHexId,
+              buyerHexId: routeBuyerHexId,
               buyerCountryId: params.buyerCountryId,
               sellerMarketId: seller.marketId,
-              sellerHexId: seller.hexId,
+              sellerHexId: routeSellerHexId,
               sellerCountryId: seller.countryId,
-              transportModes,
+              transportModes: routeTransportModes,
               isExternalTrade,
               infraPerUnit,
               requestedGoods: requestedByCorridor,
@@ -897,17 +907,17 @@ export function purchaseBuildingInputs<
             if (routesForTransfer.length === 0) {
               const hasReachableRoute = params.hasReachableCorridorRouteIgnoringCapacity({
                 buyerMarketId: params.buyerMarketId,
-                buyerHexId: params.buyerHexId,
+                buyerHexId: routeBuyerHexId,
                 buyerCountryId: params.buyerCountryId,
                 sellerMarketId: seller.marketId,
-                sellerHexId: seller.hexId,
+                sellerHexId: routeSellerHexId,
                 sellerCountryId: seller.countryId,
-                transportModes,
+                transportModes: routeTransportModes,
               });
               const hasPhysicalRoute = hasReachableRoute || params.hasPhysicalCorridorRouteIgnoringTransit({
-                buyerHexId: params.buyerHexId,
-                sellerHexId: seller.hexId,
-                transportModes,
+                buyerHexId: routeBuyerHexId,
+                sellerHexId: routeSellerHexId,
+                transportModes: routeTransportModes,
               });
               params.pushLogisticsFailure({
                 hexId: params.buyerHexId,

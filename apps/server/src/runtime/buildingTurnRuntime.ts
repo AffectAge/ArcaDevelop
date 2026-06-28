@@ -25,6 +25,7 @@ import {
   createCorridorRoutePlanner,
   type CorridorTransferRoute,
 } from "../mechanics/transportCorridorMechanics";
+import { getRegionCorridorEndpointHexId } from "../mechanics/transportCorridorRoutingMechanics";
 import {
   addCountryGood as addCountryGoodInMarketTurn,
   addGlobalGood as addGlobalGoodInMarketTurn,
@@ -285,6 +286,13 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     infraPerUnit: number;
     requestedGoods: number;
   }): MarketCorridorTransferRoute[] => corridorRoutePlanner.getCorridorRoutesForTransfer(params);
+  const getRegionTradeEndpointHexId = (regionId: string, transportMode: GoodTransportMode): string | null =>
+    getRegionCorridorEndpointHexId({
+      regionId,
+      corridors: Object.values(gameSettings.markets.transportCorridorsById ?? {}),
+      worldBase,
+      transportMode,
+    });
   const hasReachableCorridorRouteIgnoringCapacity = corridorRoutePlanner.hasReachableCorridorRouteIgnoringCapacity;
   const hasPhysicalCorridorRouteIgnoringTransit = corridorRoutePlanner.hasPhysicalCorridorRouteIgnoringTransit;
   const getRoutesCapacityInGoods = corridorRoutePlanner.getRoutesCapacityInGoods;
@@ -547,6 +555,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         buyerInstance: instance,
         inputNeeds,
         buyerHexId: instanceHexId,
+        buyerRegionId: regionId,
         buyerCountryId: ownerCountryId,
         buyerMarketId: marketId,
         getDistributionType: getGoodDistributionType,
@@ -562,6 +571,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         consumePolicyLimit,
         getInfraPerUnit,
         getTransportModes: getGoodTransportModes,
+        getRegionTradeEndpointHexId,
         getCorridorRoutesForTransfer,
         hasReachableCorridorRouteIgnoringCapacity,
         hasPhysicalCorridorRouteIgnoringTransit,

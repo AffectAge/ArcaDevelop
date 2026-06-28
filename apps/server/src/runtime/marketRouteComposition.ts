@@ -6,6 +6,7 @@ import type { createCountryWorldRuntime } from "./countryWorldRuntime";
 import type { createMarketRuntimeFacade } from "./marketRuntimeFacade";
 import type { createMarketAccessRuntime } from "./marketAccessRuntime";
 import type { GameSettings } from "./gameSettingsTypes";
+import type { HexMapArtifact, WorldBase } from "@arcanorum/shared";
 import type { MarketOverviewState } from "../mechanics/marketTurnMechanics";
 import type { upload } from "../uploads/uploadMiddleware";
 
@@ -20,7 +21,9 @@ type MarketRouteCompositionParams = {
   createId: () => string;
   getTurnId: () => number;
   getGameSettings: () => GameSettings;
-  getWorldBase: () => { hexOwner: Record<string, string | undefined> };
+  getWorldBase: () => Pick<WorldBase, "hexOwner" | "cityMarkersById" | "settlementProjectsById">;
+  getHexMapArtifact: () => HexMapArtifact | null;
+  getHexMovementCost: MarketRuntimeDeps["getHexMovementCost"];
   countryWorldRuntime: ReturnType<typeof createCountryWorldRuntime>;
   marketRuntimeFacade: ReturnType<typeof createMarketRuntimeFacade>;
   marketAccessRuntime: ReturnType<typeof createMarketAccessRuntime>;
@@ -68,6 +71,9 @@ export function registerMarketRouteComposition(params: MarketRouteCompositionPar
     getGlobalGoodProductionMaxHistoryByResourceId: params.getGlobalGoodProductionMaxHistoryByResourceId,
     getLatestMarketOverview: params.getLatestMarketOverview,
     getHexOwner: (hexId) => params.getWorldBase().hexOwner[hexId] ?? null,
+    getHexMapArtifact: params.getHexMapArtifact,
+    getWorldBase: params.getWorldBase,
+    getHexMovementCost: params.getHexMovementCost,
     getMarketDisplayName: params.marketRuntimeFacade.getMarketDisplayName,
     normalizeMarketVisibility: params.normalizeMarketVisibility,
     normalizeTransportCorridorRoutePoints: params.normalizeTransportCorridorRoutePoints,

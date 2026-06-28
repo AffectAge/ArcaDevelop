@@ -69,10 +69,11 @@ export function normalizeTransportCorridorStatus(input: unknown): TransportCorri
 }
 
 
-export function getTransportCorridorBuildCost(mode: GoodTransportMode, segments: number): number {
+export function getTransportCorridorBuildCost(mode: GoodTransportMode, routeCost: number, segments?: number): number {
   const multiplier =
     mode === "sea" ? 2 : mode === "air" ? 2.4 : mode === "pipeline" ? 1.8 : mode === "powerGrid" ? 1.7 : 1;
-  return Math.max(1, Math.floor(DEFAULT_TRANSPORT_CORRIDOR_BUILD_COST_PER_SEGMENT * Math.max(1, segments) * multiplier));
+  const effectiveCost = Number.isFinite(routeCost) && routeCost > 0 ? routeCost : Math.max(1, Number(segments ?? 1));
+  return Math.max(1, Math.floor(DEFAULT_TRANSPORT_CORRIDOR_BUILD_COST_PER_SEGMENT * Math.max(1, effectiveCost) * multiplier));
 }
 
 

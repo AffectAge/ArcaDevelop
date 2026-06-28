@@ -98,6 +98,18 @@ The server statically serves `/scenario-assets/:scenarioId/assets/buildings/*` f
 
 City marker visuals use the same atlas convention with culture ids. Clients derive city atlas URLs as `/scenario-assets/<scenarioId>/assets/cities/<sanitizedCultureId>.png`, and the server statically serves `/scenario-assets/:scenarioId/assets/cities/*` from `scenarios/<scenarioId>/assets/cities/`. Scenario validation requires each culture's city atlas to be a readable PNG sized `256x64`.
 
+## Transport Corridor Contract
+
+Transport corridor v2 routes are server-authoritative regional infrastructure. `POST /markets/:marketId/corridors/preview` accepts `waypoints` and `transportMode`, recalculates the route from map movement cost, validates city endpoints/build rights/transit constraints, and returns `computedHexIds`, `connectedRegionIds`, `connectedCityMarkerIds`, `routeCost`, and `costConstruction`.
+
+`POST /markets/:marketId/corridors` uses the same payload and validation. Clients must not send or trust final `hexIds`; persisted corridors store `schemaVersion: 2`, authored `waypoints`, server `computedHexIds`, connected regions/city nodes, construction progress, capacity/load history, and optional `pendingLevel` for upgrades. Legacy v1 corridor records are removed during restore/runtime normalization because they cannot be safely mapped to region-level city-node access.
+
+`PATCH /markets/:marketId/corridors/:corridorId` accepts `action: "open" | "close" | "upgrade" | "cancel" | "demolish"`. `cancel` deletes an owned corridor only while it is still `building`; `demolish` deletes an owned corridor only after it is no longer building. Both actions persist the market corridor state and return the updated corridor list. The current concurrency strategy is explicit rejection on stale/invalid status plus last-writer persistence in the in-memory game settings runtime.
+
+`MarketOverviewResponse.logisticsSnapshot` includes `coverageByModeByRegion` and corridor service areas include `connectedRegionIds`/`connectedCityMarkerIds` so clients can explain regional access without scanning the world.
+
+Scenario corridor visuals use `/scenario-assets/<scenarioId>/assets/corridors/corridor-atlas.png`, with a client-owned fallback at `/game-assets/corridors/fallback-corridor-atlas.png`. The atlas is `4096x1600`, sliced into `64x64` frames. Columns `0..63` are the six-direction hex connection bitmask for a corridor tile; rows are grouped by transport mode (`land`, `sea`, `air`, `pipeline`, `powerGrid`) and status (`planned`, `building`, `active`, `overloaded`, `closed`). This allows same-mode corridor branches, junctions, and crossings to resolve to one tile frame instead of overlapping line sprites.
+
 ## Unit Movement Orders
 
 `UNIT_MOVE` supports `unitKind: "civilian"`, `"division"`, and `"fleet"`. Civilian units and fleets keep `targetHexId` as the long-route source of truth; the server can recompute a route from the current hex on later turns and advances only as far as movement budget allows. Land divisions continue to use the army movement resolver.

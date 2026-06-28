@@ -480,6 +480,7 @@ describe("marketTurnMechanics", () => {
       buyerInstance: buyer,
       inputNeeds: [{ goodId: "good:iron", required: 9, available: 1 }],
       buyerHexId: "province:a",
+      buyerRegionId: "region:a",
       buyerCountryId: "country:a",
       buyerMarketId: "market:a",
       getDistributionType: () => "tradeable",

@@ -228,6 +228,8 @@ export function buildMarketOverviewResponse(countryId: string, deps: MarketReadR
       ownerCountryId: corridor.ownerCountryId,
       transportMode: corridor.transportMode,
       hexIds: corridor.hexIds,
+      connectedRegionIds: [...(corridor.connectedRegionIds ?? [])],
+      connectedCityMarkerIds: [...(corridor.connectedCityMarkerIds ?? [])],
       capacity: round3(capacity),
       load: round3(load),
       utilization: capacity > 0 ? round3(Math.max(0, Math.min(1, load / capacity))) : 0,
@@ -249,6 +251,21 @@ export function buildMarketOverviewResponse(countryId: string, deps: MarketReadR
       byHex[hexId] = current;
     }
   }
+  const coverageByModeByRegion = Object.fromEntries(
+    deps.getTransportModes().map((mode) => [mode, {} as Record<string, { capacity: number; load: number; utilization: number; corridorIds: string[] }>]),
+  ) as Record<MarketCorridorTransportMode, Record<string, { capacity: number; load: number; utilization: number; corridorIds: string[] }>>;
+  for (const area of corridorServiceAreas) {
+    if (area.status !== "active") continue;
+    for (const regionId of area.connectedRegionIds) {
+      const byRegion = coverageByModeByRegion[area.transportMode];
+      const current = byRegion[regionId] ?? { capacity: 0, load: 0, utilization: 0, corridorIds: [] };
+      current.capacity = round3(current.capacity + area.capacity);
+      current.load = round3(current.load + area.load);
+      current.utilization = current.capacity > 0 ? round3(Math.max(0, Math.min(1, current.load / current.capacity))) : 0;
+      if (!current.corridorIds.includes(area.corridorId)) current.corridorIds.push(area.corridorId);
+      byRegion[regionId] = current;
+    }
+  }
   return {
     turnId,
     countryId,
@@ -259,6 +276,7 @@ export function buildMarketOverviewResponse(countryId: string, deps: MarketReadR
       turnId,
       corridorServiceAreas,
       coverageByModeByHex,
+      coverageByModeByRegion,
       failuresByHex: logisticsFailuresByHex,
     },
     goods,

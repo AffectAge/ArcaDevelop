@@ -1,4 +1,3 @@
-import { AppButton } from "../ui/AppButton";
 import { useUiText } from "../../i18n/useUiText";
 
 type CorridorBuildPoint = {
@@ -10,6 +9,10 @@ type CorridorBuildPoint = {
 type Props = {
   points: CorridorBuildPoint[];
   hexIds: string[];
+  transportMode?: string;
+  costConstruction?: number | null;
+  connectedRegionIds?: string[];
+  blockingReason?: string | null;
   pending: boolean;
   getHexDisplayName: (hexId: string) => string;
   onUndoPoint: () => void;
@@ -17,38 +20,73 @@ type Props = {
   onConfirm: () => void;
 };
 
-export function CorridorBuildHud({ points, hexIds, pending, getHexDisplayName, onUndoPoint, onCancel, onConfirm }: Props) {
+export function CorridorBuildHud({
+  points,
+  hexIds,
+  transportMode,
+  costConstruction,
+  connectedRegionIds,
+  blockingReason,
+  pending,
+  getHexDisplayName,
+  onUndoPoint,
+  onCancel,
+  onConfirm,
+}: Props) {
   const { t } = useUiText();
+  const hasBlockingReason = Boolean(blockingReason);
 
   return (
-    <div className="arc-hud-panel fixed bottom-24 left-1/2 z-[170] max-h-[34vh] w-[min(92vw,680px)] -translate-x-1/2 overflow-auto rounded-xl p-3 text-sm">
-      <div className="arc-hud-content">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <div className="font-semibold text-[var(--arc-color-text)]">{t("corridorBuild.title")}</div>
-            <div className="text-xs text-[var(--arc-color-text-soft)]">
-              {t("corridorBuild.summary", { points: points.length, hexes: hexIds.length })}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <AppButton type="button" variant="secondary" size="sm" disabled={points.length === 0} onClick={onUndoPoint}>
-              {t("corridorBuild.undoPoint")}
-            </AppButton>
-            <AppButton type="button" variant="ghost" size="sm" onClick={onCancel}>
-              {t("common.cancel")}
-            </AppButton>
-            <AppButton type="button" variant="primary" size="sm" disabled={pending || hexIds.length < 2 || points.length < 2} onClick={onConfirm}>
-              {t("common.confirm")}
-            </AppButton>
+    <div className="arc-corridor-build-panel pointer-events-auto text-sm" role="status">
+      <div className="arc-corridor-build-panel__header">
+        <div className="min-w-0">
+          <div className="arc-corridor-build-panel__title">{t("corridorBuild.title")}</div>
+          <div className="arc-corridor-build-panel__summary">
+            {t("corridorBuild.summary", { points: points.length, hexes: hexIds.length })}
           </div>
         </div>
-        <div className="mt-2 flex flex-wrap gap-1 text-[11px] text-[var(--arc-color-text-soft)]">
-          {points.map((point, index) => (
-            <span key={`${point.hexId}-${index}`} className="arc-hud-chip rounded-md px-1.5 py-0.5">
-              {index + 1}. {getHexDisplayName(point.hexId)}
-            </span>
-          ))}
+        <div className="arc-corridor-build-panel__actions">
+          <button type="button" className="arc-strategy-workspace-action" disabled={points.length === 0} onClick={onUndoPoint}>
+            <span>{t("corridorBuild.undoPoint")}</span>
+          </button>
+          <button type="button" className="arc-strategy-workspace-action" onClick={onCancel}>
+            <span>{t("common.cancel")}</span>
+          </button>
+          <button
+            type="button"
+            className="arc-strategy-workspace-action arc-strategy-workspace-action--primary"
+            disabled={pending || hasBlockingReason || hexIds.length < 2 || points.length < 2}
+            onClick={onConfirm}
+          >
+            <span>{t("common.confirm")}</span>
+          </button>
         </div>
+      </div>
+      <div className="arc-corridor-build-panel__metrics">
+        <div className="arc-corridor-build-panel__metric">
+          <span>{t("corridorBuild.transportMode")}</span>
+          <strong>{transportMode ?? t("map.common.none")}</strong>
+        </div>
+        <div className="arc-corridor-build-panel__metric">
+          <span>{t("corridorBuild.cost")}</span>
+          <strong>{typeof costConstruction === "number" ? Math.round(costConstruction) : t("common.pending")}</strong>
+        </div>
+        <div className="arc-corridor-build-panel__metric">
+          <span>{t("corridorBuild.connectedRegions")}</span>
+          <strong>{connectedRegionIds?.length ?? 0}</strong>
+        </div>
+      </div>
+      {hasBlockingReason ? (
+        <div className="arc-corridor-build-panel__warning">
+          {blockingReason}
+        </div>
+      ) : null}
+      <div className="arc-corridor-build-panel__points">
+        {points.map((point, index) => (
+          <span key={`${point.hexId}-${index}`} className="arc-corridor-build-panel__point">
+            {index + 1}. {getHexDisplayName(point.hexId)}
+          </span>
+        ))}
       </div>
     </div>
   );

@@ -83,6 +83,7 @@ type ServerMainRouteRegistrationRuntimeParams = {
   incrementWorldStateVersion: () => number;
   getWorldBase: () => WorldBase;
   setWorldBase: (worldBase: WorldBase) => void;
+  getHexMovementCost: (hexId: string, countryId?: string) => number;
   getGameSettings: () => GameSettings;
   setGameSettings: (settings: GameSettings) => void;
   setActiveScenario: (scenario: { id: string; name: string }) => void;
@@ -159,6 +160,8 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
     getTurnId: params.getTurnId,
     getGameSettings: params.getGameSettings,
     getWorldBase: params.getWorldBase,
+    getHexMapArtifact: params.mapRuntime.getHexMapArtifact,
+    getHexMovementCost: params.getHexMovementCost,
     countryWorldRuntime: params.countryWorldRuntime,
     marketRuntimeFacade: params.marketRuntimeFacade,
     marketAccessRuntime: params.marketAccessRuntime,

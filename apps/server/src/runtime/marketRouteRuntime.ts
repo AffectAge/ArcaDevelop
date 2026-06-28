@@ -1,5 +1,5 @@
 import type express from "express";
-import type { TreatyConstructionExpirationPolicy } from "@arcanorum/shared";
+import type { HexMapArtifact, TreatyConstructionExpirationPolicy, WorldBase } from "@arcanorum/shared";
 import {
   GOOD_TRANSPORT_MODES,
   DEFAULT_TRADEABLE_TRANSPORT_MODES,
@@ -43,6 +43,9 @@ type MarketRouteRuntimeParams = {
   getGlobalGoodProductionMaxHistoryByResourceId: () => Record<string, number[]>;
   getLatestMarketOverview: () => unknown;
   getHexOwner: (hexId: string) => string | null;
+  getHexMapArtifact: () => HexMapArtifact | null;
+  getWorldBase: () => Pick<WorldBase, "cityMarkersById" | "settlementProjectsById">;
+  getHexMovementCost: (hexId: string, countryId?: string) => number;
   getMarketDisplayName: (params: { marketId: string; marketName: string; ownerCountryName?: string | null }) => string;
   normalizeMarketVisibility: (value: unknown) => "public" | "private";
   normalizeTransportCorridorRoutePoints: (input: unknown) => NonNullable<TransportCorridorEntry["routePoints"]>;
@@ -59,7 +62,7 @@ type MarketRouteRuntimeParams = {
     sourceProposalId?: string | null;
     sourceClauseId?: string | null;
   } | null;
-  getTransportCorridorBuildCost: (transportMode: GoodTransportMode, segments: number) => number;
+  getTransportCorridorBuildCost: (transportMode: GoodTransportMode, routeCost: number, segments?: number) => number;
   refreshExpiredDiplomacyProposals: () => void;
   upsertMarketMembership: (countryId: string, marketId: string | null) => void;
   rebuildCountryMarketIndexFromMembers: () => void;
@@ -259,6 +262,9 @@ export function registerMarketRuntimeRoutes(params: MarketRouteRuntimeParams): v
     isHexAllowedForCorridorOwner: params.isHexAllowedForCorridorOwner,
     isContiguousTransportCorridorRoute: params.isContiguousTransportCorridorRoute,
     getHexOwner: params.getHexOwner,
+    getHexMapArtifact: params.getHexMapArtifact,
+    getWorldBase: params.getWorldBase,
+    getHexMovementCost: params.getHexMovementCost,
     getInfrastructureConstructionRightForHex: params.getInfrastructureConstructionRightForHex,
     getTransportCorridorBuildCost: params.getTransportCorridorBuildCost,
     savePersistentState: params.savePersistentState,

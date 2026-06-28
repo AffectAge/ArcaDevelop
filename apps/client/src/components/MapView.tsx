@@ -26,6 +26,8 @@ import {
   setCountryBuildSubsidyState,
   upgradeCountryBuildState,
   type ContentEntry,
+  type MarketTransportCorridor,
+  type TransportMode,
 } from "../lib/api";
 import { useGameStore } from "../store/gameStore";
 import {
@@ -82,6 +84,9 @@ import { type BuildingAtlasState } from "../assets/buildingAtlas";
 import { getBuildingAtlasTextures } from "../map/buildingAtlasTextureCache";
 import { type CityAtlasState } from "../assets/cityAtlas";
 import { getCityAtlasTextures } from "../map/cityAtlasTextureCache";
+import { CorridorBuildHud } from "./map-hud/CorridorBuildHud";
+import { getCorridorAtlasTextures, type CorridorAtlasTextures } from "../map/corridorAtlasTextureCache";
+import type { CorridorAtlasStatus } from "../assets/corridorAtlas";
 
 export type MapModeId = MapInteractionMode;
 
@@ -146,6 +151,20 @@ type Props = {
   } | null;
   onSelectHexBuildPlacementTarget?: (target: { hexId: HexId; regionId: string }) => void;
   onCancelHexBuildPlacement?: () => void;
+  transportCorridors?: MarketTransportCorridor[];
+  corridorPlacement?: {
+    transportMode: TransportMode;
+    points: Array<{ hexId: HexId; lng: number; lat: number }>;
+    previewHexIds: HexId[];
+    costConstruction?: number | null;
+    connectedRegionIds?: string[];
+    blockingReason?: string | null;
+    pending: boolean;
+  } | null;
+  onSelectCorridorPlacementPoint?: (point: { hexId: HexId; regionId: string; lng: number; lat: number }) => void;
+  onUndoCorridorPlacementPoint?: () => void;
+  onCancelCorridorPlacement?: () => void;
+  onConfirmCorridorPlacement?: () => void;
   militaryFormationPlacement?: {
     templateName: string;
     kind: "land" | "naval" | "air";
@@ -320,6 +339,12 @@ export function MapView({
   hexBuildPlacement = null,
   onSelectHexBuildPlacementTarget,
   onCancelHexBuildPlacement,
+  transportCorridors = [],
+  corridorPlacement = null,
+  onSelectCorridorPlacementPoint,
+  onUndoCorridorPlacementPoint,
+  onCancelCorridorPlacement,
+  onConfirmCorridorPlacement,
   militaryFormationPlacement = null,
   onSelectMilitaryFormationPlacementTarget,
   onCancelMilitaryFormationPlacement,
@@ -345,6 +370,7 @@ export function MapView({
   const overlayMeshRendererRef = useRef<HexMapOverlayMeshRenderer | null>(null);
   const lensOverlayRendererRef = useRef<HexMapLensOverlayRenderer | null>(null);
   const overlayLayerRef = useRef<Graphics | null>(null);
+  const corridorLayerRef = useRef<Container | null>(null);
   const buildingLayerRef = useRef<Container | null>(null);
   const unitLayerRef = useRef<Container | null>(null);
   const cameraRef = useRef<HexCamera>(initialCamera);
@@ -375,6 +401,7 @@ export function MapView({
   const [pixiReady, setPixiReady] = useState(false);
   const [mapRenderError, setMapRenderError] = useState(false);
   const [buildingTextureVersion, setBuildingTextureVersion] = useState(0);
+  const [corridorTextureVersion, setCorridorTextureVersion] = useState(0);
   const [edgeScrollEnabled, setEdgeScrollEnabled] = useState(() => readMapNavigationSettings(useGameStore.getState().auth?.countryId).edgeScrollEnabled);
   const [textureQuality, setTextureQuality] = useState<MapTextureQuality>(() => readMapTextureQuality(useGameStore.getState().auth?.countryId));
   const [activeLens, setActiveLens] = useState<MapLensId>(() => readMapLensSetting(useGameStore.getState().auth?.countryId, suggestedMapLens ?? "terrain"));
@@ -465,6 +492,29 @@ export function MapView({
     if (!fleetMoveSelection || !hoverState?.tile || fleetMoveSelection.fromHexId === hoverState.tile.id) return [];
     return findWaterHexPath(mapArtifact, fleetMoveSelection.fromHexId, hoverState.tile.id, 1600);
   }, [fleetMoveSelection, hoverState?.tile, mapArtifact]);
+  const corridorFixedPreviewPath = useMemo(() => {
+    if (!corridorPlacement || corridorPlacement.points.length < 2) return [];
+    const result: HexId[] = [];
+    for (let index = 1; index < corridorPlacement.points.length; index += 1) {
+      const from = corridorPlacement.points[index - 1]?.hexId;
+      const to = corridorPlacement.points[index]?.hexId;
+      if (!from || !to) continue;
+      const segment = findHexPath(mapArtifact, from, to, 1600);
+      if (segment.length < 2) continue;
+      if (result.length === 0) result.push(...segment);
+      else result.push(...segment.slice(1));
+    }
+    return result;
+  }, [corridorPlacement?.points, mapArtifact]);
+  const corridorDraftPreviewPath = useMemo(() => {
+    if (!corridorPlacement || corridorPlacement.points.length < 1 || !hoverState?.tile) return [];
+    const last = corridorPlacement.points[corridorPlacement.points.length - 1];
+    if (!last || last.hexId === hoverState.tile.id) return [];
+    return findHexPath(mapArtifact, last.hexId, hoverState.tile.id, 1600);
+  }, [corridorPlacement?.points, hoverState?.tile, mapArtifact]);
+  const corridorHudPreviewPath = corridorDraftPreviewPath.length > 1
+    ? mergeHexPaths(corridorFixedPreviewPath, corridorDraftPreviewPath)
+    : corridorFixedPreviewPath;
   const civilianUnitById = useMemo(
     () => new Map(Object.values(worldBase?.civilianUnitsById ?? {}).map((unit) => [unit.id, unit] as const)),
     [worldBase?.civilianUnitsById],
@@ -868,6 +918,15 @@ export function MapView({
         setDivisionAttackSelection(null);
         return;
       }
+      if (corridorPlacement) {
+        onSelectCorridorPlacementPoint?.({
+          hexId: tile.id,
+          regionId: tile.regionId,
+          lng: tile.q,
+          lat: tile.r,
+        });
+        return;
+      }
       if (hexBuildPlacement) {
         const evaluation = placementEvaluations.get(tile.id);
         if (!evaluation?.valid) {
@@ -960,6 +1019,7 @@ export function MapView({
     },
     [
       civilianMoveSelection,
+      corridorPlacement,
       divisionAttackSelection,
       divisionById,
       divisionMoveSelection,
@@ -974,6 +1034,7 @@ export function MapView({
       onQueueCivilianUnitMoveOrder,
       onQueueFleetMoveOrder,
       onQueueUnitAttackOrder,
+      onSelectCorridorPlacementPoint,
       onSelectHexBuildPlacementTarget,
       onSelectMilitaryFormationPlacementTarget,
       placementEvaluations,
@@ -1035,12 +1096,14 @@ export function MapView({
     const app = new Application();
     const worldContainer = new Container();
     const overlayLayer = new Graphics();
+    const corridorLayer = new Container();
     const buildingLayer = new Container();
     const unitLayer = new Container();
 
     appRef.current = app;
     worldContainerRef.current = worldContainer;
     overlayLayerRef.current = overlayLayer;
+    corridorLayerRef.current = corridorLayer;
     buildingLayerRef.current = buildingLayer;
     unitLayerRef.current = unitLayer;
 
@@ -1080,7 +1143,7 @@ export function MapView({
         return;
       }
       lensRenderer.updateLens(activeLens, lensCells);
-      worldContainer.addChild(terrainRenderer.container, overlayRenderer.container, lensRenderer.container, buildingLayer, unitLayer, overlayLayer);
+      worldContainer.addChild(terrainRenderer.container, overlayRenderer.container, lensRenderer.container, corridorLayer, buildingLayer, unitLayer, overlayLayer);
       app.stage.addChild(worldContainer);
       const rect = container.getBoundingClientRect();
       terrainRenderer.setQuality(readMapTextureQuality(authCountryId), window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
@@ -1113,6 +1176,7 @@ export function MapView({
       safeDestroyMapRenderer(lensOverlayRendererRef.current);
       lensOverlayRendererRef.current = null;
       overlayLayerRef.current = null;
+      corridorLayerRef.current = null;
       buildingLayerRef.current = null;
       unitLayerRef.current = null;
       window.__arcHexMapStats = undefined;
@@ -1146,6 +1210,12 @@ export function MapView({
         if (blocked) return;
         event.preventDefault();
         onCancelHexBuildPlacement?.();
+        return;
+      }
+      if (corridorPlacement && event.button === 2) {
+        if (blocked) return;
+        event.preventDefault();
+        onCancelCorridorPlacement?.();
         return;
       }
       if (militaryFormationPlacement && event.button === 2) {
@@ -1294,6 +1364,9 @@ export function MapView({
       if (hexBuildPlacement) {
         onCancelHexBuildPlacement?.();
       }
+      if (corridorPlacement) {
+        onCancelCorridorPlacement?.();
+      }
       if (militaryFormationPlacement) {
         onCancelMilitaryFormationPlacement?.();
       }
@@ -1333,7 +1406,7 @@ export function MapView({
       pointerGestureRef.current = null;
       activePointersRef.current.clear();
     };
-  }, [applyTileInteraction, cameraBounds, centerOnTile, civilianMoveSelection, divisionAttackSelection, divisionMoveSelection, fleetMoveSelection, hexBuildPlacement, interactionLocked, mapArtifact, militaryFormationPlacement, onCancelHexBuildPlacement, onCancelMilitaryFormationPlacement, serverMapArtifact, setCameraTarget, tileById]);
+  }, [applyTileInteraction, cameraBounds, centerOnTile, civilianMoveSelection, corridorPlacement, divisionAttackSelection, divisionMoveSelection, fleetMoveSelection, hexBuildPlacement, interactionLocked, mapArtifact, militaryFormationPlacement, onCancelCorridorPlacement, onCancelHexBuildPlacement, onCancelMilitaryFormationPlacement, serverMapArtifact, setCameraTarget, tileById]);
 
   useEffect(() => {
     if (!hexBuildPlacement) return;
@@ -1344,6 +1417,16 @@ export function MapView({
     window.addEventListener("keydown", handleCancel);
     return () => window.removeEventListener("keydown", handleCancel);
   }, [hexBuildPlacement, onCancelHexBuildPlacement]);
+
+  useEffect(() => {
+    if (!corridorPlacement) return;
+    const handleCancel = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      onCancelCorridorPlacement?.();
+    };
+    window.addEventListener("keydown", handleCancel);
+    return () => window.removeEventListener("keydown", handleCancel);
+  }, [corridorPlacement, onCancelCorridorPlacement]);
 
   useEffect(() => {
     if (!militaryFormationPlacement) return;
@@ -1579,6 +1662,40 @@ export function MapView({
     }
     app.render();
   }, [camera, civilianMoveHoverPath, civilianMoveSelection, divisionMoveHoverPath, divisionMoveSelection, fleetMoveHoverPath, fleetMoveSelection, hexBuildPlacement, hoverPath, hoverState, mapArtifact, mapLayers, militaryFormationPlacement, militaryFormationValidHexIds, pixiReady, placementEvaluations, selectedTile, tileById, worldBase]);
+
+  useEffect(() => {
+    const layer = corridorLayerRef.current;
+    const app = appRef.current;
+    if (!pixiReady || !layer || !app || !app.renderer) return;
+    layer.removeChildren().forEach((child) => child.destroy());
+    const size = mapArtifact.settings.hexSize;
+    const textures = getCorridorAtlasTextures({
+      scenarioId,
+      onReady: () => setCorridorTextureVersion((value) => value + 1),
+    });
+    if (!textures) {
+      app.render();
+      return;
+    }
+    const previewTransportMode = corridorPlacement?.transportMode ?? "land";
+    const corridorTileLayers = new Map<string, Map<HexId, number>>();
+    for (const corridor of transportCorridors) {
+      const path = normalizeCorridorPath(corridor.computedHexIds && corridor.computedHexIds.length >= 2 ? corridor.computedHexIds : corridor.hexIds);
+      addCorridorPathMasks(corridorTileLayers, path, tileById, mapArtifact.settings, corridor.transportMode, getCorridorAtlasStatus(corridor));
+    }
+    drawTexturedCorridorTiles(layer, corridorTileLayers, tileById, size, textures, false);
+    if (corridorFixedPreviewPath.length > 1) {
+      const previewTileLayers = new Map<string, Map<HexId, number>>();
+      addCorridorPathMasks(previewTileLayers, corridorFixedPreviewPath, tileById, mapArtifact.settings, previewTransportMode, "planned");
+      drawTexturedCorridorTiles(layer, previewTileLayers, tileById, size, textures, true);
+    }
+    if (corridorDraftPreviewPath.length > 1) {
+      const draftTileLayers = new Map<string, Map<HexId, number>>();
+      addCorridorPathMasks(draftTileLayers, corridorDraftPreviewPath, tileById, mapArtifact.settings, previewTransportMode, "planned");
+      drawTexturedCorridorTiles(layer, draftTileLayers, tileById, size, textures, true, 0.62);
+    }
+    app.render();
+  }, [corridorDraftPreviewPath, corridorFixedPreviewPath, corridorPlacement, corridorTextureVersion, mapArtifact.settings, mapArtifact.settings.hexSize, pixiReady, scenarioId, tileById, transportCorridors]);
 
   useEffect(() => {
     const layer = buildingLayerRef.current;
@@ -2129,6 +2246,21 @@ export function MapView({
             </button>
           </div>
         </div>
+      ) : null}
+      {corridorPlacement ? (
+        <CorridorBuildHud
+          points={corridorPlacement.points}
+          hexIds={corridorHudPreviewPath}
+          transportMode={corridorPlacement.transportMode}
+          costConstruction={corridorPlacement.costConstruction ?? null}
+          connectedRegionIds={corridorPlacement.connectedRegionIds ?? []}
+          blockingReason={corridorPlacement.blockingReason ?? null}
+          pending={corridorPlacement.pending}
+          getHexDisplayName={(hexId) => hexId}
+          onUndoPoint={onUndoCorridorPlacementPoint ?? (() => undefined)}
+          onCancel={onCancelCorridorPlacement ?? (() => undefined)}
+          onConfirm={onConfirmCorridorPlacement ?? (() => undefined)}
+        />
       ) : null}
       {civilianMoveSelection ? (
         <div className="arc-map-build-placement-hud arc-hud-panel" role="status">
@@ -2777,7 +2909,15 @@ function drawHexFillAndOutline(graphics: Graphics, tile: HexTile, size: number, 
   graphics.poly(points, true).fill({ color: fillColor, alpha: 0.45 }).stroke({ color: borderColor, width: 2.2, alpha: 0.9 });
 }
 
-function drawPathOverlay(graphics: Graphics, path: HexId[], tileById: Map<HexId, HexTile>, size: number): void {
+function drawPathOverlay(
+  graphics: Graphics,
+  path: HexId[],
+  tileById: Map<HexId, HexTile>,
+  size: number,
+  color = 0xf1df8b,
+  alpha = 0.74,
+  width = 2.5,
+): void {
   let first = true;
   for (const hexId of path) {
     const tile = tileById.get(hexId);
@@ -2790,7 +2930,100 @@ function drawPathOverlay(graphics: Graphics, path: HexId[], tileById: Map<HexId,
       graphics.lineTo(center.x, center.y);
     }
   }
-  graphics.stroke({ color: 0xf1df8b, width: 2.5, alpha: 0.74 });
+  graphics.stroke({ color, width, alpha });
+}
+
+function normalizeCorridorPath(input: readonly string[] | undefined): HexId[] {
+  return (input ?? []).filter((hexId): hexId is HexId => /^hex:-?\d+:-?\d+$/.test(hexId));
+}
+
+function mergeHexPaths(left: readonly HexId[], right: readonly HexId[]): HexId[] {
+  if (left.length === 0) return [...right];
+  if (right.length === 0) return [...left];
+  return left[left.length - 1] === right[0] ? [...left, ...right.slice(1)] : [...left, ...right];
+}
+
+function getCorridorAtlasStatus(corridor: MarketTransportCorridor): CorridorAtlasStatus {
+  const capacity = Math.max(0, Number(corridor.lastCapacityByMode?.[corridor.transportMode] ?? 0));
+  const load = Math.max(0, Number(corridor.lastLoadByMode?.[corridor.transportMode] ?? 0));
+  if (corridor.status === "closed") return "closed";
+  if (corridor.status === "building") return "building";
+  if (capacity > 0 && load > capacity) return "overloaded";
+  return "active";
+}
+
+function addCorridorPathMasks(
+  layers: Map<string, Map<HexId, number>>,
+  path: readonly HexId[],
+  tileById: Map<HexId, HexTile>,
+  settings: Pick<HexMapSettings, "width" | "height" | "wrapX">,
+  transportMode: TransportMode,
+  status: CorridorAtlasStatus,
+): void {
+  if (path.length === 0) return;
+  const key = `${transportMode}:${status}`;
+  const masks = layers.get(key) ?? new Map<HexId, number>();
+  layers.set(key, masks);
+  for (let index = 0; index < path.length; index += 1) {
+    const hexId = path[index];
+    if (!tileById.has(hexId)) continue;
+    let mask = masks.get(hexId) ?? 0;
+    const previousHexId = path[index - 1];
+    const nextHexId = path[index + 1];
+    if (previousHexId) mask |= getCorridorConnectionBit(hexId, previousHexId, tileById, settings);
+    if (nextHexId) mask |= getCorridorConnectionBit(hexId, nextHexId, tileById, settings);
+    masks.set(hexId, mask);
+  }
+}
+
+function getCorridorConnectionBit(
+  fromHexId: HexId,
+  toHexId: HexId,
+  tileById: Map<HexId, HexTile>,
+  settings: Pick<HexMapSettings, "width" | "height" | "wrapX">,
+): number {
+  const fromTile = tileById.get(fromHexId);
+  if (!fromTile) return 0;
+  for (let direction = 0; direction < 6; direction += 1) {
+    const neighbor = getNeighborAxial(fromTile, direction as 0 | 1 | 2 | 3 | 4 | 5, settings);
+    if (neighbor && makeHexId(neighbor.q, neighbor.r) === toHexId) return 1 << direction;
+  }
+  return 0;
+}
+
+function drawTexturedCorridorTiles(
+  layer: Container,
+  tileLayers: Map<string, Map<HexId, number>>,
+  tileById: Map<HexId, HexTile>,
+  size: number,
+  textures: CorridorAtlasTextures,
+  preview: boolean,
+  alphaMultiplier = 1,
+): void {
+  const tileSize = Math.max(size * 2.05, 18);
+  for (const [key, masks] of tileLayers) {
+    const [transportMode, status] = key.split(":") as [TransportMode, CorridorAtlasStatus];
+    for (const [hexId, rawMask] of masks) {
+      const tile = tileById.get(hexId);
+      const texture = textures[transportMode]?.[status]?.[Math.max(0, Math.min(63, rawMask))];
+      if (!tile || !texture) continue;
+      const center = axialToPixel(tile, size);
+      const sprite = new Sprite(texture);
+      sprite.anchor.set(0.5);
+      sprite.position.set(center.x, center.y);
+      sprite.width = tileSize;
+      sprite.height = tileSize;
+      sprite.alpha = getCorridorTextureAlpha(status, preview) * alphaMultiplier;
+      layer.addChild(sprite);
+    }
+  }
+}
+
+function getCorridorTextureAlpha(status: CorridorAtlasStatus, preview: boolean): number {
+  if (preview) return 0.96;
+  if (status === "closed") return 0.42;
+  if (status === "building") return 0.82;
+  return 0.92;
 }
 
 function calculateHexPathMovementCost(

@@ -4,6 +4,8 @@ export type TransportCorridorConstructionEntry = {
   id: string;
   ownerCountryId: string;
   status: "building" | "active" | "closed";
+  level?: number | null;
+  pendingLevel?: number | null;
   progressConstruction: number;
   costConstruction: number;
   completedAt?: string | null;
@@ -31,6 +33,7 @@ export type TransportCorridorRouteEntry<TMode extends string = string> = {
   marketId?: string | null;
   status: "building" | "active" | "closed";
   transportMode: TMode;
+  computedHexIds?: string[];
   hexIds?: string[];
   routePoints?: Array<{ hexId: string }>;
   level?: number | null;
@@ -64,7 +67,9 @@ export function getCorridorRouteHexIds<TMode extends string, TCorridor extends T
   normalizeHexIds: (hexIds: unknown) => string[],
 ): string[] {
   return normalizeHexIds(
-    corridor.routePoints && corridor.routePoints.length >= 2
+    corridor.computedHexIds && corridor.computedHexIds.length >= 2
+      ? corridor.computedHexIds
+      : corridor.routePoints && corridor.routePoints.length >= 2
       ? corridor.routePoints.map((point) => point.hexId)
       : corridor.hexIds,
   );
@@ -418,6 +423,10 @@ export function resolveTransportCorridorConstructionTurn(params: {
     if (corridor.progressConstruction >= corridor.costConstruction) {
       corridor.status = "active";
       corridor.progressConstruction = corridor.costConstruction;
+      if (corridor.pendingLevel && corridor.pendingLevel > Number(corridor.level ?? 0)) {
+        corridor.level = Math.floor(corridor.pendingLevel);
+        corridor.pendingLevel = null;
+      }
       corridor.completedAt = params.nowIso;
     }
   }

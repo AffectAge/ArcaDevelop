@@ -212,15 +212,22 @@ export type TransportCorridorRoutePoint = {
 
 export type TransportCorridorEntry = {
   id: string;
+  schemaVersion?: 2;
   marketId: string;
   ownerCountryId: string;
   hexIds: string[];
   routePoints?: TransportCorridorRoutePoint[];
+  waypoints?: TransportCorridorRoutePoint[];
+  computedHexIds?: string[];
+  connectedRegionIds?: string[];
+  connectedCityMarkerIds?: string[];
   transportMode: GoodTransportMode;
   level: number;
+  pendingLevel?: number | null;
   status: TransportCorridorStatus;
   progressConstruction: number;
   costConstruction: number;
+  routeCost?: number;
   lastLoadByMode?: Record<string, number>;
   lastCapacityByMode?: Record<string, number>;
   lastLoadHistoryByMode?: Record<string, number[]>;

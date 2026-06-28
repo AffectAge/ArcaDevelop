@@ -50,11 +50,17 @@ import {
   acceptDiplomacyProposal,
   cancelMilitaryFormation,
   cancelCountryBuild,
+  createMarketTransportCorridor,
   createMilitaryFormation,
   queueCountryColonizer,
+  previewMarketTransportCorridor,
   rejectDiplomacyProposal,
   type ContentEntry,
+  type MarketTransportCorridor,
   type MarketOverviewResponse,
+  type MarketTransportCorridorPreview,
+  type TransportMode,
+  updateMarketTransportCorridor,
 } from "./lib/api";
 import { BASE_RESOURCE_ICON_URLS } from "./assets/baseResourceIcons";
 import { useWs } from "./lib/useWs";
@@ -77,6 +83,16 @@ type RegistrationApprovalCountry = Extract<
   { type: "registration-approval" }
 >["country"];
 type ElectionResultsAction = Extract<InAppUiNotification["action"], { type: "election-results" }>;
+type CorridorPlacementState = {
+  transportMode: TransportMode;
+  points: Array<{ hexId: HexId; lng: number; lat: number }>;
+  previewHexIds: HexId[];
+  costConstruction: number | null;
+  connectedRegionIds: string[];
+  blockingReason: string | null;
+  pending: boolean;
+  previewNonce: number;
+};
 const RESOLVE_START_TIMEOUT_MS = 12_000;
 const MARKET_SHELL_PARTNER_LIMIT = 3;
 
@@ -116,6 +132,28 @@ function getFormationErrorKey(code: string): UiTextKey {
       return "army.formationError.notEnoughEquipment";
     default:
       return "army.formationError.generic";
+  }
+}
+
+function getCorridorErrorKey(code: string): UiTextKey {
+  switch (code) {
+    case "CORRIDOR_ROUTE_TOO_SHORT":
+      return "shell.infrastructure.error.routeTooShort";
+    case "CORRIDOR_ENDPOINT_CITY_REQUIRED":
+      return "shell.infrastructure.error.cityEndpointRequired";
+    case "CORRIDOR_ROUTE_IMPOSSIBLE":
+      return "shell.infrastructure.error.routeImpossible";
+    case "CORRIDOR_CONSTRUCTION_RIGHT_REQUIRED":
+      return "shell.infrastructure.error.constructionRightRequired";
+    case "CORRIDOR_NOT_BUILDING":
+      return "shell.infrastructure.error.notBuilding";
+    case "CORRIDOR_STILL_BUILDING":
+      return "shell.infrastructure.error.stillBuilding";
+    case "NOT_MARKET_MEMBER":
+    case "FORBIDDEN":
+      return "shell.infrastructure.error.marketAccess";
+    default:
+      return "shell.infrastructure.error.generic";
   }
 }
 
@@ -300,8 +338,10 @@ export default function App() {
   const [marketOpen, setMarketOpen] = useState(false);
   const [globalMarketOpen, setGlobalMarketOpen] = useState(false);
   const [marketShellOverview, setMarketShellOverview] = useState<MarketOverviewResponse | null>(null);
+  const [marketTransportCorridors, setMarketTransportCorridors] = useState<MarketTransportCorridor[]>([]);
   const [marketShellCountries, setMarketShellCountries] = useState<Country[]>([]);
   const [marketShellLoading, setMarketShellLoading] = useState(false);
+  const [corridorPlacement, setCorridorPlacement] = useState<CorridorPlacementState | null>(null);
   const [politicsOpen, setPoliticsOpen] = useState(false);
   const [technologyOpen, setTechnologyOpen] = useState(false);
   const [modifiersOpen, setModifiersOpen] = useState(false);
@@ -953,7 +993,7 @@ export default function App() {
   }, [auth?.countryId]);
 
   useEffect(() => {
-    if (!auth?.token || !strategyWorkspaceOpen || activeStrategyMode !== "market") return;
+    if (!auth?.token || !strategyWorkspaceOpen || (activeStrategyMode !== "market" && activeStrategyMode !== "construction")) return;
 
     let cancelled = false;
     setMarketShellLoading(true);
@@ -961,11 +1001,13 @@ export default function App() {
       .then(([overview, countries]) => {
         if (cancelled) return;
         setMarketShellOverview(overview);
+        setMarketTransportCorridors(overview.transportCorridors ?? []);
         setMarketShellCountries(countries);
       })
       .catch(() => {
         if (cancelled) return;
         setMarketShellOverview(null);
+        setMarketTransportCorridors([]);
         setMarketShellCountries([]);
       })
       .finally(() => {
@@ -1405,6 +1447,175 @@ export default function App() {
   const focusConstructionHex = useCallback((hexId: HexId) => {
     setMapFocusRequest((current) => ({ hexId, nonce: (current?.nonce ?? 0) + 1 }));
   }, []);
+  const startInfrastructurePlacement = useCallback((transportMode: TransportMode) => {
+    setActiveStrategyMode("construction");
+    setStrategyWorkspaceOpen(true);
+    setHexBuildPlacement(null);
+    setHexBuildConfirmTarget(null);
+    setCorridorPlacement({
+      transportMode,
+      points: [],
+      previewHexIds: [],
+      costConstruction: null,
+      connectedRegionIds: [],
+      blockingReason: null,
+      pending: false,
+      previewNonce: 0,
+    });
+  }, []);
+  const selectCorridorPlacementPoint = useCallback((point: { hexId: HexId; regionId: string; lng: number; lat: number }) => {
+    setCorridorPlacement((current) => {
+      if (!current) return current;
+      const last = current.points[current.points.length - 1];
+      if (last?.hexId === point.hexId) return current;
+      return {
+        ...current,
+        points: [...current.points, { hexId: point.hexId, lng: point.lng, lat: point.lat }],
+        blockingReason: null,
+        pending: current.points.length >= 1,
+        previewNonce: current.previewNonce + 1,
+      };
+    });
+  }, []);
+  const undoCorridorPlacementPoint = useCallback(() => {
+    setCorridorPlacement((current) => {
+      if (!current || current.points.length === 0) return current;
+      const points = current.points.slice(0, -1);
+      return {
+        ...current,
+        points,
+        previewHexIds: points.length >= 2 ? current.previewHexIds : [],
+        costConstruction: points.length >= 2 ? current.costConstruction : null,
+        connectedRegionIds: points.length >= 2 ? current.connectedRegionIds : [],
+        blockingReason: null,
+        pending: points.length >= 2,
+        previewNonce: current.previewNonce + 1,
+      };
+    });
+  }, []);
+  const cancelCorridorPlacement = useCallback(() => {
+    setCorridorPlacement(null);
+  }, []);
+  const confirmCorridorPlacement = useCallback(async () => {
+    if (!auth?.token || !corridorPlacement || corridorPlacement.points.length < 2) {
+      toast.error(t("shell.infrastructure.error.routeTooShort"));
+      return;
+    }
+    const marketId = marketShellOverview?.marketId ?? auth.countryId;
+    if (!marketId) {
+      toast.error(t("shell.infrastructure.error.marketAccess"));
+      return;
+    }
+    setCorridorPlacement((current) => current ? { ...current, pending: true } : current);
+    try {
+      const result = await createMarketTransportCorridor(auth.token, marketId, {
+        waypoints: corridorPlacement.points,
+        transportMode: corridorPlacement.transportMode,
+      });
+      setMarketTransportCorridors(result.corridors);
+      setMarketShellOverview((current) => current ? { ...current, transportCorridors: result.corridors } : current);
+      setCorridorPlacement(null);
+      toast.success(t("shell.infrastructure.createSuccess"));
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "MARKET_CORRIDOR_CREATE_FAILED";
+      setCorridorPlacement((current) => current ? { ...current, pending: false, blockingReason: t(getCorridorErrorKey(code)) } : current);
+      toast.error(t(getCorridorErrorKey(code)));
+    }
+  }, [auth?.countryId, auth?.token, corridorPlacement, marketShellOverview?.marketId, t]);
+  const upgradeInfrastructureCorridor = useCallback(async (corridor: MarketTransportCorridor) => {
+    if (!auth?.token) return;
+    const marketId = corridor.marketId || marketShellOverview?.marketId || auth.countryId;
+    try {
+      const result = await updateMarketTransportCorridor(auth.token, marketId, corridor.id, { action: "upgrade" });
+      setMarketTransportCorridors(result.corridors);
+      setMarketShellOverview((current) => current ? { ...current, transportCorridors: result.corridors } : current);
+      toast.success(t("shell.infrastructure.upgradeSuccess"));
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "MARKET_CORRIDOR_UPDATE_FAILED";
+      toast.error(t(getCorridorErrorKey(code)));
+    }
+  }, [auth?.countryId, auth?.token, marketShellOverview?.marketId, t]);
+  const cancelInfrastructureCorridor = useCallback(async (corridor: MarketTransportCorridor) => {
+    if (!auth?.token) return;
+    if (!window.confirm(t("shell.infrastructure.cancelConfirm"))) return;
+    const marketId = corridor.marketId || marketShellOverview?.marketId || auth.countryId;
+    try {
+      const result = await updateMarketTransportCorridor(auth.token, marketId, corridor.id, { action: "cancel" });
+      setMarketTransportCorridors(result.corridors);
+      setMarketShellOverview((current) => current ? { ...current, transportCorridors: result.corridors } : current);
+      toast.success(t("shell.infrastructure.cancelSuccess"));
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "MARKET_CORRIDOR_UPDATE_FAILED";
+      toast.error(t(getCorridorErrorKey(code)));
+    }
+  }, [auth?.countryId, auth?.token, marketShellOverview?.marketId, t]);
+  const demolishInfrastructureCorridor = useCallback(async (corridor: MarketTransportCorridor) => {
+    if (!auth?.token) return;
+    if (!window.confirm(t("shell.infrastructure.demolishConfirm"))) return;
+    const marketId = corridor.marketId || marketShellOverview?.marketId || auth.countryId;
+    try {
+      const result = await updateMarketTransportCorridor(auth.token, marketId, corridor.id, { action: "demolish" });
+      setMarketTransportCorridors(result.corridors);
+      setMarketShellOverview((current) => current ? { ...current, transportCorridors: result.corridors } : current);
+      toast.success(t("shell.infrastructure.demolishSuccess"));
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "MARKET_CORRIDOR_UPDATE_FAILED";
+      toast.error(t(getCorridorErrorKey(code)));
+    }
+  }, [auth?.countryId, auth?.token, marketShellOverview?.marketId, t]);
+  useEffect(() => {
+    if (!auth?.token || !corridorPlacement || corridorPlacement.points.length < 2) return;
+    const marketId = marketShellOverview?.marketId ?? auth.countryId;
+    if (!marketId) return;
+    const nonce = corridorPlacement.previewNonce;
+    let canceled = false;
+    setCorridorPlacement((current) => current ? { ...current, pending: true } : current);
+    previewMarketTransportCorridor(auth.token, marketId, {
+      waypoints: corridorPlacement.points,
+      transportMode: corridorPlacement.transportMode,
+    })
+      .then((result: { preview: MarketTransportCorridorPreview }) => {
+        if (canceled) return;
+        setCorridorPlacement((current) => {
+          if (!current || current.previewNonce !== nonce) return current;
+          return {
+            ...current,
+            previewHexIds: result.preview.computedHexIds.filter(isHexId),
+            costConstruction: result.preview.costConstruction,
+            connectedRegionIds: result.preview.connectedRegionIds,
+            blockingReason: null,
+            pending: false,
+          };
+        });
+      })
+      .catch((error) => {
+        if (canceled) return;
+        const code = error instanceof Error ? error.message : "MARKET_CORRIDOR_PREVIEW_FAILED";
+        setCorridorPlacement((current) => {
+          if (!current || current.previewNonce !== nonce) return current;
+          if (code === "CORRIDOR_ENDPOINT_CITY_REQUIRED") {
+            return {
+              ...current,
+              costConstruction: null,
+              connectedRegionIds: [],
+              blockingReason: null,
+              pending: false,
+            };
+          }
+          return {
+            ...current,
+            previewHexIds: [],
+            costConstruction: null,
+            connectedRegionIds: [],
+            blockingReason: t(getCorridorErrorKey(code)),
+            pending: false,
+          };
+        });
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [auth?.countryId, auth?.token, corridorPlacement?.previewNonce, marketShellOverview?.marketId, t]);
   const canceledConstructionQueueKeyList = useMemo(
     () => [...canceledConstructionQueueKeys],
     [canceledConstructionQueueKeys],
@@ -2448,6 +2659,12 @@ export default function App() {
         onCancelConstructionProject={cancelConstructionQueueProject}
         canceledConstructionQueueKeys={canceledConstructionQueueKeyList}
         hexBuildPlacement={hexBuildPlacement}
+        transportCorridors={marketTransportCorridors}
+        corridorPlacement={corridorPlacement}
+        onSelectCorridorPlacementPoint={selectCorridorPlacementPoint}
+        onUndoCorridorPlacementPoint={undoCorridorPlacementPoint}
+        onCancelCorridorPlacement={cancelCorridorPlacement}
+        onConfirmCorridorPlacement={confirmCorridorPlacement}
         onCancelHexBuildPlacement={() => {
           setHexBuildPlacement(null);
           setHexBuildConfirmTarget(null);
@@ -2637,10 +2854,16 @@ export default function App() {
             constructionProjection={myConstructionProjection}
             technologyProjection={myTechnologyProjection}
             constructionQueuePreview={constructionQueuePreview}
+            infrastructureCorridors={marketTransportCorridors}
+            activeInfrastructureTransportMode={corridorPlacement?.transportMode ?? null}
             cancelingConstructionQueueKey={cancelingConstructionQueueKey}
             onCancelConstructionProject={cancelConstructionQueueProject}
             onFocusConstructionHex={focusConstructionHex}
             onFocusHex={focusConstructionHex}
+            onStartInfrastructurePlacement={startInfrastructurePlacement}
+            onUpgradeInfrastructureCorridor={upgradeInfrastructureCorridor}
+            onCancelInfrastructureCorridor={cancelInfrastructureCorridor}
+            onDemolishInfrastructureCorridor={demolishInfrastructureCorridor}
             populationPreview={populationPreview}
             marketPreview={marketPreview}
             marketTradeRows={marketTradeRows}

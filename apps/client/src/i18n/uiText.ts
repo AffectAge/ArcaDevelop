@@ -2067,6 +2067,37 @@ export type UiTextKey =
   | "corridorBuild.title"
   | "corridorBuild.summary"
   | "corridorBuild.undoPoint"
+  | "corridorBuild.transportMode"
+  | "corridorBuild.cost"
+  | "corridorBuild.connectedRegions"
+  | "shell.infrastructure.title"
+  | "shell.infrastructure.empty"
+  | "shell.infrastructure.rowMeta"
+  | "shell.infrastructure.upgradeTooltip"
+  | "shell.infrastructure.cancelTooltip"
+  | "shell.infrastructure.demolishTooltip"
+  | "shell.infrastructure.createSuccess"
+  | "shell.infrastructure.upgradeSuccess"
+  | "shell.infrastructure.cancelSuccess"
+  | "shell.infrastructure.demolishSuccess"
+  | "shell.infrastructure.cancelConfirm"
+  | "shell.infrastructure.demolishConfirm"
+  | "shell.infrastructure.mode.land"
+  | "shell.infrastructure.mode.sea"
+  | "shell.infrastructure.mode.air"
+  | "shell.infrastructure.mode.pipeline"
+  | "shell.infrastructure.mode.powerGrid"
+  | "shell.infrastructure.status.building"
+  | "shell.infrastructure.status.active"
+  | "shell.infrastructure.status.closed"
+  | "shell.infrastructure.error.routeTooShort"
+  | "shell.infrastructure.error.cityEndpointRequired"
+  | "shell.infrastructure.error.routeImpossible"
+  | "shell.infrastructure.error.constructionRightRequired"
+  | "shell.infrastructure.error.notBuilding"
+  | "shell.infrastructure.error.stillBuilding"
+  | "shell.infrastructure.error.marketAccess"
+  | "shell.infrastructure.error.generic"
   | "colonization.title"
   | "colonization.fallbackRegion"
   | "colonization.area"
@@ -3119,6 +3150,7 @@ export type UiTextKey =
   | "shell.workspaceTab.buildings"
   | "shell.workspaceTab.constructionQueue"
   | "shell.workspaceTab.formation"
+  | "shell.workspaceTab.infrastructure"
   | "shell.workspaceTab.records"
   | "shell.workspaceTab.summary"
   | "shell.workspaceTab.trade"
@@ -5278,8 +5310,39 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "provincePanel.pin": "Pin panel",
     "provincePanel.unpin": "Unpin panel",
     "corridorBuild.title": "Corridor construction",
-    "corridorBuild.summary": "Route points: {points}. Hexes: {provinces}. Click your provinces to lay the path.",
+    "corridorBuild.summary": "Route points: {points}. Hexes: {hexes}. Click city endpoints and optional route points.",
     "corridorBuild.undoPoint": "Remove point",
+    "corridorBuild.transportMode": "Mode",
+    "corridorBuild.cost": "Cost",
+    "corridorBuild.connectedRegions": "Regions",
+    "shell.infrastructure.title": "Infrastructure",
+    "shell.infrastructure.empty": "No transport corridors yet.",
+    "shell.infrastructure.rowMeta": "Level {level}. Regions {regions}. Hexes {hexes}.",
+    "shell.infrastructure.upgradeTooltip": "Upgrade corridor",
+    "shell.infrastructure.cancelTooltip": "Cancel corridor construction",
+    "shell.infrastructure.demolishTooltip": "Demolish corridor",
+    "shell.infrastructure.createSuccess": "Transport corridor project queued.",
+    "shell.infrastructure.upgradeSuccess": "Corridor upgrade queued.",
+    "shell.infrastructure.cancelSuccess": "Corridor construction canceled.",
+    "shell.infrastructure.demolishSuccess": "Corridor demolished.",
+    "shell.infrastructure.cancelConfirm": "Cancel this corridor construction project? Progress spent on it will be lost.",
+    "shell.infrastructure.demolishConfirm": "Demolish this transport corridor? Connected regions may lose corridor access.",
+    "shell.infrastructure.mode.land": "Road/Rail",
+    "shell.infrastructure.mode.sea": "Sea lane",
+    "shell.infrastructure.mode.air": "Air route",
+    "shell.infrastructure.mode.pipeline": "Pipeline",
+    "shell.infrastructure.mode.powerGrid": "Power grid",
+    "shell.infrastructure.status.building": "Building",
+    "shell.infrastructure.status.active": "Active",
+    "shell.infrastructure.status.closed": "Closed",
+    "shell.infrastructure.error.routeTooShort": "Choose at least two route points.",
+    "shell.infrastructure.error.cityEndpointRequired": "The first and last points must be city nodes.",
+    "shell.infrastructure.error.routeImpossible": "No valid route exists for this transport mode.",
+    "shell.infrastructure.error.constructionRightRequired": "Construction or transit rights are missing on this route.",
+    "shell.infrastructure.error.notBuilding": "Only active corridor construction can be canceled.",
+    "shell.infrastructure.error.stillBuilding": "Finish or cancel construction before demolishing this corridor.",
+    "shell.infrastructure.error.marketAccess": "This country is not allowed to build in that market.",
+    "shell.infrastructure.error.generic": "Could not build this transport corridor.",
     "colonization.title": "Colonization: {region}",
     "colonization.fallbackRegion": "Region",
     "colonization.area": "Area: {area}",
@@ -6363,6 +6426,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.workspaceTab.buildings": "Building construction",
     "shell.workspaceTab.constructionQueue": "Construction queue",
     "shell.workspaceTab.formation": "Formation",
+    "shell.workspaceTab.infrastructure": "Infrastructure",
     "shell.workspaceTab.records": "Records",
     "shell.workspaceTab.summary": "Country summary",
     "shell.workspaceTab.trade": "Trade",
@@ -8490,8 +8554,39 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "provincePanel.pin": "Закрепить панель",
     "provincePanel.unpin": "Открепить панель",
     "corridorBuild.title": "Строительство коридора",
-    "corridorBuild.summary": "Точек маршрута: {points}. Провинций: {provinces}. Кликайте по своим провинциям, чтобы прокладывать путь.",
+    "corridorBuild.summary": "Точек маршрута: {points}. Гексов: {hexes}. Выберите города на концах и промежуточные точки.",
     "corridorBuild.undoPoint": "Убрать точку",
+    "corridorBuild.transportMode": "Тип",
+    "corridorBuild.cost": "Стоимость",
+    "corridorBuild.connectedRegions": "Регионы",
+    "shell.infrastructure.title": "Инфраструктура",
+    "shell.infrastructure.empty": "Транспортных коридоров пока нет.",
+    "shell.infrastructure.rowMeta": "Уровень {level}. Регионов {regions}. Гексов {hexes}.",
+    "shell.infrastructure.upgradeTooltip": "Улучшить коридор",
+    "shell.infrastructure.cancelTooltip": "Отменить строительство коридора",
+    "shell.infrastructure.demolishTooltip": "Снести коридор",
+    "shell.infrastructure.createSuccess": "Проект транспортного коридора добавлен в очередь.",
+    "shell.infrastructure.upgradeSuccess": "Улучшение коридора добавлено в очередь.",
+    "shell.infrastructure.cancelSuccess": "Строительство коридора отменено.",
+    "shell.infrastructure.demolishSuccess": "Коридор снесен.",
+    "shell.infrastructure.cancelConfirm": "Отменить строительство этого коридора? Потраченный на него прогресс будет потерян.",
+    "shell.infrastructure.demolishConfirm": "Снести этот транспортный коридор? Подключенные регионы могут потерять доступ к коридорам.",
+    "shell.infrastructure.mode.land": "Дорога/рельсы",
+    "shell.infrastructure.mode.sea": "Морской путь",
+    "shell.infrastructure.mode.air": "Воздушный маршрут",
+    "shell.infrastructure.mode.pipeline": "Трубопровод",
+    "shell.infrastructure.mode.powerGrid": "Энергосеть",
+    "shell.infrastructure.status.building": "Строится",
+    "shell.infrastructure.status.active": "Активен",
+    "shell.infrastructure.status.closed": "Закрыт",
+    "shell.infrastructure.error.routeTooShort": "Выберите минимум две точки маршрута.",
+    "shell.infrastructure.error.cityEndpointRequired": "Первая и последняя точки должны быть городскими узлами.",
+    "shell.infrastructure.error.routeImpossible": "Для этого типа транспорта нет допустимого маршрута.",
+    "shell.infrastructure.error.constructionRightRequired": "На маршруте не хватает прав строительства или транзита.",
+    "shell.infrastructure.error.notBuilding": "Отменить можно только активное строительство коридора.",
+    "shell.infrastructure.error.stillBuilding": "Перед сносом завершите или отмените строительство коридора.",
+    "shell.infrastructure.error.marketAccess": "Эта страна не может строить в этом рынке.",
+    "shell.infrastructure.error.generic": "Не удалось построить транспортный коридор.",
     "colonization.title": "Колонизация: {region}",
     "colonization.fallbackRegion": "Регион",
     "colonization.area": "Площадь: {area}",
@@ -9575,6 +9670,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.workspaceTab.buildings": "Строительство зданий",
     "shell.workspaceTab.constructionQueue": "Очередь строительства",
     "shell.workspaceTab.formation": "Формирование",
+    "shell.workspaceTab.infrastructure": "Инфраструктура",
     "shell.workspaceTab.records": "Записи",
     "shell.workspaceTab.summary": "Сводка страны",
     "shell.workspaceTab.trade": "Торговля",

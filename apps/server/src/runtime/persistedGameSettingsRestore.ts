@@ -372,27 +372,39 @@ function restoreTransportCorridorsById(
   return Object.fromEntries(
     Object.entries(next.markets.transportCorridorsById as Record<string, unknown>).flatMap(([corridorId, raw]) => {
       const value = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+      if (value.schemaVersion !== 2) return [];
       const marketId = typeof value.marketId === "string" ? value.marketId.trim() : "";
-      const hexIds = normalizeHexIdList(value.hexIds);
+      const hexIds = normalizeHexIdList(value.computedHexIds);
+      const waypoints = normalizeTransportCorridorRoutePoints(value.waypoints);
       if (!marketId || hexIds.length < 2) return [];
+      if (waypoints.length < 2) return [];
       const transportMode = normalizeTransportMode(value.transportMode);
+      const routeCost = Math.max(1, Number(value.routeCost ?? hexIds.length - 1) || 1);
       const costConstruction = Math.max(
         1,
-        Math.floor(Number(value.costConstruction ?? getTransportCorridorBuildCost(transportMode, hexIds.length - 1)) || 1),
+        Math.floor(Number(value.costConstruction ?? getTransportCorridorBuildCost(transportMode, routeCost, hexIds.length - 1)) || 1),
       );
+      const level = Math.max(1, Math.floor(Number(value.level ?? 1) || 1));
       return [[
         corridorId,
         {
           id: corridorId,
+          schemaVersion: 2,
           marketId,
           ownerCountryId: typeof value.ownerCountryId === "string" ? value.ownerCountryId.trim() : "",
           hexIds,
-          routePoints: normalizeTransportCorridorRoutePoints(value.routePoints).filter((point) => hexIds.includes(point.hexId)),
+          routePoints: waypoints,
+          waypoints,
+          computedHexIds: hexIds,
+          connectedRegionIds: normalizeHexIdList(value.connectedRegionIds),
+          connectedCityMarkerIds: normalizeHexIdList(value.connectedCityMarkerIds),
           transportMode,
-          level: Math.max(1, Math.floor(Number(value.level ?? 1) || 1)),
+          level,
+          pendingLevel: value.pendingLevel ? Math.max(level + 1, Math.floor(Number(value.pendingLevel) || level + 1)) : null,
           status: normalizeTransportCorridorStatus(value.status),
           progressConstruction: Math.max(0, Math.min(costConstruction, Number(value.progressConstruction ?? 0) || 0)),
           costConstruction,
+          routeCost,
           lastLoadByMode: normalizeCategoryAmountMap((value as { lastLoadByMode?: unknown }).lastLoadByMode),
           lastCapacityByMode: normalizeCategoryAmountMap((value as { lastCapacityByMode?: unknown }).lastCapacityByMode),
           lastLoadHistoryByMode: Object.fromEntries(

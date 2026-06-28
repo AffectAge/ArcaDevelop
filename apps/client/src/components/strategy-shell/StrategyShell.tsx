@@ -19,13 +19,16 @@ import {
   Menu,
   Network,
   Package,
+  RadioTower,
   PlusCircle,
   ScrollText,
   Shield,
+  Ship,
   SkipForward,
   ListChecks,
   SlidersHorizontal,
   Sparkles,
+  Trash2,
   Users,
   Wallet,
   Wrench,
@@ -40,6 +43,7 @@ import { useUiText } from "../../i18n/useUiText";
 import { Tooltip, type TooltipStructuredContent } from "../Tooltip";
 import { BuildingAtlasIcon } from "../BuildingAtlasIcon";
 import type { ArmyLogisticsRow } from "./armyLogistics";
+import type { MarketTransportCorridor, TransportMode } from "../../lib/api";
 
 export type StrategyMode = "overview" | "construction" | "colonization" | "population" | "market" | "diplomacy" | "army" | "governance";
 
@@ -72,7 +76,7 @@ type ActionItem = {
   tone?: "primary" | "danger";
 };
 
-type WorkspaceTabKey = "actions" | "summary" | "records" | "trade" | "buildings" | "warehouses" | "formation";
+type WorkspaceTabKey = "actions" | "summary" | "records" | "trade" | "buildings" | "infrastructure" | "warehouses" | "formation";
 
 type BuildingListEntry = {
   id: string;
@@ -186,6 +190,8 @@ type Props = {
     industryId?: string | null;
     sectorId?: string | null;
   }>;
+  infrastructureCorridors?: MarketTransportCorridor[];
+  activeInfrastructureTransportMode?: TransportMode | null;
   cancelingConstructionQueueKey?: string | null;
   populationPreview?: GenericPreviewItem[];
   marketPreview?: GenericPreviewItem[];
@@ -234,6 +240,10 @@ type Props = {
   onOpenBudget: () => void;
   onOpenBuildingOverview?: () => void;
   onOpenBuildingConstruction?: (buildingId: string) => void;
+  onStartInfrastructurePlacement?: (transportMode: TransportMode) => void;
+  onUpgradeInfrastructureCorridor?: (corridor: MarketTransportCorridor) => void;
+  onCancelInfrastructureCorridor?: (corridor: MarketTransportCorridor) => void;
+  onDemolishInfrastructureCorridor?: (corridor: MarketTransportCorridor) => void;
   onCancelConstructionProject?: (item: ConstructionCancelPayload) => void;
   onFocusConstructionHex?: (hexId: HexId) => void;
   onFocusHex?: (hexId: HexId) => void;
@@ -287,6 +297,7 @@ const workspaceTabDescriptors: Array<{ key: WorkspaceTabKey; labelKey: UiTextKey
   { key: "records", labelKey: "shell.workspaceTab.records", icon: ClipboardList },
   { key: "trade", labelKey: "shell.workspaceTab.trade", icon: ArrowDownUp },
   { key: "buildings", labelKey: "shell.workspaceTab.buildings", icon: Building2 },
+  { key: "infrastructure", labelKey: "shell.workspaceTab.infrastructure", icon: Network },
   { key: "formation", labelKey: "shell.workspaceTab.formation", icon: PlusCircle },
   { key: "warehouses", labelKey: "shell.workspaceTab.warehouses", icon: Package },
 ];
@@ -312,6 +323,10 @@ function getStoryPriorityKey(priority: "low" | "medium" | "high"): UiTextKey {
   }
 }
 
+function normalizeHexId(value: string | null | undefined): HexId | null {
+  return value && /^hex:-?\d+:-?\d+$/.test(value) ? (value as HexId) : null;
+}
+
 function getWorkspaceTabLabelKey(tab: WorkspaceTabKey, mode: StrategyMode): UiTextKey {
   if (tab === "records" && mode === "construction") return "shell.workspaceTab.constructionQueue";
   return workspaceTabDescriptors.find((item) => item.key === tab)?.labelKey ?? "shell.workspaceTab.actions";
@@ -326,6 +341,7 @@ export function StrategyShell(props: Props) {
     if (tab.key === "summary") return props.activeMode === "overview";
     if (tab.key === "trade") return props.activeMode === "market";
     if (tab.key === "buildings") return props.activeMode === "construction";
+    if (tab.key === "infrastructure") return props.activeMode === "construction";
     if (tab.key === "formation") return props.activeMode === "army";
     if (tab.key === "warehouses") return props.activeMode === "army";
     return true;
@@ -541,6 +557,20 @@ export function StrategyShell(props: Props) {
                       sectors={props.sectorEntries ?? []}
                       disabledReason={props.countryId ? null : t("shell.buildings.noCountry")}
                       onSelect={props.onOpenBuildingConstruction}
+                    />
+                  </div>
+                ) : null}
+
+                {workspaceTab === "infrastructure" && props.activeMode === "construction" ? (
+                  <div className="arc-strategy-tab-panel">
+                    <InfrastructureConstructionPanel
+                      corridors={props.infrastructureCorridors ?? []}
+                      activeTransportMode={props.activeInfrastructureTransportMode ?? null}
+                      onStartPlacement={props.onStartInfrastructurePlacement}
+                      onUpgrade={props.onUpgradeInfrastructureCorridor}
+                      onCancel={props.onCancelInfrastructureCorridor}
+                      onDemolish={props.onDemolishInfrastructureCorridor}
+                      onFocusHex={props.onFocusHex}
                     />
                   </div>
                 ) : null}
@@ -899,6 +929,165 @@ function ColonizationGroup(props: { title: string; count: number; children: Reac
       </AnimatePresence>
     </div>
   );
+}
+
+const INFRASTRUCTURE_TRANSPORT_MODES: Array<{ mode: TransportMode; icon: LucideIcon }> = [
+  { mode: "land", icon: Network },
+  { mode: "sea", icon: Ship },
+  { mode: "air", icon: RadioTower },
+  { mode: "pipeline", icon: Wrench },
+  { mode: "powerGrid", icon: SlidersHorizontal },
+];
+
+function InfrastructureConstructionPanel(props: {
+  corridors: MarketTransportCorridor[];
+  activeTransportMode: TransportMode | null;
+  onStartPlacement?: (mode: TransportMode) => void;
+  onUpgrade?: (corridor: MarketTransportCorridor) => void;
+  onCancel?: (corridor: MarketTransportCorridor) => void;
+  onDemolish?: (corridor: MarketTransportCorridor) => void;
+  onFocusHex?: (hexId: HexId) => void;
+}) {
+  const { t } = useUiText();
+  const sorted = [...props.corridors].sort((left, right) => {
+    const statusRank = (status: MarketTransportCorridor["status"]) => (status === "building" ? 0 : status === "active" ? 1 : 2);
+    return statusRank(left.status) - statusRank(right.status) || left.transportMode.localeCompare(right.transportMode, "en");
+  });
+  return (
+    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.infrastructure.title")}>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {INFRASTRUCTURE_TRANSPORT_MODES.map(({ mode, icon: Icon }) => {
+          const active = props.activeTransportMode === mode;
+          return (
+            <button
+              key={mode}
+              type="button"
+              className={`arc-strategy-workspace-action arc-strategy-workspace-action--primary justify-start ${active ? "ring-2 ring-[var(--arc-color-accent)]" : ""}`}
+              onClick={() => props.onStartPlacement?.(mode)}
+            >
+              <Icon size={16} />
+              <span>{t(getInfrastructureModeLabelKey(mode))}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 space-y-2">
+        {sorted.length === 0 ? (
+          <EmptyPreview text={t("shell.infrastructure.empty")} />
+        ) : (
+          sorted.map((corridor) => {
+            const routeHexId = normalizeHexId(corridor.computedHexIds?.[0] ?? corridor.hexIds?.[0] ?? null);
+            const progress =
+              corridor.costConstruction > 0
+                ? Math.max(0, Math.min(100, Math.round((corridor.progressConstruction / corridor.costConstruction) * 100)))
+                : 0;
+            return (
+              <div key={corridor.id} className="arc-strategy-construction-row">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-panel)]">
+                  <Network size={18} />
+                </div>
+                <span className="arc-strategy-building-list-main">
+                  <span className="arc-strategy-building-list-name">
+                    {t(getInfrastructureModeLabelKey(corridor.transportMode))}
+                    {" · "}
+                    {t(getInfrastructureStatusLabelKey(corridor.status))}
+                  </span>
+                  <span className="arc-strategy-building-list-effects">
+                    {t("shell.infrastructure.rowMeta", {
+                      level: corridor.pendingLevel ?? corridor.level,
+                      regions: corridor.connectedRegionIds?.length ?? 0,
+                      hexes: corridor.computedHexIds?.length ?? corridor.hexIds.length,
+                    })}
+                  </span>
+                </span>
+                <div className="arc-strategy-construction-row-progress">
+                  <span className="arc-strategy-construction-row-progress-bar">
+                    <span style={{ width: `${corridor.status === "building" ? progress : 100}%` }} />
+                  </span>
+                  <span>
+                    {corridor.status === "building"
+                      ? `${progress}%`
+                      : formatCompact(corridor.lastCapacityByMode?.[corridor.transportMode] ?? 0)}
+                  </span>
+                </div>
+                <div className="arc-strategy-construction-row-actions">
+                  <Tooltip content={t("shell.infrastructure.upgradeTooltip")} placement="top">
+                    <button
+                      type="button"
+                      className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary"
+                      onClick={() => props.onUpgrade?.(corridor)}
+                      disabled={!props.onUpgrade || corridor.status === "building"}
+                      aria-label={t("shell.infrastructure.upgradeTooltip")}
+                    >
+                      <Wrench size={15} />
+                    </button>
+                  </Tooltip>
+                  {corridor.status === "building" ? (
+                    <Tooltip content={t("shell.infrastructure.cancelTooltip")} placement="top">
+                      <button
+                        type="button"
+                        className="arc-strategy-construction-row-action"
+                        onClick={() => props.onCancel?.(corridor)}
+                        disabled={!props.onCancel}
+                        aria-label={t("shell.infrastructure.cancelTooltip")}
+                      >
+                        <X size={15} />
+                      </button>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip content={t("shell.infrastructure.demolishTooltip")} placement="top">
+                      <button
+                        type="button"
+                        className="arc-strategy-construction-row-action"
+                        onClick={() => props.onDemolish?.(corridor)}
+                        disabled={!props.onDemolish}
+                        aria-label={t("shell.infrastructure.demolishTooltip")}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </Tooltip>
+                  )}
+                  <Tooltip content={t("buildings.focusConstructionHexTooltip")} placement="top">
+                    <button
+                      type="button"
+                      className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary"
+                      onClick={() => routeHexId && props.onFocusHex?.(routeHexId)}
+                      disabled={!routeHexId || !props.onFocusHex}
+                      aria-label={t("buildings.focusConstructionHexTooltip")}
+                    >
+                      <Crosshair size={15} />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </section>
+  );
+}
+
+function getInfrastructureModeLabelKey(mode: TransportMode): UiTextKey {
+  switch (mode) {
+    case "sea":
+      return "shell.infrastructure.mode.sea";
+    case "air":
+      return "shell.infrastructure.mode.air";
+    case "pipeline":
+      return "shell.infrastructure.mode.pipeline";
+    case "powerGrid":
+      return "shell.infrastructure.mode.powerGrid";
+    case "land":
+    default:
+      return "shell.infrastructure.mode.land";
+  }
+}
+
+function getInfrastructureStatusLabelKey(status: MarketTransportCorridor["status"]): UiTextKey {
+  if (status === "active") return "shell.infrastructure.status.active";
+  if (status === "closed") return "shell.infrastructure.status.closed";
+  return "shell.infrastructure.status.building";
 }
 
 function ColonizationUnitRow(props: { item: ColonizationUnitPreviewItem; onFocusHex?: (hexId: HexId) => void }) {

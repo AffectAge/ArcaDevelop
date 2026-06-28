@@ -179,6 +179,10 @@ export function ensureMarketModelReady(params: MarketRuntimeContext): void {
   const corridorsById = params.gameSettings.markets.transportCorridorsById;
   const validHexIds = new Set<string>(params.hexIndex.map((hex) => hex.id));
   for (const [corridorId, corridor] of Object.entries(corridorsById)) {
+    if (corridor.schemaVersion !== 2 || !corridor.computedHexIds || !corridor.waypoints) {
+      delete corridorsById[corridorId];
+      continue;
+    }
     corridor.ownerCountryId = corridor.ownerCountryId || marketsById[corridor.marketId]?.ownerCountryId || "";
     if (!corridor.ownerCountryId) {
       delete corridorsById[corridorId];
@@ -201,20 +205,34 @@ export function ensureMarketModelReady(params: MarketRuntimeContext): void {
       delete corridorsById[corridorId];
       continue;
     }
-    corridor.hexIds = normalizeHexIdList(corridor.hexIds).filter((hexId) => validHexIds.has(hexId));
+    corridor.computedHexIds = normalizeHexIdList(corridor.computedHexIds).filter((hexId) => validHexIds.has(hexId));
+    corridor.hexIds = corridor.computedHexIds;
     if (corridor.hexIds.length < 2) {
       delete corridorsById[corridorId];
       continue;
     }
-    corridor.routePoints = normalizeTransportCorridorRoutePoints(corridor.routePoints).filter((point) =>
+    corridor.waypoints = normalizeTransportCorridorRoutePoints(corridor.waypoints).filter((point) =>
       corridor.hexIds.includes(point.hexId),
     );
+    if (corridor.waypoints.length < 2) {
+      delete corridorsById[corridorId];
+      continue;
+    }
+    corridor.routePoints = corridor.waypoints;
+    corridor.connectedRegionIds = normalizeHexIdList(corridor.connectedRegionIds);
+    corridor.connectedCityMarkerIds = normalizeHexIdList(corridor.connectedCityMarkerIds);
     corridor.transportMode = normalizeTransportMode(corridor.transportMode);
     corridor.level = Math.max(1, Math.floor(Number(corridor.level ?? 1) || 1));
+    corridor.pendingLevel = corridor.pendingLevel ? Math.max(corridor.level + 1, Math.floor(Number(corridor.pendingLevel) || corridor.level + 1)) : null;
     corridor.status = normalizeTransportCorridorStatus(corridor.status);
     corridor.costConstruction = Math.max(
       1,
-      Math.floor(Number(corridor.costConstruction ?? getTransportCorridorBuildCost(corridor.transportMode, corridor.hexIds.length - 1)) || 1),
+      Math.floor(
+        Number(
+          corridor.costConstruction ??
+            getTransportCorridorBuildCost(corridor.transportMode, Number(corridor.routeCost ?? corridor.hexIds.length - 1), corridor.hexIds.length - 1),
+        ) || 1,
+      ),
     );
     corridor.progressConstruction = Math.max(0, Math.min(corridor.costConstruction, Number(corridor.progressConstruction ?? 0) || 0));
     corridor.lastLoadByMode = normalizeCategoryAmountMap((corridor as { lastLoadByMode?: unknown }).lastLoadByMode ?? {});

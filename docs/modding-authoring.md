@@ -231,6 +231,8 @@ Building map visuals are not authored as URL fields in building JSON. Each scena
 
 The atlas must be `256x64` with four `64x64` frames from left to right: `underConstruction`, `working`, `burning`, and `ruins`. The scenario validator rejects missing, invalid, or incorrectly sized building atlases. Runtime loading failures use the client-owned fallback atlas only as a technical fallback.
 
+Transport corridor visuals may be supplied at `assets/corridors/corridor-atlas.png`. The atlas must be `4096x1600` with `64x64` frames. Columns `0..63` are six-direction hex connection masks; rows are transport mode/status combinations in the client contract order. If a scenario does not provide this atlas, the client uses the built-in fallback corridor atlas.
+
 City markers use the same atlas layout, but the file is derived from the culture id instead of being stored in culture JSON. Each scenario culture must provide `scenarios/<scenarioId>/assets/cities/<sanitizedCultureId>.png`; for example `culture:lantian` resolves to `assets/cities/culture_lantian.png`. The four frames are `underConstruction`, `working`, `burning`, and `ruins`. Missing, invalid, or incorrectly sized city atlases are rejected by scenario validation.
 
 ## Decision Authoring

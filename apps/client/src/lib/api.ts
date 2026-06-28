@@ -936,12 +936,26 @@ export type LogisticsSnapshot = {
     ownerCountryId: string;
     transportMode: TransportMode;
     hexIds: string[];
+    connectedRegionIds?: string[];
+    connectedCityMarkerIds?: string[];
     capacity: number;
     load: number;
     utilization: number;
     status: "building" | "active" | "closed";
   }>;
   coverageByModeByHex: Record<
+    TransportMode,
+    Record<
+      string,
+      {
+        capacity: number;
+        load: number;
+        utilization: number;
+        corridorIds: string[];
+      }
+    >
+  >;
+  coverageByModeByRegion?: Record<
     TransportMode,
     Record<
       string,
@@ -999,15 +1013,22 @@ export type TransportMode = "land" | "sea" | "air" | "pipeline" | "powerGrid";
 
 export type MarketTransportCorridor = {
   id: string;
+  schemaVersion?: 2;
   marketId: string;
   ownerCountryId: string;
   hexIds: string[];
   routePoints?: { hexId: string; lng: number; lat: number }[];
+  waypoints?: { hexId: string; lng: number; lat: number }[];
+  computedHexIds?: string[];
+  connectedRegionIds?: string[];
+  connectedCityMarkerIds?: string[];
   transportMode: TransportMode;
   level: number;
+  pendingLevel?: number | null;
   status: "building" | "active" | "closed";
   progressConstruction: number;
   costConstruction: number;
+  routeCost?: number;
   lastLoadByMode?: Record<string, number>;
   lastCapacityByMode?: Record<string, number>;
   lastLoadHistoryByMode?: Record<string, number[]>;
@@ -1023,6 +1044,16 @@ export type MarketTransportCorridor = {
   nationalizedFromCountryId?: string | null;
   createdAt: string;
   completedAt?: string | null;
+};
+
+export type MarketTransportCorridorPreview = {
+  ok: true;
+  waypoints: { hexId: string; lng?: number | null; lat?: number | null }[];
+  computedHexIds: string[];
+  connectedRegionIds: string[];
+  connectedCityMarkerIds: string[];
+  costConstruction: number;
+  routeCost: number;
 };
 
 export type MarketDetails = {
@@ -1213,8 +1244,7 @@ export async function createMarketTransportCorridor(
   token: string,
   marketId: string,
   payload: {
-    hexIds: string[];
-    routePoints?: { hexId: string; lng: number; lat: number }[];
+    waypoints: { hexId: string; lng: number; lat: number }[];
     transportMode: TransportMode;
   },
 ): Promise<{ corridor: MarketTransportCorridor; corridors: MarketTransportCorridor[] }> {
@@ -1233,12 +1263,35 @@ export async function createMarketTransportCorridor(
   return (await response.json()) as { corridor: MarketTransportCorridor; corridors: MarketTransportCorridor[] };
 }
 
+export async function previewMarketTransportCorridor(
+  token: string,
+  marketId: string,
+  payload: {
+    waypoints: { hexId: string; lng?: number | null; lat?: number | null }[];
+    transportMode: TransportMode;
+  },
+): Promise<{ ok: true; marketId: string; preview: MarketTransportCorridorPreview }> {
+  const response = await fetch(`${API}/markets/${encodeURIComponent(marketId)}/corridors/preview`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err?.error ?? "MARKET_CORRIDOR_PREVIEW_FAILED");
+  }
+  return (await response.json()) as { ok: true; marketId: string; preview: MarketTransportCorridorPreview };
+}
+
 export async function updateMarketTransportCorridor(
   token: string,
   marketId: string,
   corridorId: string,
   payload: {
-    action?: "open" | "close" | "upgrade" | "demolish";
+    action?: "open" | "close" | "upgrade" | "cancel" | "demolish";
   },
 ): Promise<{ corridor: MarketTransportCorridor | null; corridors: MarketTransportCorridor[] }> {
   const response = await fetch(`${API}/markets/${encodeURIComponent(marketId)}/corridors/${encodeURIComponent(corridorId)}`, {

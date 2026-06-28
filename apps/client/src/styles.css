@@ -1528,6 +1528,133 @@ select,
   min-width: 0;
 }
 
+.arc-corridor-build-panel {
+  position: fixed;
+  top: 176px;
+  right: calc(min(31.5vw, 476px) + 34px);
+  z-index: 170;
+  width: min(520px, calc(100vw - min(31.5vw, 476px) - 66px));
+  max-height: min(36vh, 290px);
+  min-width: 340px;
+  overflow: auto;
+  border: 1px solid var(--arc-color-atlas-line-strong);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 94%, white), var(--arc-color-atlas-paper)),
+    repeating-linear-gradient(0deg, rgb(70 52 30 / 0.03) 0 1px, transparent 1px 12px);
+  color: var(--arc-color-atlas-ink);
+  box-shadow: var(--arc-shadow-atlas-panel);
+  padding: 12px;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+
+.arc-corridor-build-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--arc-color-atlas-line);
+  padding-bottom: 10px;
+}
+
+.arc-corridor-build-panel__title {
+  font-weight: 800;
+  color: var(--arc-color-atlas-ink);
+}
+
+.arc-corridor-build-panel__summary {
+  margin-top: 2px;
+  color: var(--arc-color-atlas-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.arc-corridor-build-panel__actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.arc-corridor-build-panel__actions .arc-strategy-workspace-action {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.arc-corridor-build-panel__actions .arc-strategy-workspace-action > span {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-corridor-build-panel__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.arc-corridor-build-panel__metric,
+.arc-corridor-build-panel__point {
+  border: 1px solid var(--arc-color-atlas-line);
+  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 74%, white);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.48) inset;
+}
+
+.arc-corridor-build-panel__metric {
+  min-width: 0;
+  padding: 8px 9px;
+}
+
+.arc-corridor-build-panel__metric span {
+  display: block;
+  color: var(--arc-color-atlas-muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.arc-corridor-build-panel__metric strong {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--arc-color-atlas-ink);
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arc-corridor-build-panel__warning {
+  margin-top: 9px;
+  border: 1px solid var(--arc-color-danger-border);
+  background: var(--arc-color-danger-soft);
+  color: var(--arc-color-danger-text);
+  padding: 7px 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.arc-corridor-build-panel__points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.arc-corridor-build-panel__point {
+  max-width: 220px;
+  overflow: hidden;
+  padding: 5px 7px;
+  color: var(--arc-color-atlas-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .arc-map-building-popover {
   position: absolute;
   z-index: 74;
@@ -3870,6 +3997,11 @@ select,
     min-width: 322px;
   }
 
+  .arc-corridor-build-panel {
+    right: calc(min(43.4vw, 434px) + 28px);
+    width: min(470px, calc(100vw - min(43.4vw, 434px) - 54px));
+  }
+
   .arc-strategy-mode-dock {
     width: 54px;
   }
@@ -3899,6 +4031,15 @@ select,
     min-width: 0;
   }
 
+  .arc-corridor-build-panel {
+    top: 78px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    min-width: 0;
+    max-height: 30vh;
+  }
+
   .arc-strategy-metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3924,6 +4065,32 @@ select,
     right: 8px;
     min-height: 54px;
     padding: 7px 8px;
+  }
+
+  .arc-corridor-build-panel {
+    top: 70px;
+    left: 8px;
+    right: 8px;
+    padding: 10px;
+  }
+
+  .arc-corridor-build-panel__header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .arc-corridor-build-panel__actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .arc-corridor-build-panel__actions .arc-strategy-workspace-action {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .arc-corridor-build-panel__metrics {
+    grid-template-columns: 1fr;
   }
 
   .arc-strategy-flag {
