@@ -1,0 +1,22 @@
+{
+  "id": "building:smelter",
+  "nameKey": "building.smelter.name",
+  "description": "",
+  "color": "#ef4444",
+  "costConstruction": 55,
+  "costDucats": 42,
+  "startingDucats": 10,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 44,
+  "upgradeCostDucats": 32,
+  "inputs": [
+    { "goodId": "good:iron_ore", "amount": 10 },
+    { "goodId": "good:charcoal", "amount": 4 }
+  ],
+  "outputs": [
+    { "goodId": "good:iron", "amount": 7 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:smelters", "workers": 80 }
+  ]
+}

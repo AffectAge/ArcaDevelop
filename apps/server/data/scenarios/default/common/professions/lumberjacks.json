@@ -1,0 +1,7 @@
+{
+  "id": "profession:lumberjacks",
+  "nameKey": "profession.lumberjacks.name",
+  "description": "",
+  "color": "#15803d",
+  "baseWage": 0.9
+}

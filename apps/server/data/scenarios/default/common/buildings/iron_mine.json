@@ -1,0 +1,18 @@
+{
+  "id": "building:iron_mine",
+  "nameKey": "building.iron_mine.name",
+  "description": "",
+  "color": "#78716c",
+  "costConstruction": 48,
+  "costDucats": 34,
+  "startingDucats": 8,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 40,
+  "upgradeCostDucats": 26,
+  "outputs": [
+    { "goodId": "good:iron_ore", "amount": 12 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:miners", "workers": 100 }
+  ]
+}

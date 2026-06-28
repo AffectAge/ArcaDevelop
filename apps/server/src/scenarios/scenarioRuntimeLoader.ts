@@ -1,4 +1,6 @@
-import type { WorldBase } from "@arcanorum/shared";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import type { HexMapArtifact, WorldBase } from "@arcanorum/shared";
 import {
   ensureDefaultCulture,
   ensureDefaultIdeology,
@@ -18,6 +20,7 @@ import {
 } from "../content/contentNormalizers";
 import type { GameSettings } from "../runtime/gameSettingsTypes";
 import { normalizeContentLogoUrl } from "../uploads/uploadPaths";
+import { ensureStarterColonizerForCountry } from "../mechanics/starterColonizerMechanics";
 import { loadRawScenarioContent } from "./scenarioContentLoader";
 import {
   buildHexOwnerFromRegionHistory,
@@ -31,6 +34,7 @@ import { loadScenarioSetupFiles } from "./scenarioSetupLoader";
 
 export type BuildWorldBaseFromScenarioRuntimeDeps = {
   defaultWorldBase: (currentTurnId: number) => WorldBase;
+  startingColonizerMovementPoints?: number;
   normalizeResourcesByCountryMap: (input: unknown) => WorldBase["resourcesByCountry"];
   normalizeRegionColonizationMap: (input: unknown) => WorldBase["regionColonizationByRegion"];
   normalizeRegionPopulationMap: (input: unknown) => WorldBase["regionPopulationByRegion"];
@@ -149,7 +153,44 @@ export function buildWorldBaseFromScenarioRuntime(params: {
       Array.isArray(setup.diplomacy) ? setup.diplomacy : (setup.diplomacy as { proposals?: unknown })?.proposals,
     );
   }
+  applyScenarioStarterColonizers(base, {
+    currentTurnId: params.currentTurnId,
+    history,
+    scenarioDir: params.scenarioDir,
+    movementPoints: params.startingColonizerMovementPoints,
+  });
   return base;
+}
+
+function applyScenarioStarterColonizers(
+  base: WorldBase,
+  params: {
+    currentTurnId: number;
+    history: ScenarioHistory | null;
+    scenarioDir: string | null;
+    movementPoints?: number;
+  },
+): void {
+  if (!params.history || params.history.countries.length === 0 || !params.scenarioDir) return;
+  const artifact = loadScenarioHexMapArtifact(params.scenarioDir);
+  if (!artifact || artifact.tiles.length === 0) return;
+  for (const country of params.history.countries) {
+    ensureStarterColonizerForCountry({
+      worldBase: base,
+      countryId: country.id,
+      currentTurnId: params.currentTurnId,
+      tiles: artifact.tiles,
+      movementPoints: params.movementPoints ?? 2,
+      seed: params.scenarioDir,
+    });
+  }
+}
+
+function loadScenarioHexMapArtifact(scenarioDir: string): HexMapArtifact | null {
+  const path = resolve(scenarioDir, ".generated", "hex-map-artifact.json");
+  if (!existsSync(path)) return null;
+  const parsed = JSON.parse(readFileSync(path, "utf8")) as HexMapArtifact;
+  return parsed && Array.isArray(parsed.tiles) ? parsed : null;
 }
 
 function applyAuthoredStateFromHistory(

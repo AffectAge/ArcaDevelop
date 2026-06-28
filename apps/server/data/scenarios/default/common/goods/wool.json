@@ -1,0 +1,12 @@
+{
+  "id": "good:wool",
+  "nameKey": "good.wool.name",
+  "description": "",
+  "color": "#d9d6ca",
+  "basePrice": 1.5,
+  "minPrice": 0.3,
+  "maxPrice": 10,
+  "infraPerUnit": 0.18,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea", "air"]
+}

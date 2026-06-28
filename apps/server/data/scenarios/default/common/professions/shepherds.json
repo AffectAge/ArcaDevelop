@@ -1,0 +1,7 @@
+{
+  "id": "profession:shepherds",
+  "nameKey": "profession.shepherds.name",
+  "description": "",
+  "color": "#a3a3a3",
+  "baseWage": 0.85
+}

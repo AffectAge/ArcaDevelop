@@ -1,0 +1,12 @@
+{
+  "id": "good:flour",
+  "nameKey": "good.flour.name",
+  "description": "",
+  "color": "#eee4c8",
+  "basePrice": 1.8,
+  "minPrice": 0.4,
+  "maxPrice": 10,
+  "infraPerUnit": 0.2,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea", "air"]
+}

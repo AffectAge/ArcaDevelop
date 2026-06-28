@@ -1,0 +1,7 @@
+{
+  "id": "profession:miners",
+  "nameKey": "profession.miners.name",
+  "description": "",
+  "color": "#78716c",
+  "baseWage": 1.05
+}

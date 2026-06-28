@@ -1,0 +1,7 @@
+{
+  "id": "profession:farmers",
+  "nameKey": "profession.farmers.name",
+  "description": "",
+  "color": "#84cc16",
+  "baseWage": 0.8
+}

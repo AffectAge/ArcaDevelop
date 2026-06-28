@@ -8,9 +8,14 @@ type PathNode = {
   priority: number;
 };
 
-export function findHexPath(map: HexMapArtifact, startId: HexId, goalId: HexId, limit = 1200): HexId[] {
+export function findHexPath(
+  map: HexMapArtifact,
+  startId: HexId,
+  goalId: HexId,
+  limit = 1200,
+  tileById: ReadonlyMap<HexId, HexTile> = getHexPathTileIndex(map),
+): HexId[] {
   if (startId === goalId) return [startId];
-  const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
   const start = tileById.get(startId);
   const goal = tileById.get(goalId);
   if (!start || !goal || !start.passable || !goal.passable) return [];
@@ -50,7 +55,17 @@ export function findHexPath(map: HexMapArtifact, startId: HexId, goalId: HexId, 
   return path.reverse();
 }
 
-function getNeighborTile(tile: HexTile, direction: HexDirection, map: HexMapArtifact, tileById: Map<HexId, HexTile>): HexTile | null {
+const tileIndexByMap = new WeakMap<HexMapArtifact, Map<HexId, HexTile>>();
+
+function getHexPathTileIndex(map: HexMapArtifact): Map<HexId, HexTile> {
+  const cached = tileIndexByMap.get(map);
+  if (cached) return cached;
+  const next = new Map(map.tiles.map((tile) => [tile.id, tile] as const));
+  tileIndexByMap.set(map, next);
+  return next;
+}
+
+function getNeighborTile(tile: HexTile, direction: HexDirection, map: HexMapArtifact, tileById: ReadonlyMap<HexId, HexTile>): HexTile | null {
   const axial = getNeighborAxial(tile, direction, map.settings);
   return axial ? tileById.get(makeHexId(axial.q, axial.r)) ?? null : null;
 }

@@ -1,0 +1,12 @@
+{
+  "id": "good:clothes",
+  "nameKey": "good.clothes.name",
+  "description": "",
+  "color": "#a78bfa",
+  "basePrice": 3.6,
+  "minPrice": 0.8,
+  "maxPrice": 18,
+  "infraPerUnit": 0.25,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea", "air"]
+}

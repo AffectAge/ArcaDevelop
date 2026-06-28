@@ -25,6 +25,7 @@ type ScenarioServerRuntimeParams = {
   scenariosRoot: string;
   getActiveScenarioId: () => string;
   defaultWorldBase: (currentTurnId: number) => WorldBase;
+  getStartingColonizerMovementPoints: () => number;
   addEconomyTickCountry: (countryId: string) => void;
   setAiControlledCountryIds: (countryIds: string[]) => void;
   invalidateCountryQueryCache: () => void;
@@ -85,6 +86,7 @@ export function createScenarioServerRuntime(params: ScenarioServerRuntimeParams)
       scenarioDir,
       loadedHistory,
       defaultWorldBase: params.defaultWorldBase,
+      startingColonizerMovementPoints: params.getStartingColonizerMovementPoints(),
       normalizeResourcesByCountryMap: params.normalizeResourcesByCountryMap,
       normalizeRegionColonizationMap: params.normalizeRegionColonizationMap,
       normalizeRegionPopulationMap: params.normalizeRegionPopulationMap,

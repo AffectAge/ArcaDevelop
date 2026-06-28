@@ -19,6 +19,7 @@ describe("scenario runtime loader", () => {
       currentTurnId: 7,
       scenarioDir,
       defaultWorldBase: makeWorldBase,
+      startingColonizerMovementPoints: 3,
       normalizeResourcesByCountryMap: asWorldMap<WorldBase["resourcesByCountry"]>,
       normalizeRegionColonizationMap: asWorldMap<WorldBase["regionColonizationByRegion"]>,
       normalizeRegionPopulationMap: asWorldMap<WorldBase["regionPopulationByRegion"]>,
@@ -43,6 +44,16 @@ describe("scenario runtime loader", () => {
     expect(worldBase.regionPopulationTreasuryByRegion["region:bohemia"]).toBe(15);
     expect(worldBase.regionColonizationByRegion["region:bohemia"]).toEqual({ cost: 50, disabled: true });
     expect(worldBase.regionResourceDepositsByRegion["region:bohemia"]?.[0]?.goodId).toBe("good:grain");
+    expect(Object.values(worldBase.civilianUnitsById)).toEqual([
+      expect.objectContaining({
+        countryId: "country:bohemia",
+        type: "colonizer",
+        hexId: "hex:0:0",
+        status: "idle",
+        movementPoints: 3,
+        maxMovementPoints: 3,
+      }),
+    ]);
   });
 });
 
@@ -93,6 +104,31 @@ async function createScenarioFixture(): Promise<string> {
   await writeJson(join(scenarioDir, "history/countries/bohemia.json"), {
     id: "country:bohemia",
     resources: { gold: 10 },
+  });
+  await writeJson(join(scenarioDir, ".generated/hex-map-artifact.json"), {
+    version: 1,
+    settings: {
+      seed: "fixture",
+      width: 2,
+      height: 1,
+      hexSize: 24,
+      seaLevel: 0.42,
+      temperature: 0.5,
+      moisture: 0.5,
+      mountains: 0.78,
+      rivers: 0.45,
+      forests: 0.55,
+      targetLandRegionSize: 8,
+      targetWaterRegionSize: 12,
+      chunkSize: 8,
+      wrapX: false,
+    },
+    tiles: [
+      makeHexTile({ id: "hex:0:0", regionId: "region:bohemia" }),
+      makeHexTile({ id: "hex:1:0", regionId: "region:water", waterKind: "sea", terrain: "sea", passable: true }),
+    ],
+    riverEdges: [],
+    coastOverlays: [],
   });
   return scenarioDir;
 }
@@ -152,4 +188,29 @@ function asWorldMap<T extends Record<string, unknown>>(input: unknown): T {
 
 function asDiplomacyProposals(input: unknown): WorldBase["diplomacyProposals"] {
   return Array.isArray(input) ? (input as WorldBase["diplomacyProposals"]) : [];
+}
+
+function makeHexTile(overrides: Partial<{
+  id: string;
+  regionId: string;
+  waterKind: "ocean" | "sea" | "lake" | null;
+  terrain: string;
+  passable: boolean;
+}> = {}): Record<string, unknown> {
+  return {
+    id: overrides.id ?? "hex:0:0",
+    q: 0,
+    r: 0,
+    chunkId: "hex-chunk:0:0",
+    regionId: overrides.regionId ?? "region:bohemia",
+    terrain: overrides.terrain ?? "plains",
+    biome: "temperate",
+    feature: "none",
+    waterKind: overrides.waterKind ?? null,
+    elevation: 0.5,
+    moisture: 0.5,
+    temperature: 0.5,
+    movementCost: 1,
+    passable: overrides.passable ?? true,
+  };
 }

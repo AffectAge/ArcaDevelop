@@ -1,0 +1,7 @@
+{
+  "id": "profession:millers",
+  "nameKey": "profession.millers.name",
+  "description": "",
+  "color": "#eab308",
+  "baseWage": 1
+}

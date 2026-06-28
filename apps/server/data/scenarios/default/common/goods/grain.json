@@ -1,0 +1,12 @@
+{
+  "id": "good:grain",
+  "nameKey": "good.grain.name",
+  "description": "",
+  "color": "#d7b85b",
+  "basePrice": 1.2,
+  "minPrice": 0.3,
+  "maxPrice": 8,
+  "infraPerUnit": 0.18,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea", "air"]
+}

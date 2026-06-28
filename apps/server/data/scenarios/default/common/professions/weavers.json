@@ -1,0 +1,7 @@
+{
+  "id": "profession:weavers",
+  "nameKey": "profession.weavers.name",
+  "description": "",
+  "color": "#38bdf8",
+  "baseWage": 1.15
+}

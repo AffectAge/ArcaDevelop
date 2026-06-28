@@ -10,6 +10,7 @@ import { createServerApp } from "./app/createServerApp";
 import { uploadErrorMiddleware } from "./app/uploadErrorMiddleware";
 import { normalizeRegionColonizationMap } from "./mechanics/colonizationMechanics";
 import { getGlobalBuildLimit } from "./mechanics/buildingMechanics";
+import { ensureStarterColonizerForCountry } from "./mechanics/starterColonizerMechanics";
 import { createModifierRuntime } from "./runtime/modifierRuntime";
 import { createUiNotificationRuntime } from "./runtime/uiNotificationRuntime";
 import { createTurnRuntime, TURN_RESOLVE_WORLD_DELTA_MASK } from "./runtime/turnRuntime";
@@ -61,6 +62,7 @@ import { registerServerCoreRouteRuntime } from "./runtime/serverCoreRouteRegistr
 import { registerServerInteractiveRouteRuntime } from "./runtime/serverInteractiveRouteRegistrationRuntime";
 import { registerServerMainRouteRuntime } from "./runtime/serverMainRouteRegistrationRuntime";
 import { startServerRuntime } from "./runtime/serverStartupRuntime";
+import { ensureCorePrismaTables, ensureWorldDeltaLogTable } from "./persistence/dbBootstrap";
 import { createUploadStartupCleanupRuntime } from "./runtime/uploadStartupCleanupRuntime";
 import { createServerDiplomacyFacadeRuntime } from "./runtime/serverDiplomacyFacadeRuntime";
 import {
@@ -113,6 +115,8 @@ import {
 const env = createServerEnvironmentRuntime(import.meta.url);
 
 const prisma = new PrismaClient();
+await ensureCorePrismaTables(prisma);
+await ensureWorldDeltaLogTable(prisma);
 
 const parseAuthHeader = createAuthHeaderParser(env.jwtSecret);
 const parseAuthToken = createAuthTokenParser(env.jwtSecret);
@@ -339,6 +343,7 @@ const scenarioServerRuntime = createScenarioServerRuntime({
   scenariosRoot,
   getActiveScenarioId: () => activeScenarioId,
   defaultWorldBase,
+  getStartingColonizerMovementPoints: () => gameSettings.colonization.colonizerMovementPoints,
   addEconomyTickCountry: (countryId) => economyTickCountryIds.add(countryId),
   setAiControlledCountryIds: (countryIds) => {
     aiControlledCountryIds = new Set(countryIds);
@@ -480,6 +485,18 @@ const { progressionRuntime, countryWorldRuntime } = createCountrySystemsRuntime(
   normalizeCountryDecisionRecord: worldStateNormalizerRuntime.normalizeCountryDecisionRecord,
   normalizeCountryEventRecord: worldStateNormalizerRuntime.normalizeCountryEventRecord,
   normalizeResourceTotals: worldStateNormalizerRuntime.normalizeResourceTotals,
+  createStarterColonizerForCountry: (countryId) => {
+    const artifact = mapRuntime.getHexMapArtifact();
+    const unit = ensureStarterColonizerForCountry({
+      worldBase,
+      countryId,
+      currentTurnId: turnId,
+      tiles: artifact?.tiles ?? [],
+      movementPoints: gameSettings.colonization.colonizerMovementPoints,
+      seed: `${activeScenarioId}:registration`,
+    });
+    return Boolean(unit);
+  },
   modifierConditionsMatchCountry: modifierFacade.modifierConditionsMatchCountry,
   countryHasModifier: (countryId, modifierId) =>
     modifierFacade

@@ -1,0 +1,7 @@
+{
+  "id": "profession:tailors",
+  "nameKey": "profession.tailors.name",
+  "description": "",
+  "color": "#c084fc",
+  "baseWage": 1.25
+}

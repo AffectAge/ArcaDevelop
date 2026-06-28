@@ -1,0 +1,21 @@
+{
+  "id": "building:tailor",
+  "nameKey": "building.tailor.name",
+  "description": "",
+  "color": "#a855f7",
+  "costConstruction": 45,
+  "costDucats": 30,
+  "startingDucats": 8,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 36,
+  "upgradeCostDucats": 22,
+  "inputs": [
+    { "goodId": "good:cloth", "amount": 7 }
+  ],
+  "outputs": [
+    { "goodId": "good:clothes", "amount": 8 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:tailors", "workers": 60 }
+  ]
+}

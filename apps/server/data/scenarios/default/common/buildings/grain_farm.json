@@ -1,0 +1,18 @@
+{
+  "id": "building:grain_farm",
+  "nameKey": "building.grain_farm.name",
+  "description": "",
+  "color": "#b99337",
+  "costConstruction": 30,
+  "costDucats": 18,
+  "startingDucats": 5,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 24,
+  "upgradeCostDucats": 14,
+  "outputs": [
+    { "goodId": "good:grain", "amount": 18, "affectedByFertility": true }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:farmers", "workers": 120 }
+  ]
+}

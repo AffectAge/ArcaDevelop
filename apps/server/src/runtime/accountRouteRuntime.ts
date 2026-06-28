@@ -28,6 +28,7 @@ type AccountRouteRuntimeParams = {
     resourcesByCountry: number;
     hexOwner: number;
     colonyProgressByRegion: number;
+    unitEquipmentState: number;
   };
   getTurnId: () => number;
   getWorldBase: () => WorldBase;
@@ -52,6 +53,7 @@ type AccountRouteRuntimeParams = {
   makeVersionedUploadUrl: (relativePath: string) => string;
   invalidateCountryQueryCache: () => void;
   ensureCountryInWorldBase: (countryId: string) => void;
+  createStarterColonizerForCountry: (countryId: string) => boolean;
   addCountryToEconomyTick: (countryId: string) => void;
   removeCountryFromEconomyTick: (countryId: string) => void;
   removeCountryFromActiveColonizationIndex: (countryId: string) => void;
@@ -118,6 +120,7 @@ export function registerAccountRouteRuntime(params: AccountRouteRuntimeParams): 
     makeVersionedUploadUrl: params.makeVersionedUploadUrl,
     invalidateCountryQueryCache: params.invalidateCountryQueryCache,
     ensureCountryInWorldBase: params.ensureCountryInWorldBase,
+    createStarterColonizerForCountry: params.createStarterColonizerForCountry,
     addCountryToEconomyTick: params.addCountryToEconomyTick,
     removeCountryFromEconomyTick: params.removeCountryFromEconomyTick,
     removeCountryFromActiveColonizationIndex: params.removeCountryFromActiveColonizationIndex,

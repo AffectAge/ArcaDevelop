@@ -49,6 +49,11 @@ describe("authRegistrationRoutes", () => {
     expect(deps.world.resourcesByCountry["country:new"]).toEqual(
       expect.objectContaining({ colonization: 7, construction: 9, ducats: 20, gold: 80 }),
     );
+    expect(deps.createStarterColonizerForCountry).toHaveBeenCalledWith("country:new");
+    expect(Object.values(deps.world.civilianUnitsById)).toEqual([
+      expect.objectContaining({ countryId: "country:new", type: "colonizer", status: "idle" }),
+    ]);
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({ mask: 9 });
     expect(deps.sendUiNotificationToAdmins).toHaveBeenCalledWith(expect.objectContaining({ id: "registration-approval:country:new" }));
     expect(deps.broadcast).toHaveBeenCalledWith(expect.objectContaining({ type: "NEWS_EVENT" }));
   });
@@ -137,6 +142,10 @@ describe("authRegistrationRoutes", () => {
         resourcesByCountry: { "country:a": makeResources() },
         hexOwner: { "province:a": "country:a", "province:b": "country:b" },
         colonyProgressByRegion: { "province:a": { "country:a": 10 }, "province:b": { "country:a": 5, "country:b": 8 } },
+        civilianUnitsById: {
+          "civilian:starter:country_a": makeColonizer({ countryId: "country:a" }),
+          "civilian:starter:country_b": makeColonizer({ id: "civilian:starter:country_b", countryId: "country:b" }),
+        },
       },
     });
     const app = makeApp(deps);
@@ -153,10 +162,13 @@ describe("authRegistrationRoutes", () => {
     expect(deps.removeUploadedByUrl).toHaveBeenCalledWith("/scenario-assets/demo/assets/uploads/crest.png?v=1");
     expect(deps.deleteCountry).toHaveBeenCalledWith("country:a");
     expect(deps.world.resourcesByCountry["country:a"]).toBeUndefined();
+    expect(deps.world.civilianUnitsById).toEqual({
+      "civilian:starter:country_b": expect.objectContaining({ countryId: "country:b" }),
+    });
     expect(deps.world.hexOwner).toEqual({ "province:b": "country:b" });
     expect(deps.world.colonyProgressByRegion).toEqual({ "province:b": { "country:b": 8 } });
     expect(deps.removeCountryFromActiveColonizationIndex).toHaveBeenCalledWith("country:a");
-    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({ mask: 7 });
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({ mask: 15 });
   });
 });
 
@@ -180,6 +192,7 @@ function makeDeps(options?: {
     resourcesByCountry: {},
     hexOwner: {},
     colonyProgressByRegion: {},
+    civilianUnitsById: {},
     ...options?.world,
   };
   const deps: AuthRegistrationRoutesDependencies & { world: AuthRegistrationWorldState } = {
@@ -195,7 +208,7 @@ function makeDeps(options?: {
     },
     flagImageRule: { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 },
     crestImageRule: { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 },
-    masks: { resourcesByCountry: 1, hexOwner: 2, colonyProgressByRegion: 4 },
+    masks: { resourcesByCountry: 1, hexOwner: 2, colonyProgressByRegion: 4, unitEquipmentState: 8 },
     getTurnId: () => 4,
     getWorldBase: () => world as WorldBase & AuthRegistrationWorldState,
     getRegistrationRequiresAdminApproval: () => options?.requireApproval ?? false,
@@ -228,6 +241,10 @@ function makeDeps(options?: {
     makeVersionedUploadUrl: (relativePath) => `/scenario-assets/demo/assets/uploads/${relativePath}?v=1`,
     invalidateCountryQueryCache: vi.fn(),
     ensureCountryInWorldBase: vi.fn(),
+    createStarterColonizerForCountry: vi.fn((countryId) => {
+      world.civilianUnitsById[`civilian:starter:${countryId.replace(/[^a-zA-Z0-9_-]/g, "_")}`] = makeColonizer({ countryId });
+      return true;
+    }),
     addCountryToEconomyTick: vi.fn(),
     removeCountryFromEconomyTick: vi.fn(),
     removeCountryFromActiveColonizationIndex: vi.fn(),
@@ -252,6 +269,23 @@ function makeDeps(options?: {
 
 function makeResources(): ResourceTotals {
   return { ducats: 20, gold: 80, culture: 5, science: 5, religion: 5, construction: 9, colonization: 7 };
+}
+
+function makeColonizer(overrides?: Partial<WorldBase["civilianUnitsById"][string]>): WorldBase["civilianUnitsById"][string] {
+  return {
+    id: "civilian:starter:country_a",
+    countryId: "country:a",
+    type: "colonizer",
+    hexId: "hex:0:0",
+    status: "idle",
+    movementPoints: 2,
+    maxMovementPoints: 2,
+    path: [],
+    targetHexId: null,
+    createdTurnId: 4,
+    lastMovedTurnId: null,
+    ...overrides,
+  };
 }
 
 function makeCountryRecord(overrides?: Partial<AdminCountryDbRecord>): AdminCountryDbRecord {

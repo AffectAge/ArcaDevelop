@@ -1,0 +1,7 @@
+{
+  "id": "profession:smiths",
+  "nameKey": "profession.smiths.name",
+  "description": "",
+  "color": "#f97316",
+  "baseWage": 1.4
+}

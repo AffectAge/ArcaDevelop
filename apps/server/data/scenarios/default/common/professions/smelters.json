@@ -1,0 +1,7 @@
+{
+  "id": "profession:smelters",
+  "nameKey": "profession.smelters.name",
+  "description": "",
+  "color": "#ef4444",
+  "baseWage": 1.3
+}

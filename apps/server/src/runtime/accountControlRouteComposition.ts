@@ -50,6 +50,7 @@ type AccountControlRouteCompositionParams = {
   };
   countryWorldRuntime: {
     ensureCountryInWorldBase: CountryManagementDeps["ensureCountryInWorldBase"];
+    createStarterColonizerForCountry: AccountDeps["createStarterColonizerForCountry"];
     addCountryToEconomyTick: AccountDeps["addCountryToEconomyTick"];
     removeCountryFromEconomyTick: CountryManagementDeps["removeCountryFromEconomyTick"];
   };
@@ -150,6 +151,7 @@ export function registerAccountControlRouteComposition(params: AccountControlRou
     makeVersionedUploadUrl: params.makeVersionedUploadUrl,
     invalidateCountryQueryCache: params.countryRuntimeHelpers.invalidateCountryQueryCache,
     ensureCountryInWorldBase: params.countryWorldRuntime.ensureCountryInWorldBase,
+    createStarterColonizerForCountry: params.countryWorldRuntime.createStarterColonizerForCountry,
     addCountryToEconomyTick: params.countryWorldRuntime.addCountryToEconomyTick,
     removeCountryFromEconomyTick: params.countryWorldRuntime.removeCountryFromEconomyTick,
     removeCountryFromActiveColonizationIndex: params.colonizationRuntime.removeCountryFromActiveColonizationIndex,

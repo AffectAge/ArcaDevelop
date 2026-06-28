@@ -17,6 +17,7 @@ export type AuthRegistrationWorldState = {
   resourcesByCountry: Record<string, ResourceTotals>;
   hexOwner: Record<string, string>;
   colonyProgressByRegion: Record<string, Record<string, number>>;
+  civilianUnitsById: WorldBase["civilianUnitsById"];
 };
 
 export type CountryBlockInfo = {
@@ -51,6 +52,7 @@ export type AuthRegistrationRoutesDependencies = {
     resourcesByCountry: number;
     hexOwner: number;
     colonyProgressByRegion: number;
+    unitEquipmentState: number;
   };
   getTurnId: () => number;
   getWorldBase: () => WorldBase & AuthRegistrationWorldState;
@@ -91,6 +93,7 @@ export type AuthRegistrationRoutesDependencies = {
   makeVersionedUploadUrl: (relativePath: string) => string;
   invalidateCountryQueryCache: () => void;
   ensureCountryInWorldBase: (countryId: string) => void;
+  createStarterColonizerForCountry: (countryId: string) => boolean;
   addCountryToEconomyTick: (countryId: string) => void;
   removeCountryFromEconomyTick: (countryId: string) => void;
   removeCountryFromActiveColonizationIndex: (countryId: string) => void;
@@ -166,6 +169,9 @@ export function registerAuthRegistrationRoutes(
         });
         deps.invalidateCountryQueryCache();
 
+        const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
+          deps.masks.resourcesByCountry | deps.masks.unitEquipmentState,
+        );
         const worldBase = deps.getWorldBase();
         if (!worldBase.resourcesByCountry[country.id]) {
           worldBase.resourcesByCountry[country.id] = {
@@ -181,8 +187,10 @@ export function registerAuthRegistrationRoutes(
         } else {
           deps.addCountryToEconomyTick(country.id);
         }
+        deps.createStarterColonizerForCountry(country.id);
 
         deps.savePersistentState();
+        deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
         if (requiresApproval) {
           deps.sendUiNotificationToAdmins(deps.makeRegistrationApprovalUiNotification(country));
         }
@@ -316,13 +324,16 @@ export function registerAuthRegistrationRoutes(
     deps.removeUploadedByUrl(fullTarget.flagUrl);
     deps.removeUploadedByUrl(fullTarget.crestUrl);
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
-      deps.masks.resourcesByCountry | deps.masks.hexOwner | deps.masks.colonyProgressByRegion,
+      deps.masks.resourcesByCountry | deps.masks.hexOwner | deps.masks.colonyProgressByRegion | deps.masks.unitEquipmentState,
     );
     await deps.deleteCountry(targetId);
     deps.invalidateCountryQueryCache();
 
     const worldBase = deps.getWorldBase();
     delete worldBase.resourcesByCountry[targetId];
+    for (const [unitId, unit] of Object.entries(worldBase.civilianUnitsById)) {
+      if (unit.countryId === targetId) delete worldBase.civilianUnitsById[unitId];
+    }
     deps.removeCountryFromEconomyTick(targetId);
     for (const [hexId, ownerId] of Object.entries(worldBase.hexOwner)) {
       if (ownerId === targetId) delete worldBase.hexOwner[hexId];

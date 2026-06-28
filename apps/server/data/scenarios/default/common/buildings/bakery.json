@@ -1,0 +1,22 @@
+{
+  "id": "building:bakery",
+  "nameKey": "building.bakery.name",
+  "description": "",
+  "color": "#c77b35",
+  "costConstruction": 38,
+  "costDucats": 25,
+  "startingDucats": 7,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 30,
+  "upgradeCostDucats": 18,
+  "inputs": [
+    { "goodId": "good:flour", "amount": 8 },
+    { "goodId": "good:charcoal", "amount": 1 }
+  ],
+  "outputs": [
+    { "goodId": "good:bread", "amount": 12 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:bakers", "workers": 70 }
+  ]
+}

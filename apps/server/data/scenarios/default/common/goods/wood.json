@@ -1,0 +1,12 @@
+{
+  "id": "good:wood",
+  "nameKey": "good.wood.name",
+  "description": "",
+  "color": "#7f5a36",
+  "basePrice": 1.4,
+  "minPrice": 0.3,
+  "maxPrice": 9,
+  "infraPerUnit": 0.22,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea", "air"]
+}

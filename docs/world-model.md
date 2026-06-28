@@ -68,6 +68,8 @@ Building placement is the narrow exception for map addressability: a building oc
 
 Settler-based colonization follows the same region-first rule. A colonizer founds a named `SettlementProject` on its current hex, but the project belongs to a region and completion transfers the region owner/controller. The final named city marker is a visual and interaction anchor; population, resources, buildings, construction, production, taxes, and ownership remain region-level.
 
+Scenario startup seeds one idle civilian colonizer for each authored country. The starter unit is placed on a deterministic pseudo-random passable land hex, preferring a hex in a region controlled by that country and falling back to any passable land hex when the country has no controlled region. This uses the hex only as the unit's map address and does not create province-level ownership, population, economy, or construction state.
+
 ## Ownership
 
 Each region has:

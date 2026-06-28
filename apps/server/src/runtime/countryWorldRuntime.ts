@@ -15,6 +15,7 @@ type CountryWorldRuntimeParams = {
   ensureCountryTechnologyState: (countryId: string) => WorldBase["technologyByCountry"][string];
   ensureCountryDecisionRecord: (countryId: string) => CountryDecisionRecord;
   ensureCountryEventRecord: (countryId: string) => CountryEventRecord;
+  createStarterColonizerForCountry: (countryId: string) => boolean;
   savePersistentState: () => void;
 };
 
@@ -80,6 +81,7 @@ export function createCountryWorldRuntime(params: CountryWorldRuntimeParams) {
 
   return {
     addCountryToEconomyTick,
+    createStarterColonizerForCountry: params.createStarterColonizerForCountry,
     ensureCountryInWorldBase,
     rebuildEconomyTickCountryIndexFromWorldBase,
     removeCountryFromEconomyTick,

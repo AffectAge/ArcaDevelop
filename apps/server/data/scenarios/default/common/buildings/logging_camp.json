@@ -1,0 +1,19 @@
+{
+  "id": "building:logging_camp",
+  "nameKey": "building.logging_camp.name",
+  "description": "",
+  "color": "#2f855a",
+  "costConstruction": 28,
+  "costDucats": 16,
+  "startingDucats": 4,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 22,
+  "upgradeCostDucats": 12,
+  "outputs": [
+    { "goodId": "good:wood", "amount": 12 },
+    { "goodId": "good:charcoal", "amount": 3 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:lumberjacks", "workers": 90 }
+  ]
+}

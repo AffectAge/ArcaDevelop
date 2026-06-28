@@ -13,6 +13,7 @@ type CountrySystemsRuntimeParams = {
   normalizeCountryDecisionRecord: Parameters<typeof createCountryProgressionRuntime>[0]["normalizeCountryDecisionRecord"];
   normalizeCountryEventRecord: Parameters<typeof createCountryProgressionRuntime>[0]["normalizeCountryEventRecord"];
   normalizeResourceTotals: Parameters<typeof createCountryWorldRuntime>[0]["normalizeResourceTotals"];
+  createStarterColonizerForCountry: Parameters<typeof createCountryWorldRuntime>[0]["createStarterColonizerForCountry"];
   modifierConditionsMatchCountry: Parameters<typeof createCountryProgressionRuntime>[0]["modifierConditionsMatchCountry"];
   countryHasModifier?: Parameters<typeof createCountryProgressionRuntime>[0]["countryHasModifier"];
   resolveModifiedValue: Parameters<typeof createCountryProgressionRuntime>[0]["resolveModifiedValue"];
@@ -52,6 +53,7 @@ export function createCountrySystemsRuntime(params: CountrySystemsRuntimeParams)
     ensureCountryTechnologyState: progressionRuntime.ensureCountryTechnologyState,
     ensureCountryDecisionRecord: progressionRuntime.ensureCountryDecisionRecord,
     ensureCountryEventRecord: progressionRuntime.ensureCountryEventRecord,
+    createStarterColonizerForCountry: params.createStarterColonizerForCountry,
     savePersistentState: params.savePersistentState,
   });
 

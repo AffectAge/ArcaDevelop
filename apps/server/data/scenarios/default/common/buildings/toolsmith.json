@@ -1,0 +1,22 @@
+{
+  "id": "building:toolsmith",
+  "nameKey": "building.toolsmith.name",
+  "description": "",
+  "color": "#f97316",
+  "costConstruction": 60,
+  "costDucats": 46,
+  "startingDucats": 12,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 48,
+  "upgradeCostDucats": 34,
+  "inputs": [
+    { "goodId": "good:iron", "amount": 5 },
+    { "goodId": "good:wood", "amount": 2 }
+  ],
+  "outputs": [
+    { "goodId": "good:tools", "amount": 6 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:smiths", "workers": 70 }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "good:iron_ore",
+  "nameKey": "good.iron_ore.name",
+  "description": "",
+  "color": "#8a7b72",
+  "basePrice": 1.7,
+  "minPrice": 0.4,
+  "maxPrice": 11,
+  "infraPerUnit": 0.3,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea"]
+}

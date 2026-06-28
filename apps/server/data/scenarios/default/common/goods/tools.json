@@ -1,0 +1,12 @@
+{
+  "id": "good:tools",
+  "nameKey": "good.tools.name",
+  "description": "",
+  "color": "#f59e0b",
+  "basePrice": 4.4,
+  "minPrice": 1,
+  "maxPrice": 24,
+  "infraPerUnit": 0.28,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea", "air"]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "building:weaver",
+  "nameKey": "building.weaver.name",
+  "description": "",
+  "color": "#38bdf8",
+  "costConstruction": 42,
+  "costDucats": 28,
+  "startingDucats": 8,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 34,
+  "upgradeCostDucats": 20,
+  "inputs": [
+    { "goodId": "good:wool", "amount": 8 }
+  ],
+  "outputs": [
+    { "goodId": "good:cloth", "amount": 10 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:weavers", "workers": 65 }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "id": "profession:bakers",
+  "nameKey": "profession.bakers.name",
+  "description": "",
+  "color": "#fb923c",
+  "baseWage": 1.1
+}

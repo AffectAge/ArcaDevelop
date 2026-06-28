@@ -1,0 +1,18 @@
+{
+  "id": "building:sheep_pasture",
+  "nameKey": "building.sheep_pasture.name",
+  "description": "",
+  "color": "#a8a29e",
+  "costConstruction": 30,
+  "costDucats": 17,
+  "startingDucats": 4,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 24,
+  "upgradeCostDucats": 13,
+  "outputs": [
+    { "goodId": "good:wool", "amount": 10, "affectedByFertility": true }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:shepherds", "workers": 70 }
+  ]
+}

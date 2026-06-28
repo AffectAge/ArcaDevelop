@@ -1,0 +1,12 @@
+{
+  "id": "good:bread",
+  "nameKey": "good.bread.name",
+  "description": "",
+  "color": "#c98f45",
+  "basePrice": 2.6,
+  "minPrice": 0.5,
+  "maxPrice": 14,
+  "infraPerUnit": 0.24,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea", "air"]
+}

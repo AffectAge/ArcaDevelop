@@ -1,0 +1,12 @@
+{
+  "id": "good:charcoal",
+  "nameKey": "good.charcoal.name",
+  "description": "",
+  "color": "#3f3f46",
+  "basePrice": 2,
+  "minPrice": 0.4,
+  "maxPrice": 12,
+  "infraPerUnit": 0.22,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea", "air"]
+}

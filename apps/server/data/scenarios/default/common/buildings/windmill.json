@@ -1,0 +1,21 @@
+{
+  "id": "building:windmill",
+  "nameKey": "building.windmill.name",
+  "description": "",
+  "color": "#d6c28a",
+  "costConstruction": 35,
+  "costDucats": 22,
+  "startingDucats": 6,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 28,
+  "upgradeCostDucats": 17,
+  "inputs": [
+    { "goodId": "good:grain", "amount": 10 }
+  ],
+  "outputs": [
+    { "goodId": "good:flour", "amount": 14 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:millers", "workers": 60 }
+  ]
+}

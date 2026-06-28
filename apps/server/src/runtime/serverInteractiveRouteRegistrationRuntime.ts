@@ -87,6 +87,7 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
       resourcesByCountry: WORLD_DELTA_MASK.resourcesByCountry,
       hexOwner: WORLD_DELTA_MASK.hexOwner,
       colonyProgressByRegion: WORLD_DELTA_MASK.colonyProgressByRegion,
+      unitEquipmentState: WORLD_DELTA_MASK.unitEquipmentState,
       regionConstructionQueueByRegion: WORLD_DELTA_MASK.regionConstructionQueueByRegion,
       parliamentByCountry: WORLD_DELTA_MASK.parliamentByCountry,
       technologyByCountry: WORLD_DELTA_MASK.technologyByCountry,
