@@ -123,7 +123,10 @@ export const MAP_LENS_DESCRIPTORS: MapLensDescriptor[] = [
 export function selectMapLensCells(lens: MapLensId, context: MapLensRenderContext): MapLensRenderCell[] {
   if (lens === "terrain") return [];
   const maxPopulation = lens === "population" ? resolveMaxPopulation(context) : 1;
-  return context.map.tiles
+  const tiles = context.visibleTileIds
+    ? context.map.tiles.filter((tile) => context.visibleTileIds?.has(tile.id))
+    : context.map.tiles;
+  return tiles
     .map((tile) => selectTileCell(lens, tile, context, maxPopulation))
     .map((cell) => cell ? applyAnalyticalBaseStyle(cell) : null)
     .map((cell) => cell ? applyWaterLensTransparency(cell) : null)
@@ -173,8 +176,8 @@ function selectTileCell(
       tile,
       groupId: owner ?? `unowned:${tile.regionId}`,
       borderGroupId: owner ?? `unowned:${tile.regionId}`,
-      labelGroupId: owner && !tile.waterKind ? owner : undefined,
-      label: owner && !tile.waterKind ? resolveCountryName(owner, context.countryNameById) : undefined,
+      labelGroupId: context.showLabels !== false && owner && !tile.waterKind ? owner : undefined,
+      label: context.showLabels !== false && owner && !tile.waterKind ? resolveCountryName(owner, context.countryNameById) : undefined,
       color: owner ? ownerColor : 0x77706a,
       alpha: owner ? 0.7 : 0.26,
       surfaceAlpha: tile.waterKind ? 0.16 : 0.28,
@@ -246,7 +249,7 @@ function selectTileCell(
     });
   }
   if (lens === "population") {
-    const total = resolveRegionPopulationTotal(world?.regionPopulationByRegion[tile.regionId]);
+    const total = context.populationTotalByRegion?.get(tile.regionId) ?? resolveRegionPopulationTotal(world?.regionPopulationByRegion[tile.regionId]);
     const weight = maxPopulation > 0 ? Math.min(1, total / maxPopulation) : 0;
     return createCell(tile, {
       groupId: tile.regionId,
@@ -316,6 +319,8 @@ function selectTileCell(
 }
 
 function resolveMaxPopulation(context: MapLensRenderContext): number {
+  if (context.maxPopulationTotal != null) return Math.max(1, context.maxPopulationTotal);
+  if (context.populationTotalByRegion) return Math.max(1, ...context.populationTotalByRegion.values());
   const values = Object.values(context.worldBase?.regionPopulationByRegion ?? {}).map((entry) => resolveRegionPopulationTotal(entry));
   return Math.max(1, ...values);
 }

@@ -82,4 +82,8 @@ export type MapLensRenderContext = {
   countryColorById?: Record<string, string>;
   countryNameById?: Record<string, string>;
   pendingColonyProgressByRegion?: Record<string, Record<string, number>>;
+  visibleTileIds?: ReadonlySet<string>;
+  populationTotalByRegion?: ReadonlyMap<string, number>;
+  maxPopulationTotal?: number;
+  showLabels?: boolean;
 };

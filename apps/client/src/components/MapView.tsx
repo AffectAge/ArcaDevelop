@@ -220,6 +220,21 @@ type PointerGesture = {
   pinchMidpoint: ScreenPoint | null;
 };
 
+type MapZoomBucket = "far" | "mid" | "near";
+
+type ViewportCullingState = {
+  key: string;
+  visibleTileIds: ReadonlySet<HexId>;
+};
+
+type ViewportCullingBounds = {
+  key: string;
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+};
+
 const DEFAULT_CAMERA: HexCamera = {
   x: axialToPixel({ q: DEFAULT_HEX_MAP_SETTINGS.width / 2, r: DEFAULT_HEX_MAP_SETTINGS.height / 2 }, DEFAULT_HEX_MAP_SETTINGS.hexSize).x,
   y: axialToPixel({ q: DEFAULT_HEX_MAP_SETTINGS.width / 2, r: DEFAULT_HEX_MAP_SETTINGS.height / 2 }, DEFAULT_HEX_MAP_SETTINGS.hexSize).y,
@@ -227,6 +242,7 @@ const DEFAULT_CAMERA: HexCamera = {
 };
 
 const HEX_GRID_MIN_SCALE = 0.78;
+const MAP_VIEWPORT_PADDING_HEXES = 4;
 
 const MAP_LAYER_DESCRIPTORS: Array<{ id: MapLayerToggleId; labelKey: UiTextKey; tooltipKey: UiTextKey; icon: typeof Grid3X3 }> = [
   { id: "hexGrid", labelKey: "map.layer.hexGrid", tooltipKey: "map.layer.hexGridTooltip", icon: Grid3X3 },
@@ -373,6 +389,15 @@ export function MapView({
   const initialCamera = useMemo(() => buildInitialHexCamera(mapArtifact.settings), [mapArtifact.settings]);
   const showStatsPanel = useMemo(() => shouldShowMapStatsPanel(), []);
   const tileById = useMemo(() => new Map(mapArtifact.tiles.map((tile) => [tile.id, tile])), [mapArtifact]);
+  const tilesByRegionId = useMemo(() => {
+    const byRegion = new Map<string, HexTile[]>();
+    for (const tile of mapArtifact.tiles) {
+      const tiles = byRegion.get(tile.regionId) ?? [];
+      tiles.push(tile);
+      byRegion.set(tile.regionId, tiles);
+    }
+    return byRegion;
+  }, [mapArtifact.tiles]);
   const wrapWidth = useMemo(() => worldPixelWidth(mapArtifact.settings), [mapArtifact]);
   const cameraBounds = useMemo(() => buildHexCameraBounds(mapArtifact.settings, wrapWidth), [mapArtifact.settings, wrapWidth]);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -383,6 +408,7 @@ export function MapView({
   const naturalFeatureLayerRef = useRef<Container | null>(null);
   const siteFeatureLayerRef = useRef<Container | null>(null);
   const resourceDepositLayerRef = useRef<Container | null>(null);
+  const mapLayerOutlineLayerRef = useRef<Graphics | null>(null);
   const overlayLayerRef = useRef<Graphics | null>(null);
   const corridorPersistentLayerRef = useRef<Container | null>(null);
   const corridorPreviewLayerRef = useRef<Container | null>(null);
@@ -409,7 +435,11 @@ export function MapView({
   const lastTapRef = useRef<{ tileId: HexId; time: number } | null>(null);
   const edgeScrollEnabledRef = useRef(true);
   const selectedTileIdRef = useRef<HexId | null>(null);
+  const hoverFrameRef = useRef<number | null>(null);
+  const pendingHoverRef = useRef<HoverState | null>(null);
+  const viewportCullingRef = useRef<ViewportCullingState>({ key: "all:0", visibleTileIds: new Set<HexId>() });
   const [camera, setCamera] = useState<HexCamera>(initialCamera);
+  const [viewportCulling, setViewportCulling] = useState<ViewportCullingState>(() => viewportCullingRef.current);
   const [interactionLocked, setInteractionLocked] = useState(false);
   const [selectedTileId, setSelectedTileId] = useState<HexId | null>(null);
   const [hoverState, setHoverState] = useState<HoverState | null>(null);
@@ -531,6 +561,25 @@ export function MapView({
   }, [authCountryId, buildingOverviewToken]);
 
   const selectedTile = selectedTileId ? tileById.get(selectedTileId) ?? null : null;
+  const regionPopulationSummary = useMemo(() => {
+    const totalByRegion = new Map<string, number>();
+    let maxPopulation = 1;
+    for (const [regionId, population] of Object.entries(worldBase?.regionPopulationByRegion ?? {})) {
+      const total = (population?.pops ?? []).reduce((sum, pop) => sum + Math.max(0, Number(pop.size) || 0), 0);
+      totalByRegion.set(regionId, total);
+      maxPopulation = Math.max(maxPopulation, total);
+    }
+    return { totalByRegion, maxPopulation };
+  }, [worldBase?.regionPopulationByRegion]);
+  const zoomBucket = useMemo(() => getMapZoomBucket(camera.scale), [camera.scale]);
+  const visibleRegionIds = useMemo(() => {
+    const regions = new Set<string>();
+    for (const hexId of viewportCulling.visibleTileIds) {
+      const tile = tileById.get(hexId);
+      if (tile) regions.add(tile.regionId);
+    }
+    return regions;
+  }, [tileById, viewportCulling.key, viewportCulling.visibleTileIds]);
   const mapFeaturesByHexId = useMemo(() => {
     const result = new Map<HexId, MapFeatureInstance[]>();
     for (const feature of mapFeatures) {
@@ -846,30 +895,44 @@ export function MapView({
 
   const activeLensDescriptor = useMemo(() => getMapLensDescriptor(activeLens), [activeLens]);
   const lensCells = useMemo(() => {
-    const analyticalCells = selectMapLensCells(activeLens, { map: mapArtifact, worldBase, authCountryId, countryColorById, countryNameById });
-    const baseCells = buildLayerOverlayCells(mapArtifact, worldBase, mapLayers, countryColorById, countryNameById);
+    const showLabels = mapLayers.countryLabels && zoomBucket !== "far";
+    const analyticalCells = selectMapLensCells(activeLens, {
+      map: mapArtifact,
+      worldBase,
+      authCountryId,
+      countryColorById,
+      countryNameById,
+      visibleTileIds: viewportCulling.visibleTileIds,
+      populationTotalByRegion: regionPopulationSummary.totalByRegion,
+      maxPopulationTotal: regionPopulationSummary.maxPopulation,
+      showLabels,
+    });
+    const baseCells = buildLayerOverlayCells(mapArtifact, worldBase, mapLayers, countryColorById, countryNameById, viewportCulling.visibleTileIds, showLabels);
     const cells = [...baseCells, ...analyticalCells];
-    return mapLayers.countryLabels ? cells : cells.map(stripMapCellLabel);
-  }, [activeLens, authCountryId, countryColorById, countryNameById, mapArtifact, mapLayers, worldBase]);
+    return showLabels ? cells : cells.map(stripMapCellLabel);
+  }, [activeLens, authCountryId, countryColorById, countryNameById, mapArtifact, mapLayers, regionPopulationSummary, viewportCulling.key, viewportCulling.visibleTileIds, worldBase, zoomBucket]);
 
   const placementEvaluations = useMemo(() => {
     if (!hexBuildPlacement || !placementWorld || !authCountryId) return new Map<HexId, ReturnType<typeof evaluateBuildingPlacement>>();
     const map = new Map<HexId, ReturnType<typeof evaluateBuildingPlacement>>();
-    for (const tile of mapArtifact.tiles) {
-      const controller = placementWorld.regionController[tile.regionId] ?? placementWorld.regionOwner[tile.regionId] ?? null;
+    for (const regionId of visibleRegionIds) {
+      const controller = placementWorld.regionController[regionId] ?? placementWorld.regionOwner[regionId] ?? null;
       if (controller !== authCountryId) continue;
-      const effectiveTile = resolveEffectiveHexTile(tile, cityHexIds);
-      const neighbors = getNeighborTiles(tile, tileById, mapArtifact.settings).map((neighbor) => resolveEffectiveHexTile(neighbor, cityHexIds));
-      map.set(tile.id, evaluateBuildingPlacement({
-        building: hexBuildPlacement.building,
-        countryId: authCountryId,
-        hex: effectiveTile,
-        neighborHexes: neighbors,
-        world: placementWorld,
-      }));
+      for (const tile of tilesByRegionId.get(regionId) ?? []) {
+        if (!viewportCulling.visibleTileIds.has(tile.id)) continue;
+        const effectiveTile = resolveEffectiveHexTile(tile, cityHexIds);
+        const neighbors = getNeighborTiles(tile, tileById, mapArtifact.settings).map((neighbor) => resolveEffectiveHexTile(neighbor, cityHexIds));
+        map.set(tile.id, evaluateBuildingPlacement({
+          building: hexBuildPlacement.building,
+          countryId: authCountryId,
+          hex: effectiveTile,
+          neighborHexes: neighbors,
+          world: placementWorld,
+        }));
+      }
     }
     return map;
-  }, [authCountryId, cityHexIds, hexBuildPlacement, mapArtifact.settings, mapArtifact.tiles, placementWorld, tileById]);
+  }, [authCountryId, cityHexIds, hexBuildPlacement, mapArtifact.settings, placementWorld, tileById, tilesByRegionId, viewportCulling.key, viewportCulling.visibleTileIds, visibleRegionIds]);
   const militaryFormationValidHexIds = useMemo(
     () => new Set<HexId>(militaryFormationPlacement?.validHexIds ?? []),
     [militaryFormationPlacement],
@@ -1154,11 +1217,18 @@ export function MapView({
   }, [selectedTileId]);
 
   useEffect(() => {
+    viewportCullingRef.current = viewportCulling;
+  }, [viewportCulling]);
+
+  useEffect(() => {
     if (!serverMapArtifact) return;
     const nextCamera = buildInitialHexCamera(serverMapArtifact.settings);
     cameraRef.current = nextCamera;
     cameraTargetRef.current = nextCamera;
     setCamera(nextCamera);
+    const nextViewport = getViewportCullingState(serverMapArtifact, nextCamera, containerRef.current?.getBoundingClientRect());
+    viewportCullingRef.current = nextViewport;
+    setViewportCulling(nextViewport);
   }, [serverMapArtifact]);
 
   useEffect(() => {
@@ -1169,6 +1239,7 @@ export function MapView({
     let resizeObserver: ResizeObserver | null = null;
     const app = new Application();
     const worldContainer = new Container();
+    const mapLayerOutlineLayer = new Graphics();
     const overlayLayer = new Graphics();
     const naturalFeatureLayer = new Container();
     const siteFeatureLayer = new Container();
@@ -1180,6 +1251,7 @@ export function MapView({
 
     appRef.current = app;
     worldContainerRef.current = worldContainer;
+    mapLayerOutlineLayerRef.current = mapLayerOutlineLayer;
     overlayLayerRef.current = overlayLayer;
     naturalFeatureLayerRef.current = naturalFeatureLayer;
     siteFeatureLayerRef.current = siteFeatureLayer;
@@ -1231,6 +1303,7 @@ export function MapView({
         corridorPreviewLayer,
         buildingLayer,
         unitLayer,
+        mapLayerOutlineLayer,
         overlayLayer,
       );
       app.stage.addChild(worldContainer);
@@ -1244,6 +1317,9 @@ export function MapView({
       resizeObserver = new ResizeObserver(() => {
         if (disposed || !app.renderer) return;
         app.renderer.resize(Math.max(1, container.clientWidth), Math.max(1, container.clientHeight));
+        const nextViewport = getViewportCullingState(mapArtifact, cameraRef.current, container.getBoundingClientRect());
+        viewportCullingRef.current = nextViewport;
+        setViewportCulling(nextViewport);
         app.render();
       });
       resizeObserver.observe(container);
@@ -1263,6 +1339,7 @@ export function MapView({
       naturalFeatureLayerRef.current = null;
       siteFeatureLayerRef.current = null;
       resourceDepositLayerRef.current = null;
+      mapLayerOutlineLayerRef.current = null;
       overlayLayerRef.current = null;
       corridorPersistentLayerRef.current = null;
       corridorPreviewLayerRef.current = null;
@@ -1290,6 +1367,18 @@ export function MapView({
       const y = event.clientY - rect.top;
       const inside = x >= 0 && x <= rect.width && y >= 0 && y <= rect.height;
       pointerRef.current = inside ? { x, y, blocked: isMapNavigationBlocked(event.target) } : null;
+    };
+    const scheduleHoverState = (next: HoverState | null) => {
+      pendingHoverRef.current = next;
+      if (hoverFrameRef.current != null) return;
+      hoverFrameRef.current = window.requestAnimationFrame(() => {
+        hoverFrameRef.current = null;
+        const pending = pendingHoverRef.current;
+        setHoverState((current) => {
+          if (current?.tile.id === pending?.tile.id && current?.x === pending?.x && current?.y === pending?.y) return current;
+          return pending;
+        });
+      });
     };
 
     const handlePointerDown = (event: PointerEvent) => {
@@ -1353,7 +1442,7 @@ export function MapView({
     const handlePointerMove = (event: PointerEvent) => {
       updatePointerTracking(event);
       const tile = readTileFromClientPoint(event.clientX, event.clientY);
-      setHoverState(tile ? { tile, x: event.clientX, y: event.clientY } : null);
+      scheduleHoverState(tile ? { tile, x: event.clientX, y: event.clientY } : null);
       if (interactionLocked || !activePointersRef.current.has(event.pointerId)) return;
       activePointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
       const gesture = pointerGestureRef.current;
@@ -1466,7 +1555,7 @@ export function MapView({
     const handleWindowPointerMove = (event: PointerEvent) => updatePointerTracking(event);
     const handlePointerLeave = () => {
       pointerRef.current = null;
-      setHoverState(null);
+      scheduleHoverState(null);
     };
 
     container.addEventListener("pointerdown", handlePointerDown);
@@ -1492,6 +1581,11 @@ export function MapView({
       if (gesture?.longPressTimer != null) {
         window.clearTimeout(gesture.longPressTimer);
       }
+      if (hoverFrameRef.current != null) {
+        window.cancelAnimationFrame(hoverFrameRef.current);
+        hoverFrameRef.current = null;
+      }
+      pendingHoverRef.current = null;
       pointerGestureRef.current = null;
       activePointersRef.current.clear();
     };
@@ -1652,6 +1746,13 @@ export function MapView({
         if (hasCameraChanged(cameraRef.current, nextCamera)) {
           cameraRef.current = nextCamera;
           setCamera(nextCamera);
+          const nextViewportBounds = getViewportCullingBounds(mapArtifact, nextCamera, rect);
+          const nextViewportKey = nextViewportBounds?.key ?? `all:${mapArtifact.tiles.length}`;
+          if (nextViewportKey !== viewportCullingRef.current.key) {
+            const nextViewport = getViewportCullingStateFromBounds(mapArtifact, nextViewportBounds);
+            viewportCullingRef.current = nextViewport;
+            setViewportCulling(nextViewport);
+          }
         }
       }
       frameId = window.requestAnimationFrame(step);
@@ -1659,7 +1760,7 @@ export function MapView({
 
     frameId = window.requestAnimationFrame(step);
     return () => window.cancelAnimationFrame(frameId);
-  }, [authCountryId, cameraBounds, interactionLocked]);
+  }, [authCountryId, cameraBounds, interactionLocked, mapArtifact]);
 
   useEffect(() => {
     const app = appRef.current;
@@ -1702,14 +1803,23 @@ export function MapView({
   }, [activeLens, lensCells, pixiReady]);
 
   useEffect(() => {
+    const outlineLayer = mapLayerOutlineLayerRef.current;
+    const app = appRef.current;
+    if (!pixiReady || !outlineLayer || !app || !app.renderer) return;
+    outlineLayer.clear();
+    const container = containerRef.current;
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      drawMapLayerOutlines(outlineLayer, mapArtifact, tileById, worldBase, mapLayers, camera, rect, viewportCulling.visibleTileIds);
+    }
+    app.render();
+  }, [camera, mapArtifact, mapLayers, pixiReady, tileById, viewportCulling.key, viewportCulling.visibleTileIds, worldBase]);
+
+  useEffect(() => {
     const overlayLayer = overlayLayerRef.current;
     const app = appRef.current;
     if (!pixiReady || !overlayLayer || !app || !app.renderer) return;
     overlayLayer.clear();
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      drawMapLayerOutlines(overlayLayer, mapArtifact, tileById, worldBase, mapLayers, camera, rect);
-    }
     if (hoverState?.tile) {
       drawHexOutline(overlayLayer, hoverState.tile, mapArtifact.settings.hexSize, 0xd7c38b, 1.4);
     }
@@ -1746,13 +1856,13 @@ export function MapView({
       drawPathOverlay(overlayLayer, activePath, tileById, mapArtifact.settings.hexSize);
     }
     app.render();
-  }, [camera, civilianMoveHoverPath, civilianMoveSelection, divisionMoveHoverPath, divisionMoveSelection, fleetMoveHoverPath, fleetMoveSelection, hexBuildPlacement, hoverPath, hoverState, mapArtifact, mapLayers, militaryFormationPlacement, militaryFormationValidHexIds, pixiReady, placementEvaluations, selectedTile, tileById, worldBase]);
+  }, [camera, civilianMoveHoverPath, civilianMoveSelection, divisionMoveHoverPath, divisionMoveSelection, fleetMoveHoverPath, fleetMoveSelection, hexBuildPlacement, hoverPath, hoverState, mapArtifact.settings.hexSize, militaryFormationPlacement, militaryFormationValidHexIds, pixiReady, placementEvaluations, selectedTile, tileById]);
 
   useEffect(() => {
     const layer = naturalFeatureLayerRef.current;
     const app = appRef.current;
     const container = containerRef.current;
-    if (!pixiReady || !layer || !app || !app.renderer || !container || !mapLayers.features) {
+    if (!pixiReady || !layer || !app || !app.renderer || !container || !mapLayers.features || zoomBucket === "far") {
       layer?.removeChildren().forEach((child) => child.destroy());
       return;
     }
@@ -1762,7 +1872,7 @@ export function MapView({
     let visibleSprites = 0;
     for (const tile of mapArtifact.tiles) {
       if (tile.feature === "none") continue;
-      if (!isTileInViewport(tile, camera, rect, size)) continue;
+      if (!viewportCulling.visibleTileIds.has(tile.id) || !isTileInViewport(tile, camera, rect, size)) continue;
       const sprite = buildNaturalFeatureSprite({
         tile,
         scenarioId,
@@ -1777,13 +1887,13 @@ export function MapView({
     }
     performanceStatsRef.current.visibleSprites += visibleSprites;
     app.render();
-  }, [camera, featureTextureVersion, mapArtifact.settings.hexSize, mapArtifact.tiles, mapFeatureVisuals, mapLayers.features, pixiReady, scenarioId]);
+  }, [camera, featureTextureVersion, mapArtifact.settings.hexSize, mapArtifact.tiles, mapFeatureVisuals, mapLayers.features, pixiReady, scenarioId, viewportCulling.key, viewportCulling.visibleTileIds, zoomBucket]);
 
   useEffect(() => {
     const layer = siteFeatureLayerRef.current;
     const app = appRef.current;
     const container = containerRef.current;
-    if (!pixiReady || !layer || !app || !app.renderer || !container || !mapLayers.features) {
+    if (!pixiReady || !layer || !app || !app.renderer || !container || !mapLayers.features || zoomBucket === "far") {
       layer?.removeChildren().forEach((child) => child.destroy());
       return;
     }
@@ -1793,7 +1903,7 @@ export function MapView({
     let visibleSprites = 0;
     for (const feature of mapFeatures) {
       const tile = tileById.get(feature.hexId);
-      if (!tile || !isTileInViewport(tile, camera, rect, size)) continue;
+      if (!tile || !viewportCulling.visibleTileIds.has(tile.id) || !isTileInViewport(tile, camera, rect, size)) continue;
       const sprite = buildSiteFeatureSprite({
         feature,
         tile,
@@ -1809,13 +1919,13 @@ export function MapView({
     }
     performanceStatsRef.current.visibleSprites += visibleSprites;
     app.render();
-  }, [camera, featureTextureVersion, mapArtifact.settings.hexSize, mapFeatureVisuals, mapFeatures, mapLayers.features, pixiReady, scenarioId, tileById]);
+  }, [camera, featureTextureVersion, mapArtifact.settings.hexSize, mapFeatureVisuals, mapFeatures, mapLayers.features, pixiReady, scenarioId, tileById, viewportCulling.key, viewportCulling.visibleTileIds, zoomBucket]);
 
   useEffect(() => {
     const layer = resourceDepositLayerRef.current;
     const app = appRef.current;
     const container = containerRef.current;
-    if (!pixiReady || !layer || !app || !app.renderer || !container || !mapLayers.resources || !worldBase) {
+    if (!pixiReady || !layer || !app || !app.renderer || !container || !mapLayers.resources || !worldBase || zoomBucket === "far") {
       layer?.removeChildren().forEach((child) => child.destroy());
       return;
     }
@@ -1823,9 +1933,10 @@ export function MapView({
     const size = mapArtifact.settings.hexSize;
     layer.removeChildren().forEach((child) => child.destroy());
     let visibleSprites = 0;
-    for (const deposit of Object.values(worldBase.regionResourceDepositsByRegion).flat()) {
-      if (deposit.visibility !== "known" || Number(deposit.amount) <= 0) continue;
-      const tile = tileById.get(deposit.hexId);
+    for (const hexId of viewportCulling.visibleTileIds) {
+      const deposit = resourceDepositsByHexId.get(hexId);
+      if (!deposit) continue;
+      const tile = tileById.get(hexId);
       if (!tile || !isTileInViewport(tile, camera, rect, size)) continue;
       const sprite = buildResourceDepositSprite({
         deposit,
@@ -1841,7 +1952,7 @@ export function MapView({
     }
     performanceStatsRef.current.visibleSprites += visibleSprites;
     app.render();
-  }, [camera, mapArtifact.settings.hexSize, mapLayers.resources, pixiReady, resourceDepositTextureVersion, scenarioId, tileById, worldBase]);
+  }, [camera, mapArtifact.settings.hexSize, mapLayers.resources, pixiReady, resourceDepositTextureVersion, resourceDepositsByHexId, scenarioId, tileById, viewportCulling.key, viewportCulling.visibleTileIds, worldBase, zoomBucket]);
 
   useEffect(() => {
     const layer = corridorPersistentLayerRef.current;
@@ -1862,9 +1973,9 @@ export function MapView({
       const path = normalizeCorridorPath(corridor.computedHexIds && corridor.computedHexIds.length >= 2 ? corridor.computedHexIds : corridor.hexIds);
       addCorridorPathMasks(corridorTileLayers, path, tileById, mapArtifact.settings, corridor.transportMode, getCorridorAtlasStatus(corridor));
     }
-    drawTexturedCorridorTiles(layer, corridorTileLayers, tileById, size, textures, false);
+    drawTexturedCorridorTiles(layer, corridorTileLayers, tileById, size, textures, false, 1, viewportCulling.visibleTileIds);
     app.render();
-  }, [corridorTextureVersion, mapArtifact.settings, mapArtifact.settings.hexSize, pixiReady, scenarioId, tileById, transportCorridors]);
+  }, [corridorTextureVersion, mapArtifact.settings, mapArtifact.settings.hexSize, pixiReady, scenarioId, tileById, transportCorridors, viewportCulling.key, viewportCulling.visibleTileIds]);
 
   useEffect(() => {
     const layer = corridorPreviewLayerRef.current;
@@ -1884,21 +1995,21 @@ export function MapView({
     if (corridorFixedPreviewPath.length > 1) {
       const previewTileLayers = new Map<string, Map<HexId, number>>();
       addCorridorPathMasks(previewTileLayers, corridorFixedPreviewPath, tileById, mapArtifact.settings, previewTransportMode, "planned");
-      drawTexturedCorridorTiles(layer, previewTileLayers, tileById, size, textures, true);
+      drawTexturedCorridorTiles(layer, previewTileLayers, tileById, size, textures, true, 1, viewportCulling.visibleTileIds);
     }
     if (corridorDraftPreviewPath.length > 1) {
       const draftTileLayers = new Map<string, Map<HexId, number>>();
       addCorridorPathMasks(draftTileLayers, corridorDraftPreviewPath, tileById, mapArtifact.settings, previewTransportMode, "planned");
-      drawTexturedCorridorTiles(layer, draftTileLayers, tileById, size, textures, true, 0.62);
+      drawTexturedCorridorTiles(layer, draftTileLayers, tileById, size, textures, true, 0.62, viewportCulling.visibleTileIds);
     }
     app.render();
-  }, [corridorDraftPreviewPath, corridorFixedPreviewPath, corridorPlacement?.transportMode, corridorTextureVersion, mapArtifact.settings, mapArtifact.settings.hexSize, pixiReady, scenarioId, tileById]);
+  }, [corridorDraftPreviewPath, corridorFixedPreviewPath, corridorPlacement?.transportMode, corridorTextureVersion, mapArtifact.settings, mapArtifact.settings.hexSize, pixiReady, scenarioId, tileById, viewportCulling.key, viewportCulling.visibleTileIds]);
 
   useEffect(() => {
     const layer = buildingLayerRef.current;
     const app = appRef.current;
     const showBuildings = mapLayers.buildings || Boolean(hexBuildPlacement) || Boolean(militaryFormationPlacement);
-    if (!pixiReady || !layer || !app || !worldBase || !showBuildings) {
+    if (!pixiReady || !layer || !app || !worldBase || !showBuildings || zoomBucket === "far") {
       layer?.removeChildren().forEach((child) => child.destroy());
       return;
     }
@@ -1924,7 +2035,7 @@ export function MapView({
     ) => {
       if (!hexId) return;
       const tile = tileById.get(hexId as HexId);
-      if (!tile) return;
+      if (!tile || !viewportCulling.visibleTileIds.has(tile.id)) return;
       const center = axialToPixel(tile, size);
       const textures = getBuildingAtlasTextures({
         scenarioId,
@@ -1957,7 +2068,7 @@ export function MapView({
     ) => {
       if (!hexId) return;
       const tile = tileById.get(hexId as HexId);
-      if (!tile) return;
+      if (!tile || !viewportCulling.visibleTileIds.has(tile.id)) return;
       const center = axialToPixel(tile, size);
       const textures = getCityAtlasTextures({
         scenarioId,
@@ -2025,12 +2136,12 @@ export function MapView({
       addCityMarker(marker.targetHexId, marker.cultureId, "underConstruction", { current: 0, total: 1 });
     }
     app.render();
-  }, [buildingTextureVersion, camera.scale, canceledConstructionQueueKeySet, hexBuildPlacement, mapArtifact.settings.hexSize, mapLayers.buildings, militaryFormationPlacement, pendingBuildMarkers, pendingFoundCityMarkers, pixiReady, scenarioId, tileById, worldBase]);
+  }, [buildingTextureVersion, camera.scale, canceledConstructionQueueKeySet, hexBuildPlacement, mapArtifact.settings.hexSize, mapLayers.buildings, militaryFormationPlacement, pendingBuildMarkers, pendingFoundCityMarkers, pixiReady, scenarioId, tileById, viewportCulling.key, viewportCulling.visibleTileIds, worldBase, zoomBucket]);
 
   useEffect(() => {
     const layer = unitLayerRef.current;
     const app = appRef.current;
-    if (!pixiReady || !layer || !app || !worldBase || !mapLayers.armies) {
+    if (!pixiReady || !layer || !app || !worldBase || !mapLayers.armies || zoomBucket === "far") {
       layer?.removeChildren().forEach((child) => child.destroy());
       return;
     }
@@ -2041,7 +2152,7 @@ export function MapView({
     for (const division of Object.values(worldBase.divisionsById ?? {})) {
       if ((division.kind ?? "land") !== "land") continue;
       const tile = tileById.get(division.hexId);
-      if (!tile) continue;
+      if (!tile || !viewportCulling.visibleTileIds.has(tile.id)) continue;
       const center = axialToPixel(tile, size);
       const fillColor = cssColorToHexNumber(countryColorById?.[division.countryId] ?? "", 0x9a3f39);
       const marker = new Graphics();
@@ -2062,7 +2173,7 @@ export function MapView({
     }
     for (const fleet of Object.values(worldBase.fleetsById ?? {})) {
       const tile = tileById.get(fleet.hexId);
-      if (!tile) continue;
+      if (!tile || !viewportCulling.visibleTileIds.has(tile.id)) continue;
       const center = axialToPixel(tile, size);
       const fillColor = cssColorToHexNumber(countryColorById?.[fleet.countryId] ?? "", 0x3d7fa6);
       const marker = new Graphics();
@@ -2093,7 +2204,7 @@ export function MapView({
     for (const unit of Object.values(worldBase.civilianUnitsById ?? {})) {
       if (unit.status === "captured" || pendingFoundCityUnitIds.has(unit.id)) continue;
       const tile = tileById.get(unit.hexId);
-      if (!tile) continue;
+      if (!tile || !viewportCulling.visibleTileIds.has(tile.id)) continue;
       const center = axialToPixel(tile, size);
       const fillColor = cssColorToHexNumber(countryColorById?.[unit.countryId] ?? "", 0xd8c27a);
       const marker = new Graphics();
@@ -2116,7 +2227,7 @@ export function MapView({
       layer.addChild(marker);
     }
     app.render();
-  }, [camera.scale, countryColorById, mapArtifact.settings.hexSize, mapLayers.armies, pendingFoundCityUnitIds, pixiReady, tileById, worldBase]);
+  }, [camera.scale, countryColorById, mapArtifact.settings.hexSize, mapLayers.armies, pendingFoundCityUnitIds, pixiReady, tileById, viewportCulling.key, viewportCulling.visibleTileIds, worldBase, zoomBucket]);
 
   const selectedName = selectedTile ? resolveHexName(selectedTile) : null;
   const selectedTerrainLabel = selectedTile ? t(`hexMap.terrain.${selectedTile.terrain}`) : "";
@@ -2148,7 +2259,7 @@ export function MapView({
   }, [camera, mapArtifact.settings.hexSize, selectedBuildingPopoverTile]);
   const countryById = useMemo(() => new Map(buildingOverviewCountries.map((country) => [country.id, country] as const)), [buildingOverviewCountries]);
   const cityLabels = useMemo(() => {
-    if (!containerRef.current || !mapLayers.buildings || camera.scale < 0.46) return [];
+    if (!containerRef.current || !mapLayers.buildings || zoomBucket !== "near") return [];
     const rect = containerRef.current.getBoundingClientRect();
     const labels: Array<{
       key: string;
@@ -2216,7 +2327,7 @@ export function MapView({
       });
     }
     return labels;
-  }, [camera, countryById, countryNameById, mapArtifact.settings.hexSize, mapLayers.buildings, pendingFoundCityMarkers, t, tileById, worldBase?.cityMarkersById, worldBase?.settlementProjectsById]);
+  }, [camera, countryById, countryNameById, mapArtifact.settings.hexSize, mapLayers.buildings, pendingFoundCityMarkers, t, tileById, worldBase?.cityMarkersById, worldBase?.settlementProjectsById, zoomBucket]);
 
   const foundCityName = foundCityNameDraft.trim();
   const foundCityNameValid = foundCityName.length > 0 && foundCityName.length <= 32;
@@ -3039,16 +3150,70 @@ function getMapLensIcon(lens: MapLensId) {
   return Mountain;
 }
 
+function getMapZoomBucket(scale: number): MapZoomBucket {
+  if (scale < 0.72) return "far";
+  if (scale < 1.42) return "mid";
+  return "near";
+}
+
+function getViewportCullingBounds(map: HexMapArtifact, camera: HexCamera, rect: DOMRect | undefined): ViewportCullingBounds | null {
+  if (!rect || rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+  const size = map.settings.hexSize;
+  const padding = Math.max(size * MAP_VIEWPORT_PADDING_HEXES, (size / Math.max(0.001, camera.scale)) * 2);
+  const halfWidth = rect.width / Math.max(0.001, camera.scale) / 2 + padding;
+  const halfHeight = rect.height / Math.max(0.001, camera.scale) / 2 + padding;
+  const left = camera.x - halfWidth;
+  const right = camera.x + halfWidth;
+  const top = camera.y - halfHeight;
+  const bottom = camera.y + halfHeight;
+  const bucketSize = Math.max(size * 3, 48 / Math.max(0.001, camera.scale));
+  const key = [
+    Math.floor(left / bucketSize),
+    Math.floor(right / bucketSize),
+    Math.floor(top / bucketSize),
+    Math.floor(bottom / bucketSize),
+    getMapZoomBucket(camera.scale),
+    map.tiles.length,
+  ].join(":");
+  return { key, left, right, top, bottom };
+}
+
+function getViewportCullingState(map: HexMapArtifact, camera: HexCamera, rect: DOMRect | undefined): ViewportCullingState {
+  return getViewportCullingStateFromBounds(map, getViewportCullingBounds(map, camera, rect));
+}
+
+function getViewportCullingStateFromBounds(map: HexMapArtifact, bounds: ViewportCullingBounds | null): ViewportCullingState {
+  if (!bounds) {
+    return {
+      key: `all:${map.tiles.length}`,
+      visibleTileIds: new Set(map.tiles.map((tile) => tile.id)),
+    };
+  }
+  const size = map.settings.hexSize;
+  const visibleTileIds = new Set<HexId>();
+  for (const tile of map.tiles) {
+    const center = axialToPixel(tile, size);
+    if (center.x < bounds.left || center.x > bounds.right || center.y < bounds.top || center.y > bounds.bottom) continue;
+    visibleTileIds.add(tile.id);
+  }
+  return { key: bounds.key, visibleTileIds };
+}
+
 function buildLayerOverlayCells(
   map: HexMapArtifact,
   worldBase: WorldBase | null,
   layers: MapLayerToggles,
   countryColorById?: Record<string, string>,
   countryNameById?: Record<string, string>,
+  visibleTileIds?: ReadonlySet<HexId>,
+  showLabels = true,
 ): MapLensRenderCell[] {
   if (!worldBase) return [];
   const cells: MapLensRenderCell[] = [];
   for (const tile of map.tiles) {
+    if (visibleTileIds && !visibleTileIds.has(tile.id)) continue;
     if (layers.regionFill) {
       cells.push({
         tile,
@@ -3067,8 +3232,8 @@ function buildLayerOverlayCells(
         tile,
         groupId: `layer:country:${owner}`,
         borderGroupId: `layer:country:${owner}`,
-        labelGroupId: layers.countryLabels && !tile.waterKind ? owner : undefined,
-        label: layers.countryLabels && !tile.waterKind ? countryNameById?.[owner] ?? owner : undefined,
+        labelGroupId: showLabels && layers.countryLabels && !tile.waterKind ? owner : undefined,
+        label: showLabels && layers.countryLabels && !tile.waterKind ? countryNameById?.[owner] ?? owner : undefined,
         color: countryColor,
         alpha: layers.countryFill ? (tile.waterKind ? 0.14 : 0.24) : 0,
         surfaceAlpha: 0,
@@ -3218,11 +3383,13 @@ function drawTexturedCorridorTiles(
   textures: CorridorAtlasTextures,
   preview: boolean,
   alphaMultiplier = 1,
+  visibleTileIds?: ReadonlySet<HexId>,
 ): void {
   const tileSize = Math.max(size * 2.05, 18);
   for (const [key, masks] of tileLayers) {
     const [transportMode, status] = key.split(":") as [TransportMode, CorridorAtlasStatus];
     for (const [hexId, rawMask] of masks) {
+      if (visibleTileIds && !visibleTileIds.has(hexId)) continue;
       const tile = tileById.get(hexId);
       const texture = textures[transportMode]?.[status]?.[Math.max(0, Math.min(63, rawMask))];
       if (!tile || !texture) continue;
@@ -3396,9 +3563,11 @@ function drawMapLayerOutlines(
   layers: MapLayerToggles,
   camera: HexCamera,
   rect: DOMRect,
+  visibleTileIds?: ReadonlySet<HexId>,
 ): void {
   const size = map.settings.hexSize;
   for (const tile of map.tiles) {
+    if (visibleTileIds && !visibleTileIds.has(tile.id)) continue;
     if (!isTileInViewport(tile, camera, rect, size)) continue;
     if (layers.hexGrid && camera.scale >= HEX_GRID_MIN_SCALE) {
       drawHexOutline(graphics, tile, size, 0xd3c08d, 0.55);
