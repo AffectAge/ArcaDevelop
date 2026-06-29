@@ -1,6 +1,8 @@
 {
   "scenario.default.name": "Default",
   "country:default.nameKey": "Default Country",
+  "mapFeature.ancientRuins.name": "Ancient ruins",
+  "mapFeature.ancientRuins.tooltip": "A visible special map feature reserved for future events, archaeology, and regional modifiers.",
   "good.grain.name": "Grain",
   "good.flour.name": "Flour",
   "good.bread.name": "Bread",

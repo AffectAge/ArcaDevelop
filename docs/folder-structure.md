@@ -164,6 +164,7 @@ apps/server/data/scenarios/<scenario_id>/
     races/
     markets/
     modifiers/
+    map_feature_generators/
     ai/
       archetypes/
       personalities/

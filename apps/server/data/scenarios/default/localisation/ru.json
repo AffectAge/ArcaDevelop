@@ -1,6 +1,8 @@
 {
   "scenario.default.name": "Базовый сценарий",
   "country:default.nameKey": "Базовая страна",
+  "mapFeature.ancientRuins.name": "Древние руины",
+  "mapFeature.ancientRuins.tooltip": "Видимый особый объект карты, зарезервированный для будущих событий, археологии и региональных модификаторов.",
   "good.grain.name": "Зерно",
   "good.flour.name": "Мука",
   "good.bread.name": "Хлеб",

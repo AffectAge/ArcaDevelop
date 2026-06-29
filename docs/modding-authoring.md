@@ -46,6 +46,7 @@ scenarios/<scenario_id>/
     races/*.json
     markets/*.json
     modifiers/*.json
+    map_feature_generators/*.json
     ai/
       archetypes/*.json
       personalities/*.json
@@ -77,6 +78,26 @@ Authored asset registry entries live in `common/assets/*.json` and point to loca
 ```
 
 Content should reference these entries with fields such as `assetId`, `iconAssetId`, `flagAssetId`, `crestAssetId`, `atlasAssetId`, or `imageAssetId`. If a non-required visual is absent, the client may use repo-owned fallback atlases/icons; declared asset files must still be local, readable, and dimension-correct.
+
+Map feature generator files live in `common/map_feature_generators/*.json`. They define deterministic rules for generated special map features such as deposits, ruins, holy sites, passes, and strategic points. The generated output is stored under `.generated/map-features.json`; do not author or manually edit that generated file.
+
+Example:
+
+```json
+{
+  "id": "map_feature_generator:ancient_ruins",
+  "typeId": "feature:ancient_ruins",
+  "category": "site",
+  "visualId": "feature:ancient_ruins",
+  "nameKey": "mapFeature.ancientRuins.name",
+  "visibility": "known",
+  "allowedTerrains": ["plains", "hills", "desert"],
+  "global": { "min": 4, "max": 8 },
+  "perRegion": { "max": 1 }
+}
+```
+
+Feature visuals use one common PNG atlas at `assets/features/feature-atlas.png`. The atlas is `256x448`: four horizontal `64x64` variants per row, with rows assigned to current feature visual ids (`feature:forest`, `feature:dense_forest`, `feature:jungle`, `feature:marsh`, `feature:scrub`, `feature:snowcap`, `feature:ancient_ruins`). Missing scenario feature atlases use the client-owned fallback atlas; declared `asset:*` entries still need valid local files.
 
 Base game resource point icons are not scenario content. Population, culture, science, religion, colonization, construction, ducats, and gold icons live as repo-owned PNG assets in `apps/client/public/game-assets/resource-icons/` and are mapped by the client. Scenarios must not define, upload, or override these icons; scenario assets remain for scenario-owned visuals such as flags, crests, backgrounds, buildings, goods, and authored art.
 

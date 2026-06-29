@@ -1,5 +1,5 @@
 import type express from "express";
-import type { EventLogEntry, HexMapArtifact, PopulationPop, RegionPopulation, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import type { EventLogEntry, HexMapArtifact, MapFeatureInstance, PopulationPop, RegionPopulation, WorldBase, WsOutMessage } from "@arcanorum/shared";
 import type { PrismaClient } from "@prisma/client";
 import { registerAdminHexMutationRoutes } from "../routes/adminHexMutationRoutes";
 import { registerCountryHexCustomizationRoutes } from "../routes/countryHexCustomizationRoutes";
@@ -27,6 +27,7 @@ type HexRouteRuntimeParams = {
   getTurnId: () => number;
   getHexIndex: () => HexMapIndexEntry[];
   getHexMapArtifact: () => HexMapArtifact | null;
+  getMapFeatures: () => MapFeatureInstance[];
   getWorldBase: () => WorldBase;
   getHexRenameDucatsCost: () => number;
   getRegionColonizationConfig: (regionId: string) => RegionColonizationConfig;
@@ -88,6 +89,7 @@ export function registerHexRouteRuntime(params: HexRouteRuntimeParams): void {
     routeAuth: params.routeAuth,
     getHexIndex: params.getHexIndex,
     getHexMapArtifact: params.getHexMapArtifact,
+    getMapFeatures: params.getMapFeatures,
     getWorldBase: params.getWorldBase,
   });
 

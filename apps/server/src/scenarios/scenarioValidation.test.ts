@@ -103,6 +103,72 @@ describe("scenarioValidation", () => {
     );
   });
 
+  it("validates 256x448 PNG feature atlases when scenario overrides them", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await writeBuildingAtlas(join(scenarioDir, "assets/features/feature-atlas.png"), 256, 448);
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("fails when an authored feature atlas has the wrong size", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await writeBuildingAtlas(join(scenarioDir, "assets/features/feature-atlas.png"), 256, 64);
+
+    const oldSixVariantSize = await validateScenarioDirectory(scenarioDir);
+
+    expect(oldSixVariantSize.ok).toBe(false);
+    expect(oldSixVariantSize.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "INVALID_FEATURE_ATLAS", path: "assets/features/feature-atlas.png" }),
+      ]),
+    );
+
+    await writeBuildingAtlas(join(scenarioDir, "assets/features/feature-atlas.png"), 384, 64);
+    const singleFrameSize = await validateScenarioDirectory(scenarioDir);
+
+    expect(singleFrameSize.ok).toBe(false);
+    expect(singleFrameSize.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "INVALID_FEATURE_ATLAS", path: "assets/features/feature-atlas.png" }),
+      ]),
+    );
+  });
+
+  it("validates map feature generator definitions", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await writeJson(join(scenarioDir, "common/map_feature_generators/ruins.json"), {
+      id: "map_feature_generator:ruins",
+      typeId: "feature:ancient_ruins",
+      category: "site",
+      global: { count: 3 },
+      allowedTerrains: ["plains", "hills"],
+    });
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("fails invalid map feature generator definitions", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await writeJson(join(scenarioDir, "common/map_feature_generators/bad.json"), {
+      id: "bad",
+      typeId: "ancient_ruins",
+      category: "natural",
+    });
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "INVALID_MAP_FEATURE_GENERATOR" }),
+      ]),
+    );
+  });
+
   it("fails on broken stable references", async () => {
     const scenarioDir = await createScenarioFixture();
     await writeJson(join(scenarioDir, "history/regions/bohemia.json"), {

@@ -16,6 +16,7 @@ import {
   normalizeScenarioResourceLedgerDefines,
   normalizeScenarioTurnTimerDefines,
 } from "./scenarioDefinesLoader";
+import { normalizeMapFeatureGenerator } from "./mapFeatureGeneration";
 
 export type ScenarioValidationIssueCode =
   | "MISSING_REQUIRED_FILE"
@@ -37,6 +38,8 @@ export type ScenarioValidationIssueCode =
   | "INVALID_JOURNAL_DEFINITION"
   | "INVALID_BUILDING_ATLAS"
   | "INVALID_CITY_ATLAS"
+  | "INVALID_FEATURE_ATLAS"
+  | "INVALID_MAP_FEATURE_GENERATOR"
   | "INVALID_ASSET_REGISTRY"
   | "FORBIDDEN_AUTHORED_ASSET_URL"
   | "FORBIDDEN_LEGACY_CONTENT_FIELD"
@@ -111,6 +114,7 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "race", path: "common/races" },
   { kind: "market", path: "common/markets" },
   { kind: "modifier", path: "common/modifiers" },
+  { kind: "mapFeatureGenerator", path: "common/map_feature_generators" },
   { kind: "interestGroup", path: "common/interestGroups" },
   { kind: "party", path: "common/parties" },
   { kind: "company", path: "common/companies" },
@@ -332,9 +336,11 @@ export async function validateScenarioDirectory(
   validateDecisionDefinitions(root, loadedEntities, issues);
   validateEventDefinitions(root, loadedEntities, localizationKeys, issues);
   validateJournalDefinitions(root, loadedEntities, localizationKeys, issues);
+  validateMapFeatureGenerators(root, loadedEntities, issues);
   validateEntityLocalization(root, loadedEntities, localizationKeys, issues);
   await validateBuildingAtlases(root, loadedEntities, issues);
   await validateCityAtlases(root, loadedEntities, issues);
+  await validateFeatureAtlases(root, loadedEntities, issues);
   await validateGeneratedManifest(root, summary, issues, options.requireGeneratedIndexes === true);
 
   return {
@@ -599,6 +605,53 @@ async function validateCityAtlases(root: string, entities: LoadedEntity[], issue
 
 function sanitizeCityAtlasId(cultureId: string): string {
   return cultureId.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+function validateMapFeatureGenerators(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
+  const seenHexConstrainedIds = new Set<string>();
+  for (const generator of entities.filter((entity) => entity.kind === "mapFeatureGenerator")) {
+    const result = normalizeMapFeatureGenerator(generator.data, normalizePath(relative(root, generator.path)));
+    for (const issue of result.issues) {
+      issues.push({
+        code: issue.code,
+        path: issue.path,
+        message: issue.message,
+      });
+    }
+    if (!result.definition) continue;
+    if (seenHexConstrainedIds.has(result.definition.id)) {
+      issues.push({
+        code: "DUPLICATE_ID",
+        path: normalizePath(relative(root, generator.path)),
+        message: `Duplicate map feature generator id ${result.definition.id}.`,
+      });
+    }
+    seenHexConstrainedIds.add(result.definition.id);
+  }
+}
+
+async function validateFeatureAtlases(root: string, _entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
+  const relativePath = "assets/features/feature-atlas.png";
+  const atlasPath = join(root, relativePath);
+  if (!existsSync(atlasPath)) return;
+  try {
+    const dimensions = imageSize(await readFile(atlasPath));
+    const width = dimensions.width ?? 0;
+    const height = dimensions.height ?? 0;
+    if (dimensions.type !== "png" || width !== 256 || height !== 448) {
+      issues.push({
+        code: "INVALID_FEATURE_ATLAS",
+        path: relativePath,
+        message: `Feature atlas must be a PNG sized 256x448; received ${dimensions.type ?? "unknown"} ${width}x${height}.`,
+      });
+    }
+  } catch {
+    issues.push({
+      code: "INVALID_FEATURE_ATLAS",
+      path: relativePath,
+      message: "Feature atlas must be a readable PNG sized 256x448.",
+    });
+  }
 }
 
 async function validateAssetRegistry(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
@@ -1110,6 +1163,7 @@ function validateRegionResources(root: string, region: LoadedEntity, goods: Set<
 function validateKnownStableReferences(root: string, entity: LoadedEntity, ids: Set<string>, issues: ScenarioValidationIssue[]): void {
   for (const [field, value] of Object.entries(entity.data)) {
     if (!field.endsWith("Id") || field === "id" || value == null) continue;
+    if (entity.kind === "mapFeatureGenerator" && (field === "typeId" || field === "visualId")) continue;
     if (typeof value !== "string" || !value.includes(":")) continue;
     if (ids.has(value)) continue;
     issues.push({

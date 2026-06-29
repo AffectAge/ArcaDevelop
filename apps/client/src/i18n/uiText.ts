@@ -1533,6 +1533,8 @@ export type UiTextKey =
   | "map.layer.countryBordersTooltip"
   | "map.layer.regionFill"
   | "map.layer.regionFillTooltip"
+  | "map.layer.features"
+  | "map.layer.featuresTooltip"
   | "map.layer.buildings"
   | "map.layer.buildingsTooltip"
   | "map.layer.armies"
@@ -1604,6 +1606,7 @@ export type UiTextKey =
   | "hexMap.terrain"
   | "hexMap.biome"
   | "hexMap.feature"
+  | "hexMap.siteFeature"
   | "hexMap.water"
   | "hexMap.owner"
   | "hexMap.ownerCountry"
@@ -4786,6 +4789,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.layer.countryBordersTooltip": "Show borders between countries",
     "map.layer.regionFill": "Regions",
     "map.layer.regionFillTooltip": "Show state-region fill and borders",
+    "map.layer.features": "Features",
+    "map.layer.featuresTooltip": "Show natural and special map features",
     "map.layer.buildings": "Buildings",
     "map.layer.buildingsTooltip": "Show buildings and construction projects on the map",
     "map.layer.armies": "Armies",
@@ -4857,6 +4862,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.terrain": "Terrain",
     "hexMap.biome": "Biome",
     "hexMap.feature": "Feature",
+    "hexMap.siteFeature": "Special feature",
     "hexMap.water": "Water",
     "hexMap.owner": "Owner",
     "hexMap.ownerCountry": "Country {country}",
@@ -8038,6 +8044,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.layer.countryBordersTooltip": "Показывать границы между государствами",
     "map.layer.regionFill": "Регионы",
     "map.layer.regionFillTooltip": "Показывать заливку и границы государственных регионов",
+    "map.layer.features": "Особенности",
+    "map.layer.featuresTooltip": "Показывать природные и особые объекты карты",
     "map.layer.buildings": "Здания",
     "map.layer.buildingsTooltip": "Показывать здания и строительные проекты на карте",
     "map.layer.armies": "Армии",
@@ -8109,6 +8117,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.terrain": "Местность",
     "hexMap.biome": "Биом",
     "hexMap.feature": "Особенность",
+    "hexMap.siteFeature": "Особый объект",
     "hexMap.water": "Вода",
     "hexMap.owner": "Владелец",
     "hexMap.ownerCountry": "Страна {country}",

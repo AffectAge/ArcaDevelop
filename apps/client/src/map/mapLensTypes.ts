@@ -24,6 +24,7 @@ export type MapLayerToggleId =
   | "countryFill"
   | "countryBorders"
   | "regionFill"
+  | "features"
   | "buildings"
   | "armies"
   | "countryLabels";

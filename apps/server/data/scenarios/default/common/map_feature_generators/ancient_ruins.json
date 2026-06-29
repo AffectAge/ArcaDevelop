@@ -1,0 +1,11 @@
+{
+  "id": "map_feature_generator:ancient_ruins",
+  "typeId": "feature:ancient_ruins",
+  "category": "site",
+  "visualId": "feature:ancient_ruins",
+  "nameKey": "mapFeature.ancientRuins.name",
+  "tooltipKey": "mapFeature.ancientRuins.tooltip",
+  "visibility": "known",
+  "allowedTerrains": ["plains", "grassland", "hills", "desert"],
+  "global": { "min": 8, "max": 12 }
+}

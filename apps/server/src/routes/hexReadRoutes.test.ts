@@ -63,6 +63,26 @@ describe("hexReadRoutes", () => {
     const forbiddenRawMetadataKey = ["source", "Properties"].join("");
     expect(body.hexes[0]).not.toHaveProperty(forbiddenRawMetadataKey);
   });
+
+  it("returns generated map features as a readonly public map payload", async () => {
+    const app = makeApp(makeDeps());
+
+    const response = await request(app, "/hex-map/features");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual({
+      features: [{
+        id: "map_feature:test",
+        typeId: "feature:ancient_ruins",
+        category: "site",
+        hexId: "hex:0:0",
+        regionId: "region:world",
+        visualId: "feature:ancient_ruins",
+        visibility: "known",
+      }],
+    });
+  });
 });
 
 function makeApp(deps: HexReadRoutesDependencies): express.Express {
@@ -80,6 +100,15 @@ function makeDeps(): HexReadRoutesDependencies & { world: HexReadWorldState } {
     routeAuth: createRouteAuth(),
     getHexIndex: () => [makeHex({ id: "hex:0:0", name: "Alpha" }), makeHex({ id: "hex:0:1", name: "Beta" })],
     getHexMapArtifact: () => null,
+    getMapFeatures: () => [{
+      id: "map_feature:test",
+      typeId: "feature:ancient_ruins",
+      category: "site",
+      hexId: "hex:0:0",
+      regionId: "region:world",
+      visualId: "feature:ancient_ruins",
+      visibility: "known",
+    }],
     getWorldBase: () => world,
   };
 }

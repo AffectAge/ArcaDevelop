@@ -32,6 +32,7 @@ describe("map lens settings", () => {
       countryFill: true,
       countryBorders: true,
       regionFill: true,
+      features: true,
       buildings: true,
       armies: true,
       countryLabels: true,

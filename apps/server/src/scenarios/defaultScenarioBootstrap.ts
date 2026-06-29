@@ -11,6 +11,7 @@ import {
   type HexTile,
 } from "@arcanorum/shared";
 import type { HexMapIndexEntry } from "../map/hexIndex";
+import { ensureGeneratedMapFeatures } from "./mapFeatureGeneration";
 import { getScenarioRuntimePaths } from "./runtimePaths";
 
 export const DEFAULT_SCENARIO_ID = "default";
@@ -96,6 +97,10 @@ export function ensureDefaultScenario(params: EnsureDefaultScenarioParams): Defa
   if (params.forceGenerated || !existsSync(hexIndexPath)) writeJsonFile(hexIndexPath, hexIndex);
   if (params.forceGenerated || !existsSync(generatedRegionIndexPath)) {
     writeJsonFile(generatedRegionIndexPath, generatedRegions.regions);
+  }
+  const mapFeatureResult = ensureGeneratedMapFeatures({ scenarioDir, mapArtifact: artifact, forceGenerated: params.forceGenerated });
+  if (mapFeatureResult.issues.length > 0) {
+    throw new Error(mapFeatureResult.issues.map((issue) => `${issue.code}: ${issue.path}: ${issue.message}`).join("\n"));
   }
 
   const runtimePaths = getScenarioRuntimePaths({

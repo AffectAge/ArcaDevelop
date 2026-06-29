@@ -116,6 +116,14 @@ scenarios/<scenario_id>/.generated/regions.json
 
 This file is produced by scenario map generation and contains generated region membership plus empty starting region state for bootstrap scenarios. It is read by the runtime together with authored `history/regions/*.json`, but it remains generated output and must not be manually edited. Authored scenario regions should still use one file per region under `history/regions/`.
 
+Generated special map features are written to:
+
+```text
+scenarios/<scenario_id>/.generated/map-features.json
+```
+
+This file is produced from authored `common/map_feature_generators/*.json` and the deterministic hex map artifact. It stores concrete `MapFeatureInstance` rows with stable ids, `hexId`, `regionId`, category, visibility, and visual id. Natural hex features such as forest, jungle, marsh, scrub, and snowcap remain in the hex map artifact as `HexTile.feature`.
+
 ## Validation
 
 Scenario validation must reject:
