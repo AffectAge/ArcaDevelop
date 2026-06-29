@@ -1,6 +1,9 @@
 import type {
   BuildingInstance,
   BuildingOwner,
+  HexId,
+  MapResourceDepositInstanceId,
+  RegionId,
   RegionConstructionProject,
   RegionResourceDeposit,
   RegionResourceExplorationProject,
@@ -17,6 +20,10 @@ export type HexStateNormalizerParams = {
 
 function round3(value: number): number {
   return Number((Number.isFinite(value) ? value : 0).toFixed(3));
+}
+
+function sanitizeStableIdPart(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9:_-]+/g, "_").replace(/^_+|_+$/g, "") || "unknown";
 }
 
 export function normalizeRegionBuildingsMap(params: HexStateNormalizerParams): Record<string, BuildingInstance[]> {
@@ -356,37 +363,82 @@ export function normalizeRegionResourceDepositsMap(params: HexStateNormalizerPar
   const normalized: Record<string, RegionResourceDeposit[]> = {};
   if (input && typeof input === "object") {
     const source = input as Record<string, unknown>;
-    for (const [hexId, rawRows] of Object.entries(source)) {
-      if (!hexId || !Array.isArray(rawRows)) continue;
+    for (const [regionId, rawRows] of Object.entries(source)) {
+      if (!regionId || !Array.isArray(rawRows)) continue;
       const rows: RegionResourceDeposit[] = [];
+      const occupiedHexIds = new Set<string>();
       for (const rawRow of rawRows) {
         if (!rawRow || typeof rawRow !== "object") continue;
         const row = rawRow as Partial<RegionResourceDeposit>;
         const goodId = typeof row.goodId === "string" ? row.goodId.trim() : "";
-        if (!goodId) continue;
+        const hexId = typeof row.hexId === "string" ? row.hexId.trim() : "";
+        if (!goodId || !hexId || occupiedHexIds.has(hexId)) continue;
         const amount =
           typeof row.amount === "number" && Number.isFinite(row.amount) ? round3(Math.max(0, Number(row.amount))) : 0;
         if (amount <= 0) continue;
+        const maxAmountRaw = typeof row.maxAmount === "number" && Number.isFinite(row.maxAmount) ? row.maxAmount : amount;
+        const maxAmount = round3(Math.max(amount, maxAmountRaw));
+        const initialAmountRaw =
+          typeof row.initialAmount === "number" && Number.isFinite(row.initialAmount) ? row.initialAmount : maxAmount;
+        const initialAmount = round3(Math.max(0, initialAmountRaw));
         const discoveredTurnId =
           typeof row.discoveredTurnId === "number" && Number.isFinite(row.discoveredTurnId)
             ? Math.max(1, Math.floor(row.discoveredTurnId))
-            : params.turnId;
-        const veinSize =
-          row.veinSize === "small" || row.veinSize === "medium" || row.veinSize === "large"
-            ? row.veinSize
-            : "small";
-        const existing = rows.find((entry) => entry.goodId === goodId);
-        if (existing) {
-          existing.amount = round3(existing.amount + amount);
-          continue;
-        }
-        rows.push({ goodId, amount, discoveredTurnId, veinSize });
+            : null;
+        const discoveredByCountryId =
+          typeof row.discoveredByCountryId === "string" && row.discoveredByCountryId.trim()
+            ? row.discoveredByCountryId.trim()
+            : null;
+        const sourceGeneratorId =
+          typeof row.sourceGeneratorId === "string" && row.sourceGeneratorId.trim() ? row.sourceGeneratorId.trim() : null;
+        const visibility =
+          row.visibility === "discoverable" || row.visibility === "hidden" || row.visibility === "known"
+            ? row.visibility
+            : "known";
+        const sourceType =
+          row.source === "generated" || row.source === "exploration" || row.source === "authored"
+            ? row.source
+            : "authored";
+        const depletionMode =
+          row.depletionMode === "renewable" || row.depletionMode === "infinite" || row.depletionMode === "finite"
+            ? row.depletionMode
+            : "finite";
+        const regenPerTurn =
+          typeof row.regenPerTurn === "number" && Number.isFinite(row.regenPerTurn)
+            ? round3(Math.max(0, row.regenPerTurn))
+            : null;
+        const minRenewableAmount =
+          typeof row.minRenewableAmount === "number" && Number.isFinite(row.minRenewableAmount)
+            ? round3(Math.max(0, Math.min(maxAmount, row.minRenewableAmount)))
+            : null;
+        const id: MapResourceDepositInstanceId =
+          typeof row.id === "string" && row.id.startsWith("resource_deposit:")
+            ? (row.id as MapResourceDepositInstanceId)
+            : `resource_deposit:${sanitizeStableIdPart(goodId)}_${sanitizeStableIdPart(hexId)}`;
+        rows.push({
+          id,
+          goodId,
+          hexId: hexId as HexId,
+          regionId: (typeof row.regionId === "string" && row.regionId.trim() ? row.regionId.trim() : regionId) as RegionId,
+          amount,
+          maxAmount,
+          initialAmount,
+          visibility,
+          source: sourceType,
+          depletionMode,
+          regenPerTurn,
+          minRenewableAmount,
+          discoveredTurnId,
+          discoveredByCountryId,
+          sourceGeneratorId,
+        });
+        occupiedHexIds.add(hexId);
       }
-      normalized[hexId] = rows.sort((a, b) => a.goodId.localeCompare(b.goodId));
+      normalized[regionId] = rows.sort((a, b) => a.hexId.localeCompare(b.hexId) || a.goodId.localeCompare(b.goodId));
     }
   }
-  for (const hexId of params.hexIds) {
-    if (!normalized[hexId]) normalized[hexId] = [];
+  for (const regionId of params.hexIds) {
+    if (!normalized[regionId]) normalized[regionId] = [];
   }
   return normalized;
 }

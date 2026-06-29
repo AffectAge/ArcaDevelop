@@ -88,7 +88,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -180,7 +180,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -235,7 +235,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -327,7 +327,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -419,7 +419,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -511,7 +511,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -603,7 +603,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -695,7 +695,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -714,7 +714,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -806,7 +806,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -898,7 +898,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -990,7 +990,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1082,7 +1082,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1174,7 +1174,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1182,7 +1182,7 @@
   {
     "id": "region:land:110",
     "nameKey": "region.generated.region_land_110.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:183:46",
       "hex:182:47",
@@ -1266,7 +1266,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1358,7 +1358,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1450,7 +1450,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1458,7 +1458,7 @@
   {
     "id": "region:land:113",
     "nameKey": "region.generated.region_land_113.name",
-    "color": "#5f8f52",
+    "color": "#b8a45f",
     "hexIds": [
       "hex:237:47"
     ],
@@ -1469,7 +1469,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1477,7 +1477,7 @@
   {
     "id": "region:land:114",
     "nameKey": "region.generated.region_land_114.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:271:47",
       "hex:272:47",
@@ -1561,7 +1561,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1653,7 +1653,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1745,7 +1745,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1837,7 +1837,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1929,7 +1929,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -1937,7 +1937,7 @@
   {
     "id": "region:land:119",
     "nameKey": "region.generated.region_land_119.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:151:48",
       "hex:144:49",
@@ -2021,7 +2021,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2065,7 +2065,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2157,7 +2157,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2249,7 +2249,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2341,7 +2341,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2433,7 +2433,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2489,7 +2489,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2581,7 +2581,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2673,7 +2673,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2765,7 +2765,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2785,7 +2785,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2877,7 +2877,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -2969,7 +2969,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -3061,7 +3061,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -3153,7 +3153,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -3245,7 +3245,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -3253,7 +3253,7 @@
   {
     "id": "region:land:133",
     "nameKey": "region.generated.region_land_133.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:154:53",
       "hex:155:53",
@@ -3337,7 +3337,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -3429,7 +3429,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -3521,7 +3521,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -3613,7 +3613,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -3621,7 +3621,7 @@
   {
     "id": "region:land:137",
     "nameKey": "region.generated.region_land_137.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:78:55",
       "hex:77:56",
@@ -3705,7 +3705,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -3713,7 +3713,7 @@
   {
     "id": "region:land:138",
     "nameKey": "region.generated.region_land_138.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:92:55",
       "hex:91:56",
@@ -3797,7 +3797,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -3882,7 +3882,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -3946,7 +3946,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4038,7 +4038,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4130,7 +4130,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4222,7 +4222,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4314,7 +4314,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4322,7 +4322,7 @@
   {
     "id": "region:land:144",
     "nameKey": "region.generated.region_land_144.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:243:56",
       "hex:244:56",
@@ -4406,7 +4406,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4498,7 +4498,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4506,7 +4506,7 @@
   {
     "id": "region:land:146",
     "nameKey": "region.generated.region_land_146.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:18:57",
       "hex:19:57",
@@ -4590,7 +4590,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4682,7 +4682,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4690,7 +4690,7 @@
   {
     "id": "region:land:148",
     "nameKey": "region.generated.region_land_148.name",
-    "color": "#5f8f52",
+    "color": "#3d8b52",
     "hexIds": [
       "hex:159:57",
       "hex:158:58",
@@ -4774,7 +4774,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4798,7 +4798,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4806,7 +4806,7 @@
   {
     "id": "region:land:15",
     "nameKey": "region.generated.region_land_15.name",
-    "color": "#8a9aa3",
+    "color": "#5f8f52",
     "hexIds": [
       "hex:19:6",
       "hex:18:7",
@@ -4890,7 +4890,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4898,7 +4898,7 @@
   {
     "id": "region:land:150",
     "nameKey": "region.generated.region_land_150.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:25:58",
       "hex:26:58",
@@ -4982,7 +4982,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -4990,7 +4990,7 @@
   {
     "id": "region:land:151",
     "nameKey": "region.generated.region_land_151.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:40:58",
       "hex:41:58",
@@ -5074,7 +5074,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -5166,7 +5166,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -5258,7 +5258,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -5266,7 +5266,7 @@
   {
     "id": "region:land:154",
     "nameKey": "region.generated.region_land_154.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:3:59",
       "hex:4:59",
@@ -5350,7 +5350,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -5358,7 +5358,7 @@
   {
     "id": "region:land:155",
     "nameKey": "region.generated.region_land_155.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:83:59",
       "hex:82:60",
@@ -5442,7 +5442,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -5450,7 +5450,7 @@
   {
     "id": "region:land:156",
     "nameKey": "region.generated.region_land_156.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:190:59",
       "hex:191:59",
@@ -5534,7 +5534,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -5626,7 +5626,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -5718,7 +5718,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -5810,7 +5810,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -5842,7 +5842,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -5850,7 +5850,7 @@
   {
     "id": "region:land:160",
     "nameKey": "region.generated.region_land_160.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:10:61",
       "hex:9:62",
@@ -5934,7 +5934,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -6026,7 +6026,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -6118,7 +6118,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -6210,7 +6210,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -6302,7 +6302,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -6394,7 +6394,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -6486,7 +6486,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -6578,7 +6578,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -6670,7 +6670,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -6762,7 +6762,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -6854,7 +6854,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -6862,7 +6862,7 @@
   {
     "id": "region:land:170",
     "nameKey": "region.generated.region_land_170.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:330:64",
       "hex:332:64",
@@ -6946,7 +6946,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7038,7 +7038,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7130,7 +7130,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7150,7 +7150,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7242,7 +7242,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7334,7 +7334,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7426,7 +7426,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7518,7 +7518,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7610,7 +7610,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7702,7 +7702,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7794,7 +7794,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7802,7 +7802,7 @@
   {
     "id": "region:land:180",
     "nameKey": "region.generated.region_land_180.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:156:66",
       "hex:155:67",
@@ -7886,7 +7886,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -7978,7 +7978,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -8070,7 +8070,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -8078,7 +8078,7 @@
   {
     "id": "region:land:183",
     "nameKey": "region.generated.region_land_183.name",
-    "color": "#5f8f52",
+    "color": "#b8a45f",
     "hexIds": [
       "hex:52:67",
       "hex:53:67",
@@ -8126,7 +8126,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -8218,7 +8218,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -8310,7 +8310,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -8318,7 +8318,7 @@
   {
     "id": "region:land:186",
     "nameKey": "region.generated.region_land_186.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:28:70",
       "hex:29:70",
@@ -8402,7 +8402,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -8494,7 +8494,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -8586,7 +8586,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -8678,7 +8678,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -8770,7 +8770,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -8862,7 +8862,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -8954,7 +8954,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -9046,7 +9046,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -9138,7 +9138,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -9230,7 +9230,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -9322,7 +9322,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -9414,7 +9414,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -9506,7 +9506,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -9598,7 +9598,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -9690,7 +9690,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -9782,7 +9782,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -9790,7 +9790,7 @@
   {
     "id": "region:land:20",
     "nameKey": "region.generated.region_land_20.name",
-    "color": "#8a9aa3",
+    "color": "#5f8f52",
     "hexIds": [
       "hex:27:9",
       "hex:28:9",
@@ -9874,7 +9874,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -9966,7 +9966,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -10058,7 +10058,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -10066,7 +10066,7 @@
   {
     "id": "region:land:202",
     "nameKey": "region.generated.region_land_202.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:107:74",
       "hex:108:74",
@@ -10150,7 +10150,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -10242,7 +10242,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -10334,7 +10334,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -10426,7 +10426,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -10518,7 +10518,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -10526,7 +10526,7 @@
   {
     "id": "region:land:207",
     "nameKey": "region.generated.region_land_207.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:283:75",
       "hex:284:75",
@@ -10610,7 +10610,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -10702,7 +10702,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -10794,7 +10794,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -10802,7 +10802,7 @@
   {
     "id": "region:land:21",
     "nameKey": "region.generated.region_land_21.name",
-    "color": "#8a9aa3",
+    "color": "#5f8f52",
     "hexIds": [
       "hex:97:9",
       "hex:98:9",
@@ -10886,7 +10886,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -10978,7 +10978,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -11070,7 +11070,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -11162,7 +11162,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -11254,7 +11254,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -11346,7 +11346,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -11438,7 +11438,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -11530,7 +11530,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -11622,7 +11622,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -11714,7 +11714,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -11722,7 +11722,7 @@
   {
     "id": "region:land:219",
     "nameKey": "region.generated.region_land_219.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:38:79",
       "hex:39:79",
@@ -11806,7 +11806,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -11814,7 +11814,7 @@
   {
     "id": "region:land:22",
     "nameKey": "region.generated.region_land_22.name",
-    "color": "#8a9aa3",
+    "color": "#5f8f52",
     "hexIds": [
       "hex:105:9",
       "hex:104:10",
@@ -11898,7 +11898,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -11990,7 +11990,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -12082,7 +12082,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -12174,7 +12174,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -12182,7 +12182,7 @@
   {
     "id": "region:land:223",
     "nameKey": "region.generated.region_land_223.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:2:80",
       "hex:1:81",
@@ -12266,7 +12266,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -12358,7 +12358,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -12450,7 +12450,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -12542,7 +12542,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -12561,7 +12561,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -12653,7 +12653,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -12745,7 +12745,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -12753,7 +12753,7 @@
   {
     "id": "region:land:23",
     "nameKey": "region.generated.region_land_23.name",
-    "color": "#8a9aa3",
+    "color": "#5f8f52",
     "hexIds": [
       "hex:36:10",
       "hex:37:10",
@@ -12837,7 +12837,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -12929,7 +12929,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -13021,7 +13021,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -13113,7 +13113,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -13205,7 +13205,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -13297,7 +13297,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -13389,7 +13389,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -13481,7 +13481,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -13573,7 +13573,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -13665,7 +13665,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -13757,7 +13757,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -13849,7 +13849,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -13857,7 +13857,7 @@
   {
     "id": "region:land:240",
     "nameKey": "region.generated.region_land_240.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:7:84",
       "hex:8:84",
@@ -13941,7 +13941,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -14033,7 +14033,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -14125,7 +14125,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -14217,7 +14217,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -14309,7 +14309,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -14401,7 +14401,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -14493,7 +14493,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -14585,7 +14585,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -14677,7 +14677,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -14769,7 +14769,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -14777,7 +14777,7 @@
   {
     "id": "region:land:25",
     "nameKey": "region.generated.region_land_25.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:86:11",
       "hex:87:11",
@@ -14861,7 +14861,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -14953,7 +14953,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15045,7 +15045,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15053,7 +15053,7 @@
   {
     "id": "region:land:252",
     "nameKey": "region.generated.region_land_252.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:128:86"
     ],
@@ -15064,7 +15064,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15156,7 +15156,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15248,7 +15248,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15340,7 +15340,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15432,7 +15432,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15524,7 +15524,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15616,7 +15616,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15624,7 +15624,7 @@
   {
     "id": "region:land:259",
     "nameKey": "region.generated.region_land_259.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:130:89",
       "hex:131:89",
@@ -15708,7 +15708,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15800,7 +15800,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15892,7 +15892,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -15984,7 +15984,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -16076,7 +16076,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -16168,7 +16168,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -16260,7 +16260,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -16352,7 +16352,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -16444,7 +16444,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -16452,7 +16452,7 @@
   {
     "id": "region:land:267",
     "nameKey": "region.generated.region_land_267.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:104:91",
       "hex:104:92",
@@ -16536,7 +16536,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -16544,7 +16544,7 @@
   {
     "id": "region:land:268",
     "nameKey": "region.generated.region_land_268.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:192:91",
       "hex:191:92",
@@ -16628,7 +16628,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -16720,7 +16720,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -16757,7 +16757,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -16849,7 +16849,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -16941,7 +16941,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17033,7 +17033,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17125,7 +17125,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17217,7 +17217,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17309,7 +17309,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17401,7 +17401,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17493,7 +17493,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17501,7 +17501,7 @@
   {
     "id": "region:land:278",
     "nameKey": "region.generated.region_land_278.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:3:94",
       "hex:4:94",
@@ -17585,7 +17585,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17677,7 +17677,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17685,7 +17685,7 @@
   {
     "id": "region:land:28",
     "nameKey": "region.generated.region_land_28.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:128:13",
       "hex:127:14",
@@ -17710,7 +17710,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17802,7 +17802,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17894,7 +17894,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -17986,7 +17986,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -18078,7 +18078,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -18170,7 +18170,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -18262,7 +18262,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -18354,7 +18354,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -18362,7 +18362,7 @@
   {
     "id": "region:land:287",
     "nameKey": "region.generated.region_land_287.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:275:97",
       "hex:274:98",
@@ -18446,7 +18446,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -18538,7 +18538,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -18630,7 +18630,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -18649,7 +18649,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -18657,7 +18657,7 @@
   {
     "id": "region:land:290",
     "nameKey": "region.generated.region_land_290.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:76:98",
       "hex:77:98",
@@ -18741,7 +18741,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -18833,7 +18833,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -18841,7 +18841,7 @@
   {
     "id": "region:land:292",
     "nameKey": "region.generated.region_land_292.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:107:98",
       "hex:106:99",
@@ -18925,7 +18925,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -19017,7 +19017,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -19109,7 +19109,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -19201,7 +19201,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -19293,7 +19293,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -19385,7 +19385,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -19477,7 +19477,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -19569,7 +19569,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -19661,7 +19661,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -19669,7 +19669,7 @@
   {
     "id": "region:land:30",
     "nameKey": "region.generated.region_land_30.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:181:14",
       "hex:182:14",
@@ -19753,7 +19753,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -19845,7 +19845,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -19937,7 +19937,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20029,7 +20029,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20121,7 +20121,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20213,7 +20213,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20221,7 +20221,7 @@
   {
     "id": "region:land:305",
     "nameKey": "region.generated.region_land_305.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:38:102",
       "hex:39:102",
@@ -20305,7 +20305,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20397,7 +20397,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20405,7 +20405,7 @@
   {
     "id": "region:land:307",
     "nameKey": "region.generated.region_land_307.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:260:102",
       "hex:260:103",
@@ -20489,7 +20489,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20581,7 +20581,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20589,7 +20589,7 @@
   {
     "id": "region:land:309",
     "nameKey": "region.generated.region_land_309.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:81:103",
       "hex:82:103",
@@ -20673,7 +20673,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20765,7 +20765,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20773,7 +20773,7 @@
   {
     "id": "region:land:310",
     "nameKey": "region.generated.region_land_310.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:141:103",
       "hex:140:104",
@@ -20857,7 +20857,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20949,7 +20949,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -20957,7 +20957,7 @@
   {
     "id": "region:land:312",
     "nameKey": "region.generated.region_land_312.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:346:103"
     ],
@@ -20968,7 +20968,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -21060,7 +21060,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -21152,7 +21152,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -21244,7 +21244,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -21336,7 +21336,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -21428,7 +21428,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -21520,7 +21520,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -21612,7 +21612,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -21704,7 +21704,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -21796,7 +21796,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -21888,7 +21888,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -21896,7 +21896,7 @@
   {
     "id": "region:land:322",
     "nameKey": "region.generated.region_land_322.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:265:106",
       "hex:267:106",
@@ -21917,7 +21917,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22009,7 +22009,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22101,7 +22101,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22193,7 +22193,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22244,7 +22244,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22336,7 +22336,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22428,7 +22428,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22520,7 +22520,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22528,7 +22528,7 @@
   {
     "id": "region:land:33",
     "nameKey": "region.generated.region_land_33.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:213:16",
       "hex:214:16",
@@ -22612,7 +22612,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22704,7 +22704,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22712,7 +22712,7 @@
   {
     "id": "region:land:331",
     "nameKey": "region.generated.region_land_331.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:334:108",
       "hex:335:108",
@@ -22796,7 +22796,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22888,7 +22888,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -22980,7 +22980,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -23072,7 +23072,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -23164,7 +23164,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -23256,7 +23256,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -23264,7 +23264,7 @@
   {
     "id": "region:land:337",
     "nameKey": "region.generated.region_land_337.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:210:110",
       "hex:211:110",
@@ -23348,7 +23348,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -23368,7 +23368,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -23460,7 +23460,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -23552,7 +23552,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -23644,7 +23644,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -23736,7 +23736,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -23828,7 +23828,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -23920,7 +23920,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -24012,7 +24012,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -24104,7 +24104,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -24196,7 +24196,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -24288,7 +24288,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -24380,7 +24380,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -24472,7 +24472,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -24564,7 +24564,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -24656,7 +24656,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -24748,7 +24748,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -24840,7 +24840,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -24932,7 +24932,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -25024,7 +25024,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -25032,7 +25032,7 @@
   {
     "id": "region:land:355",
     "nameKey": "region.generated.region_land_355.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:196:115",
       "hex:194:116",
@@ -25116,7 +25116,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -25208,7 +25208,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -25300,7 +25300,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -25308,7 +25308,7 @@
   {
     "id": "region:land:358",
     "nameKey": "region.generated.region_land_358.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:39:116",
       "hex:38:117",
@@ -25392,7 +25392,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -25484,7 +25484,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -25492,7 +25492,7 @@
   {
     "id": "region:land:36",
     "nameKey": "region.generated.region_land_36.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:204:17",
       "hex:205:17",
@@ -25576,7 +25576,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -25668,7 +25668,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -25760,7 +25760,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -25852,7 +25852,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -25860,7 +25860,7 @@
   {
     "id": "region:land:363",
     "nameKey": "region.generated.region_land_363.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:23:118",
       "hex:23:119",
@@ -25944,7 +25944,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26036,7 +26036,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26128,7 +26128,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26220,7 +26220,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26312,7 +26312,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26404,7 +26404,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26496,7 +26496,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26517,7 +26517,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26609,7 +26609,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26617,7 +26617,7 @@
   {
     "id": "region:land:371",
     "nameKey": "region.generated.region_land_371.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:199:121",
       "hex:198:122",
@@ -26701,7 +26701,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26793,7 +26793,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26885,7 +26885,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -26893,7 +26893,7 @@
   {
     "id": "region:land:374",
     "nameKey": "region.generated.region_land_374.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:339:121",
       "hex:338:122",
@@ -26977,7 +26977,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -27069,7 +27069,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -27161,7 +27161,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -27253,7 +27253,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -27261,7 +27261,7 @@
   {
     "id": "region:land:378",
     "nameKey": "region.generated.region_land_378.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:205:122",
       "hex:206:122",
@@ -27345,7 +27345,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -27437,7 +27437,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -27529,7 +27529,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -27621,7 +27621,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -27713,7 +27713,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -27721,7 +27721,7 @@
   {
     "id": "region:land:382",
     "nameKey": "region.generated.region_land_382.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:132:123",
       "hex:133:123",
@@ -27757,7 +27757,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -27817,7 +27817,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -27909,7 +27909,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -28001,7 +28001,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -28093,7 +28093,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -28185,7 +28185,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -28277,7 +28277,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -28369,7 +28369,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -28461,7 +28461,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -28553,7 +28553,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -28645,7 +28645,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -28737,7 +28737,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -28745,7 +28745,7 @@
   {
     "id": "region:land:393",
     "nameKey": "region.generated.region_land_393.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:189:127",
       "hex:190:127",
@@ -28829,7 +28829,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -28921,7 +28921,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -29013,7 +29013,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -29105,7 +29105,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -29197,7 +29197,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -29289,7 +29289,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -29381,7 +29381,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -29473,7 +29473,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -29481,7 +29481,7 @@
   {
     "id": "region:land:40",
     "nameKey": "region.generated.region_land_40.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:224:19",
       "hex:217:20",
@@ -29565,7 +29565,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -29657,7 +29657,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -29749,7 +29749,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -29841,7 +29841,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -29933,7 +29933,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30025,7 +30025,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30117,7 +30117,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30209,7 +30209,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30301,7 +30301,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30393,7 +30393,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30485,7 +30485,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30560,7 +30560,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30652,7 +30652,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30660,7 +30660,7 @@
   {
     "id": "region:land:411",
     "nameKey": "region.generated.region_land_411.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:47:133",
       "hex:31:134",
@@ -30744,7 +30744,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30836,7 +30836,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30844,7 +30844,7 @@
   {
     "id": "region:land:413",
     "nameKey": "region.generated.region_land_413.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:79:134",
       "hex:78:135",
@@ -30857,7 +30857,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30949,7 +30949,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -30957,7 +30957,7 @@
   {
     "id": "region:land:415",
     "nameKey": "region.generated.region_land_415.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:28:135",
       "hex:27:136",
@@ -31041,7 +31041,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -31049,7 +31049,7 @@
   {
     "id": "region:land:416",
     "nameKey": "region.generated.region_land_416.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:92:135"
     ],
@@ -31060,7 +31060,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -31122,7 +31122,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -31214,7 +31214,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -31300,7 +31300,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -31308,7 +31308,7 @@
   {
     "id": "region:land:42",
     "nameKey": "region.generated.region_land_42.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:137:20",
       "hex:138:20",
@@ -31392,7 +31392,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -31484,7 +31484,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -31576,7 +31576,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -31584,7 +31584,7 @@
   {
     "id": "region:land:422",
     "nameKey": "region.generated.region_land_422.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:218:137",
       "hex:217:138",
@@ -31668,7 +31668,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -31760,7 +31760,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -31768,7 +31768,7 @@
   {
     "id": "region:land:424",
     "nameKey": "region.generated.region_land_424.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:117:138",
       "hex:116:139",
@@ -31852,7 +31852,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -31944,7 +31944,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32036,7 +32036,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32044,7 +32044,7 @@
   {
     "id": "region:land:427",
     "nameKey": "region.generated.region_land_427.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:73:140",
       "hex:71:141",
@@ -32121,7 +32121,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32213,7 +32213,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32305,7 +32305,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32397,7 +32397,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32489,7 +32489,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32497,7 +32497,7 @@
   {
     "id": "region:land:431",
     "nameKey": "region.generated.region_land_431.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:122:143",
       "hex:121:144",
@@ -32581,7 +32581,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32673,7 +32673,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32765,7 +32765,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32773,7 +32773,7 @@
   {
     "id": "region:land:434",
     "nameKey": "region.generated.region_land_434.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:271:145",
       "hex:270:146",
@@ -32857,7 +32857,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32949,7 +32949,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32968,7 +32968,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -32976,7 +32976,7 @@
   {
     "id": "region:land:437",
     "nameKey": "region.generated.region_land_437.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:127:147",
       "hex:128:147",
@@ -33060,7 +33060,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -33152,7 +33152,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -33244,7 +33244,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -33336,7 +33336,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -33344,7 +33344,7 @@
   {
     "id": "region:land:440",
     "nameKey": "region.generated.region_land_440.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:135:148",
       "hex:136:148",
@@ -33428,7 +33428,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -33520,7 +33520,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -33612,7 +33612,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -33620,7 +33620,7 @@
   {
     "id": "region:land:443",
     "nameKey": "region.generated.region_land_443.name",
-    "color": "#8a9aa3",
+    "color": "#b8a45f",
     "hexIds": [
       "hex:201:149",
       "hex:201:150",
@@ -33704,7 +33704,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -33712,7 +33712,7 @@
   {
     "id": "region:land:444",
     "nameKey": "region.generated.region_land_444.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:353:149",
       "hex:350:150",
@@ -33796,7 +33796,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -33804,7 +33804,7 @@
   {
     "id": "region:land:445",
     "nameKey": "region.generated.region_land_445.name",
-    "color": "#8a9aa3",
+    "color": "#5f8f52",
     "hexIds": [
       "hex:6:150",
       "hex:5:151",
@@ -33888,7 +33888,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -33980,7 +33980,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34072,7 +34072,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34080,7 +34080,7 @@
   {
     "id": "region:land:448",
     "nameKey": "region.generated.region_land_448.name",
-    "color": "#8a9aa3",
+    "color": "#5f8f52",
     "hexIds": [
       "hex:227:152"
     ],
@@ -34091,7 +34091,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34183,7 +34183,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34275,7 +34275,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34283,7 +34283,7 @@
   {
     "id": "region:land:450",
     "nameKey": "region.generated.region_land_450.name",
-    "color": "#8a9aa3",
+    "color": "#b8a45f",
     "hexIds": [
       "hex:169:153",
       "hex:170:153",
@@ -34367,7 +34367,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34375,7 +34375,7 @@
   {
     "id": "region:land:451",
     "nameKey": "region.generated.region_land_451.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:359:153",
       "hex:359:154",
@@ -34389,7 +34389,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34397,7 +34397,7 @@
   {
     "id": "region:land:452",
     "nameKey": "region.generated.region_land_452.name",
-    "color": "#8a9aa3",
+    "color": "#5f8f52",
     "hexIds": [
       "hex:24:154",
       "hex:16:155",
@@ -34461,7 +34461,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34512,7 +34512,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34595,7 +34595,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34687,7 +34687,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34695,7 +34695,7 @@
   {
     "id": "region:land:456",
     "nameKey": "region.generated.region_land_456.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:271:155",
       "hex:270:156",
@@ -34756,7 +34756,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34788,7 +34788,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34837,7 +34837,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34864,7 +34864,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34872,7 +34872,7 @@
   {
     "id": "region:land:46",
     "nameKey": "region.generated.region_land_46.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:215:22",
       "hex:214:23",
@@ -34956,7 +34956,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -34964,7 +34964,7 @@
   {
     "id": "region:land:460",
     "nameKey": "region.generated.region_land_460.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:359:159"
     ],
@@ -34975,7 +34975,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -35067,7 +35067,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -35159,7 +35159,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -35251,7 +35251,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -35259,7 +35259,7 @@
   {
     "id": "region:land:5",
     "nameKey": "region.generated.region_land_5.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:130:0",
       "hex:131:0",
@@ -35343,7 +35343,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -35435,7 +35435,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -35527,7 +35527,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -35619,7 +35619,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -35711,7 +35711,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -35803,7 +35803,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -35811,7 +35811,7 @@
   {
     "id": "region:land:55",
     "nameKey": "region.generated.region_land_55.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:110:27",
       "hex:111:27",
@@ -35895,7 +35895,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -35903,7 +35903,7 @@
   {
     "id": "region:land:56",
     "nameKey": "region.generated.region_land_56.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:158:27",
       "hex:159:27",
@@ -35987,7 +35987,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36079,7 +36079,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36171,7 +36171,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36197,7 +36197,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36205,7 +36205,7 @@
   {
     "id": "region:land:6",
     "nameKey": "region.generated.region_land_6.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:143:0",
       "hex:142:1",
@@ -36289,7 +36289,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36381,7 +36381,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36473,7 +36473,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36481,7 +36481,7 @@
   {
     "id": "region:land:62",
     "nameKey": "region.generated.region_land_62.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:236:29",
       "hex:237:29",
@@ -36565,7 +36565,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36657,7 +36657,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36749,7 +36749,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36757,7 +36757,7 @@
   {
     "id": "region:land:65",
     "nameKey": "region.generated.region_land_65.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:251:30",
       "hex:252:30",
@@ -36841,7 +36841,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36933,7 +36933,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -36941,7 +36941,7 @@
   {
     "id": "region:land:67",
     "nameKey": "region.generated.region_land_67.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:80:31",
       "hex:81:31",
@@ -37025,7 +37025,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37117,7 +37117,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37125,7 +37125,7 @@
   {
     "id": "region:land:69",
     "nameKey": "region.generated.region_land_69.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:185:31",
       "hex:186:31",
@@ -37209,7 +37209,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37217,7 +37217,7 @@
   {
     "id": "region:land:7",
     "nameKey": "region.generated.region_land_7.name",
-    "color": "#8a9aa3",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:212:0",
       "hex:213:0",
@@ -37301,7 +37301,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37393,7 +37393,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37417,7 +37417,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37509,7 +37509,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37517,7 +37517,7 @@
   {
     "id": "region:land:73",
     "nameKey": "region.generated.region_land_73.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:271:32",
       "hex:272:32",
@@ -37601,7 +37601,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37693,7 +37693,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37785,7 +37785,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37877,7 +37877,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37969,7 +37969,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -37977,7 +37977,7 @@
   {
     "id": "region:land:78",
     "nameKey": "region.generated.region_land_78.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:257:34",
       "hex:256:35",
@@ -38061,7 +38061,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -38153,7 +38153,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -38245,7 +38245,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -38337,7 +38337,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -38429,7 +38429,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -38521,7 +38521,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -38529,7 +38529,7 @@
   {
     "id": "region:land:83",
     "nameKey": "region.generated.region_land_83.name",
-    "color": "#5f8f52",
+    "color": "#4f7f45",
     "hexIds": [
       "hex:320:36",
       "hex:321:36",
@@ -38613,7 +38613,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -38705,7 +38705,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -38797,7 +38797,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -38889,7 +38889,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -38981,7 +38981,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -39073,7 +39073,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -39165,7 +39165,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -39173,7 +39173,7 @@
   {
     "id": "region:land:9",
     "nameKey": "region.generated.region_land_9.name",
-    "color": "#8a9aa3",
+    "color": "#5f8f52",
     "hexIds": [
       "hex:235:0",
       "hex:236:0",
@@ -39257,7 +39257,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -39349,7 +39349,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -39357,7 +39357,7 @@
   {
     "id": "region:land:91",
     "nameKey": "region.generated.region_land_91.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:338:38",
       "hex:337:39",
@@ -39441,7 +39441,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -39449,7 +39449,7 @@
   {
     "id": "region:land:92",
     "nameKey": "region.generated.region_land_92.name",
-    "color": "#5f8f52",
+    "color": "#5f8e68",
     "hexIds": [
       "hex:69:39",
       "hex:70:39",
@@ -39533,7 +39533,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -39625,7 +39625,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -39717,7 +39717,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -39809,7 +39809,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -39901,7 +39901,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -39993,7 +39993,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -40085,7 +40085,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -40177,7 +40177,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -40335,7 +40335,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -40493,7 +40493,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -40651,7 +40651,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -40689,7 +40689,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -40847,7 +40847,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -41005,7 +41005,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -41163,7 +41163,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -41321,7 +41321,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -41341,7 +41341,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -41499,7 +41499,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -41609,7 +41609,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -41767,7 +41767,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -41801,7 +41801,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -41959,7 +41959,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -42117,7 +42117,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -42136,7 +42136,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -42294,7 +42294,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -42313,7 +42313,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -42332,7 +42332,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -42490,7 +42490,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -42510,7 +42510,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -42529,7 +42529,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -42687,7 +42687,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -42706,7 +42706,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -42864,7 +42864,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43022,7 +43022,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43180,7 +43180,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43207,7 +43207,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43365,7 +43365,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43384,7 +43384,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43403,7 +43403,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43425,7 +43425,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43444,7 +43444,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43463,7 +43463,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43490,7 +43490,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43648,7 +43648,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43806,7 +43806,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43964,7 +43964,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -43983,7 +43983,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -44141,7 +44141,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -44160,7 +44160,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -44179,7 +44179,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -44337,7 +44337,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -44356,7 +44356,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -44514,7 +44514,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -44672,7 +44672,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -44830,7 +44830,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -44988,7 +44988,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45007,7 +45007,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45080,7 +45080,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45131,7 +45131,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45188,7 +45188,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45346,7 +45346,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45368,7 +45368,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45526,7 +45526,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45684,7 +45684,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45703,7 +45703,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45861,7 +45861,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45880,7 +45880,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -45899,7 +45899,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -46057,7 +46057,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -46215,7 +46215,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -46235,7 +46235,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -46254,7 +46254,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -46273,7 +46273,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -46292,7 +46292,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -46450,7 +46450,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -46608,7 +46608,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -46766,7 +46766,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -46924,7 +46924,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -46945,7 +46945,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -47103,7 +47103,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -47122,7 +47122,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -47141,7 +47141,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -47299,7 +47299,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -47318,7 +47318,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -47476,7 +47476,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -47497,7 +47497,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -47655,7 +47655,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -47813,7 +47813,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -47971,7 +47971,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -47990,7 +47990,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -48148,7 +48148,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -48168,7 +48168,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -48187,7 +48187,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -48345,7 +48345,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -48503,7 +48503,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -48661,7 +48661,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -48680,7 +48680,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -48699,7 +48699,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -48857,7 +48857,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -49015,7 +49015,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -49143,7 +49143,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -49162,7 +49162,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -49181,7 +49181,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -49290,7 +49290,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -49448,7 +49448,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -49490,7 +49490,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -49509,7 +49509,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -49667,7 +49667,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -49686,7 +49686,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -49844,7 +49844,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -50002,7 +50002,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -50030,7 +50030,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -50050,7 +50050,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -50208,7 +50208,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -50335,7 +50335,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -50493,7 +50493,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -50513,7 +50513,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -50671,7 +50671,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -50690,7 +50690,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -50848,7 +50848,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -51006,7 +51006,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -51025,7 +51025,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -51183,7 +51183,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -51206,7 +51206,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -51364,7 +51364,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -51522,7 +51522,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -51542,7 +51542,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -51581,7 +51581,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -51739,7 +51739,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -51858,7 +51858,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -52016,7 +52016,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -52174,7 +52174,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -52332,7 +52332,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -52490,7 +52490,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -52648,7 +52648,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -52667,7 +52667,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -52825,7 +52825,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -52983,7 +52983,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -53141,7 +53141,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -53160,7 +53160,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -53318,7 +53318,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -53337,7 +53337,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -53495,7 +53495,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -53514,7 +53514,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -53672,7 +53672,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -53830,7 +53830,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -53988,7 +53988,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -54146,7 +54146,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -54165,7 +54165,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -54256,7 +54256,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -54414,7 +54414,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -54572,7 +54572,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -54730,7 +54730,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -54749,7 +54749,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -54907,7 +54907,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -54926,7 +54926,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -54947,7 +54947,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -55105,7 +55105,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -55124,7 +55124,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -55282,7 +55282,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -55440,7 +55440,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -55598,7 +55598,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -55756,7 +55756,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -55775,7 +55775,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -55794,7 +55794,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -55952,7 +55952,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -55971,7 +55971,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -56129,7 +56129,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -56287,7 +56287,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -56445,7 +56445,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -56603,7 +56603,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -56761,7 +56761,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -56919,7 +56919,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -57077,7 +57077,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -57096,7 +57096,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -57254,7 +57254,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -57412,7 +57412,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -57570,7 +57570,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -57728,7 +57728,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -57747,7 +57747,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -57905,7 +57905,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -57924,7 +57924,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -58082,7 +58082,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -58101,7 +58101,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -58259,7 +58259,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -58417,7 +58417,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -58547,7 +58547,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -58567,7 +58567,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -58725,7 +58725,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -58883,7 +58883,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -59041,7 +59041,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -59199,7 +59199,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -59357,7 +59357,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -59391,7 +59391,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -59549,7 +59549,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -59707,7 +59707,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -59768,7 +59768,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -59926,7 +59926,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -60084,7 +60084,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -60242,7 +60242,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -60400,7 +60400,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -60558,7 +60558,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -60638,7 +60638,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -60657,7 +60657,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -60749,7 +60749,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -60800,7 +60800,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -60867,7 +60867,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -60921,7 +60921,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -60970,7 +60970,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -61128,7 +61128,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -61152,7 +61152,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -61174,7 +61174,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -61193,7 +61193,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -61351,7 +61351,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -61509,7 +61509,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -61667,7 +61667,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -61825,7 +61825,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -61983,7 +61983,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -62002,7 +62002,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -62160,7 +62160,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -62318,7 +62318,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -62476,7 +62476,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -62634,7 +62634,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -62792,7 +62792,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -62950,7 +62950,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -63108,7 +63108,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -63266,7 +63266,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -63285,7 +63285,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -63304,7 +63304,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -63462,7 +63462,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -63620,7 +63620,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -63778,7 +63778,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -63936,7 +63936,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -64094,7 +64094,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -64113,7 +64113,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -64271,7 +64271,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -64429,7 +64429,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -64587,7 +64587,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -64745,7 +64745,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -64903,7 +64903,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -65061,7 +65061,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -65219,7 +65219,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -65377,7 +65377,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -65396,7 +65396,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -65453,7 +65453,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -65611,7 +65611,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -65769,7 +65769,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -65927,7 +65927,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -66085,7 +66085,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -66243,7 +66243,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -66401,7 +66401,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -66430,7 +66430,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -66588,7 +66588,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -66657,7 +66657,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -66815,7 +66815,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -66862,7 +66862,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -67020,7 +67020,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -67178,7 +67178,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -67336,7 +67336,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -67355,7 +67355,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -67374,7 +67374,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -67532,7 +67532,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -67551,7 +67551,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -67654,7 +67654,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -67812,7 +67812,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -67970,7 +67970,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -67989,7 +67989,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -68147,7 +68147,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -68305,7 +68305,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -68463,7 +68463,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -68482,7 +68482,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -68640,7 +68640,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -68659,7 +68659,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -68817,7 +68817,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -68975,7 +68975,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -69133,7 +69133,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -69291,7 +69291,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -69449,7 +69449,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -69607,7 +69607,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -69634,7 +69634,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -69792,7 +69792,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -69811,7 +69811,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -69969,7 +69969,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -70127,7 +70127,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -70179,7 +70179,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -70198,7 +70198,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -70356,7 +70356,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -70514,7 +70514,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -70672,7 +70672,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -70830,7 +70830,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true
@@ -70988,7 +70988,7 @@
     "pops": [],
     "buildings": [],
     "construction": [],
-    "resources": [],
+    "resourceDeposits": [],
     "infrastructure": {},
     "modifiers": [],
     "generated": true

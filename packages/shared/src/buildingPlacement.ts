@@ -35,6 +35,8 @@ export type BuildingPlacementContent = {
   id: string;
   placement?: BuildingPlacementRules | null;
   adjacencyEffects?: BuildingAdjacencyEffect[] | null;
+  extractions?: Array<{ goodId: string; requiresDeposit?: boolean | null }> | null;
+  requiresDepositGoodIds?: string[] | null;
 };
 
 export type BuildingPlacementReasonCode =
@@ -49,7 +51,10 @@ export type BuildingPlacementReasonCode =
   | "BUILD_PLACEMENT_WATER_DENIED"
   | "BUILD_PLACEMENT_WATER_NOT_ALLOWED"
   | "BUILD_PLACEMENT_TAG_DENIED"
-  | "BUILD_PLACEMENT_TAG_NOT_ALLOWED";
+  | "BUILD_PLACEMENT_TAG_NOT_ALLOWED"
+  | "BUILD_PLACEMENT_DEPOSIT_REQUIRED"
+  | "BUILD_PLACEMENT_DEPOSIT_HIDDEN"
+  | "BUILD_PLACEMENT_DEPOSIT_WRONG_GOOD";
 
 export type BuildingPlacementReason = {
   code: BuildingPlacementReasonCode;
@@ -74,7 +79,9 @@ export type BuildingPlacementEvaluation = {
 export type BuildingPlacementWorld = Pick<
   WorldBase,
   "regionOwner" | "regionController" | "regionBuildingsByRegion" | "regionConstructionQueueByRegion"
->;
+> & {
+  regionResourceDepositsByRegion?: WorldBase["regionResourceDepositsByRegion"];
+};
 
 export function evaluateBuildingPlacement(params: {
   building: BuildingPlacementContent;
@@ -127,6 +134,19 @@ export function evaluateBuildingPlacement(params: {
   if (placement.allowedTags?.length && !placement.allowedTags.some((tag) => hexHasTag(hex, tag))) {
     return blocked({ code: "BUILD_PLACEMENT_TAG_NOT_ALLOWED", params: { tags: placement.allowedTags.join(",") } });
   }
+  const requiredDepositGoodIds = getRequiredDepositGoodIds(params.building);
+  if (requiredDepositGoodIds.length > 0) {
+    const deposit = (params.world.regionResourceDepositsByRegion?.[hex.regionId] ?? []).find((entry) => entry.hexId === hex.id);
+    if (!deposit || deposit.amount <= 0) {
+      return blocked({ code: "BUILD_PLACEMENT_DEPOSIT_REQUIRED", params: { goodIds: requiredDepositGoodIds.join(",") } });
+    }
+    if (deposit.visibility !== "known") {
+      return blocked({ code: "BUILD_PLACEMENT_DEPOSIT_HIDDEN", params: { goodId: deposit.goodId } });
+    }
+    if (!requiredDepositGoodIds.includes(deposit.goodId)) {
+      return blocked({ code: "BUILD_PLACEMENT_DEPOSIT_WRONG_GOOD", params: { goodId: deposit.goodId, requiredGoodIds: requiredDepositGoodIds.join(",") } });
+    }
+  }
 
   const adjacencySources = evaluateAdjacencyEffects({ ...params, hex });
   const throughputFactor = adjacencySources.reduce((value, source) => {
@@ -141,6 +161,18 @@ export function evaluateBuildingPlacement(params: {
     adjacencySources,
     debugScore: Math.max(0, Math.round(round3(throughputFactor) * 1000)),
   };
+}
+
+export function getRequiredDepositGoodIds(building: BuildingPlacementContent): string[] {
+  const ids = new Set<string>();
+  for (const goodId of building.requiresDepositGoodIds ?? []) {
+    if (typeof goodId === "string" && goodId.trim()) ids.add(goodId.trim());
+  }
+  for (const extraction of building.extractions ?? []) {
+    if (extraction.requiresDeposit === false) continue;
+    if (typeof extraction.goodId === "string" && extraction.goodId.trim()) ids.add(extraction.goodId.trim());
+  }
+  return [...ids].sort((left, right) => left.localeCompare(right));
 }
 
 export function isBuildingSlotOccupied(world: BuildingPlacementWorld, hexId: string, regionId: string): boolean {

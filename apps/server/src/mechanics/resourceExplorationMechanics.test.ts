@@ -61,13 +61,29 @@ describe("resourceExplorationMechanics", () => {
       regionId: "region:a",
       regionAreaKm2: 2_000,
       goods: [ore],
+      candidateHexIds: ["hex:0:0"],
       explorationCount: 0,
       turnId: 9,
       config: { rollsPerExpedition: 1, baseEmptyChancePct: 0, depletionPerAttemptPct: 0 },
       random: makeRandom([0.5, 0.5, 0.5, 0.5]),
     });
 
-    expect(found).toEqual([{ goodId: "good:ore", amount: 600, discoveredTurnId: 9, veinSize: "large" }]);
+    expect(found).toEqual([
+      {
+        id: "resource_deposit:good:ore_hex:0:0",
+        goodId: "good:ore",
+        hexId: "hex:0:0",
+        regionId: "region:a",
+        amount: 600,
+        maxAmount: 600,
+        initialAmount: 600,
+        visibility: "known",
+        source: "exploration",
+        depletionMode: "finite",
+        discoveredTurnId: 9,
+        discoveredByCountryId: null,
+      },
+    ]);
   });
 
   it("decrements unfinished queue entries without creating deposits", () => {
@@ -100,7 +116,7 @@ describe("resourceExplorationMechanics", () => {
       regionController: { "region:a": "country:a" },
       regionResourceExplorationCountByRegion: { "region:a": 1 },
       regionResourceDepositsByRegion: {
-        "region:a": [{ goodId: "good:ore", amount: 25, discoveredTurnId: 1, veinSize: "small" }],
+        "region:a": [makeDeposit({ amount: 25 })],
       },
       regionResourceExplorationQueueByRegion: {
         "region:a": [{ queueId: "queue:a", requestedByCountryId: "country:a", startedTurnId: 1, turnsRemaining: 1 }],
@@ -118,9 +134,7 @@ describe("resourceExplorationMechanics", () => {
 
     expect(worldBase.regionResourceExplorationQueueByRegion["region:a"]).toEqual([]);
     expect(worldBase.regionResourceExplorationCountByRegion["region:a"]).toBe(2);
-    expect(worldBase.regionResourceDepositsByRegion["region:a"]).toEqual([
-      { goodId: "good:ore", amount: 625, discoveredTurnId: 1, veinSize: "small" },
-    ]);
+    expect(worldBase.regionResourceDepositsByRegion["region:a"]).toEqual([makeDeposit({ amount: 25 })]);
   });
 
   it("counts depleted empty attempts without adding deposits", () => {
@@ -154,6 +168,24 @@ function makeWorld(overrides?: Partial<ResourceExplorationWorldState>): Resource
     regionResourceExplorationQueueByRegion: {},
     regionResourceExplorationCountByRegion: {},
     regionResourceDepositsByRegion: {},
+    ...overrides,
+  };
+}
+
+function makeDeposit(overrides?: Partial<ResourceExplorationWorldState["regionResourceDepositsByRegion"][string][number]>): ResourceExplorationWorldState["regionResourceDepositsByRegion"][string][number] {
+  return {
+    id: "resource_deposit:good_ore_hex_0_0",
+    goodId: "good:ore",
+    hexId: "hex:0:0",
+    regionId: "region:a",
+    amount: 10,
+    maxAmount: 10,
+    initialAmount: 10,
+    visibility: "known",
+    source: "authored",
+    depletionMode: "finite",
+    discoveredTurnId: 1,
+    discoveredByCountryId: null,
     ...overrides,
   };
 }

@@ -1535,6 +1535,8 @@ export type UiTextKey =
   | "map.layer.regionFillTooltip"
   | "map.layer.features"
   | "map.layer.featuresTooltip"
+  | "map.layer.resources"
+  | "map.layer.resourcesTooltip"
   | "map.layer.buildings"
   | "map.layer.buildingsTooltip"
   | "map.layer.armies"
@@ -1607,6 +1609,7 @@ export type UiTextKey =
   | "hexMap.biome"
   | "hexMap.feature"
   | "hexMap.siteFeature"
+  | "hexMap.resourceDeposit"
   | "hexMap.water"
   | "hexMap.owner"
   | "hexMap.ownerCountry"
@@ -2563,6 +2566,9 @@ export type UiTextKey =
   | "buildings.hexPlacementConfirmAction"
   | "buildings.hexPlacementHud"
   | "buildings.hexPlacementReasonFeature"
+  | "buildings.hexPlacementReasonDepositHidden"
+  | "buildings.hexPlacementReasonDepositRequired"
+  | "buildings.hexPlacementReasonDepositWrongGood"
   | "buildings.hexPlacementReasonInvalid"
   | "buildings.hexPlacementReasonOccupied"
   | "buildings.hexPlacementReasonRegion"
@@ -4791,6 +4797,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.layer.regionFillTooltip": "Show state-region fill and borders",
     "map.layer.features": "Features",
     "map.layer.featuresTooltip": "Show natural and special map features",
+    "map.layer.resources": "Resources",
+    "map.layer.resourcesTooltip": "Show known resource deposits on the map",
     "map.layer.buildings": "Buildings",
     "map.layer.buildingsTooltip": "Show buildings and construction projects on the map",
     "map.layer.armies": "Armies",
@@ -4863,6 +4871,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.biome": "Biome",
     "hexMap.feature": "Feature",
     "hexMap.siteFeature": "Special feature",
+    "hexMap.resourceDeposit": "Deposit",
     "hexMap.water": "Water",
     "hexMap.owner": "Owner",
     "hexMap.ownerCountry": "Country {country}",
@@ -5819,6 +5828,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.hexPlacementConfirmAction": "Confirm",
     "buildings.hexPlacementHud": "Choose a highlighted hex. Esc or right click cancels.",
     "buildings.hexPlacementReasonFeature": "This feature does not match the building requirements.",
+    "buildings.hexPlacementReasonDepositHidden": "This deposit is not known yet.",
+    "buildings.hexPlacementReasonDepositRequired": "This building requires a known matching deposit on the selected hex.",
+    "buildings.hexPlacementReasonDepositWrongGood": "This hex has a different deposit than the selected building requires.",
     "buildings.hexPlacementReasonInvalid": "This hex cannot receive the selected building.",
     "buildings.hexPlacementReasonOccupied": "This hex already has a building or construction project.",
     "buildings.hexPlacementReasonRegion": "Your country does not control this region.",
@@ -8046,6 +8058,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.layer.regionFillTooltip": "Показывать заливку и границы государственных регионов",
     "map.layer.features": "Особенности",
     "map.layer.featuresTooltip": "Показывать природные и особые объекты карты",
+    "map.layer.resources": "Ресурсы",
+    "map.layer.resourcesTooltip": "Показывать известные залежи ресурсов на карте",
     "map.layer.buildings": "Здания",
     "map.layer.buildingsTooltip": "Показывать здания и строительные проекты на карте",
     "map.layer.armies": "Армии",
@@ -8118,6 +8132,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.biome": "Биом",
     "hexMap.feature": "Особенность",
     "hexMap.siteFeature": "Особый объект",
+    "hexMap.resourceDeposit": "Залежь",
     "hexMap.water": "Вода",
     "hexMap.owner": "Владелец",
     "hexMap.ownerCountry": "Страна {country}",
@@ -9074,6 +9089,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "buildings.hexPlacementConfirmAction": "Подтвердить",
     "buildings.hexPlacementHud": "Выберите подсвеченный гекс. Esc или ПКМ отменяют режим.",
     "buildings.hexPlacementReasonFeature": "Особенность гекса не подходит требованиям здания.",
+    "buildings.hexPlacementReasonDepositHidden": "Эта залежь пока не известна.",
+    "buildings.hexPlacementReasonDepositRequired": "Для этого здания нужна известная подходящая залежь на выбранном гексе.",
+    "buildings.hexPlacementReasonDepositWrongGood": "На этом гексе другая залежь, не подходящая выбранному зданию.",
     "buildings.hexPlacementReasonInvalid": "На этом гексе нельзя разместить выбранное здание.",
     "buildings.hexPlacementReasonOccupied": "На этом гексе уже есть здание или строительный проект.",
     "buildings.hexPlacementReasonRegion": "Ваша страна не контролирует этот регион.",

@@ -23,6 +23,7 @@ import type { GameSettings } from "../runtime/gameSettingsTypes";
 import { normalizeContentLogoUrl } from "../uploads/uploadPaths";
 import { ensureStarterColonizerForCountry } from "../mechanics/starterColonizerMechanics";
 import { loadRawScenarioContent } from "./scenarioContentLoader";
+import { ensureGeneratedResourceDeposits, loadGeneratedResourceDeposits } from "./resourceDepositGeneration";
 import {
   buildHexOwnerFromRegionHistory,
   buildRegionControllerFromRegionHistory,
@@ -146,6 +147,7 @@ export function buildWorldBaseFromScenarioRuntime(params: {
   base.regionController = loadRegionControllerFromRegionHistory(history);
   base.hexOwner = loadHexOwnerFromRegionHistory(history);
   applyAuthoredStateFromHistory(base, history, params);
+  applyGeneratedResourceDeposits(base, params);
   if (setup.countryResources) base.resourcesByCountry = params.normalizeResourcesByCountryMap(setup.countryResources);
   if (setup.hexOwners) base.hexOwner = normalizeScenarioStringMap(setup.hexOwners);
   if (setup.hexNames) base.hexNameById = normalizeScenarioStringMap(setup.hexNames);
@@ -216,7 +218,44 @@ function applyAuthoredStateFromHistory(
   base.regionBuildingDucatsByRegion = normalizers.normalizeRegionBuildingDucatsMap(mapRegionObjectField(history, "buildingDucats"));
   base.regionPopulationTreasuryByRegion = normalizers.normalizeRegionPopulationTreasuryMap(mapRegionField(history, "populationTreasury"));
   base.regionConstructionQueueByRegion = normalizers.normalizeRegionConstructionQueueMap(mapRegionArrayField(history, "construction"));
-  base.regionResourceDepositsByRegion = normalizers.normalizeRegionResourceDepositsMap(mapRegionArrayField(history, "resources"));
+  base.regionResourceDepositsByRegion = normalizers.normalizeRegionResourceDepositsMap(mapRegionArrayField(history, "resourceDeposits"));
+}
+
+function applyGeneratedResourceDeposits(
+  base: WorldBase,
+  params: {
+    scenarioDir: string | null;
+    normalizeRegionResourceDepositsMap: (input: unknown) => WorldBase["regionResourceDepositsByRegion"];
+  },
+): void {
+  if (!params.scenarioDir) return;
+  const artifact = loadScenarioHexMapArtifact(params.scenarioDir);
+  if (!artifact) return;
+  let generated = loadGeneratedResourceDeposits(params.scenarioDir);
+  if (Object.keys(generated).length === 0) {
+    const content = normalizeScenarioContentForRuntime(loadRawScenarioContent(params.scenarioDir));
+    generated = ensureGeneratedResourceDeposits({
+      scenarioDir: params.scenarioDir,
+      artifact,
+      goods: content.goods,
+      authoredDepositsByRegion: base.regionResourceDepositsByRegion,
+    });
+  }
+  const normalizedGenerated = params.normalizeRegionResourceDepositsMap(generated);
+  const occupiedHexIds = new Set(
+    Object.values(base.regionResourceDepositsByRegion)
+      .flat()
+      .map((deposit) => deposit.hexId),
+  );
+  for (const [regionId, rows] of Object.entries(normalizedGenerated)) {
+    const next = [...(base.regionResourceDepositsByRegion[regionId] ?? [])];
+    for (const deposit of rows) {
+      if (occupiedHexIds.has(deposit.hexId)) continue;
+      next.push(deposit);
+      occupiedHexIds.add(deposit.hexId);
+    }
+    base.regionResourceDepositsByRegion[regionId] = next.sort((a, b) => a.hexId.localeCompare(b.hexId) || a.goodId.localeCompare(b.goodId));
+  }
 }
 
 function mapRegionPopulation(history: ScenarioHistory): Record<string, unknown> {

@@ -11,13 +11,86 @@ import {
   type HexMapSettings,
   type HexTile,
 } from "@arcanorum/shared";
+import { normalizeContentGoods } from "../content/contentNormalizers";
 import type { HexMapIndexEntry } from "../map/hexIndex";
 import { ensureGeneratedMapFeatures } from "./mapFeatureGeneration";
+import { ensureGeneratedResourceDeposits } from "./resourceDepositGeneration";
+import type { ScenarioDefines } from "./scenarioDefinesLoader";
+import { loadRawScenarioContent } from "./scenarioContentLoader";
 import { getScenarioRuntimePaths } from "./runtimePaths";
 
 export const DEFAULT_SCENARIO_ID = "default";
 const DEFAULT_COUNTRY_ID = "country:default";
 const DEFAULT_REGION_AREA_KM2 = 1000;
+
+export const DEFAULT_SCENARIO_DEFINES: Required<ScenarioDefines> = {
+  ai: {
+    enabled: true,
+    maxCountriesPerTick: 50,
+    maxDecisionCandidatesPerCountry: 20,
+    contextCacheTtlTurns: 1,
+    maxBuildCompletionTurns: 8,
+  },
+  economy: {
+    baseCulturePerTurn: 100,
+    baseSciencePerTurn: 100,
+    baseReligionPerTurn: 100,
+    baseConstructionPerTurn: 50,
+    baseDucatsPerTurn: 5_000,
+    baseGoldPerTurn: 100,
+    demolitionCostConstructionPercent: 20,
+    marketPriceSmoothing: 0.2,
+    buildingDurabilityDecayPerTurn: 10,
+    buildingDurabilityRecoveryPerTurn: 5,
+    pollutionProductivityEffectPer1000: 0.1,
+    explorationBaseEmptyChancePct: 5,
+    explorationDepletionPerAttemptPct: 7.5,
+    explorationDurationTurns: 1,
+    explorationRollsPerExpedition: 3,
+  },
+  auditLog: {
+    maxEntries: 1_000,
+    retentionTurns: null,
+  },
+  colonization: {
+    maxActiveColonizations: 3,
+    pointsPerTurn: 30,
+    pointsCostPer1000Km2: 5,
+    ducatsCostPer1000Km2: 5,
+    settlementEnabled: true,
+    settlementPopulationOnCapture: 1_000,
+    colonizerTurns: 2,
+    colonizerCostColonization: 20,
+    colonizerCostDucats: 10,
+    colonizerMovementPoints: 2,
+  },
+  customization: {
+    renameDucats: 20,
+    recolorDucats: 10,
+    flagDucats: 15,
+    crestDucats: 15,
+    hexRenameDucats: 25,
+  },
+  military: {
+    militaryFormationSpeed: 10,
+    landDivisionStackLimitPerHex: 4,
+  },
+  registration: {
+    requireAdminApproval: false,
+  },
+  eventLog: {
+    retentionTurns: 3,
+  },
+  resourceLedger: {
+    retentionTurns: 20,
+    maxEntriesPerTurn: 10_000,
+  },
+  turnTimer: {
+    enabled: true,
+    secondsPerTurn: 86_400,
+    pauseWhenNoPlayersOnline: false,
+  },
+};
 
 export type DefaultScenarioBootstrapResult = {
   scenarioId: string;
@@ -77,7 +150,7 @@ export function ensureDefaultScenario(params: EnsureDefaultScenarioParams): Defa
     },
     controlMode: "open",
   });
-  writeJsonIfMissing(resolve(scenarioDir, "common", "defines.json"), {});
+  writeJsonIfMissing(resolve(scenarioDir, "common", "defines.json"), DEFAULT_SCENARIO_DEFINES);
   writeJsonIfMissing(resolve(scenarioDir, "localisation", "en.json"), {
     "scenario.default.name": "Default",
     "country:default.nameKey": "Default Country",
@@ -106,6 +179,13 @@ export function ensureDefaultScenario(params: EnsureDefaultScenarioParams): Defa
   if (mapFeatureResult.issues.length > 0) {
     throw new Error(mapFeatureResult.issues.map((issue) => `${issue.code}: ${issue.path}: ${issue.message}`).join("\n"));
   }
+  const rawContent = loadRawScenarioContent(scenarioDir) ?? {};
+  ensureGeneratedResourceDeposits({
+    scenarioDir,
+    artifact,
+    goods: normalizeContentGoods((rawContent as { goods?: unknown }).goods),
+    forceGenerated: params.forceGenerated,
+  });
 
   const runtimePaths = getScenarioRuntimePaths({
     scenarioDir,
@@ -164,7 +244,7 @@ function buildGeneratedRegions(artifact: HexMapArtifact): {
         pops: [],
         buildings: [],
         construction: [],
-        resources: [],
+        resourceDeposits: [],
         infrastructure: {},
         modifiers: [],
         generated: true,

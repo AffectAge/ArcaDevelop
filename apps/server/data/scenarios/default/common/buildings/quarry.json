@@ -9,8 +9,8 @@
   "maxLevel": 5,
   "upgradeCostConstruction": 34,
   "upgradeCostDucats": 22,
-  "outputs": [
-    { "goodId": "good:stone", "amount": 16 }
+  "extractions": [
+    { "goodId": "good:stone", "amount": 16, "requiresDeposit": true }
   ],
   "workforceRequirements": [
     { "professionId": "profession:quarry_workers", "workers": 110 }

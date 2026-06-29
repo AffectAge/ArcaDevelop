@@ -8,5 +8,18 @@
   "maxPrice": 7,
   "infraPerUnit": 0.16,
   "distributionType": "tradeable",
-  "transportModes": ["land", "sea", "air"]
+  "transportModes": ["land", "sea", "air"],
+  "deposit": {
+    "enabled": true,
+    "depletionMode": "renewable",
+    "minAmount": 180,
+    "maxAmount": 520,
+    "regenPerTurn": 6,
+    "minRenewableAmount": 60,
+    "visibility": "known",
+    "generation": {
+      "allowedHexTypes": ["coast", "sea", "lake", "ocean"],
+      "global": { "min": 100, "max": 160 }
+    }
+  }
 }

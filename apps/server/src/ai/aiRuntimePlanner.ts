@@ -189,7 +189,7 @@ function getAiCandidateIdentity(candidate: AiCandidate): string {
   if (candidate.kind === "diplomacy-contact") {
     return `${candidate.kind}:${candidate.countryId}:${candidate.targetCountryId}`;
   }
-  if (candidate.kind === "found-city" || candidate.kind === "queue-colonizer") {
+  if (candidate.kind === "found-city" || candidate.kind === "move-colonizer" || candidate.kind === "queue-colonizer") {
     return `${candidate.kind}:${candidate.countryId}:${candidate.regionId}`;
   }
   return `${candidate.kind}:${candidate.countryId}:${candidate.divisionId}:${candidate.targetHexId}`;

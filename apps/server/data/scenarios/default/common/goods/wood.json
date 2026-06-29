@@ -8,5 +8,18 @@
   "maxPrice": 9,
   "infraPerUnit": 0.22,
   "distributionType": "tradeable",
-  "transportModes": ["land", "sea", "air"]
+  "transportModes": ["land", "sea", "air"],
+  "deposit": {
+    "enabled": true,
+    "depletionMode": "renewable",
+    "minAmount": 160,
+    "maxAmount": 420,
+    "regenPerTurn": 4,
+    "minRenewableAmount": 40,
+    "visibility": "known",
+    "generation": {
+      "allowedFeatures": ["forest", "dense_forest", "jungle"],
+      "global": { "min": 120, "max": 180 }
+    }
+  }
 }

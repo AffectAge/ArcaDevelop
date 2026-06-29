@@ -139,10 +139,17 @@ describe("eventTriggerMechanics", () => {
         regionResourceDepositsByRegion: {
           "region:iron": [
             {
+              id: "resource_deposit:good_iron_hex_0_0",
               goodId: "good:iron",
+              hexId: "hex:0:0",
+              regionId: "region:iron",
               amount: 100,
+              maxAmount: 100,
+              initialAmount: 100,
+              visibility: "known",
+              source: "authored",
+              depletionMode: "finite",
               discoveredTurnId: 1,
-              veinSize: "medium",
             },
           ],
         },

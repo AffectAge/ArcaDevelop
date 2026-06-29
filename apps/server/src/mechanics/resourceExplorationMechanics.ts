@@ -1,4 +1,4 @@
-import type { RegionResourceDeposit, RegionResourceExplorationProject, WorldBase } from "@arcanorum/shared";
+import type { HexId, RegionId, RegionResourceDeposit, RegionResourceExplorationProject, WorldBase } from "@arcanorum/shared";
 
 export const DEFAULT_EXPLORATION_EMPTY_CHANCE_PCT = 5;
 export const DEFAULT_EXPLORATION_DEPLETION_PER_ATTEMPT_PCT = 7.5;
@@ -154,7 +154,7 @@ export function resolveResourceExplorationTurn(params: {
 
     params.worldBase.regionResourceExplorationQueueByRegion[regionId] = nextQueue;
     params.worldBase.regionResourceExplorationCountByRegion[regionId] = explorationCount;
-    params.worldBase.regionResourceDepositsByRegion[regionId] = deposits.sort((a, b) => a.goodId.localeCompare(b.goodId));
+    params.worldBase.regionResourceDepositsByRegion[regionId] = deposits.sort((a, b) => a.hexId.localeCompare(b.hexId) || a.goodId.localeCompare(b.goodId));
     if (params.worldBase.regionResourceExplorationQueueByRegion[regionId].length === 0) {
       params.worldBase.regionResourceExplorationQueueByRegion[regionId] = [];
     }
@@ -163,6 +163,7 @@ export function resolveResourceExplorationTurn(params: {
 
 export function resolveCompletedExplorationProject(params: {
   regionId: string;
+  candidateHexIds?: string[];
   regionAreaKm2: number;
   goods: ResourceExplorationGood[];
   explorationCount: number;
@@ -170,6 +171,8 @@ export function resolveCompletedExplorationProject(params: {
   config: ResourceExplorationConfig;
   random?: () => number;
 }): RegionResourceDeposit[] {
+  const candidateHexIds = (params.candidateHexIds ?? []).filter((hexId) => /^hex:-?\d+:-?\d+$/.test(hexId));
+  if (candidateHexIds.length === 0) return [];
   const random = params.random ?? Math.random;
   const emptyChancePct = Math.max(
     0,
@@ -200,12 +203,24 @@ export function resolveCompletedExplorationProject(params: {
     });
   }
 
-  return [...foundByGoodId.entries()].map(([goodId, found]) => ({
-    goodId,
-    amount: round3(found.amount),
-    discoveredTurnId: params.turnId,
-    veinSize: found.veinSize,
-  }));
+  return [...foundByGoodId.entries()].map(([goodId, found], index) => {
+    const hexId = candidateHexIds[index % candidateHexIds.length] ?? candidateHexIds[0]!;
+    const amount = round3(found.amount);
+    return {
+      id: `resource_deposit:${sanitizeStableIdPart(goodId)}_${sanitizeStableIdPart(hexId)}`,
+      goodId,
+      hexId: hexId as HexId,
+      regionId: params.regionId as RegionId,
+      amount,
+      maxAmount: amount,
+      initialAmount: amount,
+      visibility: "known",
+      source: "exploration",
+      depletionMode: "finite",
+      discoveredTurnId: params.turnId,
+      discoveredByCountryId: null,
+    };
+  });
 }
 
 export function chooseExplorationVeinSize(
@@ -255,15 +270,15 @@ export function rollExplorationVeinAmount(
 
 export function mergeResourceDeposits(target: RegionResourceDeposit[], found: RegionResourceDeposit[]): void {
   for (const row of found) {
-    const existing = target.find((entry) => entry.goodId === row.goodId);
-    if (existing) {
-      existing.amount = round3(existing.amount + row.amount);
-      continue;
-    }
+    if (target.some((entry) => entry.hexId === row.hexId)) continue;
     target.push({ ...row, amount: round3(row.amount) });
   }
 }
 
 function round3(value: number): number {
   return Number((Number.isFinite(value) ? value : 0).toFixed(3));
+}
+
+function sanitizeStableIdPart(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9:_-]+/g, "_").replace(/^_+|_+$/g, "") || "unknown";
 }

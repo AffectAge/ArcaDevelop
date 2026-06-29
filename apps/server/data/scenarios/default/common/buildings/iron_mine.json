@@ -9,8 +9,8 @@
   "maxLevel": 5,
   "upgradeCostConstruction": 40,
   "upgradeCostDucats": 26,
-  "outputs": [
-    { "goodId": "good:iron_ore", "amount": 12 }
+  "extractions": [
+    { "goodId": "good:iron_ore", "amount": 12, "requiresDeposit": true }
   ],
   "workforceRequirements": [
     { "professionId": "profession:miners", "workers": 100 }

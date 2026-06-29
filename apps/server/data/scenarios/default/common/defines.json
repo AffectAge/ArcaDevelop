@@ -1,1 +1,68 @@
-{}
+{
+  "ai": {
+    "enabled": true,
+    "maxCountriesPerTick": 50,
+    "maxDecisionCandidatesPerCountry": 20,
+    "contextCacheTtlTurns": 1,
+    "maxBuildCompletionTurns": 8
+  },
+  "economy": {
+    "baseCulturePerTurn": 100,
+    "baseSciencePerTurn": 100,
+    "baseReligionPerTurn": 100,
+    "baseConstructionPerTurn": 50,
+    "baseDucatsPerTurn": 5000,
+    "baseGoldPerTurn": 100,
+    "demolitionCostConstructionPercent": 20,
+    "marketPriceSmoothing": 0.2,
+    "buildingDurabilityDecayPerTurn": 10,
+    "buildingDurabilityRecoveryPerTurn": 5,
+    "pollutionProductivityEffectPer1000": 0.1,
+    "explorationBaseEmptyChancePct": 5,
+    "explorationDepletionPerAttemptPct": 7.5,
+    "explorationDurationTurns": 1,
+    "explorationRollsPerExpedition": 3
+  },
+  "auditLog": {
+    "maxEntries": 1000,
+    "retentionTurns": null
+  },
+  "colonization": {
+    "maxActiveColonizations": 3,
+    "pointsPerTurn": 30,
+    "pointsCostPer1000Km2": 5,
+    "ducatsCostPer1000Km2": 5,
+    "settlementEnabled": true,
+    "settlementPopulationOnCapture": 1000,
+    "colonizerTurns": 2,
+    "colonizerCostColonization": 20,
+    "colonizerCostDucats": 10,
+    "colonizerMovementPoints": 2
+  },
+  "customization": {
+    "renameDucats": 20,
+    "recolorDucats": 10,
+    "flagDucats": 15,
+    "crestDucats": 15,
+    "hexRenameDucats": 25
+  },
+  "military": {
+    "militaryFormationSpeed": 10,
+    "landDivisionStackLimitPerHex": 4
+  },
+  "registration": {
+    "requireAdminApproval": false
+  },
+  "eventLog": {
+    "retentionTurns": 3
+  },
+  "resourceLedger": {
+    "retentionTurns": 20,
+    "maxEntriesPerTurn": 10000
+  },
+  "turnTimer": {
+    "enabled": true,
+    "secondsPerTurn": 86400,
+    "pauseWhenNoPlayersOnline": false
+  }
+}

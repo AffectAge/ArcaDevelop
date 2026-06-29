@@ -9,8 +9,10 @@
   "maxLevel": 5,
   "upgradeCostConstruction": 22,
   "upgradeCostDucats": 12,
+  "extractions": [
+    { "goodId": "good:wood", "amount": 12, "requiresDeposit": true }
+  ],
   "outputs": [
-    { "goodId": "good:wood", "amount": 12 },
     { "goodId": "good:charcoal", "amount": 3 }
   ],
   "workforceRequirements": [

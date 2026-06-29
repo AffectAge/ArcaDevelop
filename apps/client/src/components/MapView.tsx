@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Application, Container, Graphics, Sprite } from "pixi.js";
-import { BookOpen, Building2, Flag, Grid3X3, HandCoins, Info, Landmark, Layers, Leaf, Mountain, Move, Shield, Ship, Tags, Users, Waves } from "lucide-react";
+import { BookOpen, Building2, Flag, Gem, Grid3X3, HandCoins, Info, Landmark, Layers, Leaf, Mountain, Move, Shield, Ship, Tags, Users, Waves } from "lucide-react";
 import { toast } from "sonner";
 import {
   buildCityHexIdSet,
@@ -18,6 +18,7 @@ import {
   type MapFeatureInstance,
   type MapFeatureVisualId,
   type MapFeatureVisualRuleDefinition,
+  type RegionResourceDeposit,
   type WorldBase,
 } from "@arcanorum/shared";
 import {
@@ -89,6 +90,8 @@ import { type CityAtlasState } from "../assets/cityAtlas";
 import { getCityAtlasTextures } from "../map/cityAtlasTextureCache";
 import { NATURAL_FEATURE_VISUAL_IDS, resolveFeatureAtlasFrame } from "../assets/featureAtlas";
 import { getFeatureAtlasTextures } from "../map/featureAtlasTextureCache";
+import { resolveResourceDepositAtlasFrame } from "../assets/resourceDepositAtlas";
+import { getResourceDepositAtlasTextures } from "../map/resourceDepositAtlasTextureCache";
 import { CorridorBuildHud } from "./map-hud/CorridorBuildHud";
 import { getCorridorAtlasTextures, type CorridorAtlasTextures } from "../map/corridorAtlasTextureCache";
 import type { CorridorAtlasStatus } from "../assets/corridorAtlas";
@@ -231,6 +234,7 @@ const MAP_LAYER_DESCRIPTORS: Array<{ id: MapLayerToggleId; labelKey: UiTextKey; 
   { id: "countryBorders", labelKey: "map.layer.countryBorders", tooltipKey: "map.layer.countryBordersTooltip", icon: Shield },
   { id: "regionFill", labelKey: "map.layer.regionFill", tooltipKey: "map.layer.regionFillTooltip", icon: Layers },
   { id: "features", labelKey: "map.layer.features", tooltipKey: "map.layer.featuresTooltip", icon: Leaf },
+  { id: "resources", labelKey: "map.layer.resources", tooltipKey: "map.layer.resourcesTooltip", icon: Gem },
   { id: "buildings", labelKey: "map.layer.buildings", tooltipKey: "map.layer.buildingsTooltip", icon: Building2 },
   { id: "armies", labelKey: "map.layer.armies", tooltipKey: "map.layer.armiesTooltip", icon: Landmark },
   { id: "countryLabels", labelKey: "map.layer.countryLabels", tooltipKey: "map.layer.countryLabelsTooltip", icon: Tags },
@@ -378,6 +382,7 @@ export function MapView({
   const lensOverlayRendererRef = useRef<HexMapLensOverlayRenderer | null>(null);
   const naturalFeatureLayerRef = useRef<Container | null>(null);
   const siteFeatureLayerRef = useRef<Container | null>(null);
+  const resourceDepositLayerRef = useRef<Container | null>(null);
   const overlayLayerRef = useRef<Graphics | null>(null);
   const corridorPersistentLayerRef = useRef<Container | null>(null);
   const corridorPreviewLayerRef = useRef<Container | null>(null);
@@ -412,6 +417,7 @@ export function MapView({
   const [mapRenderError, setMapRenderError] = useState(false);
   const [buildingTextureVersion, setBuildingTextureVersion] = useState(0);
   const [featureTextureVersion, setFeatureTextureVersion] = useState(0);
+  const [resourceDepositTextureVersion, setResourceDepositTextureVersion] = useState(0);
   const [corridorTextureVersion, setCorridorTextureVersion] = useState(0);
   const [edgeScrollEnabled, setEdgeScrollEnabled] = useState(() => readMapNavigationSettings(useGameStore.getState().auth?.countryId).edgeScrollEnabled);
   const [textureQuality, setTextureQuality] = useState<MapTextureQuality>(() => readMapTextureQuality(useGameStore.getState().auth?.countryId));
@@ -534,7 +540,16 @@ export function MapView({
     }
     return result;
   }, [mapFeatures]);
+  const resourceDepositsByHexId = useMemo(() => {
+    const result = new Map<HexId, RegionResourceDeposit>();
+    for (const deposit of Object.values(worldBase?.regionResourceDepositsByRegion ?? {}).flat()) {
+      if (deposit.visibility !== "known" || Number(deposit.amount) <= 0) continue;
+      result.set(deposit.hexId as HexId, deposit);
+    }
+    return result;
+  }, [worldBase?.regionResourceDepositsByRegion]);
   const selectedSiteFeatures = selectedTile ? mapFeaturesByHexId.get(selectedTile.id) ?? [] : [];
+  const selectedResourceDeposit = selectedTile ? resourceDepositsByHexId.get(selectedTile.id) ?? null : null;
   const hoverPath = useMemo(() => {
     if (!selectedTile || !hoverState?.tile || selectedTile.id === hoverState.tile.id) return [];
     return findHexPath(mapArtifact, selectedTile.id, hoverState.tile.id, 1600, tileById);
@@ -1157,6 +1172,7 @@ export function MapView({
     const overlayLayer = new Graphics();
     const naturalFeatureLayer = new Container();
     const siteFeatureLayer = new Container();
+    const resourceDepositLayer = new Container();
     const corridorPersistentLayer = new Container();
     const corridorPreviewLayer = new Container();
     const buildingLayer = new Container();
@@ -1167,6 +1183,7 @@ export function MapView({
     overlayLayerRef.current = overlayLayer;
     naturalFeatureLayerRef.current = naturalFeatureLayer;
     siteFeatureLayerRef.current = siteFeatureLayer;
+    resourceDepositLayerRef.current = resourceDepositLayer;
     corridorPersistentLayerRef.current = corridorPersistentLayer;
     corridorPreviewLayerRef.current = corridorPreviewLayer;
     buildingLayerRef.current = buildingLayer;
@@ -1209,6 +1226,7 @@ export function MapView({
         lensRenderer.container,
         naturalFeatureLayer,
         siteFeatureLayer,
+        resourceDepositLayer,
         corridorPersistentLayer,
         corridorPreviewLayer,
         buildingLayer,
@@ -1244,6 +1262,7 @@ export function MapView({
       lensOverlayRendererRef.current = null;
       naturalFeatureLayerRef.current = null;
       siteFeatureLayerRef.current = null;
+      resourceDepositLayerRef.current = null;
       overlayLayerRef.current = null;
       corridorPersistentLayerRef.current = null;
       corridorPreviewLayerRef.current = null;
@@ -1791,6 +1810,38 @@ export function MapView({
     performanceStatsRef.current.visibleSprites += visibleSprites;
     app.render();
   }, [camera, featureTextureVersion, mapArtifact.settings.hexSize, mapFeatureVisuals, mapFeatures, mapLayers.features, pixiReady, scenarioId, tileById]);
+
+  useEffect(() => {
+    const layer = resourceDepositLayerRef.current;
+    const app = appRef.current;
+    const container = containerRef.current;
+    if (!pixiReady || !layer || !app || !app.renderer || !container || !mapLayers.resources || !worldBase) {
+      layer?.removeChildren().forEach((child) => child.destroy());
+      return;
+    }
+    const rect = container.getBoundingClientRect();
+    const size = mapArtifact.settings.hexSize;
+    layer.removeChildren().forEach((child) => child.destroy());
+    let visibleSprites = 0;
+    for (const deposit of Object.values(worldBase.regionResourceDepositsByRegion).flat()) {
+      if (deposit.visibility !== "known" || Number(deposit.amount) <= 0) continue;
+      const tile = tileById.get(deposit.hexId);
+      if (!tile || !isTileInViewport(tile, camera, rect, size)) continue;
+      const sprite = buildResourceDepositSprite({
+        deposit,
+        tile,
+        scenarioId,
+        size,
+        cameraScale: camera.scale,
+        onReady: () => setResourceDepositTextureVersion((value) => value + 1),
+      });
+      if (!sprite) continue;
+      layer.addChild(sprite);
+      visibleSprites += 1;
+    }
+    performanceStatsRef.current.visibleSprites += visibleSprites;
+    app.render();
+  }, [camera, mapArtifact.settings.hexSize, mapLayers.resources, pixiReady, resourceDepositTextureVersion, scenarioId, tileById, worldBase]);
 
   useEffect(() => {
     const layer = corridorPersistentLayerRef.current;
@@ -2460,6 +2511,9 @@ export function MapView({
               {selectedSiteFeatures.length > 0 ? (
                 <HexDetail icon={<Leaf size={14} />} label={t("hexMap.siteFeature")} value={selectedSiteFeatures.map((feature) => resolveMapFeatureLabel(feature, t)).join(", ")} />
               ) : null}
+              {selectedResourceDeposit ? (
+                <HexDetail icon={<Gem size={14} />} label={t("hexMap.resourceDeposit")} value={formatResourceDepositLabel(selectedResourceDeposit)} />
+              ) : null}
               <HexDetail icon={<Waves size={14} />} label={t("hexMap.water")} value={selectedTile.waterKind ? t(`hexMap.water.${selectedTile.waterKind}`) : t("hexMap.water.none")} />
               <HexDetail icon={<Info size={14} />} label={t("hexMap.owner")} value={resolveOwnerName(selectedTile)} />
               <HexDetail icon={<Info size={14} />} label={t("hexMap.movementCost")} value={selectedTile.movementCost.toFixed(1)} />
@@ -2795,6 +2849,14 @@ export function MapView({
                   {
                     label: t("hexMap.siteFeature"),
                     value: (mapFeaturesByHexId.get(hoverState.tile.id) ?? []).map((feature) => resolveMapFeatureLabel(feature, t)).join(", "),
+                  },
+                ]
+              : []),
+            ...(resourceDepositsByHexId.get(hoverState.tile.id)
+              ? [
+                  {
+                    label: t("hexMap.resourceDeposit"),
+                    value: formatResourceDepositLabel(resourceDepositsByHexId.get(hoverState.tile.id)!),
                   },
                 ]
               : []),
@@ -3243,6 +3305,32 @@ function buildSiteFeatureSprite(params: {
   return sprite;
 }
 
+function buildResourceDepositSprite(params: {
+  deposit: RegionResourceDeposit;
+  tile: HexTile;
+  scenarioId: string | null | undefined;
+  size: number;
+  cameraScale: number;
+  onReady: () => void;
+}): Sprite | null {
+  const textures = getResourceDepositAtlasTextures({
+    scenarioId: params.scenarioId,
+    goodId: params.deposit.goodId,
+    onReady: params.onReady,
+  });
+  const texture = textures?.[resolveResourceDepositAtlasFrame(params.deposit)];
+  if (!texture) return null;
+  const center = axialToPixel(params.tile, params.size);
+  const sprite = new Sprite(texture);
+  sprite.anchor.set(0.5, 0.74);
+  sprite.position.set(center.x, center.y + params.size * 0.12);
+  const markerSize = Math.max(params.size * 0.54, Math.min(params.size * 0.96, 30 / Math.max(0.35, params.cameraScale)));
+  sprite.width = markerSize;
+  sprite.height = markerSize;
+  sprite.alpha = params.deposit.depletionMode === "finite" && Number(params.deposit.amount) <= 0 ? 0.36 : 0.9;
+  return sprite;
+}
+
 function resolveNaturalFeatureVisualId(feature: HexFeature): MapFeatureVisualId | null {
   return feature === "none" ? null : NATURAL_FEATURE_VISUAL_IDS[feature];
 }
@@ -3255,6 +3343,12 @@ function resolveNaturalFeatureAlpha(feature: HexFeature): number {
 
 function resolveMapFeatureLabel(feature: MapFeatureInstance, t: (key: UiTextKey) => string): string {
   return feature.nameKey ? t(feature.nameKey as UiTextKey) : feature.typeId;
+}
+
+function formatResourceDepositLabel(deposit: RegionResourceDeposit): string {
+  const amount = Math.max(0, Number(deposit.amount ?? 0));
+  const maxAmount = Math.max(amount, Number(deposit.maxAmount ?? 0));
+  return `${deposit.goodId} · ${formatCompactNumber(amount)} / ${formatCompactNumber(maxAmount)}`;
 }
 
 function calculateHexPathMovementCost(
@@ -3463,6 +3557,12 @@ function getPlacementReasonLabelKey(code: string | undefined): UiTextKey {
     case "BUILD_PLACEMENT_TAG_DENIED":
     case "BUILD_PLACEMENT_TAG_NOT_ALLOWED":
       return "buildings.hexPlacementReasonTag";
+    case "BUILD_PLACEMENT_DEPOSIT_REQUIRED":
+      return "buildings.hexPlacementReasonDepositRequired";
+    case "BUILD_PLACEMENT_DEPOSIT_HIDDEN":
+      return "buildings.hexPlacementReasonDepositHidden";
+    case "BUILD_PLACEMENT_DEPOSIT_WRONG_GOOD":
+      return "buildings.hexPlacementReasonDepositWrongGood";
     default:
       return "buildings.hexPlacementReasonInvalid";
   }

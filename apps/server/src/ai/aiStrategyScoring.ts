@@ -121,7 +121,7 @@ function getBaseWeight(candidate: AiCandidate, weights: AiStrategyWeights): numb
   if (candidate.kind === "upgrade") return weights.economyUpgrade;
   if (candidate.kind === "market-import") return weights.marketImport;
   if (candidate.kind === "diplomacy-contact") return weights.diplomacyContact;
-  if (candidate.kind === "found-city" || candidate.kind === "queue-colonizer") return weights.colonization;
+  if (candidate.kind === "found-city" || candidate.kind === "move-colonizer" || candidate.kind === "queue-colonizer") return weights.colonization;
   return weights.militaryMove;
 }
 
@@ -135,7 +135,7 @@ function getGoodWeight(candidate: AiCandidate, weights: Record<string, number>):
 }
 
 function getRegionWeight(candidate: AiCandidate, weights: Record<string, number>): number {
-  return candidate.kind === "build" || candidate.kind === "upgrade" || candidate.kind === "found-city" || candidate.kind === "queue-colonizer"
+  return candidate.kind === "build" || candidate.kind === "upgrade" || candidate.kind === "found-city" || candidate.kind === "move-colonizer" || candidate.kind === "queue-colonizer"
     ? (weights[candidate.regionId] ?? 0)
     : 0;
 }
@@ -178,7 +178,7 @@ function getCandidateSortKey(candidate: AiCandidate): string {
   if (candidate.kind === "army-move") {
     return `${candidate.kind}:${candidate.countryId}:${candidate.divisionId}:${candidate.targetHexId}`;
   }
-  if (candidate.kind === "found-city" || candidate.kind === "queue-colonizer") {
+  if (candidate.kind === "found-city" || candidate.kind === "move-colonizer" || candidate.kind === "queue-colonizer") {
     return `${candidate.kind}:${candidate.countryId}:${candidate.regionId}`;
   }
   return `${candidate.kind}:${candidate.regionId}:${candidate.buildingId}:${candidate.kind === "upgrade" ? candidate.instanceId : ""}`;

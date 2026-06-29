@@ -69,6 +69,8 @@ New heavy mechanics must use `regionId`. Do not add population, buildings, const
 
 Building placement is the narrow exception for map addressability: a building occupies one free hex slot, but the building instance still belongs to `regionBuildingsByRegion[regionId]` and its construction project still belongs to `regionConstructionQueueByRegion[regionId]`.
 
+Resource deposits are the second narrow map-addressability exception. A deposit is a physical `good:*` occurrence on one `hexId`, stored under its owning `regionId` in `regionResourceDepositsByRegion`. Extraction buildings must target a hex with a known matching deposit, and finite deposits deplete on that hex. The building instance, construction queue, market access, ownership, warehouses, production accounting, population, and taxes remain region-level systems.
+
 Settler-based colonization follows the same region-first rule. A colonizer founds a named `SettlementProject` on its current hex, but the project belongs to a region and completion transfers the region owner/controller. The final named city marker is a visual and interaction anchor; population, resources, buildings, construction, production, taxes, and ownership remain region-level.
 
 Scenario startup seeds one idle civilian colonizer for each authored country. The starter unit is placed on a deterministic pseudo-random passable land hex, preferring a hex in a region controlled by that country and falling back to any passable land hex when the country has no controlled region. This uses the hex only as the unit's map address and does not create province-level ownership, population, economy, or construction state.

@@ -26,7 +26,7 @@ describe("AI colonization candidates", () => {
     const candidates = selectAiColonizationCandidates({
       context,
       world,
-      hexes: [{ id: "hex:1:1", regionId: "region:home", neighbors: [] }],
+      hexes: [makeHex("hex:1:1", "region:home", [])],
       regionIds: ["region:home"],
       regionAdjacencyById: {},
       colonizerQueueConfig: {
@@ -84,8 +84,8 @@ describe("AI colonization candidates", () => {
       context,
       world,
       hexes: [
-        { id: "hex:1:1", regionId: "region:home", neighbors: ["hex:2:1"] },
-        { id: "hex:2:1", regionId: "region:frontier", neighbors: ["hex:1:1"] },
+        makeHex("hex:1:1", "region:home", ["hex:2:1"]),
+        makeHex("hex:2:1", "region:frontier", ["hex:1:1"]),
       ],
       regionIds: ["region:home", "region:frontier"],
       regionAdjacencyById: { "region:home": ["region:frontier"] },
@@ -119,6 +119,78 @@ describe("AI colonization candidates", () => {
     ]);
   });
 
+  it("moves idle colonizers toward the nearest valid neutral settlement region", () => {
+    const world = createAiFixtureWorld({
+      resourcesByCountry: {
+        "country:alpha": { culture: 0, science: 0, religion: 0, colonization: 25, construction: 0, ducats: 20, gold: 0 },
+      },
+      regionOwner: { "region:home": "country:alpha" },
+      regionController: { "region:home": "country:alpha" },
+      civilianUnitsById: {
+        "civilian:colonizer": {
+          id: "civilian:colonizer",
+          countryId: "country:alpha",
+          type: "colonizer",
+          hexId: "hex:0:0",
+          status: "idle",
+          movementPoints: 2,
+          maxMovementPoints: 2,
+          path: [],
+          targetHexId: null,
+          createdTurnId: 1,
+          lastMovedTurnId: null,
+        },
+      },
+      civilianUnitQueueByCountry: {},
+      settlementProjectsById: {},
+    });
+    const context = buildAiCountryContext({
+      countryId: "country:alpha",
+      world,
+      indexes: buildAiWorldIndexes(world),
+    });
+
+    const candidates = selectAiColonizationCandidates({
+      context,
+      world,
+      hexes: [
+        makeHex("hex:0:0", "region:home", ["hex:1:0"]),
+        makeHex("hex:1:0", "region:home", ["hex:0:0", "hex:2:0"]),
+        makeHex("hex:2:0", "region:frontier", ["hex:1:0"]),
+      ],
+      regionIds: ["region:home", "region:frontier"],
+      regionAdjacencyById: { "region:home": ["region:frontier"] },
+      colonizerQueueConfig: {
+        colonizerTurns: 2,
+        colonizerCostColonization: 20,
+        colonizerCostDucats: 10,
+        colonizerMovementPoints: 2,
+      },
+      getRegionColonizationConfig: () => ({ cost: 5, disabled: false, manualCost: false }),
+      getRegionDerivedColonizationCosts: () => ({ pointsCost: 5, ducatsCost: 0 }),
+    });
+
+    expect(candidates).toEqual([
+      expect.objectContaining({
+        kind: "move-colonizer",
+        countryId: "country:alpha",
+        regionId: "region:frontier",
+        targetHexId: "hex:2:0",
+        civilianUnitId: "civilian:colonizer",
+        path: ["hex:1:0", "hex:2:0"],
+        orderDraft: {
+          type: "UNIT_MOVE",
+          countryId: "country:alpha",
+          unitKind: "civilian",
+          unitId: "civilian:colonizer",
+          targetHexId: "hex:2:0",
+          path: ["hex:1:0", "hex:2:0"],
+          payload: { path: ["hex:1:0", "hex:2:0"] },
+        },
+      }),
+    ]);
+  });
+
   it("filters queue candidates when resources or free controlled hexes are missing", () => {
     const world = createAiFixtureWorld({
       resourcesByCountry: {
@@ -136,7 +208,7 @@ describe("AI colonization candidates", () => {
       selectAiColonizationCandidates({
         context,
         world,
-        hexes: [{ id: "hex:1:1", regionId: "region:home", neighbors: [] }],
+        hexes: [makeHex("hex:1:1", "region:home", [])],
         regionIds: ["region:home"],
         regionAdjacencyById: {},
         colonizerQueueConfig: {
@@ -167,3 +239,14 @@ describe("AI colonization candidates", () => {
     });
   });
 });
+
+function makeHex(id: string, regionId: string | null, neighbors: string[]) {
+  return {
+    id,
+    regionId,
+    neighbors,
+    hexType: "plains",
+    climate: "temperate_grassland",
+    landscape: "plains",
+  };
+}

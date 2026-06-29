@@ -65,10 +65,17 @@ export function createAiFixtureWorld(overrides: AiFixtureWorldOverrides = {}): W
     regionResourceDepositsByRegion: {
       "region:alpha-core": [
         {
+          id: "resource_deposit:good_grain_hex_0_0",
           goodId: "good:grain",
+          hexId: "hex:0:0",
+          regionId: "region:alpha-core",
           amount: 100,
+          maxAmount: 100,
+          initialAmount: 100,
+          visibility: "known",
+          source: "authored",
+          depletionMode: "finite",
           discoveredTurnId: 1,
-          veinSize: "medium",
         },
       ],
     },

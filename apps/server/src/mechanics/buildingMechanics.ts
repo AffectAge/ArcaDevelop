@@ -51,6 +51,7 @@ export type BuildingMechanicsContentEntry = {
   globalBuildLimit?: number | null;
   placement?: unknown;
   adjacencyEffects?: unknown;
+  requiresDepositGoodIds?: string[];
 };
 
 export type BuildingLevelRange = {
@@ -81,14 +82,23 @@ export type BuildingProductionContentEntry = {
   extractionAmountPerTurn?: number | null;
   extractionRequiresDeposit?: boolean | null;
   extractions?: BuildingProductionExtraction[];
+  requiresDepositGoodIds?: string[];
   pollutionProductivityMode?: PollutionProductivityMode;
   inputs?: BuildingProductionInput[];
   outputs?: BuildingProductionOutput[];
 };
 
 export type BuildingProductionDeposit = {
+  id?: string;
   goodId: string;
+  hexId?: string;
   amount: number;
+  maxAmount?: number;
+  initialAmount?: number;
+  depletionMode?: "finite" | "renewable" | "infinite";
+  visibility?: "known" | "discoverable" | "hidden";
+  regenPerTurn?: number | null;
+  minRenewableAmount?: number | null;
 };
 
 export type BuildingProductionResult = {
@@ -224,6 +234,7 @@ export type RegionBuildingTurnFinalizationResult = {
   populationTreasury: number;
   buildingDucatsByBuildingId: Record<string, number>;
   resourceDeposits: RegionResourceDeposit[];
+  depletedResourceDeposits: RegionResourceDeposit[];
 };
 
 export type BuildLimitCounts = {
@@ -575,6 +586,7 @@ export function resolveBuildingProductionTurn(params: {
   instanceLevel: number;
   warehouse: Record<string, number>;
   regionResourceDeposits: BuildingProductionDeposit[];
+  targetHexId?: string | null;
   laborCoverage: number;
   infraCoverage: number;
   financeCoverage: number;
@@ -610,7 +622,7 @@ export function resolveBuildingProductionTurn(params: {
   for (const extraction of activeExtractions) {
     const extractionAmountPerTurn = Math.max(0, params.resolveOutputAmount(extraction.goodId, extraction.amount));
     if (extractionAmountPerTurn <= 0 || extraction.requiresDeposit === false) continue;
-    const deposit = params.regionResourceDeposits.find((row) => row.goodId === extraction.goodId);
+    const deposit = findExtractionDeposit(params.regionResourceDeposits, extraction.goodId, params.targetHexId);
     const availableDeposit = Math.max(0, Number(deposit?.amount ?? 0));
     const extractionRequired = roundBuildingNumber(extractionAmountPerTurn * params.instanceLevel * params.laborCoverage * params.buildingThroughput);
     if (extractionRequired > 0) {
@@ -661,7 +673,7 @@ export function resolveBuildingProductionTurn(params: {
     const extractionAmountPerTurn = Math.max(0, params.resolveOutputAmount(extraction.goodId, extraction.amount));
     const extractionRequiresDeposit = extraction.requiresDeposit !== false;
     if (extractionAmountPerTurn <= 0) continue;
-    const deposit = params.regionResourceDeposits.find((row) => row.goodId === extraction.goodId);
+    const deposit = findExtractionDeposit(params.regionResourceDeposits, extraction.goodId, params.targetHexId);
     const availableDeposit = Math.max(0, Number(deposit?.amount ?? 0));
     const extractionMax = roundBuildingNumber(extractionAmountPerTurn * params.instanceLevel * params.laborCoverage * params.buildingThroughput);
     if (extractionMax > 0) params.addProductionMax(extraction.goodId, extractionRequiresDeposit ? Math.min(extractionMax, availableDeposit) : extractionMax);
@@ -673,7 +685,7 @@ export function resolveBuildingProductionTurn(params: {
         extractedByGood[extraction.goodId] = roundBuildingNumber((extractedByGood[extraction.goodId] ?? 0) + extracted);
         producedByGood[extraction.goodId] = roundBuildingNumber((producedByGood[extraction.goodId] ?? 0) + extracted);
         params.addProduction(extraction.goodId, extracted);
-        if (extractionRequiresDeposit && deposit) {
+        if (extractionRequiresDeposit && deposit && deposit.depletionMode !== "infinite") {
           deposit.amount = roundBuildingNumber(Math.max(0, availableDeposit - extracted));
         }
       }
@@ -1078,14 +1090,60 @@ export function finalizeRegionBuildingTurn(params: {
     );
   }
 
+  const finalizedResourceDeposits = finalizeResourceDeposits(params.regionResourceDeposits);
   return {
     activeBuildingInstances,
     populationTreasury: roundBuildingNumber(params.previousPopulationTreasury + params.regionWages),
     buildingDucatsByBuildingId,
-    resourceDeposits: params.regionResourceDeposits
-      .filter((row) => Number(row.amount) > 0)
-      .sort((a, b) => a.goodId.localeCompare(b.goodId)),
+    resourceDeposits: finalizedResourceDeposits.remaining,
+    depletedResourceDeposits: finalizedResourceDeposits.depleted,
   };
+}
+
+function finalizeResourceDeposits(
+  deposits: RegionResourceDeposit[],
+): { remaining: RegionResourceDeposit[]; depleted: RegionResourceDeposit[] } {
+  const remaining: RegionResourceDeposit[] = [];
+  const depleted: RegionResourceDeposit[] = [];
+  for (const row of deposits) {
+    const maxAmount = Math.max(0, Number(row.maxAmount ?? row.amount ?? 0));
+    const regenPerTurn = Math.max(0, Number(row.regenPerTurn ?? 0));
+    const minRenewableAmount = Math.max(0, Number(row.minRenewableAmount ?? 0));
+    let amount = Math.max(0, Number(row.amount ?? 0));
+    if (row.depletionMode === "renewable") {
+      amount = Math.min(maxAmount, Math.max(amount, minRenewableAmount) + regenPerTurn);
+    }
+    if (row.depletionMode === "finite" && amount <= 0) {
+      depleted.push({ ...row, amount: 0 });
+      continue;
+    }
+    remaining.push({
+      ...row,
+      amount: roundBuildingNumber(row.depletionMode === "infinite" ? row.amount : amount),
+      maxAmount: roundBuildingNumber(maxAmount),
+      initialAmount: roundBuildingNumber(Math.max(0, Number(row.initialAmount ?? maxAmount))),
+    });
+  }
+  return {
+    remaining: remaining.sort(compareResourceDeposits),
+    depleted: depleted.sort(compareResourceDeposits),
+  };
+}
+
+function compareResourceDeposits(a: RegionResourceDeposit, b: RegionResourceDeposit): number {
+  return a.hexId.localeCompare(b.hexId) || a.goodId.localeCompare(b.goodId) || a.id.localeCompare(b.id);
+}
+
+function findExtractionDeposit(
+  deposits: BuildingProductionDeposit[],
+  goodId: string,
+  targetHexId?: string | null,
+): BuildingProductionDeposit | undefined {
+  return deposits.find((row) =>
+    row.goodId === goodId &&
+    row.visibility === "known" &&
+    (!targetHexId || row.hexId === targetHexId),
+  );
 }
 
 export function transferStateOwnedBuildingsToController(params: {

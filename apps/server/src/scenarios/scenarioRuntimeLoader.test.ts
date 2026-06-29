@@ -99,7 +99,21 @@ async function createScenarioFixture(): Promise<string> {
       },
     ],
     colonization: { cost: 50, disabled: true },
-    resources: [{ goodId: "good:grain", amount: 100, discoveredTurnId: 1, veinSize: "small" }],
+    resourceDeposits: [
+      {
+        id: "resource_deposit:good_grain_hex_0_0",
+        goodId: "good:grain",
+        hexId: "hex:0:0",
+        regionId: "region:bohemia",
+        amount: 100,
+        maxAmount: 100,
+        initialAmount: 100,
+        visibility: "known",
+        source: "authored",
+        depletionMode: "finite",
+        discoveredTurnId: 1,
+      },
+    ],
   });
   await writeJson(join(scenarioDir, "history/countries/bohemia.json"), {
     id: "country:bohemia",

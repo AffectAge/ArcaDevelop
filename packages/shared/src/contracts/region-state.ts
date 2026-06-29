@@ -1,3 +1,5 @@
+import type { HexId, RegionId } from "./hex-map";
+
 export type PopulationProfessionState = {
   size: number;
   ducats: number;
@@ -89,10 +91,21 @@ export type RegionConstructionProject = {
 };
 
 export type RegionResourceDeposit = {
+  id: MapResourceDepositInstanceId;
   goodId: string;
+  hexId: HexId;
+  regionId: RegionId;
   amount: number;
-  discoveredTurnId: number;
-  veinSize: "small" | "medium" | "large";
+  maxAmount: number;
+  initialAmount: number;
+  visibility: MapResourceDepositVisibility;
+  source: MapResourceDepositSource;
+  depletionMode: DepositDepletionMode;
+  regenPerTurn?: number | null;
+  minRenewableAmount?: number | null;
+  discoveredTurnId?: number | null;
+  discoveredByCountryId?: string | null;
+  sourceGeneratorId?: string | null;
 };
 
 export type RegionResourceExplorationProject = {
@@ -100,4 +113,65 @@ export type RegionResourceExplorationProject = {
   requestedByCountryId: string;
   startedTurnId: number;
   turnsRemaining: number;
+};
+
+export type DepositDepletionMode = "finite" | "renewable" | "infinite";
+
+export type MapResourceDepositInstanceId = `resource_deposit:${string}`;
+
+export type MapResourceDepositVisibility = "known" | "discoverable" | "hidden";
+
+export type MapResourceDepositSource = "authored" | "generated" | "exploration";
+
+export type GoodDepositCountRule = {
+  min?: number;
+  max?: number;
+  count?: number;
+};
+
+export type GoodDepositGenerationRules = {
+  allowedHexTypes?: string[];
+  deniedHexTypes?: string[];
+  allowedClimates?: string[];
+  deniedClimates?: string[];
+  allowedLandscapes?: string[];
+  deniedLandscapes?: string[];
+  allowedFeatures?: string[];
+  deniedFeatures?: string[];
+  elevationMin?: number | null;
+  elevationMax?: number | null;
+  global?: GoodDepositCountRule;
+  perRegion?: GoodDepositCountRule;
+};
+
+export type GoodDepositDefinition = {
+  enabled: boolean;
+  depletionMode: DepositDepletionMode;
+  minAmount: number;
+  maxAmount: number;
+  regenPerTurn?: number | null;
+  minRenewableAmount?: number | null;
+  visibility?: MapResourceDepositVisibility;
+  generation?: GoodDepositGenerationRules | null;
+};
+
+export type BuildingDepositRequirement = {
+  goodIds: string[];
+};
+
+export type ResourceExplorationProjectDraft = {
+  regionId: string;
+  requestedByCountryId: string;
+  candidateGoodIds?: string[];
+};
+
+export type ResourceExplorationResult = {
+  regionId: string;
+  hexId: string;
+  goodId: string;
+  amount: number;
+  maxAmount?: number | null;
+  visibility?: MapResourceDepositVisibility;
+  discoveredTurnId?: number | null;
+  discoveredByCountryId?: string | null;
 };

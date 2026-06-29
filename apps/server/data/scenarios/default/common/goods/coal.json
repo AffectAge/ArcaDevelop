@@ -8,5 +8,17 @@
   "maxPrice": 12,
   "infraPerUnit": 0.28,
   "distributionType": "tradeable",
-  "transportModes": ["land", "sea"]
+  "transportModes": ["land", "sea"],
+  "deposit": {
+    "enabled": true,
+    "depletionMode": "finite",
+    "minAmount": 260,
+    "maxAmount": 900,
+    "visibility": "known",
+    "generation": {
+      "allowedHexTypes": ["hills", "mountains"],
+      "deniedClimates": ["frozen"],
+      "global": { "min": 45, "max": 80 }
+    }
+  }
 }

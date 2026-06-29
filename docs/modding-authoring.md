@@ -47,6 +47,7 @@ scenarios/<scenario_id>/
     markets/*.json
     modifiers/*.json
     map_feature_generators/*.json
+    map_feature_visuals/*.json
     ai/
       archetypes/*.json
       personalities/*.json
@@ -122,6 +123,56 @@ Conditional feature frame rules live in `common/map_feature_visuals/*.json`. The
 
 Base game resource point icons are not scenario content. Population, culture, science, religion, colonization, construction, ducats, and gold icons live as repo-owned PNG assets in `apps/client/public/game-assets/resource-icons/` and are mapped by the client. Scenarios must not define, upload, or override these icons; scenario assets remain for scenario-owned visuals such as flags, crests, backgrounds, buildings, goods, and authored art.
 
+## Hex Resource Deposits
+
+Resource deposits are authored as goods, not as a separate `resource:*` content type. A `common/goods/*.json` entry may define a `deposit` block:
+
+```json
+{
+  "id": "good:iron_ore",
+  "deposit": {
+    "enabled": true,
+    "depletionMode": "finite",
+    "minAmount": 220,
+    "maxAmount": 760,
+    "visibility": "known",
+    "generation": {
+      "allowedHexTypes": ["hills", "mountains"],
+      "global": { "min": 55, "max": 95 }
+    }
+  }
+}
+```
+
+`depletionMode` is `finite`, `renewable`, or `infinite`. Renewable deposits may also set `regenPerTurn` and `minRenewableAmount`. Generation rules can filter by `allowedHexTypes`, `deniedHexTypes`, `allowedClimates`, `deniedClimates`, `allowedLandscapes`, `deniedLandscapes`, `allowedFeatures`, `deniedFeatures`, `elevationMin`, and `elevationMax`, then apply `global` and/or `perRegion` count rules.
+
+Generated deposits are written to `.generated/resource-deposits.json`. Do not manually edit that generated file. Authored region deposits live in `history/regions/*.json` under `resourceDeposits`; old `resources` entries are invalid for deposits.
+
+```json
+{
+  "id": "region:bohemia",
+  "hexIds": ["hex:10:20"],
+  "resourceDeposits": [
+    {
+      "id": "resource_deposit:iron_bohemia_1",
+      "goodId": "good:iron_ore",
+      "hexId": "hex:10:20",
+      "regionId": "region:bohemia",
+      "amount": 400,
+      "maxAmount": 400,
+      "initialAmount": 400,
+      "visibility": "known",
+      "source": "authored",
+      "depletionMode": "finite"
+    }
+  ]
+}
+```
+
+Buildings that extract goods use `extractions`. By default extraction requires a known matching deposit on the building `targetHexId`; set `requiresDeposit: false` only for authored exceptions.
+
+Resource deposit visuals use one shared scenario atlas at `assets/resources/resource-deposit-atlas.png`, with fallback `/game-assets/resources/fallback-resource-deposit-atlas.png`. Rows are assigned to supported good ids and columns are `4` visual tiers by stock ratio times `3` stable variants, each frame `64x64`.
+
 ## Defines
 
 `common/defines.json` is scenario-owned configuration for values that should not be hardcoded in runtime code. Use it for balance, pacing, limits, retention policies, AI bonuses, and similar tunables.
@@ -138,12 +189,12 @@ Currently supported runtime defines:
     "maxBuildCompletionTurns": 8
   },
   "economy": {
-    "baseCulturePerTurn": 1,
-    "baseSciencePerTurn": 1,
-    "baseReligionPerTurn": 1,
-    "baseConstructionPerTurn": 5,
-    "baseDucatsPerTurn": 5,
-    "baseGoldPerTurn": 10,
+    "baseCulturePerTurn": 100,
+    "baseSciencePerTurn": 100,
+    "baseReligionPerTurn": 100,
+    "baseConstructionPerTurn": 50,
+    "baseDucatsPerTurn": 5000,
+    "baseGoldPerTurn": 100,
     "demolitionCostConstructionPercent": 20,
     "marketPriceSmoothing": 0.2,
     "buildingDurabilityDecayPerTurn": 10,
@@ -164,7 +215,11 @@ Currently supported runtime defines:
     "pointsCostPer1000Km2": 5,
     "ducatsCostPer1000Km2": 5,
     "settlementEnabled": true,
-    "settlementPopulationOnCapture": 1000
+    "settlementPopulationOnCapture": 1000,
+    "colonizerTurns": 2,
+    "colonizerCostColonization": 20,
+    "colonizerCostDucats": 10,
+    "colonizerMovementPoints": 2
   },
   "customization": {
     "renameDucats": 20,
@@ -182,6 +237,10 @@ Currently supported runtime defines:
   },
   "eventLog": {
     "retentionTurns": 3
+  },
+  "resourceLedger": {
+    "retentionTurns": 20,
+    "maxEntriesPerTurn": 10000
   },
   "turnTimer": {
     "enabled": true,

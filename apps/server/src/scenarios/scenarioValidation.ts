@@ -347,6 +347,7 @@ export async function validateScenarioDirectory(
   const summary = summarizeEntities(loadedEntities);
 
   validateDuplicateIds(loadedEntities, issues);
+  validateGoodDepositDefinitions(root, loadedEntities, issues);
   validateCountryAuthoringFields(root, loadedEntities, issues);
   await validateAssetRegistry(root, loadedEntities, issues);
   validateAuthoredAssetFields(root, loadedEntities, issues);
@@ -1355,26 +1356,132 @@ function validateClaims(root: string, region: LoadedEntity, countries: Set<strin
 
 function validateRegionResources(root: string, region: LoadedEntity, goods: Set<string>, issues: ScenarioValidationIssue[]): void {
   const resources = region.data.resources;
-  if (resources == null) return;
-  if (!Array.isArray(resources)) {
+  if (resources != null) {
     issues.push({
       code: "BROKEN_REFERENCE",
       path: normalizePath(relative(root, region.path)),
-      message: `${region.id}.resources must be an array.`,
+      message: `${region.id}.resources is no longer valid for deposits; use resourceDeposits with hexId entries.`,
+    });
+  }
+
+  const deposits = region.data.resourceDeposits;
+  if (deposits == null) return;
+  if (!Array.isArray(deposits)) {
+    issues.push({
+      code: "BROKEN_REFERENCE",
+      path: normalizePath(relative(root, region.path)),
+      message: `${region.id}.resourceDeposits must be an array.`,
     });
     return;
   }
 
-  for (const resource of resources) {
-    if (!isObject(resource)) continue;
-    const goodId = resource.goodId;
-    if (typeof goodId === "string" && goods.has(goodId)) continue;
-    issues.push({
-      code: "BROKEN_REFERENCE",
-      path: normalizePath(relative(root, region.path)),
-      message: `${region.id}.resources references missing good ${String(goodId)}.`,
-    });
+  const regionHexIds = new Set(Array.isArray(region.data.hexIds) ? region.data.hexIds.filter((hexId) => typeof hexId === "string") : []);
+  const occupiedHexIds = new Set<string>();
+  for (const deposit of deposits) {
+    if (!isObject(deposit)) continue;
+    const goodId = deposit.goodId;
+    const hexId = deposit.hexId;
+    if (typeof goodId !== "string" || !goods.has(goodId)) {
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path: normalizePath(relative(root, region.path)),
+        message: `${region.id}.resourceDeposits references missing good ${String(goodId)}.`,
+      });
+    }
+    if (typeof hexId !== "string" || !/^hex:-?\d+:-?\d+$/.test(hexId) || (regionHexIds.size > 0 && !regionHexIds.has(hexId))) {
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path: normalizePath(relative(root, region.path)),
+        message: `${region.id}.resourceDeposits references invalid region hex ${String(hexId)}.`,
+      });
+    } else if (occupiedHexIds.has(hexId)) {
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path: normalizePath(relative(root, region.path)),
+        message: `${region.id}.resourceDeposits has more than one deposit on ${hexId}.`,
+      });
+    } else {
+      occupiedHexIds.add(hexId);
+    }
+    validateDepositEnum(root, region.path, `${region.id}.resourceDeposits.visibility`, deposit.visibility, ["known", "discoverable", "hidden"], issues);
+    validateDepositEnum(root, region.path, `${region.id}.resourceDeposits.source`, deposit.source, ["authored", "generated", "exploration"], issues);
+    validateDepositEnum(root, region.path, `${region.id}.resourceDeposits.depletionMode`, deposit.depletionMode, ["finite", "renewable", "infinite"], issues);
+    validatePositiveNumber(root, region.path, `${region.id}.resourceDeposits.amount`, deposit.amount, issues);
+    validatePositiveNumber(root, region.path, `${region.id}.resourceDeposits.maxAmount`, deposit.maxAmount, issues);
   }
+}
+
+function validateGoodDepositDefinitions(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
+  for (const good of entities.filter((entity) => entity.kind === "good")) {
+    const deposit = good.data.deposit;
+    if (deposit == null) continue;
+    if (!isObject(deposit)) {
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path: normalizePath(relative(root, good.path)),
+        message: `${good.id}.deposit must be an object.`,
+      });
+      continue;
+    }
+    if (deposit.enabled !== true && deposit.enabled !== false) {
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path: normalizePath(relative(root, good.path)),
+        message: `${good.id}.deposit.enabled must be boolean.`,
+      });
+    }
+    validateDepositEnum(root, good.path, `${good.id}.deposit.depletionMode`, deposit.depletionMode, ["finite", "renewable", "infinite"], issues);
+    validateDepositEnum(root, good.path, `${good.id}.deposit.visibility`, deposit.visibility, ["known", "discoverable", "hidden"], issues, true);
+    validatePositiveNumber(root, good.path, `${good.id}.deposit.minAmount`, deposit.minAmount, issues);
+    validatePositiveNumber(root, good.path, `${good.id}.deposit.maxAmount`, deposit.maxAmount, issues);
+    if (deposit.depletionMode === "renewable") {
+      validateNonNegativeNumber(root, good.path, `${good.id}.deposit.regenPerTurn`, deposit.regenPerTurn, issues);
+    }
+    const generation = deposit.generation;
+    if (generation != null && !isObject(generation)) {
+      issues.push({
+        code: "BROKEN_REFERENCE",
+        path: normalizePath(relative(root, good.path)),
+        message: `${good.id}.deposit.generation must be an object.`,
+      });
+    }
+  }
+}
+
+function validateDepositEnum(
+  root: string,
+  path: string,
+  label: string,
+  value: unknown,
+  allowed: readonly string[],
+  issues: ScenarioValidationIssue[],
+  optional = false,
+): void {
+  if (value == null && optional) return;
+  if (typeof value === "string" && allowed.includes(value)) return;
+  issues.push({
+    code: "BROKEN_REFERENCE",
+    path: normalizePath(relative(root, path)),
+    message: `${label} must be one of ${allowed.join(", ")}.`,
+  });
+}
+
+function validatePositiveNumber(root: string, path: string, label: string, value: unknown, issues: ScenarioValidationIssue[]): void {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) return;
+  issues.push({
+    code: "BROKEN_REFERENCE",
+    path: normalizePath(relative(root, path)),
+    message: `${label} must be a positive number.`,
+  });
+}
+
+function validateNonNegativeNumber(root: string, path: string, label: string, value: unknown, issues: ScenarioValidationIssue[]): void {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) return;
+  issues.push({
+    code: "BROKEN_REFERENCE",
+    path: normalizePath(relative(root, path)),
+    message: `${label} must be a non-negative number.`,
+  });
 }
 
 function validateKnownStableReferences(root: string, entity: LoadedEntity, ids: Set<string>, issues: ScenarioValidationIssue[]): void {

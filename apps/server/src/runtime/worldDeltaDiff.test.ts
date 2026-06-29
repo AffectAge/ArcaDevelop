@@ -1,4 +1,4 @@
-import type { BuildingInstance, PopulationPop, RegionConstructionProject, WorldBase } from "@arcanorum/shared";
+import type { BuildingInstance, PopulationPop, RegionConstructionProject, RegionResourceDeposit, WorldBase } from "@arcanorum/shared";
 import { WORLD_DELTA_MASK } from "@arcanorum/shared";
 import { describe, expect, it } from "vitest";
 import {
@@ -37,8 +37,8 @@ describe("worldDeltaDiff", () => {
   it("compares resource deposits and building instances including nested good maps", () => {
     expect(
       isEqualResourceDeposits(
-        [{ goodId: "good:iron", amount: 2, discoveredTurnId: 1, veinSize: "small" }],
-        [{ goodId: "good:iron", amount: 2, discoveredTurnId: 1, veinSize: "small" }],
+        [makeDeposit({ goodId: "good:iron", amount: 2 })],
+        [makeDeposit({ goodId: "good:iron", amount: 2 })],
       ),
     ).toBe(true);
 
@@ -636,6 +636,24 @@ function makeResources(overrides?: Partial<WorldBase["resourcesByCountry"][strin
     construction: 0,
     ducats: 0,
     gold: 0,
+    ...overrides,
+  };
+}
+
+function makeDeposit(overrides?: Partial<RegionResourceDeposit>): RegionResourceDeposit {
+  return {
+    id: "resource_deposit:good_iron_hex_0_0",
+    goodId: "good:iron",
+    hexId: "hex:0:0",
+    regionId: "region:a",
+    amount: 10,
+    maxAmount: 10,
+    initialAmount: 10,
+    visibility: "known",
+    source: "authored",
+    depletionMode: "finite",
+    discoveredTurnId: 1,
+    discoveredByCountryId: null,
     ...overrides,
   };
 }

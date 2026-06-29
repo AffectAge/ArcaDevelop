@@ -1,6 +1,7 @@
 import type {
   BuildingAdjacencyEffect,
   BuildingPlacementRules,
+  GoodDepositDefinition,
   DecisionDefinition,
   DivisionStats,
   EquipmentClass,
@@ -104,6 +105,7 @@ export type GoodContentEntry = GameContentEntry & {
   explorationMediumVeinMax?: number | null;
   explorationLargeVeinMin?: number | null;
   explorationLargeVeinMax?: number | null;
+  deposit?: GoodDepositDefinition | null;
 };
 
 export type BuildingContentEntry = GameContentEntry & {
@@ -120,6 +122,7 @@ export type BuildingContentEntry = GameContentEntry & {
   extractionAmountPerTurn?: number | null;
   extractionRequiresDeposit?: boolean | null;
   extractions?: BuildingExtractionFlow[];
+  requiresDepositGoodIds?: string[];
   inputs?: GoodFlow[];
   outputs?: GoodFlow[];
   workforceRequirements?: WorkforceRequirement[];

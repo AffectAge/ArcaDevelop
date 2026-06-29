@@ -1,4 +1,4 @@
-import type { BuildingInstance, Order, ResourceTotals } from "@arcanorum/shared";
+import type { BuildingInstance, HexId, Order, RegionResourceDeposit, ResourceTotals } from "@arcanorum/shared";
 import { describe, expect, it } from "vitest";
 import type { HexMapIndexEntry } from "../map/hexIndex";
 import {
@@ -328,9 +328,9 @@ describe("buildingMechanics", () => {
       previousPopulationTreasury: 5,
       regionWages: 7.1234,
       regionResourceDeposits: [
-        { goodId: "good:zinc", amount: 0, discoveredTurnId: 1, veinSize: "small" },
-        { goodId: "good:coal", amount: 2, discoveredTurnId: 1, veinSize: "medium" },
-        { goodId: "good:iron", amount: 1, discoveredTurnId: 1, veinSize: "large" },
+        makeDeposit("good:zinc", "hex:0:0", 0),
+        makeDeposit("good:coal", "hex:0:1", 2),
+        makeDeposit("good:iron", "hex:0:2", 1),
       ],
     });
 
@@ -339,9 +339,10 @@ describe("buildingMechanics", () => {
     expect(result.populationTreasury).toBe(12.123);
     expect(result.buildingDucatsByBuildingId).toEqual({ "building:mill": 12 });
     expect(result.resourceDeposits).toEqual([
-      { goodId: "good:coal", amount: 2, discoveredTurnId: 1, veinSize: "medium" },
-      { goodId: "good:iron", amount: 1, discoveredTurnId: 1, veinSize: "large" },
+      makeDeposit("good:coal", "hex:0:1", 2),
+      makeDeposit("good:iron", "hex:0:2", 1),
     ]);
+    expect(result.depletedResourceDeposits).toEqual([makeDeposit("good:zinc", "hex:0:0", 0)]);
   });
 
   it("prepares building instances for a new turn and preserves manual disable state", () => {
@@ -677,7 +678,7 @@ describe("buildingMechanics", () => {
 
   it("resolves deposit extraction and depletes available deposits", () => {
     const warehouse: Record<string, number> = {};
-    const deposits = [{ goodId: "good:ore", amount: 3 }];
+    const deposits = [{ goodId: "good:ore", hexId: "hex:0:0", amount: 3, visibility: "known" as const, depletionMode: "finite" as const }];
     const productionMax: Record<string, number> = {};
     const production: Record<string, number> = {};
 
@@ -689,6 +690,7 @@ describe("buildingMechanics", () => {
         extractionRequiresDeposit: true,
       },
       instanceLevel: 1,
+      targetHexId: "hex:0:0",
       warehouse,
       regionResourceDeposits: deposits,
       laborCoverage: 1,
@@ -716,7 +718,7 @@ describe("buildingMechanics", () => {
       producedByGood: { "good:ore": 3 },
     });
     expect(warehouse).toEqual({ "good:ore": 3 });
-    expect(deposits).toEqual([{ goodId: "good:ore", amount: 0 }]);
+    expect(deposits).toEqual([{ goodId: "good:ore", hexId: "hex:0:0", amount: 0, visibility: "known", depletionMode: "finite" }]);
     expect(productionMax).toEqual({ "good:ore": 3 });
     expect(production).toEqual({ "good:ore": 3 });
   });
@@ -860,6 +862,23 @@ function makeWorld(overrides?: Partial<BuildingConstructionWorldState>): Buildin
     regionConstructionQueueByRegion: {},
     resourcesByCountry: {},
     ...overrides,
+  };
+}
+
+function makeDeposit(goodId: string, hexId: string, amount: number): RegionResourceDeposit {
+  return {
+    id: `resource_deposit:${goodId.replace(/[^a-z0-9_-]+/gi, "_")}_${hexId.replace(/[^a-z0-9_-]+/gi, "_")}`,
+    goodId,
+    hexId: hexId as HexId,
+    regionId: "region:a",
+    amount,
+    maxAmount: Math.max(1, amount),
+    initialAmount: Math.max(1, amount),
+    visibility: "known",
+    source: "authored",
+    depletionMode: "finite",
+    discoveredTurnId: 1,
+    discoveredByCountryId: null,
   };
 }
 

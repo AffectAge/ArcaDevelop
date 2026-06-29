@@ -176,9 +176,11 @@ The first guarded runtime coordinator runs the safe build-order slice only: plan
 
 ## Colonization Candidate And Runtime Slice
 
-The colonization slice adds profile-driven `COLONIZE` order drafts to the guarded AI runtime coordinator. It does not add a new protocol or mutate world state directly; selected candidates become normal `ORDER_DELTA` submissions and the existing server validation enforces neutral regions, disabled-region rules, duplicate queues, active-colonization limits, current turn, and country resources.
+The colonization slice adds profile-driven `COLONIZE` and colonizer `UNIT_MOVE` order drafts to the guarded AI runtime coordinator. It does not add a new protocol or mutate world state directly; selected candidates become normal `ORDER_DELTA` submissions and the existing server validation enforces neutral regions, disabled-region rules, duplicate queues, active-colonization limits, current turn, country resources, unit ownership, and movement legality.
 
 Colonization candidates are region-first. Landless AI countries may consider any neutral colonizable region, then strategy `colonization` weight and `regionWeights` decide whether that first target beats economy or other candidates. AI countries that already own or control regions only consider neutral regions adjacent to those regions, using a region-adjacency index derived from province neighbors once per AI cycle.
+
+If an idle colonizer already stands on a valid neutral settlement target, the AI prefers a `COLONIZE` draft. If no ready target exists, idle uncaptured colonizers can plan a deterministic land route to the nearest valid neutral settlement hex and submit a normal `UNIT_MOVE` draft. Colonizers that already have a movement target or path are left alone so the runtime movement system can continue the current route. If no usable colonizer exists and the country passes resource and queue filters, the AI may queue a new colonizer.
 
 When a colonization capture succeeds, empty captured regions may receive scenario-defined starter settlers through the normal region population state. This is controlled by `colonization.settlementEnabled` and `colonization.settlementPopulationOnCapture`; it does not create province-level population and does not change the AI order pipeline.
 

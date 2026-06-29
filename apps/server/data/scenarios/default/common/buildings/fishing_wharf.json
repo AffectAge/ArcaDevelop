@@ -9,8 +9,8 @@
   "maxLevel": 5,
   "upgradeCostConstruction": 26,
   "upgradeCostDucats": 16,
-  "outputs": [
-    { "goodId": "good:fish", "amount": 15 }
+  "extractions": [
+    { "goodId": "good:fish", "amount": 15, "requiresDeposit": true }
   ],
   "workforceRequirements": [
     { "professionId": "profession:fishers", "workers": 95 }

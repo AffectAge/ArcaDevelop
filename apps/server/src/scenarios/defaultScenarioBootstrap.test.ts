@@ -3,7 +3,8 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
-import { ensureDefaultScenario } from "./defaultScenarioBootstrap";
+import { DEFAULT_SCENARIO_DEFINES, ensureDefaultScenario } from "./defaultScenarioBootstrap";
+import { SCENARIO_DEFINES_SUPPORTED_SECTIONS, loadScenarioDefines } from "./scenarioDefinesLoader";
 import { loadScenarioHistory } from "./scenarioHistoryLoader";
 
 describe("defaultScenarioBootstrap", () => {
@@ -22,6 +23,15 @@ describe("defaultScenarioBootstrap", () => {
       expect(history.regions.length).toBeGreaterThan(0);
       expect(history.countries.map((country) => country.id)).toContain("country:default");
       expect([...history.hexIdsByRegionId.values()].flat().length).toBe(result.artifact.tiles.length);
+
+      const defines = loadScenarioDefines(result.scenarioDir);
+      expect(defines).toEqual(DEFAULT_SCENARIO_DEFINES);
+      for (const [section, fields] of Object.entries(SCENARIO_DEFINES_SUPPORTED_SECTIONS)) {
+        expect(defines).toHaveProperty(section);
+        for (const field of Object.keys(fields)) {
+          expect((defines as Record<string, Record<string, unknown>>)[section]).toHaveProperty(field);
+        }
+      }
     } finally {
       await rm(dataRoot, { recursive: true, force: true });
     }

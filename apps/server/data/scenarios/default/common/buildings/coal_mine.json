@@ -9,8 +9,8 @@
   "maxLevel": 5,
   "upgradeCostConstruction": 42,
   "upgradeCostDucats": 28,
-  "outputs": [
-    { "goodId": "good:coal", "amount": 14 }
+  "extractions": [
+    { "goodId": "good:coal", "amount": 14, "requiresDeposit": true }
   ],
   "workforceRequirements": [
     { "professionId": "profession:miners", "workers": 120 }

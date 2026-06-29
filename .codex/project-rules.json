@@ -244,6 +244,7 @@
       "diplomacyTreaties": "scenarios/<scenarioId>/history/diplomacy/treaties/*.json",
       "goods": "scenarios/<scenarioId>/common/goods/*.json",
       "buildings": "scenarios/<scenarioId>/common/buildings/*.json",
+      "regionResourceDeposits": "scenarios/<scenarioId>/history/regions/*.json#resourceDeposits",
       "technologies": "scenarios/<scenarioId>/common/technologies/*.json",
       "laws": "scenarios/<scenarioId>/common/laws/*.json",
       "lawGroups": "scenarios/<scenarioId>/common/lawGroups/*.json",
@@ -314,7 +315,11 @@
           "pointsCostPer1000Km2": { "type": "integer", "min": 1, "max": 1000000000000 },
           "ducatsCostPer1000Km2": { "type": "integer", "min": 0, "max": 1000000000000 },
           "settlementEnabled": { "type": "boolean" },
-          "settlementPopulationOnCapture": { "type": "integer", "min": 0, "max": 1000000000 }
+          "settlementPopulationOnCapture": { "type": "integer", "min": 0, "max": 1000000000 },
+          "colonizerTurns": { "type": "integer", "min": 1, "max": 3650 },
+          "colonizerCostColonization": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "colonizerCostDucats": { "type": "integer", "min": 0, "max": 1000000000000 },
+          "colonizerMovementPoints": { "type": "integer", "min": 1, "max": 100 }
         },
         "customization": {
           "renameDucats": { "type": "integer", "min": 0, "max": 1000000000000 },
@@ -324,7 +329,8 @@
           "hexRenameDucats": { "type": "integer", "min": 0, "max": 1000000000000 }
         },
         "military": {
-          "militaryFormationSpeed": { "type": "number", "min": 1, "max": 1000000000000 }
+          "militaryFormationSpeed": { "type": "number", "min": 1, "max": 1000000000000 },
+          "landDivisionStackLimitPerHex": { "type": "integer", "min": 1, "max": 100 }
         },
         "registration": {
           "requireAdminApproval": { "type": "boolean" }

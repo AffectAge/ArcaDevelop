@@ -28,6 +28,10 @@
 
 The bounded country resource journal. Mechanics emit `ResourceFlow` income or expense entries; resource ledger runtime applies the net result to `resourcesByCountry` and stores recent history in `resourceLedgerByTurn` for UI explanations.
 
+## Resource Deposit
+
+A physical `good:*` deposit on one map hex. It is stored under a region for ownership, economy, and world deltas, but extraction buildings must target the specific deposit hex.
+
 ## Resource Flow
 
 A single ledger entry for one country resource income or expense, including source type, source id, category id, amount, direction, and localization label key.

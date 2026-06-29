@@ -83,6 +83,29 @@ function createQueueColonizerCandidate(countryId: string): AiColonizationCandida
   };
 }
 
+function createMoveColonizerCandidate(countryId: string): AiColonizationCandidate {
+  return {
+    kind: "move-colonizer",
+    countryId,
+    regionId: "region:frontier",
+    targetHexId: "hex:2:0",
+    civilianUnitId: "civilian:colonizer",
+    path: ["hex:1:0", "hex:2:0"],
+    pathLength: 2,
+    isAdjacentToControlledRegion: true,
+    requiresValidatedPipeline: true,
+    orderDraft: {
+      type: "UNIT_MOVE",
+      countryId,
+      unitKind: "civilian",
+      unitId: "civilian:colonizer",
+      targetHexId: "hex:2:0",
+      path: ["hex:1:0", "hex:2:0"],
+      payload: { path: ["hex:1:0", "hex:2:0"] },
+    },
+  };
+}
+
 function createPlan(
   candidate: AiEconomyOrderCandidate | AiDiplomacyMilitaryCandidate | AiColonizationCandidate | null,
 ): AiRuntimePlan {
@@ -177,6 +200,30 @@ describe("createAiBuildOrderDraftsFromPlan", () => {
     ]);
   });
 
+  it("converts selected move-colonizer candidates into validated unit move order drafts", () => {
+    const drafts = createAiOrderDraftsFromPlan({ plan: createPlan(createMoveColonizerCandidate("country:alpha")) });
+
+    expect(drafts).toEqual([
+      {
+        kind: "validated-order-draft",
+        candidateKind: "move-colonizer",
+        countryId: "country:alpha",
+        requiresValidatedPipeline: true,
+        order: {
+          type: "UNIT_MOVE",
+          turnId: 7,
+          playerId: "ai:country:alpha",
+          countryId: "country:alpha",
+          unitId: "civilian:colonizer",
+          unitKind: "civilian",
+          targetHexId: "hex:2:0",
+          path: ["hex:1:0", "hex:2:0"],
+          payload: { path: ["hex:1:0", "hex:2:0"] },
+        },
+      },
+    ]);
+  });
+
   it("uses a custom AI player id prefix without changing order payload", () => {
     const drafts = createAiBuildOrderDraftsFromPlan({
       plan: createPlan(createBuildCandidate("country:alpha")),
@@ -193,6 +240,7 @@ describe("createAiBuildOrderDraftsFromPlan", () => {
   it("skips unsupported selected candidates and empty selections", () => {
     expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(createDiplomacyCandidate("country:alpha")) })).toEqual([]);
     expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(createColonizationCandidate("country:alpha")) })).toEqual([]);
+    expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(createMoveColonizerCandidate("country:alpha")) })).toEqual([]);
     expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(createQueueColonizerCandidate("country:alpha")) })).toEqual([]);
     expect(createAiBuildOrderDraftsFromPlan({ plan: createPlan(null) })).toEqual([]);
   });

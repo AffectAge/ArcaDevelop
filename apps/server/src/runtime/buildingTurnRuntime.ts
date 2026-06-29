@@ -1,5 +1,6 @@
 import type {
   BuildingInstance,
+  ExplanationRecord,
   ModifierStat,
   PopulationProfessionState,
   RegionPopulation,
@@ -608,6 +609,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         instanceLevel,
         warehouse,
         regionResourceDeposits,
+        targetHexId: instanceHexId,
         laborCoverage,
         infraCoverage,
         financeCoverage,
@@ -743,6 +745,27 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     worldBase.regionBuildingDucatsByRegion[regionId] = finalizedRegionBuildings.buildingDucatsByBuildingId;
     worldBase.regionBuildingsByRegion[regionId] = activeBuildingInstances;
     worldBase.regionResourceDepositsByRegion[regionId] = finalizedRegionBuildings.resourceDeposits;
+    if (finalizedRegionBuildings.depletedResourceDeposits.length > 0) {
+      const records = finalizedRegionBuildings.depletedResourceDeposits.map((deposit): ExplanationRecord => ({
+        id: `explanation:resource_depleted:${turnId}:${deposit.id}`,
+        turnId,
+        sourceSystem: "economy",
+        sourceId: deposit.id,
+        affectedObject: { kind: "region", id: regionId },
+        valueKey: `deposit.${deposit.goodId}.amount`,
+        previousValue: deposit.initialAmount,
+        newValue: 0,
+        causes: [
+          {
+            labelKey: "resourceDeposit.explanation.depleted",
+            sourceId: deposit.hexId,
+            amount: -Math.max(0, Number(deposit.initialAmount ?? 0)),
+          },
+        ],
+        modifierIds: [],
+      }));
+      worldBase.explanationRecordsByTurn[turnId] = [...(worldBase.explanationRecordsByTurn[turnId] ?? []), ...records].slice(-2_000);
+    }
   }
 
   const marketIds = new Set<string>([

@@ -306,10 +306,18 @@ function makeBuildingInstance(overrides?: Partial<BuildingInstance>): BuildingIn
 
 function makeDeposit(overrides?: Partial<RegionResourceDeposit>): RegionResourceDeposit {
   return {
+    id: "resource_deposit:good_ore_hex_0_0",
     goodId: "good:ore",
+    hexId: "hex:0:0",
+    regionId: "region:a",
     amount: 10,
+    maxAmount: 10,
+    initialAmount: 10,
+    visibility: "known",
+    source: "authored",
+    depletionMode: "finite",
     discoveredTurnId: 1,
-    veinSize: "small",
+    discoveredByCountryId: null,
     ...overrides,
   };
 }

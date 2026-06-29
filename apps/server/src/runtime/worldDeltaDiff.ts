@@ -1206,10 +1206,21 @@ export function isEqualResourceDeposits(
     const next = nextValue[i];
     if (!prev || !next) return false;
     if (
+      prev.id !== next.id ||
       prev.goodId !== next.goodId ||
+      prev.hexId !== next.hexId ||
+      prev.regionId !== next.regionId ||
       Number(prev.amount) !== Number(next.amount) ||
+      Number(prev.maxAmount) !== Number(next.maxAmount) ||
+      Number(prev.initialAmount) !== Number(next.initialAmount) ||
+      prev.visibility !== next.visibility ||
+      prev.source !== next.source ||
+      prev.depletionMode !== next.depletionMode ||
+      Number(prev.regenPerTurn ?? 0) !== Number(next.regenPerTurn ?? 0) ||
+      Number(prev.minRenewableAmount ?? 0) !== Number(next.minRenewableAmount ?? 0) ||
       prev.discoveredTurnId !== next.discoveredTurnId ||
-      prev.veinSize !== next.veinSize
+      (prev.discoveredByCountryId ?? null) !== (next.discoveredByCountryId ?? null) ||
+      (prev.sourceGeneratorId ?? null) !== (next.sourceGeneratorId ?? null)
     ) {
       return false;
     }

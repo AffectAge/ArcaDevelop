@@ -41,6 +41,28 @@ export function normalizeGoodFlows(input: unknown): GoodFlow[] {
   return items.slice(0, 64);
 }
 
+export function normalizeExtractionFlows(input: unknown): BuildingExtractionFlow[] {
+  if (!Array.isArray(input)) return [];
+  const items: BuildingExtractionFlow[] = [];
+  for (const raw of input) {
+    if (!raw || typeof raw !== "object") continue;
+    const row = raw as Partial<{ goodId: unknown; amount: unknown; requiresDeposit: unknown; minLevel: unknown; maxLevel: unknown }>;
+    const goodId = typeof row.goodId === "string" ? row.goodId.trim() : "";
+    const amount = typeof row.amount === "number" && Number.isFinite(row.amount) ? Math.max(0, row.amount) : 0;
+    if (!goodId || amount <= 0) continue;
+    const minLevel = typeof row.minLevel === "number" && Number.isInteger(row.minLevel) && row.minLevel >= 1 ? row.minLevel : null;
+    const maxLevel = typeof row.maxLevel === "number" && Number.isInteger(row.maxLevel) && row.maxLevel >= 1 ? row.maxLevel : null;
+    items.push({
+      goodId,
+      amount: Number(amount.toFixed(3)),
+      requiresDeposit: typeof row.requiresDeposit === "boolean" ? row.requiresDeposit : true,
+      ...(minLevel !== null ? { minLevel } : {}),
+      ...(maxLevel !== null ? { maxLevel } : {}),
+    });
+  }
+  return items.slice(0, 64);
+}
+
 export function normalizeWorkforceRequirements(input: unknown): WorkforceRequirement[] {
   if (!Array.isArray(input)) return [];
   const items: WorkforceRequirement[] = [];

@@ -1,6 +1,7 @@
 import type {
   BuildingAdjacencyEffect,
   BuildingPlacementRules,
+  DepositDepletionMode,
   DivisionStats,
   EquipmentBranch,
   EquipmentClass,
@@ -9,6 +10,9 @@ import type {
   EquipmentModule,
   EquipmentStats,
   EquipmentStatKey,
+  GoodDepositCountRule,
+  GoodDepositDefinition,
+  MapResourceDepositVisibility,
 } from "@arcanorum/shared";
 import {
   POPULATION_FALLBACK_KEY_BY_DIMENSION,
@@ -24,7 +28,7 @@ import {
   normalizeJournalEntry,
   normalizeModifiers,
 } from "../mechanics/contentDefinitionNormalizers";
-import { normalizeGoodFlows, normalizeWorkforceRequirements } from "../mechanics/contentFieldNormalizers";
+import { normalizeExtractionFlows, normalizeGoodFlows, normalizeWorkforceRequirements } from "../mechanics/contentFieldNormalizers";
 import {
   DEFAULT_BUILDING_DURABILITY_MAX,
   normalizeBuildingCountryLimits,
@@ -680,6 +684,7 @@ export function normalizeContentGoods(input: unknown): GameSettings["content"]["
       explorationMediumVeinMax?: unknown;
       explorationLargeVeinMin?: unknown;
       explorationLargeVeinMax?: unknown;
+      deposit?: unknown;
     }> | undefined;
     const basePrice =
       typeof raw?.basePrice === "number" && Number.isFinite(raw.basePrice)
@@ -771,8 +776,85 @@ export function normalizeContentGoods(input: unknown): GameSettings["content"]["
       explorationMediumVeinMax: Number(mediumMax.toFixed(3)),
       explorationLargeVeinMin: Number(largeMin.toFixed(3)),
       explorationLargeVeinMax: Number(largeMax.toFixed(3)),
+      deposit: normalizeGoodDepositDefinition(raw?.deposit),
     };
   });
+}
+
+function normalizeGoodDepositDefinition(input: unknown): GoodDepositDefinition | null {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const source = input as Record<string, unknown>;
+  const enabled = source.enabled === true;
+  const depletionMode = normalizeDepositDepletionMode(source.depletionMode);
+  const minAmount = normalizeNonNegativeNumber(source.minAmount, enabled ? 10 : 0);
+  const maxAmount = Math.max(minAmount, normalizeNonNegativeNumber(source.maxAmount, enabled ? Math.max(100, minAmount) : 0));
+  const regenPerTurn = depletionMode === "renewable" ? normalizeNonNegativeNumber(source.regenPerTurn, 1) : null;
+  const minRenewableAmount = depletionMode === "renewable"
+    ? Math.min(maxAmount, normalizeNonNegativeNumber(source.minRenewableAmount, minAmount))
+    : null;
+  return {
+    enabled,
+    depletionMode,
+    minAmount: Number(minAmount.toFixed(3)),
+    maxAmount: Number(maxAmount.toFixed(3)),
+    ...(regenPerTurn == null ? {} : { regenPerTurn: Number(regenPerTurn.toFixed(3)) }),
+    ...(minRenewableAmount == null ? {} : { minRenewableAmount: Number(minRenewableAmount.toFixed(3)) }),
+    visibility: normalizeDepositVisibility(source.visibility),
+    generation: normalizeGoodDepositGenerationRules(source.generation),
+  };
+}
+
+function normalizeGoodDepositGenerationRules(input: unknown): GoodDepositDefinition["generation"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const source = input as Record<string, unknown>;
+  return {
+    allowedHexTypes: normalizeStringList(source.allowedHexTypes),
+    deniedHexTypes: normalizeStringList(source.deniedHexTypes),
+    allowedClimates: normalizeStringList(source.allowedClimates),
+    deniedClimates: normalizeStringList(source.deniedClimates),
+    allowedLandscapes: normalizeStringList(source.allowedLandscapes),
+    deniedLandscapes: normalizeStringList(source.deniedLandscapes),
+    allowedFeatures: normalizeStringList(source.allowedFeatures),
+    deniedFeatures: normalizeStringList(source.deniedFeatures),
+    elevationMin: normalizeOptionalUnitNumber(source.elevationMin),
+    elevationMax: normalizeOptionalUnitNumber(source.elevationMax),
+    global: normalizeGoodDepositCountRule(source.global),
+    perRegion: normalizeGoodDepositCountRule(source.perRegion),
+  };
+}
+
+function normalizeGoodDepositCountRule(input: unknown): GoodDepositCountRule | undefined {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return undefined;
+  const source = input as Record<string, unknown>;
+  const count = normalizeNonNegativeIntegerOrNull(source.count);
+  const min = normalizeNonNegativeIntegerOrNull(source.min);
+  const max = normalizeNonNegativeIntegerOrNull(source.max);
+  return {
+    ...(count == null ? {} : { count }),
+    ...(min == null ? {} : { min }),
+    ...(max == null ? {} : { max }),
+  };
+}
+
+function normalizeDepositDepletionMode(input: unknown): DepositDepletionMode {
+  return input === "renewable" || input === "infinite" || input === "finite" ? input : "finite";
+}
+
+function normalizeDepositVisibility(input: unknown): MapResourceDepositVisibility {
+  return input === "discoverable" || input === "hidden" || input === "known" ? input : "known";
+}
+
+function normalizeNonNegativeNumber(input: unknown, fallback: number): number {
+  return typeof input === "number" && Number.isFinite(input) ? Math.max(0, input) : fallback;
+}
+
+function normalizeOptionalUnitNumber(input: unknown): number | null {
+  if (typeof input !== "number" || !Number.isFinite(input)) return null;
+  return Math.max(0, Math.min(1, Number(input.toFixed(3))));
+}
+
+function normalizeNonNegativeIntegerOrNull(input: unknown): number | null {
+  return Number.isInteger(input) && Number(input) >= 0 ? Number(input) : null;
 }
 
 export function normalizeContentBuildings(input: unknown): GameSettings["content"]["buildings"] {
@@ -792,6 +874,8 @@ export function normalizeContentBuildings(input: unknown): GameSettings["content
       industryId?: unknown;
       extractionAmountPerTurn?: unknown;
       extractionRequiresDeposit?: unknown;
+      extractions?: unknown;
+      requiresDepositGoodIds?: unknown;
       inputs?: unknown;
       outputs?: unknown;
       workforceRequirements?: unknown;
@@ -878,6 +962,8 @@ export function normalizeContentBuildings(input: unknown): GameSettings["content
       extractionGoodId,
       extractionAmountPerTurn,
       extractionRequiresDeposit,
+      extractions: normalizeExtractionFlows(raw?.extractions),
+      requiresDepositGoodIds: normalizeStringList(raw?.requiresDepositGoodIds),
       inputs: normalizeGoodFlows(raw?.inputs),
       outputs: normalizeGoodFlows(raw?.outputs),
       workforceRequirements: normalizeWorkforceRequirements(raw?.workforceRequirements),

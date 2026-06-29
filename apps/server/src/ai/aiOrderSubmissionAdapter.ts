@@ -19,6 +19,14 @@ export type AiColonizeOrderSubmissionDraft = {
   order: Extract<OrderInput, { type: "FOUND_CITY" }>;
 };
 
+export type AiMoveColonizerOrderSubmissionDraft = {
+  kind: "validated-order-draft";
+  candidateKind: "move-colonizer";
+  countryId: string;
+  requiresValidatedPipeline: true;
+  order: Extract<OrderInput, { type: "UNIT_MOVE" }>;
+};
+
 export type AiQueueColonizerActionSubmissionDraft = {
   kind: "validated-ai-action-draft";
   candidateKind: "queue-colonizer";
@@ -34,6 +42,7 @@ export type AiQueueColonizerActionSubmissionDraft = {
 export type AiOrderSubmissionDraft =
   | AiBuildOrderSubmissionDraft
   | AiColonizeOrderSubmissionDraft
+  | AiMoveColonizerOrderSubmissionDraft
   | AiQueueColonizerActionSubmissionDraft;
 
 export type CreateAiBuildOrderDraftsParams = {
@@ -79,6 +88,15 @@ function createAiOrderDraft(
       order: createFoundCityOrderInput(candidate, turnId, playerIdPrefix),
     }];
   }
+  if (candidate.kind === "move-colonizer") {
+    return [{
+      kind: "validated-order-draft",
+      candidateKind: "move-colonizer",
+      countryId: action.countryId,
+      requiresValidatedPipeline: true,
+      order: createMoveColonizerOrderInput(candidate, turnId, playerIdPrefix),
+    }];
+  }
   if (candidate.kind === "queue-colonizer") {
     return [{
       kind: "validated-ai-action-draft",
@@ -103,6 +121,27 @@ function createBuildOrderInput(
     countryId: candidate.countryId,
     regionId: candidate.regionId,
     targetHexId: candidate.orderDraft.targetHexId as Extract<OrderInput, { type: "BUILD" }>["targetHexId"],
+    payload: candidate.orderDraft.payload,
+  };
+}
+
+function createMoveColonizerOrderInput(
+  candidate: AiColonizationCandidate,
+  turnId: number,
+  playerIdPrefix: string,
+): Extract<OrderInput, { type: "UNIT_MOVE" }> {
+  if (candidate.kind !== "move-colonizer") {
+    throw new Error("AI_COLONIZATION_CANDIDATE_IS_NOT_MOVE_COLONIZER");
+  }
+  return {
+    type: "UNIT_MOVE",
+    turnId,
+    playerId: `${playerIdPrefix}:${candidate.countryId}`,
+    countryId: candidate.countryId,
+    unitId: candidate.civilianUnitId,
+    unitKind: "civilian",
+    targetHexId: candidate.targetHexId,
+    path: candidate.path,
     payload: candidate.orderDraft.payload,
   };
 }
