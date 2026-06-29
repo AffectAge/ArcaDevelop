@@ -1,8 +1,9 @@
 import type { ActiveModifierRow, AirWing, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionAvailabilityReason, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, EquipmentClass, EquipmentFrame, EquipmentModule, EquipmentProductionLine, EquipmentVariant, EventResolvedScope, EventTriggerExplanation, Fleet, GameEventDefinition, IdeologyAttractionRule, JournalEntryDefinition, LawParliamentPowerEffect, LoginPayload, MilitaryBranch, MilitaryEquipmentRequirement, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import { resolveAuthoredAssetUrl, type ScenarioAssetEntry, type ScenarioAssetRegistryPayload } from "../assets/scenarioAssetResolver";
+import { apiBase } from "./apiBase";
 
-const API = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
-
-export const apiBase = API;
+const API = apiBase;
+export { apiBase };
 
 export type ContentCulture = {
   id: string;
@@ -11,8 +12,16 @@ export type ContentCulture = {
   description: string;
   color: string;
   logoUrl: string | null;
+  assetId?: string | null;
+  iconAssetId?: string | null;
+  flagAssetId?: string | null;
+  crestAssetId?: string | null;
+  atlasAssetId?: string | null;
+  imageAssetId?: string | null;
   malePortraitUrl?: string | null;
   femalePortraitUrl?: string | null;
+  malePortraitAssetId?: string | null;
+  femalePortraitAssetId?: string | null;
   basePrice?: number | null;
   minPrice?: number | null;
   maxPrice?: number | null;
@@ -178,106 +187,10 @@ export type ContentEntryKind =
   | "shipTypes"
   | "aircraftTypes";
 
-type ContentEntryUpsertPayload = {
-  name: string;
-  description?: string;
-  color: string;
-  basePrice?: number | null;
-  minPrice?: number | null;
-  maxPrice?: number | null;
-  infraPerUnit?: number | null;
-  infrastructureCostPerUnit?: number | null;
-  distributionType?: "tradeable" | "localOnly" | "pipeline" | "powerGrid" | "service" | null;
-  transportModes?: Array<"land" | "sea" | "air" | "pipeline" | "powerGrid">;
-  resourceCategoryId?: string | null;
-  isResourceDiscoverable?: boolean | null;
-  explorationBaseWeight?: number | null;
-  explorationSmallVeinChancePct?: number | null;
-  explorationMediumVeinChancePct?: number | null;
-  explorationLargeVeinChancePct?: number | null;
-  explorationSmallVeinMin?: number | null;
-  explorationSmallVeinMax?: number | null;
-  explorationMediumVeinMin?: number | null;
-  explorationMediumVeinMax?: number | null;
-  explorationLargeVeinMin?: number | null;
-  explorationLargeVeinMax?: number | null;
-  baseWage?: number | null;
-  ideologyWeights?: Record<string, number>;
-  interestGroupWeights?: Record<string, number>;
-  professionWeights?: Record<string, number>;
-  religionWeights?: Record<string, number>;
-  buildingWeights?: Record<string, number>;
-  lawPreferences?: Record<string, number>;
-  discipline?: number | null;
-  basePoliticalStrength?: number | null;
-  solMultiplier?: number | null;
-  radicalMultiplier?: number | null;
-  loyalistMultiplier?: number | null;
-  defaultPartyId?: string | null;
-  lawGroupId?: string | null;
-  defaultLawId?: string | null;
-  order?: number | null;
-  enactmentDifficulty?: number | null;
-  votingDurationTurns?: number | null;
-  parliamentPower?: LawParliamentPowerEffect | null;
-  costScience?: number | null;
-  prerequisiteTechnologyIds?: string[] | null;
-  unlockBuildingIds?: string[] | null;
-  unlockLawIds?: string[] | null;
-  modifiers?: ModifierDefinition[] | null;
-  decision?: DecisionDefinition | null;
-  event?: GameEventDefinition | null;
-  ideologyAttractionRules?: IdeologyAttractionRule[] | null;
-  needsProfile?: ContentCulture["needsProfile"];
-  costConstruction?: number | null;
-  costDucats?: number | null;
-  startingDucats?: number | null;
-  maxLevel?: number | null;
-  maxDurability?: number | null;
-  upgradeCostDucats?: number | null;
-  upgradeCostConstruction?: number | null;
-  extractionGoodId?: string | null;
-  sectorId?: string | null;
-  industryId?: string | null;
-  extractionAmountPerTurn?: number | null;
-  extractionRequiresDeposit?: boolean | null;
-  extractions?: Array<{ goodId: string; amount: number; requiresDeposit?: boolean; minLevel?: number; maxLevel?: number }>;
-  inputs?: Array<{ goodId: string; amount: number; affectedByFertility?: boolean; minLevel?: number; maxLevel?: number }>;
-  outputs?: Array<{ goodId: string; amount: number; affectedByFertility?: boolean; minLevel?: number; maxLevel?: number }>;
-  workforceRequirements?: Array<{ professionId: string; workers: number }>;
-  allowedCountryIds?: string[];
-  deniedCountryIds?: string[];
-  allowedHexTypes?: string[];
-  deniedHexTypes?: string[];
-  allowedClimates?: string[];
-  deniedClimates?: string[];
-  allowedLandscapes?: string[];
-  deniedLandscapes?: string[];
-  allowedContinents?: string[];
-  deniedContinents?: string[];
-  allowedStrategicRegions?: string[];
-  deniedStrategicRegions?: string[];
-  minRadiation?: number | null;
-  maxRadiation?: number | null;
-  pollutionProductivityMode?: "penalty" | "bonus" | "ignore";
-  countryBuildLimits?: Array<{ countryId: string; limit: number | null }>;
-  globalBuildLimit?: number | null;
-  placement?: ContentCulture["placement"];
-  adjacencyEffects?: ContentCulture["adjacencyEffects"];
-  deployment?: ContentCulture["deployment"];
-  manpower?: number | null;
-  attack?: number | null;
-  defense?: number | null;
-  breakthrough?: number | null;
-  organization?: number | null;
-  hp?: number | null;
-  speed?: number | null;
-  supplyUse?: number | null;
-  trainingCostDucats?: number | null;
-  trainingCostManpower?: number | null;
-  equipmentNeeds?: Array<{ goodId: string; amount: number }>;
+type ContentRegistryResponse = {
+  activeScenarioId?: string | null;
+  assets?: ScenarioAssetEntry[] | null;
 };
-
 
 function withAssetBase(url?: string | null): string | null | undefined {
   if (!url) {
@@ -303,16 +216,34 @@ function normalizeCountry(country: Country): Country {
   };
 }
 
-function normalizeContentCulture(culture: ContentCulture): ContentCulture {
+function normalizeContentCulture(culture: ContentCulture, registryOrIndex?: ScenarioAssetRegistryPayload | null | number): ContentCulture {
+  const registry = typeof registryOrIndex === "number" ? null : registryOrIndex;
+  const resolvedLogo =
+    resolveAuthoredAssetUrl(culture.logoUrl, registry) ??
+    resolveScenarioContentAssetUrl(culture.iconAssetId, registry) ??
+    resolveScenarioContentAssetUrl(culture.imageAssetId, registry) ??
+    resolveScenarioContentAssetUrl(culture.flagAssetId, registry) ??
+    resolveScenarioContentAssetUrl(culture.crestAssetId, registry) ??
+    resolveScenarioContentAssetUrl(culture.assetId, registry) ??
+    null;
   return {
     ...culture,
-    logoUrl: withAssetBase(culture.logoUrl) ?? null,
-    malePortraitUrl: withAssetBase(culture.malePortraitUrl) ?? null,
-    femalePortraitUrl: withAssetBase(culture.femalePortraitUrl) ?? null,
+    logoUrl: withAssetBase(resolvedLogo) ?? null,
+    malePortraitUrl:
+      withAssetBase(resolveAuthoredAssetUrl(culture.malePortraitUrl, registry) ?? resolveScenarioContentAssetUrl(culture.malePortraitAssetId, registry)) ??
+      null,
+    femalePortraitUrl:
+      withAssetBase(resolveAuthoredAssetUrl(culture.femalePortraitUrl, registry) ?? resolveScenarioContentAssetUrl(culture.femalePortraitAssetId, registry)) ??
+      null,
   };
 }
-function normalizeContentEntry(entry: ContentEntry): ContentEntry {
-  return normalizeContentCulture(entry);
+
+function normalizeContentEntry(entry: ContentEntry, registryOrIndex?: ScenarioAssetRegistryPayload | null | number): ContentEntry {
+  return normalizeContentCulture(entry, registryOrIndex);
+}
+
+function resolveScenarioContentAssetUrl(assetId: string | null | undefined, registry?: ScenarioAssetRegistryPayload | null): string | null {
+  return resolveAuthoredAssetUrl(assetId, registry) ?? null;
 }
 
 export async function fetchServerStatus(): Promise<{ status: ServerStatus; turnId: number }> {
@@ -1684,8 +1615,8 @@ export async function fetchContentCultures(): Promise<ContentCulture[]> {
   if (!response.ok) {
     throw new Error("CONTENT_CULTURES_FAILED");
   }
-  const data = (await response.json()) as { cultures?: ContentCulture[] };
-  return (data.cultures ?? []).map(normalizeContentCulture);
+  const data = (await response.json()) as { cultures?: ContentCulture[] } & ContentRegistryResponse;
+  return (data.cultures ?? []).map((entry) => normalizeContentCulture(entry, data));
 }
 
 export async function fetchContentEntries(kind: ContentEntryKind): Promise<ContentEntry[]> {
@@ -1693,145 +1624,8 @@ export async function fetchContentEntries(kind: ContentEntryKind): Promise<Conte
   if (!response.ok) {
     throw new Error("CONTENT_ENTRIES_FAILED");
   }
-  const data = (await response.json()) as { items?: ContentEntry[] };
-  return (data.items ?? []).map(normalizeContentEntry);
-}
-
-export async function adminFetchContentEntries(token: string, kind: ContentEntryKind): Promise<ContentEntry[]> {
-  const response = await fetch(`${API}/admin/content/entries/${encodeURIComponent(kind)}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_CONTENT_ENTRIES_FAILED");
-  }
-  const data = (await response.json()) as { items?: ContentEntry[] };
-  return (data.items ?? []).map(normalizeContentEntry);
-}
-
-export async function adminCreateContentEntry(
-  token: string,
-  kind: ContentEntryKind,
-  payload: ContentEntryUpsertPayload,
-) {
-  const response = await fetch(`${API}/admin/content/entries/${encodeURIComponent(kind)}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_CREATE_CONTENT_ENTRY_FAILED");
-  }
-  const data = (await response.json()) as { item: ContentEntry; items: ContentEntry[] };
-  return { item: normalizeContentEntry(data.item), items: data.items.map(normalizeContentEntry) };
-}
-
-export async function adminUpdateContentEntry(
-  token: string,
-  kind: ContentEntryKind,
-  entryId: string,
-  payload: ContentEntryUpsertPayload,
-) {
-  const response = await fetch(`${API}/admin/content/entries/${encodeURIComponent(kind)}/${encodeURIComponent(entryId)}`, {
-    method: "PATCH",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_UPDATE_CONTENT_ENTRY_FAILED");
-  }
-  const data = (await response.json()) as { item: ContentEntry; items: ContentEntry[] };
-  return { item: normalizeContentEntry(data.item), items: data.items.map(normalizeContentEntry) };
-}
-
-export async function adminUploadContentEntryLogo(token: string, kind: ContentEntryKind, entryId: string, file: File) {
-  const formData = new FormData();
-  formData.set("cultureLogo", file);
-  const response = await fetch(
-    `${API}/admin/content/entries/${encodeURIComponent(kind)}/${encodeURIComponent(entryId)}/logo`,
-    {
-      method: "PATCH",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    },
-  );
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_UPLOAD_CONTENT_ENTRY_LOGO_FAILED");
-  }
-  const data = (await response.json()) as { item: ContentEntry; items: ContentEntry[] };
-  return { item: normalizeContentEntry(data.item), items: data.items.map(normalizeContentEntry) };
-}
-
-export async function adminDeleteContentEntryLogo(token: string, kind: ContentEntryKind, entryId: string) {
-  const response = await fetch(
-    `${API}/admin/content/entries/${encodeURIComponent(kind)}/${encodeURIComponent(entryId)}/logo`,
-    {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  );
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_DELETE_CONTENT_ENTRY_LOGO_FAILED");
-  }
-  const data = (await response.json()) as { item: ContentEntry; items: ContentEntry[] };
-  return { item: normalizeContentEntry(data.item), items: data.items.map(normalizeContentEntry) };
-}
-
-export async function adminDeleteContentEntry(token: string, kind: ContentEntryKind, entryId: string) {
-  const response = await fetch(`${API}/admin/content/entries/${encodeURIComponent(kind)}/${encodeURIComponent(entryId)}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_DELETE_CONTENT_ENTRY_FAILED");
-  }
-  const data = (await response.json()) as { items: ContentEntry[] };
-  return { items: data.items.map(normalizeContentEntry) };
-}
-
-export async function adminUploadRacePortrait(
-  token: string,
-  entryId: string,
-  slot: "male" | "female",
-  file: File,
-) {
-  const formData = new FormData();
-  formData.set("racePortrait", file);
-  const response = await fetch(
-    `${API}/admin/content/entries/races/${encodeURIComponent(entryId)}/portraits/${encodeURIComponent(slot)}`,
-    {
-      method: "PATCH",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    },
-  );
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_UPLOAD_RACE_PORTRAIT_FAILED");
-  }
-  const data = (await response.json()) as { item: ContentEntry; items: ContentEntry[] };
-  return { item: normalizeContentEntry(data.item), items: data.items.map(normalizeContentEntry) };
-}
-
-export async function adminDeleteRacePortrait(token: string, entryId: string, slot: "male" | "female") {
-  const response = await fetch(
-    `${API}/admin/content/entries/races/${encodeURIComponent(entryId)}/portraits/${encodeURIComponent(slot)}`,
-    {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  );
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_DELETE_RACE_PORTRAIT_FAILED");
-  }
-  const data = (await response.json()) as { item: ContentEntry; items: ContentEntry[] };
-  return { item: normalizeContentEntry(data.item), items: data.items.map(normalizeContentEntry) };
+  const data = (await response.json()) as { items?: ContentEntry[] } & ContentRegistryResponse;
+  return (data.items ?? []).map((entry) => normalizeContentEntry(entry, data));
 }
 
 export async function login(payload: LoginPayload): Promise<{ token: string; playerId: string; countryId: string; isAdmin: boolean; turnId: number; clientSettings?: { eventLogRetentionTurns: number } }> {
@@ -2413,6 +2207,30 @@ export type ScenarioDescriptor = {
   setupFiles: string[];
 };
 
+export type ScenarioStatus = {
+  activeScenarioId: string;
+  scenario: ScenarioDescriptor | null;
+  validation: {
+    ok: boolean;
+    summary: {
+      hexes: number;
+      regions: number;
+      countries: number;
+      contentEntries: number;
+      arcawikiEntries: number;
+    } | null;
+    issues: Array<{ code: string; message: string; path?: string }>;
+  };
+  content: Record<string, number>;
+  assets: {
+    count: number;
+    byType: Record<string, number>;
+  };
+  hashes: {
+    authoredHash: string | null;
+  };
+};
+
 export async function fetchAdminScenarios(token: string): Promise<{ activeScenarioId: string; scenarios: ScenarioDescriptor[] }> {
   const response = await fetch(`${API}/admin/scenarios`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -2422,6 +2240,17 @@ export async function fetchAdminScenarios(token: string): Promise<{ activeScenar
     throw new Error(err.error ?? "SCENARIOS_FETCH_FAILED");
   }
   return (await response.json()) as { activeScenarioId: string; scenarios: ScenarioDescriptor[] };
+}
+
+export async function fetchAdminScenarioStatus(token: string): Promise<ScenarioStatus> {
+  const response = await fetch(`${API}/admin/scenarios/status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error ?? "SCENARIO_STATUS_FETCH_FAILED");
+  }
+  return (await response.json()) as ScenarioStatus;
 }
 
 export async function applyAdminScenario(

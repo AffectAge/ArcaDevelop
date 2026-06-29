@@ -1,0 +1,23 @@
+{
+  "id": "building:arms_workshop",
+  "nameKey": "building.arms_workshop.name",
+  "description": "",
+  "color": "#b91c1c",
+  "costConstruction": 72,
+  "costDucats": 58,
+  "startingDucats": 12,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 58,
+  "upgradeCostDucats": 44,
+  "inputs": [
+    { "goodId": "good:steel", "amount": 4 },
+    { "goodId": "good:tools", "amount": 2 }
+  ],
+  "outputs": [
+    { "goodId": "good:weapons", "amount": 5 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:smiths", "workers": 50 },
+    { "professionId": "profession:machinists", "workers": 45 }
+  ]
+}

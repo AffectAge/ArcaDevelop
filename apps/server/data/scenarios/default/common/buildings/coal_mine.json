@@ -1,0 +1,18 @@
+{
+  "id": "building:coal_mine",
+  "nameKey": "building.coal_mine.name",
+  "description": "",
+  "color": "#334155",
+  "costConstruction": 52,
+  "costDucats": 36,
+  "startingDucats": 8,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 42,
+  "upgradeCostDucats": 28,
+  "outputs": [
+    { "goodId": "good:coal", "amount": 14 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:miners", "workers": 120 }
+  ]
+}

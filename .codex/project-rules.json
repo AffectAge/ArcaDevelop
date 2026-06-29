@@ -164,6 +164,8 @@
     "Balance and pacing values belong in scenario defines.",
     "Scenario-owned data/assets stay under scenario ownership.",
     "Scenario-authored data uses strict JSON, one entity per file, authoritative JSON id fields, and stable-ID references.",
+    "Do not add backwards compatibility for old DB rows, saves, legacy content fields, old scenario layouts, aliases, or migration fallbacks unless explicitly requested as a separate compatibility decision.",
+    "Authored scenario assets use stable asset:* registry ids; authored content must not store logoUrl, flagUrl, crestUrl, external URLs, or direct scenario asset URLs.",
     "Scenario generated indexes live under scenarios/<scenarioId>/.generated/ and are not authored source.",
     "Privileged behavior must be enforced server-side.",
     "Major architecture/protocol/persistence/AI/dependency/world-model/scenario decisions require an ADR."
@@ -179,6 +181,8 @@
     "new province-level population/buildings/construction/resources/colonization/diplomacy transfer",
     "authored aggregate map/provinces.json or monolithic scenario content libraries in the target scenario format",
     "root apps/server/data/content-library.json legacy content library",
+    "backwards compatibility layers for old saves/schema/runtime state without explicit separate approval",
+    "authored scenario logoUrl/flagUrl/crestUrl/external URL fields instead of stable asset:* references",
     "manual edits to scenarios/<scenarioId>/.generated/",
     "admin/security checks only on the client",
     "upload flow without owner, scenario scope, validation, and cleanup lifecycle",
@@ -353,7 +357,7 @@
           "levelBounds": { "type": "integerOrNull", "min": 1, "rule": "maxLevel >= minLevel when both are set" }
         }
       },
-      "legacyExtractionFields": ["extractionGoodId", "extractionAmountPerTurn", "extractionRequiresDeposit"]
+      "forbiddenLegacyExtractionFields": ["extractionGoodId", "extractionAmountPerTurn", "extractionRequiresDeposit"]
     },
     "hexAllowedData": [
       "id",

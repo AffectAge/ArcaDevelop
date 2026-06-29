@@ -1,0 +1,7 @@
+{
+  "id": "profession:quarry_workers",
+  "nameKey": "profession.quarry_workers.name",
+  "description": "",
+  "color": "#94a3b8",
+  "baseWage": 0.9
+}

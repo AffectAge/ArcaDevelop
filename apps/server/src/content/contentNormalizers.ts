@@ -38,6 +38,7 @@ import {
   type GoodTransportMode,
 } from "../mechanics/marketTurnMechanics";
 import type {
+  AssetContentEntry,
   BattalionContentEntry,
   BuildingContentEntry,
   DefaultBattalionKind,
@@ -45,6 +46,8 @@ import type {
   GameSettings,
   MilitaryContentEntry,
 } from "../runtime/gameSettingsTypes";
+
+const ASSET_TYPES = new Set<AssetContentEntry["type"]>(["icon", "atlas", "image"]);
 
 export const DEFAULT_UNEMPLOYED_PROFESSION: GameContentEntry = {
   id: POPULATION_FALLBACK_KEY_BY_DIMENSION.professionPct,
@@ -97,6 +100,62 @@ export const DEFAULT_RACE: GameContentEntry = {
   femalePortraitUrl: null,
 };
 
+export function normalizeContentAssets(input: unknown): AssetContentEntry[] {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const items: AssetContentEntry[] = [];
+  for (const raw of input) {
+    if (!raw || typeof raw !== "object") continue;
+    const row = raw as Partial<{
+      id: unknown;
+      type: unknown;
+      path: unknown;
+      width: unknown;
+      height: unknown;
+      frames: unknown;
+    }>;
+    const id = typeof row.id === "string" ? row.id.trim() : "";
+    const rawType = typeof row.type === "string" ? row.type : "";
+    const type = ASSET_TYPES.has(rawType as AssetContentEntry["type"]) ? (rawType as AssetContentEntry["type"]) : null;
+    const path = typeof row.path === "string" ? row.path.trim().replaceAll("\\", "/") : "";
+    const width = typeof row.width === "number" && Number.isFinite(row.width) ? Math.floor(row.width) : 0;
+    const height = typeof row.height === "number" && Number.isFinite(row.height) ? Math.floor(row.height) : 0;
+    if (!id.startsWith("asset:") || !type || !path || width <= 0 || height <= 0 || seen.has(id)) continue;
+    seen.add(id);
+    items.push({
+      id,
+      type,
+      path,
+      width,
+      height,
+      frames: normalizeAssetFrames(row.frames),
+    });
+  }
+  return items;
+}
+
+function normalizeAssetFrames(input: unknown): AssetContentEntry["frames"] | undefined {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return undefined;
+  const frames: NonNullable<AssetContentEntry["frames"]> = {};
+  for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
+    if (!key.trim() || !value || typeof value !== "object" || Array.isArray(value)) continue;
+    const row = value as Record<string, unknown>;
+    const x = typeof row.x === "number" && Number.isFinite(row.x) ? Math.floor(row.x) : -1;
+    const y = typeof row.y === "number" && Number.isFinite(row.y) ? Math.floor(row.y) : -1;
+    const width = typeof row.width === "number" && Number.isFinite(row.width) ? Math.floor(row.width) : 0;
+    const height = typeof row.height === "number" && Number.isFinite(row.height) ? Math.floor(row.height) : 0;
+    if (x < 0 || y < 0 || width <= 0 || height <= 0) continue;
+    frames[key.trim()] = { x, y, width, height };
+  }
+  return Object.keys(frames).length > 0 ? frames : undefined;
+}
+
+function normalizeAssetId(input: unknown): string | null {
+  if (typeof input !== "string") return null;
+  const value = input.trim();
+  return value.startsWith("asset:") ? value.slice(0, 160) : null;
+}
+
 export function normalizeNumberRecord(input: unknown, min: number, max: number, digits = 3): Record<string, number> {
   if (!input || typeof input !== "object" || Array.isArray(input)) return {};
   const normalized: Record<string, number> = {};
@@ -120,8 +179,16 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       description: unknown;
       color: unknown;
       logoUrl: unknown;
+      assetId: unknown;
+      iconAssetId: unknown;
+      flagAssetId: unknown;
+      crestAssetId: unknown;
+      atlasAssetId: unknown;
+      imageAssetId: unknown;
       malePortraitUrl: unknown;
       femalePortraitUrl: unknown;
+      malePortraitAssetId: unknown;
+      femalePortraitAssetId: unknown;
       baseWage: unknown;
       needsProfile: unknown;
       ideologyWeights: unknown;
@@ -157,10 +224,18 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
     const description = typeof row.description === "string" ? row.description.trim() : "";
     const color = typeof row.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(row.color.trim()) ? row.color.trim() : "#4ade80";
     const logoUrl = typeof row.logoUrl === "string" || row.logoUrl === null ? (row.logoUrl ?? null) : null;
+    const assetId = normalizeAssetId(row.assetId);
+    const iconAssetId = normalizeAssetId(row.iconAssetId);
+    const flagAssetId = normalizeAssetId(row.flagAssetId);
+    const crestAssetId = normalizeAssetId(row.crestAssetId);
+    const atlasAssetId = normalizeAssetId(row.atlasAssetId);
+    const imageAssetId = normalizeAssetId(row.imageAssetId);
     const malePortraitUrl =
       typeof row.malePortraitUrl === "string" || row.malePortraitUrl === null ? (row.malePortraitUrl ?? null) : null;
     const femalePortraitUrl =
       typeof row.femalePortraitUrl === "string" || row.femalePortraitUrl === null ? (row.femalePortraitUrl ?? null) : null;
+    const malePortraitAssetId = normalizeAssetId(row.malePortraitAssetId);
+    const femalePortraitAssetId = normalizeAssetId(row.femalePortraitAssetId);
     const baseWage =
       typeof row.baseWage === "number" && Number.isFinite(row.baseWage) ? Math.max(0, Number(row.baseWage)) : undefined;
     const discipline =
@@ -202,8 +277,16 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       description: description.slice(0, 5000),
       color,
       logoUrl,
+      assetId,
+      iconAssetId,
+      flagAssetId,
+      crestAssetId,
+      atlasAssetId,
+      imageAssetId,
       malePortraitUrl,
       femalePortraitUrl,
+      malePortraitAssetId,
+      femalePortraitAssetId,
       baseWage: baseWage == null ? undefined : Number(baseWage.toFixed(3)),
       needsProfile: normalizeCultureNeedsProfile(row.needsProfile),
       ideologyWeights: normalizeNumberRecord(row.ideologyWeights, 0, 100),

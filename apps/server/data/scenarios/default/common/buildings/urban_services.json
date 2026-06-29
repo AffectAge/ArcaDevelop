@@ -1,0 +1,21 @@
+{
+  "id": "building:urban_services",
+  "nameKey": "building.urban_services.name",
+  "description": "",
+  "color": "#f59e0b",
+  "costConstruction": 46,
+  "costDucats": 34,
+  "startingDucats": 10,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 36,
+  "upgradeCostDucats": 26,
+  "inputs": [
+    { "goodId": "good:paper", "amount": 2 }
+  ],
+  "outputs": [
+    { "goodId": "good:services", "amount": 12 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:clerks", "workers": 90 }
+  ]
+}

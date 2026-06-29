@@ -75,12 +75,18 @@ function buildGameStateDbWrite<TGameSettings, TMarketOverview>(
 ): GameStateDbWrite {
   return {
     turnId: payload.turnId,
-    gameSettingsJson: payload.gameSettings as unknown as Prisma.InputJsonValue,
+    gameSettingsJson: stripAuthoredContentFromGameSettings(payload.gameSettings) as unknown as Prisma.InputJsonValue,
     worldBaseJson: payload.worldBase as unknown as Prisma.InputJsonValue,
     ordersByTurnJson: payload.ordersByTurn as unknown as Prisma.InputJsonValue,
     resolveReadyByTurnJson: payload.resolveReadyByTurn as unknown as Prisma.InputJsonValue,
     adminAuditLogJson: payload.adminAuditLog as unknown as Prisma.InputJsonValue,
   };
+}
+
+function stripAuthoredContentFromGameSettings(input: unknown): unknown {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+  const { content: _content, ...rest } = input as Record<string, unknown>;
+  return rest;
 }
 
 export function createEmptyPersistedGameStateInput(): PersistedGameStateInput {

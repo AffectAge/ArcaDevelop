@@ -1,0 +1,7 @@
+{
+  "id": "profession:fishers",
+  "nameKey": "profession.fishers.name",
+  "description": "",
+  "color": "#0ea5e9",
+  "baseWage": 0.85
+}

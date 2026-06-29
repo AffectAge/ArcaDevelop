@@ -25,6 +25,7 @@ type AdminSettingsRuntimeParams = {
   getTurnId: () => number;
   getActiveScenarioId: () => string;
   listScenarios: () => unknown[];
+  getScenarioStatus: () => Promise<unknown>;
   getGameSettings: () => GameSettings;
   normalizeMarketId: (input: unknown) => string | null;
   normalizeMarketSanctionsMap: (input: unknown) => GameSettings["markets"]["sanctionsById"];
@@ -57,6 +58,7 @@ export function registerAdminSettingsRuntime(params: AdminSettingsRuntimeParams)
     routeAuth: params.routeAuth,
     getActiveScenarioId: params.getActiveScenarioId,
     listScenarios: params.listScenarios,
+    getScenarioStatus: params.getScenarioStatus,
     auditLogStore: params.auditLogStore,
   });
 

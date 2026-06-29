@@ -1,0 +1,12 @@
+{
+  "id": "good:luxury_clothes",
+  "nameKey": "good.luxury_clothes.name",
+  "description": "",
+  "color": "#c084fc",
+  "basePrice": 8,
+  "minPrice": 2,
+  "maxPrice": 40,
+  "infraPerUnit": 0.12,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea", "air"]
+}

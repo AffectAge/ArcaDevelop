@@ -1,0 +1,12 @@
+{
+  "id": "good:paper",
+  "nameKey": "good.paper.name",
+  "description": "",
+  "color": "#fef3c7",
+  "basePrice": 2.8,
+  "minPrice": 0.8,
+  "maxPrice": 15,
+  "infraPerUnit": 0.12,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea", "air"]
+}

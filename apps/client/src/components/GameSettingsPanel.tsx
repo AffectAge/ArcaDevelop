@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Coins, Flag, Map, Palette, RefreshCcw, Save, ScrollText, Timer, Wallet, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import { useUiText } from "../i18n/useUiText";
-import { adminRecalculateAutoRegionCosts, adminUploadUiBackground, applyAdminScenario, fetchAdminScenarios, fetchGameSettings, type GameSettings, type ScenarioDescriptor, updateGameSettings } from "../lib/api";
+import { adminRecalculateAutoRegionCosts, adminUploadUiBackground, applyAdminScenario, fetchAdminScenarios, fetchAdminScenarioStatus, fetchGameSettings, type GameSettings, type ScenarioDescriptor, type ScenarioStatus, updateGameSettings } from "../lib/api";
 import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { AppSection } from "./ui/AppSurface";
@@ -101,6 +101,7 @@ export function GameSettingsPanel({ open, token, onClose, onSettingsUpdated }: P
   const [uiBackgroundImageUrl, setUiBackgroundImageUrl] = useState<string | null>(null);
   const [uiBackgroundFile, setUiBackgroundFile] = useState<File | null>(null);
   const [scenarios, setScenarios] = useState<ScenarioDescriptor[]>([]);
+  const [scenarioStatus, setScenarioStatus] = useState<ScenarioStatus | null>(null);
   const [activeScenarioId, setActiveScenarioId] = useState("active");
   const [loadingScenarios, setLoadingScenarios] = useState(false);
   const [applyingScenarioId, setApplyingScenarioId] = useState<string | null>(null);
@@ -159,11 +160,12 @@ export function GameSettingsPanel({ open, token, onClose, onSettingsUpdated }: P
       });
 
     setLoadingScenarios(true);
-    fetchAdminScenarios(token)
-      .then((result) => {
+    Promise.all([fetchAdminScenarios(token), fetchAdminScenarioStatus(token)])
+      .then(([result, status]) => {
         if (cancelled) return;
         setScenarios(result.scenarios);
         setActiveScenarioId(result.activeScenarioId);
+        setScenarioStatus(status);
       })
       .catch(() => {
         if (!cancelled) toast.error(t("gameSettings.scenariosLoadFailed"));
@@ -452,6 +454,48 @@ export function GameSettingsPanel({ open, token, onClose, onSettingsUpdated }: P
                         {t("gameSettings.scenariosTitle")}
                       </div>
                       <div className={mutedTextClass}>{t("gameSettings.scenariosDescription")}</div>
+                      {scenarioStatus && (
+                        <div className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("gameSettings.scenarioStatusTitle")}</div>
+                              <div className={mutedTextClass}>{t("gameSettings.scenarioStatusDescription")}</div>
+                            </div>
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[11px] ${
+                                scenarioStatus.validation.ok
+                                  ? "border-[rgb(var(--theme-success))] bg-[rgb(var(--theme-success-soft))] text-[rgb(var(--theme-success))]"
+                                  : "border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] text-[rgb(var(--theme-danger))]"
+                              }`}
+                            >
+                              {scenarioStatus.validation.ok ? t("gameSettings.scenarioStatusValid") : t("gameSettings.scenarioStatusInvalid")}
+                            </span>
+                          </div>
+                          <div className="mt-3 grid gap-2 text-xs text-[rgb(var(--theme-text-secondary))] md:grid-cols-2 xl:grid-cols-4">
+                            <div className={nestedPanelClass}>{t("gameSettings.scenarioStatusActiveId", { id: scenarioStatus.activeScenarioId })}</div>
+                            <div className={nestedPanelClass}>{t("gameSettings.scenarioStatusContentEntries", { count: scenarioStatus.validation.summary?.contentEntries ?? 0 })}</div>
+                            <div className={nestedPanelClass}>{t("gameSettings.scenarioStatusAssets", { count: scenarioStatus.assets.count })}</div>
+                            <div className={nestedPanelClass}>{t("gameSettings.scenarioStatusHash", { hash: scenarioStatus.hashes.authoredHash ?? t("gameSettings.scenarioStatusHashMissing") })}</div>
+                          </div>
+                          <div className="mt-3 grid gap-2 text-xs text-[rgb(var(--theme-text-secondary))] md:grid-cols-3">
+                            {Object.entries(scenarioStatus.assets.byType).map(([type, count]) => (
+                              <div key={type} className={nestedPanelClass}>
+                                {t("gameSettings.scenarioStatusAssetType", { type, count })}
+                              </div>
+                            ))}
+                          </div>
+                          {scenarioStatus.validation.issues.length > 0 && (
+                            <div className="mt-3 max-h-36 overflow-auto rounded-lg border border-[rgb(var(--theme-danger))] bg-[rgb(var(--theme-danger-soft))] p-3 text-xs text-[rgb(var(--theme-danger))]">
+                              {scenarioStatus.validation.issues.slice(0, 8).map((issue) => (
+                                <div key={`${issue.code}:${issue.path ?? ""}:${issue.message}`}>
+                                  {issue.path ? `${issue.path}: ` : ""}
+                                  {issue.code} - {issue.message}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {loadingScenarios ? (
                         <div className="text-sm text-[rgb(var(--theme-text-muted))]">{t("gameSettings.scenariosLoading")}</div>
                       ) : scenarios.length === 0 ? (

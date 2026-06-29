@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { readFlatScenarioLocalizationFile } from "./scenarioLocalization";
 
 export const scenarioContentFileNames = [
+  ["assets", ["assets.json"]],
   ["races", ["races.json"]],
   ["resourceCategories", ["resource_categories.json", "resourceCategories.json"]],
   ["hexTypes", ["hex_types.json", "hexTypes.json"]],
@@ -39,7 +40,7 @@ export const scenarioContentFileNames = [
 export type ScenarioContentKey = (typeof scenarioContentFileNames)[number][0];
 
 const perEntityDirectoryAliases: Partial<Record<ScenarioContentKey, string[]>> = {
-  journalEntries: ["journal_entries", "journalEntries"],
+  journalEntries: ["journal_entries"],
 };
 
 export function loadRawScenarioContent(scenarioDir: string): Record<string, unknown> | null {
@@ -47,21 +48,6 @@ export function loadRawScenarioContent(scenarioDir: string): Record<string, unkn
   const merged: Record<string, unknown> = {
     ...perEntityContent,
   };
-
-  const contentDir = resolve(scenarioDir, "content");
-  for (const [key, fileNames] of scenarioContentFileNames) {
-    if (key in merged) continue;
-    for (const fileName of fileNames) {
-      const raw = readJsonFileIfExists(resolve(contentDir, fileName));
-      if (raw == null) continue;
-      merged[key] = Array.isArray(raw)
-        ? raw
-        : raw && typeof raw === "object" && key in raw
-          ? (raw as Record<string, unknown>)[key]
-          : raw;
-      break;
-    }
-  }
 
   return Object.keys(merged).length === 0 ? null : merged;
 }

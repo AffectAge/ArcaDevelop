@@ -1,0 +1,18 @@
+{
+  "id": "building:fishing_wharf",
+  "nameKey": "building.fishing_wharf.name",
+  "description": "",
+  "color": "#0ea5e9",
+  "costConstruction": 34,
+  "costDucats": 20,
+  "startingDucats": 5,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 26,
+  "upgradeCostDucats": 16,
+  "outputs": [
+    { "goodId": "good:fish", "amount": 15 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:fishers", "workers": 95 }
+  ]
+}

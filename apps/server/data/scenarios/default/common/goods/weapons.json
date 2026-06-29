@@ -1,0 +1,12 @@
+{
+  "id": "good:weapons",
+  "nameKey": "good.weapons.name",
+  "description": "",
+  "color": "#b91c1c",
+  "basePrice": 7,
+  "minPrice": 2,
+  "maxPrice": 35,
+  "infraPerUnit": 0.18,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea"]
+}

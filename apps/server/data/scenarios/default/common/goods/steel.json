@@ -1,0 +1,12 @@
+{
+  "id": "good:steel",
+  "nameKey": "good.steel.name",
+  "description": "",
+  "color": "#64748b",
+  "basePrice": 5,
+  "minPrice": 1.4,
+  "maxPrice": 25,
+  "infraPerUnit": 0.24,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea"]
+}

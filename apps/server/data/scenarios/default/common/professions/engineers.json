@@ -1,0 +1,7 @@
+{
+  "id": "profession:engineers",
+  "nameKey": "profession.engineers.name",
+  "description": "",
+  "color": "#facc15",
+  "baseWage": 1.5
+}

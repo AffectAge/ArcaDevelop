@@ -1,0 +1,12 @@
+{
+  "id": "good:coal",
+  "nameKey": "good.coal.name",
+  "description": "",
+  "color": "#334155",
+  "basePrice": 2.2,
+  "minPrice": 0.6,
+  "maxPrice": 12,
+  "infraPerUnit": 0.28,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea"]
+}

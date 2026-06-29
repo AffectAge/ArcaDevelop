@@ -1,0 +1,12 @@
+{
+  "id": "good:services",
+  "nameKey": "good.services.name",
+  "description": "",
+  "color": "#f59e0b",
+  "basePrice": 2.5,
+  "minPrice": 0.7,
+  "maxPrice": 14,
+  "infraPerUnit": 0.08,
+  "distributionType": "local",
+  "transportModes": ["land", "air"]
+}

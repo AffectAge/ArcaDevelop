@@ -7,6 +7,7 @@ import {
   ensureDefaultRace,
   ensureDefaultReligion,
   ensureDefaultUnemployedProfession,
+  normalizeContentAssets,
   normalizeContentAircraftTypes,
   normalizeContentBattalions,
   normalizeContentBuildings,
@@ -53,6 +54,7 @@ export function normalizeScenarioContentForRuntime(source: unknown): GameSetting
   const contentSource = source && typeof source === "object" ? (source as Record<string, unknown>) : {};
   const equipmentClasses = normalizeContentEquipmentClasses(contentSource.equipmentClasses ?? contentSource.equipment_classes);
   return {
+    assets: normalizeContentAssets(contentSource.assets),
     races: ensureDefaultRace(normalizeContentRaces(contentSource.races)),
     resourceCategories: normalizeContentCultures(contentSource.resourceCategories ?? contentSource.resource_categories).map((entry) => ({
       ...entry,

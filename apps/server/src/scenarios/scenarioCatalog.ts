@@ -110,14 +110,18 @@ function describeScenario(
       hasRasterTiles: existsSync(resolve(mapRoot, "tiles/raster")),
       hasHexes: existsSync(hexIndexPath),
     },
-    contentFiles: listJsonFileNames(resolve(scenarioDir, "content")),
+    contentFiles: listJsonFileNames(resolve(scenarioDir, "common")),
     setupFiles: listJsonFileNames(resolve(scenarioDir, "setup")),
   };
 }
 
 function listJsonFileNames(dir: string): string[] {
   if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((name) => name.toLowerCase().endsWith(".json"))
+  return readdirSync(dir, { withFileTypes: true })
+    .flatMap((entry) => {
+      const childPath = resolve(dir, entry.name);
+      if (entry.isDirectory()) return listJsonFileNames(childPath).map((name) => `${entry.name}/${name}`);
+      return entry.isFile() && entry.name.toLowerCase().endsWith(".json") ? [entry.name] : [];
+    })
     .sort((a, b) => a.localeCompare(b, "ru"));
 }

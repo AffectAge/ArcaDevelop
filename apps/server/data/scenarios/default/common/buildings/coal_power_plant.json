@@ -1,0 +1,23 @@
+{
+  "id": "building:coal_power_plant",
+  "nameKey": "building.coal_power_plant.name",
+  "description": "",
+  "color": "#facc15",
+  "costConstruction": 92,
+  "costDucats": 78,
+  "startingDucats": 18,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 74,
+  "upgradeCostDucats": 58,
+  "inputs": [
+    { "goodId": "good:coal", "amount": 8 },
+    { "goodId": "good:tools", "amount": 2 }
+  ],
+  "outputs": [
+    { "goodId": "good:electricity", "amount": 14 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:engineers", "workers": 45 },
+    { "professionId": "profession:machinists", "workers": 55 }
+  ]
+}

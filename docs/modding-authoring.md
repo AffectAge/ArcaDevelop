@@ -16,6 +16,8 @@ Scenario data follows a Victoria-inspired one-entity-per-file layout. Authored f
 - Keep scenario-owned files under scenario `assets/`.
 - Keep generated indexes under `.generated/`; generated files are never manual source.
 - Do not use root or scenario monolithic content libraries. `apps/server/data/content-library.json` is forbidden, and scenario content must be authored under `common/*/*.json`.
+- Do not add compatibility aliases or legacy fallbacks for old scenario layouts, old save content fields, or old runtime state unless compatibility is explicitly approved as a separate task.
+- Reference authored visuals through stable `asset:*` ids. Do not author `logoUrl`, `flagUrl`, `crestUrl`, external URLs, or direct `/scenario-assets/...` paths in scenario content.
 
 ## Per-Entity Layout
 
@@ -32,6 +34,7 @@ scenarios/<scenario_id>/
       treaties/*.json
   common/
     defines.json
+    assets/*.json
     goods/*.json
     buildings/*.json
     technologies/*.json
@@ -60,6 +63,20 @@ scenarios/<scenario_id>/
 `history/provinces/*.json`, `map/provinces.json`, `.generated/provinces.json`, `apps/server/data/content-library.json`, and monolithic content libraries are not authored or runtime source in the target format. If runtime needs aggregate views, scenario tooling must generate hex artifacts under `.generated/`.
 
 Scenario-owned uploaded assets live under `assets/uploads/` inside the scenario folder. Server-managed URLs use `/scenario-assets/<scenario_id>/assets/uploads/<relative_path>`; global upload roots and `/uploads/...` URLs are not valid authored or runtime targets.
+
+Authored asset registry entries live in `common/assets/*.json` and point to local files under scenario `assets/`:
+
+```json
+{
+  "id": "asset:good.grain",
+  "type": "icon",
+  "path": "assets/goods/grain.png",
+  "width": 64,
+  "height": 64
+}
+```
+
+Content should reference these entries with fields such as `assetId`, `iconAssetId`, `flagAssetId`, `crestAssetId`, `atlasAssetId`, or `imageAssetId`. If a non-required visual is absent, the client may use repo-owned fallback atlases/icons; declared asset files must still be local, readable, and dimension-correct.
 
 Base game resource point icons are not scenario content. Population, culture, science, religion, colonization, construction, ducats, and gold icons live as repo-owned PNG assets in `apps/client/public/game-assets/resource-icons/` and are mapped by the client. Scenarios must not define, upload, or override these icons; scenario assets remain for scenario-owned visuals such as flags, crests, backgrounds, buildings, goods, and authored art.
 
@@ -188,7 +205,7 @@ Scenario-authored buildings live in `scenarios/<scenarioId>/common/buildings/*.j
 
 `minLevel` and `maxLevel` are optional integer building levels starting at `1`. If omitted or `null`, that side of the window is unbounded. Validation rejects non-integer levels below `1` and rejects `maxLevel` lower than `minLevel`. Inactive flows do not create demand, consume inputs, report production capacity, produce goods, or extract deposits.
 
-Legacy extraction fields (`extractionGoodId`, `extractionAmountPerTurn`, and `extractionRequiresDeposit`) remain supported for older scenario content, but new authored buildings should prefer `extractions` so every extracted good can declare its own deposit and level rules.
+Legacy extraction fields (`extractionGoodId`, `extractionAmountPerTurn`, and `extractionRequiresDeposit`) should not be used in new authored buildings. Prefer `extractions` so every extracted good can declare its own deposit and level rules.
 
 ## Building Placement And Building Atlases
 
@@ -413,7 +430,7 @@ Scenario validation rejects legacy raw event text and styling fields. Event defi
 
 ## Journal Entry Authoring
 
-Scenario-authored journal entries live in `scenarios/<scenarioId>/common/journal_entries/*.json`. The loader also accepts `common/journalEntries` as a compatibility alias, but new authored content should use `journal_entries`.
+Scenario-authored journal entries live in `scenarios/<scenarioId>/common/journal_entries/*.json`.
 
 Each journal file has a stable top-level `id` and a `journalEntry` object. Required player-facing text uses localization keys:
 

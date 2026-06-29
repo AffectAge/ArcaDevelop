@@ -1,0 +1,12 @@
+{
+  "id": "good:stone",
+  "nameKey": "good.stone.name",
+  "description": "",
+  "color": "#94a3b8",
+  "basePrice": 1.5,
+  "minPrice": 0.4,
+  "maxPrice": 9,
+  "infraPerUnit": 0.3,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea"]
+}

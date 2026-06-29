@@ -37,6 +37,9 @@ export type ScenarioValidationIssueCode =
   | "INVALID_JOURNAL_DEFINITION"
   | "INVALID_BUILDING_ATLAS"
   | "INVALID_CITY_ATLAS"
+  | "INVALID_ASSET_REGISTRY"
+  | "FORBIDDEN_AUTHORED_ASSET_URL"
+  | "FORBIDDEN_LEGACY_CONTENT_FIELD"
   | "BROKEN_REFERENCE"
   | "MISSING_LOCALIZATION_KEY"
   | "MISSING_REGION_MEMBERSHIP"
@@ -94,6 +97,7 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "country", path: "history/countries" },
   { kind: "diplomacyRelation", path: "history/diplomacy/relations" },
   { kind: "diplomacyTreaty", path: "history/diplomacy/treaties" },
+  { kind: "asset", path: "common/assets" },
   { kind: "good", path: "common/goods" },
   { kind: "building", path: "common/buildings" },
   { kind: "technology", path: "common/technologies" },
@@ -114,7 +118,6 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "sector", path: "common/sectors" },
   { kind: "decision", path: "common/decisions" },
   { kind: "event", path: "common/events" },
-  { kind: "journalEntry", path: "common/journalEntries" },
   { kind: "journalEntry", path: "common/journal_entries" },
   { kind: "battalion", path: "common/battalions" },
   { kind: "shipType", path: "common/shipTypes" },
@@ -150,6 +153,18 @@ const FORBIDDEN_SETUP_SOURCE_FILES = [
   "setup/province_resource_exploration_count.json",
 ];
 const FORBIDDEN_REMOVED_FORMAT_DIRECTORIES = ["_legacy", "_obsolete"];
+const FORBIDDEN_AUTHORED_ASSET_URL_FIELDS = new Set(["logoUrl", "flagUrl", "crestUrl", "imageUrl", "malePortraitUrl", "femalePortraitUrl"]);
+const FORBIDDEN_LEGACY_CONTENT_FIELDS = new Set(["extractionGoodId", "extractionAmountPerTurn", "extractionRequiresDeposit"]);
+const ALLOWED_AUTHORED_ASSET_ID_FIELDS = new Set([
+  "assetId",
+  "iconAssetId",
+  "flagAssetId",
+  "crestAssetId",
+  "atlasAssetId",
+  "imageAssetId",
+  "malePortraitAssetId",
+  "femalePortraitAssetId",
+]);
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 const VALIDATION_AUDIT_LOG_DEFAULTS = { maxEntries: 1_000, retentionTurns: null };
 const VALIDATION_HARD_MAX_AUDIT_LOG_ENTRIES = 10_000;
@@ -305,6 +320,9 @@ export async function validateScenarioDirectory(
 
   validateDuplicateIds(loadedEntities, issues);
   validateCountryAuthoringFields(root, loadedEntities, issues);
+  await validateAssetRegistry(root, loadedEntities, issues);
+  validateAuthoredAssetFields(root, loadedEntities, issues);
+  validateForbiddenLegacyContentFields(root, loadedEntities, issues);
   validateMapEntityColors(root, loadedEntities, issues);
   await validateDefines(root, issues);
   await validateHexMapSettings(root, issues);
@@ -524,11 +542,6 @@ async function validateBuildingAtlases(root: string, entities: LoadedEntity[], i
     const relativePath = `assets/buildings/${sanitizeBuildingAtlasId(building.id)}.png`;
     const atlasPath = join(root, relativePath);
     if (!existsSync(atlasPath)) {
-      issues.push({
-        code: "MISSING_REQUIRED_FILE",
-        path: relativePath,
-        message: `Building ${building.id} requires a 256x64 PNG atlas at ${relativePath}.`,
-      });
       continue;
     }
     try {
@@ -561,11 +574,6 @@ async function validateCityAtlases(root: string, entities: LoadedEntity[], issue
     const relativePath = `assets/cities/${sanitizeCityAtlasId(culture.id)}.png`;
     const atlasPath = join(root, relativePath);
     if (!existsSync(atlasPath)) {
-      issues.push({
-        code: "MISSING_REQUIRED_FILE",
-        path: relativePath,
-        message: `Culture ${culture.id} requires a 256x64 PNG city atlas at ${relativePath}.`,
-      });
       continue;
     }
     try {
@@ -591,6 +599,182 @@ async function validateCityAtlases(root: string, entities: LoadedEntity[], issue
 
 function sanitizeCityAtlasId(cultureId: string): string {
   return cultureId.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+async function validateAssetRegistry(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
+  for (const asset of entities.filter((entity) => entity.kind === "asset")) {
+    const path = normalizePath(relative(root, asset.path));
+    if (!asset.id.startsWith("asset:")) {
+      issues.push({
+        code: "INVALID_ASSET_REGISTRY",
+        path,
+        message: `Asset id ${asset.id} must start with asset:.`,
+      });
+    }
+
+    const type = asset.data.type;
+    if (type !== "icon" && type !== "atlas" && type !== "image") {
+      issues.push({
+        code: "INVALID_ASSET_REGISTRY",
+        path,
+        message: `${asset.id}.type must be icon, atlas, or image.`,
+      });
+    }
+
+    const relativeAssetPath = typeof asset.data.path === "string" ? asset.data.path.replaceAll("\\", "/").trim() : "";
+    if (!isScenarioAssetPath(relativeAssetPath)) {
+      issues.push({
+        code: "INVALID_ASSET_REGISTRY",
+        path,
+        message: `${asset.id}.path must point to a local file under assets/.`,
+      });
+      continue;
+    }
+
+    const width = asset.data.width;
+    const height = asset.data.height;
+    if (typeof width !== "number" || !Number.isInteger(width) || width <= 0 || typeof height !== "number" || !Number.isInteger(height) || height <= 0) {
+      issues.push({
+        code: "INVALID_ASSET_REGISTRY",
+        path,
+        message: `${asset.id} must define positive integer width and height.`,
+      });
+    }
+
+    const absoluteAssetPath = join(root, relativeAssetPath);
+    if (!existsSync(absoluteAssetPath)) {
+      issues.push({
+        code: "MISSING_REQUIRED_FILE",
+        path: relativeAssetPath,
+        message: `Asset ${asset.id} references missing file ${relativeAssetPath}.`,
+      });
+      continue;
+    }
+
+    try {
+      const dimensions = imageSize(await readFile(absoluteAssetPath));
+      const actualWidth = dimensions.width ?? 0;
+      const actualHeight = dimensions.height ?? 0;
+      if (typeof width === "number" && typeof height === "number" && (actualWidth !== width || actualHeight !== height)) {
+        issues.push({
+          code: "INVALID_ASSET_REGISTRY",
+          path: relativeAssetPath,
+          message: `Asset ${asset.id} declares ${width}x${height} but file is ${actualWidth}x${actualHeight}.`,
+        });
+      }
+    } catch {
+      issues.push({
+        code: "INVALID_ASSET_REGISTRY",
+        path: relativeAssetPath,
+        message: `Asset ${asset.id} must reference a readable image file.`,
+      });
+    }
+  }
+}
+
+function validateAuthoredAssetFields(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
+  const assetIds = new Set(entities.filter((entity) => entity.kind === "asset").map((entity) => entity.id));
+  for (const entity of entities) {
+    validateAuthoredAssetFieldsRecursive(root, entity, entity.data, "", assetIds, issues);
+  }
+}
+
+function validateAuthoredAssetFieldsRecursive(
+  root: string,
+  entity: LoadedEntity,
+  value: unknown,
+  fieldPath: string,
+  assetIds: Set<string>,
+  issues: ScenarioValidationIssue[],
+): void {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => validateAuthoredAssetFieldsRecursive(root, entity, item, `${fieldPath}[${index}]`, assetIds, issues));
+    return;
+  }
+  if (!isObject(value)) return;
+
+  for (const [field, child] of Object.entries(value)) {
+    const nextPath = fieldPath ? `${fieldPath}.${field}` : field;
+    if (FORBIDDEN_AUTHORED_ASSET_URL_FIELDS.has(field)) {
+      issues.push({
+        code: "FORBIDDEN_AUTHORED_ASSET_URL",
+        path: normalizePath(relative(root, entity.path)),
+        message: `${entity.id}.${nextPath} is forbidden in authored scenario data; use assetId/iconAssetId/flagAssetId/crestAssetId/atlasAssetId instead.`,
+      });
+      continue;
+    }
+
+    if (typeof child === "string" && looksLikeExternalOrScenarioAssetUrl(child)) {
+      issues.push({
+        code: "FORBIDDEN_AUTHORED_ASSET_URL",
+        path: normalizePath(relative(root, entity.path)),
+        message: `${entity.id}.${nextPath} must not contain a URL or direct scenario asset path; reference a stable asset:* id instead.`,
+      });
+      continue;
+    }
+
+    if (ALLOWED_AUTHORED_ASSET_ID_FIELDS.has(field) && child != null) {
+      if (typeof child !== "string" || !child.startsWith("asset:")) {
+        issues.push({
+          code: "INVALID_ASSET_REGISTRY",
+          path: normalizePath(relative(root, entity.path)),
+          message: `${entity.id}.${nextPath} must reference an asset:* id.`,
+        });
+      } else if (assetIds.size > 0 && !assetIds.has(child)) {
+        issues.push({
+          code: "BROKEN_REFERENCE",
+          path: normalizePath(relative(root, entity.path)),
+          message: `${entity.id}.${nextPath} references missing id ${child}.`,
+        });
+      }
+      continue;
+    }
+
+    validateAuthoredAssetFieldsRecursive(root, entity, child, nextPath, assetIds, issues);
+  }
+}
+
+function isScenarioAssetPath(path: string): boolean {
+  if (!path.startsWith("assets/")) return false;
+  if (path.includes("://") || path.startsWith("/") || path.includes("../") || path.includes("/../")) return false;
+  return path.length > "assets/".length;
+}
+
+function looksLikeExternalOrScenarioAssetUrl(value: string): boolean {
+  const trimmed = value.trim();
+  return /^https?:\/\//i.test(trimmed) || trimmed.startsWith("/scenario-assets/") || trimmed.startsWith("assets/uploads/");
+}
+
+function validateForbiddenLegacyContentFields(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
+  for (const entity of entities) {
+    validateForbiddenLegacyContentFieldsRecursive(root, entity, entity.data, "", issues);
+  }
+}
+
+function validateForbiddenLegacyContentFieldsRecursive(
+  root: string,
+  entity: LoadedEntity,
+  value: unknown,
+  fieldPath: string,
+  issues: ScenarioValidationIssue[],
+): void {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => validateForbiddenLegacyContentFieldsRecursive(root, entity, item, `${fieldPath}[${index}]`, issues));
+    return;
+  }
+  if (!isObject(value)) return;
+  for (const [field, child] of Object.entries(value)) {
+    const nextPath = fieldPath ? `${fieldPath}.${field}` : field;
+    if (FORBIDDEN_LEGACY_CONTENT_FIELDS.has(field)) {
+      issues.push({
+        code: "FORBIDDEN_LEGACY_CONTENT_FIELD",
+        path: normalizePath(relative(root, entity.path)),
+        message: `${entity.id}.${nextPath} is a legacy authored field; use the current scenario format instead.`,
+      });
+      continue;
+    }
+    validateForbiddenLegacyContentFieldsRecursive(root, entity, child, nextPath, issues);
+  }
 }
 
 function validateCountryAuthoringFields(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {

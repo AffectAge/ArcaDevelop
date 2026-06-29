@@ -84,7 +84,7 @@ describe("scenario content loader", () => {
     expect(content?.cultures).toBeUndefined();
   });
 
-  it("loads split content files when per-entity content is absent", async () => {
+  it("ignores legacy split content files when per-entity content is absent", async () => {
     const scenarioDir = await createScenarioDir();
     await mkdir(join(scenarioDir, "content"), { recursive: true });
     await writeFile(
@@ -95,6 +95,6 @@ describe("scenario content loader", () => {
 
     const content = loadRawScenarioContent(scenarioDir);
 
-    expect(content?.resourceCategories).toEqual([{ id: "resource_category:food", name: "Food" }]);
+    expect(content).toBeNull();
   });
 });

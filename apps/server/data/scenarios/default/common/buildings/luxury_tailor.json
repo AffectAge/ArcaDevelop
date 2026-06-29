@@ -1,0 +1,23 @@
+{
+  "id": "building:luxury_tailor",
+  "nameKey": "building.luxury_tailor.name",
+  "description": "",
+  "color": "#c084fc",
+  "costConstruction": 66,
+  "costDucats": 56,
+  "startingDucats": 14,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 52,
+  "upgradeCostDucats": 42,
+  "inputs": [
+    { "goodId": "good:cloth", "amount": 5 },
+    { "goodId": "good:tools", "amount": 2 }
+  ],
+  "outputs": [
+    { "goodId": "good:luxury_clothes", "amount": 4 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:tailors", "workers": 55 },
+    { "professionId": "profession:clerks", "workers": 25 }
+  ]
+}

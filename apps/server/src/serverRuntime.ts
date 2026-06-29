@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { WebSocketServer } from "ws";
 import { createServer } from "http";
-import { AdminAuditLogStore } from "./security/adminAuditLog";
+import { AdminAuditLogStore, HARD_MAX_ADMIN_AUDIT_LOG } from "./security/adminAuditLog";
 import { createAuthHeaderParser, createAuthTokenParser } from "./security/authHeader";
 import { createAdminCountryChecker } from "./security/adminPermissions";
 import { createRouteAuth } from "./security/routeAuth";
@@ -48,6 +48,7 @@ import { createResourceLedgerRuntime } from "./runtime/resourceLedgerRuntime";
 import { round3 } from "./runtime/numberRuntime";
 import { makeOfficialNews } from "./runtime/officialNewsRuntime";
 import { buildAiControlledCountryIdsFromHistory, loadScenarioHistory } from "./scenarios/scenarioHistoryLoader";
+import { applyScenarioDefinesToGameSettings, loadScenarioDefines } from "./scenarios/scenarioDefinesLoader";
 import { DEFAULT_SCENARIO_ID, ensureDefaultScenario } from "./scenarios/defaultScenarioBootstrap";
 import {
   buildRegionAdjacencyByIdFromHexes,
@@ -78,6 +79,7 @@ import {
   DEFAULT_MARKET_PRICE_SMOOTHING,
   MAX_PERSISTED_WORLD_DELTA_LOG,
   MAX_WORLD_DELTA_HISTORY,
+  SETTINGS_MAX_NUMBER,
   PERSIST_STATE_DEBOUNCE_MS,
   WORLD_DELTA_LOG_PRUNE_INTERVAL_MS,
 } from "./runtime/serverRuntimeConfig";
@@ -363,6 +365,15 @@ const scenarioServerRuntime = createScenarioServerRuntime({
   normalizeDiplomacyProposals: worldStateNormalizerRuntime.normalizeDiplomacyProposals,
 });
 
+const defaultScenarioContent = scenarioServerRuntime.loadScenarioContent(defaultScenarioBootstrap.scenarioDir);
+if (defaultScenarioContent) {
+  gameSettings = { ...gameSettings, content: defaultScenarioContent };
+}
+gameSettings = applyScenarioDefinesToGameSettings(gameSettings, loadScenarioDefines(defaultScenarioBootstrap.scenarioDir), {
+  hardMaxAuditLogEntries: HARD_MAX_ADMIN_AUDIT_LOG,
+  maxSettingNumber: SETTINGS_MAX_NUMBER,
+});
+
 const defaultScenarioHistory = loadScenarioHistory(defaultScenarioBootstrap.scenarioDir);
 worldBase = scenarioServerRuntime.buildWorldBaseFromScenario(
   turnId,
@@ -394,6 +405,13 @@ const persistedStateRestoreRuntime = createPersistedStateRestoreRuntime({
     mapRuntime.applyMapRuntime(defaultScenarioBootstrap.mapRoot, defaultScenarioBootstrap.hexIndexPath);
   },
   findScenario: scenarioServerRuntime.findScenario,
+  loadScenarioContent: scenarioServerRuntime.loadScenarioContent,
+  loadScenarioDefines,
+  applyScenarioDefines: (settings, defines) =>
+    applyScenarioDefinesToGameSettings(settings, defines, {
+      hardMaxAuditLogEntries: HARD_MAX_ADMIN_AUDIT_LOG,
+      maxSettingNumber: SETTINGS_MAX_NUMBER,
+    }),
   defaultGameSettings,
   getDefaultWorldBase: defaultWorldBase,
   setGameSettings: (settings) => {

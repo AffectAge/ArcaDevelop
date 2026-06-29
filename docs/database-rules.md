@@ -5,15 +5,16 @@
 - Use Prisma/schema workflows for database shape changes.
 - Do not hand-edit SQLite state as an implementation shortcut.
 - Document whether a DB change needs migration, reset, or no compatibility.
+- During active development, do not add backwards-compatibility for old DB rows, saves, persisted `GameState` content, legacy scenario fields, or old runtime state unless the user explicitly asks for that compatibility as a separate decision. Prefer a documented destructive local reset when state is incompatible.
 
-Current additive runtime compatibility:
+Current additive runtime bootstrap:
 
 - `GameState.adminAuditLogJson` is part of the Prisma schema. Server startup/table bootstrap adds this column to older SQLite databases if it is missing. This does not require deleting existing local state.
 - Runtime table bootstrap lives in `apps/server/src/persistence/dbBootstrap.ts`. Keep additive startup compatibility there rather than growing `apps/server/src/index.ts`.
 - Runtime `GameState` row save/load is owned by `apps/server/src/persistence/gameStatePersistence.ts`; `apps/server/src/index.ts` should only assemble/apply runtime state and migration hooks.
 - Debounced runtime state persistence is scheduled by `apps/server/src/persistence/persistentStateScheduler.ts` and must remain serial, bounded, and test-covered.
 - obsolete JSON `game-state.json` import is read through `apps/server/src/persistence/persistedStateFile.ts`; parsing raw files should not grow in `apps/server/src/index.ts`.
-- obsolete `content-library.json` file IO is removed. Do not restore root content-library persistence; runtime content is stored in `GameState`, and authored scenario content belongs under `scenarios/<scenario_id>/common/*/*.json`.
+- obsolete `content-library.json` file IO is removed. Do not restore root content-library persistence; authored scenario content belongs under `scenarios/<scenario_id>/common/*/*.json` and is not saved as the runtime source in `GameState`.
 - Persisted world-delta replay rows are owned by `apps/server/src/persistence/worldDeltaLogPersistence.ts` and must stay bounded/pruned.
 
 ## Hot Paths

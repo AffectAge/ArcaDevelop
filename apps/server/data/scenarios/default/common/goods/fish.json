@@ -1,0 +1,12 @@
+{
+  "id": "good:fish",
+  "nameKey": "good.fish.name",
+  "description": "",
+  "color": "#38bdf8",
+  "basePrice": 1.1,
+  "minPrice": 0.3,
+  "maxPrice": 7,
+  "infraPerUnit": 0.16,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea", "air"]
+}

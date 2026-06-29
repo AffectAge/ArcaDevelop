@@ -1,0 +1,22 @@
+{
+  "id": "building:ammunition_factory",
+  "nameKey": "building.ammunition_factory.name",
+  "description": "",
+  "color": "#7f1d1d",
+  "costConstruction": 68,
+  "costDucats": 54,
+  "startingDucats": 12,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 54,
+  "upgradeCostDucats": 40,
+  "inputs": [
+    { "goodId": "good:iron", "amount": 3 },
+    { "goodId": "good:coal", "amount": 3 }
+  ],
+  "outputs": [
+    { "goodId": "good:ammunition", "amount": 6 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:machinists", "workers": 75 }
+  ]
+}

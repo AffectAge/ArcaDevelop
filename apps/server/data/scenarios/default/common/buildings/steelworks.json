@@ -1,0 +1,23 @@
+{
+  "id": "building:steelworks",
+  "nameKey": "building.steelworks.name",
+  "description": "",
+  "color": "#64748b",
+  "costConstruction": 76,
+  "costDucats": 62,
+  "startingDucats": 14,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 60,
+  "upgradeCostDucats": 46,
+  "inputs": [
+    { "goodId": "good:iron", "amount": 6 },
+    { "goodId": "good:coal", "amount": 5 }
+  ],
+  "outputs": [
+    { "goodId": "good:steel", "amount": 7 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:smelters", "workers": 80 },
+    { "professionId": "profession:machinists", "workers": 40 }
+  ]
+}

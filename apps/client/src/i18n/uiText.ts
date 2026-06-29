@@ -1080,6 +1080,16 @@ export type UiTextKey =
   | "gameSettings.scenariosEmpty"
   | "gameSettings.scenariosLoadFailed"
   | "gameSettings.scenariosLoading"
+  | "gameSettings.scenarioStatusActiveId"
+  | "gameSettings.scenarioStatusAssets"
+  | "gameSettings.scenarioStatusAssetType"
+  | "gameSettings.scenarioStatusContentEntries"
+  | "gameSettings.scenarioStatusDescription"
+  | "gameSettings.scenarioStatusHash"
+  | "gameSettings.scenarioStatusHashMissing"
+  | "gameSettings.scenarioStatusInvalid"
+  | "gameSettings.scenarioStatusTitle"
+  | "gameSettings.scenarioStatusValid"
   | "gameSettings.scenarioStart"
   | "gameSettings.scenarioStarting"
   | "gameSettings.scenarioStartTurn"
@@ -2902,7 +2912,6 @@ export type UiTextKey =
   | "shell.connectedTitle"
   | "shell.countryCustomizedMessage"
   | "shell.countryCustomizedTitle"
-  | "shell.contentPanel"
   | "shell.dashboard.activeProjects"
   | "shell.dashboard.activeResearch"
   | "shell.dashboard.army"
@@ -3058,7 +3067,6 @@ export type UiTextKey =
   | "topBar.adminForceResolve"
   | "topBar.clientSettings"
   | "topBar.colonizationLimit"
-  | "topBar.contentPanel"
   | "topBar.controlledHexes"
   | "topBar.countryDetails"
   | "topBar.currentTurn"
@@ -4325,6 +4333,16 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "gameSettings.scenariosEmpty": "No scenarios found. Add folders in apps/server/data/scenarios.",
     "gameSettings.scenariosLoadFailed": "Failed to load scenarios",
     "gameSettings.scenariosLoading": "Loading scenarios...",
+    "gameSettings.scenarioStatusActiveId": "Active id: {id}",
+    "gameSettings.scenarioStatusAssets": "Assets: {count}",
+    "gameSettings.scenarioStatusAssetType": "{type}: {count}",
+    "gameSettings.scenarioStatusContentEntries": "Content entries: {count}",
+    "gameSettings.scenarioStatusDescription": "Read-only file scenario diagnostics from the server validator.",
+    "gameSettings.scenarioStatusHash": "Authored hash: {hash}",
+    "gameSettings.scenarioStatusHashMissing": "not built",
+    "gameSettings.scenarioStatusInvalid": "Invalid",
+    "gameSettings.scenarioStatusTitle": "Scenario status",
+    "gameSettings.scenarioStatusValid": "Valid",
     "gameSettings.scenarioStart": "Start",
     "gameSettings.scenarioStarting": "Starting...",
     "gameSettings.scenarioStartTurn": "Start turn: {turn}",
@@ -6147,7 +6165,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.connectedTitle": "Connection",
     "shell.countryCustomizedMessage": "Customization applied to {country} (-ducats)",
     "shell.countryCustomizedTitle": "Country updated",
-    "shell.contentPanel": "Content",
     "shell.dashboard.activeProjects": "Active projects",
     "shell.dashboard.activeResearch": "Active research",
     "shell.dashboard.army": "Command posture",
@@ -6334,7 +6351,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "topBar.adminForceResolve": "Admin: force resolve",
     "topBar.clientSettings": "Client settings",
     "topBar.colonizationLimit": "Colonization limit",
-    "topBar.contentPanel": "Content panel",
     "topBar.controlledHexes": "Controlled provinces",
     "topBar.countryDetails": "Country and holdings details",
     "topBar.currentTurn": "Current turn",
@@ -7569,6 +7585,16 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "gameSettings.scenariosEmpty": "Сценарии не найдены. Добавь папки в apps/server/data/scenarios.",
     "gameSettings.scenariosLoadFailed": "Не удалось загрузить сценарии",
     "gameSettings.scenariosLoading": "Загрузка сценариев...",
+    "gameSettings.scenarioStatusActiveId": "Активный id: {id}",
+    "gameSettings.scenarioStatusAssets": "Ассеты: {count}",
+    "gameSettings.scenarioStatusAssetType": "{type}: {count}",
+    "gameSettings.scenarioStatusContentEntries": "Записей контента: {count}",
+    "gameSettings.scenarioStatusDescription": "Диагностика файлового сценария из серверного валидатора без возможности редактирования.",
+    "gameSettings.scenarioStatusHash": "Хеш исходных файлов: {hash}",
+    "gameSettings.scenarioStatusHashMissing": "не собран",
+    "gameSettings.scenarioStatusInvalid": "Невалиден",
+    "gameSettings.scenarioStatusTitle": "Статус сценария",
+    "gameSettings.scenarioStatusValid": "Валиден",
     "gameSettings.scenarioStart": "Начать",
     "gameSettings.scenarioStarting": "Запуск...",
     "gameSettings.scenarioStartTurn": "Ход старта: {turn}",
@@ -9391,7 +9417,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.connectedTitle": "Подключение",
     "shell.countryCustomizedMessage": "Кастомизация применена для {country} (-дукаты)",
     "shell.countryCustomizedTitle": "Изменение страны",
-    "shell.contentPanel": "Контент",
     "shell.dashboard.activeProjects": "Активные проекты",
     "shell.dashboard.activeResearch": "Активные исследования",
     "shell.dashboard.army": "Командное положение",
@@ -9578,7 +9603,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "topBar.adminForceResolve": "Админ: форс-резолв",
     "topBar.clientSettings": "Настройки клиента",
     "topBar.colonizationLimit": "Лимит колонизаций",
-    "topBar.contentPanel": "Панель контента",
     "topBar.controlledHexes": "Провинций под контролем",
     "topBar.countryDetails": "Детали страны и её владений",
     "topBar.currentTurn": "Текущий ход",

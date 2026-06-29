@@ -1,4 +1,6 @@
 import type { Express } from "express";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { WsOutMessage } from "@arcanorum/shared";
 import { WORLD_DELTA_MASK } from "@arcanorum/shared";
 import type { RouteAuth } from "../security/routeAuth";
@@ -17,6 +19,7 @@ import {
 } from "./marketSettingsNormalizers";
 import { SETTINGS_MAX_NUMBER } from "./serverRuntimeConfig";
 import { registerAdminSettingsRuntime } from "./adminSettingsRuntime";
+import { validateScenarioDirectory } from "../scenarios/scenarioValidation";
 
 type ServerAdminSettingsRouteRuntimeParams = {
   app: Express;
@@ -47,6 +50,7 @@ export function registerServerAdminSettingsRouteRuntime(params: ServerAdminSetti
     getTurnId: params.getTurnId,
     getActiveScenarioId: params.getActiveScenarioId,
     listScenarios: params.scenarioServerRuntime.listScenarios,
+    getScenarioStatus: () => getScenarioStatus(params),
     getGameSettings: params.getGameSettings,
     normalizeMarketId,
     normalizeMarketSanctionsMap: (input) => normalizeMarketSanctionsMap(input, params.getTurnId()),
@@ -61,4 +65,56 @@ export function registerServerAdminSettingsRouteRuntime(params: ServerAdminSetti
     makeOfficialNews: params.makeOfficialNews,
     broadcast: params.broadcast,
   });
+}
+
+async function getScenarioStatus(params: ServerAdminSettingsRouteRuntimeParams): Promise<unknown> {
+  const activeScenarioId = params.getActiveScenarioId();
+  const scenario = params.scenarioServerRuntime.findScenario(activeScenarioId);
+  const validation = scenario ? await validateScenarioDirectory(scenario.scenarioDir) : null;
+  const settings = params.getGameSettings();
+  return {
+    activeScenarioId,
+    scenario: scenario?.descriptor ?? null,
+    validation: validation
+      ? {
+          ok: validation.ok,
+          summary: validation.summary,
+          issues: validation.issues,
+        }
+      : {
+          ok: false,
+          summary: null,
+          issues: [{ code: "SCENARIO_NOT_FOUND", message: `Active scenario ${activeScenarioId} was not found.` }],
+        },
+    content: summarizeContent(settings.content),
+    assets: {
+      count: settings.content.assets.length,
+      byType: settings.content.assets.reduce<Record<string, number>>((acc, asset) => {
+        acc[asset.type] = (acc[asset.type] ?? 0) + 1;
+        return acc;
+      }, {}),
+    },
+    hashes: {
+      authoredHash: scenario ? readGeneratedAuthoredHash(scenario.scenarioDir) : null,
+    },
+  };
+}
+
+function summarizeContent(content: GameSettings["content"]): Record<string, number> {
+  const summary: Record<string, number> = {};
+  for (const [key, value] of Object.entries(content)) {
+    summary[key] = Array.isArray(value) ? value.length : 0;
+  }
+  return summary;
+}
+
+function readGeneratedAuthoredHash(scenarioDir: string): string | null {
+  const path = join(scenarioDir, ".generated", "index-manifest.json");
+  if (!existsSync(path)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as { authoredHash?: unknown };
+    return typeof parsed.authoredHash === "string" ? parsed.authoredHash : null;
+  } catch {
+    return null;
+  }
 }

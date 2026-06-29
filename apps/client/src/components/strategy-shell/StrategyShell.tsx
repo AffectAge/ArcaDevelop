@@ -232,7 +232,6 @@ type Props = {
   onOpenNotifications: () => void;
   onAdminForceResolve?: () => void;
   onOpenAdminPanel?: () => void;
-  onOpenContentPanel?: () => void;
   onOpenGameSettings?: () => void;
   onOpenClientSettings?: () => void;
   onOpenCivilopedia?: () => void;
@@ -404,9 +403,6 @@ export function StrategyShell(props: Props) {
           ) : null}
           {props.isAdmin && props.onOpenAdminPanel ? (
             <TopActionButton label={t("shell.admin")} icon={SlidersHorizontal} onClick={props.onOpenAdminPanel} />
-          ) : null}
-          {props.isAdmin && props.onOpenContentPanel ? (
-            <TopActionButton label={t("shell.contentPanel")} icon={BookOpen} onClick={props.onOpenContentPanel} />
           ) : null}
           {props.isAdmin && props.onOpenGameSettings ? (
             <TopActionButton label={t("shell.gameSettings")} icon={Network} onClick={props.onOpenGameSettings} />

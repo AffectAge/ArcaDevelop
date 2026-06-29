@@ -1,6 +1,5 @@
 import type { Express } from "express";
 import type { RequestHandler } from "express";
-import type { ZodTypeAny } from "zod";
 import type { RouteAuth } from "../security/routeAuth";
 import {
   registerAdminDiagnosticsRoutes,
@@ -14,7 +13,6 @@ import {
   registerTurnNotificationRoutes,
   type TurnStatusCountryRecord,
 } from "../routes/turnNotificationRoutes";
-import { registerContentRouteRuntime } from "./contentRouteRuntime";
 import type { createWorldDeltaBroadcastRuntime } from "./worldDeltaBroadcastRuntime";
 import type { createCountryRuntimeHelpers } from "./countryRuntimeHelpers";
 import type { createUiNotificationQueue } from "./uiNotificationQueue";
@@ -22,8 +20,8 @@ import type { createUiNotificationRuntime } from "./uiNotificationRuntime";
 import type { createMilitaryRuntimeFacade } from "./militaryRuntimeFacade";
 import type { GameSettings } from "./gameSettingsTypes";
 import type { ContentEntryKind } from "../content/contentEntryPayload";
-import type { ContentEntryPayload, ContentEntryRouteItem } from "../routes/contentEntryRoutes";
-import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
+import type { ContentEntryRouteItem } from "../routes/contentReadRoutes";
+import { registerContentReadRoutes } from "../routes/contentReadRoutes";
 import type { EventLogEntry, ResourceId, ResourceTotals, ServerStatus, WORLD_DELTA_MASK, WsOutMessage } from "@arcanorum/shared";
 
 type CoreRouteCompositionParams = {
@@ -41,7 +39,6 @@ type CoreRouteCompositionParams = {
   uiNotificationRuntime: ReturnType<typeof createUiNotificationRuntime>;
   militaryRuntimeFacade: ReturnType<typeof createMilitaryRuntimeFacade>;
   contentEntryKindSchema: { safeParse: (input: unknown) => { success: true; data: unknown } | { success: false } };
-  culturePayloadSchema: ZodTypeAny;
   getServerStatus: () => ServerStatus;
   getTurnId: () => number;
   getHexTileRoot: () => string;
@@ -68,16 +65,12 @@ type CoreRouteCompositionParams = {
     entries: GameSettings["civilopedia"]["entries"],
   ) => GameSettings["civilopedia"]["categories"];
   getEntriesByKind: (kind: string) => ContentEntryRouteItem[];
-  contentNameExists: (kind: string, name: string, excludeId?: string) => boolean;
-  sanitizeContentEntryByKind: (kind: string, payload: ContentEntryPayload) => Record<string, unknown>;
-  isMilitaryContentKind: (kind: string) => boolean;
   savePersistentState: () => void;
   validateImageDimensions: (...args: Parameters<typeof import("../uploads/uploadValidation").validateImageDimensions>) => ReturnType<typeof import("../uploads/uploadValidation").validateImageDimensions>;
   removeUploadedFile: (...args: Parameters<typeof import("../uploads/uploadValidation").removeUploadedFile>) => ReturnType<typeof import("../uploads/uploadValidation").removeUploadedFile>;
   removeUploadedFiles: (...args: Parameters<typeof import("../uploads/uploadValidation").removeUploadedFiles>) => ReturnType<typeof import("../uploads/uploadValidation").removeUploadedFiles>;
   removeUploadedByUrl: (...args: Parameters<typeof import("../uploads/uploadValidation").removeUploadedByUrl>) => ReturnType<typeof import("../uploads/uploadValidation").removeUploadedByUrl>;
   makeVersionedUploadUrl: (...args: Parameters<typeof import("../uploads/uploadValidation").makeVersionedUploadUrl>) => ReturnType<typeof import("../uploads/uploadValidation").makeVersionedUploadUrl>;
-  resolveContentUploadUrlSegment: (...args: Parameters<typeof import("../uploads/uploadPaths").resolveContentUploadUrlSegment>) => ReturnType<typeof import("../uploads/uploadPaths").resolveContentUploadUrlSegment>;
   makeOfficialNews: (params: {
     turn: number;
     category: EventLogEntry["category"];
@@ -133,6 +126,16 @@ export function registerCoreRouteComposition(params: CoreRouteCompositionParams)
       params.uiNotificationRuntime.isQueuedUiNotificationVisibleForCountry(item, visibilityParams),
   });
 
+  registerContentReadRoutes(params.app, {
+    getActiveScenarioId: params.getActiveScenarioId,
+    getAssets: () => params.getGameSettings().content.assets,
+    parseContentKind: (raw) => {
+      const parsed = params.contentEntryKindSchema.safeParse(raw);
+      return parsed.success ? { success: true, data: parsed.data as ContentEntryKind } : { success: false };
+    },
+    getEntriesByKind: params.getEntriesByKind,
+  });
+
   registerSettingsGuideRoutes(params.app, {
     routeAuth: params.routeAuth,
     getPublicGameSettings: () => {
@@ -177,39 +180,4 @@ export function registerCoreRouteComposition(params: CoreRouteCompositionParams)
     },
   });
 
-  registerContentRouteRuntime({
-    app: params.app,
-    routeAuth: params.routeAuth,
-    upload: params.upload,
-    getTurnId: params.getTurnId,
-    getGameSettings: params.getGameSettings,
-    parseContentKind: (raw) => {
-      const parsed = params.contentEntryKindSchema.safeParse(raw);
-      return parsed.success ? { success: true, data: parsed.data as ContentEntryKind } : { success: false };
-    },
-    parseContentPayload: (body) => {
-      const parsed = params.culturePayloadSchema.safeParse(body);
-      return parsed.success ? { success: true, data: parsed.data } : { success: false, issues: parsed.error.issues };
-    },
-    getEntriesByKind: params.getEntriesByKind,
-    contentNameExists: params.contentNameExists,
-    sanitizeContentEntryByKind: params.sanitizeContentEntryByKind,
-    isMilitaryContentKind: params.isMilitaryContentKind,
-    cloneMilitaryContentSnapshot: () =>
-      params.worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot(
-        params.worldDeltaMask.divisionTemplatesByCountry | params.worldDeltaMask.divisionsById,
-      ),
-    refreshDivisionStatsFromTemplates: () => params.militaryRuntimeFacade.refreshDivisionStatsFromTemplates(),
-    broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase) =>
-      params.worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase as WorldBaseSectionSnapshot),
-    savePersistentState: params.savePersistentState,
-    validateImageDimensions: params.validateImageDimensions,
-    removeUploadedFile: params.removeUploadedFile,
-    removeUploadedFiles: params.removeUploadedFiles,
-    removeUploadedByUrl: params.removeUploadedByUrl,
-    makeVersionedUploadUrl: params.makeVersionedUploadUrl,
-    resolveContentUploadUrlSegment: params.resolveContentUploadUrlSegment,
-    makeOfficialNews: params.makeOfficialNews,
-    broadcast: params.broadcast,
-  });
 }

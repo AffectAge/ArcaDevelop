@@ -22,10 +22,10 @@ async function createScenario(dataRoot: string, folder: string, manifest: Record
   const scenarioDir = join(dataRoot, "scenarios", folder);
   await mkdir(join(scenarioDir, "map/tiles/hex"), { recursive: true });
   await mkdir(join(scenarioDir, ".generated"), { recursive: true });
-  await mkdir(join(scenarioDir, "content"), { recursive: true });
+  await mkdir(join(scenarioDir, "common/goods"), { recursive: true });
   await writeFile(join(scenarioDir, "scenario.json"), JSON.stringify(manifest), "utf8");
   await writeFile(join(scenarioDir, ".generated/hexes.json"), "[]", "utf8");
-  await writeFile(join(scenarioDir, "content/goods.json"), "[]", "utf8");
+  await writeFile(join(scenarioDir, "common/goods/grain.json"), JSON.stringify({ id: "good:grain" }), "utf8");
   return scenarioDir;
 }
 
@@ -53,7 +53,7 @@ describe("scenario catalog", () => {
       active: true,
       startTurn: 3,
       map: { root: "scenarios/demo/map", hasVectorTiles: true, hasHexes: true },
-      contentFiles: ["goods.json"],
+      contentFiles: ["goods/grain.json"],
     });
   });
 

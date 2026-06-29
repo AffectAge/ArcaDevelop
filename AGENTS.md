@@ -124,6 +124,8 @@ Use this routing before work. `docs/task-routing.md` is the standalone source fo
 - Province authored data belongs in `history/provinces/*.json`; old aggregate `provinces.json` files are not target authored sources.
 - Root legacy aggregate content libraries such as `apps/server/data/content-library.json` are forbidden; scenario content belongs under `scenarios/<scenario_id>/common/*/*.json`.
 - Scenario generated indexes belong only under `scenarios/<scenario_id>/.generated/` and must not be manually edited.
+- During active development, do not add backwards-compatibility layers for old DB rows, saves, legacy content fields, old scenario layouts, aliases, or migration fallbacks unless the user explicitly requests that compatibility as a separate decision. Prefer documented destructive reset for incompatible local development state.
+- Authored scenario assets use stable `asset:*` ids under `common/assets/*.json`; authored scenario data must not store `logoUrl`, `flagUrl`, `crestUrl`, external URLs, or direct scenario asset URLs. Runtime player uploads remain a runtime-only exception.
 
 ## Tooltip-First Development
 

@@ -1,0 +1,23 @@
+{
+  "id": "building:paper_mill",
+  "nameKey": "building.paper_mill.name",
+  "description": "",
+  "color": "#fef3c7",
+  "costConstruction": 54,
+  "costDucats": 40,
+  "startingDucats": 10,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 42,
+  "upgradeCostDucats": 30,
+  "inputs": [
+    { "goodId": "good:wood", "amount": 5 },
+    { "goodId": "good:tools", "amount": 1 }
+  ],
+  "outputs": [
+    { "goodId": "good:paper", "amount": 7 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:lumberjacks", "workers": 35 },
+    { "professionId": "profession:machinists", "workers": 35 }
+  ]
+}

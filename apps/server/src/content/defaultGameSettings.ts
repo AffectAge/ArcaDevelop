@@ -30,6 +30,7 @@ export type BuildDefaultGameSettingsParams = {
 export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams): GameSettings {
   const defaults: GameSettings = {
     content: {
+      assets: [],
       races: ensureDefaultRace([]),
       resourceCategories: [],
       hexTypes: [],

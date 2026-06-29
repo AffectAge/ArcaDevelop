@@ -2,6 +2,7 @@ import { HARD_MAX_ADMIN_AUDIT_LOG } from "../security/adminAuditLog";
 import { normalizeCivilopediaCategories, normalizeCivilopediaEntries } from "../content/civilopediaNormalizers";
 import {
   ensureDefaultReligion,
+  normalizeContentAssets,
   normalizeContentAircraftTypes,
   normalizeContentBattalions,
   normalizeContentBuildings,
@@ -54,6 +55,7 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
 
   return {
     content: {
+      assets: normalizeContentAssets((next as Partial<{ content?: { assets?: unknown } }>).content?.assets),
       races: normalizeContentRaces((next as Partial<{ content?: { races?: unknown } }>).content?.races),
       resourceCategories: normalizeContentCultures(
         (next as Partial<{ content?: { resourceCategories?: unknown } }>).content?.resourceCategories,

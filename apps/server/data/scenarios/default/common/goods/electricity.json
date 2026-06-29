@@ -1,0 +1,12 @@
+{
+  "id": "good:electricity",
+  "nameKey": "good.electricity.name",
+  "description": "",
+  "color": "#facc15",
+  "basePrice": 4,
+  "minPrice": 1,
+  "maxPrice": 24,
+  "infraPerUnit": 0.05,
+  "distributionType": "local",
+  "transportModes": ["powerGrid"]
+}

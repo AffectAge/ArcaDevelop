@@ -50,18 +50,13 @@ describe("scenarioValidation", () => {
     expect(result.ok).toBe(true);
   });
 
-  it("fails when a building atlas is missing", async () => {
+  it("allows a missing building atlas so the client can use fallback art", async () => {
     const scenarioDir = await createScenarioFixture();
     await addBuilding(scenarioDir, "building:farm");
 
     const result = await validateScenarioDirectory(scenarioDir);
 
-    expect(result.ok).toBe(false);
-    expect(result.issues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ code: "MISSING_REQUIRED_FILE", path: "assets/buildings/building_farm.png" }),
-      ]),
-    );
+    expect(result.ok).toBe(true);
   });
 
   it("fails when a building atlas has the wrong size", async () => {
@@ -89,18 +84,13 @@ describe("scenarioValidation", () => {
     expect(result.ok).toBe(true);
   });
 
-  it("fails when a city atlas is missing or has the wrong size", async () => {
+  it("allows a missing city atlas and fails when an authored city atlas has the wrong size", async () => {
     const scenarioDir = await createScenarioFixture();
     await addCulture(scenarioDir, "culture:lantian");
 
     const missing = await validateScenarioDirectory(scenarioDir);
 
-    expect(missing.ok).toBe(false);
-    expect(missing.issues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ code: "MISSING_REQUIRED_FILE", path: "assets/cities/culture_lantian.png" }),
-      ]),
-    );
+    expect(missing.ok).toBe(true);
 
     await writeBuildingAtlas(join(scenarioDir, "assets/cities/culture_lantian.png"), 64, 64);
     const wrongSize = await validateScenarioDirectory(scenarioDir);

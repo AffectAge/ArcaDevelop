@@ -16,6 +16,7 @@ export type AdminMetadataRoutesDependencies = {
   routeAuth: RouteAuth;
   getActiveScenarioId: () => string;
   listScenarios: () => unknown[];
+  getScenarioStatus: () => Promise<unknown>;
   auditLogStore: AdminAuditLogReader;
 };
 
@@ -23,6 +24,11 @@ export function registerAdminMetadataRoutes(app: express.Express, deps: AdminMet
   app.get("/admin/scenarios", async (req, res) => {
     if (!(await deps.routeAuth.requireAdmin(req, res))) return;
     return res.json({ activeScenarioId: deps.getActiveScenarioId(), scenarios: deps.listScenarios() });
+  });
+
+  app.get("/admin/scenarios/status", async (req, res) => {
+    if (!(await deps.routeAuth.requireAdmin(req, res))) return;
+    return res.json(await deps.getScenarioStatus());
   });
 
   app.get("/admin/audit-log", async (req, res) => {

@@ -1,0 +1,23 @@
+{
+  "id": "building:furniture_workshop",
+  "nameKey": "building.furniture_workshop.name",
+  "description": "",
+  "color": "#a16207",
+  "costConstruction": 50,
+  "costDucats": 38,
+  "startingDucats": 9,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 40,
+  "upgradeCostDucats": 28,
+  "inputs": [
+    { "goodId": "good:wood", "amount": 6 },
+    { "goodId": "good:tools", "amount": 2 }
+  ],
+  "outputs": [
+    { "goodId": "good:furniture", "amount": 6 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:lumberjacks", "workers": 35 },
+    { "professionId": "profession:smiths", "workers": 35 }
+  ]
+}

@@ -2,21 +2,13 @@ import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import type { ResourceId, ServerStatus, WsOutMessage } from "@arcanorum/shared";
 import { WORLD_DELTA_MASK } from "@arcanorum/shared";
-import type { z } from "zod";
 import type { RouteAuth } from "../security/routeAuth";
 import {
   normalizeCivilopediaCategories,
   normalizeCivilopediaEntries,
 } from "../content/civilopediaNormalizers";
-import {
-  contentEntryKindSchema,
-  culturePayloadSchema,
-  isMilitaryContentKind,
-  sanitizeContentEntryByKind,
-  type ContentEntryKind,
-} from "../content/contentEntryPayload";
+import { contentEntryKindSchema, type ContentEntryKind } from "../content/contentEntryPayload";
 import { getWorldDeltaLogStatus } from "../persistence/worldDeltaLogPersistence";
-import { resolveContentUploadUrlSegment } from "../uploads/uploadPaths";
 import type { upload } from "../uploads/uploadMiddleware";
 import type {
   makeVersionedUploadUrl,
@@ -93,7 +85,6 @@ export function registerServerCoreRouteRuntime(params: ServerCoreRouteRegistrati
     uiNotificationRuntime: params.uiNotificationRuntime,
     militaryRuntimeFacade: params.militaryRuntimeFacade,
     contentEntryKindSchema,
-    culturePayloadSchema,
     getServerStatus: params.getServerStatus,
     getTurnId: params.getTurnId,
     getHexTileRoot: params.mapRuntime.getHexTileRoot,
@@ -134,18 +125,12 @@ export function registerServerCoreRouteRuntime(params: ServerCoreRouteRegistrati
     normalizeCivilopediaEntries,
     normalizeCivilopediaCategories,
     getEntriesByKind: (kind) => params.contentCatalogRuntime.getContentEntriesByKind(kind as ContentEntryKind),
-    contentNameExists: (kind, name, excludeId) =>
-      params.contentCatalogRuntime.contentNameExists(kind as ContentEntryKind, name, excludeId),
-    sanitizeContentEntryByKind: (kind, payload) =>
-      sanitizeContentEntryByKind(kind as ContentEntryKind, payload as z.infer<typeof culturePayloadSchema>),
-    isMilitaryContentKind: (kind) => isMilitaryContentKind(kind as ContentEntryKind),
     savePersistentState: params.savePersistentState,
     validateImageDimensions: params.validateImageDimensions,
     removeUploadedFile: params.removeUploadedFile,
     removeUploadedFiles: params.removeUploadedFiles,
     removeUploadedByUrl: params.removeUploadedByUrl,
     makeVersionedUploadUrl: params.makeVersionedUploadUrl,
-    resolveContentUploadUrlSegment,
     makeOfficialNews: params.makeOfficialNews,
     broadcast: params.broadcast,
   });

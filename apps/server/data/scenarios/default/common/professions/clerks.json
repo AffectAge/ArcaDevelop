@@ -1,0 +1,7 @@
+{
+  "id": "profession:clerks",
+  "nameKey": "profession.clerks.name",
+  "description": "",
+  "color": "#f59e0b",
+  "baseWage": 1.1
+}

@@ -15,7 +15,6 @@ import { GameSettingsPanel } from "./components/GameSettingsPanel";
 import { CountryCustomizationModal } from "./components/CountryCustomizationModal";
 import { ClientSettingsModal } from "./components/ClientSettingsModal";
 import { CivilopediaModal } from "./components/CivilopediaModal";
-import { ContentPanel } from "./components/ContentPanel";
 import { PopulationStatsModal } from "./components/PopulationStatsModal";
 import { StateBudgetModal } from "./components/StateBudgetModal";
 import { MarketModal } from "./components/MarketModal";
@@ -331,7 +330,6 @@ export default function App() {
   }, []);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [contentPanelOpen, setContentPanelOpen] = useState(false);
   const [populationStatsOpen, setPopulationStatsOpen] = useState(false);
   const [stateBudgetOpen, setStateBudgetOpen] = useState(false);
   const [buildingOverviewOpen, setBuildingOverviewOpen] = useState(false);
@@ -2890,7 +2888,6 @@ export default function App() {
             isAdmin={auth.isAdmin}
             onAdminForceResolve={forceResolveAsAdmin}
             onOpenAdminPanel={() => setAdminOpen(true)}
-            onOpenContentPanel={() => setContentPanelOpen(true)}
             onOpenGameSettings={() => setGameSettingsOpen(true)}
             onOpenCountryCustomization={() => setCountryCustomizationOpen(true)}
             onOpenClientSettings={() => setClientSettingsOpen(true)}
@@ -2938,14 +2935,6 @@ export default function App() {
             }}
           />
         </motion.div>
-      )}
-
-      {auth?.isAdmin && auth?.token && (
-        <ContentPanel
-          open={contentPanelOpen}
-          token={auth.token}
-          onClose={() => setContentPanelOpen(false)}
-        />
       )}
 
       {auth && (

@@ -1,0 +1,12 @@
+{
+  "id": "good:cement",
+  "nameKey": "good.cement.name",
+  "description": "",
+  "color": "#cbd5e1",
+  "basePrice": 3,
+  "minPrice": 0.8,
+  "maxPrice": 16,
+  "infraPerUnit": 0.26,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea"]
+}

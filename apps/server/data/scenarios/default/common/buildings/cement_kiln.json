@@ -1,0 +1,23 @@
+{
+  "id": "building:cement_kiln",
+  "nameKey": "building.cement_kiln.name",
+  "description": "",
+  "color": "#cbd5e1",
+  "costConstruction": 58,
+  "costDucats": 42,
+  "startingDucats": 10,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 46,
+  "upgradeCostDucats": 32,
+  "inputs": [
+    { "goodId": "good:stone", "amount": 7 },
+    { "goodId": "good:coal", "amount": 3 }
+  ],
+  "outputs": [
+    { "goodId": "good:cement", "amount": 8 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:quarry_workers", "workers": 50 },
+    { "professionId": "profession:machinists", "workers": 35 }
+  ]
+}

@@ -17,6 +17,7 @@ describe("adminMetadataRoutes", () => {
       routeAuth: createAllowedRouteAuth(),
       getActiveScenarioId: () => "scenario-a",
       listScenarios: () => [{ id: "scenario-a" }],
+      getScenarioStatus: async () => ({ activeScenarioId: "scenario-a", validation: { ok: true } }),
       auditLogStore: makeAuditLogStore(),
     });
 
@@ -24,6 +25,22 @@ describe("adminMetadataRoutes", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ activeScenarioId: "scenario-a", scenarios: [{ id: "scenario-a" }] });
+  });
+
+  it("serves active scenario status through admin auth", async () => {
+    const app = express();
+    registerAdminMetadataRoutes(app, {
+      routeAuth: createAllowedRouteAuth(),
+      getActiveScenarioId: () => "scenario-a",
+      listScenarios: () => [],
+      getScenarioStatus: async () => ({ activeScenarioId: "scenario-a", validation: { ok: true } }),
+      auditLogStore: makeAuditLogStore(),
+    });
+
+    const response = await request(app, "/admin/scenarios/status");
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ activeScenarioId: "scenario-a", validation: { ok: true } });
   });
 
   it("serves pruned audit log through admin auth", async () => {
@@ -34,6 +51,7 @@ describe("adminMetadataRoutes", () => {
       routeAuth: createAllowedRouteAuth(),
       getActiveScenarioId: () => "scenario-a",
       listScenarios: () => [],
+      getScenarioStatus: async () => ({ activeScenarioId: "scenario-a" }),
       auditLogStore: {
         prune,
         getRetentionSettings: () => ({ maxEntries: 150, retentionTurns: 20 }),

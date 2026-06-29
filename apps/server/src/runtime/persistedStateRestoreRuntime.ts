@@ -4,6 +4,7 @@ import { normalizeMarketOverviewState as normalizeMarketOverviewStateFromMarketT
 import { restoreOrdersByTurnState, restoreResolveReadyByTurnState } from "../persistence/turnStatePersistence";
 import { normalizeScenarioId } from "../scenarios/runtimePaths";
 import type { FoundScenario } from "../scenarios/scenarioCatalog";
+import type { ScenarioDefines } from "../scenarios/scenarioDefinesLoader";
 import type { GameSettings } from "./gameSettingsTypes";
 import { restorePersistedGameSettings } from "./persistedGameSettingsRestore";
 import { restorePersistedWorldBase } from "./persistedWorldBaseRestore";
@@ -27,6 +28,9 @@ type PersistedStateRestoreRuntimeParams = {
   applyMapRuntime: (mapRoot: string, hexIndexPath?: string) => void;
   resetMapRuntimeToDefault: () => void;
   findScenario: (scenarioId: string) => FoundScenario | null;
+  loadScenarioContent: (scenarioDir: string) => GameSettings["content"] | null;
+  loadScenarioDefines: (scenarioDir: string) => ScenarioDefines | null;
+  applyScenarioDefines: (settings: GameSettings, defines: ScenarioDefines | null) => GameSettings;
   defaultGameSettings: () => GameSettings;
   getDefaultWorldBase: (turnId: number) => WorldBase;
   setGameSettings: (settings: GameSettings) => void;
@@ -111,15 +115,21 @@ export function createPersistedStateRestoreRuntime(params: PersistedStateRestore
 
     const turnId = params.getTurnId();
     if (parsed.gameSettings && typeof parsed.gameSettings === "object") {
-      params.setGameSettings(
-        restorePersistedGameSettings({
-          input: parsed.gameSettings,
-          defaults: params.defaultGameSettings(),
-          turnId,
-          corridorLoadHistoryLength: params.corridorLoadHistoryLength,
-          round3: params.round3,
-        }),
-      );
+      let restoredSettings = restorePersistedGameSettings({
+        input: parsed.gameSettings,
+        defaults: params.defaultGameSettings(),
+        turnId,
+        corridorLoadHistoryLength: params.corridorLoadHistoryLength,
+        round3: params.round3,
+      });
+      if (savedScenario) {
+        const scenarioContent = params.loadScenarioContent(savedScenario.scenarioDir);
+        if (scenarioContent) {
+          restoredSettings = { ...restoredSettings, content: scenarioContent };
+        }
+        restoredSettings = params.applyScenarioDefines(restoredSettings, params.loadScenarioDefines(savedScenario.scenarioDir));
+      }
+      params.setGameSettings(restoredSettings);
     }
 
     params.setWorldBase(

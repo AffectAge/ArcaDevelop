@@ -1,0 +1,22 @@
+{
+  "id": "building:glassworks",
+  "nameKey": "building.glassworks.name",
+  "description": "",
+  "color": "#67e8f9",
+  "costConstruction": 62,
+  "costDucats": 48,
+  "startingDucats": 10,
+  "maxLevel": 5,
+  "upgradeCostConstruction": 50,
+  "upgradeCostDucats": 36,
+  "inputs": [
+    { "goodId": "good:stone", "amount": 4 },
+    { "goodId": "good:coal", "amount": 3 }
+  ],
+  "outputs": [
+    { "goodId": "good:glass", "amount": 7 }
+  ],
+  "workforceRequirements": [
+    { "professionId": "profession:machinists", "workers": 65 }
+  ]
+}

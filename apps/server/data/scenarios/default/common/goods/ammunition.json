@@ -1,0 +1,12 @@
+{
+  "id": "good:ammunition",
+  "nameKey": "good.ammunition.name",
+  "description": "",
+  "color": "#7f1d1d",
+  "basePrice": 5,
+  "minPrice": 1.5,
+  "maxPrice": 28,
+  "infraPerUnit": 0.14,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea"]
+}

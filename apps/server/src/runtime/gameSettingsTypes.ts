@@ -26,8 +26,16 @@ export type GameContentEntry = {
   description: string;
   color: string;
   logoUrl: string | null;
+  assetId?: string | null;
+  iconAssetId?: string | null;
+  flagAssetId?: string | null;
+  crestAssetId?: string | null;
+  atlasAssetId?: string | null;
+  imageAssetId?: string | null;
   malePortraitUrl: string | null;
   femalePortraitUrl: string | null;
+  malePortraitAssetId?: string | null;
+  femalePortraitAssetId?: string | null;
   baseWage?: number | null;
   needsProfile?: CultureNeedsProfile | null;
   ideologyWeights?: Record<string, number>;
@@ -57,6 +65,23 @@ export type GameContentEntry = {
   event?: GameEventDefinition | null;
   journalEntry?: JournalEntryDefinition | null;
   ideologyAttractionRules?: IdeologyAttractionRule[];
+};
+
+export type AssetContentEntry = {
+  id: string;
+  type: "icon" | "atlas" | "image";
+  path: string;
+  width: number;
+  height: number;
+  frames?: Record<
+    string,
+    {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }
+  >;
 };
 
 export type GoodContentEntry = GameContentEntry & {
@@ -247,6 +272,7 @@ export type TransportCorridorEntry = {
 
 export type GameSettings = {
   content: {
+    assets: AssetContentEntry[];
     races: GameContentEntry[];
     resourceCategories: GameContentEntry[];
     hexTypes: GameContentEntry[];

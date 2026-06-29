@@ -1,0 +1,7 @@
+{
+  "id": "profession:machinists",
+  "nameKey": "profession.machinists.name",
+  "description": "",
+  "color": "#64748b",
+  "baseWage": 1.2
+}

@@ -1,0 +1,12 @@
+{
+  "id": "good:furniture",
+  "nameKey": "good.furniture.name",
+  "description": "",
+  "color": "#a16207",
+  "basePrice": 4,
+  "minPrice": 1.1,
+  "maxPrice": 20,
+  "infraPerUnit": 0.18,
+  "distributionType": "tradeable",
+  "transportModes": ["land", "sea"]
+}
