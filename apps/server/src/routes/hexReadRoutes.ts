@@ -1,5 +1,5 @@
 import type express from "express";
-import type { HexMapArtifact, MapFeatureInstance } from "@arcanorum/shared";
+import type { HexMapArtifact, MapFeatureInstance, MapFeatureVisualRuleDefinition } from "@arcanorum/shared";
 import type { HexMapIndexEntry } from "../map/hexIndex";
 import type { RouteAuth } from "../security/routeAuth";
 
@@ -12,6 +12,7 @@ export type HexReadRoutesDependencies = {
   getHexIndex: () => HexMapIndexEntry[];
   getHexMapArtifact: () => HexMapArtifact | null;
   getMapFeatures: () => MapFeatureInstance[];
+  getMapFeatureVisuals: () => MapFeatureVisualRuleDefinition[];
   getWorldBase: () => HexReadWorldState;
 };
 
@@ -110,5 +111,10 @@ export function registerHexReadRoutes(
   app.get("/hex-map/features", (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
     return res.json({ features: deps.getMapFeatures() });
+  });
+
+  app.get("/hex-map/feature-visuals", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    return res.json({ visuals: deps.getMapFeatureVisuals() });
   });
 }

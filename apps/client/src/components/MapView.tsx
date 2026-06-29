@@ -16,6 +16,8 @@ import {
   type HexMapSettings,
   type HexTile,
   type MapFeatureInstance,
+  type MapFeatureVisualId,
+  type MapFeatureVisualRuleDefinition,
   type WorldBase,
 } from "@arcanorum/shared";
 import {
@@ -85,7 +87,7 @@ import { type BuildingAtlasState } from "../assets/buildingAtlas";
 import { getBuildingAtlasTextures } from "../map/buildingAtlasTextureCache";
 import { type CityAtlasState } from "../assets/cityAtlas";
 import { getCityAtlasTextures } from "../map/cityAtlasTextureCache";
-import { NATURAL_FEATURE_VISUAL_IDS, resolveFeatureAtlasVariant } from "../assets/featureAtlas";
+import { NATURAL_FEATURE_VISUAL_IDS, resolveFeatureAtlasFrame } from "../assets/featureAtlas";
 import { getFeatureAtlasTextures } from "../map/featureAtlasTextureCache";
 import { CorridorBuildHud } from "./map-hud/CorridorBuildHud";
 import { getCorridorAtlasTextures, type CorridorAtlasTextures } from "../map/corridorAtlasTextureCache";
@@ -362,6 +364,7 @@ export function MapView({
   const [serverMapArtifact, setServerMapArtifact] = useState<HexMapArtifact | null>(null);
   const [mapLoadError, setMapLoadError] = useState(false);
   const [mapFeatures, setMapFeatures] = useState<MapFeatureInstance[]>([]);
+  const [mapFeatureVisuals, setMapFeatureVisuals] = useState<MapFeatureVisualRuleDefinition[]>([]);
   const mapArtifact = serverMapArtifact ?? EMPTY_HEX_MAP_ARTIFACT;
   const initialCamera = useMemo(() => buildInitialHexCamera(mapArtifact.settings), [mapArtifact.settings]);
   const showStatsPanel = useMemo(() => shouldShowMapStatsPanel(), []);
@@ -465,6 +468,25 @@ export function MapView({
       .catch((error: unknown) => {
         if ((error as { name?: string }).name === "AbortError") return;
         setMapFeatures([]);
+      });
+    return () => controller.abort();
+  }, [apiBase]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`${apiBase}/hex-map/feature-visuals`, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HEX_MAP_FEATURE_VISUALS_REQUEST_FAILED:${response.status}`);
+        return response.json() as Promise<{ visuals?: MapFeatureVisualRuleDefinition[] }>;
+      })
+      .then((payload) => {
+        if (!controller.signal.aborted) {
+          setMapFeatureVisuals(Array.isArray(payload.visuals) ? payload.visuals : []);
+        }
+      })
+      .catch((error: unknown) => {
+        if ((error as { name?: string }).name === "AbortError") return;
+        setMapFeatureVisuals([]);
       });
     return () => controller.abort();
   }, [apiBase]);
@@ -1725,6 +1747,7 @@ export function MapView({
       const sprite = buildNaturalFeatureSprite({
         tile,
         scenarioId,
+        visualRules: mapFeatureVisuals,
         size,
         cameraScale: camera.scale,
         onReady: () => setFeatureTextureVersion((value) => value + 1),
@@ -1735,7 +1758,7 @@ export function MapView({
     }
     performanceStatsRef.current.visibleSprites += visibleSprites;
     app.render();
-  }, [camera, featureTextureVersion, mapArtifact.settings.hexSize, mapArtifact.tiles, mapLayers.features, pixiReady, scenarioId]);
+  }, [camera, featureTextureVersion, mapArtifact.settings.hexSize, mapArtifact.tiles, mapFeatureVisuals, mapLayers.features, pixiReady, scenarioId]);
 
   useEffect(() => {
     const layer = siteFeatureLayerRef.current;
@@ -1756,6 +1779,7 @@ export function MapView({
         feature,
         tile,
         scenarioId,
+        visualRules: mapFeatureVisuals,
         size,
         cameraScale: camera.scale,
         onReady: () => setFeatureTextureVersion((value) => value + 1),
@@ -1766,7 +1790,7 @@ export function MapView({
     }
     performanceStatsRef.current.visibleSprites += visibleSprites;
     app.render();
-  }, [camera, featureTextureVersion, mapArtifact.settings.hexSize, mapFeatures, mapLayers.features, pixiReady, scenarioId, tileById]);
+  }, [camera, featureTextureVersion, mapArtifact.settings.hexSize, mapFeatureVisuals, mapFeatures, mapLayers.features, pixiReady, scenarioId, tileById]);
 
   useEffect(() => {
     const layer = corridorPersistentLayerRef.current;
@@ -3162,6 +3186,7 @@ function getCorridorTextureAlpha(status: CorridorAtlasStatus, preview: boolean):
 function buildNaturalFeatureSprite(params: {
   tile: HexTile;
   scenarioId: string | null | undefined;
+  visualRules: MapFeatureVisualRuleDefinition[];
   size: number;
   cameraScale: number;
   onReady: () => void;
@@ -3173,7 +3198,7 @@ function buildNaturalFeatureSprite(params: {
     featureId: visualId,
     onReady: params.onReady,
   });
-  const texture = textures?.[resolveFeatureAtlasVariant(`${visualId}:${params.tile.id}`)];
+  const texture = textures?.[resolveFeatureAtlasFrame({ visualId, tile: params.tile, seed: `${visualId}:${params.tile.id}`, rules: params.visualRules })];
   if (!texture) return null;
   const center = axialToPixel(params.tile, params.size);
   const sprite = new Sprite(texture);
@@ -3190,6 +3215,7 @@ function buildSiteFeatureSprite(params: {
   feature: MapFeatureInstance;
   tile: HexTile;
   scenarioId: string | null | undefined;
+  visualRules: MapFeatureVisualRuleDefinition[];
   size: number;
   cameraScale: number;
   onReady: () => void;
@@ -3199,7 +3225,12 @@ function buildSiteFeatureSprite(params: {
     featureId: params.feature.visualId,
     onReady: params.onReady,
   });
-  const texture = textures?.[resolveFeatureAtlasVariant(`${params.feature.visualId}:${params.feature.id}:${params.tile.id}`)];
+  const texture = textures?.[resolveFeatureAtlasFrame({
+    visualId: params.feature.visualId,
+    tile: params.tile,
+    seed: `${params.feature.visualId}:${params.feature.id}:${params.tile.id}`,
+    rules: params.visualRules,
+  })];
   if (!texture) return null;
   const center = axialToPixel(params.tile, params.size);
   const sprite = new Sprite(texture);
@@ -3212,7 +3243,7 @@ function buildSiteFeatureSprite(params: {
   return sprite;
 }
 
-function resolveNaturalFeatureVisualId(feature: HexFeature): string | null {
+function resolveNaturalFeatureVisualId(feature: HexFeature): MapFeatureVisualId | null {
   return feature === "none" ? null : NATURAL_FEATURE_VISUAL_IDS[feature];
 }
 

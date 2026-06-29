@@ -103,9 +103,9 @@ describe("scenarioValidation", () => {
     );
   });
 
-  it("validates 256x448 PNG feature atlases when scenario overrides them", async () => {
+  it("validates 384x448 PNG feature atlases when scenario overrides them", async () => {
     const scenarioDir = await createScenarioFixture();
-    await writeBuildingAtlas(join(scenarioDir, "assets/features/feature-atlas.png"), 256, 448);
+    await writeBuildingAtlas(join(scenarioDir, "assets/features/feature-atlas.png"), 384, 448);
 
     const result = await validateScenarioDirectory(scenarioDir);
 
@@ -114,7 +114,7 @@ describe("scenarioValidation", () => {
 
   it("fails when an authored feature atlas has the wrong size", async () => {
     const scenarioDir = await createScenarioFixture();
-    await writeBuildingAtlas(join(scenarioDir, "assets/features/feature-atlas.png"), 256, 64);
+    await writeBuildingAtlas(join(scenarioDir, "assets/features/feature-atlas.png"), 256, 448);
 
     const oldSixVariantSize = await validateScenarioDirectory(scenarioDir);
 
@@ -149,6 +149,52 @@ describe("scenarioValidation", () => {
     const result = await validateScenarioDirectory(scenarioDir);
 
     expect(result.ok).toBe(true);
+  });
+
+  it("validates map feature visual definitions with conditional frames", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await writeJson(join(scenarioDir, "common/map_feature_visuals/snowcap.json"), {
+      id: "map_feature_visual:snowcap",
+      visualId: "feature:snowcap",
+      frames: [
+        {
+          frame: 5,
+          priority: 10,
+          conditions: {
+            terrains: ["mountains", "snow"],
+            biomes: ["alpine"],
+            temperatureBands: ["cold", "frozen"],
+            moistureBands: ["normal", "wet"],
+            minElevation: 0.86,
+            maxTemperature: 0.24,
+            distanceToWater: [2, 3],
+            hasRiver: false,
+          },
+        },
+      ],
+    });
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("fails invalid map feature visual definitions", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await writeJson(join(scenarioDir, "common/map_feature_visuals/bad.json"), {
+      id: "map_feature_visual:bad",
+      visualId: "feature:snowcap",
+      frames: [{ frame: 6, conditions: { temperatureBands: ["freezing"], riverMasks: [128], unknown: true } }],
+    });
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "INVALID_MAP_FEATURE_VISUAL" }),
+      ]),
+    );
   });
 
   it("fails invalid map feature generator definitions", async () => {

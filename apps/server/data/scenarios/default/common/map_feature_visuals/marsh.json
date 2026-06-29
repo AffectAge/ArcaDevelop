@@ -1,0 +1,49 @@
+{
+  "id": "map_feature_visual:marsh",
+  "visualId": "feature:marsh",
+  "frames": [
+    {
+      "frame": 0,
+      "weight": 2,
+      "conditions": {
+        "biomes": ["swamp"]
+      }
+    },
+    {
+      "frame": 1,
+      "weight": 2,
+      "conditions": {
+        "moistureBands": ["wet"]
+      }
+    },
+    {
+      "frame": 2,
+      "priority": 5,
+      "conditions": {
+        "moistureBands": ["saturated"]
+      }
+    },
+    {
+      "frame": 3,
+      "priority": 5,
+      "conditions": {
+        "distanceToWater": [1]
+      }
+    },
+    {
+      "frame": 4,
+      "priority": 8,
+      "conditions": {
+        "biomes": ["coastal_wetland"],
+        "isCoastal": true
+      }
+    },
+    {
+      "frame": 5,
+      "priority": 8,
+      "conditions": {
+        "hasRiver": true
+      }
+    }
+  ]
+}

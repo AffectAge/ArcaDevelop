@@ -22,17 +22,23 @@ export type HexBiome =
   | "deep_ocean"
   | "coastal_water"
   | "freshwater"
-  | "temperate"
-  | "boreal"
-  | "tropical"
-  | "arid"
-  | "cold"
+  | "temperate_grassland"
+  | "temperate_forest"
+  | "boreal_forest"
+  | "tropical_rainforest"
+  | "dry_scrubland"
+  | "arid_desert"
   | "alpine"
-  | "marsh";
+  | "tundra"
+  | "swamp"
+  | "coastal_wetland";
 
 export type HexFeature = "none" | "forest" | "dense_forest" | "jungle" | "marsh" | "scrub" | "snowcap";
 export type HexWaterKind = "ocean" | "sea" | "lake" | null;
 export type HexDirection = 0 | 1 | 2 | 3 | 4 | 5;
+export type HexDistanceToWater = 0 | 1 | 2 | 3;
+export type HexTemperatureBand = "frozen" | "cold" | "cool" | "temperate" | "warm" | "hot";
+export type HexMoistureBand = "arid" | "dry" | "normal" | "wet" | "saturated";
 export type MapFeatureTypeId = `feature:${string}`;
 export type MapFeatureInstanceId = `map_feature:${string}`;
 export type MapFeatureCategory = "natural" | "deposit" | "site" | "strategic";
@@ -55,6 +61,12 @@ export type HexTile = HexAxial & {
   elevation: number;
   moisture: number;
   temperature: number;
+  temperatureBand: HexTemperatureBand;
+  moistureBand: HexMoistureBand;
+  distanceToWater: HexDistanceToWater;
+  isCoastal: boolean;
+  riverMask: number;
+  riverWidth: number;
   movementCost: number;
   passable: boolean;
 };
@@ -142,4 +154,36 @@ export type MapFeatureGeneratorDefinition = {
   };
   global?: MapFeatureCountRule;
   perRegion?: MapFeatureRegionCountRule;
+};
+
+export type MapFeatureVisualCondition = {
+  terrains?: HexTerrain[];
+  features?: HexFeature[];
+  biomes?: HexBiome[];
+  waterKinds?: Array<Exclude<HexWaterKind, null>>;
+  temperatureBands?: HexTemperatureBand[];
+  moistureBands?: HexMoistureBand[];
+  minElevation?: number;
+  maxElevation?: number;
+  minTemperature?: number;
+  maxTemperature?: number;
+  minMoisture?: number;
+  maxMoisture?: number;
+  distanceToWater?: HexDistanceToWater[];
+  isCoastal?: boolean;
+  hasRiver?: boolean;
+  riverMasks?: number[];
+};
+
+export type MapFeatureVisualFrameRule = {
+  frame: number;
+  priority?: number;
+  weight?: number;
+  conditions?: MapFeatureVisualCondition;
+};
+
+export type MapFeatureVisualRuleDefinition = {
+  id: `map_feature_visual:${string}`;
+  visualId: MapFeatureVisualId;
+  frames: MapFeatureVisualFrameRule[];
 };

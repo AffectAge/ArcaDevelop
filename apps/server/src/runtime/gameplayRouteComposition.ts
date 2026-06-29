@@ -26,6 +26,7 @@ type GameplayRouteCompositionParams = {
     getHexIndex: HexDeps["getHexIndex"];
     getHexMapArtifact: HexDeps["getHexMapArtifact"];
     getMapFeatures: HexDeps["getMapFeatures"];
+    getMapFeatureVisuals: HexDeps["getMapFeatureVisuals"];
   };
   turnOrderRuntime: {
     removeOrderFromTurnIndexes: (order: Order) => void;
@@ -132,6 +133,7 @@ export function registerGameplayRouteComposition(params: GameplayRouteCompositio
     getHexIndex: params.mapRuntime.getHexIndex,
     getHexMapArtifact: params.mapRuntime.getHexMapArtifact,
     getMapFeatures: params.mapRuntime.getMapFeatures,
+    getMapFeatureVisuals: params.mapRuntime.getMapFeatureVisuals,
     getWorldBase: params.getWorldBase,
     getHexRenameDucatsCost: params.getHexRenameDucatsCost,
     getRegionColonizationConfig: params.colonizationRuntime.getRegionColonizationConfig,

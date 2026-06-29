@@ -1,0 +1,51 @@
+{
+  "id": "map_feature_visual:snowcap",
+  "visualId": "feature:snowcap",
+  "frames": [
+    {
+      "frame": 0,
+      "weight": 2,
+      "conditions": {
+        "biomes": ["alpine"]
+      }
+    },
+    {
+      "frame": 1,
+      "weight": 2,
+      "conditions": {
+        "temperatureBands": ["cold"]
+      }
+    },
+    {
+      "frame": 2,
+      "priority": 5,
+      "conditions": {
+        "temperatureBands": ["frozen"]
+      }
+    },
+    {
+      "frame": 3,
+      "priority": 5,
+      "conditions": {
+        "terrains": ["snow"]
+      }
+    },
+    {
+      "frame": 4,
+      "priority": 10,
+      "conditions": {
+        "terrains": ["mountains", "snow"],
+        "minElevation": 0.78,
+        "maxTemperature": 0.24
+      }
+    },
+    {
+      "frame": 5,
+      "priority": 10,
+      "conditions": {
+        "terrains": ["mountains", "snow"],
+        "minElevation": 0.86
+      }
+    }
+  ]
+}

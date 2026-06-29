@@ -20,6 +20,9 @@ Hexes are lightweight geographic units. They support:
 - elevation,
 - moisture,
 - temperature,
+- temperature band and moisture band,
+- distance to water and coastal flag,
+- compact river mask and river width,
 - movement cost,
 - passability,
 - river and coast edge metadata.

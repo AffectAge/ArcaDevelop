@@ -97,7 +97,28 @@ Example:
 }
 ```
 
-Feature visuals use one common PNG atlas at `assets/features/feature-atlas.png`. The atlas is `256x448`: four horizontal `64x64` variants per row, with rows assigned to current feature visual ids (`feature:forest`, `feature:dense_forest`, `feature:jungle`, `feature:marsh`, `feature:scrub`, `feature:snowcap`, `feature:ancient_ruins`). Missing scenario feature atlases use the client-owned fallback atlas; declared `asset:*` entries still need valid local files.
+Feature visuals use one common PNG atlas at `assets/features/feature-atlas.png`. The atlas is `384x448`: six horizontal `64x64` variants per row, with rows assigned to current feature visual ids (`feature:forest`, `feature:dense_forest`, `feature:jungle`, `feature:marsh`, `feature:scrub`, `feature:snowcap`, `feature:ancient_ruins`). Missing scenario feature atlases use the client-owned fallback atlas; declared `asset:*` entries still need valid local files.
+
+Conditional feature frame rules live in `common/map_feature_visuals/*.json`. They are optional; when absent, the client uses built-in defaults. Conditions are evaluated against map artifact fields such as `terrain`, `feature`, `biome`, `temperatureBand`, `moistureBand`, `distanceToWater`, `isCoastal`, and `riverMask`.
+
+```json
+{
+  "id": "map_feature_visual:snowcap",
+  "visualId": "feature:snowcap",
+  "frames": [
+    {
+      "frame": 5,
+      "priority": 10,
+      "conditions": {
+        "terrains": ["mountains", "snow"],
+        "biomes": ["alpine"],
+        "temperatureBands": ["cold", "frozen"],
+        "minElevation": 0.86
+      }
+    }
+  ]
+}
+```
 
 Base game resource point icons are not scenario content. Population, culture, science, religion, colonization, construction, ducats, and gold icons live as repo-owned PNG assets in `apps/client/public/game-assets/resource-icons/` and are mapped by the client. Scenarios must not define, upload, or override these icons; scenario assets remain for scenario-owned visuals such as flags, crests, backgrounds, buildings, goods, and authored art.
 

@@ -1,0 +1,49 @@
+{
+  "id": "map_feature_visual:jungle",
+  "visualId": "feature:jungle",
+  "frames": [
+    {
+      "frame": 0,
+      "weight": 2,
+      "conditions": {
+        "biomes": ["tropical_rainforest"]
+      }
+    },
+    {
+      "frame": 1,
+      "weight": 2,
+      "conditions": {
+        "temperatureBands": ["warm", "hot"]
+      }
+    },
+    {
+      "frame": 2,
+      "priority": 5,
+      "conditions": {
+        "moistureBands": ["wet"]
+      }
+    },
+    {
+      "frame": 3,
+      "priority": 5,
+      "conditions": {
+        "moistureBands": ["saturated"]
+      }
+    },
+    {
+      "frame": 4,
+      "priority": 8,
+      "conditions": {
+        "distanceToWater": [1],
+        "moistureBands": ["wet", "saturated"]
+      }
+    },
+    {
+      "frame": 5,
+      "priority": 8,
+      "conditions": {
+        "hasRiver": true
+      }
+    }
+  ]
+}

@@ -23,7 +23,7 @@ Accepted
 
 ## Consequences
 
-- Benefits: features are visible as art assets, scenario overrides use one stable common atlas path, each feature row can provide four same-feature texture variants, and generated special features have stable ids under `.generated/`.
+- Benefits: features are visible as art assets, scenario overrides use one stable common atlas path, each feature row can provide six same-feature texture variants, conditional frame rules can use lightweight map metadata, and generated special features have stable ids under `.generated/`.
 - Risks: feature sprite rendering can become a map hot path if too many sprites are visible; viewport filtering and future chunk renderers should be used for larger worlds.
 - Migration/removal work: remove `hexMapOverlayMeshRenderer`; generated map feature indexes can be deleted and regenerated from scenario generator files.
 - Compatibility decision: no legacy overlay fallback is retained; missing scenario feature atlases use the repo-owned fallback atlas.

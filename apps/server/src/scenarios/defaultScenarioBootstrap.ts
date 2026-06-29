@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import { dirname, resolve } from "node:path";
 import {
   DEFAULT_HEX_MAP_SETTINGS,
+  enrichHexMapVisualMetadata,
   generateHexMap,
   getNeighborAxial,
   makeHexId,
@@ -87,13 +88,16 @@ export function ensureDefaultScenario(params: EnsureDefaultScenarioParams): Defa
   });
 
   const settings = readHexMapSettings(settingsPath);
-  const artifact = params.forceGenerated || !existsSync(artifactPath)
+  const artifactExists = existsSync(artifactPath);
+  const rawExistingArtifact = !params.forceGenerated && artifactExists ? readJsonFile<HexMapArtifact>(artifactPath) : null;
+  const artifactMissingVisualMetadata = rawExistingArtifact ? rawExistingArtifact.tiles.some((tile) => tile.temperatureBand == null || tile.moistureBand == null || tile.distanceToWater == null || tile.riverMask == null) : false;
+  const artifact = params.forceGenerated || !rawExistingArtifact
     ? generateHexMap(settings)
-    : readJsonFile<HexMapArtifact>(artifactPath);
+    : enrichHexMapVisualMetadata(rawExistingArtifact);
   const generatedRegions = buildGeneratedRegions(artifact);
   const hexIndex = buildHexMapIndex(artifact, generatedRegions.regionColorById);
 
-  if (params.forceGenerated || !existsSync(artifactPath)) writeJsonFile(artifactPath, artifact);
+  if (params.forceGenerated || !artifactExists || artifactMissingVisualMetadata) writeJsonFile(artifactPath, artifact);
   if (params.forceGenerated || !existsSync(hexIndexPath)) writeJsonFile(hexIndexPath, hexIndex);
   if (params.forceGenerated || !existsSync(generatedRegionIndexPath)) {
     writeJsonFile(generatedRegionIndexPath, generatedRegions.regions);
@@ -223,9 +227,11 @@ function fertilityForTile(tile: HexTile): number {
 
 function colorForRegion(tile: HexTile): string {
   if (tile.waterKind) return "#2f7f98";
-  if (tile.biome === "arid") return "#b8a45f";
-  if (tile.biome === "tropical") return "#3d8b52";
-  if (tile.biome === "cold" || tile.biome === "alpine") return "#8a9aa3";
+  if (tile.biome === "arid_desert" || tile.biome === "dry_scrubland") return "#b8a45f";
+  if (tile.biome === "tropical_rainforest") return "#3d8b52";
+  if (tile.biome === "tundra" || tile.biome === "alpine") return "#8a9aa3";
+  if (tile.biome === "swamp" || tile.biome === "coastal_wetland") return "#5f8e68";
+  if (tile.biome === "boreal_forest" || tile.biome === "temperate_forest") return "#4f7f45";
   return "#5f8f52";
 }
 

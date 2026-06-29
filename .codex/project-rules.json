@@ -256,6 +256,7 @@
       "markets": "scenarios/<scenarioId>/common/markets/*.json",
       "modifiers": "scenarios/<scenarioId>/common/modifiers/*.json",
       "mapFeatureGenerators": "scenarios/<scenarioId>/common/map_feature_generators/*.json",
+      "mapFeatureVisuals": "scenarios/<scenarioId>/common/map_feature_visuals/*.json",
       "interestGroups": "scenarios/<scenarioId>/common/interestGroups/*.json",
       "parties": "scenarios/<scenarioId>/common/parties/*.json",
       "companies": "scenarios/<scenarioId>/common/companies/*.json",

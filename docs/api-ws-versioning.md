@@ -98,9 +98,11 @@ The server statically serves `/scenario-assets/:scenarioId/assets/buildings/*` f
 
 City marker visuals use the same atlas convention with culture ids. Clients derive city atlas URLs as `/scenario-assets/<scenarioId>/assets/cities/<sanitizedCultureId>.png`, and the server statically serves `/scenario-assets/:scenarioId/assets/cities/*` from `scenarios/<scenarioId>/assets/cities/`. Scenario validation requires each culture's city atlas to be a readable PNG sized `256x64`.
 
-Feature visuals use one common scenario atlas at `/scenario-assets/<scenarioId>/assets/features/feature-atlas.png`, with a repo fallback at `/game-assets/features/fallback-feature-atlas.png`. The atlas is `256x448`: four `64x64` variants across each row, with rows assigned to current feature visual ids (`feature:forest`, `feature:dense_forest`, `feature:jungle`, `feature:marsh`, `feature:scrub`, `feature:snowcap`, `feature:ancient_ruins`). Current natural `HexTile.feature` values resolve to those visual ids; generated special features use the `visualId` stored in `.generated/map-features.json`.
+Feature visuals use one common scenario atlas at `/scenario-assets/<scenarioId>/assets/features/feature-atlas.png`, with a repo fallback at `/game-assets/features/fallback-feature-atlas.png`. The atlas is `384x448`: six `64x64` variants across each row, with rows assigned to current feature visual ids (`feature:forest`, `feature:dense_forest`, `feature:jungle`, `feature:marsh`, `feature:scrub`, `feature:snowcap`, `feature:ancient_ruins`). Current natural `HexTile.feature` values resolve to those visual ids; generated special features use the `visualId` stored in `.generated/map-features.json`.
 
 `GET /hex-map/features` returns `{ features: MapFeatureInstance[] }` for readonly generated/special map features. This endpoint is public map metadata and does not mutate world state. Natural hex features remain in `/hex-map/artifact`.
+
+`GET /hex-map/feature-visuals` returns `{ visuals: MapFeatureVisualRuleDefinition[] }` for scenario-authored conditional frame rules. If it returns an empty list, the client uses built-in defaults. Conditions are evaluated against `HexTile` visual metadata such as `biome`, `temperatureBand`, `moistureBand`, `distanceToWater`, `isCoastal`, and `riverMask`.
 
 ## Transport Corridor Contract
 

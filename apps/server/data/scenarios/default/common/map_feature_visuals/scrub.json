@@ -1,0 +1,50 @@
+{
+  "id": "map_feature_visual:scrub",
+  "visualId": "feature:scrub",
+  "frames": [
+    {
+      "frame": 0,
+      "weight": 2,
+      "conditions": {
+        "biomes": ["dry_scrubland"]
+      }
+    },
+    {
+      "frame": 1,
+      "weight": 2,
+      "conditions": {
+        "moistureBands": ["dry"]
+      }
+    },
+    {
+      "frame": 2,
+      "priority": 5,
+      "conditions": {
+        "moistureBands": ["arid"]
+      }
+    },
+    {
+      "frame": 3,
+      "priority": 5,
+      "conditions": {
+        "temperatureBands": ["hot"]
+      }
+    },
+    {
+      "frame": 4,
+      "priority": 8,
+      "conditions": {
+        "terrains": ["hills"],
+        "minElevation": 0.55
+      }
+    },
+    {
+      "frame": 5,
+      "priority": 8,
+      "conditions": {
+        "distanceToWater": [1, 2],
+        "moistureBands": ["dry", "normal"]
+      }
+    }
+  ]
+}

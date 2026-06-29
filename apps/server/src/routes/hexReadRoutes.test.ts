@@ -83,6 +83,22 @@ describe("hexReadRoutes", () => {
       }],
     });
   });
+
+  it("returns scenario map feature visual rules as readonly public map payload", async () => {
+    const app = makeApp(makeDeps());
+
+    const response = await request(app, "/hex-map/feature-visuals");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual({
+      visuals: [{
+        id: "map_feature_visual:snowcap",
+        visualId: "feature:snowcap",
+        frames: [{ frame: 5, conditions: { biomes: ["alpine"], minElevation: 0.86 } }],
+      }],
+    });
+  });
 });
 
 function makeApp(deps: HexReadRoutesDependencies): express.Express {
@@ -108,6 +124,11 @@ function makeDeps(): HexReadRoutesDependencies & { world: HexReadWorldState } {
       regionId: "region:world",
       visualId: "feature:ancient_ruins",
       visibility: "known",
+    }],
+    getMapFeatureVisuals: () => [{
+      id: "map_feature_visual:snowcap",
+      visualId: "feature:snowcap",
+      frames: [{ frame: 5, conditions: { biomes: ["alpine"], minElevation: 0.86 } }],
     }],
     getWorldBase: () => world,
   };

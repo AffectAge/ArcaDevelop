@@ -4,11 +4,14 @@ import type {
   HexChunkId,
   HexCoastOverlayRecord,
   HexDirection,
+  HexDistanceToWater,
   HexEdgeRecord,
   HexFeature,
   HexMapArtifact,
   HexMapSettings,
+  HexMoistureBand,
   HexRegionId,
+  HexTemperatureBand,
   HexTerrain,
   HexTile,
   HexWaterKind,
@@ -68,7 +71,8 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
       const waterKind = resolveWaterKind(elevation, settings.seaLevel, q, r, settings);
       const terrain = resolveTerrain(elevation, moisture, temperature, waterKind, settings);
       const feature = resolveFeature(terrain, moisture, temperature, normalizedNoise(featureNoise(q / 15, r / 15)), settings);
-      const biome = resolveBiome(terrain, moisture, temperature, waterKind);
+      const temperatureBand = resolveTemperatureBand(temperature);
+      const moistureBand = resolveMoistureBand(moisture);
       const id = makeHexId(q, r);
       const tile: TileDraft = {
         id,
@@ -77,12 +81,18 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
         chunkId: makeChunkId(q, r, settings),
         regionId: null,
         terrain,
-        biome,
         feature,
         waterKind,
         elevation: roundMetric(elevation),
         moisture: roundMetric(moisture),
         temperature: roundMetric(temperature),
+        temperatureBand,
+        moistureBand,
+        biome: resolveBiome(terrain, feature, moisture, temperature, waterKind, false),
+        distanceToWater: waterKind ? 0 : 3,
+        isCoastal: false,
+        riverMask: 0,
+        riverWidth: 0,
         movementCost: resolveMovementCost(terrain, feature, waterKind),
         passable: waterKind !== "ocean",
       };
@@ -93,6 +103,7 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
 
   const coastOverlays = buildCoastOverlays(tiles, tileById, settings);
   const riverEdges = buildRiverEdges(tiles, tileById, settings);
+  applyHydrologyMetadata(tiles, tileById, coastOverlays, riverEdges, settings);
   assignRegions(tiles, tileById, settings);
 
   return {
@@ -129,17 +140,56 @@ function resolveTerrain(elevation: number, moisture: number, temperature: number
   return "plains";
 }
 
-function resolveBiome(terrain: HexTerrain, moisture: number, temperature: number, waterKind: HexWaterKind): HexBiome {
+function resolveBiome(terrain: HexTerrain, feature: HexFeature, moisture: number, temperature: number, waterKind: HexWaterKind, isCoastal: boolean): HexBiome {
   if (waterKind === "ocean") return "deep_ocean";
   if (waterKind === "sea") return "coastal_water";
   if (waterKind === "lake") return "freshwater";
+  if (terrain === "wetland" && isCoastal) return "coastal_wetland";
   if (terrain === "mountains" || terrain === "hills" || terrain === "snow") return "alpine";
-  if (terrain === "wetland" || moisture > 0.82) return "marsh";
-  if (temperature > 0.66 && moisture > 0.58) return "tropical";
-  if (temperature < 0.28) return "cold";
-  if (moisture < 0.34) return "arid";
-  if (temperature < 0.44) return "boreal";
-  return "temperate";
+  if (terrain === "wetland" || feature === "marsh" || moisture > 0.82) return "swamp";
+  if (terrain === "tundra" || temperature < 0.22) return "tundra";
+  if (terrain === "desert") return "arid_desert";
+  if (feature === "jungle" || (temperature > 0.66 && moisture > 0.58)) return "tropical_rainforest";
+  if (feature === "dense_forest" || feature === "forest") return temperature < 0.44 ? "boreal_forest" : "temperate_forest";
+  if (feature === "scrub" || moisture < 0.34) return "dry_scrubland";
+  return "temperate_grassland";
+}
+
+export function enrichHexMapVisualMetadata(artifact: HexMapArtifact): HexMapArtifact {
+  const tiles: TileDraft[] = artifact.tiles.map((tile) => {
+    const temperatureBand = tile.temperatureBand ?? resolveTemperatureBand(tile.temperature);
+    const moistureBand = tile.moistureBand ?? resolveMoistureBand(tile.moisture);
+    return {
+      ...tile,
+      temperatureBand,
+      moistureBand,
+      biome: tile.biome ?? resolveBiome(tile.terrain, tile.feature, tile.moisture, tile.temperature, tile.waterKind, false),
+      distanceToWater: tile.distanceToWater ?? (tile.waterKind ? 0 : 3),
+      isCoastal: tile.isCoastal ?? false,
+      riverMask: tile.riverMask ?? 0,
+      riverWidth: tile.riverWidth ?? 0,
+    };
+  });
+  const tileById = new Map<string, TileDraft>(tiles.map((tile) => [tile.id, tile]));
+  applyHydrologyMetadata(tiles, tileById, artifact.coastOverlays, artifact.riverEdges, artifact.settings);
+  return { ...artifact, tiles: tiles.map((tile) => ({ ...tile, regionId: tile.regionId ?? "region:land:0" })) };
+}
+
+function resolveTemperatureBand(temperature: number): HexTemperatureBand {
+  if (temperature < 0.16) return "frozen";
+  if (temperature < 0.3) return "cold";
+  if (temperature < 0.45) return "cool";
+  if (temperature < 0.62) return "temperate";
+  if (temperature < 0.78) return "warm";
+  return "hot";
+}
+
+function resolveMoistureBand(moisture: number): HexMoistureBand {
+  if (moisture < 0.2) return "arid";
+  if (moisture < 0.4) return "dry";
+  if (moisture < 0.62) return "normal";
+  if (moisture < 0.8) return "wet";
+  return "saturated";
 }
 
 function resolveFeature(terrain: HexTerrain, moisture: number, temperature: number, noise: number, settings: HexMapSettings): HexFeature {
@@ -193,6 +243,76 @@ function resolveCoastOverlayStrength(waterKind: Exclude<HexWaterKind, null>): nu
   if (waterKind === "ocean") return 0.82;
   if (waterKind === "lake") return 0.92;
   return 0.58;
+}
+
+function applyHydrologyMetadata(
+  tiles: TileDraft[],
+  tileById: Map<string, TileDraft>,
+  coastOverlays: HexCoastOverlayRecord[],
+  riverEdges: HexEdgeRecord[],
+  settings: HexMapSettings,
+): void {
+  const coastalHexIds = new Set(coastOverlays.map((overlay) => overlay.hexId));
+  const riverDrafts = collectRiverDrafts(riverEdges, tileById, settings);
+
+  for (const tile of tiles) {
+    tile.isCoastal = coastalHexIds.has(tile.id);
+    tile.distanceToWater = resolveDistanceToWater(tile, tileById, settings);
+    const riverDraft = riverDrafts.get(tile.id);
+    tile.riverMask = riverDraft?.mask ?? 0;
+    tile.riverWidth = roundMetric(riverDraft?.width ?? 0);
+    tile.biome = resolveBiome(tile.terrain, tile.feature, tile.moisture, tile.temperature, tile.waterKind, tile.isCoastal);
+  }
+}
+
+function collectRiverDrafts(riverEdges: HexEdgeRecord[], tileById: Map<string, TileDraft>, settings: HexMapSettings): Map<string, { mask: number; width: number }> {
+  const drafts = new Map<string, { mask: number; width: number }>();
+  for (const river of riverEdges) {
+    const source = drafts.get(river.hexId) ?? { mask: 0, width: 0 };
+    source.mask |= directionBit(river.direction);
+    source.width = Math.max(source.width, river.width);
+    drafts.set(river.hexId, source);
+
+    const sourceTile = tileById.get(river.hexId);
+    const neighborAxial = sourceTile ? getNeighborAxial(sourceTile, river.direction, settings) : null;
+    const neighborId = neighborAxial ? makeHexId(neighborAxial.q, neighborAxial.r) : null;
+    if (!neighborId || !tileById.has(neighborId)) continue;
+    const target = drafts.get(neighborId) ?? { mask: 0, width: 0 };
+    target.mask |= directionBit(oppositeDirection(river.direction));
+    target.width = Math.max(target.width, river.width);
+    drafts.set(neighborId, target);
+  }
+  return drafts;
+}
+
+function resolveDistanceToWater(tile: TileDraft, tileById: Map<string, TileDraft>, settings: HexMapSettings): HexDistanceToWater {
+  if (tile.waterKind) return 0;
+  let frontier: TileDraft[] = [tile];
+  const visited = new Set<string>([tile.id]);
+  for (let distance = 1; distance <= 3; distance += 1) {
+    const next: TileDraft[] = [];
+    for (const current of frontier) {
+      for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
+        const neighborAxial = getNeighborAxial(current, direction as HexDirection, settings);
+        const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+        if (!neighbor || visited.has(neighbor.id)) continue;
+        if (neighbor.waterKind) return distance as HexDistanceToWater;
+        visited.add(neighbor.id);
+        next.push(neighbor);
+      }
+    }
+    frontier = next;
+    if (frontier.length === 0) break;
+  }
+  return 3;
+}
+
+function directionBit(direction: HexDirection): number {
+  return 1 << direction;
+}
+
+function oppositeDirection(direction: HexDirection): HexDirection {
+  return ((direction + 3) % 6) as HexDirection;
 }
 
 function buildRiverEdges(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): HexEdgeRecord[] {

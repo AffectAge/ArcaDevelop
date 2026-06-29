@@ -40,6 +40,9 @@ export type ScenarioValidationIssueCode =
   | "INVALID_CITY_ATLAS"
   | "INVALID_FEATURE_ATLAS"
   | "INVALID_MAP_FEATURE_GENERATOR"
+  | "MAP_FEATURE_GENERATOR_IMPOSSIBLE"
+  | "MAP_FEATURE_GENERATOR_DUPLICATE_HEX"
+  | "INVALID_MAP_FEATURE_VISUAL"
   | "INVALID_ASSET_REGISTRY"
   | "FORBIDDEN_AUTHORED_ASSET_URL"
   | "FORBIDDEN_LEGACY_CONTENT_FIELD"
@@ -115,6 +118,7 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "market", path: "common/markets" },
   { kind: "modifier", path: "common/modifiers" },
   { kind: "mapFeatureGenerator", path: "common/map_feature_generators" },
+  { kind: "mapFeatureVisual", path: "common/map_feature_visuals" },
   { kind: "interestGroup", path: "common/interestGroups" },
   { kind: "party", path: "common/parties" },
   { kind: "company", path: "common/companies" },
@@ -275,6 +279,26 @@ const EVENT_RESOURCE_IDS = new Set(["culture", "science", "religion", "colonizat
 const EVENT_CATEGORY_IDS = new Set(["system", "colonization", "politics", "economy", "military", "diplomacy"]);
 const EVENT_PRIORITY_IDS = new Set(["low", "medium", "high"]);
 const EVENT_VISIBILITY_IDS = new Set(["public", "private"]);
+const VALID_HEX_TERRAINS = new Set(["ocean", "sea", "lake", "coast", "plains", "grassland", "forest", "hills", "mountains", "desert", "tundra", "snow", "wetland"]);
+const VALID_HEX_FEATURES = new Set(["none", "forest", "dense_forest", "jungle", "marsh", "scrub", "snowcap"]);
+const VALID_HEX_BIOMES = new Set([
+  "deep_ocean",
+  "coastal_water",
+  "freshwater",
+  "temperate_grassland",
+  "temperate_forest",
+  "boreal_forest",
+  "tropical_rainforest",
+  "dry_scrubland",
+  "arid_desert",
+  "alpine",
+  "tundra",
+  "swamp",
+  "coastal_wetland",
+]);
+const VALID_HEX_WATER_KINDS = new Set(["ocean", "sea", "lake"]);
+const VALID_HEX_TEMPERATURE_BANDS = new Set(["frozen", "cold", "cool", "temperate", "warm", "hot"]);
+const VALID_HEX_MOISTURE_BANDS = new Set(["arid", "dry", "normal", "wet", "saturated"]);
 
 export const SCENARIO_PROVINCE_FORBIDDEN_HEAVY_FIELDS = [
   "pops",
@@ -337,6 +361,7 @@ export async function validateScenarioDirectory(
   validateEventDefinitions(root, loadedEntities, localizationKeys, issues);
   validateJournalDefinitions(root, loadedEntities, localizationKeys, issues);
   validateMapFeatureGenerators(root, loadedEntities, issues);
+  validateMapFeatureVisuals(root, loadedEntities, issues);
   validateEntityLocalization(root, loadedEntities, localizationKeys, issues);
   await validateBuildingAtlases(root, loadedEntities, issues);
   await validateCityAtlases(root, loadedEntities, issues);
@@ -630,6 +655,198 @@ function validateMapFeatureGenerators(root: string, entities: LoadedEntity[], is
   }
 }
 
+function validateMapFeatureVisuals(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
+  const seenVisualIds = new Set<string>();
+  for (const visual of entities.filter((entity) => entity.kind === "mapFeatureVisual")) {
+    const path = normalizePath(relative(root, visual.path));
+    if (!visual.id.startsWith("map_feature_visual:")) {
+      issues.push({
+        code: "INVALID_MAP_FEATURE_VISUAL",
+        path,
+        message: `${visual.id}.id must start with map_feature_visual:.`,
+      });
+    }
+    const visualId = visual.data.visualId;
+    if (typeof visualId !== "string" || !visualId.startsWith("feature:")) {
+      issues.push({
+        code: "INVALID_MAP_FEATURE_VISUAL",
+        path,
+        message: `${visual.id}.visualId must be a feature:* visual id.`,
+      });
+    } else if (seenVisualIds.has(visualId)) {
+      issues.push({
+        code: "DUPLICATE_ID",
+        path,
+        message: `Duplicate map feature visual rule for ${visualId}.`,
+      });
+    } else {
+      seenVisualIds.add(visualId);
+    }
+
+    const frames = visual.data.frames;
+    if (!Array.isArray(frames) || frames.length === 0) {
+      issues.push({
+        code: "INVALID_MAP_FEATURE_VISUAL",
+        path,
+        message: `${visual.id}.frames must be a non-empty array.`,
+      });
+      continue;
+    }
+
+    for (const [index, frame] of frames.entries()) {
+      if (!isObject(frame)) {
+        issues.push({
+          code: "INVALID_MAP_FEATURE_VISUAL",
+          path,
+          message: `${visual.id}.frames[${index}] must be an object.`,
+        });
+        continue;
+      }
+      const frameIndex = frame.frame;
+      if (typeof frameIndex !== "number" || !Number.isInteger(frameIndex) || frameIndex < 0 || frameIndex > 5) {
+        issues.push({
+          code: "INVALID_MAP_FEATURE_VISUAL",
+          path,
+          message: `${visual.id}.frames[${index}].frame must be an integer from 0 to 5.`,
+        });
+      }
+      validateOptionalNumberField(frame.priority, `${visual.id}.frames[${index}].priority`, path, issues, { integer: true });
+      validateOptionalNumberField(frame.weight, `${visual.id}.frames[${index}].weight`, path, issues, { integer: true, min: 1 });
+      validateMapFeatureVisualConditions(frame.conditions, `${visual.id}.frames[${index}].conditions`, path, issues);
+    }
+  }
+}
+
+function validateMapFeatureVisualConditions(value: unknown, label: string, path: string, issues: ScenarioValidationIssue[]): void {
+  if (value == null) return;
+  if (!isObject(value)) {
+    issues.push({
+      code: "INVALID_MAP_FEATURE_VISUAL",
+      path,
+      message: `${label} must be an object.`,
+    });
+    return;
+  }
+  const allowedKeys = new Set([
+    "terrains",
+    "features",
+    "biomes",
+    "waterKinds",
+    "temperatureBands",
+    "moistureBands",
+    "minElevation",
+    "maxElevation",
+    "minTemperature",
+    "maxTemperature",
+    "minMoisture",
+    "maxMoisture",
+    "distanceToWater",
+    "isCoastal",
+    "hasRiver",
+    "riverMasks",
+  ]);
+  for (const key of Object.keys(value)) {
+    if (allowedKeys.has(key)) continue;
+    issues.push({
+      code: "INVALID_MAP_FEATURE_VISUAL",
+      path,
+      message: `${label}.${key} is not a supported condition.`,
+    });
+  }
+  validateStringArrayCondition(value.terrains, label, "terrains", VALID_HEX_TERRAINS, path, issues);
+  validateStringArrayCondition(value.features, label, "features", VALID_HEX_FEATURES, path, issues);
+  validateStringArrayCondition(value.biomes, label, "biomes", VALID_HEX_BIOMES, path, issues);
+  validateStringArrayCondition(value.waterKinds, label, "waterKinds", VALID_HEX_WATER_KINDS, path, issues);
+  validateStringArrayCondition(value.temperatureBands, label, "temperatureBands", VALID_HEX_TEMPERATURE_BANDS, path, issues);
+  validateStringArrayCondition(value.moistureBands, label, "moistureBands", VALID_HEX_MOISTURE_BANDS, path, issues);
+  validateNumberRangeCondition(value.minElevation, label, "minElevation", path, issues);
+  validateNumberRangeCondition(value.maxElevation, label, "maxElevation", path, issues);
+  validateNumberRangeCondition(value.minTemperature, label, "minTemperature", path, issues);
+  validateNumberRangeCondition(value.maxTemperature, label, "maxTemperature", path, issues);
+  validateNumberRangeCondition(value.minMoisture, label, "minMoisture", path, issues);
+  validateNumberRangeCondition(value.maxMoisture, label, "maxMoisture", path, issues);
+  validateIntegerArrayCondition(value.distanceToWater, label, "distanceToWater", 0, 3, path, issues);
+  validateIntegerArrayCondition(value.riverMasks, label, "riverMasks", 0, 63, path, issues);
+  validateOptionalBooleanCondition(value.isCoastal, label, "isCoastal", path, issues);
+  validateOptionalBooleanCondition(value.hasRiver, label, "hasRiver", path, issues);
+}
+
+function validateOptionalNumberField(
+  value: unknown,
+  label: string,
+  path: string,
+  issues: ScenarioValidationIssue[],
+  options: { integer?: boolean; min?: number } = {},
+): void {
+  if (value == null) return;
+  if (typeof value !== "number" || !Number.isFinite(value) || (options.integer === true && !Number.isInteger(value)) || (options.min !== undefined && value < options.min)) {
+    issues.push({
+      code: "INVALID_MAP_FEATURE_VISUAL",
+      path,
+      message: `${label} must be ${options.integer === true ? "an integer" : "a number"}${options.min !== undefined ? ` >= ${options.min}` : ""}.`,
+    });
+  }
+}
+
+function validateStringArrayCondition(
+  value: unknown,
+  label: string,
+  key: string,
+  allowed: Set<string>,
+  path: string,
+  issues: ScenarioValidationIssue[],
+): void {
+  if (value == null) return;
+  if (!Array.isArray(value) || value.length === 0 || value.some((item) => typeof item !== "string" || !allowed.has(item))) {
+    issues.push({
+      code: "INVALID_MAP_FEATURE_VISUAL",
+      path,
+      message: `${label}.${key} must be a non-empty array of supported values.`,
+    });
+  }
+}
+
+function validateIntegerArrayCondition(
+  value: unknown,
+  label: string,
+  key: string,
+  min: number,
+  max: number,
+  path: string,
+  issues: ScenarioValidationIssue[],
+): void {
+  if (value == null) return;
+  if (!Array.isArray(value) || value.length === 0 || value.some((item) => !Number.isInteger(item) || item < min || item > max)) {
+    issues.push({
+      code: "INVALID_MAP_FEATURE_VISUAL",
+      path,
+      message: `${label}.${key} must be a non-empty integer array from ${min} to ${max}.`,
+    });
+  }
+}
+
+function validateNumberRangeCondition(value: unknown, label: string, key: string, path: string, issues: ScenarioValidationIssue[]): void {
+  if (value == null) return;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
+    issues.push({
+      code: "INVALID_MAP_FEATURE_VISUAL",
+      path,
+      message: `${label}.${key} must be a number from 0 to 1.`,
+    });
+  }
+}
+
+function validateOptionalBooleanCondition(value: unknown, label: string, key: string, path: string, issues: ScenarioValidationIssue[]): void {
+  if (value == null) return;
+  if (typeof value !== "boolean") {
+    issues.push({
+      code: "INVALID_MAP_FEATURE_VISUAL",
+      path,
+      message: `${label}.${key} must be a boolean.`,
+    });
+  }
+}
+
 async function validateFeatureAtlases(root: string, _entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
   const relativePath = "assets/features/feature-atlas.png";
   const atlasPath = join(root, relativePath);
@@ -638,18 +855,18 @@ async function validateFeatureAtlases(root: string, _entities: LoadedEntity[], i
     const dimensions = imageSize(await readFile(atlasPath));
     const width = dimensions.width ?? 0;
     const height = dimensions.height ?? 0;
-    if (dimensions.type !== "png" || width !== 256 || height !== 448) {
+    if (dimensions.type !== "png" || width !== 384 || height !== 448) {
       issues.push({
         code: "INVALID_FEATURE_ATLAS",
         path: relativePath,
-        message: `Feature atlas must be a PNG sized 256x448; received ${dimensions.type ?? "unknown"} ${width}x${height}.`,
+        message: `Feature atlas must be a PNG sized 384x448; received ${dimensions.type ?? "unknown"} ${width}x${height}.`,
       });
     }
   } catch {
     issues.push({
       code: "INVALID_FEATURE_ATLAS",
       path: relativePath,
-      message: "Feature atlas must be a readable PNG sized 256x448.",
+      message: "Feature atlas must be a readable PNG sized 384x448.",
     });
   }
 }
@@ -1164,6 +1381,7 @@ function validateKnownStableReferences(root: string, entity: LoadedEntity, ids: 
   for (const [field, value] of Object.entries(entity.data)) {
     if (!field.endsWith("Id") || field === "id" || value == null) continue;
     if (entity.kind === "mapFeatureGenerator" && (field === "typeId" || field === "visualId")) continue;
+    if (entity.kind === "mapFeatureVisual" && field === "visualId") continue;
     if (typeof value !== "string" || !value.includes(":")) continue;
     if (ids.has(value)) continue;
     issues.push({

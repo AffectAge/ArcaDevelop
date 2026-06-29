@@ -1,0 +1,38 @@
+{
+  "id": "map_feature_visual:ancient_ruins",
+  "visualId": "feature:ancient_ruins",
+  "frames": [
+    {
+      "frame": 0,
+      "weight": 2
+    },
+    {
+      "frame": 1,
+      "weight": 2
+    },
+    {
+      "frame": 2,
+      "conditions": {
+        "terrains": ["hills", "mountains"]
+      }
+    },
+    {
+      "frame": 3,
+      "conditions": {
+        "moistureBands": ["dry", "arid"]
+      }
+    },
+    {
+      "frame": 4,
+      "conditions": {
+        "isCoastal": true
+      }
+    },
+    {
+      "frame": 5,
+      "conditions": {
+        "hasRiver": true
+      }
+    }
+  ]
+}

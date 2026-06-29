@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { HexMapArtifact, WorldBase } from "@arcanorum/shared";
+import { enrichHexMapVisualMetadata, type HexMapArtifact, type WorldBase } from "@arcanorum/shared";
 import {
   ensureDefaultCulture,
   ensureDefaultIdeology,
@@ -192,7 +192,7 @@ function loadScenarioHexMapArtifact(scenarioDir: string): HexMapArtifact | null 
   const path = resolve(scenarioDir, ".generated", "hex-map-artifact.json");
   if (!existsSync(path)) return null;
   const parsed = JSON.parse(readFileSync(path, "utf8")) as HexMapArtifact;
-  return parsed && Array.isArray(parsed.tiles) ? parsed : null;
+  return parsed && Array.isArray(parsed.tiles) ? enrichHexMapVisualMetadata(parsed) : null;
 }
 
 function applyAuthoredStateFromHistory(

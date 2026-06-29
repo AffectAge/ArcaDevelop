@@ -11,14 +11,14 @@ const smallMap = generateHexMap({ ...DEFAULT_HEX_MAP_SETTINGS, width: 24, height
 
 describe("hex terrain mesh renderer data", () => {
   it("maps terrain and biome to stable material ids", () => {
-    expect(resolveTerrainMaterialId({ terrain: "grassland", biome: "temperate", waterKind: null })).toBe("grass");
-    expect(resolveTerrainMaterialId({ terrain: "desert", biome: "arid", waterKind: null })).toBe("sand");
-    expect(resolveTerrainMaterialId({ terrain: "snow", biome: "cold", waterKind: null })).toBe("snow");
+    expect(resolveTerrainMaterialId({ terrain: "grassland", biome: "temperate_grassland", waterKind: null })).toBe("grass");
+    expect(resolveTerrainMaterialId({ terrain: "desert", biome: "arid_desert", waterKind: null })).toBe("sand");
+    expect(resolveTerrainMaterialId({ terrain: "snow", biome: "tundra", waterKind: null })).toBe("snow");
     expect(resolveTerrainMaterialId({ terrain: "sea", biome: "coastal_water", waterKind: "sea" })).toBe("coastal_water");
   });
 
   it("uses city material for city-tagged hexes without changing terrain material mapping", () => {
-    const tile = makeTestTile(1, 1, { terrain: "plains", biome: "temperate", waterKind: null });
+    const tile = makeTestTile(1, 1, { terrain: "plains", biome: "temperate_grassland", waterKind: null });
     expect(resolveTerrainMaterialId(tile)).toBe("plains");
     expect(resolveEffectiveTerrainMaterialId(tile, new Set([tile.id]))).toBe("city");
   });
@@ -164,9 +164,9 @@ describe("hex terrain mesh renderer data", () => {
   });
 
   it("emits river params for connected and non-connected hexes", () => {
-    const source = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
-    const target = makeTestTile(2, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
-    const dry = makeTestTile(0, 0, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const source = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate_grassland", waterKind: null });
+    const target = makeTestTile(2, 1, { terrain: "grassland", biome: "temperate_grassland", waterKind: null });
+    const dry = makeTestTile(0, 0, { terrain: "grassland", biome: "temperate_grassland", waterKind: null });
     const map: HexMapArtifact = {
       ...smallMap,
       settings: { ...smallMap.settings, width: 4, height: 4, wrapX: false },
@@ -192,7 +192,7 @@ describe("hex terrain mesh renderer data", () => {
   });
 
   it("uses fresh water material for lake coastline masks on neighboring land hexes", () => {
-    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate_grassland", waterKind: null });
     const lake = makeTestTile(2, 1, { terrain: "lake", biome: "freshwater", waterKind: "lake" });
     const map: HexMapArtifact = {
       ...smallMap,
@@ -209,8 +209,8 @@ describe("hex terrain mesh renderer data", () => {
   });
 
   it("keeps land-land biome transition params on coastal land hexes", () => {
-    const coastLand = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
-    const neighborLand = makeTestTile(2, 1, { terrain: "plains", biome: "temperate", waterKind: null });
+    const coastLand = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate_grassland", waterKind: null });
+    const neighborLand = makeTestTile(2, 1, { terrain: "plains", biome: "temperate_grassland", waterKind: null });
     const lake = makeTestTile(1, 2, { terrain: "lake", biome: "freshwater", waterKind: "lake" });
     const map: HexMapArtifact = {
       ...smallMap,
@@ -246,7 +246,7 @@ describe("hex terrain mesh renderer data", () => {
   });
 
   it("emits land-water biome transition params on the land side only", () => {
-    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate_grassland", waterKind: null });
     const lake = makeTestTile(2, 1, { terrain: "lake", biome: "freshwater", waterKind: "lake" });
     const map: HexMapArtifact = {
       ...smallMap,
@@ -262,7 +262,7 @@ describe("hex terrain mesh renderer data", () => {
   });
 
   it("emits separate biome transitions from one land hex to lake and sea neighbors", () => {
-    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate_grassland", waterKind: null });
     const lake = makeTestTile(2, 1, { terrain: "lake", biome: "freshwater", waterKind: "lake" });
     const sea = makeTestTile(1, 0, { terrain: "sea", biome: "coastal_water", waterKind: "sea" });
     const map: HexMapArtifact = {
@@ -288,7 +288,7 @@ describe("hex terrain mesh renderer data", () => {
   });
 
   it("emits separate coastline water materials from one land hex to lake and sea neighbors", () => {
-    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate", waterKind: null });
+    const land = makeTestTile(1, 1, { terrain: "grassland", biome: "temperate_grassland", waterKind: null });
     const lake = makeTestTile(2, 1, { terrain: "lake", biome: "freshwater", waterKind: "lake" });
     const sea = makeTestTile(1, 0, { terrain: "sea", biome: "coastal_water", waterKind: "sea" });
     const map: HexMapArtifact = {
@@ -377,6 +377,12 @@ function makeTestTile(q: number, r: number, overrides: Pick<HexTile, "terrain" |
     elevation: overrides.waterKind ? 0.48 : 0.58,
     moisture: 0.52,
     temperature: 0.5,
+    temperatureBand: "temperate",
+    moistureBand: "normal",
+    distanceToWater: overrides.waterKind ? 0 : 3,
+    isCoastal: false,
+    riverMask: 0,
+    riverWidth: 0,
     movementCost: overrides.waterKind ? 3 : 1,
     passable: true,
   };

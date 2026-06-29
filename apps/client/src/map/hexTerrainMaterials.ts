@@ -105,13 +105,13 @@ export function resolveTerrainMaterialId(tile: Pick<HexTile, "terrain" | "biome"
   if (tile.waterKind === "ocean" || tile.terrain === "ocean") return "deep_water";
   if (tile.waterKind === "sea" || tile.terrain === "sea" || tile.terrain === "coast") return "coastal_water";
   if (tile.waterKind === "lake" || tile.terrain === "lake") return "fresh_water";
-  if (tile.terrain === "desert" || tile.biome === "arid") return "sand";
-  if (tile.terrain === "snow" || tile.biome === "cold") return "snow";
-  if (tile.terrain === "tundra") return "tundra";
+  if (tile.terrain === "desert" || tile.biome === "arid_desert" || tile.biome === "dry_scrubland") return "sand";
+  if (tile.terrain === "snow") return "snow";
+  if (tile.terrain === "tundra" || tile.biome === "tundra") return "tundra";
   if (tile.terrain === "mountains") return "rock";
   if (tile.terrain === "hills" || tile.biome === "alpine") return "hills";
-  if (tile.terrain === "wetland" || tile.biome === "marsh") return "wetland";
-  if (tile.terrain === "forest" || tile.biome === "boreal" || tile.biome === "tropical") return "forest";
+  if (tile.terrain === "wetland" || tile.biome === "swamp" || tile.biome === "coastal_wetland") return "wetland";
+  if (tile.terrain === "forest" || tile.biome === "boreal_forest" || tile.biome === "temperate_forest" || tile.biome === "tropical_rainforest") return "forest";
   if (tile.terrain === "plains") return "plains";
   return "grass";
 }

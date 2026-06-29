@@ -1,7 +1,7 @@
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import type { HexMapArtifact } from "@arcanorum/shared";
-import type { MapFeatureInstance } from "@arcanorum/shared";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { enrichHexMapVisualMetadata, type HexMapArtifact } from "@arcanorum/shared";
+import type { MapFeatureInstance, MapFeatureVisualRuleDefinition } from "@arcanorum/shared";
 import {
   loadHexIndexFromFile,
   type HexMapIndexEntry,
@@ -16,6 +16,7 @@ type MapRuntimeState = {
   mapFeaturesJsonPath: string;
   hexMapArtifact: HexMapArtifact | null;
   mapFeatures: MapFeatureInstance[];
+  mapFeatureVisuals: MapFeatureVisualRuleDefinition[];
   hexIndex: HexMapIndexEntry[];
   hexAreaById: Map<string, number>;
   hexById: Map<string, HexMapIndexEntry>;
@@ -25,6 +26,7 @@ function buildMapRuntimeState(mapRoot: string, hexIndexPath = resolve(mapRoot, "
   const prebuiltTileRoot = resolve(mapRoot, "tiles/hex");
   const hexMapArtifactJsonPath = resolve(dirname(hexIndexPath), "hex-map-artifact.json");
   const mapFeaturesJsonPath = resolve(dirname(hexIndexPath), GENERATED_MAP_FEATURES_FILE);
+  const scenarioDir = resolve(dirname(hexIndexPath), "..");
   const hexIndex = loadHexIndexFromFile(hexIndexPath);
   return {
     prebuiltTileRoot,
@@ -34,6 +36,7 @@ function buildMapRuntimeState(mapRoot: string, hexIndexPath = resolve(mapRoot, "
     mapFeaturesJsonPath,
     hexMapArtifact: loadHexMapArtifactIfExists(hexMapArtifactJsonPath),
     mapFeatures: loadGeneratedMapFeatures(mapFeaturesJsonPath),
+    mapFeatureVisuals: loadMapFeatureVisuals(resolve(scenarioDir, "common", "map_feature_visuals")),
     hexIndex,
     hexAreaById: new Map(hexIndex.map((hex) => [hex.id, hex.areaKm2] as const)),
     hexById: new Map(hexIndex.map((hex) => [hex.id, hex] as const)),
@@ -58,10 +61,22 @@ export function createMapRuntimeState(mapRoot: string, hexIndexPath?: string) {
     getHexMapArtifact: () => state.hexMapArtifact,
     getHexMapArtifactJsonPath: () => state.hexMapArtifactJsonPath,
     getMapFeatures: () => state.mapFeatures,
+    getMapFeatureVisuals: () => state.mapFeatureVisuals,
   };
 }
 
 function loadHexMapArtifactIfExists(path: string): HexMapArtifact | null {
   if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, "utf8")) as HexMapArtifact;
+  return enrichHexMapVisualMetadata(JSON.parse(readFileSync(path, "utf8")) as HexMapArtifact);
+}
+
+function loadMapFeatureVisuals(directory: string): MapFeatureVisualRuleDefinition[] {
+  if (!existsSync(directory)) return [];
+  const visuals: MapFeatureVisualRuleDefinition[] = [];
+  for (const fileName of readdirSync(directory).filter((entry) => entry.endsWith(".json")).sort((left, right) => left.localeCompare(right, "en"))) {
+    const path = join(directory, fileName);
+    const data = JSON.parse(readFileSync(path, "utf8")) as MapFeatureVisualRuleDefinition;
+    visuals.push(data);
+  }
+  return visuals;
 }
