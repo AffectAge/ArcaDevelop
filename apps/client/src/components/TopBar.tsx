@@ -40,7 +40,7 @@ type Props = {
   resourceGrowthByTurn?: Partial<Record<(typeof cards)[number]["key"], number>>;
   resourceExpenseByTurn?: Partial<Record<(typeof cards)[number]["key"], number>>;
   colonizationLimit?: { active: number; max: number } | null;
-  countryDetails?: { provinceCount: number; totalAreaKm2: number } | null;
+  countryDetails?: { provinceCount: number } | null;
   turnTimer?: { enabled: boolean; secondsPerTurn: number; startedAtMs: number | null } | null;
 };
 
@@ -85,10 +85,6 @@ function formatPercent(value: number): string {
   const abs = Math.abs(value);
   const digits = abs >= 10 ? 1 : 2;
   return `${value.toFixed(digits).replace(/\.0+$/, "").replace(/(\.\d)0$/, "$1")}%`;
-}
-
-function formatAreaKm2(value: number, locale: string): string {
-  return `${new Intl.NumberFormat(locale).format(Math.max(0, Math.round(value)))} km²`;
 }
 
 function formatCountdown(secondsLeft: number, t: (key: UiTextKey) => string): string {
@@ -161,7 +157,7 @@ export function TopBar({
   countryDetails,
   turnTimer,
 }: Props) {
-  const { locale, t } = useUiText();
+  const { t } = useUiText();
   const hoverOpenTimerRef = useRef<number | null>(null);
   const countryHoverTimerRef = useRef<number | null>(null);
   const populationHoverTimerRef = useRef<number | null>(null);
@@ -301,10 +297,6 @@ export function TopBar({
                     <div className="flex items-center justify-between gap-3">
                       <span>{t("topBar.controlledHexes")}</span>
                       <span className="text-[var(--arc-color-atlas-ink)]">{countryDetails?.provinceCount ?? 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span>{t("topBar.totalArea")}</span>
-                      <span className="text-[var(--arc-color-atlas-ink)]">{formatAreaKm2(countryDetails?.totalAreaKm2 ?? 0, locale)}</span>
                     </div>
                     <div className="mt-1 flex items-center justify-between gap-3 border-t border-[var(--arc-color-atlas-line)] pt-1">
                       <span>{t("topBar.currentTurn")}</span>

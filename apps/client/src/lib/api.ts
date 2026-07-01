@@ -1956,38 +1956,6 @@ export async function fetchPublicCustomizationPrices(): Promise<CustomizationPri
   return data.customization;
 }
 
-export type HexIndexItem = {
-  id: string;
-  name: string;
-  regionId?: string | null;
-  hexColor: string;
-  regionColor: string;
-  areaKm2: number;
-  hexType?: string | null;
-  centerX?: number | null;
-  centerY?: number | null;
-  sourceCenterX?: number | null;
-  sourceCenterY?: number | null;
-  neighbors?: string[];
-  climate?: string | null;
-  pollution?: number | null;
-  radiation?: number | null;
-  landscape?: string | null;
-  continent?: string | null;
-  strategicRegion?: string | null;
-  fertileLandKm2?: number | null;
-  fertility?: number | null;
-};
-
-export async function fetchHexIndex(): Promise<HexIndexItem[]> {
-  const response = await fetch(`${API}/hexes/index`);
-  if (!response.ok) {
-    throw new Error("HEX_INDEX_FAILED");
-  }
-  const data = (await response.json()) as { hexes: HexIndexItem[] };
-  return data.hexes;
-}
-
 export type PublicGameUiSettings = Pick<GameSettings, "economy" | "colonization" | "customization" | "eventLog" | "turnTimer" | "map" | "military"> & {
   activeScenarioId?: string;
 };

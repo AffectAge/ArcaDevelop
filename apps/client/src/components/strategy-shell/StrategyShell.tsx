@@ -221,7 +221,7 @@ type Props = {
   colonizerQueuePreview?: ColonizationQueuePreviewItem[];
   colonizerUnitPreview?: ColonizationUnitPreviewItem[];
   settlementProjectPreview?: SettlementProjectPreviewItem[];
-  countryDetails?: { provinceCount: number; totalAreaKm2: number } | null;
+  countryDetails?: { provinceCount: number } | null;
   notificationCount: number;
   pendingDecisionCount: number;
   activeJournalCount: number;
@@ -521,7 +521,6 @@ export function StrategyShell(props: Props) {
                       <AtlasMetric
                         label={t("shell.metric.regions")}
                         value={formatCompact(props.countryDetails?.provinceCount ?? 0)}
-                        note={props.countryDetails ? t("shell.metric.area", { area: formatCompact(props.countryDetails.totalAreaKm2) }) : undefined}
                       />
                       <AtlasMetric
                         label={t("shell.metric.colonies")}

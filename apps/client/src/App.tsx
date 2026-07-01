@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import type { Country, DiplomacyProposal, DivisionTemplate, HexId, MilitaryBranch, MilitaryFormationQueueItem, OrderDelta, WsOutMessage } from "@arcanorum/shared";
 import { AuthPanel, type AuthSuccess } from "./components/AuthPanel";
 import { MapView } from "./components/MapView";
@@ -42,7 +42,6 @@ import {
   fetchCurrentTurnOrders,
   fetchMarketOverview,
   fetchPendingUiNotifications,
-  fetchHexIndex,
   fetchPublicGameUiSettings,
   fetchWorldSnapshot,
   markUiNotificationViewed,
@@ -65,7 +64,6 @@ import { BASE_RESOURCE_ICON_URLS } from "./assets/baseResourceIcons";
 import { useWs } from "./lib/useWs";
 import { useGameStore } from "./store/gameStore";
 import { MAP_NAVIGATION_SETTINGS_EVENT, readMapNavigationSettings, writeMapNavigationSettings } from "./map/mapNavigationSettings";
-import type { MapTextureQuality } from "./map/hexTextureSystem";
 import type { MapInteractionMode, MapLensId } from "./map/mapLensTypes";
 import type { UiTextKey } from "./i18n/uiText";
 import { useUiText } from "./i18n/useUiText";
@@ -394,13 +392,10 @@ export default function App() {
   const [landDivisionStackLimitPerHex, setLandDivisionStackLimitPerHex] = useState(4);
   const [demolitionCostConstructionPercent, setDemolitionCostConstructionPercent] = useState(20);
   const [hexRenameDucatsCost, setHexRenameDucatsCost] = useState(25);
-  const [provinceAreaKm2ById, setHexAreaKm2ById] = useState<Record<string, number>>({});
   const [showAntarctica, setShowAntarctica] = useState(false);
   const [showMapControls, setShowMapControls] = useState(false);
   const [edgeScrollEnabled, setEdgeScrollEnabled] = useState(true);
-  const [mapTextureQuality, setMapTextureQuality] = useState<MapTextureQuality>("high");
   const [sortNotifications, setSortNotifications] = useState(true);
-  const [hexIndexLoaded, setHexIndexLoaded] = useState(false);
   const [publicUiLoaded, setPublicUiLoaded] = useState(false);
   const [activeScenarioId, setActiveScenarioId] = useState("default");
 
@@ -786,11 +781,9 @@ export default function App() {
   useEffect(() => {
     const settings = readMapNavigationSettings(auth?.countryId);
     setEdgeScrollEnabled(settings.edgeScrollEnabled);
-    setMapTextureQuality(settings.textureQuality);
     const onNavigationSettingsChanged = () => {
       const next = readMapNavigationSettings(auth?.countryId);
       setEdgeScrollEnabled(next.edgeScrollEnabled);
-      setMapTextureQuality(next.textureQuality);
     };
     window.addEventListener(MAP_NAVIGATION_SETTINGS_EVENT, onNavigationSettingsChanged);
     return () => window.removeEventListener(MAP_NAVIGATION_SETTINGS_EVENT, onNavigationSettingsChanged);
@@ -835,27 +828,6 @@ export default function App() {
       return next.size === current.size ? current : next;
     });
   }, [canceledConstructionQueueKeys.size, worldBase]);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchHexIndex()
-      .then((items) => {
-        if (cancelled) return;
-        const next: Record<string, number> = {};
-        for (const item of items) next[item.id] = item.areaKm2;
-        setHexAreaKm2ById(next);
-        setHexIndexLoaded(true);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setHexAreaKm2ById({});
-          setHexIndexLoaded(true);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -1041,17 +1013,15 @@ export default function App() {
   }, [auth, worldBase]);
   const currentCountryDetails = useMemo(() => {
     if (!auth || !worldBase) {
-      return { provinceCount: 0, totalAreaKm2: 0 };
+      return { provinceCount: 0 };
     }
     let provinceCount = 0;
-    let totalAreaKm2 = 0;
     for (const [hexId, ownerCountryId] of Object.entries(worldBase.hexOwner ?? {})) {
       if (ownerCountryId !== auth.countryId) continue;
       provinceCount += 1;
-      totalAreaKm2 += Math.max(0, Number(provinceAreaKm2ById[hexId] ?? 0));
     }
-    return { provinceCount, totalAreaKm2: Math.round(totalAreaKm2) };
-  }, [auth, provinceAreaKm2ById, worldBase]);
+    return { provinceCount };
+  }, [auth, worldBase]);
 
   const currentCountryPopulationSummary = useMemo(() => {
     if (!auth || !worldBase) {
@@ -2390,13 +2360,13 @@ export default function App() {
       setEntryLoadingGate("hidden");
       return;
     }
-    const ready = Boolean(worldBase) && Boolean(country) && hexIndexLoaded && publicUiLoaded;
+    const ready = Boolean(worldBase) && Boolean(country) && publicUiLoaded;
     setEntryLoadingGate((prev) => {
       if (prev === "hidden") return prev;
       if (prev === "loading" && ready) return "ready";
       return prev;
     });
-  }, [auth, country, hexIndexLoaded, publicUiLoaded, worldBase]);
+  }, [auth, country, publicUiLoaded, worldBase]);
 
   useEffect(() => {
     if (!auth?.token) return;
@@ -2777,57 +2747,64 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-[145] flex items-center justify-center bg-[var(--arc-modal-backdrop)] backdrop-blur-md"
+            className="arc-entry-loading-backdrop"
           >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(18,26,38,0.16),rgba(4,8,12,0.82)_72%)]" />
             <motion.div
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
-              className="glass panel-border relative z-10 w-[min(92vw,34rem)] rounded-xl bg-[var(--arc-color-panel)] p-6 shadow-2xl"
+              className="arc-building-overview-modal arc-entry-loading-modal"
             >
               {entryLoadingGate === "loading" ? (
-                <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-arc-accent/30 bg-arc-accent/10">
-                    <Loader2 className="h-8 w-8 animate-spin text-arc-accent" />
+                <>
+                  <header className="arc-building-overview-header">
+                    <div>
+                      <div className="arc-building-overview-title">{t("shell.entryLoadingStatus")}</div>
+                      <p>{t("shell.entryLoadingDescription")}</p>
+                    </div>
+                    <span className="arc-entry-loading-spinner" aria-hidden="true">
+                      <Loader2 className="animate-spin" size={22} />
+                    </span>
+                  </header>
+                  <div className="arc-building-overview-body">
+                    <div
+                      className="arc-entry-progress"
+                      role="progressbar"
+                      aria-label={t("shell.entryLoadingStatus")}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round((((worldBase ? 1 : 0) + (publicUiLoaded ? 1 : 0) + (country ? 1 : 0)) / 3) * 100)}
+                    >
+                      <span
+                        style={{
+                          width: `${Math.round((((worldBase ? 1 : 0) + (publicUiLoaded ? 1 : 0) + (country ? 1 : 0)) / 3) * 100)}%`,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-lg font-semibold text-[var(--arc-color-text)]">{t("shell.entryLoadingStatus")}</div>
-                    <div className="mt-1 text-sm text-[var(--arc-color-text-soft)]">{t("shell.entryLoadingDescription")}</div>
-                  </div>
-                  <div className="grid w-full grid-cols-1 gap-2 text-left text-xs text-[var(--arc-color-text-soft)] sm:grid-cols-2">
-                    <div className={`rounded-lg border px-3 py-2 ${worldBase ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
-                      {t("shell.entryWorldState")} {worldBase ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
-                    </div>
-                    <div className={`rounded-lg border px-3 py-2 ${hexIndexLoaded ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
-                      {t("shell.entryHexIndex")} {hexIndexLoaded ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
-                    </div>
-                    <div className={`rounded-lg border px-3 py-2 ${publicUiLoaded ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
-                      {t("shell.entryPublicUi")} {publicUiLoaded ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
-                    </div>
-                    <div className={`rounded-lg border px-3 py-2 ${country ? "border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-[var(--arc-color-success-text)]" : "border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)]"}`}>
-                      {t("shell.entryCountryProfile")} {country ? t("shell.entryReadyStatus") : t("shell.entryLoading")}
-                    </div>
-                  </div>
-                </div>
+                </>
               ) : (
-                <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[var(--arc-color-success-border)] bg-[var(--arc-color-success-bottom)] text-2xl text-[var(--arc-color-success-text)]">
-                    ✓
+                <>
+                  <header className="arc-building-overview-header">
+                    <div>
+                      <div className="arc-building-overview-title">{t("shell.entryLoadedTitle")}</div>
+                      <p>{t("shell.entryLoadedDescription")}</p>
+                    </div>
+                    <span className="arc-entry-loaded-icon" aria-hidden="true">
+                      <CheckCircle2 size={22} />
+                    </span>
+                  </header>
+                  <div className="arc-building-overview-body arc-entry-ready-body">
+                    <button
+                      type="button"
+                      onClick={() => setEntryLoadingGate("hidden")}
+                      className="arc-auth-primary-button"
+                    >
+                      {t("shell.entryEnterGame")}
+                    </button>
                   </div>
-                  <div>
-                    <div className="text-lg font-semibold text-[var(--arc-color-text)]">{t("shell.entryLoadedTitle")}</div>
-                    <div className="mt-1 text-sm text-[var(--arc-color-text-soft)]">{t("shell.entryLoadedDescription")}</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setEntryLoadingGate("hidden")}
-                    className="panel-border inline-flex h-11 items-center justify-center rounded-lg bg-arc-accent px-5 text-sm font-semibold text-black transition hover:brightness-110"
-                  >
-                    {t("shell.entryEnterGame")}
-                  </button>
-                </div>
+                </>
               )}
             </motion.div>
           </motion.div>
@@ -3411,14 +3388,12 @@ export default function App() {
           open={clientSettingsOpen}
           showMapControls={showMapControls}
           edgeScrollEnabled={edgeScrollEnabled}
-          textureQuality={mapTextureQuality}
           sortNotifications={sortNotifications}
           onClose={() => setClientSettingsOpen(false)}
-          onSave={({ showMapControls: nextShowMapControls, edgeScrollEnabled: nextEdgeScrollEnabled, textureQuality: nextTextureQuality, sortNotifications: nextSortNotifications }) => {
+          onSave={({ showMapControls: nextShowMapControls, edgeScrollEnabled: nextEdgeScrollEnabled, sortNotifications: nextSortNotifications }) => {
             setShowMapControls(nextShowMapControls);
             setEdgeScrollEnabled(nextEdgeScrollEnabled);
-            setMapTextureQuality(nextTextureQuality);
-            writeMapNavigationSettings(auth.countryId, { edgeScrollEnabled: nextEdgeScrollEnabled, textureQuality: nextTextureQuality });
+            writeMapNavigationSettings(auth.countryId, { edgeScrollEnabled: nextEdgeScrollEnabled });
             setSortNotifications(nextSortNotifications);
           }}
         />

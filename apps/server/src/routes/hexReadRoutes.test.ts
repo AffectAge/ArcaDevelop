@@ -37,33 +37,6 @@ describe("hexReadRoutes", () => {
     expect(body.hexes[0]).not.toHaveProperty("colonyProgressByCountry");
   });
 
-  it("returns public hex index without raw metadata", async () => {
-    const app = makeApp(makeDeps());
-
-    const response = await request(app, "/hexes/index");
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toBe("no-store");
-    const body = await response.json();
-    expect(body.hexes).toEqual([
-      expect.objectContaining({
-        id: "hex:0:0",
-        name: "Alpha",
-        regionId: "region:world",
-        hexColor: "#8fb9a8",
-        regionColor: "#22d3ee",
-        climate: "temperate",
-        landscape: "plains",
-      }),
-      expect.objectContaining({
-        id: "hex:0:1",
-        name: "Beta",
-      }),
-    ]);
-    const forbiddenRawMetadataKey = ["source", "Properties"].join("");
-    expect(body.hexes[0]).not.toHaveProperty(forbiddenRawMetadataKey);
-  });
-
   it("returns generated map features as a readonly public map payload", async () => {
     const app = makeApp(makeDeps());
 

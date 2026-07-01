@@ -1179,11 +1179,6 @@ export type UiTextKey =
   | "clientSettings.mapControlsDescription"
   | "clientSettings.edgeScroll"
   | "clientSettings.edgeScrollDescription"
-  | "clientSettings.mapTextureQuality"
-  | "clientSettings.mapTextureQualityDescription"
-  | "clientSettings.mapTextureQuality.low"
-  | "clientSettings.mapTextureQuality.medium"
-  | "clientSettings.mapTextureQuality.high"
   | "clientSettings.save"
   | "clientSettings.sortNotifications"
   | "clientSettings.sortNotificationsDescription"
@@ -2963,7 +2958,6 @@ export type UiTextKey =
   | "shell.entryLoadingDescription"
   | "shell.entryLoadingStatus"
   | "shell.entryReadyStatus"
-  | "shell.entryHexIndex"
   | "shell.entryPublicUi"
   | "shell.entryWorldState"
   | "shell.forceResolve"
@@ -2976,7 +2970,6 @@ export type UiTextKey =
   | "shell.logoutMessage"
   | "shell.logoutToast"
   | "shell.logoutTitle"
-  | "shell.metric.area"
   | "shell.metric.colonies"
   | "shell.metric.population"
   | "shell.metric.regions"
@@ -3103,7 +3096,6 @@ export type UiTextKey =
   | "topBar.time.hour"
   | "topBar.time.minute"
   | "topBar.time.second"
-  | "topBar.totalArea"
   | "textInput.emptyResets"
   | "shell.readiness.empty"
   | "shell.readiness.offline"
@@ -4441,11 +4433,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "clientSettings.mapControlsDescription": "Zoom, reset, and map lock buttons in the lower right corner.",
     "clientSettings.edgeScroll": "Edge scrolling",
     "clientSettings.edgeScrollDescription": "Move the map when the pointer reaches the screen edge.",
-    "clientSettings.mapTextureQuality": "Map texture quality",
-    "clientSettings.mapTextureQualityDescription": "Low uses flat colors, Medium enables textures and decals, High adds blending and subtle animation.",
-    "clientSettings.mapTextureQuality.low": "Low",
-    "clientSettings.mapTextureQuality.medium": "Medium",
-    "clientSettings.mapTextureQuality.high": "High",
     "clientSettings.save": "Save",
     "clientSettings.sortNotifications": "Notification sorting",
     "clientSettings.sortNotificationsDescription": "When opened, unread notifications are moved left / to the end of the row.",
@@ -6225,7 +6212,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.entryLoadingDescription": "Preparing the map, settings, and your country state",
     "shell.entryLoadingStatus": "Loading game data",
     "shell.entryReadyStatus": "ready",
-    "shell.entryHexIndex": "Hexes",
     "shell.entryPublicUi": "UI settings",
     "shell.entryWorldState": "World state",
     "shell.forceResolve": "Force resolve",
@@ -6238,7 +6224,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.logoutMessage": "Player session ended",
     "shell.logoutToast": "You left the country",
     "shell.logoutTitle": "Logout",
-    "shell.metric.area": "{area} km2",
     "shell.metric.colonies": "Colonies",
     "shell.metric.population": "Population",
     "shell.metric.regions": "Regions",
@@ -6396,7 +6381,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "topBar.time.hour": "h",
     "topBar.time.minute": "m",
     "topBar.time.second": "s",
-    "topBar.totalArea": "Total area",
     "textInput.emptyResets": "An empty value resets the field",
     "shell.readiness.empty": "No country readiness records are visible yet.",
     "shell.readiness.offline": "Offline",
@@ -7702,11 +7686,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "clientSettings.mapControlsDescription": "Кнопки зума, сброса и блокировки карты в правом нижнем углу.",
     "clientSettings.edgeScroll": "Прокрутка у края",
     "clientSettings.edgeScrollDescription": "Перемещает карту, когда курсор подходит к краю экрана.",
-    "clientSettings.mapTextureQuality": "Качество текстур карты",
-    "clientSettings.mapTextureQualityDescription": "Низкое качество использует плоские цвета, среднее включает текстуры и декали, высокое добавляет смешивание и мягкую анимацию.",
-    "clientSettings.mapTextureQuality.low": "Низкое",
-    "clientSettings.mapTextureQuality.medium": "Среднее",
-    "clientSettings.mapTextureQuality.high": "Высокое",
     "clientSettings.save": "Сохранить",
     "clientSettings.sortNotifications": "Сортировка уведомлений",
     "clientSettings.sortNotificationsDescription": "При открытии непросмотренные уведомления переставляются влево/в конец ряда.",
@@ -9486,7 +9465,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.entryLoadingDescription": "Подготавливаем карту, настройки и состояние вашей страны",
     "shell.entryLoadingStatus": "Загрузка данных игры",
     "shell.entryReadyStatus": "готово",
-    "shell.entryHexIndex": "Гексы",
     "shell.entryPublicUi": "UI-настройки",
     "shell.entryWorldState": "Состояние мира",
     "shell.forceResolve": "Форсировать ход",
@@ -9499,7 +9477,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.logoutMessage": "Сессия игрока завершена",
     "shell.logoutToast": "Вы вышли из страны",
     "shell.logoutTitle": "Выход",
-    "shell.metric.area": "{area} км²",
     "shell.metric.colonies": "Колонии",
     "shell.metric.population": "Население",
     "shell.metric.regions": "Регионы",
@@ -9657,7 +9634,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "topBar.time.hour": "ч",
     "topBar.time.minute": "м",
     "topBar.time.second": "с",
-    "topBar.totalArea": "Общая площадь",
     "textInput.emptyResets": "Пустое значение сбрасывает поле",
     "shell.readiness.empty": "Статусы готовности стран пока не видны.",
     "shell.readiness.offline": "Оффлайн",

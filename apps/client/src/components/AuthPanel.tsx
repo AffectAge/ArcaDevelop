@@ -55,19 +55,19 @@ const statusMeta: Record<ServerStatus, { labelKey: UiTextKey; cls: string }> = {
 };
 
 const presetColors = ["#4ade80", "#22d3ee", "#60a5fa", "#f59e0b", "#ef4444", "#a78bfa"];
-const AUTH_LABEL_CLASS = "mb-1 block text-xs text-[var(--arc-color-text-soft)]";
-const AUTH_INPUT_CLASS = "w-full rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] outline-none transition hover:border-[var(--arc-color-gold)] focus:border-[var(--arc-color-gold)]";
+const AUTH_LABEL_CLASS = "arc-auth-label";
+const AUTH_INPUT_CLASS = "arc-auth-input";
 const AUTH_OPTION_CLASS = (active: boolean) =>
-  `relative cursor-pointer rounded-md px-3 py-2 pr-9 transition ${active ? "bg-[var(--arc-color-primary-bottom)] text-[var(--arc-color-text)]" : "text-[var(--arc-color-text-soft)]"}`;
-const AUTH_STATUS_OK_CLASS = "border-[var(--arc-color-success-border)] text-[var(--arc-color-success-text)] shadow-[0_0_14px_rgb(34_197_94_/_0.18)]";
-const AUTH_STATUS_IDLE_CLASS = "border-[var(--arc-color-gold-soft)] text-[var(--arc-color-text-muted)]";
+  `arc-auth-option ${active ? "arc-auth-option--active" : ""}`;
+const AUTH_STATUS_OK_CLASS = "arc-auth-check arc-auth-check--ok";
+const AUTH_STATUS_IDLE_CLASS = "arc-auth-check";
 
 function FieldError({ text }: { text?: string }) {
   if (!text) {
     return null;
   }
 
-  return <p className="mt-1 text-xs text-[var(--arc-color-danger-text)]">{text}</p>;
+  return <p className="arc-auth-error">{text}</p>;
 }
 
 function FileField({
@@ -86,7 +86,7 @@ function FileField({
   return (
     <div>
       <label className={AUTH_LABEL_CLASS}>{label}</label>
-      <label className="panel-border flex cursor-pointer items-center gap-2 rounded-lg bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] transition hover:border-[var(--arc-color-gold)]">
+      <label className="arc-auth-file-field">
         <Upload size={15} className="text-[var(--arc-color-gold)]" />
         <span className="truncate">{file ? file.name : selectLabel}</span>
         <input
@@ -96,7 +96,7 @@ function FileField({
           onChange={(event) => onChange(event.target.files?.[0] ?? null)}
         />
       </label>
-      <p className="mt-1 text-xs text-[var(--arc-color-text-muted)]">{hint}</p>
+      <p className="arc-auth-hint">{hint}</p>
     </div>
   );
 }
@@ -392,35 +392,35 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
   });
 
   return (
-    <motion.div layout transition={{ layout: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } }} className="glass panel-border relative z-20 w-[min(94vw,620px)] rounded-xl p-6 shadow-2xl">
+    <motion.div layout transition={{ layout: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } }} className="arc-building-overview-modal arc-auth-modal">
       <AnimatePresence>
         {registrationPendingModal.open && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-[var(--arc-modal-backdrop)] p-4 backdrop-blur-sm"
+            className="arc-auth-pending-backdrop"
           >
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
               transition={{ duration: 0.16, ease: "easeOut" }}
-              className="glass panel-border w-full max-w-[28rem] rounded-xl border-[var(--arc-color-gold-soft)] bg-[var(--arc-color-panel)] p-4 shadow-2xl"
+              className="arc-building-overview-card arc-building-overview-card--working arc-auth-pending-card"
             >
-              <div className="mb-2 flex items-center justify-center gap-2 text-center text-sm font-semibold text-[var(--arc-color-gold)]">
+              <div className="arc-auth-pending-title">
                 <ShieldCheck size={15} />
                 <span>{t("auth.registrationSent")}</span>
               </div>
-              <div className="mb-1 text-xs text-[var(--arc-color-text-soft)]">
+              <div className="arc-auth-pending-message">
                 {t("auth.registrationSentMessage", { country: registrationPendingModal.countryName })}
               </div>
-              <div className="mb-4 text-xs text-[var(--arc-color-text-muted)]">{t("auth.registrationPendingDescription")}</div>
+              <div className="arc-auth-pending-description">{t("auth.registrationPendingDescription")}</div>
               <div className="flex justify-center">
                 <button
                   type="button"
                   onClick={() => setRegistrationPendingModal({ open: false, countryName: "" })}
-                  className="inline-flex items-center justify-center rounded-lg bg-arc-accent px-4 py-2 text-sm font-semibold text-black transition hover:brightness-110"
+                  className="arc-auth-primary-button"
                 >
                   {t("auth.waitButton")}
                 </button>
@@ -429,35 +429,37 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="mb-5 flex items-start justify-between gap-4">
+      <header className="arc-building-overview-header">
         <div>
-          <div className="font-display text-5xl tracking-[0.18em]">ARCANORUM</div>
-          <div className="mt-1 text-xs text-[var(--arc-color-text-muted)]">{t("auth.clientVersion")}</div>
+          <div className="arc-building-overview-title arc-auth-title">ARCANORUM</div>
+          <p>{t("auth.clientVersion")}</p>
         </div>
-        <div className="panel-border flex items-center gap-2 rounded-lg bg-[var(--arc-overlay-30)] px-3 py-2 text-xs text-[var(--arc-color-text-soft)]">
+        <div className="arc-auth-server-status">
           <Server size={14} />
-          <span className={`h-2.5 w-2.5 rounded-full ${statusMeta[serverStatus].cls} ${serverStatus === "online" ? "pulse-status" : ""}`} />
+          <span className={`arc-auth-status-dot ${statusMeta[serverStatus].cls} ${serverStatus === "online" ? "pulse-status" : ""}`} />
           {t(statusMeta[serverStatus].labelKey)}
         </div>
-      </div>
+      </header>
 
       {loading ? (
-        <div className="rounded-xl bg-[var(--arc-overlay-30)] p-4 text-sm text-[var(--arc-color-text-soft)]">
-          <div className="mb-2 flex items-center justify-center gap-2">
+        <div className="arc-building-overview-body">
+          <div className="arc-auth-loading-card">
+            <div className="arc-auth-loading-title">
             <LoaderCircle className="animate-spin" size={16} />
             {t("auth.loadingGame")}
+            </div>
+            <div className="arc-auth-progress-track">
+              <div style={{ width: `${loadingProgress}%` }} />
+            </div>
+            <div className="arc-auth-progress-value">{loadingProgress}%</div>
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded bg-[var(--arc-overlay-45)]">
-            <div className="h-full rounded bg-arc-accent transition-all duration-300" style={{ width: `${loadingProgress}%` }} />
-          </div>
-          <div className="mt-1 text-center text-xs text-[var(--arc-color-text-muted)]">{loadingProgress}%</div>
         </div>
       ) : (
         <Tab.Group>
-          <Tab.List className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-[var(--arc-overlay-30)] p-1">
+          <Tab.List className="arc-auth-tabs">
             <Tab
               className={({ selected }) =>
-                `inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition ${selected ? "bg-[var(--arc-color-primary-bottom)] text-[var(--arc-color-text)]" : "text-[var(--arc-color-text-soft)] hover:text-[var(--arc-color-text)]"}`
+                `arc-auth-tab ${selected ? "arc-auth-tab--selected" : ""}`
               }
             >
               <LogIn size={15} />
@@ -465,7 +467,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
             </Tab>
             <Tab
               className={({ selected }) =>
-                `inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition ${selected ? "bg-[var(--arc-color-primary-bottom)] text-[var(--arc-color-text)]" : "text-[var(--arc-color-text-soft)] hover:text-[var(--arc-color-text)]"}`
+                `arc-auth-tab ${selected ? "arc-auth-tab--selected" : ""}`
               }
             >
               <UserPlus size={15} />
@@ -473,7 +475,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
             </Tab>
           </Tab.List>
 
-          <motion.div layout transition={{ layout: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } }} className="overflow-hidden">
+          <motion.div layout transition={{ layout: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } }} className="arc-building-overview-body arc-auth-body arc-scrollbar">
             <Tab.Panels>
             <Tab.Panel>
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: "easeOut" }}>
@@ -488,15 +490,15 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                       <Listbox.Button className={`${AUTH_INPUT_CLASS} pr-10 text-left`}>
                         {selectedCountry ? selectedCountry.name : t("auth.selectCountry")}
                       </Listbox.Button>
-                      <Listbox.Options className="arc-scrollbar panel-border absolute z-30 mt-2 max-h-56 w-full overflow-auto rounded-lg bg-[var(--arc-color-panel)] p-1 text-sm shadow-2xl outline-none">
+                      <Listbox.Options className="arc-scrollbar arc-auth-options">
                         <Listbox.Option
                           value=""
                           className={({ active }) => AUTH_OPTION_CLASS(active)}
                         >
                           {({ selected }) => (
                             <>
-                              <span className={selected ? "text-[var(--arc-color-gold)]" : ""}>{t("auth.selectCountry")}</span>
-                              {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--arc-color-gold)]" />}
+                              <span className={selected ? "arc-auth-selected-option" : ""}>{t("auth.selectCountry")}</span>
+                              {selected && <Check size={14} className="arc-auth-option-check" />}
                             </>
                           )}
                         </Listbox.Option>
@@ -508,8 +510,8 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                           >
                             {({ selected }) => (
                               <>
-                                <span className={selected ? "text-[var(--arc-color-gold)]" : ""}>{country.name}</span>
-                                {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--arc-color-gold)]" />}
+                                <span className={selected ? "arc-auth-selected-option" : ""}>{country.name}</span>
+                                {selected && <Check size={14} className="arc-auth-option-check" />}
                               </>
                             )}
                           </Listbox.Option>
@@ -533,7 +535,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                       }
                     >
                       <span
-                        className={`group inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-[var(--arc-overlay-30)] transition ${
+                        className={`${
                           passwordChecks.length
                             ? AUTH_STATUS_OK_CLASS
                             : AUTH_STATUS_IDLE_CLASS
@@ -551,7 +553,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                       }
                     >
                       <span
-                        className={`group inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-[var(--arc-overlay-30)] transition ${
+                        className={`${
                           passwordChecks.complexity
                             ? AUTH_STATUS_OK_CLASS
                             : AUTH_STATUS_IDLE_CLASS
@@ -564,19 +566,19 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                   </div>
                 </div>
 
-                <label className="flex items-center gap-2 text-xs text-[var(--arc-color-text-soft)]">
+                <label className="arc-auth-checkbox">
                   <input type="checkbox" className="accent-arc-accent" {...loginForm.register("rememberMe")} />
                   {t("auth.rememberMe")}
                 </label>
 
-                <button disabled={submitting} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-arc-accent px-3 py-2 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-60">
+                <button disabled={submitting} className="arc-auth-primary-button arc-auth-full-button">
                   <ShieldCheck size={15} />
                   {submitting ? t("auth.loginPending") : t("auth.enterGame")}
                 </button>
                 <button
                   type="button"
                   onClick={onOpenCivilopedia}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-3 py-2 text-sm text-[var(--arc-color-text-soft)] transition hover:border-[var(--arc-color-gold)] hover:text-[var(--arc-color-gold)]"
+                  className="arc-auth-secondary-button arc-auth-full-button"
                 >
                   <BookOpen size={15} />
                   {t("auth.knowledge")}
@@ -595,7 +597,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                 </div>
 
                 <div>
-                  <label className="mb-1 flex items-center gap-2 text-xs text-[var(--arc-color-text-soft)]">
+                  <label className="arc-auth-label arc-auth-label-row">
                     <Palette size={13} /> {t("auth.countryColor")}
                   </label>
                   <div className="flex items-center gap-2">
@@ -603,7 +605,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                       type="color"
                       value={colord(registerColor).isValid() ? colord(registerColor).toHex() : "#4ade80"}
                       onChange={(e) => registerForm.setValue("countryColor", e.target.value, { shouldDirty: true, shouldValidate: true })}
-                      className="panel-border h-10 w-12 cursor-pointer rounded-lg bg-[var(--arc-overlay-35)] p-1"
+                      className="arc-auth-color-picker"
                     />
                     <input
                       className={AUTH_INPUT_CLASS}
@@ -611,7 +613,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                       {...registerForm.register("countryColor")}
                     />
                     <span
-                      className="panel-border h-9 w-9 rounded-md"
+                      className="arc-auth-color-preview"
                       style={{ backgroundColor: colord(registerColor).isValid() ? colord(registerColor).toHex() : "#111827" }}
                     />
                   </div>
@@ -621,7 +623,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                         key={color}
                         type="button"
                         onClick={() => registerForm.setValue("countryColor", color, { shouldDirty: true, shouldValidate: true })}
-                        className="panel-border h-6 w-6 rounded-full transition hover:scale-110"
+                        className="arc-auth-color-preset"
                         style={{ backgroundColor: color }}
                         aria-label={t("auth.presetColor", { color })}
                       />
@@ -648,23 +650,23 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <div className="panel-border rounded-lg bg-[var(--arc-overlay-30)] p-2">
-                    <div className="mb-2 text-xs text-[var(--arc-color-text-muted)]">{t("auth.flagPreview")}</div>
-                    <div className="h-20 overflow-hidden rounded-md bg-[var(--arc-overlay-35)]">
+                  <div className="arc-auth-preview-card">
+                    <div className="arc-auth-preview-title">{t("auth.flagPreview")}</div>
+                    <div className="arc-auth-preview-frame">
                       {flagPreviewUrl ? (
                         <img src={flagPreviewUrl} alt="flag preview" className="h-full w-full object-contain p-1" />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-xs text-[var(--arc-color-text-muted)]">{t("auth.noFileSelected")}</div>
+                        <div className="arc-auth-preview-empty">{t("auth.noFileSelected")}</div>
                       )}
                     </div>
                   </div>
-                  <div className="panel-border rounded-lg bg-[var(--arc-overlay-30)] p-2">
-                    <div className="mb-2 text-xs text-[var(--arc-color-text-muted)]">{t("auth.crestPreview")}</div>
-                    <div className="h-20 overflow-hidden rounded-md bg-[var(--arc-overlay-35)]">
+                  <div className="arc-auth-preview-card">
+                    <div className="arc-auth-preview-title">{t("auth.crestPreview")}</div>
+                    <div className="arc-auth-preview-frame">
                       {crestPreviewUrl ? (
                         <img src={crestPreviewUrl} alt="crest preview" className="h-full w-full object-contain p-1" />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-xs text-[var(--arc-color-text-muted)]">{t("auth.noFileSelected")}</div>
+                        <div className="arc-auth-preview-empty">{t("auth.noFileSelected")}</div>
                       )}
                     </div>
                   </div>
@@ -684,7 +686,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                         }
                       >
                         <span
-                          className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-[var(--arc-overlay-30)] transition ${
+                          className={`${
                             registerPasswordChecks.length
                               ? AUTH_STATUS_OK_CLASS
                               : AUTH_STATUS_IDLE_CLASS
@@ -702,7 +704,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                         }
                       >
                         <span
-                          className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border bg-[var(--arc-overlay-30)] transition ${
+                          className={`${
                             registerPasswordChecks.complexity
                               ? AUTH_STATUS_OK_CLASS
                               : AUTH_STATUS_IDLE_CLASS
@@ -721,14 +723,14 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                   </div>
                 </div>
 
-                <button disabled={submitting} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-arc-accent px-3 py-2 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-60">
+                <button disabled={submitting} className="arc-auth-primary-button arc-auth-full-button">
                   <UserPlus size={15} />
                   {submitting ? t("auth.creating") : t("auth.createCountry")}
                 </button>
                 <button
                   type="button"
                   onClick={onOpenCivilopedia}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--arc-color-gold-soft)] bg-[var(--arc-overlay-30)] px-3 py-2 text-sm text-[var(--arc-color-text-soft)] transition hover:border-[var(--arc-color-gold)] hover:text-[var(--arc-color-gold)]"
+                  className="arc-auth-secondary-button arc-auth-full-button"
                 >
                   <BookOpen size={15} />
                   {t("auth.knowledge")}

@@ -70,34 +70,6 @@ export function registerHexReadRoutes(
     });
   });
 
-  app.get("/hexes/index", (_req, res) => {
-    res.setHeader("Cache-Control", "no-store");
-    return res.json({
-      hexes: deps.getHexIndex().map((province) => ({
-        id: province.id,
-        name: province.name,
-        regionId: province.regionId,
-        hexColor: province.hexColor,
-        regionColor: province.regionColor,
-        areaKm2: province.areaKm2,
-        hexType: province.hexType,
-        centerX: province.centerX,
-        centerY: province.centerY,
-        sourceCenterX: province.sourceCenterX,
-        sourceCenterY: province.sourceCenterY,
-        neighbors: province.neighbors,
-        climate: province.climate,
-        pollution: province.pollution,
-        radiation: province.radiation,
-        landscape: province.landscape,
-        continent: province.continent,
-        strategicRegion: province.strategicRegion,
-        fertileLandKm2: province.fertileLandKm2,
-        fertility: province.fertility,
-      })),
-    });
-  });
-
   app.get("/hex-map/artifact", (_req, res) => {
     const artifact = deps.getHexMapArtifact();
     if (!artifact) {
