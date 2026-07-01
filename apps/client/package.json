@@ -22,6 +22,7 @@
     "colord": "^2.9.3",
     "echarts": "^6.0.0",
     "elkjs": "^0.11.0",
+    "flatbush": "^4.6.2",
     "framer-motion": "^11.15.0",
     "lucide-react": "^0.475.0",
     "pixi.js": "^8.19.0",

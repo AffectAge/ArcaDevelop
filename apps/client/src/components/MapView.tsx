@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Application, Container, Graphics, Sprite } from "pixi.js";
+import Flatbush from "flatbush";
 import { BookOpen, Building2, Flag, Gem, Grid3X3, HandCoins, Info, Landmark, Layers, Leaf, Mountain, Move, Shield, Ship, Tags, Users, Waves } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -235,6 +236,11 @@ type ViewportCullingBounds = {
   bottom: number;
 };
 
+type MapTileSpatialIndex = {
+  index: Flatbush | null;
+  tileIdsByIndex: readonly HexId[];
+};
+
 const DEFAULT_CAMERA: HexCamera = {
   x: axialToPixel({ q: DEFAULT_HEX_MAP_SETTINGS.width / 2, r: DEFAULT_HEX_MAP_SETTINGS.height / 2 }, DEFAULT_HEX_MAP_SETTINGS.hexSize).x,
   y: axialToPixel({ q: DEFAULT_HEX_MAP_SETTINGS.width / 2, r: DEFAULT_HEX_MAP_SETTINGS.height / 2 }, DEFAULT_HEX_MAP_SETTINGS.hexSize).y,
@@ -389,6 +395,7 @@ export function MapView({
   const initialCamera = useMemo(() => buildInitialHexCamera(mapArtifact.settings), [mapArtifact.settings]);
   const showStatsPanel = useMemo(() => shouldShowMapStatsPanel(), []);
   const tileById = useMemo(() => new Map(mapArtifact.tiles.map((tile) => [tile.id, tile])), [mapArtifact]);
+  const tileSpatialIndex = useMemo(() => buildTileSpatialIndex(mapArtifact), [mapArtifact]);
   const tilesByRegionId = useMemo(() => {
     const byRegion = new Map<string, HexTile[]>();
     for (const tile of mapArtifact.tiles) {
@@ -1226,10 +1233,10 @@ export function MapView({
     cameraRef.current = nextCamera;
     cameraTargetRef.current = nextCamera;
     setCamera(nextCamera);
-    const nextViewport = getViewportCullingState(serverMapArtifact, nextCamera, containerRef.current?.getBoundingClientRect());
+    const nextViewport = getViewportCullingState(serverMapArtifact, tileSpatialIndex, nextCamera, containerRef.current?.getBoundingClientRect());
     viewportCullingRef.current = nextViewport;
     setViewportCulling(nextViewport);
-  }, [serverMapArtifact]);
+  }, [serverMapArtifact, tileSpatialIndex]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -1317,7 +1324,7 @@ export function MapView({
       resizeObserver = new ResizeObserver(() => {
         if (disposed || !app.renderer) return;
         app.renderer.resize(Math.max(1, container.clientWidth), Math.max(1, container.clientHeight));
-        const nextViewport = getViewportCullingState(mapArtifact, cameraRef.current, container.getBoundingClientRect());
+        const nextViewport = getViewportCullingState(mapArtifact, tileSpatialIndex, cameraRef.current, container.getBoundingClientRect());
         viewportCullingRef.current = nextViewport;
         setViewportCulling(nextViewport);
         app.render();
@@ -1350,7 +1357,7 @@ export function MapView({
         safeDestroyPixiApp(app);
       }
     };
-  }, [authCountryId, mapArtifact, serverMapArtifact, tileById, wrapWidth]);
+  }, [authCountryId, mapArtifact, serverMapArtifact, tileById, tileSpatialIndex, wrapWidth]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -1749,7 +1756,7 @@ export function MapView({
           const nextViewportBounds = getViewportCullingBounds(mapArtifact, nextCamera, rect);
           const nextViewportKey = nextViewportBounds?.key ?? `all:${mapArtifact.tiles.length}`;
           if (nextViewportKey !== viewportCullingRef.current.key) {
-            const nextViewport = getViewportCullingStateFromBounds(mapArtifact, nextViewportBounds);
+            const nextViewport = getViewportCullingStateFromBounds(mapArtifact, tileSpatialIndex, nextViewportBounds);
             viewportCullingRef.current = nextViewport;
             setViewportCulling(nextViewport);
           }
@@ -1760,7 +1767,7 @@ export function MapView({
 
     frameId = window.requestAnimationFrame(step);
     return () => window.cancelAnimationFrame(frameId);
-  }, [authCountryId, cameraBounds, interactionLocked, mapArtifact]);
+  }, [authCountryId, cameraBounds, interactionLocked, mapArtifact, tileSpatialIndex]);
 
   useEffect(() => {
     const app = appRef.current;
@@ -3156,6 +3163,21 @@ function getMapZoomBucket(scale: number): MapZoomBucket {
   return "near";
 }
 
+function buildTileSpatialIndex(map: HexMapArtifact): MapTileSpatialIndex {
+  if (map.tiles.length === 0) {
+    return { index: null, tileIdsByIndex: [] };
+  }
+  const index = new Flatbush(map.tiles.length);
+  const tileIdsByIndex: HexId[] = [];
+  for (const tile of map.tiles) {
+    const center = axialToPixel(tile, map.settings.hexSize);
+    tileIdsByIndex.push(tile.id);
+    index.add(center.x, center.y, center.x, center.y);
+  }
+  index.finish();
+  return { index, tileIdsByIndex };
+}
+
 function getViewportCullingBounds(map: HexMapArtifact, camera: HexCamera, rect: DOMRect | undefined): ViewportCullingBounds | null {
   if (!rect || rect.width <= 0 || rect.height <= 0) {
     return null;
@@ -3180,23 +3202,24 @@ function getViewportCullingBounds(map: HexMapArtifact, camera: HexCamera, rect: 
   return { key, left, right, top, bottom };
 }
 
-function getViewportCullingState(map: HexMapArtifact, camera: HexCamera, rect: DOMRect | undefined): ViewportCullingState {
-  return getViewportCullingStateFromBounds(map, getViewportCullingBounds(map, camera, rect));
+function getViewportCullingState(map: HexMapArtifact, spatialIndex: MapTileSpatialIndex, camera: HexCamera, rect: DOMRect | undefined): ViewportCullingState {
+  return getViewportCullingStateFromBounds(map, spatialIndex, getViewportCullingBounds(map, camera, rect));
 }
 
-function getViewportCullingStateFromBounds(map: HexMapArtifact, bounds: ViewportCullingBounds | null): ViewportCullingState {
+function getViewportCullingStateFromBounds(map: HexMapArtifact, spatialIndex: MapTileSpatialIndex, bounds: ViewportCullingBounds | null): ViewportCullingState {
   if (!bounds) {
     return {
       key: `all:${map.tiles.length}`,
-      visibleTileIds: new Set(map.tiles.map((tile) => tile.id)),
+      visibleTileIds: new Set(spatialIndex.tileIdsByIndex),
     };
   }
-  const size = map.settings.hexSize;
+  if (!spatialIndex.index) {
+    return { key: bounds.key, visibleTileIds: new Set<HexId>() };
+  }
   const visibleTileIds = new Set<HexId>();
-  for (const tile of map.tiles) {
-    const center = axialToPixel(tile, size);
-    if (center.x < bounds.left || center.x > bounds.right || center.y < bounds.top || center.y > bounds.bottom) continue;
-    visibleTileIds.add(tile.id);
+  for (const itemIndex of spatialIndex.index.search(bounds.left, bounds.top, bounds.right, bounds.bottom)) {
+    const tileId = spatialIndex.tileIdsByIndex[itemIndex];
+    if (tileId) visibleTileIds.add(tileId);
   }
   return { key: bounds.key, visibleTileIds };
 }
