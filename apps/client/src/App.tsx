@@ -6,7 +6,7 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import type { Country, DiplomacyProposal, DivisionTemplate, HexId, MilitaryBranch, MilitaryFormationQueueItem, OrderDelta, WsOutMessage } from "@arcanorum/shared";
 import { AuthPanel, type AuthSuccess } from "./components/AuthPanel";
 import { MapView } from "./components/MapView";
-import { StrategyShell, type MarketTradeOverviewRow, type StrategyMode } from "./components/strategy-shell/StrategyShell";
+import { StrategyShell, type MarketTradeOverviewRow, type StrategyMode, type StrategyShellSelectedHexDetails } from "./components/strategy-shell/StrategyShell";
 import { buildArmyLogisticsRows } from "./components/strategy-shell/armyLogistics";
 import { CommandPalette } from "./components/CommandPalette";
 import { AdminPanel } from "./components/AdminPanel";
@@ -416,6 +416,9 @@ export default function App() {
   const [canceledConstructionQueueKeys, setCanceledConstructionQueueKeys] = useState<Set<string>>(() => new Set());
   const [mapFocusRequest, setMapFocusRequest] = useState<{ hexId: HexId; nonce: number } | null>(null);
   const [queueingColonizerHexId, setQueueingColonizerHexId] = useState<HexId | null>(null);
+  const [selectedHexDetails, setSelectedHexDetails] = useState<StrategyShellSelectedHexDetails | null>(null);
+  const [openHexWorkspaceRequestId, setOpenHexWorkspaceRequestId] = useState(0);
+  const [colonizerPlacement, setColonizerPlacement] = useState<{ active: boolean } | null>(null);
   const [hexBuildPlacement, setHexBuildPlacement] = useState<{
     building: ContentEntry;
     owner: { type: "state"; countryId: string } | { type: "company"; companyId: string };
@@ -2601,8 +2604,20 @@ export default function App() {
         onQueueUnitAttackOrder={queueUnitAttackOrder}
         onQueueCivilianUnitMoveOrder={queueCivilianUnitMoveOrder}
         onFoundCityOrder={queueFoundCityOrder}
-        onQueueColonizer={queueColonizerOnHex}
-        queueingColonizerHexId={queueingColonizerHexId}
+        onHexSelectionChange={setSelectedHexDetails}
+        onOpenSelectedHexWorkspace={(details) => {
+          setSelectedHexDetails(details);
+          setActiveStrategyMode("overview");
+          setStrategyWorkspaceOpen(true);
+          setOpenHexWorkspaceRequestId((value) => value + 1);
+        }}
+        colonizerPlacement={colonizerPlacement}
+        onCancelColonizerPlacement={() => setColonizerPlacement(null)}
+        onSelectColonizerPlacementTarget={(target) => {
+          if (!isHexId(target.hexId)) return;
+          setColonizerPlacement(null);
+          void queueColonizerOnHex(target.hexId);
+        }}
         colonizationIconUrl={BASE_RESOURCE_ICON_URLS.colonization}
         ducatsIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
         maxActiveColonizations={maxActiveColonizations}
@@ -2665,28 +2680,6 @@ export default function App() {
             priority: formationPlacement.priority,
             repeat: formationPlacement.repeat,
           });
-        }}
-        onOpenAdminHexEditor={(hexId) => {
-          setAdminInitialHexId(hexId);
-          setAdminOpen(true);
-        }}
-        onOpenHexKnowledge={(hexId, hexName) => {
-          setCivilopediaIntent({
-            type: "region",
-            hexId,
-            hexName,
-            createIfMissing: false,
-          });
-          setCivilopediaOpen(true);
-        }}
-        onCreateHexKnowledge={(hexId, hexName) => {
-          setCivilopediaIntent({
-            type: "region",
-            hexId,
-            hexName,
-            createIfMissing: true,
-          });
-          setCivilopediaOpen(true);
         }}
         onHexRenameCharged={(chargedDucats) => {
           if (chargedDucats <= 0) return;
@@ -2879,6 +2872,9 @@ export default function App() {
             colonizerQueuePreview={colonizerQueuePreview}
             colonizerUnitPreview={colonizerUnitPreview}
             settlementProjectPreview={settlementProjectPreview}
+            selectedHexDetails={selectedHexDetails}
+            openHexWorkspaceRequestId={openHexWorkspaceRequestId}
+            colonizerPlacementActive={Boolean(colonizerPlacement)}
             countryDetails={currentCountryDetails}
             notificationCount={uiNotificationHistory.length}
             pendingDecisionCount={pendingDecisionNotificationCount}
@@ -2891,6 +2887,11 @@ export default function App() {
             industryEntries={industryEntries}
             sectorEntries={sectorEntries}
             onOpenBuildingConstruction={startHexBuildPlacementForBuilding}
+            onStartColonizerPlacement={() => {
+              setActiveStrategyMode("colonization");
+              setStrategyWorkspaceOpen(true);
+              setColonizerPlacement({ active: true });
+            }}
             onOpenPopulation={() => setPopulationStatsOpen(true)}
             onOpenMarket={() => setMarketOpen(true)}
             onOpenGlobalMarket={() => setGlobalMarketOpen(true)}

@@ -1683,6 +1683,8 @@ export type UiTextKey =
   | "hexMap.foundCityTooltipCannot"
   | "hexMap.foundCityNeutralRequired"
   | "hexMap.foundCityOrderSent"
+  | "hexMap.unitPopoverTitle"
+  | "hexMap.unitPopoverHex"
   | "hexMap.cityPendingNameFallback"
   | "hexMap.build"
   | "hexMap.colonize"
@@ -2905,7 +2907,12 @@ export type UiTextKey =
   | "shell.codex"
   | "shell.colonization.colonizerQueue"
   | "shell.colonization.focusHexTooltip"
+  | "shell.colonization.management"
+  | "shell.colonization.prepareColonizer"
+  | "shell.colonization.prepareColonizerActive"
+  | "shell.colonization.prepareColonizerDescription"
   | "shell.colonization.readyColonizers"
+  | "shell.colonization.selectPreparationHex"
   | "shell.colonization.settlementProject"
   | "shell.colonization.settlementProjects"
   | "shell.colonization.status.active"
@@ -3157,14 +3164,18 @@ export type UiTextKey =
   | "shell.worldResynced"
   | "shell.workspaceTab.actions"
   | "shell.workspaceTab.buildings"
+  | "shell.workspaceTab.colonizers"
   | "shell.workspaceTab.constructionQueue"
   | "shell.workspaceTab.formation"
+  | "shell.workspaceTab.hex"
   | "shell.workspaceTab.infrastructure"
   | "shell.workspaceTab.records"
   | "shell.workspaceTab.summary"
   | "shell.workspaceTab.trade"
   | "shell.workspaceTab.warehouses"
   | "shell.workspaceTabs"
+  | "shell.hex.controller"
+  | "shell.hex.title"
   | "shell.warehouses.assigned"
   | "shell.warehouses.balance"
   | "shell.warehouses.balanceShort"
@@ -4937,6 +4948,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.foundCityTooltipCannot": "A city can be founded only by your colonizer on a neutral region.",
     "hexMap.foundCityNeutralRequired": "City foundation requires a neutral region.",
     "hexMap.foundCityOrderSent": "City foundation order sent",
+    "hexMap.unitPopoverTitle": "Selected unit",
+    "hexMap.unitPopoverHex": "Hex {hex}",
     "hexMap.cityPendingNameFallback": "New city",
     "hexMap.build": "Build",
     "hexMap.colonize": "Colonize",
@@ -6159,7 +6172,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.codex": "Arcawiki",
     "shell.colonization.colonizerQueue": "Colonizer preparation",
     "shell.colonization.focusHexTooltip": "Center the camera on this hex.",
+    "shell.colonization.management": "Colonizer management",
+    "shell.colonization.prepareColonizer": "Prepare colonizer",
+    "shell.colonization.prepareColonizerActive": "Select preparation hex",
+    "shell.colonization.prepareColonizerDescription": "Choose a controlled hex without a civilian unit or civilian queue. The colonizer appears there after preparation finishes.",
     "shell.colonization.readyColonizers": "Ready colonizers",
+    "shell.colonization.selectPreparationHex": "Select a valid controlled hex on the map.",
     "shell.colonization.settlementProject": "Settlement project",
     "shell.colonization.settlementProjects": "Settlement projects",
     "shell.colonization.status.active": "Active",
@@ -6442,14 +6460,18 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.worldResynced": "World state synchronized again",
     "shell.workspaceTab.actions": "Available actions",
     "shell.workspaceTab.buildings": "Building construction",
+    "shell.workspaceTab.colonizers": "Colonizers",
     "shell.workspaceTab.constructionQueue": "Construction queue",
     "shell.workspaceTab.formation": "Formation",
+    "shell.workspaceTab.hex": "Hex",
     "shell.workspaceTab.infrastructure": "Infrastructure",
     "shell.workspaceTab.records": "Records",
     "shell.workspaceTab.summary": "Country summary",
     "shell.workspaceTab.trade": "Trade",
     "shell.workspaceTab.warehouses": "Warehouses",
     "shell.workspaceTabs": "Workspace tabs",
+    "shell.hex.controller": "Controller",
+    "shell.hex.title": "Hex information",
     "shell.warehouses.assigned": "Assigned to units",
     "shell.warehouses.balance": "Balance",
     "shell.warehouses.balanceShort": "Bal.",
@@ -8190,6 +8212,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.foundCityTooltipCannot": "Город может основать только ваш колонизатор в нейтральном регионе.",
     "hexMap.foundCityNeutralRequired": "Для основания города нужен нейтральный регион.",
     "hexMap.foundCityOrderSent": "Приказ основания города отправлен",
+    "hexMap.unitPopoverTitle": "Выбранный юнит",
+    "hexMap.unitPopoverHex": "Гекс {hex}",
     "hexMap.cityPendingNameFallback": "Новый город",
     "hexMap.build": "Строить",
     "hexMap.colonize": "Колонизировать",
@@ -9412,7 +9436,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.codex": "Аркавики",
     "shell.colonization.colonizerQueue": "Подготовка колонизаторов",
     "shell.colonization.focusHexTooltip": "Центрировать камеру на этом гексе.",
+    "shell.colonization.management": "Управление колонизаторами",
+    "shell.colonization.prepareColonizer": "Подготовить колонизатора",
+    "shell.colonization.prepareColonizerActive": "Выберите гекс подготовки",
+    "shell.colonization.prepareColonizerDescription": "Выберите контролируемый гекс без гражданского юнита или гражданской очереди. Колонизатор появится там после подготовки.",
     "shell.colonization.readyColonizers": "Готовые колонизаторы",
+    "shell.colonization.selectPreparationHex": "Выберите допустимый контролируемый гекс на карте.",
     "shell.colonization.settlementProject": "Проект поселения",
     "shell.colonization.settlementProjects": "Проекты поселений",
     "shell.colonization.status.active": "Активен",
@@ -9695,14 +9724,18 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.worldResynced": "Состояние мира синхронизировано заново",
     "shell.workspaceTab.actions": "Доступные действия",
     "shell.workspaceTab.buildings": "Строительство зданий",
+    "shell.workspaceTab.colonizers": "Колонизаторы",
     "shell.workspaceTab.constructionQueue": "Очередь строительства",
     "shell.workspaceTab.formation": "Формирование",
+    "shell.workspaceTab.hex": "Гекс",
     "shell.workspaceTab.infrastructure": "Инфраструктура",
     "shell.workspaceTab.records": "Записи",
     "shell.workspaceTab.summary": "Сводка страны",
     "shell.workspaceTab.trade": "Торговля",
     "shell.workspaceTab.warehouses": "Склады",
     "shell.workspaceTabs": "Вкладки рабочей области",
+    "shell.hex.controller": "Контролирует",
+    "shell.hex.title": "Информация о гексе",
     "shell.warehouses.assigned": "Назначено частям",
     "shell.warehouses.balance": "Баланс",
     "shell.warehouses.balanceShort": "Бал.",

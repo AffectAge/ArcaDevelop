@@ -76,7 +76,23 @@ type ActionItem = {
   tone?: "primary" | "danger";
 };
 
-type WorkspaceTabKey = "actions" | "summary" | "records" | "trade" | "buildings" | "infrastructure" | "warehouses" | "formation";
+type WorkspaceTabKey = "actions" | "summary" | "hex" | "records" | "trade" | "buildings" | "infrastructure" | "colonizers" | "warehouses" | "formation";
+
+export type StrategyShellSelectedHexDetails = {
+  id: HexId;
+  name: string;
+  regionId: string;
+  terrain: string;
+  feature: string;
+  siteFeatures: string[];
+  resourceDeposit: string | null;
+  water: string;
+  owner: string;
+  controller: string;
+  movementCost: string;
+  divisionStack: string;
+  divisionStackTooltip?: TooltipStructuredContent;
+};
 
 type BuildingListEntry = {
   id: string;
@@ -221,6 +237,9 @@ type Props = {
   colonizerQueuePreview?: ColonizationQueuePreviewItem[];
   colonizerUnitPreview?: ColonizationUnitPreviewItem[];
   settlementProjectPreview?: SettlementProjectPreviewItem[];
+  selectedHexDetails?: StrategyShellSelectedHexDetails | null;
+  openHexWorkspaceRequestId?: number;
+  colonizerPlacementActive?: boolean;
   countryDetails?: { provinceCount: number } | null;
   notificationCount: number;
   pendingDecisionCount: number;
@@ -246,6 +265,7 @@ type Props = {
   onCancelConstructionProject?: (item: ConstructionCancelPayload) => void;
   onFocusConstructionHex?: (hexId: HexId) => void;
   onFocusHex?: (hexId: HexId) => void;
+  onStartColonizerPlacement?: () => void;
   onStartMilitaryFormationPlacement?: (
     template: DivisionTemplate,
     options: { quantity: number; priority: "high" | "normal" | "low"; repeat: boolean },
@@ -293,10 +313,12 @@ const resourceDescriptors: Array<{ key: ResourceKey; labelKey: UiTextKey; icon: 
 const workspaceTabDescriptors: Array<{ key: WorkspaceTabKey; labelKey: UiTextKey; icon: LucideIcon }> = [
   { key: "actions", labelKey: "shell.workspaceTab.actions", icon: ListChecks },
   { key: "summary", labelKey: "shell.workspaceTab.summary", icon: Users },
+  { key: "hex", labelKey: "shell.workspaceTab.hex", icon: Crosshair },
   { key: "records", labelKey: "shell.workspaceTab.records", icon: ClipboardList },
   { key: "trade", labelKey: "shell.workspaceTab.trade", icon: ArrowDownUp },
   { key: "buildings", labelKey: "shell.workspaceTab.buildings", icon: Building2 },
   { key: "infrastructure", labelKey: "shell.workspaceTab.infrastructure", icon: Network },
+  { key: "colonizers", labelKey: "shell.workspaceTab.colonizers", icon: Flag },
   { key: "formation", labelKey: "shell.workspaceTab.formation", icon: PlusCircle },
   { key: "warehouses", labelKey: "shell.workspaceTab.warehouses", icon: Package },
 ];
@@ -335,12 +357,20 @@ export function StrategyShell(props: Props) {
   const { t } = useUiText();
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTabKey>("actions");
   const activeMode = modeDescriptors.find((mode) => mode.key === props.activeMode) ?? modeDescriptors[0];
-  const activeActions = getModeActions(props.activeMode, props, () => setWorkspaceTab("buildings"), () => setWorkspaceTab("records"));
+  const activeActions = getModeActions(
+    props.activeMode,
+    props,
+    () => setWorkspaceTab("buildings"),
+    () => setWorkspaceTab("records"),
+    () => setWorkspaceTab("colonizers"),
+  );
   const availableWorkspaceTabs = workspaceTabDescriptors.filter((tab) => {
     if (tab.key === "summary") return props.activeMode === "overview";
+    if (tab.key === "hex") return props.activeMode === "overview" && Boolean(props.selectedHexDetails);
     if (tab.key === "trade") return props.activeMode === "market";
     if (tab.key === "buildings") return props.activeMode === "construction";
     if (tab.key === "infrastructure") return props.activeMode === "construction";
+    if (tab.key === "colonizers") return props.activeMode === "colonization";
     if (tab.key === "formation") return props.activeMode === "army";
     if (tab.key === "warehouses") return props.activeMode === "army";
     return true;
@@ -356,6 +386,11 @@ export function StrategyShell(props: Props) {
       setWorkspaceTab("actions");
     }
   }, [availableWorkspaceTabs, workspaceTab]);
+
+  useEffect(() => {
+    if (!props.openHexWorkspaceRequestId || !props.selectedHexDetails) return;
+    setWorkspaceTab("hex");
+  }, [props.openHexWorkspaceRequestId, props.selectedHexDetails]);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[111] text-[var(--arc-color-atlas-ink)]">
@@ -531,6 +566,12 @@ export function StrategyShell(props: Props) {
                   </div>
                 ) : null}
 
+                {workspaceTab === "hex" && props.activeMode === "overview" && props.selectedHexDetails ? (
+                  <div className="arc-strategy-tab-panel">
+                    <HexDetailsPanel details={props.selectedHexDetails} />
+                  </div>
+                ) : null}
+
                 {workspaceTab === "records" ? (
                   <div className="arc-strategy-tab-panel">
                     <ModePreview mode={props.activeMode} props={props} />
@@ -567,6 +608,12 @@ export function StrategyShell(props: Props) {
                       onDemolish={props.onDemolishInfrastructureCorridor}
                       onFocusHex={props.onFocusHex}
                     />
+                  </div>
+                ) : null}
+
+                {workspaceTab === "colonizers" && props.activeMode === "colonization" ? (
+                  <div className="arc-strategy-tab-panel">
+                    <ColonizerManagementPanel props={props} />
                   </div>
                 ) : null}
 
@@ -856,6 +903,61 @@ function ConstructionPreviewRow({
 
 function EmptyPreview({ text }: { text: string }) {
   return <div className="arc-strategy-empty-preview">{text}</div>;
+}
+
+function HexDetailsPanel({ details }: { details: StrategyShellSelectedHexDetails }) {
+  const { t } = useUiText();
+  return (
+    <section className="arc-strategy-preview" aria-label={t("shell.hex.title")}>
+      <div className="arc-strategy-preview-header">
+        <span>{details.name}</span>
+        <span>{details.id}</span>
+      </div>
+      <div className="mt-3 grid gap-2">
+        <HexDetailsRow label={t("hexMap.region")} value={details.regionId} />
+        <HexDetailsRow label={t("hexMap.terrain")} value={details.terrain} />
+        <HexDetailsRow label={t("hexMap.feature")} value={details.feature} />
+        <HexDetailsRow label={t("hexMap.siteFeature")} value={details.siteFeatures.length > 0 ? details.siteFeatures.join(", ") : t("map.common.none")} />
+        <HexDetailsRow label={t("hexMap.resourceDeposit")} value={details.resourceDeposit ?? t("map.common.none")} />
+        <HexDetailsRow label={t("hexMap.water")} value={details.water} />
+        <HexDetailsRow label={t("hexMap.owner")} value={details.owner} />
+        <HexDetailsRow label={t("shell.hex.controller")} value={details.controller} />
+        <HexDetailsRow label={t("hexMap.movementCost")} value={details.movementCost} />
+        <HexDetailsRow label={t("hexMap.divisionStack")} value={details.divisionStack} tooltip={details.divisionStackTooltip} />
+      </div>
+    </section>
+  );
+}
+
+function HexDetailsRow(props: { label: string; value: string; tooltip?: TooltipStructuredContent }) {
+  const row = (
+    <div className="arc-strategy-hex-row">
+      <span>{props.label}</span>
+      <strong>{props.value}</strong>
+    </div>
+  );
+  return props.tooltip ? <Tooltip content={props.tooltip}>{row}</Tooltip> : row;
+}
+
+function ColonizerManagementPanel({ props }: { props: Props }) {
+  const { t } = useUiText();
+  return (
+    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.colonization.management")}>
+      <button
+        type="button"
+        className={`arc-strategy-workspace-action arc-strategy-workspace-action--primary justify-start ${props.colonizerPlacementActive ? "ring-2 ring-[var(--arc-color-accent)]" : ""}`}
+        onClick={props.onStartColonizerPlacement}
+        disabled={!props.onStartColonizerPlacement}
+      >
+        <Flag size={16} />
+        <span>{props.colonizerPlacementActive ? t("shell.colonization.prepareColonizerActive") : t("shell.colonization.prepareColonizer")}</span>
+      </button>
+      <p className="mt-2 text-xs leading-5 text-[var(--arc-color-atlas-muted)]">{t("shell.colonization.prepareColonizerDescription")}</p>
+      <div className="mt-3">
+        <ColonizationPreview props={props} />
+      </div>
+    </section>
+  );
 }
 
 function ColonizationPreview({ props }: { props: Props }) {
@@ -2188,7 +2290,13 @@ function DashboardSection(props: {
   );
 }
 
-function getModeActions(mode: StrategyMode, props: Props, openBuildingsTab: () => void, openRecordsTab: () => void): ActionItem[] {
+function getModeActions(
+  mode: StrategyMode,
+  props: Props,
+  openBuildingsTab: () => void,
+  _openRecordsTab: () => void,
+  openColonizersTab: () => void,
+): ActionItem[] {
   if (mode === "overview") {
     return [
       { key: "colonization", labelKey: "shell.action.colonization", descriptionKey: "shell.action.colonizationDescription", icon: Flag, onClick: () => props.onModeChange("colonization"), tone: "primary" },
@@ -2205,8 +2313,8 @@ function getModeActions(mode: StrategyMode, props: Props, openBuildingsTab: () =
   }
   if (mode === "colonization") {
     return [
-      { key: "army", labelKey: "shell.action.divisionDesigner", descriptionKey: "shell.action.divisionDesignerDescription", icon: Shield, onClick: props.onOpenDivisionDesigner, tone: "primary" },
-      { key: "colonization-records", labelKey: "shell.action.colonizationRecords", descriptionKey: "shell.action.colonizationRecordsDescription", icon: ClipboardList, onClick: openRecordsTab },
+      { key: "prepare-colonizer", labelKey: "shell.colonization.prepareColonizer", descriptionKey: "shell.colonization.prepareColonizerDescription", icon: Flag, onClick: props.onStartColonizerPlacement ?? openColonizersTab, tone: "primary" },
+      { key: "colonization-records", labelKey: "shell.action.colonizationRecords", descriptionKey: "shell.action.colonizationRecordsDescription", icon: ClipboardList, onClick: openColonizersTab },
     ];
   }
   if (mode === "population") {
