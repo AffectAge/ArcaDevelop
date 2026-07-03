@@ -120,21 +120,25 @@ export const MAP_LENS_DESCRIPTORS: MapLensDescriptor[] = [
   },
 ];
 
+const MAP_LENS_DESCRIPTOR_BY_ID = new Map(MAP_LENS_DESCRIPTORS.map((descriptor) => [descriptor.id, descriptor] as const));
+
 export function selectMapLensCells(lens: MapLensId, context: MapLensRenderContext): MapLensRenderCell[] {
   if (lens === "terrain") return [];
   const maxPopulation = lens === "population" ? resolveMaxPopulation(context) : 1;
-  const tiles = context.visibleTileIds
-    ? context.map.tiles.filter((tile) => context.visibleTileIds?.has(tile.id))
-    : context.map.tiles;
-  return tiles
-    .map((tile) => selectTileCell(lens, tile, context, maxPopulation))
-    .map((cell) => cell ? applyAnalyticalBaseStyle(cell) : null)
-    .map((cell) => cell ? applyWaterLensTransparency(cell) : null)
-    .filter((cell): cell is MapLensRenderCell => Boolean(cell));
+  const cells: MapLensRenderCell[] = [];
+  for (const tile of context.map.tiles) {
+    if (context.visibleTileIds && !context.visibleTileIds.has(tile.id)) continue;
+    const selectedCell = selectTileCell(lens, tile, context, maxPopulation);
+    if (!selectedCell) continue;
+    const analyticalCell = applyAnalyticalBaseStyle(selectedCell);
+    const transparentCell = applyWaterLensTransparency(analyticalCell);
+    cells.push(transparentCell);
+  }
+  return cells;
 }
 
 export function getMapLensDescriptor(lens: MapLensId): MapLensDescriptor {
-  return MAP_LENS_DESCRIPTORS.find((descriptor) => descriptor.id === lens) ?? MAP_LENS_DESCRIPTORS[0];
+  return MAP_LENS_DESCRIPTOR_BY_ID.get(lens) ?? MAP_LENS_DESCRIPTORS[0];
 }
 
 function selectTileCell(

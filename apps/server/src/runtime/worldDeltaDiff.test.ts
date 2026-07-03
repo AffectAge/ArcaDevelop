@@ -5,6 +5,7 @@ import {
   buildCompactWorldDelta,
   buildBaselineWorldDeltaPayload,
   buildWorldDeltaPayload,
+  cloneDirtyWorldBaseSectionSnapshot,
   cloneWorldBaseSectionSnapshot,
   isEqualBuildingInstances,
   isEqualConstructionQueue,
@@ -269,6 +270,47 @@ describe("worldDeltaDiff", () => {
     expect(compact.xr).toEqual(next.explanationRecordsByTurn);
   });
 
+  it("does not emit unchanged ledger and explanation records", () => {
+    const flow = makeResourceFlow({ amount: 5 });
+    const explanation = {
+      id: "explanation:test",
+      turnId: 5,
+      sourceSystem: "event" as const,
+      sourceId: "event:test",
+      affectedObject: { kind: "country" as const, id: "country:a" },
+      valueKey: "resource.science",
+      previousValue: 1,
+      newValue: 3,
+      causes: [{ labelKey: "resourceLedger.source.generic", sourceId: "option:test", amount: 2 }],
+      modifierIds: [],
+    };
+    const prev = makeWorldBase({
+      resourceLedgerByTurn: { 5: [flow] },
+      explanationRecordsByTurn: { 5: [explanation] },
+    });
+    const next = makeWorldBase({
+      resourceLedgerByTurn: { 5: [structuredClone(flow)] },
+      explanationRecordsByTurn: { 5: [structuredClone(explanation)] },
+    });
+
+    const unchanged = buildCompactWorldDelta({
+      prev,
+      next,
+      isEqualRegionPopulation: (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b),
+    });
+    expect(unchanged.l).toBeUndefined();
+    expect(unchanged.xr).toBeUndefined();
+
+    next.resourceLedgerByTurn[5] = [makeResourceFlow({ amount: 6 })];
+    const changed = buildCompactWorldDelta({
+      prev,
+      next,
+      isEqualRegionPopulation: (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b),
+    });
+    expect(changed.mask & WORLD_DELTA_MASK.resourceLedgerByTurn).toBeTruthy();
+    expect(changed.l).toEqual({ 5: next.resourceLedgerByTurn[5] });
+  });
+
   it("diffs country applied modifiers with compact cm payload", () => {
     const prev = makeWorldBase({
       countryModifiersByCountryId: {
@@ -424,6 +466,30 @@ describe("worldDeltaDiff", () => {
     expect(snapshot.hexNameById).toBeUndefined();
   });
 
+  it("clones only dirty requested world sections", () => {
+    const worldBase = makeWorldBase({
+      resourcesByCountry: { "country:a": makeResources({ ducats: 3 }) },
+      hexOwner: { "province:a": "country:a" },
+      hexNameById: { "province:a": "Praha" },
+    });
+
+    const snapshot = cloneDirtyWorldBaseSectionSnapshot({
+      worldBase,
+      turnId: 4,
+      requestedMask: WORLD_DELTA_MASK.resourcesByCountry | WORLD_DELTA_MASK.hexOwner | WORLD_DELTA_MASK.hexNameById,
+      dirtyMask: WORLD_DELTA_MASK.hexOwner,
+    });
+
+    worldBase.resourcesByCountry["country:a"]!.ducats = 99;
+    worldBase.hexOwner["province:a"] = "country:b";
+    worldBase.hexNameById["province:a"] = "Praha Updated";
+
+    expect(snapshot.mask).toBe(WORLD_DELTA_MASK.hexOwner);
+    expect(snapshot.hexOwner).toEqual({ "province:a": "country:a" });
+    expect(snapshot.resourcesByCountry).toBeUndefined();
+    expect(snapshot.hexNameById).toBeUndefined();
+  });
+
   it("builds websocket compact and baseline delta payloads from compact diff", () => {
     const compact = {
       mask: WORLD_DELTA_MASK.resourcesByCountry,
@@ -510,7 +576,7 @@ describe("worldDeltaDiff", () => {
       c: { "country:a": makeResources({ ducats: 8 }) },
       rejectedOrders,
     });
-    expect(prepared.baselinePayload.changes.resourcesByCountry).toEqual({
+    expect(prepared.baselinePayload!.changes.resourcesByCountry).toEqual({
       "country:a": makeResources({ ducats: 8 }),
     });
   });
@@ -636,6 +702,22 @@ function makeResources(overrides?: Partial<WorldBase["resourcesByCountry"][strin
     construction: 0,
     ducats: 0,
     gold: 0,
+    ...overrides,
+  };
+}
+
+function makeResourceFlow(overrides?: Partial<WorldBase["resourceLedgerByTurn"][number][number]>): WorldBase["resourceLedgerByTurn"][number][number] {
+  return {
+    id: "flow:test",
+    turnId: 5,
+    countryId: "country:a",
+    resourceId: "science",
+    direction: "income",
+    amount: 5,
+    sourceType: "event",
+    sourceId: "event:test",
+    categoryId: "events",
+    labelKey: "resourceLedger.source.event",
     ...overrides,
   };
 }

@@ -14,6 +14,7 @@ import type {
   WorldDelta,
 } from "@arcanorum/shared";
 import { WORLD_DELTA_MASK } from "@arcanorum/shared";
+import { getDirtySnapshotMask } from "./worldDeltaDirtyTracker";
 
 export type CompactWorldDeltaPayload = Omit<WorldDelta, "type" | "turnId" | "worldStateVersion" | "rejectedOrders">;
 
@@ -214,6 +215,22 @@ export type WorldBaseSectionSnapshot = {
   diplomacyProposals?: WorldBase["diplomacyProposals"];
 };
 
+export function cloneDirtyWorldBaseSectionSnapshot(params: {
+  worldBase: WorldBase;
+  turnId: number;
+  requestedMask: number;
+  dirtyMask: number;
+}): WorldBaseSectionSnapshot {
+  return cloneWorldBaseSectionSnapshot({
+    worldBase: params.worldBase,
+    turnId: params.turnId,
+    mask: getDirtySnapshotMask({
+      requestedMask: params.requestedMask,
+      dirtyMask: params.dirtyMask,
+    }),
+  });
+}
+
 export function cloneWorldBaseSectionSnapshot(params: {
   worldBase: WorldBase;
   turnId: number;
@@ -337,7 +354,8 @@ export type PreparedWorldDeltaBroadcast =
       ok: true;
       nextWorldStateVersion: number;
       payload: WorldDelta;
-      baselinePayload: BaselineWorldDeltaPayload;
+      baselinePayload?: BaselineWorldDeltaPayload;
+      buildBaselinePayload: () => BaselineWorldDeltaPayload;
     };
 
 export function prepareWorldDeltaBroadcast(params: {
@@ -347,6 +365,7 @@ export function prepareWorldDeltaBroadcast(params: {
   currentWorldStateVersion: number;
   rejectedOrders: WorldDelta["rejectedOrders"];
   isEqualRegionPopulation: (prevValue: RegionPopulation | undefined, nextValue: RegionPopulation) => boolean;
+  buildBaselinePayload?: boolean;
 }): PreparedWorldDeltaBroadcast {
   const prevForDiff = toWorldBaseForDeltaDiff(params.previous, params.next);
   const compact = buildCompactWorldDelta({
@@ -359,6 +378,12 @@ export function prepareWorldDeltaBroadcast(params: {
   }
 
   const nextWorldStateVersion = params.currentWorldStateVersion + 1;
+  const buildBaselinePayload = () => buildBaselineWorldDeltaPayload({
+    turnId: params.turnId,
+    worldStateVersion: nextWorldStateVersion,
+    compact,
+    rejectedOrders: params.rejectedOrders,
+  });
   return {
     ok: true,
     nextWorldStateVersion,
@@ -368,12 +393,8 @@ export function prepareWorldDeltaBroadcast(params: {
       compact,
       rejectedOrders: params.rejectedOrders,
     }),
-    baselinePayload: buildBaselineWorldDeltaPayload({
-      turnId: params.turnId,
-      worldStateVersion: nextWorldStateVersion,
-      compact,
-      rejectedOrders: params.rejectedOrders,
-    }),
+    baselinePayload: params.buildBaselinePayload === false ? undefined : buildBaselinePayload(),
+    buildBaselinePayload,
   };
 }
 
@@ -420,7 +441,7 @@ export function buildCompactWorldDelta(params: {
   const equipmentVariantsById: WorldDelta["ev"] = {};
   const equipmentProductionLinesByCountry: WorldDelta["el"] = {};
   const equipmentStockpileByCountry: WorldDelta["es"] = {};
-  const diplomacyProposalsChanged = JSON.stringify(prev.diplomacyProposals ?? []) !== JSON.stringify(next.diplomacyProposals ?? []);
+  const diplomacyProposalsChanged = !isJsonEquivalent(prev.diplomacyProposals ?? [], next.diplomacyProposals ?? []);
 
   for (const key of new Set([...Object.keys(prev.resourcesByCountry), ...Object.keys(next.resourcesByCountry)])) {
     const prevValue = prev.resourcesByCountry[key];
@@ -451,7 +472,7 @@ export function buildCompactWorldDelta(params: {
       resourceLedgerByTurn[turnId] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       resourceLedgerByTurn[turnId] = nextValue;
     }
   }
@@ -464,7 +485,7 @@ export function buildCompactWorldDelta(params: {
       explanationRecordsByTurn[turnId] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       explanationRecordsByTurn[turnId] = nextValue;
     }
   }
@@ -659,7 +680,7 @@ export function buildCompactWorldDelta(params: {
       parliamentByCountry[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       parliamentByCountry[key] = nextValue;
     }
   }
@@ -670,7 +691,7 @@ export function buildCompactWorldDelta(params: {
       technologyByCountry[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       technologyByCountry[key] = nextValue;
     }
   }
@@ -681,7 +702,7 @@ export function buildCompactWorldDelta(params: {
       countryDecisionsByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       countryDecisionsByCountryId[key] = nextValue;
     }
   }
@@ -692,7 +713,7 @@ export function buildCompactWorldDelta(params: {
       countryEventsByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       countryEventsByCountryId[key] = nextValue;
     }
   }
@@ -708,7 +729,7 @@ export function buildCompactWorldDelta(params: {
       countryScheduledEventsByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       countryScheduledEventsByCountryId[key] = nextValue;
     }
   }
@@ -724,7 +745,7 @@ export function buildCompactWorldDelta(params: {
       countryEventFlagsByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       countryEventFlagsByCountryId[key] = nextValue;
     }
   }
@@ -740,7 +761,7 @@ export function buildCompactWorldDelta(params: {
       journalEntriesByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       journalEntriesByCountryId[key] = nextValue;
     }
   }
@@ -756,7 +777,7 @@ export function buildCompactWorldDelta(params: {
       countryModifiersByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       countryModifiersByCountryId[key] = nextValue;
     }
   }
@@ -767,7 +788,7 @@ export function buildCompactWorldDelta(params: {
       divisionTemplatesByCountry[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       divisionTemplatesByCountry[key] = nextValue;
     }
   }
@@ -778,7 +799,7 @@ export function buildCompactWorldDelta(params: {
       divisionsById[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       divisionsById[key] = nextValue;
     }
   }
@@ -789,7 +810,7 @@ export function buildCompactWorldDelta(params: {
       militaryFormationQueueByCountry[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       militaryFormationQueueByCountry[key] = nextValue;
     }
   }
@@ -1138,10 +1159,43 @@ function collectRecordDiff<T>(
       output[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       output[key] = nextValue;
     }
   }
+}
+
+function isJsonEquivalent(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (left == null || right == null) return left === right;
+  if (typeof left !== typeof right) return false;
+  if (typeof left !== "object") return Object.is(left, right);
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right)) return false;
+    if (left.length !== right.length) return false;
+    for (let index = 0; index < left.length; index += 1) {
+      if (!isJsonEquivalent(normalizeJsonArrayValue(left[index]), normalizeJsonArrayValue(right[index]))) return false;
+    }
+    return true;
+  }
+
+  const leftRecord = left as Record<string, unknown>;
+  const rightRecord = right as Record<string, unknown>;
+  const leftKeys = Object.keys(leftRecord).filter((key) => leftRecord[key] !== undefined);
+  const rightKeys = Object.keys(rightRecord).filter((key) => rightRecord[key] !== undefined);
+  if (leftKeys.length !== rightKeys.length) return false;
+  for (const key of leftKeys) {
+    if (!Object.prototype.hasOwnProperty.call(rightRecord, key)) return false;
+    if (!isJsonEquivalent(leftRecord[key], rightRecord[key])) return false;
+  }
+  return true;
+}
+
+function normalizeJsonArrayValue(value: unknown): unknown {
+  if (value === undefined) return null;
+  if (typeof value === "number" && !Number.isFinite(value)) return null;
+  return value;
 }
 
 export function isEqualCountryProgressMap(

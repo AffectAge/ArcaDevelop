@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { enrichHexMapVisualMetadata, type HexMapArtifact } from "@arcanorum/shared";
+import { enrichHexMapVisualMetadata, type HexMapArtifact, type HexTile } from "@arcanorum/shared";
 import type { MapFeatureInstance, MapFeatureVisualRuleDefinition } from "@arcanorum/shared";
 import {
   loadHexIndexFromFile,
@@ -20,6 +20,7 @@ type MapRuntimeState = {
   hexIndex: HexMapIndexEntry[];
   hexAreaById: Map<string, number>;
   hexById: Map<string, HexMapIndexEntry>;
+  hexTileById: Map<string, HexTile>;
 };
 
 function buildMapRuntimeState(mapRoot: string, hexIndexPath = resolve(mapRoot, "hexes.json")): MapRuntimeState {
@@ -28,18 +29,20 @@ function buildMapRuntimeState(mapRoot: string, hexIndexPath = resolve(mapRoot, "
   const mapFeaturesJsonPath = resolve(dirname(hexIndexPath), GENERATED_MAP_FEATURES_FILE);
   const scenarioDir = resolve(dirname(hexIndexPath), "..");
   const hexIndex = loadHexIndexFromFile(hexIndexPath);
+  const hexMapArtifact = loadHexMapArtifactIfExists(hexMapArtifactJsonPath);
   return {
     prebuiltTileRoot,
     rasterTileRoot: resolve(mapRoot, "tiles/raster"),
     hexIndexJsonPath: hexIndexPath,
     hexMapArtifactJsonPath,
     mapFeaturesJsonPath,
-    hexMapArtifact: loadHexMapArtifactIfExists(hexMapArtifactJsonPath),
+    hexMapArtifact,
     mapFeatures: loadGeneratedMapFeatures(mapFeaturesJsonPath),
     mapFeatureVisuals: loadMapFeatureVisuals(resolve(scenarioDir, "common", "map_feature_visuals")),
     hexIndex,
     hexAreaById: new Map(hexIndex.map((hex) => [hex.id, hex.areaKm2] as const)),
     hexById: new Map(hexIndex.map((hex) => [hex.id, hex] as const)),
+    hexTileById: new Map((hexMapArtifact?.tiles ?? []).map((hex) => [hex.id, hex] as const)),
   };
 }
 
@@ -56,6 +59,7 @@ export function createMapRuntimeState(mapRoot: string, hexIndexPath?: string) {
     getRasterTileRoot: () => state.rasterTileRoot,
     getHexAreaById: () => state.hexAreaById,
     getHexById: () => state.hexById,
+    getHexTileById: () => state.hexTileById,
     getHexIndex: () => state.hexIndex,
     getHexIndexJsonPath: () => state.hexIndexJsonPath,
     getHexMapArtifact: () => state.hexMapArtifact,

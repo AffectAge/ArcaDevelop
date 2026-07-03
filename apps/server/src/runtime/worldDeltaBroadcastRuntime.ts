@@ -1,5 +1,6 @@
 import type { WorldBase, WorldDelta, WsOutMessage } from "@arcanorum/shared";
 import {
+  cloneDirtyWorldBaseSectionSnapshot as cloneDirtyWorldBaseSectionSnapshotFromDiff,
   prepareWorldDeltaBroadcast,
   type WorldBaseSectionSnapshot,
 } from "./worldDeltaDiff";
@@ -34,6 +35,15 @@ export function createWorldDeltaBroadcastRuntime(params: WorldDeltaBroadcastRunt
     });
   }
 
+  function cloneDirtyWorldBaseSectionSnapshot(requestedMask: number, dirtyMask: number): WorldBaseSectionSnapshot {
+    return cloneDirtyWorldBaseSectionSnapshotFromDiff({
+      worldBase: params.getWorldBase(),
+      turnId: params.getTurnId(),
+      requestedMask,
+      dirtyMask,
+    });
+  }
+
   function resetWsDeltaSizeMetrics(): void {
     resetWsDeltaSizeMetricsInRuntime(params.getMetrics());
   }
@@ -54,11 +64,18 @@ export function createWorldDeltaBroadcastRuntime(params: WorldDeltaBroadcastRunt
     });
   }
 
-  function captureWsDeltaSizeMetrics(input: { compactPayload: WorldDelta; baselinePayload: unknown }): void {
+  function captureWsDeltaSizeMetrics(input: {
+    compactPayload: WorldDelta;
+    baselinePayload?: unknown;
+    baselinePayloadFactory?: () => unknown;
+    captureBaselineBytes?: boolean;
+  }): void {
     captureWsDeltaSizeMetricsInRuntime({
       metrics: params.getMetrics(),
       compactPayload: input.compactPayload,
       baselinePayload: input.baselinePayload,
+      baselinePayloadFactory: input.baselinePayloadFactory,
+      captureBaselineBytes: input.captureBaselineBytes,
     });
   }
 
@@ -77,14 +94,19 @@ export function createWorldDeltaBroadcastRuntime(params: WorldDeltaBroadcastRunt
       currentWorldStateVersion: params.getWorldStateVersion(),
       rejectedOrders,
       isEqualRegionPopulation: params.isEqualRegionPopulation,
+      buildBaselinePayload: false,
     });
     if (!prepared.ok) {
       return;
     }
 
     params.setWorldStateVersion(prepared.nextWorldStateVersion);
-    const { payload, baselinePayload } = prepared;
-    captureWsDeltaSizeMetrics({ compactPayload: payload, baselinePayload });
+    const { payload } = prepared;
+    captureWsDeltaSizeMetrics({
+      compactPayload: payload,
+      baselinePayloadFactory: prepared.buildBaselinePayload,
+      captureBaselineBytes: false,
+    });
     pushWorldDeltaToHistory(payload);
     params.saveWorldDeltaPersistent(payload);
     params.broadcast(payload);
@@ -92,6 +114,7 @@ export function createWorldDeltaBroadcastRuntime(params: WorldDeltaBroadcastRunt
 
   return {
     cloneWorldBaseSectionSnapshot,
+    cloneDirtyWorldBaseSectionSnapshot,
     resetWsDeltaSizeMetrics,
     pushWorldDeltaToHistory,
     getReplayDeltasFromVersion,

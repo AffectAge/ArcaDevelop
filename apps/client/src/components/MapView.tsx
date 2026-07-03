@@ -53,6 +53,7 @@ import {
 import { DEFAULT_HEX_MAP_SETTINGS } from "../map/hexMapGenerator";
 import { axialToPixel, getNeighborAxial, hexCorner, makeHexId, pixelToAxial, worldPixelWidth } from "../map/hexGeometry";
 import { findHexPath } from "../map/hexPathfinding";
+import { getNeighborTiles, usePathPreviewCache } from "../map/usePathPreviewCache";
 import { createHexTerrainMeshRenderer, type HexTerrainMeshRenderer } from "../map/hexTerrainMeshRenderer";
 import { createHexMapLensOverlayRenderer, type HexMapLensOverlayRenderer } from "../map/hexMapLensOverlayRenderer";
 import type { HexTerrainShaderQuality } from "../map/hexTerrainMaterials";
@@ -243,6 +244,7 @@ type MapTileSpatialIndex = {
   index: Flatbush | null;
   tileIdsByIndex: readonly HexId[];
 };
+
 
 const DEFAULT_CAMERA: HexCamera = {
   x: axialToPixel({ q: DEFAULT_HEX_MAP_SETTINGS.width / 2, r: DEFAULT_HEX_MAP_SETTINGS.height / 2 }, DEFAULT_HEX_MAP_SETTINGS.hexSize).x,
@@ -492,6 +494,7 @@ export function MapView({
   const [mapBuildingRenameDraftById, setMapBuildingRenameDraftById] = useState<Record<string, string>>({});
   const [goods, setGoods] = useState<GoodMeta[]>([]);
   const [activeCountryModifiers, setActiveCountryModifiers] = useState<ActiveModifierRow[]>([]);
+  const getCachedPreviewPath = usePathPreviewCache(mapArtifact, tileById);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -623,20 +626,20 @@ export function MapView({
   }, [worldBase?.regionResourceDepositsByRegion]);
   const hoverPath = useMemo(() => {
     if (!selectedTile || !hoverState?.tile || selectedTile.id === hoverState.tile.id) return [];
-    return findHexPath(mapArtifact, selectedTile.id, hoverState.tile.id, 1600, tileById);
-  }, [hoverState?.tile, mapArtifact, selectedTile, tileById]);
+    return getCachedPreviewPath("land", selectedTile.id, hoverState.tile.id);
+  }, [getCachedPreviewPath, hoverState?.tile, selectedTile]);
   const civilianMoveHoverPath = useMemo(() => {
     if (!civilianMoveSelection || !hoverState?.tile || civilianMoveSelection.fromHexId === hoverState.tile.id) return [];
-    return findHexPath(mapArtifact, civilianMoveSelection.fromHexId, hoverState.tile.id, 1600, tileById);
-  }, [civilianMoveSelection, hoverState?.tile, mapArtifact, tileById]);
+    return getCachedPreviewPath("land", civilianMoveSelection.fromHexId, hoverState.tile.id);
+  }, [civilianMoveSelection, getCachedPreviewPath, hoverState?.tile]);
   const divisionMoveHoverPath = useMemo(() => {
     if (!divisionMoveSelection || !hoverState?.tile || divisionMoveSelection.fromHexId === hoverState.tile.id) return [];
-    return findHexPath(mapArtifact, divisionMoveSelection.fromHexId, hoverState.tile.id, 1600, tileById);
-  }, [divisionMoveSelection, hoverState?.tile, mapArtifact, tileById]);
+    return getCachedPreviewPath("land", divisionMoveSelection.fromHexId, hoverState.tile.id);
+  }, [divisionMoveSelection, getCachedPreviewPath, hoverState?.tile]);
   const fleetMoveHoverPath = useMemo(() => {
     if (!fleetMoveSelection || !hoverState?.tile || fleetMoveSelection.fromHexId === hoverState.tile.id) return [];
-    return findWaterHexPath(mapArtifact, fleetMoveSelection.fromHexId, hoverState.tile.id, 1600, tileById);
-  }, [fleetMoveSelection, hoverState?.tile, mapArtifact, tileById]);
+    return getCachedPreviewPath("water", fleetMoveSelection.fromHexId, hoverState.tile.id);
+  }, [fleetMoveSelection, getCachedPreviewPath, hoverState?.tile]);
   const corridorFixedPreviewPath = useMemo(() => {
     if (!corridorPlacement || corridorPlacement.points.length < 2) return [];
     const result: HexId[] = [];
@@ -644,19 +647,19 @@ export function MapView({
       const from = corridorPlacement.points[index - 1]?.hexId;
       const to = corridorPlacement.points[index]?.hexId;
       if (!from || !to) continue;
-      const segment = findHexPath(mapArtifact, from, to, 1600, tileById);
+      const segment = getCachedPreviewPath("land", from, to);
       if (segment.length < 2) continue;
       if (result.length === 0) result.push(...segment);
       else result.push(...segment.slice(1));
     }
     return result;
-  }, [corridorPlacement?.points, mapArtifact, tileById]);
+  }, [corridorPlacement?.points, getCachedPreviewPath]);
   const corridorDraftPreviewPath = useMemo(() => {
     if (!corridorPlacement || corridorPlacement.points.length < 1 || !hoverState?.tile) return [];
     const last = corridorPlacement.points[corridorPlacement.points.length - 1];
     if (!last || last.hexId === hoverState.tile.id) return [];
-    return findHexPath(mapArtifact, last.hexId, hoverState.tile.id, 1600, tileById);
-  }, [corridorPlacement?.points, hoverState?.tile, mapArtifact, tileById]);
+    return getCachedPreviewPath("land", last.hexId, hoverState.tile.id);
+  }, [corridorPlacement?.points, getCachedPreviewPath, hoverState?.tile]);
   const corridorHudPreviewPath = corridorDraftPreviewPath.length > 1
     ? mergeHexPaths(corridorFixedPreviewPath, corridorDraftPreviewPath)
     : corridorFixedPreviewPath;
@@ -1177,7 +1180,7 @@ export function MapView({
           setMapActionNotice(t("hexMap.civilianMoveSelectTarget"));
           return;
         }
-        const path = findHexPath(mapArtifact, civilianMoveSelection.fromHexId, tile.id, 1600, tileById);
+        const path = getCachedPreviewPath("land", civilianMoveSelection.fromHexId, tile.id);
         if (path.length < 2) {
           setMapActionNotice(t("hexMap.civilianMoveNoPath"));
           return;
@@ -1193,7 +1196,7 @@ export function MapView({
           setMapActionNotice(t("hexMap.divisionMoveSelectTarget"));
           return;
         }
-        const path = findHexPath(mapArtifact, divisionMoveSelection.fromHexId, tile.id, 1600, tileById);
+        const path = getCachedPreviewPath("land", divisionMoveSelection.fromHexId, tile.id);
         if (path.length < 2) {
           setMapActionNotice(t("hexMap.divisionMoveNoPath"));
           return;
@@ -1209,7 +1212,7 @@ export function MapView({
           setMapActionNotice(t("hexMap.fleetMoveSelectTarget"));
           return;
         }
-        const path = findWaterHexPath(mapArtifact, fleetMoveSelection.fromHexId, tile.id, 1600, tileById);
+        const path = getCachedPreviewPath("water", fleetMoveSelection.fromHexId, tile.id);
         if (path.length < 2) {
           setMapActionNotice(t("hexMap.fleetMoveNoPath"));
           return;
@@ -1797,7 +1800,7 @@ export function MapView({
       pointerGestureRef.current = null;
       activePointersRef.current.clear();
     };
-  }, [applyTileInteraction, cameraBounds, centerOnTile, civilianMoveSelection, colonizerPlacement?.active, corridorPlacement, divisionAttackSelection, divisionMoveSelection, fleetMoveSelection, hexBuildPlacement, hitTestMapUnitAtClientPoint, interactionLocked, mapArtifact, militaryFormationPlacement, onCancelColonizerPlacement, onCancelCorridorPlacement, onCancelHexBuildPlacement, onCancelMilitaryFormationPlacement, selectMapUnitForMovement, serverMapArtifact, setCameraTarget, tileById]);
+  }, [applyTileInteraction, cameraBounds, centerOnTile, civilianMoveSelection, colonizerPlacement?.active, corridorPlacement, divisionAttackSelection, divisionMoveSelection, fleetMoveSelection, getCachedPreviewPath, hexBuildPlacement, hitTestMapUnitAtClientPoint, interactionLocked, mapArtifact, militaryFormationPlacement, onCancelColonizerPlacement, onCancelCorridorPlacement, onCancelHexBuildPlacement, onCancelMilitaryFormationPlacement, selectMapUnitForMovement, serverMapArtifact, setCameraTarget, tileById]);
 
   useEffect(() => {
     if (!hexBuildPlacement) return;
@@ -3482,6 +3485,7 @@ function drawPathOverlay(
   graphics.stroke({ color, width, alpha });
 }
 
+
 function normalizeCorridorPath(input: readonly string[] | undefined): HexId[] {
   return (input ?? []).filter((hexId): hexId is HexId => /^hex:-?\d+:-?\d+$/.test(hexId));
 }
@@ -3806,59 +3810,6 @@ function drawBoundaryEdges(
     graphics.lineTo(second.x, second.y);
   }
   graphics.stroke({ color, width, alpha });
-}
-
-function getNeighborTiles(tile: HexTile, tileById: ReadonlyMap<HexId, HexTile>, settings: HexMapSettings): HexTile[] {
-  const tiles: HexTile[] = [];
-  for (let direction = 0; direction < 6; direction += 1) {
-    const axial = getNeighborAxial(tile, direction as 0 | 1 | 2 | 3 | 4 | 5, settings);
-    if (!axial) continue;
-    const neighbor = tileById.get(makeHexId(axial.q, axial.r));
-    if (neighbor) tiles.push(neighbor);
-  }
-  return tiles;
-}
-
-function findWaterHexPath(
-  map: HexMapArtifact,
-  fromHexId: HexId,
-  targetHexId: HexId,
-  limit = 1600,
-  tileById: ReadonlyMap<HexId, HexTile> = new Map(map.tiles.map((tile) => [tile.id, tile] as const)),
-): HexId[] {
-  if (fromHexId === targetHexId) return [fromHexId];
-  const start = tileById.get(fromHexId);
-  const target = tileById.get(targetHexId);
-  if (!start || !target || !isFleetPassableTile(target)) return [];
-  const frontier: HexId[] = [fromHexId];
-  const cameFrom = new Map<HexId, HexId | null>([[fromHexId, null]]);
-  let visited = 0;
-  while (frontier.length > 0 && visited < limit) {
-    visited += 1;
-    const currentId = frontier.shift();
-    if (!currentId) break;
-    if (currentId === targetHexId) break;
-    const current = tileById.get(currentId);
-    if (!current) continue;
-    for (const neighbor of getNeighborTiles(current, tileById, map.settings)) {
-      if (!isFleetPassableTile(neighbor)) continue;
-      if (cameFrom.has(neighbor.id)) continue;
-      cameFrom.set(neighbor.id, currentId);
-      frontier.push(neighbor.id);
-    }
-  }
-  if (!cameFrom.has(targetHexId)) return [];
-  const route: HexId[] = [];
-  let cursor: HexId | null = targetHexId;
-  while (cursor) {
-    route.push(cursor);
-    cursor = cameFrom.get(cursor) ?? null;
-  }
-  return route.reverse();
-}
-
-function isFleetPassableTile(tile: HexTile): boolean {
-  return Boolean(tile.waterKind);
 }
 
 function isTileInViewport(tile: HexTile, camera: HexCamera, rect: DOMRect, size: number): boolean {

@@ -142,7 +142,7 @@ const mapRuntime = createMapRuntimeState(
   defaultScenarioBootstrap.hexIndexPath,
 );
 const getHexMovementCost = (hexId: string, countryId?: string): number => {
-  const tile = mapRuntime.getHexMapArtifact()?.tiles.find((entry) => entry.id === hexId);
+  const tile = mapRuntime.getHexTileById().get(hexId);
   const baseCost = Math.max(0.001, Number(tile?.movementCost ?? 1) || 1);
   if (!countryId || !tile) return baseCost;
   const cityHexIds = buildCityHexIdSet(worldBase);

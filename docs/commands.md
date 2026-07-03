@@ -29,6 +29,12 @@ npm run typecheck
 Runs typecheck across workspaces through `npm run typecheck -ws`.
 
 ```bash
+npm run verify
+```
+
+Regenerates the Prisma client, runs workspace typechecks, and runs the Vitest suite. Use this as the default pre-PR verification command for broad runtime/client changes.
+
+```bash
 npm run lint
 ```
 
@@ -102,7 +108,7 @@ npm run theme:validate
 npm run docs:check
 ```
 
-Do not pretend these commands exist until package scripts are added.
+Do not pretend missing commands exist until package scripts are added.
 
 `scenario:validate` should validate strict per-entity JSON, stable-ID references, localization, assets, region/province membership, forbidden province-heavy fields, and generated index freshness. `scenario:build-indexes` should create or refresh `scenarios/<scenario_id>/.generated/` from authored per-entity files.
 

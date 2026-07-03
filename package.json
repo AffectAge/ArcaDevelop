@@ -23,7 +23,8 @@
     "docs:check": "node scripts/check-docs.mjs && tsx scripts/check-project-rules.ts && tsx scripts/check-code-guards.ts",
     "scenario:validate": "tsx apps/server/scripts/scenario-validate.ts",
     "scenario:build-indexes": "tsx apps/server/scripts/scenario-build-indexes.ts",
-    "scenario:generate-map": "tsx apps/server/scripts/scenario-generate-map.ts"
+    "scenario:generate-map": "tsx apps/server/scripts/scenario-generate-map.ts",
+    "verify": "npm run prisma:generate -w @arcanorum/server && npm run typecheck -ws && npm test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

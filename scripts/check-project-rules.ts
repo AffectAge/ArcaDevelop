@@ -172,6 +172,7 @@ function assertTaskRoutingFilesExist(value: unknown): void {
 function buildExpectedAuthoredPaths(): Record<string, string> {
   const result: Record<string, string> = {
     defines: "scenarios/<scenarioId>/common/defines.json",
+    regionResourceDeposits: "scenarios/<scenarioId>/history/regions/*.json#resourceDeposits",
   };
   const keyByKind: Record<string, string> = {
     province: "provinces",
@@ -179,6 +180,7 @@ function buildExpectedAuthoredPaths(): Record<string, string> {
     country: "countries",
     diplomacyRelation: "diplomacyRelations",
     diplomacyTreaty: "diplomacyTreaties",
+    asset: "assets",
     good: "goods",
     building: "buildings",
     technology: "technologies",
@@ -197,6 +199,8 @@ function buildExpectedAuthoredPaths(): Record<string, string> {
     race: "races",
     market: "markets",
     modifier: "modifiers",
+    mapFeatureGenerator: "mapFeatureGenerators",
+    mapFeatureVisual: "mapFeatureVisuals",
     interestGroup: "interestGroups",
     party: "parties",
     company: "companies",

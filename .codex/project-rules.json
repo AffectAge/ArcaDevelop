@@ -242,6 +242,7 @@
       "countries": "scenarios/<scenarioId>/history/countries/*.json",
       "diplomacyRelations": "scenarios/<scenarioId>/history/diplomacy/relations/*.json",
       "diplomacyTreaties": "scenarios/<scenarioId>/history/diplomacy/treaties/*.json",
+      "assets": "scenarios/<scenarioId>/common/assets/*.json",
       "goods": "scenarios/<scenarioId>/common/goods/*.json",
       "buildings": "scenarios/<scenarioId>/common/buildings/*.json",
       "regionResourceDeposits": "scenarios/<scenarioId>/history/regions/*.json#resourceDeposits",

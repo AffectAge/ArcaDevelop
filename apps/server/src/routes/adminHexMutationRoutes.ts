@@ -373,7 +373,8 @@ function resolvePopulationTargetRegionIds(
   params: { regionId?: string; countryId?: string },
 ): string[] {
   const worldBase = deps.getWorldBase();
-  const regionIds = getKnownRegionIds(worldBase);
+  const regionIdSet = buildKnownRegionIdSet(worldBase);
+  const regionIds = [...regionIdSet].sort();
   if (scope === "world") {
     return regionIds;
   }
@@ -382,7 +383,7 @@ function resolvePopulationTargetRegionIds(
     if (!regionId) {
       throw new Error("REGION_ID_REQUIRED");
     }
-    if (!regionExists(worldBase, regionId)) {
+    if (!regionIdSet.has(regionId)) {
       throw new Error("REGION_NOT_FOUND");
     }
     return [regionId];
@@ -400,19 +401,21 @@ function resolvePopulationTargetRegionIds(
 }
 
 function getKnownRegionIds(worldBase: AdminHexMutationWorldState): string[] {
-  return [
-    ...new Set([
-      ...Object.keys(worldBase.regionOwner),
-      ...Object.keys(worldBase.regionController),
-      ...Object.keys(worldBase.regionPopulationByRegion),
-      ...Object.keys(worldBase.regionColonizationByRegion),
-      ...Object.keys(worldBase.colonyProgressByRegion),
-    ]),
-  ].sort();
+  return [...buildKnownRegionIdSet(worldBase)].sort();
 }
 
 function regionExists(worldBase: AdminHexMutationWorldState, regionId: string): boolean {
-  return getKnownRegionIds(worldBase).includes(regionId);
+  return buildKnownRegionIdSet(worldBase).has(regionId);
+}
+
+function buildKnownRegionIdSet(worldBase: AdminHexMutationWorldState): Set<string> {
+  return new Set([
+    ...Object.keys(worldBase.regionOwner),
+    ...Object.keys(worldBase.regionController),
+    ...Object.keys(worldBase.regionPopulationByRegion),
+    ...Object.keys(worldBase.regionColonizationByRegion),
+    ...Object.keys(worldBase.colonyProgressByRegion),
+  ]);
 }
 
 function summarizeRegion(

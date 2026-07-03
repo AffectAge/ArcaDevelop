@@ -124,6 +124,7 @@ type RegionTurnContext = {
   ownerCountryId: string;
   primaryHexId: string;
   hexIds: string[];
+  buildingInstances: BuildingInstance[];
 };
 
 export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntimeDeps): ResolveBuildingsTurnRuntimeResult {
@@ -167,6 +168,8 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   const fallbackByDimension = resolvePopulationFallbackKeys(domains);
   const buildingById = new Map(gameSettings.content.buildings.map((entry) => [entry.id, entry] as const));
   const cityHexIds = buildCityHexIdSet(worldBase);
+  const hexIndexById = new Map(hexHexIndex.map((hex) => [hex.id, hex] as const));
+  const neighborHexesById = new Map<string, HexMapIndexEntry[]>();
   const goodById = new Map(gameSettings.content.goods.map((entry) => [entry.id, entry] as const));
   const professionById = new Map(gameSettings.content.professions.map((entry) => [entry.id, entry] as const));
   const nextProfessionsByPopIdByHex: Record<string, Record<string, Record<string, PopulationProfessionState>>> = {};
@@ -364,11 +367,8 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   // This lets buildings buy from the full market scope (province/country/market/global)
   // instead of only regions that were processed earlier in the same turn.
   for (const context of regionTurnContexts) {
-    const { regionId, ownerCountryId, primaryHexId } = context;
+    const { regionId, ownerCountryId, primaryHexId, buildingInstances } = context;
     const marketId = getMarketIdByCountry(ownerCountryId);
-    const buildingInstances = [...(worldBase.regionBuildingsByRegion[regionId] ?? [])].sort((a, b) =>
-      a.instanceId.localeCompare(b.instanceId),
-    );
     for (const instance of buildingInstances) {
       const building = buildingById.get(instance.buildingId);
       if (!building) continue;
@@ -397,13 +397,11 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   }
 
   for (const context of regionTurnContexts) {
-    const { regionId, ownerCountryId, primaryHexId } = context;
+    const { regionId, ownerCountryId, primaryHexId, buildingInstances } = context;
     if (!alertsByCountry[ownerCountryId]) alertsByCountry[ownerCountryId] = [];
 
     const population = normalizeRegionPopulation(worldBase.regionPopulationByRegion[regionId], regionId, domains);
     const marketId = getMarketIdByCountry(ownerCountryId);
-    const buildingInstances = [...(worldBase.regionBuildingsByRegion[regionId] ?? [])]
-      .sort((a, b) => a.instanceId.localeCompare(b.instanceId));
     const regionResourceDeposits = [...(worldBase.regionResourceDepositsByRegion[regionId] ?? [])].map((deposit) => ({
       ...deposit,
     }));
@@ -486,7 +484,8 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         building,
         instance,
         regionBuildingsByRegion: worldBase.regionBuildingsByRegion,
-        hexHexIndex,
+        hexIndexById,
+        neighborHexesById,
         cityHexIds,
       }));
       const warehouse = instance.warehouseByGoodId ?? {};
@@ -852,6 +851,8 @@ function buildRegionTurnContexts(params: {
         ownerCountryId,
         primaryHexId: hexIds[0] ?? regionId,
         hexIds,
+        buildingInstances: [...(params.worldBase.regionBuildingsByRegion[regionId] ?? [])]
+          .sort((left, right) => left.instanceId.localeCompare(right.instanceId)),
       }];
     });
 }
@@ -860,16 +861,15 @@ function resolveAdjacencyThroughputFactor(params: {
   building: BuildingContentEntry;
   instance: BuildingInstance;
   regionBuildingsByRegion: WorldBase["regionBuildingsByRegion"];
-  hexHexIndex: HexMapIndexEntry[];
+  hexIndexById: ReadonlyMap<string, HexMapIndexEntry>;
+  neighborHexesById: Map<string, HexMapIndexEntry[]>;
   cityHexIds?: ReadonlySet<string>;
 }): number {
   const effects = params.building.adjacencyEffects ?? [];
   const targetHexId = params.instance.targetHexId;
   if (!targetHexId || effects.length === 0) return 1;
-  const hexById = new Map(params.hexHexIndex.map((hex) => [hex.id, hex] as const));
-  const target = hexById.get(targetHexId);
-  if (!target) return 1;
-  const neighborHexes = target.neighbors.map((id) => hexById.get(id)).filter((hex): hex is HexMapIndexEntry => Boolean(hex));
+  const neighborHexes = getCachedNeighborHexes(targetHexId, params.hexIndexById, params.neighborHexesById);
+  if (neighborHexes.length === 0) return 1;
   let factor = 1;
   for (const effect of effects) {
     const modifier = effect.modifier;
@@ -897,4 +897,19 @@ function resolveAdjacencyThroughputFactor(params: {
     }
   }
   return Math.max(0, Number(factor.toFixed(3)));
+}
+
+function getCachedNeighborHexes(
+  targetHexId: string,
+  hexIndexById: ReadonlyMap<string, HexMapIndexEntry>,
+  neighborHexesById: Map<string, HexMapIndexEntry[]>,
+): HexMapIndexEntry[] {
+  const cached = neighborHexesById.get(targetHexId);
+  if (cached) return cached;
+  const target = hexIndexById.get(targetHexId);
+  const neighborHexes = target
+    ? target.neighbors.map((id) => hexIndexById.get(id)).filter((hex): hex is HexMapIndexEntry => Boolean(hex))
+    : [];
+  neighborHexesById.set(targetHexId, neighborHexes);
+  return neighborHexes;
 }
