@@ -33,6 +33,7 @@ This is the entrypoint for project documentation.
 - `docs/entity-ownership.md` - practical ownership map by entity.
 - `docs/testing-strategy.md` - project-wide testing layers and expectations.
 - `docs/performance-budgets.md` - turn resolve, AI, WS, scenario loading, and map budgets.
+- `docs/new-project-hex-map-agent-plan.md` - standalone agent plan for building a Babylon.js hex map in a new map-only project.
 
 ## AI
 
