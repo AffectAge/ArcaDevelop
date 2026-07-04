@@ -291,6 +291,7 @@ export default function App() {
   const replayRequestInFlightRef = useRef(false);
   const resolveStartTimeoutRef = useRef<number | null>(null);
   const [entryLoadingGate, setEntryLoadingGate] = useState<"hidden" | "loading" | "ready">("hidden");
+  const [mapReady, setMapReady] = useState(false);
   const [pendingDeltaAckVersion, setPendingDeltaAckVersion] = useState<number | null>(null);
   const [pendingReplayFromWorldStateVersion, setPendingReplayFromWorldStateVersion] = useState<number | null>(null);
   const [turnResolveOverlay, setTurnResolveOverlay] = useState<
@@ -2399,15 +2400,16 @@ export default function App() {
   useEffect(() => {
     if (!auth) {
       setEntryLoadingGate("hidden");
+      setMapReady(false);
       return;
     }
-    const ready = Boolean(worldBase) && Boolean(country) && publicUiLoaded;
+    const ready = Boolean(worldBase) && Boolean(country) && publicUiLoaded && mapReady;
     setEntryLoadingGate((prev) => {
       if (prev === "hidden") return prev;
       if (prev === "loading" && ready) return "ready";
       return prev;
     });
-  }, [auth, country, publicUiLoaded, worldBase]);
+  }, [auth, country, mapReady, publicUiLoaded, worldBase]);
 
   useEffect(() => {
     if (!auth?.token) return;
@@ -2715,90 +2717,100 @@ export default function App() {
     }
   };
 
+  const gameSceneMounted = Boolean(auth && entryLoadingGate === "hidden");
+  const entryLoadingProgressPercent = Math.round(
+    (((worldBase ? 1 : 0) + (publicUiLoaded ? 1 : 0) + (country ? 1 : 0) + (mapReady ? 1 : 0)) / 4) * 100,
+  );
+
   return (
     <div className="relative h-screen overflow-hidden bg-arc-bg text-[var(--arc-color-text)]">
-      <MapView
-        apiBase={apiBase}
-        scenarioId={activeScenarioId}
-        focusHexRequest={mapFocusRequest}
-        onQueueArmyMoveOrder={queueArmyMoveOrder}
-        onQueueFleetMoveOrder={queueFleetMoveOrder}
-        onQueueUnitAttackOrder={queueUnitAttackOrder}
-        onQueueCivilianUnitMoveOrder={queueCivilianUnitMoveOrder}
-        onFoundCityOrder={queueFoundCityOrder}
-        onHexSelectionChange={setSelectedHexDetails}
-        onOpenSelectedHexWorkspace={(details) => {
-          setSelectedHexDetails(details);
-          setActiveStrategyMode("overview");
-          setStrategyWorkspaceOpen(true);
-          setOpenHexWorkspaceRequestId((value) => value + 1);
-        }}
-        colonizerPlacement={colonizerPlacement}
-        onCancelColonizerPlacement={() => setColonizerPlacement(null)}
-        onSelectColonizerPlacementTarget={(target) => {
-          if (!isHexId(target.hexId)) return;
-          setColonizerPlacement(null);
-          void queueColonizerOnHex(target.hexId);
-        }}
-        unitTrainingPlacement={selectedUnitTrainingType ? { unitType: selectedUnitTrainingType } : null}
-        onCancelUnitTrainingPlacement={() => setUnitTrainingPlacement(null)}
-        onSelectUnitTrainingPlacementTarget={(target) => {
-          if (!unitTrainingPlacement || !isHexId(target.hexId)) return;
-          const unitTypeId = unitTrainingPlacement.unitTypeId;
-          setUnitTrainingPlacement(null);
-          void trainUnitOnHex(unitTypeId, target.hexId);
-        }}
-        colonizationIconUrl={BASE_RESOURCE_ICON_URLS.colonization}
-        ducatsIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
-        maxActiveColonizations={maxActiveColonizations}
-        landDivisionStackLimitPerHex={landDivisionStackLimitPerHex}
-        hexRenameDucatsCost={hexRenameDucatsCost}
-        countryColorById={countryColorById}
-        countryNameById={countryNameById}
-        suggestedMapMode={resolveSuggestedMapMode(activeStrategyMode)}
-        suggestedMapLens={resolveSuggestedMapLens(activeStrategyMode)}
-        showMapControls={showMapControls}
-        showZoomIndicator={showZoomIndicator}
-        showAntarctica={showAntarctica}
-        buildingEntries={buildingEntries}
-        buildingOverviewToken={auth?.token ?? null}
-        buildingOverviewCountryId={auth?.countryId ?? null}
-        buildingOverviewBuildings={buildingEntries}
-        buildingOverviewCompanies={companyEntries}
-        buildingOverviewCountries={countries}
-        buildingOverviewIndustries={industryEntries}
-        buildingOverviewSectors={sectorEntries}
-        buildingOverviewDemolitionCostConstructionPercent={demolitionCostConstructionPercent}
-        buildingOverviewCancelingConstructionQueueKey={cancelingConstructionQueueKey}
-        onCancelConstructionProject={cancelConstructionQueueProject}
-        canceledConstructionQueueKeys={canceledConstructionQueueKeyList}
-        hexBuildPlacement={hexBuildPlacement}
-        transportCorridors={marketTransportCorridors}
-        corridorPlacement={corridorPlacement}
-        onSelectCorridorPlacementPoint={selectCorridorPlacementPoint}
-        onUndoCorridorPlacementPoint={undoCorridorPlacementPoint}
-        onCancelCorridorPlacement={cancelCorridorPlacement}
-        onConfirmCorridorPlacement={confirmCorridorPlacement}
-        onCancelHexBuildPlacement={() => {
-          setHexBuildPlacement(null);
-          setHexBuildConfirmTarget(null);
-        }}
-        onSelectHexBuildPlacementTarget={(target) => {
-          if (!hexBuildPlacement || !isHexId(target.hexId)) return;
-          setHexBuildConfirmTarget({
-            hexId: target.hexId,
-            regionId: target.regionId,
-            building: hexBuildPlacement.building,
-            owner: hexBuildPlacement.owner,
-          });
-        }}
-        onHexRenameCharged={(chargedDucats) => {
-          if (chargedDucats <= 0) return;
-          setHexRenameDucatSpend((prev) =>
-            prev.turnId === turnId ? { turnId, amount: prev.amount + chargedDucats } : { turnId, amount: chargedDucats },
-          );
-        }}
-      />
+      {auth ? (
+        <div className={gameSceneMounted ? "absolute inset-0" : "pointer-events-none invisible absolute inset-0"} aria-hidden={!gameSceneMounted}>
+          <MapView
+            apiBase={apiBase}
+            scenarioId={activeScenarioId}
+            focusHexRequest={gameSceneMounted ? mapFocusRequest : null}
+            onQueueArmyMoveOrder={queueArmyMoveOrder}
+            onQueueFleetMoveOrder={queueFleetMoveOrder}
+            onQueueUnitAttackOrder={queueUnitAttackOrder}
+            onQueueCivilianUnitMoveOrder={queueCivilianUnitMoveOrder}
+            onFoundCityOrder={queueFoundCityOrder}
+            onHexSelectionChange={gameSceneMounted ? setSelectedHexDetails : undefined}
+            onOpenSelectedHexWorkspace={(details) => {
+              setSelectedHexDetails(details);
+              setActiveStrategyMode("overview");
+              setStrategyWorkspaceOpen(true);
+              setOpenHexWorkspaceRequestId((value) => value + 1);
+            }}
+            colonizerPlacement={colonizerPlacement}
+            onCancelColonizerPlacement={() => setColonizerPlacement(null)}
+            onSelectColonizerPlacementTarget={(target) => {
+              if (!isHexId(target.hexId)) return;
+              setColonizerPlacement(null);
+              void queueColonizerOnHex(target.hexId);
+            }}
+            unitTrainingPlacement={selectedUnitTrainingType ? { unitType: selectedUnitTrainingType } : null}
+            onCancelUnitTrainingPlacement={() => setUnitTrainingPlacement(null)}
+            onSelectUnitTrainingPlacementTarget={(target) => {
+              if (!unitTrainingPlacement || !isHexId(target.hexId)) return;
+              const unitTypeId = unitTrainingPlacement.unitTypeId;
+              setUnitTrainingPlacement(null);
+              void trainUnitOnHex(unitTypeId, target.hexId);
+            }}
+            colonizationIconUrl={BASE_RESOURCE_ICON_URLS.colonization}
+            ducatsIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
+            maxActiveColonizations={maxActiveColonizations}
+            landDivisionStackLimitPerHex={landDivisionStackLimitPerHex}
+            hexRenameDucatsCost={hexRenameDucatsCost}
+            countryColorById={countryColorById}
+            countryNameById={countryNameById}
+            suggestedMapMode={resolveSuggestedMapMode(activeStrategyMode)}
+            suggestedMapLens={resolveSuggestedMapLens(activeStrategyMode)}
+            showMapControls={showMapControls}
+            showZoomIndicator={showZoomIndicator}
+            showAntarctica={showAntarctica}
+            buildingEntries={buildingEntries}
+            buildingOverviewToken={auth.token}
+            buildingOverviewCountryId={auth.countryId}
+            buildingOverviewBuildings={buildingEntries}
+            buildingOverviewCompanies={companyEntries}
+            buildingOverviewCountries={countries}
+            buildingOverviewIndustries={industryEntries}
+            buildingOverviewSectors={sectorEntries}
+            buildingOverviewDemolitionCostConstructionPercent={demolitionCostConstructionPercent}
+            buildingOverviewCancelingConstructionQueueKey={cancelingConstructionQueueKey}
+            onCancelConstructionProject={cancelConstructionQueueProject}
+            canceledConstructionQueueKeys={canceledConstructionQueueKeyList}
+            hexBuildPlacement={hexBuildPlacement}
+            transportCorridors={marketTransportCorridors}
+            corridorPlacement={corridorPlacement}
+            onSelectCorridorPlacementPoint={selectCorridorPlacementPoint}
+            onUndoCorridorPlacementPoint={undoCorridorPlacementPoint}
+            onCancelCorridorPlacement={cancelCorridorPlacement}
+            onConfirmCorridorPlacement={confirmCorridorPlacement}
+            onCancelHexBuildPlacement={() => {
+              setHexBuildPlacement(null);
+              setHexBuildConfirmTarget(null);
+            }}
+            onSelectHexBuildPlacementTarget={(target) => {
+              if (!hexBuildPlacement || !isHexId(target.hexId)) return;
+              setHexBuildConfirmTarget({
+                hexId: target.hexId,
+                regionId: target.regionId,
+                building: hexBuildPlacement.building,
+                owner: hexBuildPlacement.owner,
+              });
+            }}
+            onMapReadyChange={setMapReady}
+            onHexRenameCharged={(chargedDucats) => {
+              if (chargedDucats <= 0) return;
+              setHexRenameDucatSpend((prev) =>
+                prev.turnId === turnId ? { turnId, amount: prev.amount + chargedDucats } : { turnId, amount: chargedDucats },
+              );
+            }}
+          />
+        </div>
+      ) : null}
 
       <AnimatePresence>
         {!auth && (
@@ -2832,7 +2844,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {auth && (
+      {gameSceneMounted && (
         <InAppNotificationTray
           items={uiNotifications}
           viewedIds={viewedUiNotificationIds}
@@ -2888,11 +2900,11 @@ export default function App() {
                       aria-label={t("shell.entryLoadingStatus")}
                       aria-valuemin={0}
                       aria-valuemax={100}
-                      aria-valuenow={Math.round((((worldBase ? 1 : 0) + (publicUiLoaded ? 1 : 0) + (country ? 1 : 0)) / 3) * 100)}
+                      aria-valuenow={entryLoadingProgressPercent}
                     >
                       <span
                         style={{
-                          width: `${Math.round((((worldBase ? 1 : 0) + (publicUiLoaded ? 1 : 0) + (country ? 1 : 0)) / 3) * 100)}%`,
+                          width: `${entryLoadingProgressPercent}%`,
                         }}
                       />
                     </div>
@@ -2925,7 +2937,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {auth && (
+      {gameSceneMounted && auth && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="pointer-events-none absolute inset-0 z-[111]">
           <StrategyShell
             activeMode={activeStrategyMode}

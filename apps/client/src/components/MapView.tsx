@@ -178,6 +178,7 @@ type Props = {
   onUndoCorridorPlacementPoint?: () => void;
   onCancelCorridorPlacement?: () => void;
   onConfirmCorridorPlacement?: () => void;
+  onMapReadyChange?: (ready: boolean) => void;
 };
 
 type HoverState = {
@@ -396,6 +397,7 @@ export function MapView({
   onUndoCorridorPlacementPoint,
   onCancelCorridorPlacement,
   onConfirmCorridorPlacement,
+  onMapReadyChange,
 }: Props) {
   const { locale, t } = useUiText();
   const authCountryId = useGameStore((state) => state.auth?.countryId ?? null);
@@ -502,6 +504,11 @@ export function MapView({
   const [goods, setGoods] = useState<GoodMeta[]>([]);
   const [activeCountryModifiers, setActiveCountryModifiers] = useState<ActiveModifierRow[]>([]);
   const getCachedPreviewPath = usePathPreviewCache(mapArtifact, tileById);
+
+  useEffect(() => {
+    onMapReadyChange?.(pixiReady && !mapRenderError && !mapLoadError && Boolean(serverMapArtifact));
+    return () => onMapReadyChange?.(false);
+  }, [mapLoadError, mapRenderError, onMapReadyChange, pixiReady, serverMapArtifact]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -916,7 +923,7 @@ export function MapView({
 
   useEffect(() => {
     terrainMeshRendererRef.current?.setCityHexIds(cityHexIds);
-    appRef.current?.render();
+    safeRenderPixiApp(appRef.current);
   }, [cityHexIds]);
 
   const selectedMapBuildingItem = selectedBuildingPopoverHexId ? mapBuildingItemByHexId.get(selectedBuildingPopoverHexId) ?? null : null;
@@ -1580,11 +1587,11 @@ export function MapView({
         const nextViewport = getViewportCullingState(mapArtifact, tileSpatialIndex, cameraRef.current, container.getBoundingClientRect());
         viewportCullingRef.current = nextViewport;
         setViewportCulling(nextViewport);
-        app.render();
+        safeRenderPixiApp(app);
       });
       resizeObserver.observe(container);
       setPixiReady(true);
-      app.render();
+      safeRenderPixiApp(app);
     });
 
     return () => {
@@ -2075,7 +2082,7 @@ export function MapView({
     }
     worldContainer.position.set(rect.width / 2 - camera.x * camera.scale, rect.height / 2 - camera.y * camera.scale);
     worldContainer.scale.set(camera.scale);
-    app.render();
+    safeRenderPixiApp(app);
   }, [camera, mapArtifact, pixiReady, tileById, wrapWidth]);
 
   useEffect(() => {
@@ -2088,7 +2095,7 @@ export function MapView({
       const rect = container.getBoundingClientRect();
       lensRenderer.updateVisibility(cameraRef.current, rect);
     }
-    app.render();
+    safeRenderPixiApp(app);
   }, [activeLens, lensCells, pixiReady]);
 
   useEffect(() => {
@@ -2101,7 +2108,7 @@ export function MapView({
       const rect = container.getBoundingClientRect();
       drawMapLayerOutlines(outlineLayer, mapArtifact, tileById, worldBase, mapLayers, camera, rect, viewportCulling.visibleTileIds);
     }
-    app.render();
+    safeRenderPixiApp(app);
   }, [camera, mapArtifact, mapLayers, pixiReady, tileById, viewportCulling.key, viewportCulling.visibleTileIds, worldBase]);
 
   useEffect(() => {
@@ -2153,7 +2160,7 @@ export function MapView({
     if (activePath.length > 1) {
       drawPathOverlay(overlayLayer, activePath, tileById, mapArtifact.settings.hexSize);
     }
-    app.render();
+    safeRenderPixiApp(app);
   }, [camera, civilianMoveHoverPath, civilianMoveSelection, colonizerPlacement?.active, colonizerPlacementValidHexIds, divisionMoveHoverPath, divisionMoveSelection, fleetMoveHoverPath, fleetMoveSelection, hexBuildPlacement, hoverPath, hoverState, mapArtifact.settings.hexSize,  pixiReady, placementEvaluations, selectedTile, tileById, unitTrainingPlacement, unitTrainingPlacementValidHexIds]);
 
   useEffect(() => {
@@ -2186,7 +2193,7 @@ export function MapView({
     }
     pruneLayerPool(spritePool, activeKeys);
     performanceStatsRef.current.visibleSprites += visibleSprites;
-    app.render();
+    safeRenderPixiApp(app);
   }, [camera, featureTextureVersion, mapArtifact.settings.hexSize, mapArtifact.tiles, mapFeatureVisuals, mapLayers.features, pixiReady, scenarioId, viewportCulling.key, viewportCulling.visibleTileIds, zoomBucket]);
 
   useEffect(() => {
@@ -2220,7 +2227,7 @@ export function MapView({
     }
     pruneLayerPool(spritePool, activeKeys);
     performanceStatsRef.current.visibleSprites += visibleSprites;
-    app.render();
+    safeRenderPixiApp(app);
   }, [camera, featureTextureVersion, mapArtifact.settings.hexSize, mapFeatureVisuals, mapFeatures, mapLayers.features, pixiReady, scenarioId, tileById, viewportCulling.key, viewportCulling.visibleTileIds, zoomBucket]);
 
   useEffect(() => {
@@ -2255,7 +2262,7 @@ export function MapView({
     }
     pruneLayerPool(spritePool, activeKeys);
     performanceStatsRef.current.visibleSprites += visibleSprites;
-    app.render();
+    safeRenderPixiApp(app);
   }, [camera, mapArtifact.settings.hexSize, mapLayers.resources, pixiReady, resourceDepositTextureVersion, resourceDepositsByHexId, scenarioId, tileById, viewportCulling.key, viewportCulling.visibleTileIds, worldBase, zoomBucket]);
 
   useEffect(() => {
@@ -2269,7 +2276,7 @@ export function MapView({
       onReady: () => setCorridorTextureVersion((value) => value + 1),
     });
     if (!textures) {
-      app.render();
+      safeRenderPixiApp(app);
       return;
     }
     const corridorTileLayers = new Map<string, Map<HexId, number>>();
@@ -2278,7 +2285,7 @@ export function MapView({
       addCorridorPathMasks(corridorTileLayers, path, tileById, mapArtifact.settings, corridor.transportMode, getCorridorAtlasStatus(corridor));
     }
     drawTexturedCorridorTiles(layer, corridorTileLayers, tileById, size, textures, false, 1, viewportCulling.visibleTileIds);
-    app.render();
+    safeRenderPixiApp(app);
   }, [corridorTextureVersion, mapArtifact.settings, mapArtifact.settings.hexSize, pixiReady, scenarioId, tileById, transportCorridors, viewportCulling.key, viewportCulling.visibleTileIds]);
 
   useEffect(() => {
@@ -2292,7 +2299,7 @@ export function MapView({
       onReady: () => setCorridorTextureVersion((value) => value + 1),
     });
     if (!textures) {
-      app.render();
+      safeRenderPixiApp(app);
       return;
     }
     const previewTransportMode = corridorPlacement?.transportMode ?? "land";
@@ -2306,7 +2313,7 @@ export function MapView({
       addCorridorPathMasks(draftTileLayers, corridorDraftPreviewPath, tileById, mapArtifact.settings, previewTransportMode, "planned");
       drawTexturedCorridorTiles(layer, draftTileLayers, tileById, size, textures, true, 0.62, viewportCulling.visibleTileIds);
     }
-    app.render();
+    safeRenderPixiApp(app);
   }, [corridorDraftPreviewPath, corridorFixedPreviewPath, corridorPlacement?.transportMode, corridorTextureVersion, mapArtifact.settings, mapArtifact.settings.hexSize, pixiReady, scenarioId, tileById, viewportCulling.key, viewportCulling.visibleTileIds]);
 
   useEffect(() => {
@@ -2461,7 +2468,7 @@ export function MapView({
     }
     pruneLayerPool(spritePool, activeSpriteKeys);
     pruneLayerPool(graphicsPool, activeGraphicsKeys);
-    app.render();
+    safeRenderPixiApp(app);
   }, [buildingTextureVersion, camera.scale, canceledConstructionQueueKeySet, hexBuildPlacement, mapArtifact.settings.hexSize, mapLayers.buildings, pendingBuildMarkers, pendingFoundCityMarkers, pixiReady, scenarioId, tileById, viewportCulling.key, viewportCulling.visibleTileIds, worldBase, zoomBucket]);
 
   useEffect(() => {
@@ -2582,7 +2589,7 @@ export function MapView({
     }
     pruneLayerPool(spritePool, activeSpriteKeys);
     pruneLayerPool(graphicsPool, activeGraphicsKeys);
-    app.render();
+    safeRenderPixiApp(app);
   }, [camera.scale, countryColorById, mapArtifact.settings.hexSize, mapLayers.armies, pendingFoundCityUnitIds, pixiReady, scenarioId, tileById, unitTextureVersion, viewportCulling.key, viewportCulling.visibleTileIds, worldBase]);
 
   const selectedBuildingPopoverTile = selectedBuildingPopoverHexId ? tileById.get(selectedBuildingPopoverHexId) ?? null : null;
@@ -3461,6 +3468,11 @@ function safeDestroyPixiApp(app: Application): void {
   }
 }
 
+function safeRenderPixiApp(app: Application | null): void {
+  if (!app?.renderer) return;
+  app.render();
+}
+
 function getPooledSprite(layer: Container, pool: Map<string, Sprite>, key: string): Sprite {
   const existing = pool.get(key);
   if (existing) {
@@ -4105,3 +4117,4 @@ function getPlacementReasonLabelKey(code: string | undefined): UiTextKey {
       return "buildings.hexPlacementReasonInvalid";
   }
 }
+
