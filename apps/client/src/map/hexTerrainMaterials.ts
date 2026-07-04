@@ -1,8 +1,47 @@
 import type { HexTile } from "@arcanorum/shared";
 
-export type TerrainMaterialId = "deep_water" | "coastal_water" | "fresh_water" | "grass" | "plains" | "forest" | "hills" | "rock" | "sand" | "tundra" | "snow" | "wetland" | "city";
+export type TerrainMaterialId =
+  | "deep_water"
+  | "coastal_water"
+  | "fresh_water"
+  | "tundra_flat"
+  | "tundra_rough"
+  | "tundra_mountainous"
+  | "grassland_flat"
+  | "grassland_rough"
+  | "grassland_mountainous"
+  | "plains_flat"
+  | "plains_rough"
+  | "plains_mountainous"
+  | "desert_flat"
+  | "desert_rough"
+  | "desert_mountainous"
+  | "tropical_flat"
+  | "tropical_rough"
+  | "tropical_mountainous"
+  | "city";
 export type HexTerrainShaderQuality = "low" | "medium" | "high";
-export const TERRAIN_MATERIAL_IDS: TerrainMaterialId[] = ["deep_water", "coastal_water", "fresh_water", "grass", "plains", "forest", "hills", "rock", "sand", "tundra", "snow", "wetland", "city"];
+export const TERRAIN_MATERIAL_IDS: TerrainMaterialId[] = [
+  "deep_water",
+  "coastal_water",
+  "fresh_water",
+  "tundra_flat",
+  "tundra_rough",
+  "tundra_mountainous",
+  "grassland_flat",
+  "grassland_rough",
+  "grassland_mountainous",
+  "plains_flat",
+  "plains_rough",
+  "plains_mountainous",
+  "desert_flat",
+  "desert_rough",
+  "desert_mountainous",
+  "tropical_flat",
+  "tropical_rough",
+  "tropical_mountainous",
+  "city",
+];
 
 export type HexMaterialLayerSet = {
   albedo: string;
@@ -57,7 +96,7 @@ export type HexMaterialPackManifest = {
 export const generatedHexMaterialPack: HexMaterialPackManifest = {
   id: "arcanorum-generated-terrain-materials-v1",
   atlas: {
-    columns: 4,
+    columns: 5,
     rows: 4,
     tileSize: 128,
     albedoUrl: "/game-assets/hex-materials/hex-terrain-albedo.png",
@@ -72,31 +111,37 @@ export const generatedHexMaterialPack: HexMaterialPackManifest = {
   },
   biomeTransitions: {
     url: "/game-assets/hex-materials/hex-biome-transition-masks.png",
-    columns: 8,
+    columns: 16,
     rows: 6,
     tileSize: 128,
-    variants: 8,
+    variants: 16,
   },
   riverMasks: {
     url: "/game-assets/hex-materials/hex-river-shape-masks.png",
-    columns: 16,
+    columns: 32,
     rows: 16,
     tileSize: 128,
-    variants: 4,
+    variants: 8,
   },
   materials: {
     deep_water: material("deep_water", [0.09, 0.27, 0.36], 0.22, 0.72),
     coastal_water: material("coastal_water", [0.18, 0.48, 0.52], 0.18, 0.64),
     fresh_water: material("fresh_water", [0.25, 0.54, 0.57], 0.16, 0.6),
-    grass: material("grass", [0.42, 0.62, 0.32], 0.24, 0.78),
-    plains: material("plains", [0.66, 0.65, 0.38], 0.22, 0.82),
-    forest: material("forest", [0.25, 0.43, 0.24], 0.26, 0.86),
-    hills: material("hills", [0.54, 0.5, 0.34], 0.28, 0.9),
-    rock: material("rock", [0.45, 0.43, 0.4], 0.3, 0.94),
-    sand: material("sand", [0.76, 0.63, 0.34], 0.22, 0.84),
-    tundra: material("tundra", [0.56, 0.62, 0.53], 0.2, 0.88),
-    snow: material("snow", [0.82, 0.87, 0.84], 0.12, 0.7),
-    wetland: material("wetland", [0.34, 0.49, 0.39], 0.24, 0.92),
+    tundra_flat: material("tundra_flat", [0.56, 0.62, 0.53], 0.18, 0.82),
+    tundra_rough: material("tundra_rough", [0.49, 0.55, 0.5], 0.28, 0.9),
+    tundra_mountainous: material("tundra_mountainous", [0.42, 0.44, 0.43], 0.38, 0.96),
+    grassland_flat: material("grassland_flat", [0.42, 0.62, 0.32], 0.2, 0.78),
+    grassland_rough: material("grassland_rough", [0.36, 0.52, 0.3], 0.3, 0.88),
+    grassland_mountainous: material("grassland_mountainous", [0.31, 0.43, 0.28], 0.4, 0.96),
+    plains_flat: material("plains_flat", [0.66, 0.65, 0.38], 0.2, 0.8),
+    plains_rough: material("plains_rough", [0.58, 0.54, 0.34], 0.3, 0.9),
+    plains_mountainous: material("plains_mountainous", [0.5, 0.46, 0.32], 0.4, 0.96),
+    desert_flat: material("desert_flat", [0.76, 0.63, 0.34], 0.18, 0.82),
+    desert_rough: material("desert_rough", [0.66, 0.55, 0.34], 0.28, 0.9),
+    desert_mountainous: material("desert_mountainous", [0.55, 0.45, 0.33], 0.38, 0.96),
+    tropical_flat: material("tropical_flat", [0.24, 0.58, 0.31], 0.22, 0.84),
+    tropical_rough: material("tropical_rough", [0.21, 0.47, 0.29], 0.32, 0.92),
+    tropical_mountainous: material("tropical_mountainous", [0.18, 0.37, 0.26], 0.42, 0.98),
     city: material("city", [0.54, 0.48, 0.42], 0.32, 0.96),
   },
 };
@@ -106,23 +151,17 @@ export function resolveTerrainMaterialId(tile: Pick<HexTile, "mapTags" | "waterK
   if (tile.waterKind === "ocean" || tags.includes("water:ocean")) return "deep_water";
   if (tile.waterKind === "sea" || tags.includes("water:coastal")) return "coastal_water";
   if (tile.waterKind === "lake" || tags.includes("water:lake")) return "fresh_water";
-  if (tags.includes("feature:snow")) return "snow";
-  if (tags.includes("biome:desert")) return "sand";
-  if (tags.includes("biome:tundra")) return "tundra";
-  if (tags.includes("morphology:mountainous")) return "rock";
-  if (tags.includes("morphology:rough")) return "hills";
-  if (tags.includes("feature:wet")) return "wetland";
-  if (tags.includes("feature:vegetated")) return "forest";
-  if (tags.includes("biome:plains")) return "plains";
-  return "grass";
+  const biome = resolveLandBiome(tags);
+  const morphology = tags.includes("morphology:mountainous") ? "mountainous" : tags.includes("morphology:rough") ? "rough" : "flat";
+  return `${biome}_${morphology}`;
 }
 
 export function resolveTerrainMaterialColor(materialId: TerrainMaterialId, pack: HexMaterialPackManifest = generatedHexMaterialPack): [number, number, number] {
-  return pack.materials[materialId]?.albedoColor ?? pack.materials.grass.albedoColor;
+  return pack.materials[materialId]?.albedoColor ?? pack.materials.grassland_flat.albedoColor;
 }
 
 export function resolveTerrainMaterialAtlasIndex(materialId: TerrainMaterialId, pack: HexMaterialPackManifest = generatedHexMaterialPack): number {
-  return pack.materials[materialId]?.atlasIndex ?? pack.materials.grass.atlasIndex;
+  return pack.materials[materialId]?.atlasIndex ?? pack.materials.grassland_flat.atlasIndex;
 }
 
 export function resolveShaderQualityFeatures(quality: HexTerrainShaderQuality): {
@@ -158,4 +197,12 @@ function material(id: TerrainMaterialId, albedoColor: [number, number, number], 
       ao: `${id}_ao`,
     },
   };
+}
+
+function resolveLandBiome(tags: string[]): "tundra" | "grassland" | "plains" | "desert" | "tropical" {
+  if (tags.includes("biome:tundra")) return "tundra";
+  if (tags.includes("biome:plains")) return "plains";
+  if (tags.includes("biome:desert")) return "desert";
+  if (tags.includes("biome:tropical")) return "tropical";
+  return "grassland";
 }

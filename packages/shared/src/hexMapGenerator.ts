@@ -7,6 +7,7 @@ import type {
   HexDirection,
   HexDistanceToWater,
   HexEdgeRecord,
+  HexId,
   HexMapArtifact,
   HexMapRange,
   HexMapScript,
@@ -18,7 +19,7 @@ import type {
   HexTile,
   HexWaterKind,
 } from "./contracts/hex-map";
-import { getNeighborAxial, HEX_DIRECTIONS, makeHexId } from "./hexGeometry";
+import { axialDistance, getNeighborAxial, HEX_DIRECTIONS, makeHexId } from "./hexGeometry";
 
 type InternalTerrain = "ocean" | "sea" | "lake" | "plains" | "grassland" | "hills" | "mountains" | "desert" | "tundra" | "snow" | "wetland";
 type InternalFeature = "none" | "forest" | "dense_forest" | "jungle" | "marsh" | "scrub" | "snowcap";
@@ -155,6 +156,7 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
     }
   }
 
+  addInlandLakes(tiles, tileById, normalizedSettings);
   promoteNearLandSeasToCoastalWater(tiles, tileById, normalizedSettings);
   const coastOverlays = buildCoastOverlays(tiles, tileById, normalizedSettings);
   let riverEdges = buildRiverEdges(tiles, tileById, normalizedSettings);
@@ -426,14 +428,90 @@ function resolveEdgeOceanMargin(input: number | HexMapRange | undefined, random:
 }
 
 function resolveWaterKind(landScore: number, elevation: number): HexWaterKind {
-  if (landScore < 0.28) return "ocean";
-  if (landScore < 0.38 || elevation < 0.32) return "sea";
+  if (landScore < 0.34 || elevation < 0.3) return "ocean";
   return null;
 }
 
 function resolveMoisture(q: number, r: number, noise: ReturnType<typeof createNoise2D>, settings: HexMapSettings, waterKind: HexWaterKind): number {
   const climateBias = settings.generation.climate.rainfall === "wet" ? 0.18 : settings.generation.climate.rainfall === "dry" ? -0.14 : 0;
   return clamp01(normalizedNoise(noise(q / 34 + 3, r / 34 - 3)) * 0.62 + normalizedNoise(noise(q / 90 - 11, r / 90 + 4)) * 0.28 + (waterKind ? 0.08 : 0) + climateBias);
+}
+
+function addInlandLakes(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): void {
+  const landTiles = tiles.filter((tile) => !tile.waterKind);
+  const targetLakeTileCount = Math.max(1, Math.round(landTiles.length * 0.012));
+  const maxLakeSize = Math.max(3, Math.min(18, Math.round(Math.sqrt(landTiles.length) * 0.42)));
+  const minOceanDistance = settings.generation.mapScript === "archipelago" ? 3 : 4;
+  const candidates = landTiles
+    .filter((tile) => {
+      if (tile.elevation > 0.62 || tile.moisture < 0.52) return false;
+      if (tile.morphology === "mountainous") return false;
+      if (distanceToWater(tile, tileById, settings, minOceanDistance) <= minOceanDistance) return false;
+      return isLocalDrainageLow(tile, tileById, settings);
+    })
+    .sort((a, b) => lakeCandidateScore(b) - lakeCandidateScore(a) || a.id.localeCompare(b.id));
+  const lakeIds = new Set<string>();
+  for (const candidate of candidates) {
+    if (lakeIds.size >= targetLakeTileCount) break;
+    if (lakeIds.has(candidate.id) || candidate.waterKind) continue;
+    const lake = growLakeBasin(candidate, tileById, settings, maxLakeSize, minOceanDistance, lakeIds);
+    if (lake.length === 0) continue;
+    for (const tile of lake) {
+      lakeIds.add(tile.id);
+      tile.waterKind = "lake";
+      tile.internalTerrain = "lake";
+      tile.internalFeature = "none";
+      tile.civBiome = resolveCivBiome(tile.internalTerrain, tile.internalFeature, tile.moisture, tile.temperature);
+      tile.morphology = resolveMorphology(tile.internalTerrain, tile.elevation);
+      tile.passable = true;
+    }
+  }
+}
+
+function isLocalDrainageLow(tile: TileDraft, tileById: Map<string, TileDraft>, settings: HexMapSettings): boolean {
+  let lowerNeighbors = 0;
+  for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
+    const neighborAxial = getNeighborAxial(tile, direction as HexDirection, settings);
+    const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+    if (!neighbor || neighbor.waterKind) continue;
+    if (neighbor.elevation < tile.elevation - 0.025) lowerNeighbors += 1;
+  }
+  return lowerNeighbors <= 1;
+}
+
+function lakeCandidateScore(tile: TileDraft): number {
+  return tile.moisture * 0.52 + (1 - tile.elevation) * 0.38 + stableUnit(`${tile.id}:lake`) * 0.1;
+}
+
+function growLakeBasin(
+  start: TileDraft,
+  tileById: Map<string, TileDraft>,
+  settings: HexMapSettings,
+  maxSize: number,
+  minOceanDistance: number,
+  lakeIds: ReadonlySet<string>,
+): TileDraft[] {
+  const lake: TileDraft[] = [];
+  const visited = new Set<string>([start.id]);
+  const queue = new FlatQueue<TileDraft>();
+  queue.push(start, 0);
+  const spillElevation = start.elevation + 0.055 + stableUnit(`${start.id}:spill`) * 0.045;
+  while (queue.length > 0 && lake.length < maxSize) {
+    const current = queue.pop();
+    if (!current || current.waterKind || lakeIds.has(current.id)) continue;
+    if (current.elevation > spillElevation || current.moisture < 0.46 || current.morphology === "mountainous") continue;
+    if (distanceToWater(current, tileById, settings, minOceanDistance) <= minOceanDistance) continue;
+    lake.push(current);
+    for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
+      const neighborAxial = getNeighborAxial(current, direction as HexDirection, settings);
+      const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+      if (!neighbor || visited.has(neighbor.id) || neighbor.waterKind || lakeIds.has(neighbor.id)) continue;
+      visited.add(neighbor.id);
+      const score = Math.max(0, neighbor.elevation - start.elevation) + Math.max(0, 0.58 - neighbor.moisture) * 0.4 + stableUnit(`${start.id}:${neighbor.id}:lake`) * 0.02;
+      queue.push(neighbor, score);
+    }
+  }
+  return lake.length >= 1 ? lake : [];
 }
 
 function resolveTemperature(q: number, r: number, latitude: number, elevation: number, noise: ReturnType<typeof createNoise2D>, settings: HexMapSettings): number {
@@ -632,27 +710,46 @@ function distanceToLand(tile: TileDraft, tileById: Map<string, TileDraft>, setti
 }
 
 function buildRiverEdges(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): HexEdgeRecord[] {
-  const edges = new Map<string, HexEdgeRecord>();
-  const densityFactor = settings.generation.rivers.density === "many" ? 0.004 : settings.generation.rivers.density === "normal" ? 0.002 : 0.0009;
+  const edgeFlows = new Map<string, { hexId: HexId; direction: HexDirection; flow: number }>();
+  const densityFactor = settings.generation.rivers.density === "many" ? 0.0048 : settings.generation.rivers.density === "normal" ? 0.0026 : 0.0012;
+  const sourceCount = Math.max(3, Math.round(settings.width * settings.height * densityFactor));
+  const minSourceDistance = settings.generation.rivers.density === "many" ? 4 : settings.generation.rivers.density === "normal" ? 5 : 7;
   const candidates = tiles
-    .filter((tile) => !tile.waterKind && tile.elevation > 0.68)
-    .sort((a, b) => b.elevation - a.elevation || a.id.localeCompare(b.id))
-    .slice(0, Math.max(4, Math.round(settings.width * settings.height * densityFactor)));
-  for (const source of candidates) {
+    .filter((tile) => !tile.waterKind && tile.elevation > 0.58 && tile.moisture > 0.36 && distanceToWater(tile, tileById, settings, 3) > 1)
+    .sort((a, b) => riverSourceScore(b, tileById, settings) - riverSourceScore(a, tileById, settings) || a.id.localeCompare(b.id));
+  const sources: TileDraft[] = [];
+  for (const candidate of candidates) {
+    if (sources.length >= sourceCount) break;
+    if (sources.every((source) => axialDistance(source, candidate) >= minSourceDistance)) sources.push(candidate);
+  }
+  for (const source of sources) {
     let current = source;
     const visited = new Set<string>();
-    const maxLength = 28 + Math.round(source.elevation * 42);
+    const maxLength = 18 + Math.round(source.elevation * 46) + Math.round(source.moisture * 18);
+    let flow = 0.85 + source.moisture * 1.15 + Math.max(0, source.elevation - 0.58) * 1.8;
     for (let step = 0; step < maxLength; step += 1) {
       visited.add(current.id);
-      const downhill = getDownhillNeighbor(current, tileById, settings, visited);
+      const downhill = getRiverDownhillNeighbor(current, tileById, settings, visited);
       if (!downhill) break;
-      const width = Math.min(5, 1 + step / 8);
-      edges.set(`${current.id}:${downhill.direction}`, { hexId: current.id, direction: downhill.direction, width });
+      const key = `${current.id}:${downhill.direction}`;
+      const existing = edgeFlows.get(key);
+      edgeFlows.set(key, {
+        hexId: current.id,
+        direction: downhill.direction,
+        flow: (existing?.flow ?? 0) + flow,
+      });
       current = downhill.tile;
+      flow += 0.16 + current.moisture * 0.32 + Math.max(0, source.elevation - current.elevation) * 0.08;
       if (current.waterKind) break;
     }
   }
-  return [...edges.values()];
+  return [...edgeFlows.values()]
+    .map((edge) => ({
+      hexId: edge.hexId,
+      direction: edge.direction,
+      width: roundMagnitude(Math.min(5, 0.95 + Math.sqrt(edge.flow) * 1.02)),
+    }))
+    .sort((a, b) => a.hexId.localeCompare(b.hexId) || a.direction - b.direction);
 }
 
 function classifyRiverEdges(riverEdges: HexEdgeRecord[], tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): HexEdgeRecord[] {
@@ -674,17 +771,24 @@ function classifyRiverEdges(riverEdges: HexEdgeRecord[], tiles: TileDraft[], til
   });
 }
 
-function getDownhillNeighbor(tile: TileDraft, tileById: Map<string, TileDraft>, settings: HexMapSettings, visited: Set<string>): { tile: TileDraft; direction: HexDirection } | null {
+function riverSourceScore(tile: TileDraft, tileById: Map<string, TileDraft>, settings: HexMapSettings): number {
+  const waterDistance = Math.min(4, distanceToWater(tile, tileById, settings, 4));
+  const drainageBias = isLocalDrainageLow(tile, tileById, settings) ? 0.08 : 0;
+  return tile.elevation * 0.48 + tile.moisture * 0.32 + waterDistance * 0.035 + drainageBias + stableUnit(`${tile.id}:river-source`) * 0.035;
+}
+
+function getRiverDownhillNeighbor(tile: TileDraft, tileById: Map<string, TileDraft>, settings: HexMapSettings, visited: Set<string>): { tile: TileDraft; direction: HexDirection } | null {
   let best: { tile: TileDraft; direction: HexDirection; score: number } | null = null;
   for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
     const neighborAxial = getNeighborAxial(tile, direction as HexDirection, settings);
     const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
     if (!neighbor || visited.has(neighbor.id)) continue;
-    const waterBonus = neighbor.waterKind ? -0.28 : 0;
-    const score = neighbor.elevation + neighbor.moisture * 0.08 + waterBonus;
+    const waterBonus = neighbor.waterKind ? -0.42 : 0;
+    const moistureChannel = neighbor.waterKind ? 0 : (1 - neighbor.moisture) * 0.045;
+    const score = neighbor.elevation + moistureChannel + waterBonus + stableUnit(`${tile.id}:${neighbor.id}:river-step`) * 0.018;
     if (!best || score < best.score) best = { tile: neighbor, direction: direction as HexDirection, score };
   }
-  return best && best.score <= tile.elevation + 0.08 ? best : null;
+  return best && best.score <= tile.elevation + 0.045 ? best : null;
 }
 
 function assignRegions(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): void {
@@ -859,6 +963,10 @@ function roundMetric(value: number): number {
   return Math.round(clamp01(value) * 1000) / 1000;
 }
 
+function roundMagnitude(value: number): number {
+  return Math.round(value * 1000) / 1000;
+}
+
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
@@ -880,4 +988,13 @@ function seededRandom(seed: string): () => number {
     next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
     return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+function stableUnit(input: string): number {
+  let value = 2166136261;
+  for (let index = 0; index < input.length; index += 1) {
+    value ^= input.charCodeAt(index);
+    value = Math.imul(value, 16777619);
+  }
+  return (value >>> 0) / 4294967295;
 }

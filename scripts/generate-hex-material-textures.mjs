@@ -3,26 +3,37 @@ import { dirname, join } from "node:path";
 import { deflateSync } from "node:zlib";
 
 const MATERIALS = [
-  ["deep_water", [23, 69, 92]],
-  ["coastal_water", [46, 122, 133]],
-  ["fresh_water", [64, 138, 145]],
-  ["grass", [107, 158, 82]],
-  ["plains", [168, 166, 97]],
-  ["forest", [64, 110, 61]],
-  ["hills", [138, 128, 87]],
-  ["rock", [115, 110, 102]],
-  ["sand", [194, 161, 87]],
-  ["tundra", [143, 158, 135]],
-  ["snow", [209, 222, 214]],
-  ["wetland", [87, 125, 99]],
+  { id: "deep_water", color: [23, 69, 92], kind: "water", relief: "water" },
+  { id: "coastal_water", color: [46, 122, 133], kind: "water", relief: "water" },
+  { id: "fresh_water", color: [64, 138, 145], kind: "water", relief: "water" },
+  { id: "tundra_flat", color: [143, 158, 135], kind: "land", relief: "flat" },
+  { id: "tundra_rough", color: [125, 140, 128], kind: "land", relief: "rough" },
+  { id: "tundra_mountainous", color: [107, 112, 110], kind: "land", relief: "mountainous" },
+  { id: "grassland_flat", color: [107, 158, 82], kind: "land", relief: "flat" },
+  { id: "grassland_rough", color: [92, 133, 77], kind: "land", relief: "rough" },
+  { id: "grassland_mountainous", color: [79, 110, 71], kind: "land", relief: "mountainous" },
+  { id: "plains_flat", color: [168, 166, 97], kind: "land", relief: "flat" },
+  { id: "plains_rough", color: [148, 138, 87], kind: "land", relief: "rough" },
+  { id: "plains_mountainous", color: [128, 117, 82], kind: "land", relief: "mountainous" },
+  { id: "desert_flat", color: [194, 161, 87], kind: "land", relief: "flat" },
+  { id: "desert_rough", color: [168, 140, 87], kind: "land", relief: "rough" },
+  { id: "desert_mountainous", color: [140, 115, 84], kind: "land", relief: "mountainous" },
+  { id: "tropical_flat", color: [61, 148, 79], kind: "land", relief: "flat" },
+  { id: "tropical_rough", color: [54, 120, 74], kind: "land", relief: "rough" },
+  { id: "tropical_mountainous", color: [46, 94, 66], kind: "land", relief: "mountainous" },
+  { id: "city", color: [138, 122, 107], kind: "built", relief: "rough" },
 ];
 
 const TILE_SIZE = 128;
-const COLUMNS = 4;
-const ROWS = 3;
+const COLUMNS = 5;
+const ROWS = 4;
 const WIDTH = TILE_SIZE * COLUMNS;
 const HEIGHT = TILE_SIZE * ROWS;
 const OUT_DIR = "apps/client/public/game-assets/hex-materials";
+
+if (MATERIALS.length > COLUMNS * ROWS) {
+  throw new Error(`Material atlas has ${COLUMNS * ROWS} slots for ${MATERIALS.length} materials.`);
+}
 
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(join(OUT_DIR, "hex-terrain-albedo.png"), encodePng(renderAtlas("albedo")));
@@ -31,26 +42,27 @@ writeFileSync(join(OUT_DIR, "hex-terrain-detail.png"), encodePng(renderAtlas("de
 function renderAtlas(kind) {
   const pixels = Buffer.alloc(WIDTH * HEIGHT * 4);
   for (let index = 0; index < MATERIALS.length; index += 1) {
-    const [id, color] = MATERIALS[index];
+    const material = MATERIALS[index];
     const tileX = (index % COLUMNS) * TILE_SIZE;
     const tileY = Math.floor(index / COLUMNS) * TILE_SIZE;
     for (let y = 0; y < TILE_SIZE; y += 1) {
       for (let x = 0; x < TILE_SIZE; x += 1) {
         const worldX = tileX + x;
         const worldY = tileY + y;
-        const n1 = periodicNoise(id, x, y, 3);
-        const n2 = periodicNoise(`${id}:fine`, x, y, 9);
-        const n3 = periodicRidgeNoise(`${id}:ridge`, x, y);
-        const grain = (n1 - 0.5) * 0.22 + (n2 - 0.5) * 0.08 + n3 * terrainRidgeStrength(id);
+        const n1 = periodicNoise(material.id, x, y, 3);
+        const n2 = periodicNoise(`${material.id}:fine`, x, y, 9);
+        const n3 = periodicRidgeNoise(`${material.id}:ridge`, x, y);
+        const ridge = ridgePattern(material, x, y) * terrainRidgeStrength(material);
+        const grain = (n1 - 0.5) * baseNoiseStrength(material) + (n2 - 0.5) * fineNoiseStrength(material) + n3 * terrainRidgeStrength(material) + ridge;
         const channel = (worldY * WIDTH + worldX) * 4;
         if (kind === "detail") {
-          const detail = clampByte(128 + grain * 190);
-          pixels[channel] = detail;
-          pixels[channel + 1] = clampByte(128 + (n2 - 0.5) * 95);
-          pixels[channel + 2] = clampByte(128 + n3 * 140);
+          const detailScale = material.relief === "mountainous" ? 230 : material.relief === "rough" ? 205 : 170;
+          pixels[channel] = clampByte(128 + grain * detailScale);
+          pixels[channel + 1] = clampByte(128 + (n2 - 0.5) * (material.relief === "flat" ? 70 : 105));
+          pixels[channel + 2] = clampByte(128 + (n3 + Math.abs(ridge)) * (material.relief === "mountainous" ? 175 : 130));
           pixels[channel + 3] = 255;
         } else {
-          const [r, g, b] = shadeColor(color, grain, id, x, y);
+          const [r, g, b] = shadeColor(material.color, grain, material, x, y);
           pixels[channel] = r;
           pixels[channel + 1] = g;
           pixels[channel + 2] = b;
@@ -62,20 +74,47 @@ function renderAtlas(kind) {
   return pixels;
 }
 
-function terrainRidgeStrength(id) {
-  if (id === "deep_water" || id === "coastal_water" || id === "fresh_water") return 0.035;
-  if (id === "rock" || id === "hills") return 0.16;
-  if (id === "sand" || id === "snow") return 0.08;
-  return 0.1;
+function terrainRidgeStrength(material) {
+  if (material.kind === "water") return 0.035;
+  if (material.id === "city") return 0.13;
+  if (material.relief === "mountainous") return 0.27;
+  if (material.relief === "rough") return 0.15;
+  return 0.055;
 }
 
-function shadeColor(color, grain, id, x, y) {
-  const water = id.includes("water");
+function baseNoiseStrength(material) {
+  if (material.kind === "water") return 0.16;
+  if (material.id === "city") return 0.18;
+  if (material.relief === "mountainous") return 0.28;
+  if (material.relief === "rough") return 0.24;
+  return 0.16;
+}
+
+function fineNoiseStrength(material) {
+  if (material.kind === "water") return 0.07;
+  if (material.id === "city") return 0.1;
+  if (material.relief === "mountainous") return 0.14;
+  if (material.relief === "rough") return 0.11;
+  return 0.055;
+}
+
+function ridgePattern(material, x, y) {
+  if (material.kind === "water" || material.relief === "flat") return 0;
+  const diagonalA = Math.sin(tileAngle(x + y * 0.45, material.relief === "mountainous" ? 5 : 3));
+  const diagonalB = Math.cos(tileAngle(x * 0.35 - y, material.relief === "mountainous" ? 7 : 4));
+  const angular = Math.abs(diagonalA * 0.65 + diagonalB * 0.35);
+  const signedCrease = material.relief === "mountainous" ? Math.sign(diagonalA + diagonalB * 0.5) * angular : angular * 0.5;
+  return signedCrease;
+}
+
+function shadeColor(color, grain, material, x, y) {
+  const water = material.kind === "water";
   const wave = water
     ? Math.sin(tileAngle(x, 5) + tileAngle(y, 2)) * 0.045 + Math.sin(tileAngle(x, 9) - tileAngle(y, 4)) * 0.035
     : 0;
-  const warmth = id === "sand" ? 0.04 : id === "snow" ? -0.025 : 0;
-  const shade = grain + wave;
+  const warmth = material.id.startsWith("desert") ? 0.04 : material.id.startsWith("tundra") ? -0.025 : material.id.startsWith("tropical") ? 0.015 : 0;
+  const reliefDarken = material.relief === "mountainous" ? -0.06 : material.relief === "rough" ? -0.025 : 0;
+  const shade = grain + wave + reliefDarken;
   return [
     clampByte(color[0] * (1 + shade + warmth)),
     clampByte(color[1] * (1 + shade * 0.9)),

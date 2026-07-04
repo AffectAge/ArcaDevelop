@@ -10,16 +10,38 @@ import { axialToPixel, getNeighborAxial, HEX_DIRECTIONS, makeHexId } from "./hex
 const smallMap = generateHexMap({ ...DEFAULT_HEX_MAP_SETTINGS, width: 24, height: 16, chunkSize: 8, seed: "mesh-test" });
 
 describe("hex terrain mesh renderer data", () => {
-  it("maps terrain and biome to stable material ids", () => {
-    expect(resolveTerrainMaterialId({ mapTags: ["biome:grassland"], waterKind: null })).toBe("grass");
-    expect(resolveTerrainMaterialId({ mapTags: ["biome:desert"], waterKind: null })).toBe("sand");
-    expect(resolveTerrainMaterialId({ mapTags: ["feature:snow"], waterKind: null })).toBe("snow");
+  it("maps biome and relief tags to stable land material ids", () => {
+    const matrix = [
+      ["biome:tundra", "morphology:flat", "tundra_flat"],
+      ["biome:tundra", "morphology:rough", "tundra_rough"],
+      ["biome:tundra", "morphology:mountainous", "tundra_mountainous"],
+      ["biome:grassland", "morphology:flat", "grassland_flat"],
+      ["biome:grassland", "morphology:rough", "grassland_rough"],
+      ["biome:grassland", "morphology:mountainous", "grassland_mountainous"],
+      ["biome:plains", "morphology:flat", "plains_flat"],
+      ["biome:plains", "morphology:rough", "plains_rough"],
+      ["biome:plains", "morphology:mountainous", "plains_mountainous"],
+      ["biome:desert", "morphology:flat", "desert_flat"],
+      ["biome:desert", "morphology:rough", "desert_rough"],
+      ["biome:desert", "morphology:mountainous", "desert_mountainous"],
+      ["biome:tropical", "morphology:flat", "tropical_flat"],
+      ["biome:tropical", "morphology:rough", "tropical_rough"],
+      ["biome:tropical", "morphology:mountainous", "tropical_mountainous"],
+    ] as const;
+
+    for (const [biomeTag, morphologyTag, materialId] of matrix) {
+      expect(resolveTerrainMaterialId({ mapTags: [biomeTag, morphologyTag], waterKind: null })).toBe(materialId);
+    }
+    expect(resolveTerrainMaterialId({ mapTags: ["biome:desert"], waterKind: null })).toBe("desert_flat");
+    expect(resolveTerrainMaterialId({ mapTags: ["feature:snow"], waterKind: null })).toBe("grassland_flat");
+    expect(resolveTerrainMaterialId({ mapTags: ["biome:grassland", "morphology:navigable_river"], waterKind: null })).toBe("grassland_flat");
+    expect(resolveTerrainMaterialId({ mapTags: ["biome:grassland", "morphology:rough", "morphology:navigable_river"], waterKind: null })).toBe("grassland_rough");
     expect(resolveTerrainMaterialId({ mapTags: ["water:coastal"], waterKind: "sea" })).toBe("coastal_water");
   });
 
   it("uses city material for city-tagged hexes without changing terrain material mapping", () => {
     const tile = makeTestTile(1, 1, { mapTags: ["biome:plains"], waterKind: null });
-    expect(resolveTerrainMaterialId(tile)).toBe("plains");
+    expect(resolveTerrainMaterialId(tile)).toBe("plains_flat");
     expect(resolveEffectiveTerrainMaterialId(tile, new Set([tile.id]))).toBe("city");
   });
 
@@ -81,6 +103,9 @@ describe("hex terrain mesh renderer data", () => {
   it("covers every terrain material with generated atlas assets", () => {
     expect(() => validateHexMaterialPack(generatedHexMaterialPack)).not.toThrow();
     expect(Object.keys(generatedHexMaterialPack.materials).sort()).toEqual([...TERRAIN_MATERIAL_IDS].sort());
+    expect(generatedHexMaterialPack.atlas).toMatchObject({ columns: 5, rows: 4, tileSize: 128 });
+    expect(generatedHexMaterialPack.atlas.columns * generatedHexMaterialPack.atlas.rows).toBeGreaterThanOrEqual(TERRAIN_MATERIAL_IDS.length);
+    expect(new Set(TERRAIN_MATERIAL_IDS.map((id) => generatedHexMaterialPack.materials[id].atlasIndex)).size).toBe(TERRAIN_MATERIAL_IDS.length);
     expect(generatedHexMaterialPack.atlas.albedoUrl).toBe("/game-assets/hex-materials/hex-terrain-albedo.png");
     expect(generatedHexMaterialPack.atlas.detailUrl).toBe("/game-assets/hex-materials/hex-terrain-detail.png");
     expect(generatedHexMaterialPack.coastMasks).toMatchObject({
@@ -92,17 +117,17 @@ describe("hex terrain mesh renderer data", () => {
     });
     expect(generatedHexMaterialPack.biomeTransitions).toMatchObject({
       url: "/game-assets/hex-materials/hex-biome-transition-masks.png",
-      columns: 8,
+      columns: 16,
       rows: 6,
       tileSize: 128,
-      variants: 8,
+      variants: 16,
     });
     expect(generatedHexMaterialPack.riverMasks).toMatchObject({
       url: "/game-assets/hex-materials/hex-river-shape-masks.png",
-      columns: 16,
+      columns: 32,
       rows: 16,
       tileSize: 128,
-      variants: 4,
+      variants: 8,
     });
   });
 
@@ -358,9 +383,9 @@ describe("hex terrain mesh renderer data", () => {
   });
 
   it("selects stable biome transition variants by hex id, direction, and materials", () => {
-    const first = resolveHexBiomeTransitionAtlasIndex(makeHexId(4, 4), 2, "grass", "forest");
-    const second = resolveHexBiomeTransitionAtlasIndex(makeHexId(4, 4), 2, "grass", "forest");
-    const other = resolveHexBiomeTransitionAtlasIndex(makeHexId(5, 4), 2, "grass", "forest");
+    const first = resolveHexBiomeTransitionAtlasIndex(makeHexId(4, 4), 2, "grassland_flat", "grassland_rough");
+    const second = resolveHexBiomeTransitionAtlasIndex(makeHexId(4, 4), 2, "grassland_flat", "grassland_rough");
+    const other = resolveHexBiomeTransitionAtlasIndex(makeHexId(5, 4), 2, "grassland_flat", "grassland_rough");
     const variants = generatedHexMaterialPack.biomeTransitions.variants;
 
     expect(first).toBe(second);

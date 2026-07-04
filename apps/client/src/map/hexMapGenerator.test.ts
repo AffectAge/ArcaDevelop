@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { HexDirection } from "@arcanorum/shared";
+import type { HexDirection, HexMapSettings, HexTile } from "@arcanorum/shared";
 import { getNeighborAxial, makeHexId } from "./hexGeometry";
 import { DEFAULT_HEX_MAP_SETTINGS, generateHexMap } from "./hexMapGenerator";
 
@@ -50,6 +50,35 @@ describe("generateHexMap", () => {
     expect(map.tiles.some((tile) => tile.mapTags.includes("water:coastal") && landRegionIds.has(tile.regionId))).toBe(true);
   });
 
+  it("keeps coastal water adjacent to land instead of isolated in deep ocean", () => {
+    const map = generateHexMap(TEST_SETTINGS);
+    const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
+    const coastalWater = map.tiles.filter((tile) => tile.waterKind === "sea");
+
+    expect(coastalWater.length).toBeGreaterThan(0);
+    for (const tile of coastalWater) {
+      expect(distanceToNearestLand(tile, tileById, map.settings, 2)).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it("generates inland lakes inside landmasses", () => {
+    const map = generateHexMap({
+      ...TEST_SETTINGS,
+      seed: "inland-lakes-regression",
+      width: 72,
+      height: 44,
+    });
+    const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
+    const lakes = map.tiles.filter((tile) => tile.waterKind === "lake");
+
+    expect(lakes.length).toBeGreaterThan(0);
+    for (const lake of lakes) {
+      expect(lake.mapTags).toContain("water:lake");
+      expect(hasNeighbor(lake, tileById, map.settings, (neighbor) => neighbor.waterKind == null)).toBe(true);
+      expect(distanceToNearestOcean(lake, tileById, map.settings, 2)).toBeGreaterThan(2);
+    }
+  });
+
   it("uses valid river edges", () => {
     const map = generateHexMap(TEST_SETTINGS);
     const tileIds = new Set(map.tiles.map((tile) => tile.id));
@@ -62,6 +91,42 @@ describe("generateHexMap", () => {
       expect(tile).toBeTruthy();
       const neighbor = tile ? getNeighborAxial(tile, edge.direction as HexDirection, map.settings) : null;
       expect(neighbor ? tileIds.has(makeHexId(neighbor.q, neighbor.r)) : false).toBe(true);
+    }
+  });
+
+  it("routes rivers downhill toward water with accumulated widths", () => {
+    const map = generateHexMap({
+      ...TEST_SETTINGS,
+      seed: "hydrology-regression",
+      width: 72,
+      height: 44,
+      generation: {
+        ...TEST_SETTINGS.generation,
+        rivers: {
+          ...TEST_SETTINGS.generation.rivers,
+          density: "many",
+        },
+      },
+    });
+    const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
+
+    expect(map.riverEdges.length).toBeGreaterThan(0);
+    expect(Math.max(...map.riverEdges.map((edge) => edge.width))).toBeGreaterThan(2);
+    expect(map.riverEdges.some((edge) => {
+      const source = tileById.get(edge.hexId);
+      const neighborAxial = source ? getNeighborAxial(source, edge.direction as HexDirection, map.settings) : null;
+      const target = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+      return target?.waterKind != null;
+    })).toBe(true);
+    for (const edge of map.riverEdges) {
+      const source = tileById.get(edge.hexId);
+      const neighborAxial = source ? getNeighborAxial(source, edge.direction as HexDirection, map.settings) : null;
+      const target = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+
+      expect(source).toBeTruthy();
+      expect(target).toBeTruthy();
+      expect(source?.waterKind ?? null).toBeNull();
+      if (!target?.waterKind) expect(target?.elevation ?? 1).toBeLessThanOrEqual((source?.elevation ?? 0) + 0.055);
     }
   });
 
@@ -226,4 +291,41 @@ function collectLandComponents(map: ReturnType<typeof generateHexMap>): Array<{ 
   }
 
   return components;
+}
+
+function distanceToNearestLand(tile: HexTile, tileById: ReadonlyMap<string, HexTile>, settings: HexMapSettings, maxDistance: number): number {
+  return distanceToNearest(tile, tileById, settings, maxDistance, (candidate) => candidate.waterKind == null);
+}
+
+function distanceToNearestOcean(tile: HexTile, tileById: ReadonlyMap<string, HexTile>, settings: HexMapSettings, maxDistance: number): number {
+  return distanceToNearest(tile, tileById, settings, maxDistance, (candidate) => candidate.waterKind === "ocean" || candidate.waterKind === "sea");
+}
+
+function distanceToNearest(tile: HexTile, tileById: ReadonlyMap<string, HexTile>, settings: HexMapSettings, maxDistance: number, predicate: (tile: HexTile) => boolean): number {
+  let frontier: HexTile[] = [tile];
+  const visited = new Set<string>([tile.id]);
+  for (let distance = 1; distance <= maxDistance; distance += 1) {
+    const next: HexTile[] = [];
+    for (const current of frontier) {
+      for (let direction = 0; direction < 6; direction += 1) {
+        const neighborAxial = getNeighborAxial(current, direction as HexDirection, settings);
+        const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+        if (!neighbor || visited.has(neighbor.id)) continue;
+        if (predicate(neighbor)) return distance;
+        visited.add(neighbor.id);
+        next.push(neighbor);
+      }
+    }
+    frontier = next;
+  }
+  return maxDistance + 1;
+}
+
+function hasNeighbor(tile: HexTile, tileById: ReadonlyMap<string, HexTile>, settings: HexMapSettings, predicate: (tile: HexTile) => boolean): boolean {
+  for (let direction = 0; direction < 6; direction += 1) {
+    const neighborAxial = getNeighborAxial(tile, direction as HexDirection, settings);
+    const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+    if (neighbor && predicate(neighbor)) return true;
+  }
+  return false;
 }

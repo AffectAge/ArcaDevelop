@@ -4,6 +4,9 @@ import { deflateSync } from "node:zlib";
 
 const OUT_DIR = "apps/client/public/game-assets/hex-materials";
 const TILE_SIZE = 128;
+const COAST_MASK_VARIANTS = 4;
+const BIOME_TRANSITION_VARIANTS = 16;
+const RIVER_MASK_VARIANTS = 8;
 const DIRECTIONS = [
   [0.8660254038, 0],
   [0.4330127019, -0.75],
@@ -15,16 +18,16 @@ const DIRECTIONS = [
 
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(join(OUT_DIR, "hex-coast-masks.png"), encodePng(renderCoastMasks(), TILE_SIZE * 16, TILE_SIZE * 16));
-writeFileSync(join(OUT_DIR, "hex-biome-transition-masks.png"), encodePng(renderBiomeTransitionMasks(), TILE_SIZE * 8, TILE_SIZE * 6));
-writeFileSync(join(OUT_DIR, "hex-river-shape-masks.png"), encodePng(renderRiverMasks(), TILE_SIZE * 16, TILE_SIZE * 16));
+writeFileSync(join(OUT_DIR, "hex-biome-transition-masks.png"), encodePng(renderBiomeTransitionMasks(), TILE_SIZE * BIOME_TRANSITION_VARIANTS, TILE_SIZE * 6));
+writeFileSync(join(OUT_DIR, "hex-river-shape-masks.png"), encodePng(renderRiverMasks(), TILE_SIZE * (64 * RIVER_MASK_VARIANTS / 16), TILE_SIZE * 16));
 writeFileSync(join(OUT_DIR, "hex-coast-mask-template.png"), encodePng(renderCoastMaskTemplate(), TILE_SIZE * 16, TILE_SIZE * 16));
-writeFileSync(join(OUT_DIR, "hex-biome-transition-mask-template.png"), encodePng(renderBiomeTransitionMaskTemplate(), TILE_SIZE * 8, TILE_SIZE * 6));
-writeFileSync(join(OUT_DIR, "hex-river-shape-mask-template.png"), encodePng(renderRiverMaskTemplate(), TILE_SIZE * 16, TILE_SIZE * 16));
+writeFileSync(join(OUT_DIR, "hex-biome-transition-mask-template.png"), encodePng(renderBiomeTransitionMaskTemplate(), TILE_SIZE * BIOME_TRANSITION_VARIANTS, TILE_SIZE * 6));
+writeFileSync(join(OUT_DIR, "hex-river-shape-mask-template.png"), encodePng(renderRiverMaskTemplate(), TILE_SIZE * (64 * RIVER_MASK_VARIANTS / 16), TILE_SIZE * 16));
 
 function renderCoastMasks() {
   return renderAtlas(16, 16, (tileIndex, x, y) => {
-    const rawMask = Math.floor(tileIndex / 4);
-    const variant = tileIndex % 4;
+    const rawMask = Math.floor(tileIndex / COAST_MASK_VARIANTS);
+    const variant = tileIndex % COAST_MASK_VARIANTS;
     if (rawMask <= 0) return 0;
     const p = localPoint(x, y);
     let amount = 0;
@@ -40,53 +43,54 @@ function renderCoastMasks() {
 }
 
 function renderBiomeTransitionMasks() {
-  return renderAtlas(8, 6, (tileIndex, x, y) => {
-    const direction = Math.floor(tileIndex / 8);
-    const variant = tileIndex % 8;
+  return renderAtlas(BIOME_TRANSITION_VARIANTS, 6, (tileIndex, x, y) => {
+    const direction = Math.floor(tileIndex / BIOME_TRANSITION_VARIANTS);
+    const variant = tileIndex % BIOME_TRANSITION_VARIANTS;
     const p = localPoint(x, y);
     const edge = dot(p, DIRECTIONS[direction]);
-    const n = coastlineNoise(p, direction + 11, variant, direction);
-    const threshold = 0.61 + n * 0.08 + (variant % 3) * 0.012;
-    return smoothstep(threshold, threshold + 0.12, edge);
+    const broad = softMaskNoise(p, direction + 11, variant, direction);
+    const longWave = Math.sin(tileAngle(x + variant * 5, 1 + (variant % 3)) + tileAngle(y, 1 + ((variant + direction) % 2))) * 0.012;
+    const feather = 0.15 + (variant % 4) * 0.012;
+    const threshold = 0.6 + broad * 0.055 + longWave + (variant % 5) * 0.004;
+    return smoothstep(threshold, threshold + feather, edge);
   });
 }
 
 function renderRiverMasks() {
-  return renderAtlas(16, 16, (tileIndex, x, y) => {
-    const rawMask = Math.floor(tileIndex / 4);
-    const variant = tileIndex % 4;
+  return renderAtlas(64 * RIVER_MASK_VARIANTS / 16, 16, (tileIndex, x, y) => {
+    const rawMask = Math.floor(tileIndex / RIVER_MASK_VARIANTS);
+    const variant = tileIndex % RIVER_MASK_VARIANTS;
     if (rawMask <= 0) return 0;
     const p = localPoint(x, y);
     const directions = [];
     for (let direction = 0; direction < 6; direction += 1) {
       if ((rawMask & (1 << direction)) !== 0) directions.push(direction);
     }
-    const baseWidth = 0.076 + variant * 0.007 + Math.min(0.048, directions.length * 0.01);
-    const edgeSoftness = 0.022;
+    const baseWidth = 0.072 + variant * 0.0045 + Math.min(0.056, directions.length * 0.011);
+    const edgeSoftness = 0.033 + (variant % 3) * 0.003;
     let coverage = 0;
     for (const direction of directions) {
       const distance = riverCurveDistance(p, rawMask, variant, direction);
-      const bankNoise =
-        (valueNoise(p.x * 9.0 + rawMask * 0.41 + direction, p.y * 8.4 + variant) - 0.5) * 0.018 +
-        (valueNoise(p.x * 23.0 + variant, p.y * 19.0 + rawMask + direction) - 0.5) * 0.008;
-      const width = baseWidth + bankNoise;
+      const along = Math.max(0, dot(p, DIRECTIONS[direction]));
+      const taper = directions.length === 1 ? 1 - along * 0.12 : 1 + along * 0.035;
+      const width = Math.max(0.048, baseWidth * taper);
       const core = 1 - smoothstep(width, width + edgeSoftness, distance);
       coverage = Math.max(coverage, core);
     }
-    const junctionRadius = baseWidth * (directions.length <= 1 ? 1.05 : 1.95 + directions.length * 0.16);
+    const junctionRadius = baseWidth * (directions.length <= 1 ? 0.92 : 1.58 + directions.length * 0.14);
     const junction = 1 - smoothstep(junctionRadius, junctionRadius + edgeSoftness, length(p));
     const mouths = directions.reduce((amount, direction) => {
       const edgePoint = { x: DIRECTIONS[direction][0] * 0.91, y: DIRECTIONS[direction][1] * 0.91 };
-      const radius = baseWidth * (1.25 + variant * 0.06);
+      const radius = baseWidth * (1.04 + variant * 0.018);
       return Math.max(amount, 1 - smoothstep(radius, radius + edgeSoftness, length({ x: p.x - edgePoint.x, y: p.y - edgePoint.y })));
     }, 0);
-    const water = Math.max(coverage, junction * (directions.length > 1 ? 1 : 0.82), mouths * 0.96);
+    const water = Math.max(coverage, junction * (directions.length > 1 ? 1 : 0.68), mouths * 0.9);
     return water < 0.035 ? 0 : water;
   });
 }
 
 function renderRiverMaskTemplate() {
-  return renderDirectionalTemplateAtlas(16, 16, (tileIndex) => Math.floor(tileIndex / 4), {
+  return renderDirectionalTemplateAtlas(64 * RIVER_MASK_VARIANTS / 16, 16, (tileIndex) => Math.floor(tileIndex / RIVER_MASK_VARIANTS), {
     activeLineAlpha: 230,
     inactiveLineAlpha: 34,
     activeLineThickness: 1.65,
@@ -106,7 +110,7 @@ function renderCoastMaskTemplate() {
 }
 
 function renderBiomeTransitionMaskTemplate() {
-  return renderDirectionalTemplateAtlas(8, 6, (tileIndex) => 1 << Math.floor(tileIndex / 8), {
+  return renderDirectionalTemplateAtlas(BIOME_TRANSITION_VARIANTS, 6, (tileIndex) => 1 << Math.floor(tileIndex / BIOME_TRANSITION_VARIANTS), {
     activeLineAlpha: 230,
     inactiveLineAlpha: 24,
     activeLineThickness: 1.55,
@@ -227,10 +231,20 @@ function localPoint(x, y) {
   };
 }
 
+function tileAngle(value, frequency) {
+  return (value / (TILE_SIZE - 1)) * Math.PI * 2 * frequency;
+}
+
 function coastlineNoise(p, rawMask, variant, direction) {
   const ridge = valueNoise(p.x * (3.2 + variant), p.y * (4.4 + direction) + rawMask);
   const fine = valueNoise(p.x * 9.1 + direction, p.y * 7.7 + variant);
   return (ridge - 0.5) * 0.85 + (fine - 0.5) * 0.28;
+}
+
+function softMaskNoise(p, rawMask, variant, direction) {
+  const broad = valueNoise(p.x * (1.65 + variant * 0.08) + rawMask * 0.17, p.y * (2.05 + direction * 0.11) + variant * 0.23);
+  const medium = valueNoise(p.x * 3.4 + direction * 0.31, p.y * 3.1 + rawMask * 0.13 + variant * 0.19);
+  return (broad - 0.5) * 0.85 + (medium - 0.5) * 0.22;
 }
 
 function valueNoise(x, y) {
@@ -256,8 +270,8 @@ function riverCurveDistance(p, rawMask, variant, direction) {
   const controlB = riverBendPoint(rawMask, variant + 7, direction, 0.68);
   let distance = Number.POSITIVE_INFINITY;
   let previous = { x: 0, y: 0 };
-  for (let step = 1; step <= 18; step += 1) {
-    const t = step / 18;
+  for (let step = 1; step <= 28; step += 1) {
+    const t = step / 28;
     const point = cubicBezier({ x: 0, y: 0 }, controlA, controlB, end, t);
     distance = Math.min(distance, segmentDistance(p, previous, point));
     previous = point;
@@ -275,8 +289,8 @@ function segmentDistance(p, a, b) {
 function riverBendPoint(rawMask, variant, direction, forwardBase) {
   const normal = [-DIRECTIONS[direction][1], DIRECTIONS[direction][0]];
   const side = hash(`${rawMask}:${variant}:${direction}:side`) > 0.5 ? 1 : -1;
-  const bendAmount = (0.045 + hash(`${rawMask}:${variant}:${direction}:bend`) * 0.115) * side;
-  const forward = forwardBase + (hash(`${rawMask}:${variant}:${direction}:forward`) - 0.5) * 0.13;
+  const bendAmount = (0.028 + hash(`${rawMask}:${variant}:${direction}:bend`) * 0.082) * side;
+  const forward = forwardBase + (hash(`${rawMask}:${variant}:${direction}:forward`) - 0.5) * 0.09;
   return {
     x: DIRECTIONS[direction][0] * forward + normal[0] * bendAmount,
     y: DIRECTIONS[direction][1] * forward + normal[1] * bendAmount,
