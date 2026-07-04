@@ -398,6 +398,8 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       countryEventFlagsByCountryId: {},
       journalEntriesByCountryId: {},
       countryModifiersByCountryId: {},
+      unitsById: {},
+      unitTrainingQueueByCountry: {},
       divisionTemplatesByCountry: {},
       divisionsById: {},
       fleetsById: {},

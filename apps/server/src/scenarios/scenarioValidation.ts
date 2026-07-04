@@ -37,6 +37,7 @@ export type ScenarioValidationIssueCode =
   | "INVALID_EVENT_DEFINITION"
   | "INVALID_JOURNAL_DEFINITION"
   | "INVALID_BUILDING_ATLAS"
+  | "INVALID_UNIT_ATLAS"
   | "INVALID_CITY_ATLAS"
   | "INVALID_FEATURE_ATLAS"
   | "INVALID_MAP_FEATURE_GENERATOR"
@@ -106,6 +107,7 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "asset", path: "common/assets" },
   { kind: "good", path: "common/goods" },
   { kind: "building", path: "common/buildings" },
+  { kind: "unitType", path: "common/unit_types" },
   { kind: "technology", path: "common/technologies" },
   { kind: "law", path: "common/laws" },
   { kind: "lawGroup", path: "common/lawGroups" },
@@ -365,6 +367,7 @@ export async function validateScenarioDirectory(
   validateMapFeatureVisuals(root, loadedEntities, issues);
   validateEntityLocalization(root, loadedEntities, localizationKeys, issues);
   await validateBuildingAtlases(root, loadedEntities, issues);
+  await validateUnitAtlases(root, loadedEntities, issues);
   await validateCityAtlases(root, loadedEntities, issues);
   await validateFeatureAtlases(root, loadedEntities, issues);
   await validateGeneratedManifest(root, summary, issues, options.requireGeneratedIndexes === true);
@@ -599,6 +602,38 @@ async function validateBuildingAtlases(root: string, entities: LoadedEntity[], i
 
 function sanitizeBuildingAtlasId(buildingId: string): string {
   return buildingId.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+async function validateUnitAtlases(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
+  for (const unitType of entities.filter((entity) => entity.kind === "unitType")) {
+    const relativePath = `assets/units/${sanitizeUnitAtlasId(unitType.id)}.png`;
+    const atlasPath = join(root, relativePath);
+    if (!existsSync(atlasPath)) {
+      continue;
+    }
+    try {
+      const dimensions = imageSize(await readFile(atlasPath));
+      const width = dimensions.width ?? 0;
+      const height = dimensions.height ?? 0;
+      if (dimensions.type !== "png" || width !== 256 || height !== 64) {
+        issues.push({
+          code: "INVALID_UNIT_ATLAS",
+          path: relativePath,
+          message: `Unit atlas must be a PNG sized 256x64; received ${dimensions.type ?? "unknown"} ${width}x${height}.`,
+        });
+      }
+    } catch {
+      issues.push({
+        code: "INVALID_UNIT_ATLAS",
+        path: relativePath,
+        message: "Unit atlas must be a readable PNG sized 256x64.",
+      });
+    }
+  }
+}
+
+function sanitizeUnitAtlasId(unitTypeId: string): string {
+  return unitTypeId.replace(/^unit:/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
 async function validateCityAtlases(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {

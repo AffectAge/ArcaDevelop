@@ -12,13 +12,6 @@ import {
   type WsOutMessage,
 } from "@arcanorum/shared";
 import { applyCountryResourceIncomeTurn, type EconomyTickResourceStat } from "../mechanics/economyTickMechanics";
-import {
-  advanceMilitaryFormationQueue as advanceMilitaryFormationQueueInState,
-  advanceStoredArmyRoutesTurn,
-  resolveArmyMoveOrder,
-  resolveUnitAttackOrder,
-  type MilitaryRuntimeEvent,
-} from "../mechanics/militaryMechanics";
 import { resolveBuildOrder } from "../mechanics/buildingMechanics";
 import {
   resolveColonizationCapturesTurn,
@@ -32,12 +25,12 @@ import {
   resolveSettlementProjectsTurn,
 } from "../mechanics/settlementMechanics";
 import {
-  advanceStoredCivilianUnitRoutesTurn,
-  advanceStoredFleetRoutesTurn,
-  resolveUnitMoveOrder,
-} from "../mechanics/unitMovementMechanics";
-import { advanceCivilianUnitQueueTurn } from "../mechanics/civilianUnitMechanics";
-import { resolveEquipmentProductionLinesTurn } from "../mechanics/equipmentMechanics";
+  advanceStoredMapUnitRoutesTurn,
+  advanceUnitTrainingQueueTurn,
+  resolveMapUnitAttackOrder,
+  resolveMapUnitMoveOrder,
+  resolveMapUnitWaitOrder,
+} from "../mechanics/mapUnitMechanics";
 import type { HexMapIndexEntry } from "../map/hexIndex";
 import { resolveTurnWithPipeline, type TurnResolverResult } from "./turnResolver";
 import type { GameContentEntry, GameSettings } from "./gameSettingsTypes";
@@ -73,8 +66,6 @@ export const TURN_RESOLVE_WORLD_DELTA_MASK =
   WORLD_DELTA_MASK.journalEntriesByCountryId |
   WORLD_DELTA_MASK.countryModifiersByCountryId |
   WORLD_DELTA_MASK.explanationRecordsByTurn |
-  WORLD_DELTA_MASK.divisionsById |
-  WORLD_DELTA_MASK.militaryFormationQueueByCountry |
   WORLD_DELTA_MASK.unitEquipmentState;
 
 export type AiTurnBeforeResolveHookParams = {
@@ -93,7 +84,6 @@ type TurnRuntimeParams = {
   getOrdersByTurn: () => Map<number, Map<string, Order[]>>;
   getResolveReadyByTurn: () => Map<number, Set<string>>;
   getActiveColonizeRegionsByCountry: () => Map<string, Set<string>>;
-  refreshDivisionStatsFromTemplates: () => void;
   getHexIndex: () => HexMapIndexEntry[];
   getEconomyTickCountryIds: () => Set<string>;
   fullSnapshotMask: number;
@@ -163,83 +153,8 @@ type TurnRuntimeParams = {
 
 type TurnRuntimeResult = TurnResolverResult<WorldBaseSectionSnapshot, CountryEventUiNotification>;
 
-function round3(value: number): number {
-  return Math.round((Number.isFinite(value) ? value : 0) * 1000) / 1000;
-}
-
-function sumEquipmentMap(input: Record<string, number> | undefined): number {
-  return Object.values(input ?? {}).reduce((sum, amount) => sum + Math.max(0, Number(amount) || 0), 0);
-}
-
 export function createTurnRuntime(params: TurnRuntimeParams) {
   let isResolvingTurnNow = false;
-
-  const pushMilitaryRuntimeEvents = (news: EventLogEntry[], events: MilitaryRuntimeEvent[]): void => {
-    for (const event of events) {
-      news.push(
-        params.makeOfficialNews({
-          turn: params.getTurnId(),
-          category: event.category,
-          title: event.title,
-          message: event.message,
-          countryId: event.countryId,
-          priority: event.priority,
-          visibility: event.visibility,
-        }),
-      );
-    }
-  };
-
-  const advanceMilitaryFormationQueue = (news: EventLogEntry[]): void => {
-    const events: MilitaryRuntimeEvent[] = [];
-    advanceMilitaryFormationQueueInState({
-      worldBase: params.getWorldBase(),
-      turnId: params.getTurnId(),
-      createId: randomUUID,
-      events,
-      landDivisionStackLimitPerHex: params.getGameSettings().military.landDivisionStackLimitPerHex,
-    });
-    pushMilitaryRuntimeEvents(news, events);
-  };
-
-  const advanceCivilianUnitQueue = (): void => {
-    advanceCivilianUnitQueueTurn({
-      worldBase: params.getWorldBase(),
-      createId: randomUUID,
-      turnId: params.getTurnId(),
-      colonizerMovementPoints: params.getGameSettings().colonization.colonizerMovementPoints,
-    });
-  };
-
-  const emitMilitarySupplyNews = (news: EventLogEntry[]): void => {
-    const turnId = params.getTurnId();
-    const summaryByCountry = new Map<string, { received: number; returned: number; divisions: number }>();
-    for (const division of Object.values(params.getWorldBase().divisionsById)) {
-      const report = division.equipmentSupplyReport;
-      if (!report || report.turnId !== turnId) continue;
-      const received = sumEquipmentMap(report.receivedByVariantId);
-      const returned = sumEquipmentMap(report.returnedByVariantId);
-      if (received <= 0 && returned <= 0) continue;
-      const summary = summaryByCountry.get(division.countryId) ?? { received: 0, returned: 0, divisions: 0 };
-      summary.received += received;
-      summary.returned += returned;
-      summary.divisions += 1;
-      summaryByCountry.set(division.countryId, summary);
-    }
-    for (const [countryId, summary] of summaryByCountry) {
-      news.push(
-        params.makeOfficialNews({
-          turn: turnId,
-          category: "military",
-          title: "Снабжение армии",
-          message: `Снабжение обновило ${summary.divisions} дивизий: получено ${round3(summary.received)}, возвращено ${round3(summary.returned)} техники.`,
-          countryId,
-          priority: "low",
-          visibility: "private",
-        }),
-      );
-    }
-  };
 
   let neighborHexIdsByHexId: Map<string, HexId[]> | null = null;
   const getNeighborHexIds = (hexId: HexId): HexId[] => {
@@ -254,11 +169,11 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
     return neighborHexIdsByHexId.get(hexId) ?? [];
   };
   let hexByIdForFleetMovement: Map<string, HexMapIndexEntry> | null = null;
-  const isFleetPassableHex = (hexId: HexId): boolean => {
+  const getHexForUnitMovement = (hexId: HexId): HexMapIndexEntry | null => {
     if (!hexByIdForFleetMovement) {
       hexByIdForFleetMovement = new Map(params.getHexIndex().map((hex) => [hex.id, hex] as const));
     }
-    return isFleetPassableHexEntry(hexByIdForFleetMovement.get(hexId));
+    return hexByIdForFleetMovement.get(hexId) ?? null;
   };
 
   const resolveTurn = async (): Promise<TurnRuntimeResult> => {
@@ -278,81 +193,53 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
       },
       cloneWorldBaseSectionSnapshot: params.cloneWorldBaseSectionSnapshot,
       getCurrentOrders: (currentTurnId) => params.getOrdersByTurn().get(currentTurnId),
-      refreshDivisionStatsFromTemplates: params.refreshDivisionStatsFromTemplates,
-      emitMilitarySupplyNews,
       getActiveColonizeRegionsByCountry: params.getActiveColonizeRegionsByCountry,
-      resolveArmyMoveOrder: ({ order, playerId, movedDivisionIds, rejectedOrders, news }) => {
-        const events: MilitaryRuntimeEvent[] = [];
-        const result = resolveArmyMoveOrder({
-          order,
-          playerId,
-          worldBase: params.getWorldBase(),
-          hexes: params.getHexIndex(),
-          turnId: params.getTurnId(),
-          movedDivisionIds,
-          events,
-          areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
-          getNeighborHexIds,
-          getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string) => number,
-          landDivisionStackLimitPerHex: params.getGameSettings().military.landDivisionStackLimitPerHex,
-        });
-        if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
-        pushMilitaryRuntimeEvents(news, events);
-      },
-      resolveUnitMoveOrder: ({ order, playerId, movedDivisionIds, movedCivilianUnitIds, movedFleetIds, rejectedOrders, news }) => {
-        if (order.type === "UNIT_MOVE" && order.unitKind === "division") {
-          const events: MilitaryRuntimeEvent[] = [];
-          const result = resolveArmyMoveOrder({
-            order: {
-              ...order,
-              type: "ARMY_MOVE",
-              payload: { ...order.payload, divisionId: order.unitId, path: order.path },
-            },
+      resolveUnitMoveOrder: ({ order, playerId, movedMapUnitIds, rejectedOrders, news }) => {
+        if (order.type === "UNIT_MOVE" && order.unitKind === "map") {
+          const result = resolveMapUnitMoveOrder({
+            order,
             playerId,
             worldBase: params.getWorldBase(),
-            hexes: params.getHexIndex(),
+            unitTypes: params.getGameSettings().content.unitTypes,
             turnId: params.getTurnId(),
-            movedDivisionIds,
-            events,
-            areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
+            movedUnitIds: movedMapUnitIds,
+            news,
+            areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
             getNeighborHexIds,
             getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string) => number,
-            landDivisionStackLimitPerHex: params.getGameSettings().military.landDivisionStackLimitPerHex,
+            getHex: getHexForUnitMovement,
           });
           if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
-          pushMilitaryRuntimeEvents(news, events);
           return;
         }
-        const result = resolveUnitMoveOrder({
-          order,
-          playerId,
-          worldBase: params.getWorldBase(),
-          turnId: params.getTurnId(),
-          movedCivilianUnitIds,
-          movedFleetIds,
-          news,
-          areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
-          getNeighborHexIds,
-          getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string) => number,
-          isFleetPassableHex,
-        });
-        if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
+        rejectedOrders.push({ playerId, reason: "UNIT_MOVE_KIND_UNSUPPORTED", tempOrderId: order.id });
       },
-      resolveUnitAttackOrder: ({ order, playerId, movedDivisionIds, rejectedOrders, news }) => {
-        const events: MilitaryRuntimeEvent[] = [];
-        const result = resolveUnitAttackOrder({
+      resolveUnitAttackOrder: ({ order, playerId, movedMapUnitIds, rejectedOrders, news }) => {
+        if (order.type === "UNIT_ATTACK" && params.getWorldBase().unitsById?.[order.attackerUnitId]) {
+          const result = resolveMapUnitAttackOrder({
+            order,
+            playerId,
+            worldBase: params.getWorldBase(),
+            unitTypes: params.getGameSettings().content.unitTypes,
+            turnId: params.getTurnId(),
+            movedUnitIds: movedMapUnitIds,
+            news,
+            areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
+          });
+          if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
+          return;
+        }
+        rejectedOrders.push({ playerId, reason: "UNIT_ATTACK_ATTACKER_NOT_FOUND", tempOrderId: order.id });
+      },
+      resolveUnitWaitOrder: ({ order, playerId, movedMapUnitIds, rejectedOrders }) => {
+        const result = resolveMapUnitWaitOrder({
           order,
           playerId,
           worldBase: params.getWorldBase(),
-          hexes: params.getHexIndex(),
           turnId: params.getTurnId(),
-          movedDivisionIds,
-          events,
-          areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
-          landDivisionStackLimitPerHex: params.getGameSettings().military.landDivisionStackLimitPerHex,
+          movedUnitIds: movedMapUnitIds,
         });
         if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
-        pushMilitaryRuntimeEvents(news, events);
       },
       resolveBuildOrder: ({ order, playerId, rejectedOrders }) => {
         const buildingById = new Map(params.getGameSettings().content.buildings.map((entry) => [entry.id, entry] as const));
@@ -396,6 +283,7 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           order,
           playerId,
           worldBase: params.getWorldBase(),
+          unitTypes: params.getGameSettings().content.unitTypes,
           getHexRegionId: (hexId) => hexRegionById.get(hexId) ?? null,
           getRegionColonizationConfig: params.getRegionColonizationConfig,
           createId: randomUUID,
@@ -403,64 +291,23 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
         });
         if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
       },
-      advanceStoredArmyRoutesTurn: ({ movedDivisionIds, news }) => {
-        const storedRouteEvents: MilitaryRuntimeEvent[] = [];
-        advanceStoredArmyRoutesTurn({
+      advanceStoredUnitRoutesTurn: ({ movedMapUnitIds, news }) => {
+        advanceStoredMapUnitRoutesTurn({
           worldBase: params.getWorldBase(),
-          hexes: params.getHexIndex(),
+          unitTypes: params.getGameSettings().content.unitTypes,
           turnId: params.getTurnId(),
-          movedDivisionIds,
-          events: storedRouteEvents,
-          areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
-          getNeighborHexIds,
-          getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string) => number,
-          landDivisionStackLimitPerHex: params.getGameSettings().military.landDivisionStackLimitPerHex,
-        });
-        pushMilitaryRuntimeEvents(news, storedRouteEvents);
-      },
-      advanceStoredUnitRoutesTurn: ({ movedCivilianUnitIds, movedFleetIds, news }) => {
-        advanceStoredCivilianUnitRoutesTurn({
-          worldBase: params.getWorldBase(),
-          turnId: params.getTurnId(),
-          movedCivilianUnitIds,
+          movedUnitIds: movedMapUnitIds,
           news,
-          areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
-          getNeighborHexIds,
           getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string) => number,
-        });
-        advanceStoredFleetRoutesTurn({
-          worldBase: params.getWorldBase(),
-          turnId: params.getTurnId(),
-          movedFleetIds,
-          news,
-          areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
-          getNeighborHexIds,
-          getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string) => number,
-          isFleetPassableHex,
         });
       },
-      advanceMilitaryFormationQueue,
-      advanceCivilianUnitQueue,
-      resolveEquipmentProductionLinesTurn: (news) => {
-        const result = resolveEquipmentProductionLinesTurn({
+      advanceUnitTrainingQueue: (news) => {
+        advanceUnitTrainingQueueTurn({
           worldBase: params.getWorldBase(),
-          markets: params.getGameSettings().markets,
+          unitTypes: params.getGameSettings().content.unitTypes,
+          turnId: params.getTurnId(),
+          news,
         });
-        for (const [countryId, variants] of Object.entries(result.producedByCountry)) {
-          for (const [variantId, amount] of Object.entries(variants)) {
-            news.push(
-              params.makeOfficialNews({
-                turn: params.getTurnId(),
-                category: "military",
-                title: "Производство техники",
-                message: `${variantId}: +${amount}`,
-                countryId,
-                priority: "low",
-                visibility: "private",
-              }),
-            );
-          }
-        }
       },
       resolveColonizationSupportTurn: ({ colonizeTargetsByCountry, touchedRegionIds }) => {
         resolveColonizationSupportTurn({
@@ -582,24 +429,6 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
     resolveTurn,
     resolveAndBroadcastCurrentTurn,
   };
-}
-
-function isFleetPassableHexEntry(hex: HexMapIndexEntry | undefined): boolean {
-  if (!hex) return false;
-  const tokens = [hex.hexType, hex.landscape, hex.continent].map((value) => String(value ?? "").toLowerCase());
-  return tokens.some(
-    (value) =>
-      value === "water" ||
-      value === "sea" ||
-      value === "ocean" ||
-      value === "coast" ||
-      value === "coastal_water" ||
-      value === "deep_ocean" ||
-      value === "lake" ||
-      value.endsWith(":water") ||
-      value.endsWith(":sea") ||
-      value.endsWith(":ocean"),
-  );
 }
 
 export function runAiTurnBeforeResolveIfEnabled(params: {

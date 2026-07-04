@@ -15,7 +15,6 @@ import { createDiplomacyRouteComposition } from "./diplomacyRouteComposition";
 import type { createMapRuntimeState } from "./mapRuntimeState";
 import type { createMarketAccessRuntime } from "./marketAccessRuntime";
 import type { createMarketRuntimeFacade } from "./marketRuntimeFacade";
-import type { createMilitaryRuntimeFacade } from "./militaryRuntimeFacade";
 import type { makeOfficialNews } from "./officialNewsRuntime";
 import type { createScenarioServerRuntime } from "./scenarioServerRuntime";
 import type { createTurnOrderRuntimeFacade } from "./turnOrderRuntimeFacade";
@@ -25,6 +24,7 @@ import type { createWorldPopulationRuntime } from "./worldPopulationRuntime";
 import type { ResourceLedgerRuntime } from "./resourceLedgerRuntime";
 import type { GameSettings } from "./gameSettingsTypes";
 import type { MarketPriceRuntimeState } from "./marketPriceRuntimeState";
+import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
 import { getTransportCorridorBuildCost } from "./marketSettingsNormalizers";
 import {
   normalizeMarketVisibility,
@@ -41,9 +41,9 @@ import { loadScenarioHistoryOrNull } from "../scenarios/scenarioRuntimeLoader";
 import { registerCountryRouteComposition } from "./countryRouteComposition";
 import { registerGameplayRouteComposition } from "./gameplayRouteComposition";
 import { registerMarketRouteComposition } from "./marketRouteComposition";
-import { registerMilitaryRouteComposition } from "./militaryRouteComposition";
 import { registerScenarioRouteComposition } from "./scenarioRouteComposition";
 import { registerWorldRouteComposition } from "./worldRouteComposition";
+import { registerUnitRoutes } from "../routes/unitRoutes";
 
 type CountrySystemsRuntime = ReturnType<typeof createCountrySystemsRuntime>;
 type UiNotificationRuntime = ReturnType<typeof createUiNotificationRuntime>;
@@ -67,7 +67,6 @@ type ServerMainRouteRegistrationRuntimeParams = {
   marketRuntimeFacade: ReturnType<typeof createMarketRuntimeFacade>;
   marketAccessRuntime: ReturnType<typeof createMarketAccessRuntime>;
   marketPriceRuntimeState: MarketPriceRuntimeState;
-  militaryRuntimeFacade: ReturnType<typeof createMilitaryRuntimeFacade>;
   colonizationRuntime: ReturnType<typeof createColonizationRuntimeFacade>;
   buildingRuntime: ReturnType<typeof createBuildingSystemsRuntime>["buildingRuntime"];
   worldPopulationRuntime: ReturnType<typeof createWorldPopulationRuntime>;
@@ -100,9 +99,9 @@ type ServerMainRouteRegistrationRuntimeParams = {
   savePersistentState: () => void;
   flushPersistentStateNow: () => Promise<void>;
   validateImageDimensions: Parameters<typeof registerMarketRouteComposition>[0]["validateImageDimensions"];
-  removeUploadedFile: Parameters<typeof registerMilitaryRouteComposition>[0]["removeUploadedFile"];
-  removeUploadedByUrl: Parameters<typeof registerMilitaryRouteComposition>[0]["removeUploadedByUrl"];
-  makeVersionedUploadUrl: Parameters<typeof registerMilitaryRouteComposition>[0]["makeVersionedUploadUrl"];
+  removeUploadedFile: (file: Express.Multer.File | undefined) => void;
+  removeUploadedByUrl: (url: string) => void;
+  makeVersionedUploadUrl: (relativePath: string) => string;
   makeOfficialNews: typeof makeOfficialNews;
   normalizeDiplomacyProposals: Parameters<typeof createDiplomacyRouteComposition>[0]["normalizeDiplomacyProposals"];
   sendUiNotificationToCountry: (
@@ -123,31 +122,25 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
     countryWorldRuntime: params.countryWorldRuntime,
   });
 
-  registerMilitaryRouteComposition({
-    app: params.app,
+  registerUnitRoutes(params.app, {
     routeAuth: params.routeAuth,
-    upload: params.upload,
     masks: {
-      divisionTemplatesByCountry: WORLD_DELTA_MASK.divisionTemplatesByCountry,
-      divisionsById: WORLD_DELTA_MASK.divisionsById,
-      resourcesByCountry: WORLD_DELTA_MASK.resourcesByCountry,
-      militaryFormationQueueByCountry: WORLD_DELTA_MASK.militaryFormationQueueByCountry,
       unitEquipmentState: WORLD_DELTA_MASK.unitEquipmentState,
+      resourcesByCountry: WORLD_DELTA_MASK.resourcesByCountry,
+      resourceLedgerByTurn: WORLD_DELTA_MASK.resourceLedgerByTurn,
     },
     createId: randomUUID,
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,
-    getGameSettings: params.getGameSettings,
-    mapRuntime: params.mapRuntime,
-    countryWorldRuntime: params.countryWorldRuntime,
-    marketRuntimeFacade: params.marketRuntimeFacade,
-    militaryRuntimeFacade: params.militaryRuntimeFacade,
-    worldDeltaBroadcastRuntime: params.worldDeltaBroadcastRuntime,
-    resourceLedgerRuntime: params.resourceLedgerRuntime,
+    getUnitTypes: () => params.getGameSettings().content.unitTypes,
+    getHexRegionId: (hexId) => params.mapRuntime.getHexById().get(hexId)?.regionId ?? null,
+    getHex: (hexId) => params.mapRuntime.getHexById().get(hexId) ?? null,
+    cloneWorldBaseSectionSnapshot: params.worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot,
+    broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase) =>
+      params.worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase as WorldBaseSectionSnapshot),
     savePersistentState: params.savePersistentState,
-    removeUploadedFile: params.removeUploadedFile,
-    removeUploadedByUrl: params.removeUploadedByUrl,
-    makeVersionedUploadUrl: params.makeVersionedUploadUrl,
+    addResourceLedgerExpense: params.resourceLedgerRuntime.addExpense,
+    flushResourceLedger: params.resourceLedgerRuntime.flushTurn,
   });
 
   registerMarketRouteComposition({
@@ -308,7 +301,6 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
       regionBuildingsByRegion: WORLD_DELTA_MASK.regionBuildingsByRegion,
       regionBuildingDucatsByRegion: WORLD_DELTA_MASK.regionBuildingDucatsByRegion,
       resourceLedgerByTurn: WORLD_DELTA_MASK.resourceLedgerByTurn,
-      unitEquipmentState: WORLD_DELTA_MASK.unitEquipmentState,
       hexOwner: WORLD_DELTA_MASK.hexOwner,
       regionOwner: WORLD_DELTA_MASK.regionOwner,
       regionController: WORLD_DELTA_MASK.regionController,

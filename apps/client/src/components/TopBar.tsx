@@ -5,6 +5,7 @@ import { BASE_RESOURCE_ICON_URLS } from "../assets/baseResourceIcons";
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 import { TooltipPanel } from "./Tooltip";
+import type { TurnActionItem } from "@arcanorum/shared";
 
 type Resources = {
   culture: number;
@@ -29,6 +30,11 @@ type Props = {
   populationIconUrl?: string | null;
   onOpenTurnStatus: () => void;
   onNextTurn: () => void;
+  turnActions?: TurnActionItem[];
+  onTurnActionFocus?: (item: TurnActionItem) => void;
+  onForceNextTurn?: () => void;
+  onSkipTurnActionUnit?: (item: TurnActionItem) => void;
+  onSleepTurnActionUnit?: (item: TurnActionItem) => void;
   onLogout: () => void;
   isAdmin?: boolean;
   onAdminForceResolve?: () => void;
@@ -143,6 +149,11 @@ export function TopBar({
   populationIconUrl,
   onOpenTurnStatus,
   onNextTurn,
+  turnActions = [],
+  onTurnActionFocus,
+  onForceNextTurn,
+  onSkipTurnActionUnit,
+  onSleepTurnActionUnit,
   onLogout,
   isAdmin = false,
   onAdminForceResolve,
@@ -262,6 +273,16 @@ export function TopBar({
         : "text-[var(--arc-color-text-soft)]";
   const populationBirthRatePct = populationTotal > 0 ? (populationBirths / populationTotal) * 100 : 0;
   const populationDeathRatePct = populationTotal > 0 ? (populationDeaths / populationTotal) * 100 : 0;
+  const blockingTurnActions = turnActions.filter((item) => item.severity === "blocking");
+  const hasBlockingTurnActions = blockingTurnActions.length > 0;
+  const nextTurnLabel = hasBlockingTurnActions ? t("turnActions.needsOrders", { count: blockingTurnActions.length }) : t("topBar.nextTurn", { turn: turnId });
+  const handleNextTurnClick = () => {
+    if (hasBlockingTurnActions) {
+      onTurnActionFocus?.(blockingTurnActions[0]!);
+      return;
+    }
+    onNextTurn();
+  };
 
   return (
     <header className="arc-hud-panel arc-hud-panel--overflow-visible pointer-events-auto absolute left-4 right-4 top-3 z-[112] rounded-xl px-4 py-3">
@@ -522,12 +543,13 @@ export function TopBar({
           <TopIconActionButton label={t("topBar.logout")} onClick={onLogout} icon={LogOut} />
           <TopIconActionButton label={t("shell.action.turnStatus")} onClick={onOpenTurnStatus} icon={ListChecks} />
 
+          <div className="relative">
           <button
-            onClick={onNextTurn}
+            onClick={handleNextTurnClick}
             className={`arc-topbar-next-turn group inline-flex h-10 items-center justify-start overflow-hidden rounded-lg border border-[var(--arc-color-primary-border)] bg-gradient-to-b from-[var(--arc-color-primary-top)] to-[var(--arc-color-primary-bottom)] text-[var(--arc-color-text)] shadow-[var(--arc-shadow-inset-button)] transition-[width,filter] hover:brightness-110 ${
-              turnTimer?.enabled && turnTimerRemainingSec !== null ? "gap-2 px-3" : "w-10 px-3 hover:w-[190px]"
+              turnTimer?.enabled && turnTimerRemainingSec !== null ? "gap-2 px-3" : hasBlockingTurnActions ? "gap-2 px-3" : "w-10 px-3 hover:w-[190px]"
             }`}
-            aria-label={t("topBar.nextTurn", { turn: turnId })}
+            aria-label={nextTurnLabel}
             type="button"
           >
             <SkipForward size={16} className="shrink-0" />
@@ -538,10 +560,11 @@ export function TopBar({
               </span>
             ) : (
               <span className="ml-2 max-w-0 overflow-hidden whitespace-nowrap text-xs font-semibold opacity-0 transition-all duration-150 group-hover:max-w-[140px] group-hover:opacity-100">
-                {t("topBar.nextTurn", { turn: turnId })}
+                {nextTurnLabel}
               </span>
             )}
           </button>
+          </div>
         </div>
       </div>
     </header>

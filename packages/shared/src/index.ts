@@ -5,6 +5,8 @@ export * from "./contracts/content";
 export * from "./contracts/orders";
 export * from "./contracts/military";
 export * from "./contracts/unit-equipment";
+export * from "./contracts/units";
+export * from "./contracts/turn-actions";
 export * from "./contracts/region-state";
 export * from "./contracts/politics";
 export * from "./contracts/world";

@@ -212,6 +212,7 @@ function buildExpectedAuthoredPaths(): Record<string, string> {
     battalion: "battalions",
     shipType: "shipTypes",
     aircraftType: "aircraftTypes",
+    unitType: "unitTypes",
     aiArchetype: "aiArchetypes",
     aiPersonality: "aiPersonalities",
     aiStrategy: "aiStrategies",

@@ -34,8 +34,11 @@ Do not rely on raw human-readable server messages. Use machine-readable `code` v
 
 The shared order union reserves player-facing target orders for the new model:
 
-- `UNIT_MOVE`: moves a civilian unit, land division, or fleet toward a server-validated target hex. Civilian units, land divisions, and fleets store the target and recalculate their route each turn where their resolver supports long routes; routes may exceed current movement points or per-turn speed. Fleets are water-only in the current server slice.
+- `UNIT_MOVE`: moves a `MapUnit` with `unitKind: "map"` toward a server-validated target hex.
 - `UNIT_ATTACK`: requests a manual Civ-like attack against a target hex/unit.
+- `UNIT_SKIP_TURN`: spends a `MapUnit` action for the current turn only, removing it from the turn action checklist until the next turn.
+- `UNIT_SLEEP`: puts a `MapUnit` into `sleeping` status so it no longer blocks turn readiness until explicitly woken or given a future wake rule.
+- `UNIT_WAKE`: returns an owned sleeping `MapUnit` to `idle` through the normal validated order pipeline without granting extra movement.
 - `FOUND_CITY`: consumes a `colonizer` civilian unit and starts a region-owned settlement project at the unit hex when the target region is neutral and eligible.
 - `EQUIPMENT_VARIANT`: creates or updates a country/scenario equipment variant from module slots.
 - `EQUIPMENT_PRODUCTION_LINE`: creates or updates a production line for a specific equipment variant.
@@ -124,11 +127,7 @@ Scenario corridor visuals use `/scenario-assets/<scenarioId>/assets/corridors/co
 
 ## Unit Movement Orders
 
-`UNIT_MOVE` supports `unitKind: "civilian"`, `"division"`, and `"fleet"`. Civilian units and fleets keep `targetHexId` as the long-route source of truth; the server can recompute a route from the current hex on later turns and advances only as far as movement budget allows. Land divisions continue to use the army movement resolver.
-
-Fleet movement is server-authoritative and water-only. Submit validation and turn resolution both reject fleet routes that include non-water hexes, using `FLEET_TARGET_NOT_WATER` for authored/payload route violations and `UNIT_MOVE_TARGET_INVALID` when no valid water route exists.
-
-Client map UI may send fleet movement through the same `UNIT_MOVE unitKind: "fleet"` order used by the army workspace. The map preview filters routes to water hexes for player clarity, but server validation remains authoritative.
+`UNIT_MOVE`, `UNIT_ATTACK`, `UNIT_SKIP_TURN`, `UNIT_SLEEP`, and `UNIT_WAKE` target individual `MapUnit` records with `unitKind: "map"`. The server validates ownership, current unit status, queued-order conflicts, route contiguity for movement, adjacent target legality for attacks, and sleeping-state legality for wake. The client uses `/turn/actions` to guide players toward blocking idle units, but readiness remains a UX layer: force-end turn still sends the normal ready request without inventing hidden orders.
 ## Resource Ledger Deltas
 
 `WorldBase.resourceLedgerByTurn` stores bounded persisted `ResourceFlow[]` history. World deltas use the compact `resourceLedgerByTurn` delta field for newly changed or pruned ledger turns. Bootstrap/resync may include the bounded snapshot, but normal turn deltas must not rebroadcast full history.

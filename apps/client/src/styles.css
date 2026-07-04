@@ -1250,6 +1250,446 @@ select,
   color: var(--arc-color-atlas-primary-ink);
 }
 
+.arc-turn-advancer-hub {
+  position: absolute;
+  right: 18px;
+  bottom: 8px;
+  z-index: 124;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  max-width: min(680px, calc(100vw - 32px));
+  color: var(--arc-color-atlas-ink);
+}
+
+.arc-turn-advancer-card {
+  --arc-turn-advancer-frame: var(--arc-color-atlas-line-strong);
+  --arc-turn-advancer-glow: color-mix(in srgb, var(--arc-color-atlas-primary) 10%, transparent);
+  position: relative;
+  width: min(520px, calc(100vw - 104px));
+  min-height: 136px;
+  overflow: hidden;
+  border: 0;
+  background: var(--arc-turn-advancer-frame);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.35) inset,
+    var(--arc-shadow-floating);
+  padding: 8px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+
+.arc-turn-advancer-card::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 0 0, var(--arc-turn-advancer-glow), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white), var(--arc-color-atlas-paper)),
+    repeating-linear-gradient(0deg, rgb(70 52 30 / 0.035) 0 1px, transparent 1px 12px);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+}
+
+.arc-turn-advancer-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-turn-advancer-card--blocked {
+  --arc-turn-advancer-frame: color-mix(in srgb, var(--arc-color-atlas-danger) 48%, var(--arc-color-atlas-line-strong));
+  --arc-turn-advancer-glow: color-mix(in srgb, var(--arc-color-atlas-danger) 12%, transparent);
+}
+
+.arc-turn-advancer-card--ready {
+  --arc-turn-advancer-frame: color-mix(in srgb, var(--arc-color-atlas-good) 42%, var(--arc-color-atlas-line-strong));
+  --arc-turn-advancer-glow: color-mix(in srgb, var(--arc-color-atlas-good) 12%, transparent);
+}
+
+.arc-turn-advancer-layout {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.arc-turn-advancer-action-bank {
+  display: grid;
+  grid-template-columns: repeat(2, 33px);
+  grid-auto-rows: 33px;
+  align-content: start;
+  gap: 4px;
+  min-height: 70px;
+  border-right: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 78%, transparent);
+  padding-right: 8px;
+}
+
+.arc-turn-advancer-unit-panel {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.arc-turn-advancer-card__main {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr);
+  gap: 9px;
+  min-height: 50px;
+  align-items: start;
+}
+
+.arc-turn-advancer-portrait {
+  position: relative;
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  overflow: hidden;
+  border: 0;
+  background: var(--arc-color-atlas-primary);
+  color: var(--arc-color-atlas-muted);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--arc-color-atlas-paper-soft) 70%, transparent),
+    0 1px 3px rgb(0 0 0 / 0.22);
+}
+
+.arc-turn-advancer-portrait--texture {
+  background-repeat: no-repeat;
+  background-size: auto 64px;
+  image-rendering: pixelated;
+}
+
+.arc-turn-advancer-card__body {
+  min-width: 0;
+}
+
+.arc-turn-advancer-card__eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--arc-color-atlas-muted);
+}
+
+.arc-turn-advancer-card__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--arc-font-display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--arc-color-atlas-ink);
+}
+
+.arc-turn-advancer-card__description,
+.arc-turn-advancer-command-strip__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--arc-color-atlas-muted);
+}
+
+.arc-turn-advancer-health {
+  display: grid;
+  grid-template-columns: auto minmax(74px, 1fr);
+  align-items: center;
+  gap: 7px;
+  margin-top: 2px;
+}
+
+.arc-turn-advancer-health__text {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--arc-color-atlas-good);
+}
+
+.arc-turn-advancer-health__track {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--arc-color-atlas-line) 72%, transparent);
+  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+}
+
+.arc-turn-advancer-health__track > span {
+  display: block;
+  height: 100%;
+  background: var(--arc-color-atlas-good);
+}
+
+.arc-turn-advancer-stats,
+.arc-turn-advancer-queue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 0;
+}
+
+.arc-turn-advancer-stat {
+  position: relative;
+  display: inline-flex;
+  min-width: 54px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  overflow: hidden;
+  border: 0;
+  background: var(--arc-color-atlas-line);
+  padding: 4px 7px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--arc-color-atlas-ink);
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+.arc-turn-advancer-command-strip {
+  display: grid;
+  grid-template-columns: 33px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-height: 33px;
+  border-top: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 72%, transparent);
+  padding-top: 5px;
+}
+
+.arc-turn-advancer-command-strip__lead {
+  position: relative;
+  display: inline-flex;
+  width: 33px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--arc-color-atlas-line);
+  color: var(--arc-color-atlas-primary);
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+}
+
+.arc-turn-advancer-command-strip__lead::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: color-mix(in srgb, var(--arc-color-atlas-primary) 10%, var(--arc-color-atlas-paper-soft));
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+.arc-turn-advancer-command-strip__lead > svg {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-turn-advancer-stat::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+}
+
+.arc-turn-advancer-stat > * {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-turn-advancer-action {
+  position: relative;
+  display: inline-flex;
+  width: 33px;
+  height: 33px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 0;
+  background: var(--arc-color-atlas-line);
+  color: var(--arc-color-atlas-muted);
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
+    0 1px 2px rgb(0 0 0 / 0.14);
+  transition: transform 160ms ease, filter 160ms ease, border-color 160ms ease;
+}
+
+.arc-turn-advancer-action::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+.arc-turn-advancer-action > svg {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-turn-advancer-action:hover {
+  transform: translateY(-1px);
+  background: var(--arc-color-atlas-primary);
+  color: var(--arc-color-atlas-primary);
+  filter: brightness(1.04);
+}
+
+.arc-turn-advancer-action--danger {
+  background: color-mix(in srgb, var(--arc-color-atlas-danger) 58%, var(--arc-color-atlas-line));
+  color: var(--arc-color-atlas-danger);
+}
+
+.arc-turn-advancer-action--danger::before {
+  background: color-mix(in srgb, var(--arc-color-atlas-danger) 8%, var(--arc-color-atlas-paper-soft));
+}
+
+.arc-turn-advancer-queue {
+  align-items: center;
+}
+
+.arc-turn-advancer-queue__dot {
+  width: 10px;
+  height: 10px;
+  border: 0;
+  background: var(--arc-color-atlas-muted);
+  clip-path: polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px));
+}
+
+.arc-turn-advancer-queue__dot--active {
+  width: 20px;
+  background: var(--arc-color-atlas-primary);
+}
+
+.arc-turn-advancer-queue__more {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--arc-color-atlas-muted);
+}
+
+.arc-turn-advancer-orb {
+  position: relative;
+  display: grid;
+  width: 88px;
+  height: auto;
+  min-height: 100%;
+  align-self: stretch;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 0;
+  background: var(--arc-color-atlas-line-strong);
+  clip-path: polygon(0 0, 64% 0, 100% 26%, 100% 74%, 64% 100%, 0 100%);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.35) inset,
+    var(--arc-shadow-floating);
+  color: var(--arc-color-atlas-ink);
+  transition: transform 160ms ease, filter 160ms ease;
+  margin-left: -1px;
+}
+
+.arc-turn-advancer-orb::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 88%, white), var(--arc-color-atlas-paper)),
+    repeating-linear-gradient(0deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 10px);
+  clip-path: polygon(0 0, 63% 0, 100% 27%, 100% 73%, 63% 100%, 0 100%);
+}
+
+.arc-turn-advancer-orb__content,
+.arc-turn-advancer-orb__label {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-turn-advancer-orb__content {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.arc-turn-advancer-orb:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+
+.arc-turn-advancer-orb--blocked {
+  background: color-mix(in srgb, var(--arc-color-atlas-danger) 58%, var(--arc-color-atlas-line-strong));
+  color: var(--arc-color-atlas-danger);
+}
+
+.arc-turn-advancer-orb--ready {
+  background: color-mix(in srgb, var(--arc-color-atlas-good) 58%, var(--arc-color-atlas-line-strong));
+  color: var(--arc-color-atlas-good);
+}
+
+.arc-turn-advancer-orb__label {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  min-width: 21px;
+  border: 0;
+  background: var(--arc-color-atlas-line);
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--arc-color-atlas-ink);
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+}
+
+@media (max-width: 720px) {
+  .arc-turn-advancer-hub {
+    right: 10px;
+    bottom: 8px;
+    left: 10px;
+    max-width: none;
+    gap: 0;
+  }
+
+  .arc-turn-advancer-card {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .arc-turn-advancer-layout {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .arc-turn-advancer-action-bank {
+    grid-template-columns: 33px;
+    overflow: hidden;
+    max-height: 70px;
+    min-height: 70px;
+  }
+
+  .arc-turn-advancer-card__main {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .arc-turn-advancer-portrait {
+    width: 48px;
+    height: 48px;
+  }
+
+  .arc-turn-advancer-stats {
+    display: none;
+  }
+
+  .arc-turn-advancer-orb {
+    width: 66px;
+    height: auto;
+  }
+}
+
 .arc-strategy-badge {
   position: absolute;
   top: -7px;
@@ -1718,13 +2158,14 @@ select,
 .arc-strategy-workspace-frame {
   position: absolute;
   top: 124px;
-  right: 16px;
+  left: 16px;
   bottom: 18px;
   display: flex;
   flex-direction: column;
   width: min(31.5vw, 476px);
   min-width: 322px;
   overflow: visible;
+  z-index: 8;
 }
 
 .arc-strategy-workspace {
@@ -1887,6 +2328,17 @@ select,
   padding: 48px 12px;
   color: var(--arc-color-atlas-muted);
   font-size: 13px;
+}
+
+.arc-turn-status-player-summary {
+  margin: 0 0 10px;
+  border: 1px solid var(--arc-color-atlas-line);
+  border-radius: 8px;
+  background: var(--arc-color-atlas-paper-soft);
+  color: var(--arc-color-atlas-ink);
+  padding: 8px 10px;
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 .arc-turn-status-row {
@@ -4529,7 +4981,7 @@ select,
   }
 
   .arc-strategy-workspace-frame {
-    left: 76px;
+    left: 10px;
     right: 10px;
     width: auto;
     min-width: 0;

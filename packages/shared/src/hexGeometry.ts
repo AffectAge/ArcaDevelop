@@ -2,11 +2,30 @@ import type { HexAxial, HexDirection, HexId, HexMapSettings } from "./contracts/
 
 export const HEX_DIRECTIONS: ReadonlyArray<HexAxial> = [
   { q: 1, r: 0 },
-  { q: 1, r: -1 },
   { q: 0, r: -1 },
+  { q: -1, r: -1 },
   { q: -1, r: 0 },
-  { q: -1, r: 1 },
   { q: 0, r: 1 },
+  { q: 1, r: 1 },
+];
+
+const ODD_ROW_DIRECTION_OFFSETS: ReadonlyArray<ReadonlyArray<HexAxial>> = [
+  [
+    { q: 1, r: 0 },
+    { q: 0, r: -1 },
+    { q: -1, r: -1 },
+    { q: -1, r: 0 },
+    { q: -1, r: 1 },
+    { q: 0, r: 1 },
+  ],
+  [
+    { q: 1, r: 0 },
+    { q: 1, r: -1 },
+    { q: 0, r: -1 },
+    { q: -1, r: 0 },
+    { q: 0, r: 1 },
+    { q: 1, r: 1 },
+  ],
 ];
 
 export function makeHexId(q: number, r: number): HexId {
@@ -26,33 +45,37 @@ export function normalizeAxial(q: number, r: number, settings: Pick<HexMapSettin
 }
 
 export function getNeighborAxial(hex: HexAxial, direction: HexDirection, settings: Pick<HexMapSettings, "width" | "height" | "wrapX">): HexAxial | null {
-  const offset = HEX_DIRECTIONS[direction];
+  const offset = ODD_ROW_DIRECTION_OFFSETS[Math.abs(hex.r) % 2]?.[direction];
   return normalizeAxial(hex.q + offset.q, hex.r + offset.r, settings);
 }
 
 export function axialDistance(a: HexAxial, b: HexAxial, width?: number): number {
-  let dq = a.q - b.q;
-  if (width && width > 0) {
-    if (Math.abs(dq) > width / 2) {
-      dq = dq > 0 ? dq - width : dq + width;
-    }
-  }
-  const dr = a.r - b.r;
-  const ds = -dq - dr;
-  return (Math.abs(dq) + Math.abs(dr) + Math.abs(ds)) / 2;
+  const direct = offsetDistance(a, b);
+  if (!width || width <= 0) return direct;
+  return Math.min(direct, offsetDistance({ q: a.q - width, r: a.r }, b), offsetDistance({ q: a.q + width, r: a.r }, b));
 }
 
 export function axialToPixel(hex: HexAxial, size: number): { x: number; y: number } {
   return {
-    x: size * Math.sqrt(3) * (hex.q + hex.r / 2),
+    x: size * Math.sqrt(3) * (hex.q + (Math.abs(hex.r) % 2) * 0.5),
     y: size * 1.5 * hex.r,
   };
 }
 
 export function pixelToAxial(x: number, y: number, size: number, settings: Pick<HexMapSettings, "width" | "height" | "wrapX">): HexAxial | null {
-  const qFloat = ((Math.sqrt(3) / 3) * x - y / 3) / size;
-  const rFloat = ((2 / 3) * y) / size;
-  return normalizeAxial(Math.round(cubeRound(qFloat, rFloat).q), Math.round(cubeRound(qFloat, rFloat).r), settings);
+  const estimatedR = Math.round(y / (size * 1.5));
+  const estimatedQ = Math.round(x / (size * Math.sqrt(3)) - (Math.abs(estimatedR) % 2) * 0.5);
+  let best: { hex: HexAxial; distance: number } | null = null;
+  for (let r = estimatedR - 2; r <= estimatedR + 2; r += 1) {
+    for (let q = estimatedQ - 2; q <= estimatedQ + 2; q += 1) {
+      const normalized = normalizeAxial(q, r, settings);
+      if (!normalized) continue;
+      const center = axialToPixel(normalized, size);
+      const distance = (center.x - x) ** 2 + (center.y - y) ** 2;
+      if (!best || distance < best.distance) best = { hex: normalized, distance };
+    }
+  }
+  return best?.hex ?? null;
 }
 
 export function hexCorner(center: { x: number; y: number }, size: number, index: number): { x: number; y: number } {
@@ -91,28 +114,28 @@ function hexEdgeCornerIndices(direction: HexDirection): [number, number] {
 }
 
 export function worldPixelWidth(settings: Pick<HexMapSettings, "width" | "height" | "hexSize">): number {
-  const left = axialToPixel({ q: 0, r: settings.height - 1 }, settings.hexSize).x - settings.hexSize;
-  const right = axialToPixel({ q: settings.width - 1, r: 0 }, settings.hexSize).x + settings.hexSize;
+  const horizontalRadius = (Math.sqrt(3) / 2) * settings.hexSize;
+  const rows = [...new Set([0, Math.min(1, settings.height - 1), settings.height - 1])];
+  let left = Number.POSITIVE_INFINITY;
+  let right = Number.NEGATIVE_INFINITY;
+  for (const r of rows) {
+    for (const q of [0, settings.width - 1]) {
+      const center = axialToPixel({ q, r }, settings.hexSize);
+      left = Math.min(left, center.x - horizontalRadius);
+      right = Math.max(right, center.x + horizontalRadius);
+    }
+  }
   return right - left;
 }
 
-function cubeRound(qFloat: number, rFloat: number): HexAxial {
-  let q = Math.round(qFloat);
-  let r = Math.round(rFloat);
-  let s = Math.round(-qFloat - rFloat);
+function offsetDistance(a: HexAxial, b: HexAxial): number {
+  const ac = offsetToCube(a);
+  const bc = offsetToCube(b);
+  return (Math.abs(ac.x - bc.x) + Math.abs(ac.y - bc.y) + Math.abs(ac.z - bc.z)) / 2;
+}
 
-  const qDiff = Math.abs(q - qFloat);
-  const rDiff = Math.abs(r - rFloat);
-  const sDiff = Math.abs(s + qFloat + rFloat);
-
-  if (qDiff > rDiff && qDiff > sDiff) {
-    q = -r - s;
-  } else if (rDiff > sDiff) {
-    r = -q - s;
-  } else {
-    s = -q - r;
-  }
-
-  void s;
-  return { q, r };
+function offsetToCube(hex: HexAxial): { x: number; y: number; z: number } {
+  const x = hex.q - (hex.r - (Math.abs(hex.r) % 2)) / 2;
+  const z = hex.r;
+  return { x, y: -x - z, z };
 }

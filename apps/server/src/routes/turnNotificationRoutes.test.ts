@@ -96,6 +96,42 @@ describe("turnNotificationRoutes", () => {
     expect(cleanupExpiredPunishments).toHaveBeenCalledOnce();
   });
 
+  it("serves turn action blockers for idle map units", async () => {
+    const app = express();
+    registerTurnNotificationRoutes(app, {
+      ...makeDeps(),
+      getWorldBase: () => ({
+        unitsById: {
+          "unit:a": {
+            id: "unit:a",
+            unitTypeId: "unit:colonizer",
+            countryId: "country-a",
+            hexId: "hex:0:0",
+            hp: 50,
+            movementPoints: 2,
+            experience: 0,
+            status: "idle",
+            path: [],
+            targetHexId: null,
+            createdTurnId: 1,
+            lastActionTurnId: null,
+          },
+        },
+      }) as never,
+      getUnitTypes: () => [{ id: "unit:colonizer", canFoundCity: true } as never],
+    });
+
+    const response = await request(app, "/turn/actions");
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      turnId: 5,
+      countryId: "country-a",
+      blockingCount: 1,
+      items: [{ kind: "unit_can_act", target: { type: "unit", unitId: "unit:a", hexId: "hex:0:0" } }],
+    });
+  });
+
   it("serves pending notifications and marks visible notifications viewed", async () => {
     const viewedByCountryIds = new Set<string>();
     const target = {
@@ -169,6 +205,9 @@ function makeDeps() {
     routeAuth: createAllowedRouteAuth(),
     isAdminCountry: vi.fn().mockResolvedValue(false),
     getTurnId: () => 5,
+    getWorldBase: () => ({}) as never,
+    getUnitTypes: () => [],
+    getOrdersByTurn: () => new Map(),
     cleanupExpiredPunishments: vi.fn().mockResolvedValue(undefined),
     getTurnStatusCountries: async () => [],
     getReadySetForTurn: () => new Set<string>(),

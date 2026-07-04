@@ -3,11 +3,10 @@ import { Dialog } from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2 } from "lucide-react";
-import type { Country, DiplomacyProposal, DivisionTemplate, HexId, MilitaryBranch, MilitaryFormationQueueItem, OrderDelta, WsOutMessage } from "@arcanorum/shared";
+import type { Country, DiplomacyProposal, HexId, MapUnit, OrderDelta, TurnActionItem, UnitTypeDefinition, WsOutMessage } from "@arcanorum/shared";
 import { AuthPanel, type AuthSuccess } from "./components/AuthPanel";
 import { MapView } from "./components/MapView";
 import { StrategyShell, type MarketTradeOverviewRow, type StrategyMode, type StrategyShellSelectedHexDetails } from "./components/strategy-shell/StrategyShell";
-import { buildArmyLogisticsRows } from "./components/strategy-shell/armyLogistics";
 import { CommandPalette } from "./components/CommandPalette";
 import { AdminPanel } from "./components/AdminPanel";
 import { TurnStatusModal } from "./components/TurnStatusModal";
@@ -26,8 +25,8 @@ import { CountryEventsModal } from "./components/CountryEventsModal";
 import { CountryJournalModal } from "./components/CountryJournalModal";
 import { DiplomacyModal } from "./components/DiplomacyModal";
 import { DiplomacyProposalStoryModal } from "./components/DiplomacyProposalStoryModal";
-import { ArmyDesignerModal, type ArmyDesignerModalKind } from "./components/ArmyDesignerModals";
 import { InAppNotificationTray, type InAppUiNotification } from "./components/InAppNotificationTray";
+import { TurnAdvancerHub } from "./components/TurnAdvancerHub";
 import { NotificationHistoryModal } from "./components/NotificationHistoryModal";
 import { RegistrationApprovalModal } from "./components/RegistrationApprovalModal";
 import { ElectionResultsModal } from "./components/ElectionResultsModal";
@@ -43,16 +42,19 @@ import {
   fetchMarketOverview,
   fetchPendingUiNotifications,
   fetchPublicGameUiSettings,
+  fetchTurnActions,
   fetchWorldSnapshot,
   markUiNotificationViewed,
   acceptDiplomacyProposal,
-  cancelMilitaryFormation,
   cancelCountryBuild,
   createMarketTransportCorridor,
-  createMilitaryFormation,
   queueCountryColonizer,
+  cancelUnitTraining,
+  disbandUnit,
+  getUnitsOverview,
   previewMarketTransportCorridor,
   rejectDiplomacyProposal,
+  trainUnit,
   type ContentEntry,
   type MarketTransportCorridor,
   type MarketOverviewResponse,
@@ -92,44 +94,32 @@ type CorridorPlacementState = {
 };
 const RESOLVE_START_TIMEOUT_MS = 12_000;
 const MARKET_SHELL_PARTNER_LIMIT = 3;
+const STRATEGY_SHELL_STATE_STORAGE_KEY = "arcanorum.strategyShell.state.v1";
 
-function resolveSuggestedMapMode(strategyMode: StrategyMode): MapInteractionMode {
-  if (strategyMode === "colonization") return "colonization";
-  if (strategyMode === "construction") return "construction";
-  if (strategyMode === "army") return "army";
-  if (strategyMode === "market") return "market";
+function readStrategyShellState(): { mode: StrategyMode; workspaceOpen: boolean } {
+  if (typeof window === "undefined") return { mode: "overview", workspaceOpen: true };
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(STRATEGY_SHELL_STATE_STORAGE_KEY) ?? "{}") as Partial<{
+      mode: StrategyMode;
+      workspaceOpen: boolean;
+    }>;
+    const validMode = parsed.mode && isStrategyMode(parsed.mode) ? parsed.mode : "overview";
+    return { mode: validMode, workspaceOpen: typeof parsed.workspaceOpen === "boolean" ? parsed.workspaceOpen : true };
+  } catch {
+    return { mode: "overview", workspaceOpen: true };
+  }
+}
+
+function isStrategyMode(value: string): value is StrategyMode {
+  return ["overview", "construction", "colonization", "population", "market", "diplomacy", "army", "units", "governance"].includes(value);
+}
+
+function resolveSuggestedMapMode(_strategyMode: StrategyMode): MapInteractionMode {
   return "overview";
 }
 
-function resolveSuggestedMapLens(strategyMode: StrategyMode): MapLensId {
-  if (strategyMode === "colonization") return "colonization";
-  if (strategyMode === "construction") return "infrastructure";
-  if (strategyMode === "army") return "military";
-  if (strategyMode === "market") return "market";
-  if (strategyMode === "population") return "population";
-  if (strategyMode === "diplomacy" || strategyMode === "governance") return "political";
+function resolveSuggestedMapLens(_strategyMode: StrategyMode): MapLensId {
   return "terrain";
-}
-
-function getFormationErrorKey(code: string): UiTextKey {
-  switch (code) {
-    case "FORMATION_DEPLOYMENT_HEX_REQUIRED":
-      return "army.formationError.hexRequired";
-    case "FORMATION_DEPLOYMENT_HEX_INVALID":
-      return "army.formationError.hexInvalid";
-    case "FORMATION_DEPLOYMENT_BUILDING_REQUIRED":
-      return "army.formationError.buildingRequired";
-    case "FORMATION_DEPLOYMENT_BRANCH_UNSUPPORTED":
-      return "army.formationError.branchUnsupported";
-    case "FORMATION_TEMPLATE_NOT_FOUND":
-      return "army.formationError.templateNotFound";
-    case "NOT_ENOUGH_DUCATS":
-      return "army.formationError.notEnoughDucats";
-    case "NOT_ENOUGH_EQUIPMENT":
-      return "army.formationError.notEnoughEquipment";
-    default:
-      return "army.formationError.generic";
-  }
 }
 
 function getCorridorErrorKey(code: string): UiTextKey {
@@ -154,18 +144,6 @@ function getCorridorErrorKey(code: string): UiTextKey {
   }
 }
 
-function getMilitaryBranchLabelKey(kind: MilitaryBranch): UiTextKey {
-  if (kind === "naval") return "army.branch.naval";
-  if (kind === "air") return "army.branch.air";
-  return "army.branch.land";
-}
-
-function getFormationPriorityLabelKey(priority: "high" | "normal" | "low"): UiTextKey {
-  if (priority === "high") return "army.formationPriority.high";
-  if (priority === "low") return "army.formationPriority.low";
-  return "army.formationPriority.normal";
-}
-
 function sumPositiveRecord(input: Record<string, number> | undefined): number {
   return Object.values(input ?? {}).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0);
 }
@@ -186,6 +164,15 @@ function resolveColonizerQueueErrorKey(code: string): UiTextKey {
   if (code === "INSUFFICIENT_COLONIZATION_POINTS") return "hexMap.queueColonizerInsufficientColonization";
   if (code === "INSUFFICIENT_DUCATS") return "hexMap.queueColonizerInsufficientDucats";
   return "hexMap.queueColonizerFailed";
+}
+
+function resolveUnitTrainingErrorKey(code: string): UiTextKey {
+  if (code === "UNIT_TRAIN_NO_VALID_DEPLOYMENT_HEX") return "shell.units.error.noValidHex";
+  if (code === "UNIT_TRAIN_REGION_NOT_CONTROLLED") return "shell.units.error.regionNotControlled";
+  if (code === "UNIT_TRAIN_INSUFFICIENT_RESOURCES") return "shell.units.error.insufficientResources";
+  if (code === "UNIT_TYPE_NOT_FOUND") return "shell.units.error.unitTypeNotFound";
+  if (code === "UNIT_TRAIN_INVALID_PAYLOAD") return "shell.units.error.invalidPayload";
+  return "shell.units.error.trainFailed";
 }
 
 function resolveWsPlayerErrorKey(code: string): UiTextKey | null {
@@ -320,12 +307,23 @@ export default function App() {
   }>({ open: false, action: null });
   const [country, setCountry] = useState<SessionCountry | null>(null);
   const [countries, setCountries] = useState<Country[]>([]);
-  const [activeStrategyMode, setActiveStrategyMode] = useState<StrategyMode>("overview");
-  const [strategyWorkspaceOpen, setStrategyWorkspaceOpen] = useState(true);
+  const [activeStrategyMode, setActiveStrategyMode] = useState<StrategyMode>(() => readStrategyShellState().mode);
+  const [strategyWorkspaceOpen, setStrategyWorkspaceOpen] = useState(() => readStrategyShellState().workspaceOpen);
   const setStrategyModeAndOpenWorkspace = useCallback((mode: StrategyMode) => {
     setActiveStrategyMode(mode);
     setStrategyWorkspaceOpen(true);
   }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        STRATEGY_SHELL_STATE_STORAGE_KEY,
+        JSON.stringify({ mode: activeStrategyMode, workspaceOpen: strategyWorkspaceOpen }),
+      );
+    } catch {
+      // Local UI persistence is optional.
+    }
+  }, [activeStrategyMode, strategyWorkspaceOpen]);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [populationStatsOpen, setPopulationStatsOpen] = useState(false);
@@ -349,9 +347,10 @@ export default function App() {
   const [eventsOpen, setEventsOpen] = useState(false);
   const [focusedEventPendingId, setFocusedEventPendingId] = useState<string | null>(null);
   const [diplomacyOpen, setDiplomacyOpen] = useState(false);
-  const [armyDesignerKind, setArmyDesignerKind] = useState<ArmyDesignerModalKind | null>(null);
   const [adminInitialHexId, setAdminInitialHexId] = useState<string | null>(null);
   const [turnStatusOpen, setTurnStatusOpen] = useState(false);
+  const [turnActions, setTurnActions] = useState<TurnActionItem[]>([]);
+  const [turnActionsNonce, setTurnActionsNonce] = useState(0);
   const [gameSettingsOpen, setGameSettingsOpen] = useState(false);
   const [countryCustomizationOpen, setCountryCustomizationOpen] = useState(false);
   const [clientSettingsOpen, setClientSettingsOpen] = useState(false);
@@ -409,6 +408,7 @@ export default function App() {
   );
   const countryById = useMemo(() => new Map(countries.map((item) => [item.id, item] as const)), [countries]);
   const [buildingEntries, setBuildingEntries] = useState<ContentEntry[]>([]);
+  const [unitTypeEntries, setUnitTypeEntries] = useState<UnitTypeDefinition[]>([]);
   const [companyEntries, setCompanyEntries] = useState<ContentEntry[]>([]);
   const [industryEntries, setIndustryEntries] = useState<ContentEntry[]>([]);
   const [sectorEntries, setSectorEntries] = useState<ContentEntry[]>([]);
@@ -419,6 +419,8 @@ export default function App() {
   const [selectedHexDetails, setSelectedHexDetails] = useState<StrategyShellSelectedHexDetails | null>(null);
   const [openHexWorkspaceRequestId, setOpenHexWorkspaceRequestId] = useState(0);
   const [colonizerPlacement, setColonizerPlacement] = useState<{ active: boolean } | null>(null);
+  const [unitTrainingPlacement, setUnitTrainingPlacement] = useState<{ unitTypeId: string } | null>(null);
+  const [cancelingUnitTrainingQueueId, setCancelingUnitTrainingQueueId] = useState<string | null>(null);
   const [hexBuildPlacement, setHexBuildPlacement] = useState<{
     building: ContentEntry;
     owner: { type: "state"; countryId: string } | { type: "company"; companyId: string };
@@ -429,22 +431,6 @@ export default function App() {
     building: ContentEntry;
     owner: { type: "state"; countryId: string } | { type: "company"; companyId: string };
   } | null>(null);
-  const [formationPlacement, setFormationPlacement] = useState<{
-    template: DivisionTemplate;
-    quantity: number;
-    priority: "high" | "normal" | "low";
-    repeat: boolean;
-  } | null>(null);
-  const [formationConfirmTarget, setFormationConfirmTarget] = useState<{
-    hexId: HexId;
-    regionId: string;
-    template: DivisionTemplate;
-    quantity: number;
-    priority: "high" | "normal" | "low";
-    repeat: boolean;
-  } | null>(null);
-  const [formationRequestPending, setFormationRequestPending] = useState(false);
-  const [cancelingFormationQueueId, setCancelingFormationQueueId] = useState<string | null>(null);
   const [technologyEntries, setTechnologyEntries] = useState<ContentEntry[]>([]);
   const [journalEntries, setJournalEntries] = useState<ContentEntry[]>([]);
   const [turnTimerUi, setTurnTimerUi] = useState<{ enabled: boolean; secondsPerTurn: number; startedAtMs: number | null }>({
@@ -906,6 +892,27 @@ export default function App() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!auth?.token) {
+      setUnitTypeEntries([]);
+      return;
+    }
+    let cancelled = false;
+    getUnitsOverview(auth.token)
+      .then((overview) => {
+        if (!cancelled) setUnitTypeEntries(overview.unitTypes);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setUnitTypeEntries([]);
+          toast.error(t("shell.units.overviewFailed"));
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [auth?.token, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1721,52 +1728,33 @@ export default function App() {
   }, [auth, worldBase]);
   const armyPreview = useMemo(() => {
     if (!auth || !worldBase) return [];
-    const divisions = Object.values(worldBase.divisionsById ?? {}).filter((division) => division.countryId === auth.countryId);
-    const moving = divisions.filter((division) => division.status === "moving").length;
-    const fighting = divisions.filter((division) => division.status === "fighting").length;
-    const queue = worldBase.militaryFormationQueueByCountry?.[auth.countryId] ?? [];
+    const units = Object.values(worldBase.unitsById ?? {}).filter((unit) => unit.countryId === auth.countryId);
+    const moving = units.filter((unit) => unit.status === "moving").length;
+    const fighting = units.filter((unit) => unit.status === "fighting").length;
+    const queue = worldBase.unitTrainingQueueByCountry?.[auth.countryId] ?? [];
     return [
-      { labelKey: "shell.preview.divisions" as const, value: divisions.length, detail: `${moving}/${fighting}` },
+      { labelKey: "shell.preview.divisions" as const, value: units.length, detail: `${moving}/${fighting}` },
       { labelKey: "shell.preview.formationQueue" as const, value: queue.length, detailKey: "shell.preview.formationQueueDetail" as const },
-      { labelKey: "shell.preview.averageOrganization" as const, value: Math.floor(divisions.reduce((sum, division) => sum + Number(division.organization ?? 0), 0) / Math.max(1, divisions.length)), detailKey: "shell.preview.averageOrganizationDetail" as const },
+      { labelKey: "shell.preview.averageOrganization" as const, value: Math.floor(units.reduce((sum, unit) => sum + Number(unit.hp ?? 0), 0) / Math.max(1, units.length)), detailKey: "shell.preview.averageOrganizationDetail" as const },
     ];
   }, [auth, worldBase]);
-  const armyLogisticsRows = useMemo(() => {
+  const readyUnits = useMemo(() => {
     if (!auth || !worldBase) return [];
-    const divisions = Object.values(worldBase.divisionsById ?? {}).filter((division) => division.countryId === auth.countryId);
-    return buildArmyLogisticsRows({
-      variantsById: worldBase.equipmentVariantsById ?? {},
-      stockpileByVariantId: worldBase.equipmentStockpileByCountry?.[auth.countryId] ?? {},
-      productionLines: worldBase.equipmentProductionLinesByCountry?.[auth.countryId] ?? [],
-      divisions,
-    });
+    return Object.values(worldBase.unitsById ?? {}).filter((unit) => unit.countryId === auth.countryId && unit.status !== "destroyed");
   }, [auth, worldBase]);
-  const militaryFormationTemplates = useMemo(
-    () => (auth && worldBase ? worldBase.divisionTemplatesByCountry?.[auth.countryId] ?? [] : []),
-    [auth, worldBase],
-  );
-  const militaryFormationQueue = useMemo(
-    () => (auth && worldBase ? worldBase.militaryFormationQueueByCountry?.[auth.countryId] ?? [] : []),
-    [auth, worldBase],
-  );
-  const formationDeploymentHexIds = useMemo(() => {
-    if (!auth || !worldBase || !formationPlacement) return [];
-    const buildingById = new Map(buildingEntries.map((building) => [building.id, building] as const));
-    const ids: HexId[] = [];
-    for (const [regionId, instances] of Object.entries(worldBase.regionBuildingsByRegion ?? {})) {
-      const controller = worldBase.regionController?.[regionId] ?? worldBase.regionOwner?.[regionId] ?? null;
-      if (controller !== auth.countryId) continue;
-      for (const instance of instances ?? []) {
-        if (!isHexId(instance.targetHexId)) continue;
-        const building = buildingById.get(instance.buildingId);
-        const deployment = building?.deployment;
-        if (!deployment?.branches?.includes(formationPlacement.template.kind ?? "land")) continue;
-        if (deployment.requiresActive !== false && instance.isInactive) continue;
-        ids.push(instance.targetHexId);
-      }
-    }
-    return [...new Set(ids)];
-  }, [auth, buildingEntries, formationPlacement, worldBase]);
+  const readyUnitsById = useMemo(() => Object.fromEntries(readyUnits.map((unit) => [unit.id, unit])), [readyUnits]);
+  const unitTrainingQueue = useMemo(() => {
+    if (!auth || !worldBase) return [];
+    return worldBase.unitTrainingQueueByCountry?.[auth.countryId] ?? [];
+  }, [auth, worldBase]);
+  const unitPreview = useMemo(() => {
+    const idle = readyUnits.filter((unit) => unit.status === "idle").length;
+    return [
+      { labelKey: "shell.preview.readyUnits" as const, value: readyUnits.length, detail: `${idle}` },
+      { labelKey: "shell.preview.trainingUnits" as const, value: unitTrainingQueue.length, detailKey: "shell.preview.trainingUnitsDetail" as const },
+      { labelKey: "shell.preview.unitTypes" as const, value: unitTypeEntries.length, detailKey: "shell.preview.unitTypesDetail" as const },
+    ];
+  }, [readyUnits, unitTrainingQueue.length, unitTypeEntries.length]);
   const governancePreview = useMemo(() => {
     if (!auth || !worldBase) return [];
     const parliament = worldBase.parliamentByCountry?.[auth.countryId] ?? null;
@@ -2028,6 +2016,7 @@ export default function App() {
       return;
     }
     const routePath = Array.isArray(path) ? path.filter((value) => typeof value === "string" && value.trim().length > 0) : [];
+    const isMapUnit = Boolean(worldBase?.unitsById?.[divisionId]);
 
     const delta: OrderDelta = {
       type: "ORDER_DELTA",
@@ -2038,13 +2027,14 @@ export default function App() {
         targetHexId: hexId,
         type: "UNIT_MOVE",
         unitId: divisionId,
-        unitKind: "division",
+        unitKind: isMapUnit ? "map" : "division",
         path: routePath.filter(isHexId),
-        payload: routePath.length > 0 ? { divisionId, path: routePath } : { divisionId },
+        payload: routePath.length > 0 ? { divisionId, unitId: divisionId, path: routePath } : { divisionId, unitId: divisionId },
       },
     };
 
     send(delta);
+    setTurnActionsNonce((value) => value + 1);
     toast(t("shell.orderSent"), { description: routePath.length > 1 ? `UNIT_MOVE: ${routePath.length}` : `UNIT_MOVE -> ${hexId}` });
     addEvent({
       category: "military",
@@ -2111,6 +2101,7 @@ export default function App() {
     };
 
     send(delta);
+    setTurnActionsNonce((value) => value + 1);
     addOrder({
       ...delta.order,
       id: `local:${turnId}:${divisionId}:unit-attack`,
@@ -2126,50 +2117,6 @@ export default function App() {
       visibility: "private",
       turn: turnId,
     });
-  };
-
-  const confirmMilitaryFormation = async () => {
-    if (!auth?.token || !formationConfirmTarget) return;
-    setFormationRequestPending(true);
-    try {
-      await createMilitaryFormation(auth.token, {
-        templateId: formationConfirmTarget.template.id,
-        hexId: formationConfirmTarget.hexId,
-        quantity: formationConfirmTarget.quantity,
-        priority: formationConfirmTarget.priority,
-        repeat: formationConfirmTarget.repeat,
-      });
-      toast.success(t("army.formationQueued"));
-      setFormationConfirmTarget(null);
-      setFormationPlacement((current) =>
-        current
-          ? {
-              ...current,
-              template: formationConfirmTarget.template,
-              quantity: formationConfirmTarget.quantity,
-              priority: formationConfirmTarget.priority,
-              repeat: formationConfirmTarget.repeat,
-            }
-          : current,
-      );
-    } catch (error) {
-      toast.error(t(getFormationErrorKey(error instanceof Error ? error.message : "FORMATION_CREATE_FAILED")));
-    } finally {
-      setFormationRequestPending(false);
-    }
-  };
-
-  const cancelMilitaryFormationQueueItem = async (queueId: string) => {
-    if (!auth?.token) return;
-    setCancelingFormationQueueId(queueId);
-    try {
-      await cancelMilitaryFormation(auth.token, queueId);
-      toast.success(t("army.formationCancelSuccess"));
-    } catch (error) {
-      toast.error(t(getFormationErrorKey(error instanceof Error ? error.message : "FORMATION_CANCEL_FAILED")));
-    } finally {
-      setCancelingFormationQueueId(null);
-    }
   };
 
   const startHexBuildPlacement = (request: {
@@ -2204,6 +2151,7 @@ export default function App() {
     };
 
     send(delta);
+    setTurnActionsNonce((value) => value + 1);
     addOrder({
       ...delta.order,
       id: `local:${turnId}:${unitId}:unit-move`,
@@ -2286,6 +2234,57 @@ export default function App() {
       setQueueingColonizerHexId((current) => (current === hexId ? null : current));
     }
   };
+
+  const trainUnitOnHex = async (unitTypeId: string, hexId: HexId) => {
+    if (!auth?.token) {
+      toast.error(t("shell.buildings.noCountry"));
+      return;
+    }
+    try {
+      await trainUnit(auth.token, { unitTypeId, hexId });
+      const unitType = unitTypeEntries.find((entry) => entry.id === unitTypeId);
+      toast.success(t("shell.units.trainingQueued"), { description: unitType ? t(unitType.nameKey) : unitTypeId });
+      addEvent({
+        category: "military",
+        title: t("shell.units.trainingQueued"),
+        message: `${unitTypeId} -> ${hexId}`,
+        countryId: auth.countryId,
+        priority: "medium",
+        visibility: "private",
+        turn: turnId,
+      });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "UNIT_TRAIN_FAILED";
+      toast.error(t(resolveUnitTrainingErrorKey(code)));
+    }
+  };
+
+  const cancelUnitTrainingQueueItem = async (queueId: string) => {
+    if (!auth?.token) return;
+    setCancelingUnitTrainingQueueId(queueId);
+    try {
+      await cancelUnitTraining(auth.token, queueId);
+      toast.success(t("shell.units.trainingCanceled"));
+    } catch {
+      toast.error(t("shell.units.trainingCancelFailed"));
+    } finally {
+      setCancelingUnitTrainingQueueId((current) => (current === queueId ? null : current));
+    }
+  };
+
+  const disbandReadyUnit = async (unitId: string) => {
+    if (!auth?.token) return;
+    try {
+      await disbandUnit(auth.token, unitId);
+      toast.success(t("shell.units.disbanded"));
+    } catch {
+      toast.error(t("shell.units.disbandFailed"));
+    }
+  };
+
+  const selectedUnitTrainingType = unitTrainingPlacement
+    ? unitTypeEntries.find((entry) => entry.id === unitTrainingPlacement.unitTypeId) ?? null
+    : null;
 
   const startHexBuildPlacementForBuilding = (buildingId: string) => {
     if (!auth) {
@@ -2447,10 +2446,94 @@ export default function App() {
     };
   }, [auth?.countryId, auth?.token, turnId]);
 
-  const requestNextTurn = () => {
+  useEffect(() => {
+    if (!auth?.token) {
+      setTurnActions([]);
+      return;
+    }
+    let cancelled = false;
+    fetchTurnActions(auth.token)
+      .then((checklist) => {
+        if (cancelled) return;
+        setTurnActions(checklist.items);
+      })
+      .catch(() => {
+        if (!cancelled) setTurnActions([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [auth?.token, turnId, turnActionsNonce]);
+
+  const requestNextTurn = (options?: { force?: boolean }) => {
     if (turnResolveOverlay.phase === "processing") return;
+    if (options?.force && turnActions.some((item) => item.severity === "blocking")) {
+      const confirmed = window.confirm(t("turnActions.forceEndTurnConfirm", { count: turnActions.filter((item) => item.severity === "blocking").length }));
+      if (!confirmed) return;
+    }
     send({ type: "REQUEST_RESOLVE" });
     armResolveStartTimeout("manual");
+  };
+
+  const focusTurnAction = (item: TurnActionItem) => {
+    if (item.action.type === "focus_hex") {
+      setMapFocusRequest({ hexId: item.action.hexId, nonce: Date.now() });
+      setActiveStrategyMode("units");
+      setStrategyWorkspaceOpen(true);
+    }
+    if (item.action.type === "open_strategy_mode") {
+      setActiveStrategyMode(item.action.mode as StrategyMode);
+      setStrategyWorkspaceOpen(true);
+    }
+  };
+
+  const queueUnitWaitOrder = (item: TurnActionItem, type: "UNIT_SKIP_TURN" | "UNIT_SLEEP" | "UNIT_WAKE") => {
+    if (!auth || item.target.type !== "unit") return;
+    const delta: OrderDelta = {
+      type: "ORDER_DELTA",
+      order: {
+        turnId,
+        playerId: auth.playerId,
+        countryId: auth.countryId,
+        type,
+        unitId: item.target.unitId,
+        unitKind: "map",
+        payload: {},
+      },
+    };
+    send(delta);
+    addOrder({
+      ...delta.order,
+      id: `local:${turnId}:${item.target.unitId}:${type}`,
+      createdAt: new Date().toISOString(),
+    });
+    setTurnActions((current) => current.filter((entry) => entry.id !== item.id));
+    setTurnActionsNonce((value) => value + 1);
+    toast(t(type === "UNIT_SLEEP" ? "turnActions.sleepQueued" : type === "UNIT_WAKE" ? "turnActions.wakeQueued" : "turnActions.skipQueued"));
+  };
+
+  const queueUnitWakeOrder = (unit: MapUnit) => {
+    if (!auth || unit.countryId !== auth.countryId) return;
+    const delta: OrderDelta = {
+      type: "ORDER_DELTA",
+      order: {
+        turnId,
+        playerId: auth.playerId,
+        countryId: auth.countryId,
+        type: "UNIT_WAKE",
+        unitId: unit.id,
+        unitKind: "map",
+        payload: {},
+      },
+    };
+    send(delta);
+    addOrder({
+      ...delta.order,
+      id: `local:${turnId}:${unit.id}:UNIT_WAKE`,
+      createdAt: new Date().toISOString(),
+    });
+    setTurnActionsNonce((value) => value + 1);
+    toast(t("turnActions.wakeQueued"));
   };
 
   useEffect(() => {
@@ -2618,6 +2701,14 @@ export default function App() {
           setColonizerPlacement(null);
           void queueColonizerOnHex(target.hexId);
         }}
+        unitTrainingPlacement={selectedUnitTrainingType ? { unitType: selectedUnitTrainingType } : null}
+        onCancelUnitTrainingPlacement={() => setUnitTrainingPlacement(null)}
+        onSelectUnitTrainingPlacementTarget={(target) => {
+          if (!unitTrainingPlacement || !isHexId(target.hexId)) return;
+          const unitTypeId = unitTrainingPlacement.unitTypeId;
+          setUnitTrainingPlacement(null);
+          void trainUnitOnHex(unitTypeId, target.hexId);
+        }}
         colonizationIconUrl={BASE_RESOURCE_ICON_URLS.colonization}
         ducatsIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
         maxActiveColonizations={maxActiveColonizations}
@@ -2659,26 +2750,6 @@ export default function App() {
             regionId: target.regionId,
             building: hexBuildPlacement.building,
             owner: hexBuildPlacement.owner,
-          });
-        }}
-        militaryFormationPlacement={formationPlacement ? {
-          templateName: formationPlacement.template.name,
-          kind: formationPlacement.template.kind ?? "land",
-          validHexIds: formationDeploymentHexIds,
-        } : null}
-        onCancelMilitaryFormationPlacement={() => {
-          setFormationPlacement(null);
-          setFormationConfirmTarget(null);
-        }}
-        onSelectMilitaryFormationPlacementTarget={(target) => {
-          if (!formationPlacement || !isHexId(target.hexId)) return;
-          setFormationConfirmTarget({
-            hexId: target.hexId,
-            regionId: target.regionId,
-            template: formationPlacement.template,
-            quantity: formationPlacement.quantity,
-            priority: formationPlacement.priority,
-            repeat: formationPlacement.repeat,
           });
         }}
         onHexRenameCharged={(chargedDucats) => {
@@ -2838,22 +2909,30 @@ export default function App() {
             marketTradeLoading={marketShellLoading}
             diplomacyPreview={diplomacyPreview}
             armyPreview={armyPreview}
-            armyLogisticsRows={armyLogisticsRows}
-            militaryFormationTemplates={militaryFormationTemplates}
-            militaryFormationQueue={militaryFormationQueue}
-            activeMilitaryFormationTemplateId={formationPlacement?.template.id ?? null}
-            cancelingMilitaryFormationQueueId={cancelingFormationQueueId}
-            onStartMilitaryFormationPlacement={(template, options) => {
-              setActiveStrategyMode("army");
+            unitPreview={unitPreview}
+            unitTypes={unitTypeEntries}
+            unitTrainingQueue={unitTrainingQueue}
+            readyUnits={readyUnits}
+            unitTrainingPlacementActive={Boolean(unitTrainingPlacement)}
+            cancelingUnitTrainingQueueId={cancelingUnitTrainingQueueId}
+            onStartUnitTrainingPlacement={(unitTypeId) => {
+              setActiveStrategyMode("units");
               setStrategyWorkspaceOpen(true);
-              setFormationConfirmTarget(null);
-              setFormationPlacement({ template, ...options });
+              setHexBuildPlacement(null);
+              setColonizerPlacement(null);
+              setUnitTrainingPlacement({ unitTypeId });
             }}
-            onCancelMilitaryFormationQueue={cancelMilitaryFormationQueueItem}
+            onCancelUnitTraining={cancelUnitTrainingQueueItem}
+            onDisbandUnit={disbandReadyUnit}
             governancePreview={governancePreview}
             storyPreview={storyPreview}
             onOpenTurnStatus={() => setTurnStatusOpen(true)}
-            onNextTurn={requestNextTurn}
+            onNextTurn={() => requestNextTurn()}
+            turnActions={turnActions}
+            onTurnActionFocus={focusTurnAction}
+            onForceNextTurn={() => requestNextTurn({ force: true })}
+            onSkipTurnActionUnit={(item) => queueUnitWaitOrder(item, "UNIT_SKIP_TURN")}
+            onSleepTurnActionUnit={(item) => queueUnitWaitOrder(item, "UNIT_SLEEP")}
             onLogout={logoutToAuth}
             isAdmin={auth.isAdmin}
             onAdminForceResolve={forceResolveAsAdmin}
@@ -2896,12 +2975,6 @@ export default function App() {
             onOpenMarket={() => setMarketOpen(true)}
             onOpenGlobalMarket={() => setGlobalMarketOpen(true)}
             onOpenDiplomacy={() => setDiplomacyOpen(true)}
-            onOpenDivisionDesigner={() => setArmyDesignerKind("division-template")}
-            onOpenAirWingDesigner={() => setArmyDesignerKind("air-template")}
-            onOpenFleetDesigner={() => setArmyDesignerKind("fleet-template")}
-            onOpenLandEquipmentDesigner={() => setArmyDesignerKind("land-equipment")}
-            onOpenAirEquipmentDesigner={() => setArmyDesignerKind("air-equipment")}
-            onOpenNavalEquipmentDesigner={() => setArmyDesignerKind("naval-equipment")}
             onOpenPolitics={() => setPoliticsOpen(true)}
             onOpenTechnology={() => setTechnologyOpen(true)}
             onOpenModifiers={() => setModifiersOpen(true)}
@@ -2911,6 +2984,19 @@ export default function App() {
               setFocusedEventPendingId(null);
               setEventsOpen(true);
             }}
+          />
+          <TurnAdvancerHub
+            scenarioId={activeScenarioId}
+            turnId={turnId}
+            turnActions={turnActions}
+            unitsById={readyUnitsById}
+            unitTypes={unitTypeEntries}
+            onNextTurn={() => requestNextTurn()}
+            onForceNextTurn={() => requestNextTurn({ force: true })}
+            onFocusAction={focusTurnAction}
+            onSkipUnit={(item) => queueUnitWaitOrder(item, "UNIT_SKIP_TURN")}
+            onSleepUnit={(item) => queueUnitWaitOrder(item, "UNIT_SLEEP")}
+            onWakeUnit={queueUnitWakeOrder}
           />
         </motion.div>
       )}
@@ -3069,81 +3155,6 @@ export default function App() {
           </Dialog>
         ) : null}
       </AnimatePresence>
-      <AnimatePresence>
-        {auth && formationConfirmTarget ? (
-          <Dialog
-            open
-            onClose={() => setFormationConfirmTarget(null)}
-            className="relative z-[214]"
-          >
-            <motion.div
-              aria-hidden="true"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-[var(--arc-modal-backdrop)]"
-            />
-            <div className="fixed inset-0 z-[215] flex items-center justify-center p-4">
-              <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                className="arc-hex-build-confirm"
-              >
-                <div className="arc-hex-build-confirm__header">
-                  <Dialog.Title className="arc-hex-build-confirm__title">
-                    {t("army.formationConfirmTitle")}
-                  </Dialog.Title>
-                </div>
-                <div className="arc-hex-build-confirm__body">
-                  <div className="arc-hex-build-confirm__row">
-                    <span>{t("army.template")}</span>
-                    <strong>{formationConfirmTarget.template.name}</strong>
-                  </div>
-                  <div className="arc-hex-build-confirm__row">
-                    <span>{t("army.branch")}</span>
-                    <strong>{t(getMilitaryBranchLabelKey(formationConfirmTarget.template.kind ?? "land"))}</strong>
-                  </div>
-                  <div className="arc-hex-build-confirm__row">
-                    <span>{t("hexMap.hex")}</span>
-                    <strong>{formationConfirmTarget.hexId}</strong>
-                  </div>
-                  <div className="arc-hex-build-confirm__row">
-                    <span>{t("army.formationQuantity")}</span>
-                    <strong>{formationConfirmTarget.quantity}</strong>
-                  </div>
-                  <div className="arc-hex-build-confirm__row">
-                    <span>{t("army.formationPriority")}</span>
-                    <strong>{t(getFormationPriorityLabelKey(formationConfirmTarget.priority))}</strong>
-                  </div>
-                  <div className="arc-hex-build-confirm__row">
-                    <span>{t("army.formationRepeat")}</span>
-                    <strong>{formationConfirmTarget.repeat ? t("common.yes") : t("common.no")}</strong>
-                  </div>
-                </div>
-                <div className="arc-hex-build-confirm__actions">
-                  <button
-                    type="button"
-                    className="arc-strategy-workspace-action arc-hex-build-confirm__action arc-hex-build-confirm__action--cancel"
-                    onClick={() => setFormationConfirmTarget(null)}
-                    disabled={formationRequestPending}
-                  >
-                    <span>{t("buildings.hexPlacementCancelAction")}</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="arc-strategy-workspace-action arc-strategy-workspace-action--primary arc-hex-build-confirm__action"
-                    onClick={confirmMilitaryFormation}
-                    disabled={formationRequestPending}
-                  >
-                    <span>{formationRequestPending ? t("army.loading") : t("army.formationConfirmAction")}</span>
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          </Dialog>
-        ) : null}
-      </AnimatePresence>
       {auth?.token && (
         <MarketModal
           open={marketOpen}
@@ -3264,15 +3275,6 @@ export default function App() {
           }}
         />
       )}
-      {auth?.token && (
-        <ArmyDesignerModal
-          open={Boolean(armyDesignerKind)}
-          kind={armyDesignerKind}
-          token={auth.token}
-          onClose={() => setArmyDesignerKind(null)}
-        />
-      )}
-
       {auth?.isAdmin && auth?.token && (
         <AdminPanel
           open={adminOpen}
@@ -3287,7 +3289,7 @@ export default function App() {
         />
       )}
 
-      {auth && <TurnStatusModal open={turnStatusOpen} onClose={() => setTurnStatusOpen(false)} />}
+      {auth && <TurnStatusModal open={turnStatusOpen} onClose={() => setTurnStatusOpen(false)} token={auth.token} />}
       {auth && (
         <NotificationHistoryModal
           open={notificationHistoryOpen}

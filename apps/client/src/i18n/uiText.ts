@@ -1654,8 +1654,6 @@ export type UiTextKey =
   | "hexMap.civilianMoveTooltipCannot"
   | "hexMap.civilianMoveUnavailable"
   | "hexMap.civilianMoveSelectTarget"
-  | "hexMap.formationPlacementHud"
-  | "hexMap.formationPlacementInvalid"
   | "hexMap.civilianMovePreview"
   | "hexMap.civilianMoveNoPath"
   | "hexMap.civilianMoveTooFar"
@@ -1685,6 +1683,8 @@ export type UiTextKey =
   | "hexMap.foundCityOrderSent"
   | "hexMap.unitPopoverTitle"
   | "hexMap.unitPopoverHex"
+  | "hexMap.unitTrainingPlacementHud"
+  | "hexMap.unitTrainingUnavailable"
   | "hexMap.cityPendingNameFallback"
   | "hexMap.build"
   | "hexMap.colonize"
@@ -2851,18 +2851,6 @@ export type UiTextKey =
   | "provinceContext.openAdminEditor"
   | "shell.action.army"
   | "shell.action.armyDescription"
-  | "shell.action.divisionDesigner"
-  | "shell.action.divisionDesignerDescription"
-  | "shell.action.airWingDesigner"
-  | "shell.action.airWingDesignerDescription"
-  | "shell.action.fleetDesigner"
-  | "shell.action.fleetDesignerDescription"
-  | "shell.action.landEquipmentDesigner"
-  | "shell.action.landEquipmentDesignerDescription"
-  | "shell.action.airEquipmentDesigner"
-  | "shell.action.airEquipmentDesignerDescription"
-  | "shell.action.navalEquipmentDesigner"
-  | "shell.action.navalEquipmentDesignerDescription"
   | "shell.action.budget"
   | "shell.action.budgetDescription"
   | "shell.action.buildings"
@@ -2899,6 +2887,8 @@ export type UiTextKey =
   | "shell.action.technologyDescription"
   | "shell.action.turnStatus"
   | "shell.action.turnStatusDescription"
+  | "shell.action.unitCatalog"
+  | "shell.action.unitCatalogDescription"
   | "shell.admin"
   | "shell.adminPanel"
   | "shell.availableActions"
@@ -2956,6 +2946,8 @@ export type UiTextKey =
   | "shell.dashboard.scienceSpend"
   | "shell.dashboard.totalPopulation"
   | "shell.dashboard.treasury"
+  | "shell.dashboard.units"
+  | "shell.dashboard.unitsIntro"
   | "shell.endTurn"
   | "shell.entryCountryProfile"
   | "shell.entryEnterGame"
@@ -3008,6 +3000,8 @@ export type UiTextKey =
   | "shell.mode.overviewDescription"
   | "shell.mode.population"
   | "shell.mode.populationDescription"
+  | "shell.mode.units"
+  | "shell.mode.unitsDescription"
   | "shell.modeDock"
   | "shell.notifications"
   | "shell.orderColonizationTitle"
@@ -3051,6 +3045,13 @@ export type UiTextKey =
   | "shell.preview.subsidies"
   | "shell.preview.topCulture"
   | "shell.preview.topProfession"
+  | "shell.preview.readyUnits"
+  | "shell.preview.trainingUnits"
+  | "shell.preview.trainingUnitsDetail"
+  | "shell.preview.unitTypes"
+  | "shell.preview.unitTypesDetail"
+  | "shell.preview.units"
+  | "shell.preview.noUnits"
   | "shell.preview.unknownBuilding"
   | "shell.resource.colonization"
   | "shell.resource.construction"
@@ -3088,6 +3089,42 @@ export type UiTextKey =
   | "topBar.netGrowth"
   | "topBar.netPerTurn"
   | "topBar.nextTurn"
+  | "turnActions.description"
+  | "turnActions.actionTrayAria"
+  | "turnActions.commandHubAria"
+  | "turnActions.focusUnit"
+  | "turnActions.focusUnitTooltip"
+  | "turnActions.forceEndTurn"
+  | "turnActions.forceEndTurnConfirm"
+  | "turnActions.forceEndTurnTooltip"
+  | "turnActions.foundCity"
+  | "turnActions.foundCityTooltip"
+  | "turnActions.needsOrders"
+  | "turnActions.nextTurnBlockedTooltip"
+  | "turnActions.queueAria"
+  | "turnActions.readyDescription"
+  | "turnActions.readyTitle"
+  | "turnActions.readyTooltip"
+  | "turnActions.skipQueued"
+  | "turnActions.skipUnit"
+  | "turnActions.skipUnitTooltip"
+  | "turnActions.sleepQueued"
+  | "turnActions.sleepUnit"
+  | "turnActions.sleepUnitTooltip"
+  | "turnActions.stat.attack"
+  | "turnActions.stat.defense"
+  | "turnActions.stat.hp"
+  | "turnActions.stat.movement"
+  | "turnActions.title"
+  | "turnActions.unitCanAct.description"
+  | "turnActions.unitCanAct.label"
+  | "turnActions.unitCanFoundCity.description"
+  | "turnActions.unitCanFoundCity.label"
+  | "turnActions.unitPortraitAria"
+  | "turnActions.unitStatsAria"
+  | "turnActions.wakeQueued"
+  | "turnActions.wakeUnit"
+  | "turnActions.wakeUnitTooltip"
   | "topBar.openCountryDetails"
   | "topBar.openResourceDetails"
   | "topBar.populationAria"
@@ -3169,10 +3206,38 @@ export type UiTextKey =
   | "shell.workspaceTab.formation"
   | "shell.workspaceTab.hex"
   | "shell.workspaceTab.infrastructure"
+  | "shell.workspaceTab.readyUnits"
   | "shell.workspaceTab.records"
   | "shell.workspaceTab.summary"
+  | "shell.workspaceTab.trainingQueue"
   | "shell.workspaceTab.trade"
+  | "shell.workspaceTab.unitCatalog"
   | "shell.workspaceTab.warehouses"
+  | "shell.units.cancelTraining"
+  | "shell.units.catalog"
+  | "shell.units.catalogDetail"
+  | "shell.units.disband"
+  | "shell.units.disbanded"
+  | "shell.units.disbandFailed"
+  | "shell.units.emptyCatalog"
+  | "shell.units.emptyReadyUnits"
+  | "shell.units.emptyTrainingQueue"
+  | "shell.units.error.insufficientResources"
+  | "shell.units.error.invalidPayload"
+  | "shell.units.error.noValidHex"
+  | "shell.units.error.regionNotControlled"
+  | "shell.units.error.trainFailed"
+  | "shell.units.error.unitTypeNotFound"
+  | "shell.units.focusHex"
+  | "shell.units.groupLabel"
+  | "shell.units.overviewFailed"
+  | "shell.units.ready"
+  | "shell.units.readyDetail"
+  | "shell.units.training"
+  | "shell.units.trainingCancelFailed"
+  | "shell.units.trainingCanceled"
+  | "shell.units.trainingQueued"
+  | "shell.units.queueDetail"
   | "shell.workspaceTabs"
   | "shell.hex.controller"
   | "shell.hex.title"
@@ -3233,6 +3298,8 @@ export type UiTextKey =
   | "turnStatus.blockedPermanent"
   | "turnStatus.blockedUntilTime"
   | "turnStatus.blockedUntilTurn"
+  | "turnStatus.currentCountryNeedsOrders"
+  | "turnStatus.currentCountryReady"
   | "turnStatus.lastLogin"
   | "turnStatus.loading"
   | "turnStatus.noLoginData"
@@ -4919,8 +4986,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.civilianMoveTooltipCannot": "This civilian unit cannot move now.",
     "hexMap.civilianMoveUnavailable": "This civilian unit cannot move now.",
     "hexMap.civilianMoveSelectTarget": "Select a target hex for the colonizer.",
-    "hexMap.formationPlacementHud": "Select a deployment hex.",
-    "hexMap.formationPlacementInvalid": "The selected formation cannot deploy on this hex.",
     "hexMap.civilianMovePreview": "Route cost {cost}; this turn {points}",
     "hexMap.civilianMoveNoPath": "No valid route to that hex.",
     "hexMap.civilianMoveTooFar": "Route is too long: {cost}/{points} movement points.",
@@ -4950,6 +5015,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.foundCityOrderSent": "City foundation order sent",
     "hexMap.unitPopoverTitle": "Selected unit",
     "hexMap.unitPopoverHex": "Hex {hex}",
+    "hexMap.unitTrainingPlacementHud": "Select a controlled deployment hex for this unit.",
+    "hexMap.unitTrainingUnavailable": "This hex cannot train the selected unit.",
     "hexMap.cityPendingNameFallback": "New city",
     "hexMap.build": "Build",
     "hexMap.colonize": "Colonize",
@@ -6116,18 +6183,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "provinceContext.openAdminEditor": "Hex management",
     "shell.action.army": "Command army",
     "shell.action.armyDescription": "Open formations, routes, and military orders.",
-    "shell.action.divisionDesigner": "Division designer",
-    "shell.action.divisionDesignerDescription": "Create and edit land division templates from combat and support components.",
-    "shell.action.airWingDesigner": "Air wing designer",
-    "shell.action.airWingDesignerDescription": "Create air wing templates and their equipment requirements.",
-    "shell.action.fleetDesigner": "Fleet designer",
-    "shell.action.fleetDesignerDescription": "Create fleet templates and their ship requirements.",
-    "shell.action.landEquipmentDesigner": "Create equipment",
-    "shell.action.landEquipmentDesignerDescription": "Design land equipment variants from frames and modules.",
-    "shell.action.airEquipmentDesigner": "Create aircraft",
-    "shell.action.airEquipmentDesignerDescription": "Design aircraft variants from airframes and modules.",
-    "shell.action.navalEquipmentDesigner": "Create ship",
-    "shell.action.navalEquipmentDesignerDescription": "Design ship variants from hulls and modules.",
     "shell.action.budget": "State budget",
     "shell.action.budgetDescription": "Review treasury pressure, subsidies, and current-turn expenses.",
     "shell.action.buildings": "Regional construction",
@@ -6164,6 +6219,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.technologyDescription": "Open research, progress, and prerequisites.",
     "shell.action.turnStatus": "Country readiness",
     "shell.action.turnStatusDescription": "Review who is ready to resolve the current turn.",
+    "shell.action.unitCatalog": "Train units",
+    "shell.action.unitCatalogDescription": "Open unit types and choose a deployment hex for training.",
     "shell.admin": "Admin",
     "shell.adminPanel": "Admin panel",
     "shell.availableActions": "Available actions",
@@ -6221,6 +6278,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.dashboard.scienceSpend": "Science committed",
     "shell.dashboard.totalPopulation": "Total population",
     "shell.dashboard.treasury": "Treasury",
+    "shell.dashboard.units": "Units",
+    "shell.dashboard.unitsIntro": "Train individual map units, inspect deployment queues, and manage ready units.",
     "shell.endTurn": "End turn",
     "shell.entryCountryProfile": "Country profile",
     "shell.entryEnterGame": "Enter game",
@@ -6273,6 +6332,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.mode.overviewDescription": "Country dashboard over the map: resources, issues, readiness, and priorities.",
     "shell.mode.population": "Population",
     "shell.mode.populationDescription": "Society dashboard for pops, professions, cultures, religions, and needs.",
+    "shell.mode.units": "Units",
+    "shell.mode.unitsDescription": "Train individual map units from scenario unit types.",
     "shell.modeDock": "Map modes",
     "shell.notifications": "Notifications",
     "shell.orderColonizationTitle": "New colonization order",
@@ -6316,6 +6377,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.subsidies": "Subsidies",
     "shell.preview.topCulture": "Top culture",
     "shell.preview.topProfession": "Top profession",
+    "shell.preview.readyUnits": "Ready units",
+    "shell.preview.trainingUnits": "Training queue",
+    "shell.preview.trainingUnitsDetail": "Units in training",
+    "shell.preview.unitTypes": "Unit types",
+    "shell.preview.unitTypesDetail": "Scenario unit catalog",
+    "shell.preview.units": "Units",
+    "shell.preview.noUnits": "No units",
     "shell.preview.unknownBuilding": "Building {id}",
     "shell.resource.colonization": "Colonization",
     "shell.resource.construction": "Construction",
@@ -6384,6 +6452,42 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "topBar.netGrowth": "Net growth",
     "topBar.netPerTurn": "Net per turn",
     "topBar.nextTurn": "Next turn #{turn}",
+    "turnActions.description": "Resolve is available, but these units can still act this turn.",
+    "turnActions.actionTrayAria": "Unit action tray",
+    "turnActions.commandHubAria": "Turn advancer and unit command hub",
+    "turnActions.focusUnit": "Focus",
+    "turnActions.focusUnitTooltip": "Center the map on this required action.",
+    "turnActions.forceEndTurn": "Force end turn",
+    "turnActions.forceEndTurnConfirm": "End the turn with {count} unresolved action(s)?",
+    "turnActions.forceEndTurnTooltip": "End the turn anyway after confirmation. No hidden unit orders are created.",
+    "turnActions.foundCity": "Found city",
+    "turnActions.foundCityTooltip": "Focus the colonizer so the map founding action can be confirmed.",
+    "turnActions.needsOrders": "Needs orders: {count}",
+    "turnActions.nextTurnBlockedTooltip": "Some units can still act. Click to review them, or Shift-click to force end turn.",
+    "turnActions.queueAria": "Required action queue",
+    "turnActions.readyDescription": "No required actions remain",
+    "turnActions.readyTitle": "Ready",
+    "turnActions.readyTooltip": "All required actions are resolved. Click to mark your country ready.",
+    "turnActions.skipQueued": "Unit will wait this turn",
+    "turnActions.skipUnit": "Skip",
+    "turnActions.skipUnitTooltip": "Spend this unit's remaining action for the current turn only.",
+    "turnActions.sleepQueued": "Unit will sleep",
+    "turnActions.sleepUnit": "Sleep",
+    "turnActions.sleepUnitTooltip": "Put this unit on standby so it stops blocking future turns until woken.",
+    "turnActions.stat.attack": "Attack",
+    "turnActions.stat.defense": "Defense",
+    "turnActions.stat.hp": "Hit points",
+    "turnActions.stat.movement": "Movement points",
+    "turnActions.title": "Actions required",
+    "turnActions.unitCanAct.description": "This unit has movement or combat actions available.",
+    "turnActions.unitCanAct.label": "Unit can act",
+    "turnActions.unitCanFoundCity.description": "This civilian unit can move or found a city.",
+    "turnActions.unitCanFoundCity.label": "Civilian unit can act",
+    "turnActions.unitPortraitAria": "Unit portrait",
+    "turnActions.unitStatsAria": "Current unit stats",
+    "turnActions.wakeQueued": "Unit will wake",
+    "turnActions.wakeUnit": "Wake",
+    "turnActions.wakeUnitTooltip": "Wake a sleeping unit so it can receive normal orders again.",
     "topBar.openCountryDetails": "Open country details",
     "topBar.openResourceDetails": "{resource}: open details",
     "topBar.populationAria": "Population: {population}, net growth {growth}",
@@ -6465,10 +6569,38 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.workspaceTab.formation": "Formation",
     "shell.workspaceTab.hex": "Hex",
     "shell.workspaceTab.infrastructure": "Infrastructure",
+    "shell.workspaceTab.readyUnits": "Ready units",
     "shell.workspaceTab.records": "Records",
     "shell.workspaceTab.summary": "Country summary",
+    "shell.workspaceTab.trainingQueue": "Training queue",
     "shell.workspaceTab.trade": "Trade",
+    "shell.workspaceTab.unitCatalog": "Unit catalog",
     "shell.workspaceTab.warehouses": "Warehouses",
+    "shell.units.cancelTraining": "Cancel training",
+    "shell.units.catalog": "Unit catalog",
+    "shell.units.catalogDetail": "ATK {attack} · DEF {defense} · MOV {movement} · {turns} turns",
+    "shell.units.disband": "Disband unit",
+    "shell.units.disbanded": "Unit disbanded",
+    "shell.units.disbandFailed": "Failed to disband unit",
+    "shell.units.emptyCatalog": "No unit types are available.",
+    "shell.units.emptyReadyUnits": "No ready units.",
+    "shell.units.emptyTrainingQueue": "No units are training.",
+    "shell.units.error.insufficientResources": "Not enough resources to train this unit.",
+    "shell.units.error.invalidPayload": "Invalid unit training request.",
+    "shell.units.error.noValidHex": "No valid deployment hex for this unit.",
+    "shell.units.error.regionNotControlled": "You do not control this deployment region.",
+    "shell.units.error.trainFailed": "Unit training failed.",
+    "shell.units.error.unitTypeNotFound": "Unit type was not found.",
+    "shell.units.focusHex": "Focus hex",
+    "shell.units.groupLabel": "{domain} · {class}",
+    "shell.units.overviewFailed": "Failed to load unit catalog",
+    "shell.units.ready": "Ready",
+    "shell.units.readyDetail": "HP {hp} · MOV {movement} · {status} · {hex}",
+    "shell.units.training": "Training",
+    "shell.units.trainingCancelFailed": "Failed to cancel training",
+    "shell.units.trainingCanceled": "Training canceled",
+    "shell.units.trainingQueued": "Unit training queued",
+    "shell.units.queueDetail": "{hex} · {turns}/{total} turns",
     "shell.workspaceTabs": "Workspace tabs",
     "shell.hex.controller": "Controller",
     "shell.hex.title": "Hex information",
@@ -6498,6 +6630,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "turnStatus.blockedPermanent": "Blocked permanently",
     "turnStatus.blockedUntilTime": "Blocked until {time}",
     "turnStatus.blockedUntilTurn": "Blocked until turn {turn}",
+    "turnStatus.currentCountryNeedsOrders": "Your country needs {count} order(s) before a clean end turn.",
+    "turnStatus.currentCountryReady": "Your country has no required actions.",
     "turnStatus.lastLogin": "Last login: {value}",
     "turnStatus.loading": "Loading country readiness...",
     "turnStatus.noLoginData": "no data",
@@ -8183,8 +8317,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.civilianMoveTooltipCannot": "Этот гражданский юнит сейчас не может двигаться.",
     "hexMap.civilianMoveUnavailable": "Этот гражданский юнит сейчас не может двигаться.",
     "hexMap.civilianMoveSelectTarget": "Выберите целевой гекс для колонизатора.",
-    "hexMap.formationPlacementHud": "Выберите гекс развёртывания.",
-    "hexMap.formationPlacementInvalid": "Выбранное формирование нельзя разместить на этом гексе.",
     "hexMap.civilianMovePreview": "Стоимость пути {cost}; на этот ход {points}",
     "hexMap.civilianMoveNoPath": "Нет допустимого маршрута до этого гекса.",
     "hexMap.civilianMoveTooFar": "Маршрут слишком длинный: {cost}/{points} очков хода.",
@@ -8214,6 +8346,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.foundCityOrderSent": "Приказ основания города отправлен",
     "hexMap.unitPopoverTitle": "Выбранный юнит",
     "hexMap.unitPopoverHex": "Гекс {hex}",
+    "hexMap.unitTrainingPlacementHud": "Выберите контролируемый гекс размещения для этого юнита.",
+    "hexMap.unitTrainingUnavailable": "На этом гексе нельзя тренировать выбранный юнит.",
     "hexMap.cityPendingNameFallback": "Новый город",
     "hexMap.build": "Строить",
     "hexMap.colonize": "Колонизировать",
@@ -9380,18 +9514,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "provinceContext.openAdminEditor": "Управление провинцией",
     "shell.action.army": "Командовать армией",
     "shell.action.armyDescription": "Открыть соединения, маршруты и военные приказы.",
-    "shell.action.divisionDesigner": "Конструктор дивизий",
-    "shell.action.divisionDesignerDescription": "Создать и изменить шаблоны сухопутных дивизий из боевых и поддерживающих компонентов.",
-    "shell.action.airWingDesigner": "Конструктор авиакрыльев",
-    "shell.action.airWingDesignerDescription": "Создать шаблоны авиакрыльев и их требования техники.",
-    "shell.action.fleetDesigner": "Конструктор флотов",
-    "shell.action.fleetDesignerDescription": "Создать шаблоны флотов и их требования кораблей.",
-    "shell.action.landEquipmentDesigner": "Создать технику",
-    "shell.action.landEquipmentDesignerDescription": "Собрать вариант сухопутной техники из основы и модулей.",
-    "shell.action.airEquipmentDesigner": "Создать самолёт",
-    "shell.action.airEquipmentDesignerDescription": "Собрать вариант самолёта из планера и модулей.",
-    "shell.action.navalEquipmentDesigner": "Создать корабль",
-    "shell.action.navalEquipmentDesignerDescription": "Собрать вариант корабля из корпуса и модулей.",
     "shell.action.budget": "Бюджет страны",
     "shell.action.budgetDescription": "Проверить казну, субсидии и расходы текущего хода.",
     "shell.action.buildings": "Строительство региона",
@@ -9428,6 +9550,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.technologyDescription": "Открыть исследования, прогресс и требования.",
     "shell.action.turnStatus": "Готовность стран",
     "shell.action.turnStatusDescription": "Проверить, кто готов к завершению текущего хода.",
+    "shell.action.unitCatalog": "Тренировать юниты",
+    "shell.action.unitCatalogDescription": "Открыть типы юнитов и выбрать гекс размещения для тренировки.",
     "shell.admin": "Админ",
     "shell.adminPanel": "Админ-панель",
     "shell.availableActions": "Доступные действия",
@@ -9485,6 +9609,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.dashboard.scienceSpend": "Наука вложена",
     "shell.dashboard.totalPopulation": "Всего населения",
     "shell.dashboard.treasury": "Казна",
+    "shell.dashboard.units": "Юниты",
+    "shell.dashboard.unitsIntro": "Тренируйте отдельные юниты на карте, проверяйте очередь размещения и управляйте готовыми юнитами.",
     "shell.endTurn": "Завершить ход",
     "shell.entryCountryProfile": "Профиль страны",
     "shell.entryEnterGame": "Войти в игру",
@@ -9537,6 +9663,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.mode.overviewDescription": "Сводка страны поверх карты: ресурсы, проблемы, готовность и приоритеты.",
     "shell.mode.population": "Население",
     "shell.mode.populationDescription": "Общество страны: pops, профессии, культуры, религии и потребности.",
+    "shell.mode.units": "Юниты",
+    "shell.mode.unitsDescription": "Тренировка отдельных юнитов из сценарных типов.",
     "shell.modeDock": "Режимы карты",
     "shell.notifications": "Уведомления",
     "shell.orderColonizationTitle": "Новый приказ колонизации",
@@ -9580,6 +9708,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.subsidies": "Субсидии",
     "shell.preview.topCulture": "Крупнейшая культура",
     "shell.preview.topProfession": "Крупнейшая профессия",
+    "shell.preview.readyUnits": "Готовые юниты",
+    "shell.preview.trainingUnits": "Очередь тренировки",
+    "shell.preview.trainingUnitsDetail": "Юниты в подготовке",
+    "shell.preview.unitTypes": "Типы юнитов",
+    "shell.preview.unitTypesDetail": "Сценарный каталог юнитов",
+    "shell.preview.units": "Юниты",
+    "shell.preview.noUnits": "Юнитов нет",
     "shell.preview.unknownBuilding": "Здание {id}",
     "shell.resource.colonization": "Колонизация",
     "shell.resource.construction": "Строительство",
@@ -9648,6 +9783,42 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "topBar.netGrowth": "Чистый прирост",
     "topBar.netPerTurn": "Итог за ход",
     "topBar.nextTurn": "Следующий ход #{turn}",
+    "turnActions.description": "Ход можно завершить, но эти юниты еще могут действовать.",
+    "turnActions.actionTrayAria": "Панель действий юнита",
+    "turnActions.commandHubAria": "Кнопка хода и командный узел юнита",
+    "turnActions.focusUnit": "Фокус",
+    "turnActions.focusUnitTooltip": "Центрировать карту на действии, которое требует внимания.",
+    "turnActions.forceEndTurn": "Завершить принудительно",
+    "turnActions.forceEndTurnConfirm": "Завершить ход с незавершенными действиями: {count}?",
+    "turnActions.forceEndTurnTooltip": "Все равно завершить ход после подтверждения. Скрытые приказы юнитам не создаются.",
+    "turnActions.foundCity": "Основать город",
+    "turnActions.foundCityTooltip": "Сфокусировать колониста, чтобы подтвердить основание города на карте.",
+    "turnActions.needsOrders": "Нужны приказы: {count}",
+    "turnActions.nextTurnBlockedTooltip": "Некоторые юниты еще могут действовать. Нажмите, чтобы посмотреть, или Shift+Click для принудительного завершения.",
+    "turnActions.queueAria": "Очередь обязательных действий",
+    "turnActions.readyDescription": "Обязательных действий больше нет",
+    "turnActions.readyTitle": "Готово",
+    "turnActions.readyTooltip": "Все обязательные действия закрыты. Нажмите, чтобы отметить страну готовой.",
+    "turnActions.skipQueued": "Юнит пропустит этот ход",
+    "turnActions.skipUnit": "Пропуск",
+    "turnActions.skipUnitTooltip": "Потратить оставшееся действие юнита только на текущий ход.",
+    "turnActions.sleepQueued": "Юнит уснет",
+    "turnActions.sleepUnit": "Сон",
+    "turnActions.sleepUnitTooltip": "Перевести юнит в режим ожидания, чтобы он не блокировал будущие ходы до пробуждения.",
+    "turnActions.stat.attack": "Атака",
+    "turnActions.stat.defense": "Защита",
+    "turnActions.stat.hp": "Здоровье",
+    "turnActions.stat.movement": "Очки хода",
+    "turnActions.title": "Требуются действия",
+    "turnActions.unitCanAct.description": "У этого юнита доступны движение или боевые действия.",
+    "turnActions.unitCanAct.label": "Юнит может действовать",
+    "turnActions.unitCanFoundCity.description": "Этот гражданский юнит может двигаться или основать город.",
+    "turnActions.unitCanFoundCity.label": "Гражданский юнит может действовать",
+    "turnActions.unitPortraitAria": "Портрет юнита",
+    "turnActions.unitStatsAria": "Текущие характеристики юнита",
+    "turnActions.wakeQueued": "Юнит проснется",
+    "turnActions.wakeUnit": "Пробудить",
+    "turnActions.wakeUnitTooltip": "Пробудить спящий юнит, чтобы он снова мог получать обычные приказы.",
     "topBar.openCountryDetails": "Открыть детали страны",
     "topBar.openResourceDetails": "{resource}: открыть детали",
     "topBar.populationAria": "Население: {population}, прирост {growth}",
@@ -9729,10 +9900,38 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.workspaceTab.formation": "Формирование",
     "shell.workspaceTab.hex": "Гекс",
     "shell.workspaceTab.infrastructure": "Инфраструктура",
+    "shell.workspaceTab.readyUnits": "Готовые юниты",
     "shell.workspaceTab.records": "Записи",
     "shell.workspaceTab.summary": "Сводка страны",
+    "shell.workspaceTab.trainingQueue": "Очередь тренировки",
     "shell.workspaceTab.trade": "Торговля",
+    "shell.workspaceTab.unitCatalog": "Каталог юнитов",
     "shell.workspaceTab.warehouses": "Склады",
+    "shell.units.cancelTraining": "Отменить тренировку",
+    "shell.units.catalog": "Каталог юнитов",
+    "shell.units.catalogDetail": "АТК {attack} · ЗАЩ {defense} · ХОД {movement} · {turns} ход.",
+    "shell.units.disband": "Расформировать юнит",
+    "shell.units.disbanded": "Юнит расформирован",
+    "shell.units.disbandFailed": "Не удалось расформировать юнит",
+    "shell.units.emptyCatalog": "Нет доступных типов юнитов.",
+    "shell.units.emptyReadyUnits": "Нет готовых юнитов.",
+    "shell.units.emptyTrainingQueue": "Нет юнитов в тренировке.",
+    "shell.units.error.insufficientResources": "Не хватает ресурсов для тренировки этого юнита.",
+    "shell.units.error.invalidPayload": "Некорректный запрос тренировки юнита.",
+    "shell.units.error.noValidHex": "Нет допустимого гекса размещения для этого юнита.",
+    "shell.units.error.regionNotControlled": "Вы не контролируете регион размещения.",
+    "shell.units.error.trainFailed": "Не удалось поставить юнит в тренировку.",
+    "shell.units.error.unitTypeNotFound": "Тип юнита не найден.",
+    "shell.units.focusHex": "Показать гекс",
+    "shell.units.groupLabel": "{domain} · {class}",
+    "shell.units.overviewFailed": "Не удалось загрузить каталог юнитов",
+    "shell.units.ready": "Готово",
+    "shell.units.readyDetail": "HP {hp} · ХОД {movement} · {status} · {hex}",
+    "shell.units.training": "Тренировка",
+    "shell.units.trainingCancelFailed": "Не удалось отменить тренировку",
+    "shell.units.trainingCanceled": "Тренировка отменена",
+    "shell.units.trainingQueued": "Юнит поставлен в тренировку",
+    "shell.units.queueDetail": "{hex} · {turns}/{total} ход.",
     "shell.workspaceTabs": "Вкладки рабочей области",
     "shell.hex.controller": "Контролирует",
     "shell.hex.title": "Информация о гексе",
@@ -9762,6 +9961,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "turnStatus.blockedPermanent": "Заблокирована бессрочно",
     "turnStatus.blockedUntilTime": "Заблокирована до {time}",
     "turnStatus.blockedUntilTurn": "Заблокирована до хода {turn}",
+    "turnStatus.currentCountryNeedsOrders": "Вашей стране нужны приказы: {count}, чтобы чисто завершить ход.",
+    "turnStatus.currentCountryReady": "У вашей страны нет обязательных действий.",
     "turnStatus.lastLogin": "Последний вход: {value}",
     "turnStatus.loading": "Загрузка готовности стран...",
     "turnStatus.noLoginData": "нет данных",

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { BASE_RESOURCE_ICON_URLS } from "../assets/baseResourceIcons";
-import { fetchTurnStatus, type TurnStatusItem } from "../lib/api";
+import { fetchTurnActions, fetchTurnStatus, type TurnStatusItem } from "../lib/api";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
 import { useUiText } from "../i18n/useUiText";
 import type { UiTextKey } from "../i18n/uiText";
@@ -19,6 +19,7 @@ const resourceCards = [
 type Props = {
   open: boolean;
   onClose: () => void;
+  token?: string | null;
 };
 
 type TurnStatusPayload = {
@@ -128,10 +129,11 @@ function ResourceStrip({ item }: { item: TurnStatusItem }) {
   );
 }
 
-export function TurnStatusModal({ open, onClose }: Props) {
+export function TurnStatusModal({ open, onClose, token }: Props) {
   const { t } = useUiText();
   const [loading, setLoading] = useState(false);
   const [payload, setPayload] = useState<TurnStatusPayload | null>(null);
+  const [blockingActionCount, setBlockingActionCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -163,6 +165,24 @@ export function TurnStatusModal({ open, onClose }: Props) {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open || !token) {
+      setBlockingActionCount(null);
+      return;
+    }
+    let cancelled = false;
+    fetchTurnActions(token)
+      .then((checklist) => {
+        if (!cancelled) setBlockingActionCount(checklist.blockingCount);
+      })
+      .catch(() => {
+        if (!cancelled) setBlockingActionCount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, token]);
+
   const sorted = useMemo(() => {
     if (!payload) {
       return [];
@@ -186,6 +206,14 @@ export function TurnStatusModal({ open, onClose }: Props) {
         description={`${t("shell.turn", { turn: payload?.turnId ?? "-" })} · ${t("shell.readiness.progress", { ready: payload?.readyCount ?? 0, required: payload?.requiredCount ?? 0 })}`}
         onClose={onClose}
       />
+
+      {blockingActionCount != null ? (
+        <div className="arc-turn-status-player-summary">
+          {blockingActionCount > 0
+            ? t("turnStatus.currentCountryNeedsOrders", { count: blockingActionCount })
+            : t("turnStatus.currentCountryReady")}
+        </div>
+      ) : null}
 
       {loading && !payload ? (
         <div className="arc-turn-status-loading">

@@ -11,6 +11,15 @@ Arcanorum is a single-world online grand strategy game designed to grow toward t
 - Scenarios own their countries, regions, content, AI profiles, localization, Arcawiki, theme, defines, and assets.
 - The server is authoritative. The client may request actions, but the server validates everything.
 
+## Hex Map Geometry
+
+Arcanorum's target map uses **pointy-top rectangular offset hexes** on a rectangular `width x height` map artifact.
+
+- Keep the canonical coordinate orientation pointy-top with a visually rectangular left/right map boundary. Do not switch helpers, renderers, masks, pathfinding, or authored assets to flat-top or accumulating axial screen projection without an explicit architecture decision.
+- Keep generated/authored hex maps rectangular by settings bounds: `q` in `[0, width)`, `r` in `[0, height)`, with optional horizontal wrapping only when `wrapX` is enabled.
+- Regions may form irregular gameplay shapes by owning sets of hex IDs, but the underlying static map artifact remains rectangular.
+- Any proposal to change hex orientation or map shape must account for `axialToPixel`, `pixelToAxial`, neighbor directions, edge masks, rivers/coasts, corridors, path previews, hit testing, viewport culling, and existing scenario artifacts.
+
 ## Required Workflow
 
 Before editing, restate the task, list relevant agent guides/docs, and wait for explicit user confirmation when the task is ambiguous, destructive, or changes gameplay architecture. For straightforward documentation implementation already requested by the user, proceed with narrowly scoped edits.

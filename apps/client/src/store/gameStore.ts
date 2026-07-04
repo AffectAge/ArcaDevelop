@@ -385,6 +385,26 @@ export const useGameStore = create<GameState>((set) => ({
       }
 
       if ((delta.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0) {
+        if (delta.mu) {
+          nextWorldBase.unitsById = { ...(nextWorldBase.unitsById ?? {}) };
+          for (const [unitId, value] of Object.entries(delta.mu)) {
+            if (!value) {
+              delete nextWorldBase.unitsById[unitId];
+              continue;
+            }
+            nextWorldBase.unitsById[unitId] = value;
+          }
+        }
+        if (delta.uq) {
+          nextWorldBase.unitTrainingQueueByCountry = { ...(nextWorldBase.unitTrainingQueueByCountry ?? {}) };
+          for (const [countryId, value] of Object.entries(delta.uq)) {
+            if (!value) {
+              delete nextWorldBase.unitTrainingQueueByCountry[countryId];
+              continue;
+            }
+            nextWorldBase.unitTrainingQueueByCountry[countryId] = value;
+          }
+        }
         if (delta.fl) {
           nextWorldBase.fleetsById = { ...nextWorldBase.fleetsById };
           for (const [fleetId, value] of Object.entries(delta.fl)) {

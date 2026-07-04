@@ -53,28 +53,30 @@ export function MapLensHud<TLayer extends string, TLens extends string>({
               </motion.div>
             ) : null}
           </AnimatePresence>
-          <motion.div
-            layout
-            transition={{ layout: { duration: 0.16, ease: "easeOut" } }}
-            className="arc-scrollbar relative z-10 flex min-h-[58px] max-h-[66px] items-center justify-center gap-2 overflow-x-auto overflow-y-hidden px-3 py-2.5"
-          >
-            {layers.map((layer) => {
-              const Icon = layer.icon ?? Briefcase;
-              return (
-                <Tooltip key={layer.id} content={layer.tooltip ?? layer.label}>
-                  <motion.button
-                    type="button"
-                    onClick={() => onLayerToggle(layer.id)}
-                    className={getLensIconButtonClass(layer.active)}
-                    aria-label={layer.label}
-                    aria-pressed={layer.active}
-                  >
-                    <Icon size={20} />
-                  </motion.button>
-                </Tooltip>
-              );
-            })}
-          </motion.div>
+          {layers.length > 0 ? (
+            <motion.div
+              layout
+              transition={{ layout: { duration: 0.16, ease: "easeOut" } }}
+              className="arc-scrollbar relative z-10 flex min-h-[58px] max-h-[66px] items-center justify-center gap-2 overflow-x-auto overflow-y-hidden px-3 py-2.5"
+            >
+              {layers.map((layer) => {
+                const Icon = layer.icon ?? Briefcase;
+                return (
+                  <Tooltip key={layer.id} content={layer.tooltip ?? layer.label}>
+                    <motion.button
+                      type="button"
+                      onClick={() => onLayerToggle(layer.id)}
+                      className={getLensIconButtonClass(layer.active)}
+                      aria-label={layer.label}
+                      aria-pressed={layer.active}
+                    >
+                      <Icon size={20} />
+                    </motion.button>
+                  </Tooltip>
+                );
+              })}
+            </motion.div>
+          ) : null}
         </div>
       </div>
 

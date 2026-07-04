@@ -14,6 +14,7 @@ import type {
   MilitaryBranch,
   ModifierDefinition,
   TreatyConstructionExpirationPolicy,
+  UnitTypeDefinition,
 } from "@arcanorum/shared";
 import type { BuildingCountryLimit, PollutionProductivityMode } from "../mechanics/buildingMechanics";
 import type { GoodDistributionType, GoodTransportMode } from "../mechanics/marketTurnMechanics";
@@ -301,6 +302,7 @@ export type GameSettings = {
     decisions: GameContentEntry[];
     events: GameContentEntry[];
     journalEntries: GameContentEntry[];
+    unitTypes: UnitTypeDefinition[];
     battalions: BattalionContentEntry[];
     shipTypes: MilitaryContentEntry[];
     aircraftTypes: MilitaryContentEntry[];

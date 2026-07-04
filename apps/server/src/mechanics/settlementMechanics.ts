@@ -3,11 +3,13 @@ import type {
   CityMarker,
   EventLogEntry,
   FoundCityOrder,
+  MapUnit,
   Order,
   RegionPopulation,
   ResourceFlowSourceType,
   ResourceId,
   SettlementProject,
+  UnitTypeDefinition,
   WorldBase,
 } from "@arcanorum/shared";
 import { transferStateOwnedBuildingsToController } from "./buildingMechanics";
@@ -51,6 +53,7 @@ export type SettlementTurnResult = {
 export type SettlementWorldState = Pick<
   WorldBase,
   | "civilianUnitsById"
+  | "unitsById"
   | "settlementProjectsById"
   | "cityMarkersById"
   | "resourcesByCountry"
@@ -68,6 +71,7 @@ export function resolveFoundCityOrder(params: {
   order: Order;
   playerId: string;
   worldBase: SettlementWorldState;
+  unitTypes?: readonly UnitTypeDefinition[];
   getHexRegionId: HexRegionReader;
   getRegionColonizationConfig: (regionId: string) => RegionColonizationConfig;
   createId: CreateSettlementId;
@@ -82,6 +86,7 @@ export function resolveFoundCityOrder(params: {
   const validation = validateFoundCityOrder({
     order: params.order,
     worldBase: params.worldBase,
+    unitTypes: params.unitTypes ?? [],
     getHexRegionId: params.getHexRegionId,
     getRegionColonizationConfig: params.getRegionColonizationConfig,
   });
@@ -95,7 +100,12 @@ export function resolveFoundCityOrder(params: {
   const projectId = `settlement:${params.createId()}`;
   const unit = validation.unit;
   const cityName = normalizeCityName(params.order.name);
-  delete params.worldBase.civilianUnitsById[unit.id];
+  if ("unitTypeId" in unit) {
+    params.worldBase.unitsById ??= {};
+    delete params.worldBase.unitsById[unit.id];
+  } else {
+    delete params.worldBase.civilianUnitsById[unit.id];
+  }
   params.worldBase.settlementProjectsById[projectId] = {
     id: projectId,
     name: cityName,
@@ -117,20 +127,21 @@ export function resolveFoundCityOrder(params: {
 export function validateFoundCityOrder(params: {
   order: FoundCityOrder;
   worldBase: SettlementWorldState;
+  unitTypes?: readonly UnitTypeDefinition[];
   getHexRegionId: HexRegionReader;
   getRegionColonizationConfig: (regionId: string) => RegionColonizationConfig;
 }):
-  | { ok: true; unit: CivilianUnit; regionConfig: RegionColonizationConfig }
+  | { ok: true; unit: CivilianUnit | MapUnit; regionConfig: RegionColonizationConfig }
   | { ok: false; reason: string } {
   const cityNameValidation = validateCityName(params.order.name);
   if (!cityNameValidation.ok) {
     return { ok: false, reason: cityNameValidation.reason };
   }
-  const unit = params.worldBase.civilianUnitsById[params.order.civilianUnitId];
-  if (!unit || unit.countryId !== params.order.countryId || unit.type !== "colonizer") {
+  const unit = findFoundCityUnit(params.worldBase, params.unitTypes ?? [], params.order.civilianUnitId);
+  if (!unit || unit.countryId !== params.order.countryId) {
     return { ok: false, reason: "COLONIZER_NOT_FOUND" };
   }
-  if (unit.status === "captured") {
+  if (unit.status === "captured" || ("unitTypeId" in unit && unit.status === "destroyed")) {
     return { ok: false, reason: "COLONIZER_CAPTURED" };
   }
   if (unit.hexId !== params.order.targetHexId) {
@@ -151,6 +162,20 @@ export function validateFoundCityOrder(params: {
     return { ok: false, reason: "COLONIZATION_DISABLED" };
   }
   return { ok: true, unit, regionConfig };
+}
+
+function findFoundCityUnit(
+  worldBase: SettlementWorldState,
+  unitTypes: readonly UnitTypeDefinition[],
+  unitId: string,
+): CivilianUnit | MapUnit | null {
+  const mapUnit = worldBase.unitsById?.[unitId];
+  if (mapUnit) {
+    const unitType = unitTypes.find((candidate) => candidate.id === mapUnit.unitTypeId);
+    return unitType?.canFoundCity === true ? mapUnit : null;
+  }
+  const legacyUnit = worldBase.civilianUnitsById[unitId];
+  return legacyUnit?.type === "colonizer" ? legacyUnit : null;
 }
 
 function validateCityName(value: unknown): { ok: true } | { ok: false; reason: string } {

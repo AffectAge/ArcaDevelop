@@ -13,31 +13,26 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
   setWorldBaseTurnId: (turnId: number) => void;
   cloneWorldBaseSectionSnapshot: (mask: number) => TSnapshot;
   getCurrentOrders: (turnId: number) => Map<string, Order[]> | undefined;
-  refreshDivisionStatsFromTemplates: () => void;
-  emitMilitarySupplyNews: (news: EventLogEntry[]) => void;
   getActiveColonizeRegionsByCountry: () => Map<string, Iterable<string>>;
-  resolveArmyMoveOrder: (params: {
-    order: Order;
-    playerId: string;
-    movedDivisionIds: Set<string>;
-    rejectedOrders: WorldDelta["rejectedOrders"];
-    news: EventLogEntry[];
-  }) => void;
   resolveUnitMoveOrder: (params: {
     order: Order;
     playerId: string;
-    movedDivisionIds: Set<string>;
-    movedCivilianUnitIds: Set<string>;
-    movedFleetIds: Set<string>;
+    movedMapUnitIds: Set<string>;
     rejectedOrders: WorldDelta["rejectedOrders"];
     news: EventLogEntry[];
   }) => void;
   resolveUnitAttackOrder: (params: {
     order: Order;
     playerId: string;
-    movedDivisionIds: Set<string>;
+    movedMapUnitIds: Set<string>;
     rejectedOrders: WorldDelta["rejectedOrders"];
     news: EventLogEntry[];
+  }) => void;
+  resolveUnitWaitOrder: (params: {
+    order: Order;
+    playerId: string;
+    movedMapUnitIds: Set<string>;
+    rejectedOrders: WorldDelta["rejectedOrders"];
   }) => void;
   resolveBuildOrder: (params: {
     order: Order;
@@ -56,15 +51,11 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
     playerId: string;
     rejectedOrders: WorldDelta["rejectedOrders"];
   }) => void;
-  advanceStoredArmyRoutesTurn: (params: { movedDivisionIds: Set<string>; news: EventLogEntry[] }) => void;
   advanceStoredUnitRoutesTurn: (params: {
-    movedCivilianUnitIds: Set<string>;
-    movedFleetIds: Set<string>;
+    movedMapUnitIds: Set<string>;
     news: EventLogEntry[];
   }) => void;
-  advanceMilitaryFormationQueue: (news: EventLogEntry[]) => void;
-  advanceCivilianUnitQueue: () => void;
-  resolveEquipmentProductionLinesTurn: (news: EventLogEntry[]) => void;
+  advanceUnitTrainingQueue: (news: EventLogEntry[]) => void;
   resolveColonizationSupportTurn: (params: {
     colonizeTargetsByCountry: Map<string, Set<string>>;
     touchedRegionIds: Set<string>;
@@ -106,11 +97,7 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
   const rejectedOrders: WorldDelta["rejectedOrders"] = [];
   const news: EventLogEntry[] = [];
   const uiNotifications: TUiNotification[] = [];
-  const movedDivisionIds = new Set<string>();
-  const movedCivilianUnitIds = new Set<string>();
-  const movedFleetIds = new Set<string>();
-  deps.refreshDivisionStatsFromTemplates();
-  deps.emitMilitarySupplyNews(news);
+  const movedMapUnitIds = new Set<string>();
   const currentOrders = deps.getCurrentOrders(turnId) ?? new Map<string, Order[]>();
 
   const colonizeTargetsByCountry = new Map<string, Set<string>>();
@@ -124,14 +111,14 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
 
   currentOrders.forEach((orders, playerId) => {
     for (const order of orders) {
-      if (order.type === "ARMY_MOVE") {
-        deps.resolveArmyMoveOrder({ order, playerId, movedDivisionIds, rejectedOrders, news });
-      }
       if (order.type === "UNIT_MOVE") {
-        deps.resolveUnitMoveOrder({ order, playerId, movedDivisionIds, movedCivilianUnitIds, movedFleetIds, rejectedOrders, news });
+        deps.resolveUnitMoveOrder({ order, playerId, movedMapUnitIds, rejectedOrders, news });
       }
       if (order.type === "UNIT_ATTACK") {
-        deps.resolveUnitAttackOrder({ order, playerId, movedDivisionIds, rejectedOrders, news });
+        deps.resolveUnitAttackOrder({ order, playerId, movedMapUnitIds, rejectedOrders, news });
+      }
+      if (order.type === "UNIT_SKIP_TURN" || order.type === "UNIT_SLEEP" || order.type === "UNIT_WAKE") {
+        deps.resolveUnitWaitOrder({ order, playerId, movedMapUnitIds, rejectedOrders });
       }
       if (order.type === "BUILD") {
         deps.resolveBuildOrder({ order, playerId, rejectedOrders });
@@ -145,13 +132,8 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
     }
   });
 
-  deps.advanceStoredArmyRoutesTurn({ movedDivisionIds, news });
-  deps.advanceStoredUnitRoutesTurn({ movedCivilianUnitIds, movedFleetIds, news });
-  deps.advanceMilitaryFormationQueue(news);
-  deps.advanceCivilianUnitQueue();
-  deps.resolveEquipmentProductionLinesTurn(news);
-  deps.refreshDivisionStatsFromTemplates();
-  deps.emitMilitarySupplyNews(news);
+  deps.advanceStoredUnitRoutesTurn({ movedMapUnitIds, news });
+  deps.advanceUnitTrainingQueue(news);
   deps.resolveColonizationSupportTurn({ colonizeTargetsByCountry, touchedRegionIds });
   deps.resolveSettlementProjectsTurn(news);
   deps.flushResourceLedger();

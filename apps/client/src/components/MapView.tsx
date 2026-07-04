@@ -20,6 +20,7 @@ import {
   type MapFeatureVisualId,
   type MapFeatureVisualRuleDefinition,
   type RegionResourceDeposit,
+  type UnitTypeDefinition,
   type WorldBase,
 } from "@arcanorum/shared";
 import {
@@ -95,6 +96,7 @@ import { getResourceDepositAtlasTextures } from "../map/resourceDepositAtlasText
 import { CorridorBuildHud } from "./map-hud/CorridorBuildHud";
 import { getCorridorAtlasTextures, type CorridorAtlasTextures } from "../map/corridorAtlasTextureCache";
 import type { CorridorAtlasStatus } from "../assets/corridorAtlas";
+import { getUnitAtlasTextures } from "../map/unitAtlasTextureCache";
 
 export type MapModeId = MapInteractionMode;
 
@@ -130,6 +132,9 @@ type Props = {
   colonizerPlacement?: { active: boolean } | null;
   onSelectColonizerPlacementTarget?: (target: { hexId: HexId; regionId: string }) => void;
   onCancelColonizerPlacement?: () => void;
+  unitTrainingPlacement?: { unitType: UnitTypeDefinition } | null;
+  onSelectUnitTrainingPlacementTarget?: (target: { hexId: HexId; regionId: string }) => void;
+  onCancelUnitTrainingPlacement?: () => void;
   onHexRenameCharged?: (chargedDucats: number) => void;
   colonizationIconUrl?: string | null;
   ducatsIconUrl?: string | null;
@@ -173,13 +178,6 @@ type Props = {
   onUndoCorridorPlacementPoint?: () => void;
   onCancelCorridorPlacement?: () => void;
   onConfirmCorridorPlacement?: () => void;
-  militaryFormationPlacement?: {
-    templateName: string;
-    kind: "land" | "naval" | "air";
-    validHexIds: readonly HexId[];
-  } | null;
-  onSelectMilitaryFormationPlacementTarget?: (target: { hexId: HexId; regionId: string }) => void;
-  onCancelMilitaryFormationPlacement?: () => void;
 };
 
 type HoverState = {
@@ -187,6 +185,10 @@ type HoverState = {
   x: number;
   y: number;
 };
+
+function isHexId(value: string | null | undefined): value is HexId {
+  return Boolean(value && /^hex:-?\d+:-?\d+$/.test(value));
+}
 
 type ActivePointer = {
   x: number;
@@ -210,6 +212,7 @@ type FoundCityConfirmTarget = {
 };
 
 type SelectedMapUnit =
+  | { kind: "map"; unitId: string; fromHexId: HexId }
   | { kind: "civilian"; unitId: string; fromHexId: HexId }
   | { kind: "division"; divisionId: string; fromHexId: HexId }
   | { kind: "fleet"; fleetId: string; fromHexId: HexId };
@@ -268,6 +271,7 @@ const MAP_LAYER_DESCRIPTORS: Array<{ id: MapLayerToggleId; labelKey: UiTextKey; 
   { id: "armies", labelKey: "map.layer.armies", tooltipKey: "map.layer.armiesTooltip", icon: Landmark },
   { id: "countryLabels", labelKey: "map.layer.countryLabels", tooltipKey: "map.layer.countryLabelsTooltip", icon: Tags },
 ];
+const VISIBLE_MAP_LENS_IDS = new Set<MapLensId>(["terrain"]);
 
 function buildInitialHexCamera(settings: HexMapSettings): HexCamera {
   return {
@@ -355,6 +359,9 @@ export function MapView({
   colonizerPlacement = null,
   onSelectColonizerPlacementTarget,
   onCancelColonizerPlacement,
+  unitTrainingPlacement = null,
+  onSelectUnitTrainingPlacementTarget,
+  onCancelUnitTrainingPlacement,
   onHexRenameCharged: _onHexRenameCharged,
   colonizationIconUrl: _colonizationIconUrl,
   ducatsIconUrl: _ducatsIconUrl,
@@ -388,9 +395,6 @@ export function MapView({
   onUndoCorridorPlacementPoint,
   onCancelCorridorPlacement,
   onConfirmCorridorPlacement,
-  militaryFormationPlacement = null,
-  onSelectMilitaryFormationPlacementTarget,
-  onCancelMilitaryFormationPlacement,
 }: Props) {
   const { t } = useUiText();
   const authCountryId = useGameStore((state) => state.auth?.countryId ?? null);
@@ -437,6 +441,7 @@ export function MapView({
   const unitLayerRef = useRef<Container | null>(null);
   const buildingSpritePoolRef = useRef<Map<string, Sprite>>(new Map());
   const buildingGraphicsPoolRef = useRef<Map<string, Graphics>>(new Map());
+  const unitSpritePoolRef = useRef<Map<string, Sprite>>(new Map());
   const unitGraphicsPoolRef = useRef<Map<string, Graphics>>(new Map());
   const cameraRef = useRef<HexCamera>(initialCamera);
   const cameraTargetRef = useRef<HexCamera>(initialCamera);
@@ -474,6 +479,7 @@ export function MapView({
   const [featureTextureVersion, setFeatureTextureVersion] = useState(0);
   const [resourceDepositTextureVersion, setResourceDepositTextureVersion] = useState(0);
   const [corridorTextureVersion, setCorridorTextureVersion] = useState(0);
+  const [unitTextureVersion, setUnitTextureVersion] = useState(0);
   const [edgeScrollEnabled, setEdgeScrollEnabled] = useState(() => readMapNavigationSettings(useGameStore.getState().auth?.countryId).edgeScrollEnabled);
   const [reducedMotion, setReducedMotion] = useState(() => reducedMotionRef.current);
   const [activeLens, setActiveLens] = useState<MapLensId>(() => readMapLensSetting(useGameStore.getState().auth?.countryId, suggestedMapLens ?? "terrain"));
@@ -666,6 +672,10 @@ export function MapView({
   const civilianUnitById = useMemo(
     () => new Map(Object.values(worldBase?.civilianUnitsById ?? {}).map((unit) => [unit.id, unit] as const)),
     [worldBase?.civilianUnitsById],
+  );
+  const mapUnitById = useMemo(
+    () => new Map(Object.values(worldBase?.unitsById ?? {}).map((unit) => [unit.id, unit] as const)),
+    [worldBase?.unitsById],
   );
   const divisionById = useMemo(
     () => new Map(Object.values(worldBase?.divisionsById ?? {}).map((division) => [division.id, division] as const)),
@@ -879,6 +889,16 @@ export function MapView({
     }
     return map;
   }, [worldBase?.divisionsById]);
+  const mapUnitsByHexId = useMemo(() => {
+    const map = new Map<HexId, NonNullable<NonNullable<WorldBase["unitsById"]>[string]>[]>();
+    for (const unit of Object.values(worldBase?.unitsById ?? {})) {
+      if (unit.status === "destroyed" || unit.status === "captured") continue;
+      const list = map.get(unit.hexId) ?? [];
+      list.push(unit);
+      map.set(unit.hexId, list);
+    }
+    return map;
+  }, [worldBase?.unitsById]);
   const fleetsByHexId = useMemo(() => {
     const map = new Map<HexId, NonNullable<WorldBase["fleetsById"][string]>[]>();
     for (const fleet of Object.values(worldBase?.fleetsById ?? {})) {
@@ -946,10 +966,6 @@ export function MapView({
     }
     return map;
   }, [authCountryId, cityHexIds, hexBuildPlacement, mapArtifact.settings, placementWorld, tileById, tilesByRegionId, viewportCulling.key, viewportCulling.visibleTileIds, visibleRegionIds]);
-  const militaryFormationValidHexIds = useMemo(
-    () => new Set<HexId>(militaryFormationPlacement?.validHexIds ?? []),
-    [militaryFormationPlacement],
-  );
 
   const layerOptions = useMemo(
     () =>
@@ -965,7 +981,7 @@ export function MapView({
 
   const lensOptions = useMemo(
     () =>
-      MAP_LENS_DESCRIPTORS.map((lens) => ({
+      MAP_LENS_DESCRIPTORS.filter((lens) => VISIBLE_MAP_LENS_IDS.has(lens.id)).map((lens) => ({
         id: lens.id,
         label: t(lens.labelKey),
         tooltip: t(lens.tooltipKey),
@@ -1077,6 +1093,53 @@ export function MapView({
     return valid;
   }, [canQueueColonizerOnTile, colonizerPlacement?.active, tileById, viewportCulling.key, viewportCulling.visibleTileIds]);
 
+  const unitTrainingDeploymentHexIds = useMemo(() => {
+    const ids = new Set<HexId>();
+    if (!authCountryId || !worldBase) return ids;
+    for (const city of Object.values(worldBase.cityMarkersById ?? {})) {
+      if (city.countryId === authCountryId && isHexId(city.targetHexId)) ids.add(city.targetHexId);
+    }
+    for (const instances of Object.values(worldBase.regionBuildingsByRegion ?? {})) {
+      for (const instance of instances ?? []) {
+        if (instance.owner.type === "state" && instance.owner.countryId === authCountryId && isHexId(instance.targetHexId)) {
+          ids.add(instance.targetHexId);
+        }
+      }
+    }
+    return ids;
+  }, [authCountryId, worldBase]);
+
+  const canTrainUnitOnTile = useCallback(
+    (tile: HexTile) => {
+      const unitType = unitTrainingPlacement?.unitType;
+      if (!authCountryId || !unitType || !onSelectUnitTrainingPlacementTarget || !worldBase) return false;
+      const controller = worldBase.regionController[tile.regionId] ?? worldBase.regionOwner[tile.regionId] ?? null;
+      if (controller !== authCountryId) return false;
+      if (!unitTrainingDeploymentHexIds.has(tile.id)) return false;
+      if (unitType.domain === "naval" && !tile.waterKind) return false;
+      if ((unitType.domain === "land" || unitType.domain === "civilian") && tile.waterKind) return false;
+      const presentUnits = mapUnitsByHexId.get(tile.id) ?? [];
+      if (unitType.domain === "civilian") {
+        return !presentUnits.some((unit) => unit.countryId === authCountryId);
+      }
+      if (unitType.domain === "land" || unitType.domain === "naval") {
+        return !presentUnits.some((unit) => unit.countryId === authCountryId);
+      }
+      return true;
+    },
+    [authCountryId, mapUnitsByHexId, onSelectUnitTrainingPlacementTarget, unitTrainingDeploymentHexIds, unitTrainingPlacement, worldBase],
+  );
+
+  const unitTrainingPlacementValidHexIds = useMemo(() => {
+    if (!unitTrainingPlacement) return new Set<HexId>();
+    const valid = new Set<HexId>();
+    for (const hexId of viewportCulling.visibleTileIds) {
+      const tile = tileById.get(hexId);
+      if (tile && canTrainUnitOnTile(tile)) valid.add(hexId);
+    }
+    return valid;
+  }, [canTrainUnitOnTile, tileById, unitTrainingPlacement, viewportCulling.key, viewportCulling.visibleTileIds]);
+
   const buildHexWorkspaceDetails = useCallback(
     (tile: HexTile): StrategyShellSelectedHexDetails => {
       const hasCity = cityHexIds.has(tile.id);
@@ -1159,12 +1222,12 @@ export function MapView({
         onSelectHexBuildPlacementTarget?.({ hexId: tile.id, regionId: tile.regionId });
         return;
       }
-      if (militaryFormationPlacement) {
-        if (!militaryFormationValidHexIds.has(tile.id)) {
-          setMapActionNotice(t("hexMap.formationPlacementInvalid"));
+      if (unitTrainingPlacement) {
+        if (!canTrainUnitOnTile(tile)) {
+          setMapActionNotice(t("hexMap.unitTrainingUnavailable"));
           return;
         }
-        onSelectMilitaryFormationPlacementTarget?.({ hexId: tile.id, regionId: tile.regionId });
+        onSelectUnitTrainingPlacementTarget?.({ hexId: tile.id, regionId: tile.regionId });
         return;
       }
       if (colonizerPlacement?.active) {
@@ -1229,16 +1292,18 @@ export function MapView({
           return;
         }
         const path = findHexPath(mapArtifact, divisionAttackSelection.fromHexId, tile.id, 2, tileById);
-        const attacker = divisionById.get(divisionAttackSelection.divisionId);
+        const attacker = divisionById.get(divisionAttackSelection.divisionId) ?? mapUnitById.get(divisionAttackSelection.divisionId) ?? null;
         const targetDivisions = divisionsByHexId.get(tile.id) ?? [];
+        const targetMapUnits = mapUnitsByHexId.get(tile.id) ?? [];
         const enemyDivision = targetDivisions.find((division) => attacker && division.countryId !== attacker.countryId) ?? null;
+        const enemyMapUnit = targetMapUnits.find((unit) => attacker && unit.countryId !== attacker.countryId) ?? null;
         const targetController = worldBase?.hexOwner?.[tile.id] ?? worldBase?.regionController?.[tile.regionId] ?? worldBase?.regionOwner?.[tile.regionId] ?? null;
         const attackableByControl = Boolean(attacker && targetController && targetController !== attacker.countryId);
-        if (path.length !== 2 || !attacker || (!enemyDivision && !attackableByControl)) {
+        if (path.length !== 2 || !attacker || (!enemyDivision && !enemyMapUnit && !attackableByControl)) {
           setMapActionNotice(t("hexMap.divisionAttackNoTarget"));
           return;
         }
-        onQueueUnitAttackOrder?.(divisionAttackSelection.divisionId, tile.id, enemyDivision?.id ?? null);
+        onQueueUnitAttackOrder?.(divisionAttackSelection.divisionId, tile.id, enemyMapUnit?.id ?? enemyDivision?.id ?? null);
         setDivisionAttackSelection(null);
         setMapActionNotice(t("hexMap.divisionAttackOrderSent"));
         return;
@@ -1257,6 +1322,7 @@ export function MapView({
     [
       buildHexWorkspaceDetails,
       canQueueColonizerOnTile,
+      canTrainUnitOnTile,
       civilianMoveSelection,
       colonizerPlacement?.active,
       corridorPlacement,
@@ -1268,8 +1334,8 @@ export function MapView({
       hexBuildPlacement,
       mapBuildingItemByHexId,
       mapArtifact,
-      militaryFormationPlacement,
-      militaryFormationValidHexIds,
+      mapUnitById,
+      mapUnitsByHexId,
       onQueueArmyMoveOrder,
       onQueueCivilianUnitMoveOrder,
       onQueueFleetMoveOrder,
@@ -1278,10 +1344,11 @@ export function MapView({
       onOpenSelectedHexWorkspace,
       onSelectColonizerPlacementTarget,
       onSelectHexBuildPlacementTarget,
-      onSelectMilitaryFormationPlacementTarget,
+      onSelectUnitTrainingPlacementTarget,
       placementEvaluations,
       selectTile,
       t,
+      unitTrainingPlacement,
       worldBase?.hexOwner,
       worldBase?.regionController,
       worldBase?.regionOwner,
@@ -1305,6 +1372,13 @@ export function MapView({
         }
       };
 
+      for (const unit of Object.values(worldBase?.unitsById ?? {})) {
+        if (unit.countryId !== authCountryId || unit.status === "captured" || unit.status === "destroyed") continue;
+        const tile = tileById.get(unit.hexId);
+        if (!tile) continue;
+        const center = axialToPixel(tile, size);
+        addCandidate({ kind: "map", unitId: unit.id, fromHexId: tile.id }, center.x, center.y + size * 0.04, Math.max(size * 0.24, Math.min(size * 0.46, 18 / camera.scale)), 3);
+      }
       for (const unit of Object.values(worldBase?.civilianUnitsById ?? {})) {
         if (unit.countryId !== authCountryId || unit.status === "captured") continue;
         const tile = tileById.get(unit.hexId);
@@ -1330,7 +1404,7 @@ export function MapView({
       candidates.sort((left, right) => left.distance - right.distance || left.priority - right.priority);
       return candidates[0]?.unit ?? null;
     },
-    [authCountryId, camera, mapArtifact.settings.hexSize, tileById, worldBase?.civilianUnitsById, worldBase?.divisionsById, worldBase?.fleetsById],
+    [authCountryId, camera, mapArtifact.settings.hexSize, tileById, worldBase?.civilianUnitsById, worldBase?.divisionsById, worldBase?.fleetsById, worldBase?.unitsById],
   );
 
   const selectMapUnitForMovement = useCallback(
@@ -1339,13 +1413,13 @@ export function MapView({
       setSelectedBuildingPopoverHexId(null);
       setExpandedMapBuildingId(null);
       setCivilianMoveSelection(unit.kind === "civilian" ? { unitId: unit.unitId, fromHexId: unit.fromHexId } : null);
-      setDivisionMoveSelection(unit.kind === "division" ? { divisionId: unit.divisionId, fromHexId: unit.fromHexId } : null);
+      setDivisionMoveSelection(unit.kind === "division" ? { divisionId: unit.divisionId, fromHexId: unit.fromHexId } : unit.kind === "map" ? { divisionId: unit.unitId, fromHexId: unit.fromHexId } : null);
       setFleetMoveSelection(unit.kind === "fleet" ? { fleetId: unit.fleetId, fromHexId: unit.fromHexId } : null);
       setDivisionAttackSelection(null);
       setMapActionNotice(
         unit.kind === "civilian"
           ? t("hexMap.civilianMoveSelectTarget")
-          : unit.kind === "division"
+          : unit.kind === "division" || unit.kind === "map"
             ? t("hexMap.divisionMoveSelectTarget")
             : t("hexMap.fleetMoveSelectTarget"),
       );
@@ -1383,7 +1457,8 @@ export function MapView({
   }, []);
 
   useEffect(() => {
-    setActiveLens(readMapLensSetting(authCountryId, suggestedMapLens ?? "terrain"));
+    const storedLens = readMapLensSetting(authCountryId, suggestedMapLens ?? "terrain");
+    setActiveLens(VISIBLE_MAP_LENS_IDS.has(storedLens) ? storedLens : "terrain");
   }, [authCountryId, suggestedMapLens]);
 
   useEffect(() => {
@@ -1530,6 +1605,7 @@ export function MapView({
       unitLayerRef.current = null;
       destroyLayerPool(buildingSpritePoolRef.current);
       destroyLayerPool(buildingGraphicsPoolRef.current);
+      destroyLayerPool(unitSpritePoolRef.current);
       destroyLayerPool(unitGraphicsPoolRef.current);
       window.__arcHexMapStats = undefined;
       if (initialized) {
@@ -1582,16 +1658,16 @@ export function MapView({
         onCancelCorridorPlacement?.();
         return;
       }
-      if (militaryFormationPlacement && event.button === 2) {
-        if (blocked) return;
-        event.preventDefault();
-        onCancelMilitaryFormationPlacement?.();
-        return;
-      }
       if (colonizerPlacement?.active && event.button === 2) {
         if (blocked) return;
         event.preventDefault();
         onCancelColonizerPlacement?.();
+        return;
+      }
+      if (unitTrainingPlacement && event.button === 2) {
+        if (blocked) return;
+        event.preventDefault();
+        onCancelUnitTrainingPlacement?.();
         return;
       }
       if (civilianMoveSelection && event.button === 2) {
@@ -1701,9 +1777,8 @@ export function MapView({
       if (!interactionLocked && gesture && !gesture.moved && tile) {
         const shouldHitTestUnits =
           !hexBuildPlacement &&
-          !corridorPlacement &&
-          !militaryFormationPlacement &&
-          !colonizerPlacement?.active &&
+          !corridorPlacement &&          !colonizerPlacement?.active &&
+          !unitTrainingPlacement &&
           !civilianMoveSelection &&
           !divisionMoveSelection &&
           !fleetMoveSelection &&
@@ -1751,11 +1826,11 @@ export function MapView({
       if (corridorPlacement) {
         onCancelCorridorPlacement?.();
       }
-      if (militaryFormationPlacement) {
-        onCancelMilitaryFormationPlacement?.();
-      }
       if (colonizerPlacement?.active) {
         onCancelColonizerPlacement?.();
+      }
+      if (unitTrainingPlacement) {
+        onCancelUnitTrainingPlacement?.();
       }
       setDivisionMoveSelection(null);
       setDivisionAttackSelection(null);
@@ -1800,7 +1875,7 @@ export function MapView({
       pointerGestureRef.current = null;
       activePointersRef.current.clear();
     };
-  }, [applyTileInteraction, cameraBounds, centerOnTile, civilianMoveSelection, colonizerPlacement?.active, corridorPlacement, divisionAttackSelection, divisionMoveSelection, fleetMoveSelection, getCachedPreviewPath, hexBuildPlacement, hitTestMapUnitAtClientPoint, interactionLocked, mapArtifact, militaryFormationPlacement, onCancelColonizerPlacement, onCancelCorridorPlacement, onCancelHexBuildPlacement, onCancelMilitaryFormationPlacement, selectMapUnitForMovement, serverMapArtifact, setCameraTarget, tileById]);
+  }, [applyTileInteraction, cameraBounds, centerOnTile, civilianMoveSelection, colonizerPlacement?.active, corridorPlacement, divisionAttackSelection, divisionMoveSelection, fleetMoveSelection, getCachedPreviewPath, hexBuildPlacement, hitTestMapUnitAtClientPoint, interactionLocked, mapArtifact, onCancelColonizerPlacement, onCancelCorridorPlacement, onCancelHexBuildPlacement, onCancelUnitTrainingPlacement, selectMapUnitForMovement, serverMapArtifact, setCameraTarget, tileById, unitTrainingPlacement]);
 
   useEffect(() => {
     if (!hexBuildPlacement) return;
@@ -1821,16 +1896,6 @@ export function MapView({
     window.addEventListener("keydown", handleCancel);
     return () => window.removeEventListener("keydown", handleCancel);
   }, [corridorPlacement, onCancelCorridorPlacement]);
-
-  useEffect(() => {
-    if (!militaryFormationPlacement) return;
-    const handleCancel = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      onCancelMilitaryFormationPlacement?.();
-    };
-    window.addEventListener("keydown", handleCancel);
-    return () => window.removeEventListener("keydown", handleCancel);
-  }, [militaryFormationPlacement, onCancelMilitaryFormationPlacement]);
 
   useEffect(() => {
     if (!colonizerPlacement?.active) return;
@@ -1886,7 +1951,7 @@ export function MapView({
       event.preventDefault();
       if (interactionLocked) return;
       if (key === "center") {
-        centerOnTile(selectedTileIdRef.current ? tileById.get(selectedTileIdRef.current) ?? null : null);
+        setCameraTarget((current) => centerCameraOnWorldPoint(current, getMapWorldCenter(mapArtifact), cameraBounds));
         return;
       }
       pressedKeysRef.current.add(key);
@@ -1908,7 +1973,7 @@ export function MapView({
       window.removeEventListener("blur", handleBlur);
       pressedKeysRef.current.clear();
     };
-  }, [centerOnTile, interactionLocked, tileById]);
+  }, [cameraBounds, interactionLocked, mapArtifact, setCameraTarget]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -2052,19 +2117,19 @@ export function MapView({
         drawHexFillAndOutline(overlayLayer, tile, mapArtifact.settings.hexSize, colors.fill, colors.border);
       }
     }
-    if (militaryFormationPlacement && containerRef.current) {
+    if (colonizerPlacement?.active && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const colors = getPlacementOverlayColors(containerRef.current);
-      for (const hexId of militaryFormationValidHexIds) {
+      for (const hexId of colonizerPlacementValidHexIds) {
         const tile = tileById.get(hexId);
         if (!tile || !isTileInViewport(tile, camera, rect, mapArtifact.settings.hexSize)) continue;
         drawHexFillAndOutline(overlayLayer, tile, mapArtifact.settings.hexSize, colors.fill, colors.border);
       }
     }
-    if (colonizerPlacement?.active && containerRef.current) {
+    if (unitTrainingPlacement && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const colors = getPlacementOverlayColors(containerRef.current);
-      for (const hexId of colonizerPlacementValidHexIds) {
+      for (const hexId of unitTrainingPlacementValidHexIds) {
         const tile = tileById.get(hexId);
         if (!tile || !isTileInViewport(tile, camera, rect, mapArtifact.settings.hexSize)) continue;
         drawHexFillAndOutline(overlayLayer, tile, mapArtifact.settings.hexSize, colors.fill, colors.border);
@@ -2084,7 +2149,7 @@ export function MapView({
       drawPathOverlay(overlayLayer, activePath, tileById, mapArtifact.settings.hexSize);
     }
     app.render();
-  }, [camera, civilianMoveHoverPath, civilianMoveSelection, colonizerPlacement?.active, colonizerPlacementValidHexIds, divisionMoveHoverPath, divisionMoveSelection, fleetMoveHoverPath, fleetMoveSelection, hexBuildPlacement, hoverPath, hoverState, mapArtifact.settings.hexSize, militaryFormationPlacement, militaryFormationValidHexIds, pixiReady, placementEvaluations, selectedTile, tileById]);
+  }, [camera, civilianMoveHoverPath, civilianMoveSelection, colonizerPlacement?.active, colonizerPlacementValidHexIds, divisionMoveHoverPath, divisionMoveSelection, fleetMoveHoverPath, fleetMoveSelection, hexBuildPlacement, hoverPath, hoverState, mapArtifact.settings.hexSize,  pixiReady, placementEvaluations, selectedTile, tileById, unitTrainingPlacement, unitTrainingPlacementValidHexIds]);
 
   useEffect(() => {
     const layer = naturalFeatureLayerRef.current;
@@ -2244,7 +2309,7 @@ export function MapView({
     const spritePool = buildingSpritePoolRef.current;
     const graphicsPool = buildingGraphicsPoolRef.current;
     const app = appRef.current;
-    const showBuildings = mapLayers.buildings || Boolean(hexBuildPlacement) || Boolean(militaryFormationPlacement);
+    const showBuildings = mapLayers.buildings || Boolean(hexBuildPlacement);
     if (!pixiReady || !layer || !app || !worldBase || !showBuildings || zoomBucket === "far") {
       hideLayerPool(spritePool);
       hideLayerPool(graphicsPool);
@@ -2392,25 +2457,45 @@ export function MapView({
     pruneLayerPool(spritePool, activeSpriteKeys);
     pruneLayerPool(graphicsPool, activeGraphicsKeys);
     app.render();
-  }, [buildingTextureVersion, camera.scale, canceledConstructionQueueKeySet, hexBuildPlacement, mapArtifact.settings.hexSize, mapLayers.buildings, militaryFormationPlacement, pendingBuildMarkers, pendingFoundCityMarkers, pixiReady, scenarioId, tileById, viewportCulling.key, viewportCulling.visibleTileIds, worldBase, zoomBucket]);
+  }, [buildingTextureVersion, camera.scale, canceledConstructionQueueKeySet, hexBuildPlacement, mapArtifact.settings.hexSize, mapLayers.buildings, pendingBuildMarkers, pendingFoundCityMarkers, pixiReady, scenarioId, tileById, viewportCulling.key, viewportCulling.visibleTileIds, worldBase, zoomBucket]);
 
   useEffect(() => {
     const layer = unitLayerRef.current;
+    const spritePool = unitSpritePoolRef.current;
     const graphicsPool = unitGraphicsPoolRef.current;
     const app = appRef.current;
-    if (!pixiReady || !layer || !app || !worldBase || !mapLayers.armies || zoomBucket === "far") {
+    if (!pixiReady || !layer || !app || !worldBase || !mapLayers.armies) {
+      hideLayerPool(spritePool);
       hideLayerPool(graphicsPool);
       return;
     }
+    hideLayerPool(spritePool);
     hideLayerPool(graphicsPool);
-    const activeKeys = new Set<string>();
+    const activeSpriteKeys = new Set<string>();
+    const activeGraphicsKeys = new Set<string>();
     const size = mapArtifact.settings.hexSize;
     const styles = getComputedStyle(document.documentElement);
     const strokeColor = cssColorToHexNumber(styles.getPropertyValue("--arc-map-building-marker-stroke").trim(), 0x261433);
+    for (const unit of Object.values(worldBase.unitsById ?? {})) {
+      if (unit.status === "destroyed" || unit.status === "captured" || pendingFoundCityUnitIds.has(unit.id)) continue;
+      const key = `map-unit:${unit.id}`;
+      activeSpriteKeys.add(key);
+      const tile = tileById.get(unit.hexId);
+      if (!tile || !viewportCulling.visibleTileIds.has(tile.id)) continue;
+      updateMapUnitSprite(getPooledSprite(layer, spritePool, key), {
+        unit,
+        tile,
+        scenarioId,
+        size,
+        cameraScale: camera.scale,
+        tintColor: cssColorToHexNumber(countryColorById?.[unit.countryId] ?? "", 0xffffff),
+        onReady: () => setUnitTextureVersion((value) => value + 1),
+      });
+    }
     for (const division of Object.values(worldBase.divisionsById ?? {})) {
       if ((division.kind ?? "land") !== "land") continue;
       const key = `division:${division.id}`;
-      activeKeys.add(key);
+      activeGraphicsKeys.add(key);
       const tile = tileById.get(division.hexId);
       if (!tile || !viewportCulling.visibleTileIds.has(tile.id)) continue;
       const center = axialToPixel(tile, size);
@@ -2433,7 +2518,7 @@ export function MapView({
     }
     for (const fleet of Object.values(worldBase.fleetsById ?? {})) {
       const key = `fleet:${fleet.id}`;
-      activeKeys.add(key);
+      activeGraphicsKeys.add(key);
       const tile = tileById.get(fleet.hexId);
       if (!tile || !viewportCulling.visibleTileIds.has(tile.id)) continue;
       const center = axialToPixel(tile, size);
@@ -2466,7 +2551,7 @@ export function MapView({
     for (const unit of Object.values(worldBase.civilianUnitsById ?? {})) {
       if (unit.status === "captured" || pendingFoundCityUnitIds.has(unit.id)) continue;
       const key = `civilian:${unit.id}`;
-      activeKeys.add(key);
+      activeGraphicsKeys.add(key);
       const tile = tileById.get(unit.hexId);
       if (!tile || !viewportCulling.visibleTileIds.has(tile.id)) continue;
       const center = axialToPixel(tile, size);
@@ -2490,9 +2575,10 @@ export function MapView({
         .fill({ color: 0xf3ead2, alpha: 0.9 });
       marker.visible = true;
     }
-    pruneLayerPool(graphicsPool, activeKeys);
+    pruneLayerPool(spritePool, activeSpriteKeys);
+    pruneLayerPool(graphicsPool, activeGraphicsKeys);
     app.render();
-  }, [camera.scale, countryColorById, mapArtifact.settings.hexSize, mapLayers.armies, pendingFoundCityUnitIds, pixiReady, tileById, viewportCulling.key, viewportCulling.visibleTileIds, worldBase, zoomBucket]);
+  }, [camera.scale, countryColorById, mapArtifact.settings.hexSize, mapLayers.armies, pendingFoundCityUnitIds, pixiReady, scenarioId, tileById, unitTextureVersion, viewportCulling.key, viewportCulling.visibleTileIds, worldBase]);
 
   const selectedBuildingPopoverTile = selectedBuildingPopoverHexId ? tileById.get(selectedBuildingPopoverHexId) ?? null : null;
   const selectedBuildingPopoverStyle = useMemo<CSSProperties | null>(() => {
@@ -2518,6 +2604,7 @@ export function MapView({
       top: Math.min(Math.max(92, y - 24), Math.max(92, rect.height - 360)),
     };
   }, [camera, mapArtifact.settings.hexSize, selectedMapUnitTile]);
+  const selectedNewMapUnit = selectedMapUnit?.kind === "map" ? mapUnitById.get(selectedMapUnit.unitId) ?? null : null;
   const selectedCivilianUnit = selectedMapUnit?.kind === "civilian" ? civilianUnitById.get(selectedMapUnit.unitId) ?? null : null;
   const selectedDivisionUnit = selectedMapUnit?.kind === "division" ? divisionById.get(selectedMapUnit.divisionId) ?? null : null;
   const selectedFleetUnit = selectedMapUnit?.kind === "fleet" ? (worldBase?.fleetsById?.[selectedMapUnit.fleetId] ?? null) : null;
@@ -2525,21 +2612,28 @@ export function MapView({
     ? !worldBase?.regionOwner[selectedMapUnitTile.regionId] && !worldBase?.regionController[selectedMapUnitTile.regionId]
     : false;
   const selectedColonizerCanFoundCity = Boolean(
-    selectedCivilianUnit &&
+    ((selectedCivilianUnit &&
       selectedCivilianUnit.countryId === authCountryId &&
       selectedCivilianUnit.type === "colonizer" &&
-      selectedCivilianUnit.status !== "captured" &&
+      selectedCivilianUnit.status !== "captured") ||
+      (selectedNewMapUnit &&
+        selectedNewMapUnit.countryId === authCountryId &&
+        selectedNewMapUnit.unitTypeId === "unit:colonizer" &&
+        selectedNewMapUnit.status !== "captured" &&
+        selectedNewMapUnit.status !== "destroyed")) &&
       selectedMapUnitRegionIsNeutral,
   );
   const selectedDivisionCanAttack = Boolean(
-    selectedDivisionUnit &&
+    (selectedDivisionUnit || (selectedNewMapUnit && selectedNewMapUnit.unitTypeId !== "unit:colonizer")) &&
       selectedMapUnitTile &&
-      selectedDivisionUnit.countryId === authCountryId &&
-      !pendingDivisionActionIds.has(selectedDivisionUnit.id) &&
+      (selectedDivisionUnit?.countryId ?? selectedNewMapUnit?.countryId) === authCountryId &&
+      !pendingDivisionActionIds.has(selectedDivisionUnit?.id ?? selectedNewMapUnit?.id ?? "") &&
       getNeighborTiles(selectedMapUnitTile, tileById, mapArtifact.settings).some((neighbor) => {
-        const enemyDivision = (divisionsByHexId.get(neighbor.id) ?? []).some((candidate) => candidate.countryId !== selectedDivisionUnit.countryId);
+        const attackerCountryId = selectedDivisionUnit?.countryId ?? selectedNewMapUnit?.countryId ?? "";
+        const enemyDivision = (divisionsByHexId.get(neighbor.id) ?? []).some((candidate) => candidate.countryId !== attackerCountryId);
+        const enemyMapUnit = (mapUnitsByHexId.get(neighbor.id) ?? []).some((candidate) => candidate.countryId !== attackerCountryId);
         const controller = worldBase?.hexOwner?.[neighbor.id] ?? worldBase?.regionController?.[neighbor.regionId] ?? worldBase?.regionOwner?.[neighbor.regionId] ?? null;
-        return enemyDivision || Boolean(controller && controller !== selectedDivisionUnit.countryId);
+        return enemyDivision || enemyMapUnit || Boolean(controller && controller !== attackerCountryId);
       }),
   );
   const countryById = useMemo(() => new Map(buildingOverviewCountries.map((country) => [country.id, country] as const)), [buildingOverviewCountries]);
@@ -2804,7 +2898,7 @@ export function MapView({
         />
       ) : null}
       {serverMapArtifact ? (
-        <MapLensHud
+          <MapLensHud
           layers={layerOptions}
           lenses={lensOptions}
           activeLensId={activeLens}
@@ -2829,73 +2923,23 @@ export function MapView({
           </div>
         </div>
       ) : null}
-      {militaryFormationPlacement ? (
-        <div className="arc-map-build-placement-hud arc-hud-panel" role="status">
-          <div className="arc-hud-content">
-            <strong>{militaryFormationPlacement.templateName}</strong>
-            <span>{t("hexMap.formationPlacementHud")}</span>
-            <button type="button" className="map-btn" onClick={onCancelMilitaryFormationPlacement}>
-              {t("common.cancel")}
-            </button>
-          </div>
-        </div>
-      ) : null}
-      {corridorPlacement ? (
-        <CorridorBuildHud
-          points={corridorPlacement.points}
-          hexIds={corridorHudPreviewPath}
-          transportMode={corridorPlacement.transportMode}
-          costConstruction={corridorPlacement.costConstruction ?? null}
-          connectedRegionIds={corridorPlacement.connectedRegionIds ?? []}
-          blockingReason={corridorPlacement.blockingReason ?? null}
-          pending={corridorPlacement.pending}
-          getHexDisplayName={(hexId) => hexId}
-          onUndoPoint={onUndoCorridorPlacementPoint ?? (() => undefined)}
-          onCancel={onCancelCorridorPlacement ?? (() => undefined)}
-          onConfirm={onConfirmCorridorPlacement ?? (() => undefined)}
-        />
-      ) : null}
-      {civilianMoveSelection ? (
-        <div className="arc-map-build-placement-hud arc-hud-panel" role="status">
-          <div className="arc-hud-content">
-            <strong>{t("hexMap.civilianMove")}</strong>
-            <span>{t("hexMap.civilianMoveSelectTarget")}</span>
-            <span>
-              {t("hexMap.civilianMovePreview", {
-                cost: formatCompactNumber(civilianMovePreviewCost),
-                points: formatCompactNumber(Math.max(0, Number(civilianUnitById.get(civilianMoveSelection.unitId)?.movementPoints ?? 0))),
-              })}
-            </span>
-            <button type="button" className="map-btn" onClick={() => setCivilianMoveSelection(null)}>
-              {t("common.cancel")}
-            </button>
-          </div>
-        </div>
-      ) : null}
-      {cityLabels.map((label) => (
-        <div
-          key={label.key}
-          className={`arc-map-city-label${label.pending ? " arc-map-city-label--pending" : ""}`}
-          style={{ left: label.left, top: label.top }}
-          aria-hidden="true"
-        >
-          <span className="arc-map-city-label__flag">
-            {label.flagUrl ? <img src={label.flagUrl} alt="" /> : label.ownerName.slice(0, 1).toUpperCase()}
-          </span>
-          <span className="arc-map-city-label__name">{label.name}</span>
-          {label.progress != null ? (
-            <span className="arc-map-city-label__progress" aria-hidden="true">
-              <span style={{ width: `${Math.round(label.progress * 100)}%` }} />
-            </span>
-          ) : null}
-        </div>
-      ))}
       {colonizerPlacement?.active ? (
         <div className="arc-map-build-placement-hud arc-hud-panel" role="status">
           <div className="arc-hud-content">
             <strong>{t("shell.colonization.prepareColonizer")}</strong>
             <span>{t("shell.colonization.selectPreparationHex")}</span>
             <button type="button" className="map-btn" onClick={() => onCancelColonizerPlacement?.()}>
+              {t("common.cancel")}
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {unitTrainingPlacement ? (
+        <div className="arc-map-build-placement-hud arc-hud-panel" role="status">
+          <div className="arc-hud-content">
+            <strong>{t(unitTrainingPlacement.unitType.nameKey)}</strong>
+            <span>{t("hexMap.unitTrainingPlacementHud")}</span>
+            <button type="button" className="map-btn" onClick={() => onCancelUnitTrainingPlacement?.()}>
               {t("common.cancel")}
             </button>
           </div>
@@ -2913,7 +2957,9 @@ export function MapView({
             <div>
               <p>{t("hexMap.unitPopoverTitle")}</p>
               <h3>
-                {selectedCivilianUnit
+                {selectedNewMapUnit
+                  ? selectedNewMapUnit.unitTypeId
+                  : selectedCivilianUnit
                   ? selectedCivilianUnit.type === "colonizer"
                     ? t("hexMap.civilianColonizer")
                     : selectedCivilianUnit.id
@@ -2948,8 +2994,11 @@ export function MapView({
             {selectedFleetUnit ? (
               <span>{t("hexMap.fleetStatus", { strength: Math.round(Number(selectedFleetUnit.strength ?? 0) * 100), organization: Math.round(Number(selectedFleetUnit.organization ?? 0)) })}</span>
             ) : null}
+            {selectedNewMapUnit ? (
+              <span>{`${selectedNewMapUnit.status} · ${Math.max(0, Math.round(selectedNewMapUnit.hp))} HP · ${Math.max(0, Math.floor(selectedNewMapUnit.movementPoints))} MP`}</span>
+            ) : null}
           </div>
-          {selectedCivilianUnit?.type === "colonizer" ? (
+          {selectedCivilianUnit?.type === "colonizer" || selectedNewMapUnit?.unitTypeId === "unit:colonizer" ? (
             <div className="arc-map-unit-popover__actions">
               <Tooltip content={t(selectedColonizerCanFoundCity ? "hexMap.foundCityTooltipCan" : "hexMap.foundCityTooltipCannot")}>
                 <button
@@ -2957,18 +3006,19 @@ export function MapView({
                   className="map-btn"
                   disabled={!selectedColonizerCanFoundCity || !selectedMapUnitTile}
                   onClick={() => {
-                    if (!selectedColonizerCanFoundCity || !selectedMapUnitTile || !selectedCivilianUnit) {
+                    const foundingUnit = selectedCivilianUnit ?? selectedNewMapUnit;
+                    if (!selectedColonizerCanFoundCity || !selectedMapUnitTile || !foundingUnit) {
                       setMapActionNotice(t("hexMap.foundCityNeutralRequired"));
                       return;
                     }
-                    const ownerCountry = buildingOverviewCountries.find((country) => country.id === selectedCivilianUnit.countryId) ?? null;
+                    const ownerCountry = buildingOverviewCountries.find((country) => country.id === foundingUnit.countryId) ?? null;
                     setFoundCityNameDraft("");
                     setFoundCityConfirmTarget({
-                      civilianUnitId: selectedCivilianUnit.id,
+                      civilianUnitId: foundingUnit.id,
                       hexId: selectedMapUnitTile.id,
                       regionId: selectedMapUnitTile.regionId,
-                      countryId: selectedCivilianUnit.countryId,
-                      ownerName: ownerCountry?.name ?? countryNameById?.[selectedCivilianUnit.countryId] ?? selectedCivilianUnit.countryId,
+                      countryId: foundingUnit.countryId,
+                      ownerName: ownerCountry?.name ?? countryNameById?.[foundingUnit.countryId] ?? foundingUnit.countryId,
                       ownerFlagUrl: ownerCountry?.flagUrl ?? null,
                       costColonization: worldBase?.regionColonizationByRegion?.[selectedMapUnitTile.regionId]?.cost ?? null,
                     });
@@ -2980,7 +3030,7 @@ export function MapView({
               </Tooltip>
             </div>
           ) : null}
-          {selectedDivisionUnit ? (
+          {selectedDivisionUnit || selectedNewMapUnit ? (
             <div className="arc-map-unit-popover__actions">
               <Tooltip content={t(selectedDivisionCanAttack ? "hexMap.divisionAttackTooltipCan" : "hexMap.divisionAttackTooltipCannot")}>
                 <button
@@ -2988,14 +3038,15 @@ export function MapView({
                   className="map-btn"
                   disabled={!selectedDivisionCanAttack || !selectedMapUnitTile}
                   onClick={() => {
-                    if (!selectedDivisionCanAttack || !selectedMapUnitTile || !selectedDivisionUnit) {
+                    const attackingUnitId = selectedDivisionUnit?.id ?? selectedNewMapUnit?.id ?? null;
+                    if (!selectedDivisionCanAttack || !selectedMapUnitTile || !attackingUnitId) {
                       setMapActionNotice(t("hexMap.divisionAttackUnavailable"));
                       return;
                     }
                     setDivisionMoveSelection(null);
                     setFleetMoveSelection(null);
                     setCivilianMoveSelection(null);
-                    setDivisionAttackSelection({ divisionId: selectedDivisionUnit.id, fromHexId: selectedMapUnitTile.id });
+                    setDivisionAttackSelection({ divisionId: attackingUnitId, fromHexId: selectedMapUnitTile.id });
                     setMapActionNotice(t("hexMap.divisionAttackSelectTarget"));
                   }}
                 >
@@ -3210,17 +3261,11 @@ function isMapNavigationBlocked(target: EventTarget | null): boolean {
   return Boolean(
     target.closest(
       [
-        ".arc-hud-panel",
-        ".arc-map-building-popover",
         "[role='dialog']",
         "[aria-modal='true']",
-        "button",
         "input",
         "select",
         "textarea",
-        "a[href]",
-        "[role='button']",
-        "[role='link']",
         "[contenteditable='true']",
       ].join(","),
     ),
@@ -3249,6 +3294,10 @@ function calculateKeyboardVelocity(keys: Set<string>): { x: number; y: number } 
 
 function calculateKeyboardZoomDirection(keys: Set<string>): number {
   return (keys.has("zoomIn") ? 1 : 0) - (keys.has("zoomOut") ? 1 : 0);
+}
+
+function getMapWorldCenter(map: HexMapArtifact): { x: number; y: number } {
+  return axialToPixel({ q: map.settings.width / 2, r: map.settings.height / 2 }, map.settings.hexSize);
 }
 
 function hasCameraChanged(current: HexCamera, next: HexCamera): boolean {
@@ -3676,6 +3725,39 @@ function updateResourceDepositSprite(sprite: Sprite, params: {
   sprite.width = markerSize;
   sprite.height = markerSize;
   sprite.alpha = params.deposit.depletionMode === "finite" && Number(params.deposit.amount) <= 0 ? 0.36 : 0.9;
+  sprite.visible = true;
+  return true;
+}
+
+function updateMapUnitSprite(sprite: Sprite, params: {
+  unit: NonNullable<WorldBase["unitsById"]>[string];
+  tile: HexTile;
+  scenarioId: string | null | undefined;
+  size: number;
+  cameraScale: number;
+  tintColor: number;
+  onReady: () => void;
+}): boolean {
+  const textures = getUnitAtlasTextures({
+    scenarioId: params.scenarioId,
+    unitTypeId: params.unit.unitTypeId,
+    onReady: params.onReady,
+  });
+  const state = params.unit.status === "moving" ? "move" : params.unit.status === "fighting" ? "attack" : params.unit.hp < 35 ? "damaged" : "idle";
+  const texture = textures?.[state] ?? textures?.idle;
+  if (!texture) {
+    sprite.visible = false;
+    return false;
+  }
+  const center = axialToPixel(params.tile, params.size);
+  sprite.texture = texture;
+  sprite.anchor.set(0.5, 0.78);
+  sprite.position.set(center.x, center.y + params.size * 0.04);
+  const markerSize = Math.max(params.size * 0.48, Math.min(params.size * 0.82, 30 / Math.max(0.35, params.cameraScale)));
+  sprite.width = markerSize;
+  sprite.height = markerSize;
+  sprite.tint = params.tintColor;
+  sprite.alpha = params.unit.status === "based" ? 0.72 : 0.96;
   sprite.visible = true;
   return true;
 }

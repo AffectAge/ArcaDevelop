@@ -17,12 +17,11 @@ import type { createWorldDeltaBroadcastRuntime } from "./worldDeltaBroadcastRunt
 import type { createCountryRuntimeHelpers } from "./countryRuntimeHelpers";
 import type { createUiNotificationQueue } from "./uiNotificationQueue";
 import type { createUiNotificationRuntime } from "./uiNotificationRuntime";
-import type { createMilitaryRuntimeFacade } from "./militaryRuntimeFacade";
 import type { GameSettings } from "./gameSettingsTypes";
 import type { ContentEntryKind } from "../content/contentEntryPayload";
 import type { ContentEntryRouteItem } from "../routes/contentReadRoutes";
 import { registerContentReadRoutes } from "../routes/contentReadRoutes";
-import type { EventLogEntry, ResourceId, ResourceTotals, ServerStatus, WORLD_DELTA_MASK, WsOutMessage } from "@arcanorum/shared";
+import type { EventLogEntry, Order, ResourceId, ResourceTotals, ServerStatus, WORLD_DELTA_MASK, WorldBase, WsOutMessage } from "@arcanorum/shared";
 
 type CoreRouteCompositionParams = {
   app: Express;
@@ -37,10 +36,11 @@ type CoreRouteCompositionParams = {
   countryRuntimeHelpers: ReturnType<typeof createCountryRuntimeHelpers>;
   uiNotificationQueue: ReturnType<typeof createUiNotificationQueue>;
   uiNotificationRuntime: ReturnType<typeof createUiNotificationRuntime>;
-  militaryRuntimeFacade: ReturnType<typeof createMilitaryRuntimeFacade>;
   contentEntryKindSchema: { safeParse: (input: unknown) => { success: true; data: unknown } | { success: false } };
   getServerStatus: () => ServerStatus;
   getTurnId: () => number;
+  getWorldBase: () => WorldBase;
+  getOrdersByTurn: () => Map<number, Map<string, Order[]>>;
   getHexTileRoot: () => string;
   getRasterTileRoot: () => string;
   getWsDeltaSizeMetrics: () => WsDeltaSizeMetricsSnapshot;
@@ -106,6 +106,9 @@ export function registerCoreRouteComposition(params: CoreRouteCompositionParams)
     routeAuth: params.routeAuth,
     isAdminCountry: params.isAdminCountry,
     getTurnId: params.getTurnId,
+    getWorldBase: params.getWorldBase,
+    getUnitTypes: () => params.getGameSettings().content.unitTypes,
+    getOrdersByTurn: params.getOrdersByTurn,
     cleanupExpiredPunishments: params.countryRuntimeHelpers.cleanupExpiredPunishments,
     getTurnStatusCountries: params.getTurnStatusCountries,
     getReadySetForTurn: params.getReadySetForTurn,

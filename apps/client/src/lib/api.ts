@@ -1,4 +1,4 @@
-import type { ActiveModifierRow, AirWing, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionAvailabilityReason, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, EquipmentClass, EquipmentFrame, EquipmentModule, EquipmentProductionLine, EquipmentVariant, EventResolvedScope, EventTriggerExplanation, Fleet, GameEventDefinition, IdeologyAttractionRule, JournalEntryDefinition, LawParliamentPowerEffect, LoginPayload, MilitaryBranch, MilitaryEquipmentRequirement, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import type { ActiveModifierRow, AirWing, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionAvailabilityReason, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, EquipmentClass, EquipmentFrame, EquipmentModule, EquipmentProductionLine, EquipmentVariant, EventResolvedScope, EventTriggerExplanation, Fleet, GameEventDefinition, IdeologyAttractionRule, JournalEntryDefinition, LawParliamentPowerEffect, LoginPayload, MapUnit, MilitaryBranch, MilitaryEquipmentRequirement, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, TurnActionChecklist, UnitTrainingQueueItem, UnitTypeDefinition, WorldBase, WsOutMessage } from "@arcanorum/shared";
 import { resolveAuthoredAssetUrl, type ScenarioAssetEntry, type ScenarioAssetRegistryPayload } from "../assets/scenarioAssetResolver";
 import { apiBase } from "./apiBase";
 
@@ -274,6 +274,13 @@ export async function fetchWorldSnapshot(token: string): Promise<{ worldBase: Wo
   return response.json();
 }
 
+export async function fetchTurnActions(token: string): Promise<TurnActionChecklist> {
+  const response = await fetch(`${API}/turn/actions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleJson<TurnActionChecklist>(response, "TURN_ACTIONS_FAILED");
+}
+
 function authHeaders(token: string): HeadersInit {
   return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 }
@@ -349,6 +356,44 @@ export async function fetchMilitaryOverview(token: string): Promise<MilitaryOver
     headers: authHeaders(token),
   });
   return handleJson<MilitaryOverview>(response);
+}
+
+export type UnitsOverview = {
+  unitTypes: UnitTypeDefinition[];
+  units: MapUnit[];
+  trainingQueue: UnitTrainingQueueItem[];
+};
+
+export async function getUnitsOverview(token: string): Promise<UnitsOverview> {
+  const response = await fetch(`${API}/units/overview`, {
+    headers: authHeaders(token),
+  });
+  return handleJson<UnitsOverview>(response, "UNITS_OVERVIEW_FAILED");
+}
+
+export async function trainUnit(token: string, payload: { unitTypeId: string; hexId: string }): Promise<{ item: UnitTrainingQueueItem }> {
+  const response = await fetch(`${API}/units/train`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(payload),
+  });
+  return handleJson<{ item: UnitTrainingQueueItem }>(response, "UNIT_TRAIN_FAILED");
+}
+
+export async function cancelUnitTraining(token: string, queueId: string): Promise<{ ok: true }> {
+  const response = await fetch(`${API}/units/training/${encodeURIComponent(queueId)}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  return handleJson<{ ok: true }>(response, "UNIT_TRAINING_CANCEL_FAILED");
+}
+
+export async function disbandUnit(token: string, unitId: string): Promise<{ ok: true }> {
+  const response = await fetch(`${API}/units/${encodeURIComponent(unitId)}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  return handleJson<{ ok: true }>(response, "UNIT_DISBAND_FAILED");
 }
 
 export async function saveMilitaryTemplate(

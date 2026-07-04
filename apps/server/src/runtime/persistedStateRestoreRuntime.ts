@@ -56,9 +56,6 @@ type PersistedStateRestoreRuntimeParams = {
   normalizeCountryEventFlagsMap: (input: unknown) => WorldBase["countryEventFlagsByCountryId"];
   normalizeJournalEntriesMap: (input: unknown) => WorldBase["journalEntriesByCountryId"];
   normalizeCountryModifiersMap: (input: unknown) => WorldBase["countryModifiersByCountryId"];
-  normalizeDivisionTemplatesByCountry: (input: unknown) => WorldBase["divisionTemplatesByCountry"];
-  normalizeDivisionsById: (input: unknown, base: WorldBase) => WorldBase["divisionsById"];
-  normalizeMilitaryFormationQueueByCountry: (input: unknown) => WorldBase["militaryFormationQueueByCountry"];
   normalizeDiplomacyProposals: (input: unknown) => DiplomacyProposal[];
   rebuildTurnOrderIndexes: () => void;
   rebuildEconomyTickCountryIndexFromWorldBase: () => void;
@@ -156,9 +153,6 @@ export function createPersistedStateRestoreRuntime(params: PersistedStateRestore
         normalizeCountryEventFlagsMap: params.normalizeCountryEventFlagsMap,
         normalizeJournalEntriesMap: params.normalizeJournalEntriesMap,
         normalizeCountryModifiersMap: params.normalizeCountryModifiersMap,
-        normalizeDivisionTemplatesByCountry: params.normalizeDivisionTemplatesByCountry,
-        normalizeDivisionsById: params.normalizeDivisionsById,
-        normalizeMilitaryFormationQueueByCountry: params.normalizeMilitaryFormationQueueByCountry,
         normalizeDiplomacyProposals: params.normalizeDiplomacyProposals,
       }),
     );

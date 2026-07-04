@@ -64,8 +64,9 @@ describe("hex terrain mesh renderer data", () => {
 
     expect(centerIndex).toBeGreaterThanOrEqual(0);
     for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
-      const offset = HEX_DIRECTIONS[direction];
-      const neighbor = axialToPixel({ q: tile.q + offset.q, r: tile.r + offset.r }, smallMap.settings.hexSize);
+      const neighborAxial = getNeighborAxial(tile, direction as HexDirection, smallMap.settings);
+      expect(neighborAxial).toBeTruthy();
+      const neighbor = axialToPixel(neighborAxial!, smallMap.settings.hexSize);
       const vertexOffset = centerIndex + direction * 6 + 2;
       const cornerA = { x: chunk.positions[vertexOffset], y: chunk.positions[vertexOffset + 1] };
       const cornerB = { x: chunk.positions[vertexOffset + 2], y: chunk.positions[vertexOffset + 3] };

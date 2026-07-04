@@ -270,6 +270,7 @@
       "battalions": "scenarios/<scenarioId>/common/battalions/*.json",
       "shipTypes": "scenarios/<scenarioId>/common/shipTypes/*.json",
       "aircraftTypes": "scenarios/<scenarioId>/common/aircraftTypes/*.json",
+      "unitTypes": "scenarios/<scenarioId>/common/unit_types/*.json",
       "aiArchetypes": "scenarios/<scenarioId>/common/ai/archetypes/*.json",
       "aiPersonalities": "scenarios/<scenarioId>/common/ai/personalities/*.json",
       "aiStrategies": "scenarios/<scenarioId>/common/ai/strategies/*.json",

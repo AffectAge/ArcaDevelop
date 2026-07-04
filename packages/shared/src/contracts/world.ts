@@ -4,6 +4,7 @@ import type { DiplomacyProposal } from "./diplomacy";
 import type { CountryAppliedModifier, CountryDecisionRecord, CountryEventRecord, CountryJournalState, ExplanationRecord, ScheduledCountryEvent } from "./content";
 import type { AirWing, Division, DivisionTemplate, Fleet, MilitaryFormationQueueItem } from "./military";
 import type { CivilianUnit, CivilianUnitQueueItem, CityMarker, EquipmentProductionLine, EquipmentStockpileByCountry, EquipmentVariant, SettlementProject } from "./unit-equipment";
+import type { MapUnit, UnitTrainingQueueItem } from "./units";
 import type { BuildingInstance, RegionConstructionProject, RegionPopulation, RegionResourceDeposit, RegionResourceExplorationProject } from "./region-state";
 import type { CountryParliament, CountryTechnologyState } from "./politics";
 export type WorldBase = {
@@ -33,6 +34,8 @@ export type WorldBase = {
   countryEventFlagsByCountryId: Record<string, Record<string, string | number | boolean>>;
   journalEntriesByCountryId: Record<string, CountryJournalState>;
   countryModifiersByCountryId: Record<string, CountryAppliedModifier[]>;
+  unitsById?: Record<string, MapUnit>;
+  unitTrainingQueueByCountry?: Record<string, UnitTrainingQueueItem[]>;
   divisionTemplatesByCountry: Record<string, DivisionTemplate[]>;
   divisionsById: Record<string, Division>;
   fleetsById: Record<string, Fleet>;
@@ -111,6 +114,8 @@ export type WorldDelta = {
   xg?: Record<string, Record<string, string | number | boolean> | null>;
   jo?: Record<string, CountryJournalState | null>;
   cm?: Record<string, CountryAppliedModifier[] | null>;
+  mu?: Record<string, MapUnit | null>;
+  uq?: Record<string, UnitTrainingQueueItem[] | null>;
   g?: Record<string, DivisionTemplate[] | null>;
   x?: Record<string, Division | null>;
   fl?: Record<string, Fleet | null>;

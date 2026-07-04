@@ -1,7 +1,8 @@
 import type express from "express";
-import type { ResourceTotals, WsOutMessage } from "@arcanorum/shared";
+import type { Order, ResourceTotals, TurnActionChecklist, UnitTypeDefinition, WorldBase, WsOutMessage } from "@arcanorum/shared";
 import type { ResourceId } from "@arcanorum/shared";
 import type { RouteAuth } from "../security/routeAuth";
+import { buildTurnActionChecklist } from "../mechanics/turnActionChecklistMechanics";
 
 export type TurnStatusCountryRecord = {
   id: string;
@@ -40,6 +41,9 @@ export type TurnNotificationRoutesDependencies = {
   routeAuth: RouteAuth;
   isAdminCountry: (countryId: string) => Promise<boolean>;
   getTurnId: () => number;
+  getWorldBase: () => WorldBase;
+  getUnitTypes: () => readonly UnitTypeDefinition[];
+  getOrdersByTurn: () => Map<number, Map<string, Order[]>>;
   cleanupExpiredPunishments: (turnId: number, now: Date) => Promise<void>;
   getTurnStatusCountries: () => Promise<TurnStatusCountryRecord[]>;
   getReadySetForTurn: (turnId: number) => Set<string>;
@@ -72,6 +76,19 @@ export function registerTurnNotificationRoutes(
   app: express.Express,
   deps: TurnNotificationRoutesDependencies,
 ): void {
+  app.get("/turn/actions", async (req, res) => {
+    const auth = deps.routeAuth.requireAuth(req, res);
+    if (!auth) return;
+    const checklist: TurnActionChecklist = buildTurnActionChecklist({
+      worldBase: deps.getWorldBase(),
+      unitTypes: deps.getUnitTypes(),
+      ordersByTurn: deps.getOrdersByTurn(),
+      turnId: deps.getTurnId(),
+      countryId: auth.countryId,
+    });
+    return res.json(checklist);
+  });
+
   app.get("/turn/status", async (_req, res) => {
     const now = new Date();
     const turnId = deps.getTurnId();

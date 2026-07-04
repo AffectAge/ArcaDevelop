@@ -58,6 +58,7 @@ type ServerInteractiveRouteRegistrationRuntimeParams = {
   getGameSettings: () => GameSettings;
   getHexIndex: () => HexMapIndexEntry[];
   getHexMovementCost: Parameters<typeof registerWebSocketRouteComposition>[0]["getHexMovementCost"];
+  areHexIdsAdjacentOrSame: Parameters<typeof registerWebSocketRouteComposition>[0]["areHexIdsAdjacentOrSame"];
   getAiControlledCountryIds: Parameters<typeof registerWebSocketRouteComposition>[0]["getAiControlledCountryIds"];
   pushAdminAuditLog: Parameters<typeof registerAccountControlRouteComposition>[0]["pushAdminAuditLog"];
   validateImageRule: Parameters<typeof registerAccountControlRouteComposition>[0]["validateImageRule"];
@@ -162,8 +163,7 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
     buildingRuntime: params.buildingRuntime,
     progressionRuntime: params.progressionRuntime,
     getGlobalBuildLimit,
-    normalizeArmyMoveRoute: params.turnMechanicsAdapterRuntime.normalizeArmyMoveRoute,
-    isContiguousArmyRoute: params.turnMechanicsAdapterRuntime.isContiguousArmyRoute,
+    areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
     getHexMovementCost: params.getHexMovementCost,
     broadcast: params.broadcast,
     broadcastTurnResolveStarted: params.broadcastTurnResolveStarted,

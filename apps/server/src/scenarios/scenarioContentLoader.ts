@@ -29,6 +29,7 @@ export const scenarioContentFileNames = [
   ["decisions", ["decisions.json"]],
   ["events", ["events.json"]],
   ["journalEntries", ["journal_entries.json", "journalEntries.json"]],
+  ["unitTypes", ["unit_types.json", "unitTypes.json"]],
   ["battalions", ["battalions.json"]],
   ["shipTypes", ["ship_types.json", "shipTypes.json"]],
   ["aircraftTypes", ["aircraft_types.json", "aircraftTypes.json"]],
@@ -41,6 +42,7 @@ export type ScenarioContentKey = (typeof scenarioContentFileNames)[number][0];
 
 const perEntityDirectoryAliases: Partial<Record<ScenarioContentKey, string[]>> = {
   journalEntries: ["journal_entries"],
+  unitTypes: ["unit_types"],
 };
 
 export function loadRawScenarioContent(scenarioDir: string): Record<string, unknown> | null {

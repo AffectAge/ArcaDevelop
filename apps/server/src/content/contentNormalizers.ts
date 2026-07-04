@@ -13,6 +13,9 @@ import type {
   GoodDepositCountRule,
   GoodDepositDefinition,
   MapResourceDepositVisibility,
+  UnitCombatClass,
+  UnitDomain,
+  UnitTypeDefinition,
 } from "@arcanorum/shared";
 import {
   POPULATION_FALLBACK_KEY_BY_DIMENSION,
@@ -52,6 +55,52 @@ import type {
 } from "../runtime/gameSettingsTypes";
 
 const ASSET_TYPES = new Set<AssetContentEntry["type"]>(["icon", "atlas", "image"]);
+const UNIT_DOMAINS = new Set<UnitDomain>(["civilian", "land", "naval", "air"]);
+const UNIT_CLASSES = new Set<UnitCombatClass>(["civilian", "melee", "ranged", "cavalry", "siege", "naval_melee", "naval_ranged", "air"]);
+
+export const DEFAULT_UNIT_TYPES: UnitTypeDefinition[] = [
+  {
+    id: "unit:colonizer",
+    domain: "civilian",
+    class: "civilian",
+    nameKey: "unit.colonizer.name",
+    descriptionKey: "unit.colonizer.description",
+    stats: { maxHp: 50, attack: 0, defense: 0, movement: 2, vision: 2 },
+    productionCost: { colonization: 20, ducats: 10 },
+    visual: { atlasAssetId: "asset:unit.colonizer", frameWidth: 64, frameHeight: 64, states: { idle: { frame: 0 }, move: { frame: 1 }, damaged: { frame: 3 } } },
+    canFoundCity: true,
+  },
+  {
+    id: "unit:warrior",
+    domain: "land",
+    class: "melee",
+    nameKey: "unit.warrior.name",
+    descriptionKey: "unit.warrior.description",
+    stats: { maxHp: 100, attack: 20, defense: 18, movement: 2, vision: 2 },
+    productionCost: { ducats: 25 },
+    visual: { atlasAssetId: "asset:unit.warrior", frameWidth: 64, frameHeight: 64, states: { idle: { frame: 0 }, move: { frame: 1 }, attack: { frame: 2 }, damaged: { frame: 3 } } },
+  },
+  {
+    id: "unit:archer",
+    domain: "land",
+    class: "ranged",
+    nameKey: "unit.archer.name",
+    descriptionKey: "unit.archer.description",
+    stats: { maxHp: 100, attack: 12, defense: 12, rangedAttack: 24, range: 2, movement: 2, vision: 2 },
+    productionCost: { ducats: 30 },
+    visual: { atlasAssetId: "asset:unit.archer", frameWidth: 64, frameHeight: 64, states: { idle: { frame: 0 }, move: { frame: 1 }, attack: { frame: 2 }, damaged: { frame: 3 } } },
+  },
+  {
+    id: "unit:galley",
+    domain: "naval",
+    class: "naval_melee",
+    nameKey: "unit.galley.name",
+    descriptionKey: "unit.galley.description",
+    stats: { maxHp: 100, attack: 18, defense: 16, movement: 3, vision: 2 },
+    productionCost: { ducats: 35 },
+    visual: { atlasAssetId: "asset:unit.galley", frameWidth: 64, frameHeight: 64, states: { idle: { frame: 0 }, move: { frame: 1 }, attack: { frame: 2 }, damaged: { frame: 3 } } },
+  },
+];
 
 export const DEFAULT_UNEMPLOYED_PROFESSION: GameContentEntry = {
   id: POPULATION_FALLBACK_KEY_BY_DIMENSION.professionPct,
@@ -989,6 +1038,92 @@ export function normalizeContentBuildings(input: unknown): GameSettings["content
       deployment: normalizeBuildingDeployment(raw?.deployment),
     };
   });
+}
+
+export function normalizeContentUnitTypes(input: unknown): GameSettings["content"]["unitTypes"] {
+  const rows = Array.isArray(input) ? input : [];
+  const byId = new Map<string, UnitTypeDefinition>();
+  for (const raw of rows) {
+    if (!raw || typeof raw !== "object") continue;
+    const entry = raw as Record<string, unknown>;
+    const id = typeof entry.id === "string" ? entry.id.trim().slice(0, 160) : "";
+    const domain = typeof entry.domain === "string" && UNIT_DOMAINS.has(entry.domain as UnitDomain) ? (entry.domain as UnitDomain) : null;
+    const unitClass = typeof entry.class === "string" && UNIT_CLASSES.has(entry.class as UnitCombatClass) ? (entry.class as UnitCombatClass) : null;
+    const nameKey = typeof entry.nameKey === "string" && entry.nameKey.trim() ? entry.nameKey.trim().slice(0, 180) : "";
+    if (!id.startsWith("unit:") || !domain || !unitClass || !nameKey || byId.has(id)) continue;
+    const statsSource = entry.stats && typeof entry.stats === "object" && !Array.isArray(entry.stats) ? (entry.stats as Record<string, unknown>) : {};
+    const visualSource = entry.visual && typeof entry.visual === "object" && !Array.isArray(entry.visual) ? (entry.visual as Record<string, unknown>) : {};
+    byId.set(id, {
+      id,
+      domain,
+      class: unitClass,
+      nameKey,
+      descriptionKey: typeof entry.descriptionKey === "string" && entry.descriptionKey.trim() ? entry.descriptionKey.trim().slice(0, 180) : null,
+      stats: {
+        maxHp: normalizeUnitNumber(statsSource.maxHp, 1, 10_000, 100),
+        attack: normalizeUnitNumber(statsSource.attack, 0, 10_000, 0),
+        defense: normalizeUnitNumber(statsSource.defense, 0, 10_000, 0),
+        rangedAttack: normalizeOptionalUnitStat(statsSource.rangedAttack, 0, 10_000),
+        range: normalizeOptionalUnitStat(statsSource.range, 0, 12),
+        movement: normalizeUnitNumber(statsSource.movement, 0.1, 64, 1),
+        vision: normalizeOptionalUnitStat(statsSource.vision, 0, 64),
+      },
+      productionCost: normalizeUnitProductionCost(entry.productionCost),
+      unlockTechnologyId:
+        typeof entry.unlockTechnologyId === "string" && entry.unlockTechnologyId.trim()
+          ? entry.unlockTechnologyId.trim().slice(0, 160)
+          : null,
+      visual: {
+        atlasAssetId: normalizeAssetId(visualSource.atlasAssetId),
+        atlasPath: typeof visualSource.atlasPath === "string" && visualSource.atlasPath.trim() ? visualSource.atlasPath.trim().slice(0, 240) : null,
+        frameWidth: normalizeUnitInteger(visualSource.frameWidth, 1, 512, 64),
+        frameHeight: normalizeUnitInteger(visualSource.frameHeight, 1, 512, 64),
+        states: normalizeUnitVisualStates(visualSource.states),
+      },
+      canFoundCity: typeof entry.canFoundCity === "boolean" ? entry.canFoundCity : domain === "civilian" && unitClass === "civilian",
+    });
+  }
+  for (const fallback of DEFAULT_UNIT_TYPES) {
+    if (!byId.has(fallback.id)) byId.set(fallback.id, fallback);
+  }
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id, "en"));
+}
+
+function normalizeUnitNumber(input: unknown, min: number, max: number, fallback: number): number {
+  return typeof input === "number" && Number.isFinite(input) ? Number(Math.max(min, Math.min(max, input)).toFixed(3)) : fallback;
+}
+
+function normalizeOptionalUnitStat(input: unknown, min: number, max: number): number | undefined {
+  return typeof input === "number" && Number.isFinite(input) ? Number(Math.max(min, Math.min(max, input)).toFixed(3)) : undefined;
+}
+
+function normalizeUnitInteger(input: unknown, min: number, max: number, fallback: number): number {
+  return typeof input === "number" && Number.isFinite(input) ? Math.max(min, Math.min(max, Math.floor(input))) : fallback;
+}
+
+function normalizeUnitProductionCost(input: unknown): UnitTypeDefinition["productionCost"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
+  const source = input as Record<string, unknown>;
+  return {
+    ducats: normalizeOptionalUnitStat(source.ducats, 0, 1_000_000),
+    construction: normalizeOptionalUnitStat(source.construction, 0, 1_000_000),
+    colonization: normalizeOptionalUnitStat(source.colonization, 0, 1_000_000),
+    goods: normalizeGoodFlows(source.goods),
+  };
+}
+
+function normalizeUnitVisualStates(input: unknown): UnitTypeDefinition["visual"]["states"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return { idle: { frame: 0 } };
+  const states: UnitTypeDefinition["visual"]["states"] = {};
+  for (const key of ["idle", "move", "attack", "damaged"] as const) {
+    const row = (input as Record<string, unknown>)[key];
+    if (!row || typeof row !== "object" || Array.isArray(row)) continue;
+    const raw = row as Record<string, unknown>;
+    states[key] = {
+      frame: normalizeUnitInteger(raw.frame, 0, 256, 0),
+    };
+  }
+  return Object.keys(states).length > 0 ? states : { idle: { frame: 0 } };
 }
 
 function normalizeBuildingDeployment(input: unknown): BuildingContentEntry["deployment"] {

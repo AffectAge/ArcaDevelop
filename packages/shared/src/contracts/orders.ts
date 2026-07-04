@@ -7,6 +7,9 @@ export type OrderType =
   | "COLONIZE"
   | "UNIT_MOVE"
   | "UNIT_ATTACK"
+  | "UNIT_SKIP_TURN"
+  | "UNIT_SLEEP"
+  | "UNIT_WAKE"
   | "FOUND_CITY"
   | "EQUIPMENT_VARIANT"
   | "EQUIPMENT_PRODUCTION_LINE";
@@ -44,7 +47,7 @@ export type ColonizeOrder = OrderBase & {
 export type UnitMoveOrder = OrderBase & {
   type: "UNIT_MOVE";
   unitId: string;
-  unitKind: "civilian" | "division" | "fleet";
+  unitKind: "map" | "civilian" | "division" | "fleet";
   targetHexId: HexId;
   path: HexId[];
 };
@@ -54,6 +57,24 @@ export type UnitAttackOrder = OrderBase & {
   attackerUnitId: string;
   targetHexId: HexId;
   targetUnitId?: string;
+};
+
+export type UnitSkipTurnOrder = OrderBase & {
+  type: "UNIT_SKIP_TURN";
+  unitId: string;
+  unitKind: "map";
+};
+
+export type UnitSleepOrder = OrderBase & {
+  type: "UNIT_SLEEP";
+  unitId: string;
+  unitKind: "map";
+};
+
+export type UnitWakeOrder = OrderBase & {
+  type: "UNIT_WAKE";
+  unitId: string;
+  unitKind: "map";
 };
 
 export type FoundCityOrder = OrderBase & {
@@ -79,6 +100,9 @@ export type Order =
   | ColonizeOrder
   | UnitMoveOrder
   | UnitAttackOrder
+  | UnitSkipTurnOrder
+  | UnitSleepOrder
+  | UnitWakeOrder
   | FoundCityOrder
   | EquipmentVariantOrder
   | EquipmentProductionLineOrder;

@@ -13,6 +13,7 @@ import {
   normalizeContentEquipmentModules,
   normalizeContentRaces,
   normalizeContentShipTypes,
+  normalizeContentUnitTypes,
 } from "../content/contentNormalizers";
 import { normalizeTransportMode } from "../mechanics/marketTurnMechanics";
 import { getTransportCorridorBuildCost } from "./marketSettingsNormalizers";
@@ -90,6 +91,7 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
       decisions: normalizeContentCultures((next as Partial<{ content?: { decisions?: unknown } }>).content?.decisions),
       events: normalizeContentCultures((next as Partial<{ content?: { events?: unknown } }>).content?.events),
       journalEntries: normalizeContentCultures((next as Partial<{ content?: { journalEntries?: unknown } }>).content?.journalEntries),
+      unitTypes: normalizeContentUnitTypes((next as Partial<{ content?: { unitTypes?: unknown } }>).content?.unitTypes),
       battalions: normalizeContentBattalions((next as Partial<{ content?: { battalions?: unknown } }>).content?.battalions),
       shipTypes: normalizeContentShipTypes((next as Partial<{ content?: { shipTypes?: unknown } }>).content?.shipTypes),
       aircraftTypes: normalizeContentAircraftTypes((next as Partial<{ content?: { aircraftTypes?: unknown } }>).content?.aircraftTypes),

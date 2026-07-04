@@ -48,6 +48,8 @@ export type BaselineWorldDeltaPayload = {
     countryEventFlagsByCountryId?: WorldDelta["xg"];
     journalEntriesByCountryId?: WorldDelta["jo"];
     countryModifiersByCountryId?: WorldDelta["cm"];
+    unitsById?: WorldDelta["mu"];
+    unitTrainingQueueByCountry?: WorldDelta["uq"];
     divisionTemplatesByCountry?: WorldDelta["g"];
     divisionsById?: WorldDelta["x"];
     militaryFormationQueueByCountry?: WorldDelta["w"];
@@ -101,6 +103,8 @@ export function buildWorldDeltaPayload(params: {
     xg: params.compact.xg,
     jo: params.compact.jo,
     cm: params.compact.cm,
+    mu: params.compact.mu,
+    uq: params.compact.uq,
     g: params.compact.g,
     x: params.compact.x,
     w: params.compact.w,
@@ -154,6 +158,8 @@ export function buildBaselineWorldDeltaPayload(params: {
       countryEventFlagsByCountryId: params.compact.xg,
       journalEntriesByCountryId: params.compact.jo,
       countryModifiersByCountryId: params.compact.cm,
+      unitsById: params.compact.mu,
+      unitTrainingQueueByCountry: params.compact.uq,
       divisionTemplatesByCountry: params.compact.g,
       divisionsById: params.compact.x,
       militaryFormationQueueByCountry: params.compact.w,
@@ -200,6 +206,8 @@ export type WorldBaseSectionSnapshot = {
   countryEventFlagsByCountryId?: WorldBase["countryEventFlagsByCountryId"];
   journalEntriesByCountryId?: WorldBase["journalEntriesByCountryId"];
   countryModifiersByCountryId?: WorldBase["countryModifiersByCountryId"];
+  unitsById?: WorldBase["unitsById"];
+  unitTrainingQueueByCountry?: WorldBase["unitTrainingQueueByCountry"];
   divisionTemplatesByCountry?: WorldBase["divisionTemplatesByCountry"];
   divisionsById?: WorldBase["divisionsById"];
   militaryFormationQueueByCountry?: WorldBase["militaryFormationQueueByCountry"];
@@ -331,6 +339,8 @@ export function cloneWorldBaseSectionSnapshot(params: {
     snapshot.militaryFormationQueueByCountry = structuredClone(worldBase.militaryFormationQueueByCountry);
   }
   if ((mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0) {
+    snapshot.unitsById = structuredClone(worldBase.unitsById ?? {});
+    snapshot.unitTrainingQueueByCountry = structuredClone(worldBase.unitTrainingQueueByCountry ?? {});
     snapshot.fleetsById = structuredClone(worldBase.fleetsById);
     snapshot.airWingsById = structuredClone(worldBase.airWingsById);
     snapshot.civilianUnitsById = structuredClone(worldBase.civilianUnitsById);
@@ -429,6 +439,8 @@ export function buildCompactWorldDelta(params: {
   const countryEventFlagsByCountryId: Record<string, WorldBase["countryEventFlagsByCountryId"][string] | null> = {};
   const journalEntriesByCountryId: Record<string, WorldBase["journalEntriesByCountryId"][string] | null> = {};
   const countryModifiersByCountryId: Record<string, WorldBase["countryModifiersByCountryId"][string] | null> = {};
+  const unitsById: WorldDelta["mu"] = {};
+  const unitTrainingQueueByCountry: WorldDelta["uq"] = {};
   const divisionTemplatesByCountry: Record<string, DivisionTemplate[] | null> = {};
   const divisionsById: Record<string, Division | null> = {};
   const militaryFormationQueueByCountry: Record<string, MilitaryFormationQueueItem[] | null> = {};
@@ -815,6 +827,8 @@ export function buildCompactWorldDelta(params: {
     }
   }
   collectRecordDiff(prev.civilianUnitsById, next.civilianUnitsById, civilianUnitsById);
+  collectRecordDiff(prev.unitsById ?? {}, next.unitsById ?? {}, unitsById);
+  collectRecordDiff(prev.unitTrainingQueueByCountry ?? {}, next.unitTrainingQueueByCountry ?? {}, unitTrainingQueueByCountry);
   collectRecordDiff(prev.fleetsById, next.fleetsById, fleetsById);
   collectRecordDiff(prev.airWingsById, next.airWingsById, airWingsById);
   collectRecordDiff(prev.civilianUnitQueueByCountry, next.civilianUnitQueueByCountry, civilianUnitQueueByCountry);
@@ -945,6 +959,14 @@ export function buildCompactWorldDelta(params: {
   if (Object.keys(civilianUnitsById).length > 0) {
     mask |= WORLD_DELTA_MASK.unitEquipmentState;
     compact.cu = civilianUnitsById;
+  }
+  if (Object.keys(unitsById).length > 0) {
+    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    compact.mu = unitsById;
+  }
+  if (Object.keys(unitTrainingQueueByCountry).length > 0) {
+    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    compact.uq = unitTrainingQueueByCountry;
   }
   if (Object.keys(fleetsById).length > 0) {
     mask |= WORLD_DELTA_MASK.unitEquipmentState;
@@ -1092,6 +1114,14 @@ export function toWorldBaseForDeltaDiff(previous: WorldBaseSectionSnapshot, next
       (previous.mask & WORLD_DELTA_MASK.countryModifiersByCountryId) !== 0 && previous.countryModifiersByCountryId
         ? previous.countryModifiersByCountryId
         : next.countryModifiersByCountryId,
+    unitsById:
+      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.unitsById
+        ? previous.unitsById
+        : next.unitsById ?? {},
+    unitTrainingQueueByCountry:
+      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.unitTrainingQueueByCountry
+        ? previous.unitTrainingQueueByCountry
+        : next.unitTrainingQueueByCountry ?? {},
     divisionTemplatesByCountry:
       (previous.mask & WORLD_DELTA_MASK.divisionTemplatesByCountry) !== 0 && previous.divisionTemplatesByCountry
         ? previous.divisionTemplatesByCountry

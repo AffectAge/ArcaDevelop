@@ -54,7 +54,6 @@ import {
   buildRegionAdjacencyByIdFromHexes,
   selectAiColonizationCandidates,
 } from "./ai/aiColonizationCandidates";
-import { makeCivilianUnitLedgerFlows, queueColonizerUnit } from "./mechanics/civilianUnitMechanics";
 import { selectAiEconomyOrderCandidates } from "./ai/aiEconomyCandidates";
 import { runAiOrderRuntimeCycleWithRuntimeSubmitter } from "./runtime/aiRuntimeCoordinator";
 import type { AiRuntimeCandidateProvider } from "./ai/aiRuntimePlanner";
@@ -83,13 +82,9 @@ import {
   PERSIST_STATE_DEBOUNCE_MS,
   WORLD_DELTA_LOG_PRUNE_INTERVAL_MS,
 } from "./runtime/serverRuntimeConfig";
-import {
-  DEFAULT_BATTALIONS,
-} from "./content/contentNormalizers";
 import type { GameSettings } from "./runtime/gameSettingsTypes";
 import { normalizeHexIdList } from "./runtime/marketSettingsNormalizers";
 import { createMarketSystemsRuntime } from "./runtime/marketSystemsRuntime";
-import { createMilitaryRuntimeFacade } from "./runtime/militaryRuntimeFacade";
 import { createMarketPriceRuntimeState } from "./runtime/marketPriceRuntimeState";
 import { createPopulationSystemsRuntime } from "./runtime/populationSystemsRuntime";
 import { createWorldStateNormalizerRuntime } from "./runtime/worldStateNormalizerRuntime";
@@ -269,13 +264,6 @@ const { worldPopulationRuntime } = createPopulationSystemsRuntime({
 
 let aiControlledCountryIds = new Set<string>();
 
-const militaryRuntimeFacade = createMilitaryRuntimeFacade({
-  getGameSettings: () => gameSettings,
-  getWorldBase: () => worldBase,
-  getTurnId: () => turnId,
-  defaultBattalions: DEFAULT_BATTALIONS,
-});
-
 registerServerCoreRouteRuntime({
   app,
   wsServerProvider: () => wss,
@@ -288,9 +276,10 @@ registerServerCoreRouteRuntime({
   countryRuntimeHelpers,
   sessionStateRuntime,
   uiNotificationRuntime,
-  militaryRuntimeFacade,
   getServerStatus: () => env.serverStatus,
   getTurnId: () => turnId,
+  getWorldBase: () => worldBase,
+  getOrdersByTurn: () => turnStateRuntime.ordersByTurn,
   getWsDeltaSizeMetrics: () => wsDeltaSizeMetrics,
   getWorldDeltaHistory: () => worldDeltaHistory,
   getWorldStateVersion: () => worldStateVersion,
@@ -441,9 +430,6 @@ const persistedStateRestoreRuntime = createPersistedStateRestoreRuntime({
   normalizeCountryEventFlagsMap: worldStateNormalizerRuntime.normalizeCountryEventFlagsMap,
   normalizeJournalEntriesMap: worldStateNormalizerRuntime.normalizeJournalEntriesMap,
   normalizeCountryModifiersMap: worldStateNormalizerRuntime.normalizeCountryModifiersMap,
-  normalizeDivisionTemplatesByCountry: militaryRuntimeFacade.normalizeDivisionTemplatesByCountry,
-  normalizeDivisionsById: militaryRuntimeFacade.normalizeDivisionsById,
-  normalizeMilitaryFormationQueueByCountry: militaryRuntimeFacade.normalizeMilitaryFormationQueueByCountry,
   normalizeDiplomacyProposals: worldStateNormalizerRuntime.normalizeDiplomacyProposals,
   rebuildTurnOrderIndexes: turnOrderRuntime.rebuildTurnOrderIndexes,
   rebuildEconomyTickCountryIndexFromWorldBase: () => countryWorldRuntime.rebuildEconomyTickCountryIndexFromWorldBase(),
@@ -580,7 +566,6 @@ const turnRuntime = createTurnRuntime({
   getOrdersByTurn: () => turnStateRuntime.ordersByTurn,
   getResolveReadyByTurn: () => turnStateRuntime.resolveReadyByTurn,
   getActiveColonizeRegionsByCountry: () => turnStateRuntime.activeColonizeRegionsByCountry,
-  refreshDivisionStatsFromTemplates: militaryRuntimeFacade.refreshDivisionStatsFromTemplates,
   getHexIndex: mapRuntime.getHexIndex,
   getEconomyTickCountryIds: () => economyTickCountryIds,
   fullSnapshotMask: TURN_RESOLVE_WORLD_DELTA_MASK,
@@ -601,35 +586,6 @@ const turnRuntime = createTurnRuntime({
       aiSettings,
       countryIds,
       candidateProviders: createAiRuntimeCandidateProviders(),
-      submitAiAction: async (draft) => {
-        if (draft.action.type !== "QUEUE_COLONIZER") {
-          return { ok: false, reason: "AI_ACTION_NOT_SUPPORTED" };
-        }
-        const previousWorldBase = worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot(
-          TURN_RESOLVE_WORLD_DELTA_MASK,
-        );
-        const result = queueColonizerUnit({
-          worldBase,
-          countryId: draft.action.countryId,
-          hexId: draft.action.hexId,
-          getHexRegionId: (hexId) => mapRuntime.getHexIndex().find((hex) => hex.id === hexId)?.regionId ?? null,
-          config: gameSettings.colonization,
-          createId: randomUUID,
-          turnId,
-        });
-        if (!result.ok) return { ok: false, reason: result.error };
-        for (const flow of makeCivilianUnitLedgerFlows({
-          countryId: draft.action.countryId,
-          queueId: result.item.id,
-          cost: result.item.cost,
-        })) {
-          resourceLedgerRuntime.addExpense(flow);
-        }
-        resourceLedgerRuntime.flushTurn();
-        persistenceFacade.savePersistentState();
-        worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
-        return { ok: true, submittedOrderId: result.item.id };
-      },
       runtimeParams: {
         wsServer: wss,
         onlinePlayers: sessionStateRuntime.onlinePlayers,
@@ -686,8 +642,7 @@ const turnRuntime = createTurnRuntime({
         countBuildingOccurrences: buildingRuntime.countBuildingOccurrences,
         getCountryBuildLimit: buildingRuntime.getCountryBuildLimit,
         getGlobalBuildLimit,
-        normalizeArmyMoveRoute: turnMechanicsAdapterRuntime.normalizeArmyMoveRoute,
-        isContiguousArmyRoute: turnMechanicsAdapterRuntime.isContiguousArmyRoute,
+        areHexIdsAdjacentOrSame: marketAccessRuntime.areHexIdsAdjacentOrSame,
         getHexMovementCost,
       },
       onSubmissionError: (message) => console.warn("[ai] order rejected", message.code),
@@ -781,7 +736,6 @@ registerServerMainRouteRuntime({
   marketRuntimeFacade,
   marketAccessRuntime,
   marketPriceRuntimeState,
-  militaryRuntimeFacade,
   colonizationRuntime,
   buildingRuntime,
   worldPopulationRuntime,
@@ -871,6 +825,7 @@ registerServerInteractiveRouteRuntime({
   getGameSettings: () => gameSettings,
   getHexIndex: mapRuntime.getHexIndex,
   getHexMovementCost,
+  areHexIdsAdjacentOrSame: marketAccessRuntime.areHexIdsAdjacentOrSame,
   getAiControlledCountryIds: () => new Set(aiControlledCountryIds),
   pushAdminAuditLog: (entry) => adminAuditLogStore.push(entry),
   validateImageRule,

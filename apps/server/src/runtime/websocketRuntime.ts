@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import type { WebSocketServer, WebSocket } from "ws";
 import type { AuthHeaderPayload } from "../security/authHeader";
 import type {
-  Division,
   HexId,
   Order,
   OrderDelta,
@@ -14,14 +13,8 @@ import type {
 } from "@arcanorum/shared";
 import type { GameContentEntry, GameSettings } from "./gameSettingsTypes";
 import type { RegionColonizationConfig } from "../mechanics/colonizationMechanics";
-import { countLandDivisionsOnHex, findDivisionRouteToTarget } from "../mechanics/militaryMechanics";
 import { validateFoundCityOrder } from "../mechanics/settlementMechanics";
-import {
-  findCivilianRouteToTarget,
-  findFleetRouteToTarget,
-  isCivilianHexOccupied,
-  normalizeUnitMoveRoute,
-} from "../mechanics/unitMovementMechanics";
+import { isContiguousMapUnitRoute, normalizeMapUnitMoveRoute } from "../mechanics/mapUnitMechanics";
 import type { HexMapIndexEntry } from "../map/hexIndex";
 
 type WebSocketCountryRecord = {
@@ -87,12 +80,7 @@ type WebSocketRuntimeParams = {
   ) => { byCountry: number; global: number };
   getCountryBuildLimit: (building: GameContentEntry, countryId: string) => number | null | undefined;
   getGlobalBuildLimit: (building: GameContentEntry) => number | null;
-  normalizeArmyMoveRoute: (
-    payload: Record<string, unknown> | undefined,
-    fallbackHexId: HexId,
-    currentHexId: HexId,
-  ) => HexId[];
-  isContiguousArmyRoute: (fromHexId: HexId, route: HexId[]) => boolean;
+  areHexIdsAdjacentOrSame: (leftHexId: string, rightHexId: string) => boolean;
   getHexMovementCost: (hexId: HexId, countryId?: string) => number;
 };
 
@@ -349,9 +337,11 @@ export async function submitOrderDeltaToRuntime(input: {
   if (
     delta.order.type !== "COLONIZE" &&
     delta.order.type !== "BUILD" &&
-    delta.order.type !== "ARMY_MOVE" &&
     delta.order.type !== "UNIT_MOVE" &&
     delta.order.type !== "UNIT_ATTACK" &&
+    delta.order.type !== "UNIT_SKIP_TURN" &&
+    delta.order.type !== "UNIT_SLEEP" &&
+    delta.order.type !== "UNIT_WAKE" &&
     delta.order.type !== "FOUND_CITY" &&
     countryResource.ducats <= 0
   ) {
@@ -371,9 +361,10 @@ export async function submitOrderDeltaToRuntime(input: {
   if (!validateColonizeOrder({ params, delta, send, turnId, worldBase, gameSettings })) return;
   if (!validateUnitMoveOrder({ params, delta, send, worldBase, playerOrders })) return;
   if (!validateUnitAttackOrder({ params, delta, send, worldBase, playerOrders })) return;
+  if (!validateUnitWaitOrder({ delta, send, worldBase, playerOrders })) return;
   if (!validateFoundCityOrderForSubmit({ params, delta, send, worldBase })) return;
   if (!(await validateBuildOrder({ params, delta, send, worldBase, gameSettings }))) return;
-  if (!validateArmyMoveOrder({ params, delta, send, worldBase, playerOrders })) return;
+  if (!validateArmyMoveOrder({ delta, send })) return;
 
   if (playerOrders.length >= 8) {
     send({ type: "ERROR", code: "RATE_LIMIT", message: "Too many orders this turn" });
@@ -388,6 +379,52 @@ export async function submitOrderDeltaToRuntime(input: {
   params.broadcast({ type: "ORDER_BROADCAST", order });
 }
 
+function validateUnitWaitOrder(input: {
+  delta: OrderDelta;
+  send: (message: WsOutMessage) => void;
+  worldBase: WorldBase;
+  playerOrders: Order[];
+}): boolean {
+  const { delta, send, worldBase, playerOrders } = input;
+  if (delta.order.type !== "UNIT_SKIP_TURN" && delta.order.type !== "UNIT_SLEEP" && delta.order.type !== "UNIT_WAKE") return true;
+  if (delta.order.unitKind !== "map") {
+    send({ type: "ERROR", code: "UNIT_WAIT_KIND_UNSUPPORTED", message: "UNIT_WAIT_KIND_UNSUPPORTED" });
+    return false;
+  }
+  const unit = worldBase.unitsById?.[delta.order.unitId];
+  if (!unit || unit.countryId !== delta.order.countryId) {
+    send({ type: "ERROR", code: "MAP_UNIT_NOT_FOUND", message: "MAP_UNIT_NOT_FOUND" });
+    return false;
+  }
+  if (unit.status === "captured" || unit.status === "destroyed") {
+    send({ type: "ERROR", code: "MAP_UNIT_UNAVAILABLE", message: "MAP_UNIT_UNAVAILABLE" });
+    return false;
+  }
+  if (delta.order.type === "UNIT_WAKE" && unit.status !== "sleeping") {
+    send({ type: "ERROR", code: "MAP_UNIT_NOT_SLEEPING", message: "MAP_UNIT_NOT_SLEEPING" });
+    return false;
+  }
+  if ((delta.order.type === "UNIT_SKIP_TURN" || delta.order.type === "UNIT_SLEEP") && unit.status === "sleeping") {
+    send({ type: "ERROR", code: "MAP_UNIT_UNAVAILABLE", message: "MAP_UNIT_UNAVAILABLE" });
+    return false;
+  }
+  if (
+    playerOrders.some(
+      (order) =>
+        order.countryId === delta.order.countryId &&
+        ((order.type === "UNIT_MOVE" && order.unitKind === "map" && order.unitId === unit.id) ||
+          (order.type === "UNIT_ATTACK" && order.attackerUnitId === unit.id) ||
+          (order.type === "UNIT_SKIP_TURN" && order.unitKind === "map" && order.unitId === unit.id) ||
+          (order.type === "UNIT_SLEEP" && order.unitKind === "map" && order.unitId === unit.id) ||
+          (order.type === "UNIT_WAKE" && order.unitKind === "map" && order.unitId === unit.id)),
+    )
+  ) {
+    send({ type: "ERROR", code: "MAP_UNIT_ALREADY_QUEUED", message: "MAP_UNIT_ALREADY_QUEUED" });
+    return false;
+  }
+  return true;
+}
+
 function validateUnitAttackOrder(input: {
   params: WebSocketRuntimeParams;
   delta: OrderDelta;
@@ -398,31 +435,34 @@ function validateUnitAttackOrder(input: {
   const { params, delta, send, worldBase, playerOrders } = input;
   if (delta.order.type !== "UNIT_ATTACK") return true;
   const attackOrder = delta.order;
-  const attacker = worldBase.divisionsById[attackOrder.attackerUnitId];
-  if (!attacker || attacker.countryId !== attackOrder.countryId || (attacker.kind ?? "land") !== "land") {
+  const attacker = worldBase.unitsById?.[attackOrder.attackerUnitId];
+  if (!attacker || attacker.countryId !== attackOrder.countryId || attacker.status === "destroyed" || attacker.status === "captured") {
     send({ type: "ERROR", code: "UNIT_ATTACK_ATTACKER_NOT_FOUND", message: "UNIT_ATTACK_ATTACKER_NOT_FOUND" });
     return false;
   }
-  if (attackOrder.targetHexId === attacker.hexId || !params.isContiguousArmyRoute(attacker.hexId, [attackOrder.targetHexId])) {
+  if (
+    attackOrder.targetHexId === attacker.hexId ||
+    !params.areHexIdsAdjacentOrSame(attacker.hexId, attackOrder.targetHexId)
+  ) {
     send({ type: "ERROR", code: "UNIT_ATTACK_TARGET_INVALID", message: "UNIT_ATTACK_TARGET_INVALID" });
     return false;
   }
   if (attackOrder.targetUnitId) {
-    const targetUnit = worldBase.divisionsById[attackOrder.targetUnitId];
+    const targetUnit = worldBase.unitsById?.[attackOrder.targetUnitId];
     if (!targetUnit || targetUnit.countryId === attacker.countryId || targetUnit.hexId !== attackOrder.targetHexId) {
       send({ type: "ERROR", code: "UNIT_ATTACK_TARGET_INVALID", message: "UNIT_ATTACK_TARGET_INVALID" });
       return false;
     }
   }
-  const hasEnemyDivision = Object.values(worldBase.divisionsById).some(
-      (division) =>
-        (division.kind ?? "land") === "land" &&
-      division.hexId === attackOrder.targetHexId &&
-      division.countryId !== attacker.countryId &&
-      division.strength > 0,
+  const hasEnemyUnit = Object.values(worldBase.unitsById ?? {}).some(
+    (unit) =>
+      unit.hexId === attackOrder.targetHexId &&
+      unit.countryId !== attacker.countryId &&
+      unit.status !== "destroyed" &&
+      unit.status !== "captured",
   );
   const targetOwnerId = worldBase.hexOwner[attackOrder.targetHexId] ?? null;
-  if (!hasEnemyDivision && (!targetOwnerId || targetOwnerId === attacker.countryId)) {
+  if (!hasEnemyUnit && (!targetOwnerId || targetOwnerId === attacker.countryId)) {
     send({ type: "ERROR", code: "UNIT_ATTACK_TARGET_INVALID", message: "UNIT_ATTACK_TARGET_INVALID" });
     return false;
   }
@@ -431,8 +471,10 @@ function validateUnitAttackOrder(input: {
       (order) =>
         order.countryId === attackOrder.countryId &&
         ((order.type === "UNIT_ATTACK" && order.attackerUnitId === attacker.id) ||
-          (order.type === "UNIT_MOVE" && order.unitKind === "division" && order.unitId === attacker.id) ||
-          (order.type === "ARMY_MOVE" && typeof order.payload?.divisionId === "string" && order.payload.divisionId === attacker.id)),
+          (order.type === "UNIT_MOVE" && order.unitKind === "map" && order.unitId === attacker.id) ||
+          (order.type === "UNIT_SKIP_TURN" && order.unitKind === "map" && order.unitId === attacker.id) ||
+          (order.type === "UNIT_SLEEP" && order.unitKind === "map" && order.unitId === attacker.id) ||
+          (order.type === "UNIT_WAKE" && order.unitKind === "map" && order.unitId === attacker.id)),
     )
   ) {
     send({ type: "ERROR", code: "UNIT_ATTACK_ALREADY_QUEUED", message: "UNIT_ATTACK_ALREADY_QUEUED" });
@@ -453,6 +495,7 @@ function validateFoundCityOrderForSubmit(input: {
   const validation = validateFoundCityOrder({
     order: { ...delta.order, id: "submit-validation", createdAt: new Date(0).toISOString() },
     worldBase,
+    unitTypes: params.getGameSettings().content.unitTypes,
     getHexRegionId: (hexId) => hexRegionById.get(hexId) ?? null,
     getRegionColonizationConfig: params.getRegionColonizationConfig,
   });
@@ -470,120 +513,26 @@ function validateUnitMoveOrder(input: {
 }): boolean {
   const { params, delta, send, worldBase, playerOrders } = input;
   if (delta.order.type !== "UNIT_MOVE") return true;
-  if (delta.order.unitKind === "division") {
-    const division = worldBase.divisionsById[delta.order.unitId];
-    if (!division || division.countryId !== delta.order.countryId || (division.kind ?? "land") !== "land") {
-      send({ type: "ERROR", code: "DIVISION_NOT_FOUND", message: "DIVISION_NOT_FOUND" });
-      return false;
-    }
-    const route = params.normalizeArmyMoveRoute(delta.order.payload, delta.order.targetHexId, division.hexId);
-    const hexById = new Map(params.getHexIndex().map((hex) => [hex.id, hex] as const));
-    const serverRoute = findDivisionRouteToTarget({
-      worldBase,
-      division,
-      targetHexId: delta.order.targetHexId,
-      getNeighborHexIds: (hexId) => (hexById.get(hexId)?.neighbors ?? []).filter((neighborId): neighborId is HexId => /^hex:-?\d+:-?\d+$/.test(neighborId)),
-      getHexMovementCost: params.getHexMovementCost,
-      landDivisionStackLimitPerHex: params.getGameSettings().military.landDivisionStackLimitPerHex,
-    });
-    const validatedRoute = serverRoute.length > 0 ? serverRoute : route;
-    if (validatedRoute.length === 0 || !params.isContiguousArmyRoute(division.hexId, validatedRoute)) {
-      send({ type: "ERROR", code: "DIVISION_TARGET_NOT_ADJACENT", message: "DIVISION_TARGET_NOT_ADJACENT" });
-      return false;
-    }
-    if (isPeacefulDivisionStepStackFull(worldBase, division, validatedRoute[0], params.getGameSettings().military.landDivisionStackLimitPerHex)) {
-      send({ type: "ERROR", code: "DIVISION_STACK_LIMIT_REACHED", message: "DIVISION_STACK_LIMIT_REACHED" });
-      return false;
-    }
-    if (
-      playerOrders.some(
-        (order) =>
-          order.countryId === delta.order.countryId &&
-          ((order.type === "UNIT_MOVE" && order.unitKind === "division" && order.unitId === division.id) ||
-            (order.type === "ARMY_MOVE" && typeof order.payload?.divisionId === "string" && order.payload.divisionId === division.id)),
-      )
-    ) {
-      send({ type: "ERROR", code: "DIVISION_ALREADY_QUEUED", message: "DIVISION_ALREADY_QUEUED" });
-      return false;
-    }
-    return true;
-  }
-  if (delta.order.unitKind === "fleet") {
-    const fleet = worldBase.fleetsById[delta.order.unitId];
-    if (!fleet || fleet.countryId !== delta.order.countryId) {
-      send({ type: "ERROR", code: "FLEET_NOT_FOUND", message: "FLEET_NOT_FOUND" });
-      return false;
-    }
-    const route = normalizeUnitMoveRoute(delta.order.payload, delta.order.targetHexId, fleet.hexId);
-    const hexById = new Map(params.getHexIndex().map((hex) => [hex.id, hex] as const));
-    const isFleetPassableHex = (hexId: HexId) => isFleetPassableHexEntry(hexById.get(hexId));
-    const serverRoute = findFleetRouteToTarget({
-      fleet,
-      targetHexId: delta.order.targetHexId,
-      getNeighborHexIds: (hexId) => (hexById.get(hexId)?.neighbors ?? []).filter((neighborId): neighborId is HexId => /^hex:-?\d+:-?\d+$/.test(neighborId)),
-      getHexMovementCost: params.getHexMovementCost,
-      isFleetPassableHex,
-    });
-    const validatedRoute = serverRoute.length > 0 ? serverRoute : route;
-    if (validatedRoute.length === 0) {
-      send({ type: "ERROR", code: "UNIT_MOVE_TARGET_INVALID", message: "UNIT_MOVE_TARGET_INVALID" });
-      return false;
-    }
-    if (!params.isContiguousArmyRoute(fleet.hexId, validatedRoute)) {
-      send({ type: "ERROR", code: "UNIT_MOVE_PATH_NOT_CONTIGUOUS", message: "UNIT_MOVE_PATH_NOT_CONTIGUOUS" });
-      return false;
-    }
-    if (!validatedRoute.every(isFleetPassableHex)) {
-      send({ type: "ERROR", code: "FLEET_TARGET_NOT_WATER", message: "FLEET_TARGET_NOT_WATER" });
-      return false;
-    }
-    if (
-      playerOrders.some(
-        (order) =>
-          order.type === "UNIT_MOVE" &&
-          order.countryId === delta.order.countryId &&
-          order.unitKind === "fleet" &&
-          order.unitId === fleet.id,
-      )
-    ) {
-      send({ type: "ERROR", code: "FLEET_ALREADY_QUEUED", message: "FLEET_ALREADY_QUEUED" });
-      return false;
-    }
-    return true;
-  }
-  if (delta.order.unitKind !== "civilian") {
+  if (delta.order.unitKind !== "map") {
     send({ type: "ERROR", code: "UNIT_MOVE_KIND_UNSUPPORTED", message: "UNIT_MOVE_KIND_UNSUPPORTED" });
     return false;
   }
-  const unit = worldBase.civilianUnitsById[delta.order.unitId];
+  const unit = worldBase.unitsById?.[delta.order.unitId];
   if (!unit || unit.countryId !== delta.order.countryId) {
-    send({ type: "ERROR", code: "CIVILIAN_UNIT_NOT_FOUND", message: "CIVILIAN_UNIT_NOT_FOUND" });
+    send({ type: "ERROR", code: "MAP_UNIT_NOT_FOUND", message: "MAP_UNIT_NOT_FOUND" });
     return false;
   }
-  if (unit.status === "captured") {
-    send({ type: "ERROR", code: "CIVILIAN_UNIT_CAPTURED", message: "CIVILIAN_UNIT_CAPTURED" });
+  if (unit.status === "captured" || unit.status === "destroyed") {
+    send({ type: "ERROR", code: "MAP_UNIT_UNAVAILABLE", message: "MAP_UNIT_UNAVAILABLE" });
     return false;
   }
-  const route = normalizeUnitMoveRoute(delta.order.payload, delta.order.targetHexId, unit.hexId);
-  const hexById = new Map(params.getHexIndex().map((hex) => [hex.id, hex] as const));
-  const serverRoute = findCivilianRouteToTarget({
-    worldBase,
-    unit,
-    targetHexId: delta.order.targetHexId,
-    getNeighborHexIds: (hexId) => (hexById.get(hexId)?.neighbors ?? []).filter((neighborId): neighborId is HexId => /^hex:-?\d+:-?\d+$/.test(neighborId)),
-    getHexMovementCost: params.getHexMovementCost,
-  });
-  const validatedRoute = serverRoute.length > 0 ? serverRoute : route;
+  const validatedRoute = normalizeMapUnitMoveRoute(delta.order.payload, delta.order.targetHexId, unit.hexId);
   if (validatedRoute.length === 0) {
     send({ type: "ERROR", code: "UNIT_MOVE_TARGET_INVALID", message: "UNIT_MOVE_TARGET_INVALID" });
     return false;
   }
-  if (!params.isContiguousArmyRoute(unit.hexId, validatedRoute)) {
+  if (!isContiguousMapUnitRoute({ fromHexId: unit.hexId, route: validatedRoute, areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame })) {
     send({ type: "ERROR", code: "UNIT_MOVE_PATH_NOT_CONTIGUOUS", message: "UNIT_MOVE_PATH_NOT_CONTIGUOUS" });
-    return false;
-  }
-  if (validatedRoute.some((hexId) => isCivilianHexOccupied(worldBase, hexId, unit.id))) {
-    send({ type: "ERROR", code: "CIVILIAN_UNIT_HEX_OCCUPIED", message: "CIVILIAN_UNIT_HEX_OCCUPIED" });
     return false;
   }
   if (
@@ -591,58 +540,21 @@ function validateUnitMoveOrder(input: {
       (order) =>
         order.type === "UNIT_MOVE" &&
         order.countryId === delta.order.countryId &&
-        order.unitKind === "civilian" &&
+        order.unitKind === "map" &&
         order.unitId === unit.id,
+    ) ||
+    playerOrders.some(
+      (order) =>
+        order.countryId === delta.order.countryId &&
+        ((order.type === "UNIT_SKIP_TURN" && order.unitKind === "map" && order.unitId === unit.id) ||
+          (order.type === "UNIT_SLEEP" && order.unitKind === "map" && order.unitId === unit.id) ||
+          (order.type === "UNIT_WAKE" && order.unitKind === "map" && order.unitId === unit.id)),
     )
   ) {
-    send({ type: "ERROR", code: "CIVILIAN_UNIT_ALREADY_QUEUED", message: "CIVILIAN_UNIT_ALREADY_QUEUED" });
+    send({ type: "ERROR", code: "MAP_UNIT_ALREADY_QUEUED", message: "MAP_UNIT_ALREADY_QUEUED" });
     return false;
   }
   return true;
-}
-
-function isFleetPassableHexEntry(hex: HexMapIndexEntry | undefined): boolean {
-  if (!hex) return false;
-  const tokens = [hex.hexType, hex.landscape, hex.continent].map((value) => String(value ?? "").toLowerCase());
-  return tokens.some(
-    (value) =>
-      value === "water" ||
-      value === "sea" ||
-      value === "ocean" ||
-      value === "coast" ||
-      value === "coastal_water" ||
-      value === "deep_ocean" ||
-      value === "lake" ||
-      value.endsWith(":water") ||
-      value.endsWith(":sea") ||
-      value.endsWith(":ocean"),
-  );
-}
-
-function isPeacefulDivisionStepStackFull(
-  worldBase: WorldBase,
-  division: Division,
-  hexId: HexId | undefined,
-  landDivisionStackLimitPerHex: number,
-): boolean {
-  if (!hexId) return false;
-  const targetOwnerId = worldBase.hexOwner[hexId] ?? null;
-  const hasEnemyDivision = Object.values(worldBase.divisionsById).some(
-    (other) =>
-      (other.kind ?? "land") === "land" &&
-      other.id !== division.id &&
-      other.hexId === hexId &&
-      other.countryId !== division.countryId,
-  );
-  if (hasEnemyDivision || (targetOwnerId && targetOwnerId !== division.countryId)) return false;
-  return (
-    countLandDivisionsOnHex({
-      worldBase,
-      hexId,
-      countryId: division.countryId,
-      excludeDivisionId: division.id,
-    }) >= Math.max(1, Math.floor(landDivisionStackLimitPerHex))
-  );
 }
 
 function validateColonizeOrder(input: {
@@ -757,51 +669,13 @@ async function validateBuildOrder(input: {
 }
 
 function validateArmyMoveOrder(input: {
-  params: WebSocketRuntimeParams;
   delta: OrderDelta;
   send: (message: WsOutMessage) => void;
-  worldBase: WorldBase;
-  playerOrders: Order[];
 }): boolean {
-  const { params, delta, send, worldBase, playerOrders } = input;
+  const { delta, send } = input;
   if (delta.order.type !== "ARMY_MOVE") return true;
-  const divisionId = typeof delta.order.payload?.divisionId === "string" ? delta.order.payload.divisionId.trim() : "";
-  const division = divisionId ? worldBase.divisionsById[divisionId] : null;
-  if (!division || division.countryId !== delta.order.countryId) {
-    send({ type: "ERROR", code: "DIVISION_NOT_FOUND", message: "Дивизия не найдена" });
-    return false;
-  }
-  const route = params.normalizeArmyMoveRoute(delta.order.payload, delta.order.targetHexId, division.hexId);
-  const hexById = new Map(params.getHexIndex().map((hex) => [hex.id, hex] as const));
-  const serverRoute = findDivisionRouteToTarget({
-    worldBase,
-    division,
-    targetHexId: delta.order.targetHexId,
-    getNeighborHexIds: (hexId) => (hexById.get(hexId)?.neighbors ?? []).filter((neighborId): neighborId is HexId => /^hex:-?\d+:-?\d+$/.test(neighborId)),
-    getHexMovementCost: params.getHexMovementCost,
-    landDivisionStackLimitPerHex: params.getGameSettings().military.landDivisionStackLimitPerHex,
-  });
-  const validatedRoute = serverRoute.length > 0 ? serverRoute : route;
-  if (validatedRoute.length === 0 || !params.isContiguousArmyRoute(division.hexId, validatedRoute)) {
-    send({ type: "ERROR", code: "DIVISION_TARGET_NOT_ADJACENT", message: "Маршрут дивизии должен идти по соседним hex-клеткам" });
-    return false;
-  }
-  if (isPeacefulDivisionStepStackFull(worldBase, division, validatedRoute[0], params.getGameSettings().military.landDivisionStackLimitPerHex)) {
-    send({ type: "ERROR", code: "DIVISION_STACK_LIMIT_REACHED", message: "На гексе достигнут лимит дивизий" });
-    return false;
-  }
-  if (
-    playerOrders.some(
-      (order) =>
-        order.countryId === delta.order.countryId &&
-        ((order.type === "ARMY_MOVE" && typeof order.payload?.divisionId === "string" && order.payload.divisionId === division.id) ||
-          (order.type === "UNIT_MOVE" && order.unitKind === "division" && order.unitId === division.id)),
-    )
-  ) {
-    send({ type: "ERROR", code: "DIVISION_ALREADY_QUEUED", message: "Для этой дивизии уже есть приказ на этот ход" });
-    return false;
-  }
-  return true;
+  send({ type: "ERROR", code: "ARMY_MOVE_REMOVED", message: "ARMY_MOVE_REMOVED" });
+  return false;
 }
 
 async function handleRequestResolve(input: {

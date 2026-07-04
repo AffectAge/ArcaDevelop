@@ -1,0 +1,30 @@
+{
+  "id": "unit:colonizer",
+  "domain": "civilian",
+  "class": "civilian",
+  "nameKey": "unit.colonizer.name",
+  "descriptionKey": "unit.colonizer.description",
+  "stats": {
+    "maxHp": 50,
+    "attack": 0,
+    "defense": 5,
+    "movement": 2,
+    "vision": 2
+  },
+  "productionCost": {
+    "colonization": 50,
+    "ducats": 25
+  },
+  "visual": {
+    "atlasAssetId": "asset:unit.colonizer",
+    "atlasPath": "assets/units/colonizer.png",
+    "frameWidth": 64,
+    "frameHeight": 64,
+    "states": {
+      "idle": { "frame": 0 },
+      "move": { "frame": 1 },
+      "damaged": { "frame": 3 }
+    }
+  },
+  "canFoundCity": true
+}

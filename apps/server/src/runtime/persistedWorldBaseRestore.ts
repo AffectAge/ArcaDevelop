@@ -27,9 +27,6 @@ type RestorePersistedWorldBaseParams = {
   normalizeCountryEventFlagsMap: (input: unknown) => WorldBase["countryEventFlagsByCountryId"];
   normalizeJournalEntriesMap: (input: unknown) => WorldBase["journalEntriesByCountryId"];
   normalizeCountryModifiersMap: (input: unknown) => WorldBase["countryModifiersByCountryId"];
-  normalizeDivisionTemplatesByCountry: (input: unknown) => WorldBase["divisionTemplatesByCountry"];
-  normalizeDivisionsById: (input: unknown, base: WorldBase) => WorldBase["divisionsById"];
-  normalizeMilitaryFormationQueueByCountry: (input: unknown) => WorldBase["militaryFormationQueueByCountry"];
   normalizeDiplomacyProposals: (input: unknown) => DiplomacyProposal[];
 };
 
@@ -124,9 +121,13 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     countryModifiersByCountryId: params.normalizeCountryModifiersMap(
       (candidate as Partial<WorldBase> & { countryModifiersByCountryId?: unknown }).countryModifiersByCountryId,
     ),
-    divisionTemplatesByCountry: params.normalizeDivisionTemplatesByCountry(
-      (candidate as Partial<WorldBase> & { divisionTemplatesByCountry?: unknown }).divisionTemplatesByCountry,
-    ),
+    unitsById: normalizeRecord(
+      (candidate as Partial<WorldBase> & { unitsById?: unknown }).unitsById,
+    ) as WorldBase["unitsById"],
+    unitTrainingQueueByCountry: normalizeRecord(
+      (candidate as Partial<WorldBase> & { unitTrainingQueueByCountry?: unknown }).unitTrainingQueueByCountry,
+    ) as WorldBase["unitTrainingQueueByCountry"],
+    divisionTemplatesByCountry: {},
     divisionsById: {},
     fleetsById: normalizeRecord(
       (candidate as Partial<WorldBase> & { fleetsById?: unknown }).fleetsById,
@@ -134,9 +135,7 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     airWingsById: normalizeRecord(
       (candidate as Partial<WorldBase> & { airWingsById?: unknown }).airWingsById,
     ) as WorldBase["airWingsById"],
-    militaryFormationQueueByCountry: params.normalizeMilitaryFormationQueueByCountry(
-      (candidate as Partial<WorldBase> & { militaryFormationQueueByCountry?: unknown }).militaryFormationQueueByCountry,
-    ),
+    militaryFormationQueueByCountry: {},
     civilianUnitsById: normalizeRecord(
       (candidate as Partial<WorldBase> & { civilianUnitsById?: unknown }).civilianUnitsById,
     ) as WorldBase["civilianUnitsById"],
@@ -162,10 +161,6 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
       (candidate as Partial<WorldBase> & { diplomacyProposals?: unknown }).diplomacyProposals,
     ),
   };
-  restored.divisionsById = params.normalizeDivisionsById(
-    (candidate as Partial<WorldBase> & { divisionsById?: unknown }).divisionsById,
-    restored,
-  );
   return restored;
 }
 

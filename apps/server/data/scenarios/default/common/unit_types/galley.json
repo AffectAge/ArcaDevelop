@@ -1,0 +1,30 @@
+{
+  "id": "unit:galley",
+  "domain": "naval",
+  "class": "naval_melee",
+  "nameKey": "unit.galley.name",
+  "descriptionKey": "unit.galley.description",
+  "stats": {
+    "maxHp": 100,
+    "attack": 24,
+    "defense": 18,
+    "movement": 3,
+    "vision": 3
+  },
+  "productionCost": {
+    "ducats": 70,
+    "construction": 90
+  },
+  "visual": {
+    "atlasAssetId": "asset:unit.galley",
+    "atlasPath": "assets/units/galley.png",
+    "frameWidth": 64,
+    "frameHeight": 64,
+    "states": {
+      "idle": { "frame": 0 },
+      "move": { "frame": 1 },
+      "attack": { "frame": 2 },
+      "damaged": { "frame": 3 }
+    }
+  }
+}
