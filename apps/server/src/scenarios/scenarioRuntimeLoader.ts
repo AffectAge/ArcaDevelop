@@ -193,7 +193,7 @@ function applyScenarioStarterColonizers(
 }
 
 function loadScenarioHexMapArtifact(scenarioDir: string): HexMapArtifact | null {
-  const path = resolve(scenarioDir, ".generated", "hex-map-artifact.json");
+  const path = resolve(scenarioDir, ".generated", "hex-map.json");
   if (!existsSync(path)) return null;
   const parsed = JSON.parse(readFileSync(path, "utf8")) as HexMapArtifact;
   return parsed && Array.isArray(parsed.tiles) ? enrichHexMapVisualMetadata(parsed) : null;

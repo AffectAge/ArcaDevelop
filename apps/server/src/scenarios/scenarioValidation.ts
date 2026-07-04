@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { imageSize } from "image-size";
+import { HEX_MAP_TAGS, HEX_MAP_TAG_SET } from "@arcanorum/shared";
 import {
   assertScenarioDefinesShape,
   normalizeScenarioAiDefines,
@@ -356,7 +357,7 @@ export async function validateScenarioDirectory(
   validateForbiddenLegacyContentFields(root, loadedEntities, issues);
   validateMapEntityColors(root, loadedEntities, issues);
   await validateDefines(root, issues);
-  await validateHexMapSettings(root, issues);
+  await validateHexMapSettings(root, localizationKeys, issues);
   validateHexHeavyFields(root, loadedEntities, issues);
   validateRegionMembership(root, loadedEntities, issues);
   validateEntityReferences(root, loadedEntities, issues);
@@ -671,7 +672,8 @@ function sanitizeCityAtlasId(cultureId: string): string {
 function validateMapFeatureGenerators(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
   const seenHexConstrainedIds = new Set<string>();
   for (const generator of entities.filter((entity) => entity.kind === "mapFeatureGenerator")) {
-    const result = normalizeMapFeatureGenerator(generator.data, normalizePath(relative(root, generator.path)));
+    const path = normalizePath(relative(root, generator.path));
+    const result = normalizeMapFeatureGenerator(generator.data, path);
     for (const issue of result.issues) {
       issues.push({
         code: issue.code,
@@ -683,10 +685,11 @@ function validateMapFeatureGenerators(root: string, entities: LoadedEntity[], is
     if (seenHexConstrainedIds.has(result.definition.id)) {
       issues.push({
         code: "DUPLICATE_ID",
-        path: normalizePath(relative(root, generator.path)),
+        path,
         message: `Duplicate map feature generator id ${result.definition.id}.`,
       });
     }
+    validateMapTagQuery(generator.data.tagQuery, `${generator.id}.tagQuery`, path, "INVALID_MAP_FEATURE_GENERATOR", issues);
     seenHexConstrainedIds.add(result.definition.id);
   }
 }
@@ -780,6 +783,7 @@ function validateMapFeatureVisualConditions(value: unknown, label: string, path:
     "isCoastal",
     "hasRiver",
     "riverMasks",
+    "tagQuery",
   ]);
   for (const key of Object.keys(value)) {
     if (allowedKeys.has(key)) continue;
@@ -805,6 +809,7 @@ function validateMapFeatureVisualConditions(value: unknown, label: string, path:
   validateIntegerArrayCondition(value.riverMasks, label, "riverMasks", 0, 63, path, issues);
   validateOptionalBooleanCondition(value.isCoastal, label, "isCoastal", path, issues);
   validateOptionalBooleanCondition(value.hasRiver, label, "hasRiver", path, issues);
+  validateMapTagQuery(value.tagQuery, label, path, "INVALID_MAP_FEATURE_VISUAL", issues);
 }
 
 function validateOptionalNumberField(
@@ -822,6 +827,52 @@ function validateOptionalNumberField(
       message: `${label} must be ${options.integer === true ? "an integer" : "a number"}${options.min !== undefined ? ` >= ${options.min}` : ""}.`,
     });
   }
+}
+
+function validateMapTagQuery(
+  query: unknown,
+  label: string,
+  path: string,
+  code: ScenarioValidationIssueCode,
+  issues: ScenarioValidationIssue[],
+  depth = 0,
+): void {
+  if (query == null) return;
+  if (typeof query === "string") {
+    if (HEX_MAP_TAG_SET.has(query)) return;
+    issues.push({ code, path, message: `${label} references unsupported map tag ${query}.` });
+    return;
+  }
+  if (!isObject(query) || depth > 6) {
+    issues.push({ code, path, message: `${label} must be a map tag string or all/any/not object.` });
+    return;
+  }
+  const allowedKeys = new Set(["all", "any", "not"]);
+  for (const key of Object.keys(query)) {
+    if (allowedKeys.has(key)) continue;
+    issues.push({ code, path, message: `${label}.${key} is not supported in map tag queries.` });
+  }
+  if (query.all != null) validateMapTagQueryList(query.all, `${label}.all`, path, code, issues, depth + 1);
+  if (query.any != null) validateMapTagQueryList(query.any, `${label}.any`, path, code, issues, depth + 1);
+  if (query.not != null) {
+    if (Array.isArray(query.not)) validateMapTagQueryList(query.not, `${label}.not`, path, code, issues, depth + 1);
+    else validateMapTagQuery(query.not, `${label}.not`, path, code, issues, depth + 1);
+  }
+}
+
+function validateMapTagQueryList(
+  value: unknown,
+  label: string,
+  path: string,
+  code: ScenarioValidationIssueCode,
+  issues: ScenarioValidationIssue[],
+  depth: number,
+): void {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 32) {
+    issues.push({ code, path, message: `${label} must contain 1-32 map tag query entries.` });
+    return;
+  }
+  value.forEach((child, index) => validateMapTagQuery(child, `${label}[${index}]`, path, code, issues, depth));
 }
 
 function validateStringArrayCondition(
@@ -1124,7 +1175,7 @@ async function loadHexMapSettings(root: string): Promise<JsonObject> {
   return loaded.data;
 }
 
-async function validateHexMapSettings(root: string, issues: ScenarioValidationIssue[]): Promise<void> {
+async function validateHexMapSettings(root: string, localizationKeys: Set<string>, issues: ScenarioValidationIssue[]): Promise<void> {
   const loaded = await readJsonIfExists(join(root, "map/hex-settings.json"), root, issues);
   if (!loaded) {
     issues.push({
@@ -1143,17 +1194,25 @@ async function validateHexMapSettings(root: string, issues: ScenarioValidationIs
     return;
   }
 
-  const requiredStringFields = ["seed"] as const;
-  for (const field of requiredStringFields) {
-    if (typeof loaded.data[field] === "string" && loaded.data[field].trim() !== "") continue;
+  const legacyFields = ["seaLevel", "temperature", "moisture", "mountains", "rivers", "forests", "targetLandRegionSize", "targetWaterRegionSize"];
+  for (const field of legacyFields) {
+    if (!(field in loaded.data)) continue;
     issues.push({
       code: "INVALID_HEX_MAP_SETTINGS",
       path: "map/hex-settings.json",
-      message: `Hex map setting ${field} must be a non-empty string.`,
+      message: `Legacy flat hex map setting ${field} is no longer supported; use generation sections.`,
     });
   }
 
-  const requiredPositiveIntegerFields = ["width", "height", "hexSize", "targetLandRegionSize", "targetWaterRegionSize", "chunkSize"] as const;
+  if (typeof loaded.data.seed !== "string" || loaded.data.seed.trim() === "") {
+    issues.push({
+      code: "INVALID_HEX_MAP_SETTINGS",
+      path: "map/hex-settings.json",
+      message: "Hex map setting seed must be a non-empty string.",
+    });
+  }
+
+  const requiredPositiveIntegerFields = ["width", "height", "hexSize", "chunkSize"] as const;
   for (const field of requiredPositiveIntegerFields) {
     const value = loaded.data[field];
     if (Number.isInteger(value) && Number(value) > 0) continue;
@@ -1164,24 +1223,74 @@ async function validateHexMapSettings(root: string, issues: ScenarioValidationIs
     });
   }
 
-  const requiredUnitNumberFields = ["seaLevel", "temperature", "moisture", "mountains", "rivers", "forests"] as const;
-  for (const field of requiredUnitNumberFields) {
-    const value = loaded.data[field];
-    if (typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1) continue;
+  if (loaded.data.wrapX !== false) {
     issues.push({
       code: "INVALID_HEX_MAP_SETTINGS",
       path: "map/hex-settings.json",
-      message: `Hex map setting ${field} must be a finite number between 0 and 1.`,
+      message: "Hex map setting wrapX must be false for the current rectangular scenario map format.",
     });
   }
 
-  if (typeof loaded.data.wrapX !== "boolean") {
+  const generation = loaded.data.generation;
+  if (!isObject(generation)) {
     issues.push({
       code: "INVALID_HEX_MAP_SETTINGS",
       path: "map/hex-settings.json",
-      message: "Hex map setting wrapX must be a boolean.",
+      message: "Hex map settings must define generation sections.",
+    });
+    return;
+  }
+  validateGenerationSection(generation, issues);
+  for (const tag of HEX_MAP_TAGS) {
+    const key = `mapTag.${tag.replace(":", ".")}`;
+    if (localizationKeys.has(key)) continue;
+    issues.push({
+      code: "MISSING_LOCALIZATION_KEY",
+      path: "map/hex-settings.json",
+      message: `Map tag ${tag} requires localization key ${key} in en/ru.`,
     });
   }
+}
+
+function validateGenerationSection(generation: JsonObject, issues: ScenarioValidationIssue[]): void {
+  const mapScript = generation.mapScript;
+  if (mapScript !== "continents" && mapScript !== "pangaea" && mapScript !== "archipelago") {
+    issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.mapScript must be continents, pangaea, or archipelago." });
+  }
+  const landmasses = isObject(generation.landmasses) ? generation.landmasses : null;
+  const climate = isObject(generation.climate) ? generation.climate : null;
+  const rivers = isObject(generation.rivers) ? generation.rivers : null;
+  const regions = isObject(generation.regions) ? generation.regions : null;
+  const tags = isObject(generation.tags) ? generation.tags : null;
+  if (!landmasses || !climate || !rivers || !regions || !tags) {
+    issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation must include landmasses, climate, rivers, regions, and tags sections." });
+    return;
+  }
+  validateIntegerRange(landmasses.majorContinents, "generation.landmasses.majorContinents", issues, 1, 12);
+  validateUnitNumberField(landmasses.landRatio, "generation.landmasses.landRatio", issues);
+  if (landmasses.islandDensity !== "low" && landmasses.islandDensity !== "medium" && landmasses.islandDensity !== "high") {
+    issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.landmasses.islandDensity must be low, medium, or high." });
+  }
+  if (climate.preset !== "earthlike" && climate.preset !== "scenario") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.climate.preset must be earthlike or scenario." });
+  if (climate.temperature !== "cold" && climate.temperature !== "temperate" && climate.temperature !== "hot") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.climate.temperature must be cold, temperate, or hot." });
+  if (climate.rainfall !== "dry" && climate.rainfall !== "balanced" && climate.rainfall !== "wet") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.climate.rainfall must be dry, balanced, or wet." });
+  if (rivers.density !== "rare" && rivers.density !== "normal" && rivers.density !== "many") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.rivers.density must be rare, normal, or many." });
+  if (typeof rivers.navigable !== "boolean") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.rivers.navigable must be boolean." });
+  if (!Number.isInteger(rivers.crossingPenalty) || Number(rivers.crossingPenalty) < 0) issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.rivers.crossingPenalty must be a non-negative integer." });
+  if (!Number.isInteger(regions.targetLandRegionSize) || Number(regions.targetLandRegionSize) <= 0) issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.regions.targetLandRegionSize must be a positive integer." });
+  if (!Number.isInteger(regions.targetWaterRegionSize) || Number(regions.targetWaterRegionSize) <= 0) issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.regions.targetWaterRegionSize must be a positive integer." });
+  if (tags.enabled !== true) issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.tags.enabled must be true." });
+}
+
+function validateIntegerRange(value: unknown, label: string, issues: ScenarioValidationIssue[], minAllowed: number, maxAllowed: number): void {
+  if (!isObject(value) || !Number.isInteger(value.min) || !Number.isInteger(value.max) || Number(value.min) < minAllowed || Number(value.max) > maxAllowed || Number(value.max) < Number(value.min)) {
+    issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: `${label} must define integer min/max within ${minAllowed}-${maxAllowed}.` });
+  }
+}
+
+function validateUnitNumberField(value: unknown, label: string, issues: ScenarioValidationIssue[]): void {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1) return;
+  issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: `${label} must be a finite number between 0 and 1.` });
 }
 
 async function validateDefines(root: string, issues: ScenarioValidationIssue[]): Promise<void> {
@@ -1479,6 +1588,8 @@ function validateGoodDepositDefinitions(root: string, entities: LoadedEntity[], 
         path: normalizePath(relative(root, good.path)),
         message: `${good.id}.deposit.generation must be an object.`,
       });
+    } else if (isObject(generation)) {
+      validateMapTagQuery(generation.tagQuery, `${good.id}.deposit.generation.tagQuery`, normalizePath(relative(root, good.path)), "BROKEN_REFERENCE", issues);
     }
   }
 }

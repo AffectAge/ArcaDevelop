@@ -1164,6 +1164,7 @@ export function MapView({
         owner: ownerId ? t("hexMap.ownerCountry", { country: ownerId }) : t("hexMap.ownerNone"),
         controller: controllerId ? t("hexMap.ownerCountry", { country: controllerId }) : t("hexMap.ownerNone"),
         movementCost: tile.movementCost.toFixed(1),
+        mapTags: (tile.mapTags ?? []).map((tag) => t(resolveMapTagLabelKey(tag))),
         divisionStack: t("hexMap.divisionStackValue", { current: stackCount, max: stackLimit }),
         divisionStackTooltip: {
           title: t("hexMap.divisionStack"),
@@ -3792,6 +3793,52 @@ function formatResourceDepositLabel(deposit: RegionResourceDeposit): string {
   const maxAmount = Math.max(amount, Number(deposit.maxAmount ?? 0));
   return `${deposit.goodId} · ${formatCompactNumber(amount)} / ${formatCompactNumber(maxAmount)}`;
 }
+
+function resolveMapTagLabelKey(tag: string): UiTextKey {
+  const key = `mapTag.${tag.replace(":", ".")}` as UiTextKey;
+  return MAP_TAG_LABEL_KEYS.has(key) ? key : "mapTag.unknown";
+}
+
+const MAP_TAG_LABEL_KEYS = new Set<UiTextKey>([
+  "mapTag.unknown",
+  "mapTag.fertility.barren",
+  "mapTag.fertility.poor",
+  "mapTag.fertility.modest",
+  "mapTag.fertility.fertile",
+  "mapTag.fertility.rich",
+  "mapTag.rainfall.arid",
+  "mapTag.rainfall.dry",
+  "mapTag.rainfall.moderate",
+  "mapTag.rainfall.wet",
+  "mapTag.rainfall.monsoon",
+  "mapTag.slope.flat",
+  "mapTag.slope.rolling",
+  "mapTag.slope.hilly",
+  "mapTag.slope.steep",
+  "mapTag.slope.rugged",
+  "mapTag.latitude.polar",
+  "mapTag.latitude.subpolar",
+  "mapTag.latitude.temperate",
+  "mapTag.latitude.subtropical",
+  "mapTag.latitude.tropical",
+  "mapTag.elevation.lowland",
+  "mapTag.elevation.upland",
+  "mapTag.elevation.highland",
+  "mapTag.elevation.mountain",
+  "mapTag.elevation.peak",
+  "mapTag.landmass.continent",
+  "mapTag.landmass.island",
+  "mapTag.continent.homeland",
+  "mapTag.continent.distant",
+  "mapTag.basin.headwater",
+  "mapTag.basin.mainstem",
+  "mapTag.basin.delta",
+  "mapTag.river.minor",
+  "mapTag.river.major",
+  "mapTag.river.navigable",
+  "mapTag.coast.coastal",
+  "mapTag.coast.inland",
+]);
 
 function calculateHexPathMovementCost(
   path: HexId[],

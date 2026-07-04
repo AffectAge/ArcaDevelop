@@ -111,6 +111,8 @@ Resource deposit visuals use one shared scenario atlas at `/scenario-assets/<sce
 
 `GET /hex-map/features` returns `{ features: MapFeatureInstance[] }` for readonly generated/special map features. This endpoint is public map metadata and does not mutate world state. Natural hex features remain in `/hex-map/artifact`.
 
+`GET /hex-map/artifact` returns the generated static map artifact from `.generated/hex-map.json`. `HexTile` entries may include `mapTags`, and river edge records may include `riverClass`, `navigable`, and `crossingCost`. This is static scenario map metadata, not a world-delta contract. Clients use it for hex tooltips, feature visuals, path previews, and navigable river previews; server movement resolution uses the same artifact for authoritative costs.
+
 `GET /hex-map/feature-visuals` returns `{ visuals: MapFeatureVisualRuleDefinition[] }` for scenario-authored conditional frame rules. If it returns an empty list, the client uses built-in defaults. Conditions are evaluated against `HexTile` visual metadata such as `biome`, `temperatureBand`, `moistureBand`, `distanceToWater`, `isCoastal`, and `riverMask`.
 
 ## Transport Corridor Contract

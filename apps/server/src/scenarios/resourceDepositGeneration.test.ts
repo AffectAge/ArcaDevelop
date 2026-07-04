@@ -1,4 +1,4 @@
-import type { HexMapArtifact, HexTile, RegionResourceDeposit } from "@arcanorum/shared";
+import { DEFAULT_HEX_MAP_SETTINGS, type HexMapArtifact, type HexTile, type RegionResourceDeposit } from "@arcanorum/shared";
 import { describe, expect, it } from "vitest";
 import { generateResourceDeposits } from "./resourceDepositGeneration";
 
@@ -58,38 +58,56 @@ describe("resourceDepositGeneration", () => {
       depletionMode: "finite",
     });
   });
+
+  it("filters generated deposits with map tag queries", () => {
+    const generated = generateResourceDeposits({
+      artifact: makeArtifact(),
+      goods: [
+        {
+          id: "good:grain",
+          deposit: {
+            enabled: true,
+            depletionMode: "finite",
+            minAmount: 10,
+            maxAmount: 20,
+            visibility: "known",
+            generation: {
+              tagQuery: { all: ["fertility:rich"], not: ["slope:rugged"] },
+              global: { count: 1 },
+            },
+          },
+        },
+      ],
+    });
+
+    expect(Object.values(generated).flat()).toHaveLength(1);
+    expect(Object.values(generated).flat()[0]?.hexId).toBe("hex:2:0");
+  });
 });
 
 function makeArtifact(): HexMapArtifact {
   return {
     version: 1,
     settings: {
+      ...DEFAULT_HEX_MAP_SETTINGS,
       seed: "deposit-test",
       width: 3,
       height: 1,
       hexSize: 24,
-      seaLevel: 0.42,
-      temperature: 0.5,
-      moisture: 0.5,
-      mountains: 0.8,
-      rivers: 0.4,
-      forests: 0.5,
-      targetLandRegionSize: 8,
-      targetWaterRegionSize: 8,
       chunkSize: 8,
       wrapX: false,
     },
     tiles: [
       makeTile("hex:0:0", "region:a", "hills"),
       makeTile("hex:1:0", "region:a", "hills"),
-      makeTile("hex:2:0", "region:a", "plains"),
+      makeTile("hex:2:0", "region:a", "plains", ["fertility:rich", "slope:flat"]),
     ],
     riverEdges: [],
     coastOverlays: [],
   };
 }
 
-function makeTile(id: HexTile["id"], regionId: HexTile["regionId"], terrain: HexTile["terrain"]): HexTile {
+function makeTile(id: HexTile["id"], regionId: HexTile["regionId"], terrain: HexTile["terrain"], mapTags: HexTile["mapTags"] = []): HexTile {
   return {
     id,
     regionId,
@@ -109,6 +127,7 @@ function makeTile(id: HexTile["id"], regionId: HexTile["regionId"], terrain: Hex
     isCoastal: false,
     riverMask: 0,
     riverWidth: 0,
+    mapTags,
     movementCost: 1,
     passable: true,
   };

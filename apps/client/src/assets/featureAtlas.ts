@@ -1,4 +1,4 @@
-import type { HexFeature, HexTile, MapFeatureVisualFrameRule, MapFeatureVisualId, MapFeatureVisualRuleDefinition } from "@arcanorum/shared";
+import { matchesMapTagQuery, type HexFeature, type HexTile, type MapFeatureVisualFrameRule, type MapFeatureVisualId, type MapFeatureVisualRuleDefinition } from "@arcanorum/shared";
 
 export const FEATURE_ATLAS_FRAME_SIZE = 64;
 export const FEATURE_ATLAS_VARIANTS = 6;
@@ -142,6 +142,7 @@ function matchesFrameRule(frame: MapFeatureVisualFrameRule, tile: HexTile): bool
   if (condition.isCoastal !== undefined && tile.isCoastal !== condition.isCoastal) return false;
   if (condition.hasRiver !== undefined && (tile.riverMask > 0) !== condition.hasRiver) return false;
   if (condition.riverMasks && !condition.riverMasks.includes(tile.riverMask)) return false;
+  if (!matchesMapTagQuery(tile.mapTags, condition.tagQuery)) return false;
   return true;
 }
 

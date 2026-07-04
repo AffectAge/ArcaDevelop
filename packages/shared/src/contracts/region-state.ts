@@ -1,4 +1,4 @@
-import type { HexId, RegionId } from "./hex-map";
+import type { HexId, MapTagQuery, RegionId } from "./hex-map";
 
 export type PopulationProfessionState = {
   size: number;
@@ -140,6 +140,7 @@ export type GoodDepositGenerationRules = {
   deniedFeatures?: string[];
   elevationMin?: number | null;
   elevationMax?: number | null;
+  tagQuery?: MapTagQuery | null;
   global?: GoodDepositCountRule;
   perRegion?: GoodDepositCountRule;
 };

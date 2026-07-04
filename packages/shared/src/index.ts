@@ -17,3 +17,5 @@ export * from "./buildingPlacement";
 export * from "./effectiveHex";
 export * from "./hexGeometry";
 export * from "./hexMapGenerator";
+export * from "./hexMapMovement";
+export * from "./mapTags";

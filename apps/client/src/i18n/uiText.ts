@@ -1610,6 +1610,45 @@ export type UiTextKey =
   | "hexMap.ownerCountry"
   | "hexMap.ownerNone"
   | "hexMap.movementCost"
+  | "hexMap.mapTags"
+  | "mapTag.unknown"
+  | "mapTag.fertility.barren"
+  | "mapTag.fertility.poor"
+  | "mapTag.fertility.modest"
+  | "mapTag.fertility.fertile"
+  | "mapTag.fertility.rich"
+  | "mapTag.rainfall.arid"
+  | "mapTag.rainfall.dry"
+  | "mapTag.rainfall.moderate"
+  | "mapTag.rainfall.wet"
+  | "mapTag.rainfall.monsoon"
+  | "mapTag.slope.flat"
+  | "mapTag.slope.rolling"
+  | "mapTag.slope.hilly"
+  | "mapTag.slope.steep"
+  | "mapTag.slope.rugged"
+  | "mapTag.latitude.polar"
+  | "mapTag.latitude.subpolar"
+  | "mapTag.latitude.temperate"
+  | "mapTag.latitude.subtropical"
+  | "mapTag.latitude.tropical"
+  | "mapTag.elevation.lowland"
+  | "mapTag.elevation.upland"
+  | "mapTag.elevation.highland"
+  | "mapTag.elevation.mountain"
+  | "mapTag.elevation.peak"
+  | "mapTag.landmass.continent"
+  | "mapTag.landmass.island"
+  | "mapTag.continent.homeland"
+  | "mapTag.continent.distant"
+  | "mapTag.basin.headwater"
+  | "mapTag.basin.mainstem"
+  | "mapTag.basin.delta"
+  | "mapTag.river.minor"
+  | "mapTag.river.major"
+  | "mapTag.river.navigable"
+  | "mapTag.coast.coastal"
+  | "mapTag.coast.inland"
   | "hexMap.building"
   | "hexMap.buildingStatusBurning"
   | "hexMap.buildingStatusConstruction"
@@ -4942,6 +4981,45 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.ownerCountry": "Country {country}",
     "hexMap.ownerNone": "Unowned",
     "hexMap.movementCost": "Move cost",
+    "hexMap.mapTags": "Map tags",
+    "mapTag.unknown": "Unknown tag",
+    "mapTag.fertility.barren": "Barren",
+    "mapTag.fertility.poor": "Poor fertility",
+    "mapTag.fertility.modest": "Modest fertility",
+    "mapTag.fertility.fertile": "Fertile",
+    "mapTag.fertility.rich": "Rich fertility",
+    "mapTag.rainfall.arid": "Arid",
+    "mapTag.rainfall.dry": "Dry",
+    "mapTag.rainfall.moderate": "Moderate rainfall",
+    "mapTag.rainfall.wet": "Wet",
+    "mapTag.rainfall.monsoon": "Monsoon rainfall",
+    "mapTag.slope.flat": "Flat",
+    "mapTag.slope.rolling": "Rolling",
+    "mapTag.slope.hilly": "Hilly",
+    "mapTag.slope.steep": "Steep",
+    "mapTag.slope.rugged": "Rugged",
+    "mapTag.latitude.polar": "Polar",
+    "mapTag.latitude.subpolar": "Subpolar",
+    "mapTag.latitude.temperate": "Temperate latitude",
+    "mapTag.latitude.subtropical": "Subtropical",
+    "mapTag.latitude.tropical": "Tropical",
+    "mapTag.elevation.lowland": "Lowland",
+    "mapTag.elevation.upland": "Upland",
+    "mapTag.elevation.highland": "Highland",
+    "mapTag.elevation.mountain": "Mountain elevation",
+    "mapTag.elevation.peak": "Peak",
+    "mapTag.landmass.continent": "Continent",
+    "mapTag.landmass.island": "Island",
+    "mapTag.continent.homeland": "Homeland continent",
+    "mapTag.continent.distant": "Distant continent",
+    "mapTag.basin.headwater": "Headwater basin",
+    "mapTag.basin.mainstem": "Main river basin",
+    "mapTag.basin.delta": "River delta",
+    "mapTag.river.minor": "Minor river",
+    "mapTag.river.major": "Major river",
+    "mapTag.river.navigable": "Navigable river",
+    "mapTag.coast.coastal": "Coastal",
+    "mapTag.coast.inland": "Inland",
     "hexMap.building": "Building",
     "hexMap.buildingStatusBurning": "Burning",
     "hexMap.buildingStatusConstruction": "Under construction",
@@ -8273,6 +8351,45 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.ownerCountry": "Страна {country}",
     "hexMap.ownerNone": "Нет владельца",
     "hexMap.movementCost": "Стоимость хода",
+    "hexMap.mapTags": "Теги карты",
+    "mapTag.unknown": "Неизвестный тег",
+    "mapTag.fertility.barren": "Бесплодная земля",
+    "mapTag.fertility.poor": "Низкая урожайность",
+    "mapTag.fertility.modest": "Средняя урожайность",
+    "mapTag.fertility.fertile": "Высокая урожайность",
+    "mapTag.fertility.rich": "Богатая урожайность",
+    "mapTag.rainfall.arid": "Засушливо",
+    "mapTag.rainfall.dry": "Сухо",
+    "mapTag.rainfall.moderate": "Умеренные осадки",
+    "mapTag.rainfall.wet": "Влажно",
+    "mapTag.rainfall.monsoon": "Муссонные осадки",
+    "mapTag.slope.flat": "Равнина",
+    "mapTag.slope.rolling": "Волнистый рельеф",
+    "mapTag.slope.hilly": "Холмисто",
+    "mapTag.slope.steep": "Крутые склоны",
+    "mapTag.slope.rugged": "Пересеченный рельеф",
+    "mapTag.latitude.polar": "Полярная широта",
+    "mapTag.latitude.subpolar": "Субполярная широта",
+    "mapTag.latitude.temperate": "Умеренная широта",
+    "mapTag.latitude.subtropical": "Субтропики",
+    "mapTag.latitude.tropical": "Тропики",
+    "mapTag.elevation.lowland": "Низменность",
+    "mapTag.elevation.upland": "Возвышенность",
+    "mapTag.elevation.highland": "Плоскогорье",
+    "mapTag.elevation.mountain": "Горная высота",
+    "mapTag.elevation.peak": "Пик",
+    "mapTag.landmass.continent": "Континент",
+    "mapTag.landmass.island": "Остров",
+    "mapTag.continent.homeland": "Родной материк",
+    "mapTag.continent.distant": "Дальний материк",
+    "mapTag.basin.headwater": "Верховья бассейна",
+    "mapTag.basin.mainstem": "Главное русло",
+    "mapTag.basin.delta": "Речная дельта",
+    "mapTag.river.minor": "Малая река",
+    "mapTag.river.major": "Крупная река",
+    "mapTag.river.navigable": "Судоходная река",
+    "mapTag.coast.coastal": "Побережье",
+    "mapTag.coast.inland": "Внутренняя земля",
     "hexMap.building": "Здание",
     "hexMap.buildingStatusBurning": "Горит",
     "hexMap.buildingStatusConstruction": "Строится",

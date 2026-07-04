@@ -49,6 +49,6 @@ export function resolveEffectiveHexTile(hex: HexTile, cityHexIds: ReadonlySet<He
   };
 }
 
-export function hexHasTag(hex: { tags?: readonly string[] | null }, tag: string): boolean {
-  return Boolean(hex.tags?.some((item) => item === tag));
+export function hexHasTag(hex: { tags?: readonly string[] | null; mapTags?: readonly string[] | null }, tag: string): boolean {
+  return Boolean(hex.tags?.some((item) => item === tag) || hex.mapTags?.some((item) => item === tag));
 }

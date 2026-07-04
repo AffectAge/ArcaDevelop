@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { HexMapArtifact, HexTile, MapFeatureGeneratorDefinition } from "@arcanorum/shared";
+import { DEFAULT_HEX_MAP_SETTINGS, type HexMapArtifact, type HexTile, type MapFeatureGeneratorDefinition } from "@arcanorum/shared";
 import { generateMapFeatures } from "./mapFeatureGeneration";
 
 describe("map feature generation", () => {
@@ -58,6 +58,22 @@ describe("map feature generation", () => {
     expect(result.features).toHaveLength(makeMap().tiles.length);
     expect(new Set(result.features.map((feature) => feature.hexId)).size).toBe(result.features.length);
   });
+
+  it("filters candidates with map tag queries", () => {
+    const generator: MapFeatureGeneratorDefinition = {
+      id: "map_feature_generator:holy_delta",
+      typeId: "feature:holy_delta",
+      category: "site",
+      tagQuery: { all: ["basin:delta"], not: ["slope:rugged"] },
+      global: { count: 1 },
+    };
+
+    const result = generateMapFeatures({ generators: [generator], mapArtifact: makeMap(), scenarioSeed: "seed:a" });
+
+    expect(result.issues).toEqual([]);
+    expect(result.features).toHaveLength(1);
+    expect(result.features[0]?.hexId).toBe("hex:3:0");
+  });
 });
 
 function makeMap(): HexMapArtifact {
@@ -70,18 +86,11 @@ function makeMap(): HexMapArtifact {
   return {
     version: 1,
     settings: {
+      ...DEFAULT_HEX_MAP_SETTINGS,
       seed: "test-map",
       width: 4,
       height: 1,
       hexSize: 24,
-      seaLevel: 0.4,
-      temperature: 0.5,
-      moisture: 0.5,
-      mountains: 0.5,
-      rivers: 0.5,
-      forests: 0.5,
-      targetLandRegionSize: 2,
-      targetWaterRegionSize: 2,
       chunkSize: 4,
       wrapX: false,
     },
@@ -112,6 +121,7 @@ function makeTile(id: HexTile["id"], regionId: HexTile["regionId"]): HexTile {
     isCoastal: false,
     riverMask: 0,
     riverWidth: 0,
+    mapTags: id === "hex:3:0" ? ["basin:delta", "slope:flat"] : [],
     movementCost: 1,
     passable: true,
   };

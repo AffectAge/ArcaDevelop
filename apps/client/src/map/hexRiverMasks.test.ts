@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { HexMapArtifact, HexTile } from "@arcanorum/shared";
+import { DEFAULT_HEX_MAP_SETTINGS, type HexMapArtifact, type HexTile } from "@arcanorum/shared";
 import { collectHexRiverMaskDrafts, collectHexRiverMaskParams, resolveHexRiverMaskAtlasIndex, resolveHexRiverStrength } from "./hexRiverMasks";
 import { generatedHexMaterialPack } from "./hexTerrainMaterials";
 
@@ -48,18 +48,11 @@ function makeMap(tiles: HexTile[]): HexMapArtifact {
   return {
     version: 1,
     settings: {
+      ...DEFAULT_HEX_MAP_SETTINGS,
       seed: "river-masks-test",
       width: 4,
       height: 4,
       hexSize: 18,
-      seaLevel: 0.5,
-      temperature: 0.5,
-      moisture: 0.5,
-      mountains: 0.6,
-      rivers: 0.5,
-      forests: 0.5,
-      targetLandRegionSize: 4,
-      targetWaterRegionSize: 4,
       chunkSize: 4,
       wrapX: false,
     },

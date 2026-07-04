@@ -104,7 +104,10 @@ import {
 } from "./uploads/uploadValidation";
 import {
   type ResourceId,
+  resolveHexStepMovementCost,
   buildCityHexIdSet,
+  type HexId,
+  type UnitDomain,
   type WorldBase,
   type WorldDelta,
 } from "@arcanorum/shared";
@@ -136,16 +139,26 @@ const mapRuntime = createMapRuntimeState(
   defaultScenarioBootstrap.mapRoot,
   defaultScenarioBootstrap.hexIndexPath,
 );
-const getHexMovementCost = (hexId: string, countryId?: string): number => {
+const getHexMovementCost = (hexId: string, countryId?: string, fromHexId?: string, unitDomain?: UnitDomain): number => {
   const tile = mapRuntime.getHexTileById().get(hexId);
   const baseCost = Math.max(0.001, Number(tile?.movementCost ?? 1) || 1);
-  if (!countryId || !tile) return baseCost;
+  if (!tile) return baseCost;
   const cityHexIds = buildCityHexIdSet(worldBase);
   const hexTags = cityHexIds.has(tile.id) ? ["city"] : [];
-  return Math.max(0.001, modifierFacade.resolveModifiedValue("hex_movement_cost", baseCost, {
+  const modifiedCost = countryId ? modifierFacade.resolveModifiedValue("hex_movement_cost", baseCost, {
     countryId,
     hexId,
     hexTags,
+  }) : baseCost;
+  const map = mapRuntime.getHexMapArtifact();
+  if (!map || !fromHexId || !unitDomain) return Math.max(0.001, modifiedCost);
+  return Math.max(0.001, resolveHexStepMovementCost({
+    map,
+    fromHexId: fromHexId as HexId,
+    toTile: tile,
+    domain: unitDomain,
+    baseCost: modifiedCost,
+    tileById: mapRuntime.getHexTileById() as ReadonlyMap<HexId, typeof tile>,
   }));
 };
 

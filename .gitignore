@@ -12,6 +12,7 @@ build/
 **/.vite/
 coverage/
 **/coverage/
+**/.generated/
 
 # TypeScript and test caches
 *.tsbuildinfo

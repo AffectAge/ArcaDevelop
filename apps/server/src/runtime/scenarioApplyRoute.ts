@@ -2,6 +2,7 @@ import type express from "express";
 import type { EventLogEntry, WorldBase, WsOutMessage } from "@arcanorum/shared";
 import type { RouteAuth } from "../security/routeAuth";
 import { normalizeScenarioId } from "../scenarios/runtimePaths";
+import { ensureScenarioMapArtifacts } from "../scenarios/defaultScenarioBootstrap";
 import type { FoundScenario } from "../scenarios/scenarioCatalog";
 import type { ScenarioDefines } from "../scenarios/scenarioDefinesLoader";
 import type { ScenarioHistory } from "../scenarios/scenarioHistoryLoader";
@@ -74,6 +75,8 @@ export function registerScenarioApplyRoute(params: ScenarioApplyRouteParams): vo
     }
 
     try {
+      const generatedMap = ensureScenarioMapArtifacts({ scenarioDir: scenario.scenarioDir });
+      scenario.hexIndexPath = generatedMap.hexIndexPath;
       params.applyMapRuntime(scenario.mapRoot, scenario.hexIndexPath);
       const scenarioHistory = params.loadScenarioHistory(scenario.scenarioDir);
       await params.applyScenarioCountryMetadata(scenario.scenarioDir, scenarioHistory);

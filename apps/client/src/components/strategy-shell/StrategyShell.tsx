@@ -88,6 +88,7 @@ export type StrategyShellSelectedHexDetails = {
   owner: string;
   controller: string;
   movementCost: string;
+  mapTags: string[];
   divisionStack: string;
   divisionStackTooltip?: TooltipStructuredContent;
 };
@@ -1000,6 +1001,7 @@ function HexDetailsPanel({ details }: { details: StrategyShellSelectedHexDetails
         <HexDetailsRow label={t("hexMap.owner")} value={details.owner} />
         <HexDetailsRow label={t("shell.hex.controller")} value={details.controller} />
         <HexDetailsRow label={t("hexMap.movementCost")} value={details.movementCost} />
+        <HexDetailsRow label={t("hexMap.mapTags")} value={details.mapTags.length > 0 ? details.mapTags.join(", ") : t("map.common.none")} />
         <HexDetailsRow label={t("hexMap.divisionStack")} value={details.divisionStack} tooltip={details.divisionStackTooltip} />
       </div>
     </section>

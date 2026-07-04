@@ -10,6 +10,7 @@ import type {
   RegionResourceDeposit,
   ResourceExplorationResult,
 } from "@arcanorum/shared";
+import { matchesMapTagQuery } from "@arcanorum/shared";
 
 export const GENERATED_RESOURCE_DEPOSITS_FILE = "resource-deposits.json";
 
@@ -179,6 +180,7 @@ function matchesDepositRules(tile: HexTile, definition: GoodDepositDefinition): 
   if (rules.deniedFeatures?.includes(tile.feature)) return false;
   if (typeof rules.elevationMin === "number" && tile.elevation < rules.elevationMin) return false;
   if (typeof rules.elevationMax === "number" && tile.elevation > rules.elevationMax) return false;
+  if (!matchesMapTagQuery(tile.mapTags, rules.tagQuery)) return false;
   return true;
 }
 

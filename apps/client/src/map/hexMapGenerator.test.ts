@@ -7,8 +7,14 @@ const TEST_SETTINGS = {
   ...DEFAULT_HEX_MAP_SETTINGS,
   width: 48,
   height: 30,
-  targetLandRegionSize: 18,
-  targetWaterRegionSize: 30,
+  generation: {
+    ...DEFAULT_HEX_MAP_SETTINGS.generation,
+    regions: {
+      ...DEFAULT_HEX_MAP_SETTINGS.generation.regions,
+      targetLandRegionSize: 18,
+      targetWaterRegionSize: 30,
+    },
+  },
 };
 
 describe("generateHexMap", () => {
@@ -19,11 +25,11 @@ describe("generateHexMap", () => {
     expect(second).toEqual(first);
   });
 
-  it("wraps X neighbors across the world edge", () => {
+  it("does not wrap X neighbors across the world edge", () => {
     const map = generateHexMap(TEST_SETTINGS);
     const neighbor = getNeighborAxial({ q: 0, r: 10 }, 3, map.settings);
 
-    expect(neighbor).toEqual({ q: map.settings.width - 1, r: 10 });
+    expect(neighbor).toBeNull();
   });
 
   it("does not mix land and water tiles inside generated regions", () => {
@@ -78,16 +84,29 @@ describe("generateHexMap", () => {
     }
   });
 
-  it("adds coast overlays around lake neighbors", () => {
+  it("adds closed-vocabulary map tags to generated tiles", () => {
     const map = generateHexMap(TEST_SETTINGS);
-    const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
-    const lakeCoast = map.coastOverlays.find((overlay) => {
-      const tile = tileById.get(overlay.hexId);
-      const neighborAxial = tile ? getNeighborAxial(tile, overlay.direction as HexDirection, map.settings) : null;
-      const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
-      return tile && !tile.waterKind && neighbor?.waterKind === "lake";
-    });
 
-    expect(lakeCoast).toBeTruthy();
+    expect(map.tiles.every((tile) => Array.isArray(tile.mapTags) && tile.mapTags.length > 0)).toBe(true);
+    expect(map.tiles.some((tile) => tile.mapTags?.includes("landmass:continent"))).toBe(true);
+    expect(map.tiles.some((tile) => tile.mapTags?.includes("continent:homeland"))).toBe(true);
+  });
+
+  it("smoke-generates all supported map scripts", () => {
+    for (const mapScript of ["continents", "pangaea", "archipelago"] as const) {
+      const map = generateHexMap({
+        ...TEST_SETTINGS,
+        seed: `test-${mapScript}`,
+        generation: {
+          ...TEST_SETTINGS.generation,
+          mapScript,
+        },
+      });
+
+      expect(map.tiles).toHaveLength(TEST_SETTINGS.width * TEST_SETTINGS.height);
+      expect(new Set(map.tiles.map((tile) => tile.regionId)).size).toBeGreaterThan(0);
+      expect(map.tiles.some((tile) => !tile.waterKind)).toBe(true);
+      expect(map.tiles.some((tile) => tile.waterKind === "ocean")).toBe(true);
+    }
   });
 });

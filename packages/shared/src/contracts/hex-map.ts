@@ -39,6 +39,7 @@ export type HexDirection = 0 | 1 | 2 | 3 | 4 | 5;
 export type HexDistanceToWater = 0 | 1 | 2 | 3;
 export type HexTemperatureBand = "frozen" | "cold" | "cool" | "temperate" | "warm" | "hot";
 export type HexMoistureBand = "arid" | "dry" | "normal" | "wet" | "saturated";
+export type HexMapTag = `${string}:${string}`;
 export type MapFeatureTypeId = `feature:${string}`;
 export type MapFeatureInstanceId = `map_feature:${string}`;
 export type MapFeatureCategory = "natural" | "deposit" | "site" | "strategic";
@@ -67,6 +68,7 @@ export type HexTile = HexAxial & {
   isCoastal: boolean;
   riverMask: number;
   riverWidth: number;
+  mapTags?: HexMapTag[];
   movementCost: number;
   passable: boolean;
 };
@@ -75,6 +77,9 @@ export type HexEdgeRecord = {
   hexId: HexId;
   direction: HexDirection;
   width: number;
+  riverClass?: "minor" | "major" | "navigable";
+  navigable?: boolean;
+  crossingCost?: number;
 };
 
 export type HexCoastOverlayRecord = {
@@ -83,21 +88,47 @@ export type HexCoastOverlayRecord = {
   strength: number;
 };
 
+export type HexMapScript = "continents" | "pangaea" | "archipelago";
+
+export type HexMapRange = {
+  min: number;
+  max: number;
+};
+
+export type HexMapGenerationSettings = {
+  mapScript: HexMapScript;
+  landmasses: {
+    majorContinents: HexMapRange;
+    landRatio: number;
+    islandDensity: "low" | "medium" | "high";
+  };
+  climate: {
+    preset: "earthlike" | "scenario";
+    temperature: "cold" | "temperate" | "hot";
+    rainfall: "dry" | "balanced" | "wet";
+  };
+  rivers: {
+    density: "rare" | "normal" | "many";
+    navigable: boolean;
+    crossingPenalty: number;
+  };
+  regions: {
+    targetLandRegionSize: number;
+    targetWaterRegionSize: number;
+  };
+  tags: {
+    enabled: boolean;
+  };
+};
+
 export type HexMapSettings = {
   seed: string;
   width: number;
   height: number;
   hexSize: number;
-  seaLevel: number;
-  temperature: number;
-  moisture: number;
-  mountains: number;
-  rivers: number;
-  forests: number;
-  targetLandRegionSize: number;
-  targetWaterRegionSize: number;
   chunkSize: number;
   wrapX: boolean;
+  generation: HexMapGenerationSettings;
 };
 
 export type HexMapArtifact = {
@@ -148,6 +179,7 @@ export type MapFeatureGeneratorDefinition = {
   deniedFeatures?: HexFeature[];
   allowedWaterKinds?: Array<Exclude<HexWaterKind, null>>;
   deniedWaterKinds?: Array<Exclude<HexWaterKind, null>>;
+  tagQuery?: MapTagQuery;
   regions?: {
     include?: RegionId[];
     exclude?: RegionId[];
@@ -173,6 +205,7 @@ export type MapFeatureVisualCondition = {
   isCoastal?: boolean;
   hasRiver?: boolean;
   riverMasks?: number[];
+  tagQuery?: MapTagQuery;
 };
 
 export type MapFeatureVisualFrameRule = {
@@ -186,4 +219,10 @@ export type MapFeatureVisualRuleDefinition = {
   id: `map_feature_visual:${string}`;
   visualId: MapFeatureVisualId;
   frames: MapFeatureVisualFrameRule[];
+};
+
+export type MapTagQuery = string | {
+  all?: MapTagQuery[];
+  any?: MapTagQuery[];
+  not?: MapTagQuery | MapTagQuery[];
 };

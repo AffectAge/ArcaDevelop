@@ -51,7 +51,7 @@ export function resolveMapUnitMoveOrder(params: {
   movedUnitIds: Set<string>;
   areHexIdsAdjacentOrSame: (fromHexId: HexId, toHexId: HexId) => boolean;
   getNeighborHexIds?: (hexId: HexId) => HexId[];
-  getHexMovementCost?: (hexId: HexId, countryId?: string) => number;
+  getHexMovementCost?: (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number;
   getHex?: (hexId: HexId) => { id: string; passable?: boolean; waterKind?: string | null } | null | undefined;
   news?: EventLogEntry[];
 }): MapUnitMoveOrderResolution {
@@ -73,9 +73,13 @@ export function resolveMapUnitMoveOrder(params: {
   if (!isContiguousMapUnitRoute({ fromHexId: unit.hexId, route, areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame })) {
     return reject("UNIT_MOVE_PATH_NOT_CONTIGUOUS");
   }
+  let previousHexId = unit.hexId;
   const blockedHexId = route.find((hexId) => {
     const hex = params.getHex?.(hexId) ?? null;
-    return !canUnitEnterHex(unitType.domain, hex) || isStackBlocked(params.worldBase, params.unitTypes, unit, hexId);
+    const canEnterByRiver = unitType.domain === "naval" && Number(params.getHexMovementCost?.(hexId, unit.countryId, previousHexId as HexId, unitType.domain) ?? 999) < 1;
+    const blocked = (!canEnterByRiver && !canUnitEnterHex(unitType.domain, hex)) || isStackBlocked(params.worldBase, params.unitTypes, unit, hexId);
+    previousHexId = hexId;
+    return blocked;
   });
   if (blockedHexId) {
     params.news?.push(makeMapUnitMovementBlockedNews(unit, params.turnId, blockedHexId));
@@ -200,7 +204,7 @@ export function advanceStoredMapUnitRoutesTurn(params: {
   turnId: number;
   movedUnitIds: Set<string>;
   news?: EventLogEntry[];
-  getHexMovementCost?: (hexId: HexId, countryId?: string) => number;
+  getHexMovementCost?: (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number;
 }): void {
   for (const unit of Object.values(params.worldBase.unitsById ?? {})) {
     if (params.movedUnitIds.has(unit.id) || unit.status === "sleeping" || unit.status === "captured" || unit.status === "destroyed" || unit.path.length === 0) continue;
@@ -323,7 +327,7 @@ function advanceMapUnitAlongRoute(params: {
   unitTypes: readonly UnitTypeDefinition[];
   turnId: number;
   news?: EventLogEntry[];
-  getHexMovementCost?: (hexId: HexId, countryId?: string) => number;
+  getHexMovementCost?: (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number;
 }): boolean {
   const movementBudget = Math.max(1, Math.floor(params.unitType.stats.movement || params.unit.movementPoints || 1));
   let budget = movementBudget;
@@ -332,7 +336,7 @@ function advanceMapUnitAlongRoute(params: {
   while (remainingRoute.length > 0) {
     const nextHexId = remainingRoute[0]!;
     if (isStackBlocked(params.worldBase, params.unitTypes, params.unit, nextHexId)) break;
-    const cost = Math.max(1, Math.ceil(params.getHexMovementCost?.(nextHexId, params.unit.countryId) ?? 1));
+    const cost = Math.max(1, Math.ceil(params.getHexMovementCost?.(nextHexId, params.unit.countryId, params.unit.hexId, params.unitType.domain) ?? 1));
     if (cost > budget) break;
     budget -= cost;
     params.unit.hexId = nextHexId;

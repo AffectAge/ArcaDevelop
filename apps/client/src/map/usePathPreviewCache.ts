@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { HexId, HexMapArtifact, HexMapSettings, HexTile } from "@arcanorum/shared";
+import { findRiverEdgeBetween } from "@arcanorum/shared";
 import { getNeighborAxial, makeHexId } from "./hexGeometry";
 import { findHexPath } from "./hexPathfinding";
 
@@ -105,7 +106,7 @@ function findWaterHexPath(
     const current = tileById.get(currentId);
     if (!current) continue;
     for (const neighbor of getNeighborTiles(current, tileById, map.settings)) {
-      if (!isFleetPassableTile(neighbor)) continue;
+      if (!isFleetPassableTile(neighbor) && findRiverEdgeBetween(map, current.id, neighbor.id, tileById)?.navigable !== true) continue;
       if (cameFrom.has(neighbor.id)) continue;
       cameFrom.set(neighbor.id, currentId);
       frontier.push(neighbor.id);

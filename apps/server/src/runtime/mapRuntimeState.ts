@@ -25,7 +25,7 @@ type MapRuntimeState = {
 
 function buildMapRuntimeState(mapRoot: string, hexIndexPath = resolve(mapRoot, "hexes.json")): MapRuntimeState {
   const prebuiltTileRoot = resolve(mapRoot, "tiles/hex");
-  const hexMapArtifactJsonPath = resolve(dirname(hexIndexPath), "hex-map-artifact.json");
+  const hexMapArtifactJsonPath = resolve(dirname(hexIndexPath), "hex-map.json");
   const mapFeaturesJsonPath = resolve(dirname(hexIndexPath), GENERATED_MAP_FEATURES_FILE);
   const scenarioDir = resolve(dirname(hexIndexPath), "..");
   const hexIndex = loadHexIndexFromFile(hexIndexPath);

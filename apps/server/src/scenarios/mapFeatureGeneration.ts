@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { matchesMapTagQuery } from "@arcanorum/shared";
 import type {
   HexFeature,
   HexMapArtifact,
@@ -207,6 +208,7 @@ export function normalizeMapFeatureGenerator(input: unknown, path = "map_feature
     deniedFeatures: normalizeEnumArray(input.deniedFeatures, VALID_FEATURES),
     allowedWaterKinds: normalizeEnumArray(input.allowedWaterKinds, VALID_WATER_KINDS),
     deniedWaterKinds: normalizeEnumArray(input.deniedWaterKinds, VALID_WATER_KINDS),
+    tagQuery: normalizeMapTagQuery(input.tagQuery),
     regions: normalizeRegions(input.regions),
     global: normalizeCountRuleInput(input.global),
     perRegion: normalizeRegionCountRuleInput(input.perRegion),
@@ -229,6 +231,7 @@ function selectGeneratorCandidates(generator: MapFeatureGeneratorDefinition, map
     .filter((tile) => !generator.deniedFeatures?.includes(tile.feature))
     .filter((tile) => !generator.allowedWaterKinds || (tile.waterKind != null && generator.allowedWaterKinds.includes(tile.waterKind)))
     .filter((tile) => !(tile.waterKind != null && generator.deniedWaterKinds?.includes(tile.waterKind)))
+    .filter((tile) => matchesMapTagQuery(tile.mapTags, generator.tagQuery))
     .map((tile) => ({
       hexId: tile.id,
       regionId: tile.regionId,
@@ -251,6 +254,21 @@ function normalizeRegionCountRuleInput(input: unknown): MapFeatureGeneratorDefin
     ...base,
     regionIds: normalizeRegionIds(input.regionIds),
     excludedRegionIds: normalizeRegionIds(input.excludedRegionIds),
+  };
+}
+
+function normalizeMapTagQuery(input: unknown): MapFeatureGeneratorDefinition["tagQuery"] {
+  if (typeof input === "string" && input.trim()) return input.trim() as MapFeatureGeneratorDefinition["tagQuery"];
+  if (!isObject(input)) return undefined;
+  const all = Array.isArray(input.all) ? input.all.map(normalizeMapTagQuery).filter((item): item is NonNullable<MapFeatureGeneratorDefinition["tagQuery"]> => item != null) : undefined;
+  const any = Array.isArray(input.any) ? input.any.map(normalizeMapTagQuery).filter((item): item is NonNullable<MapFeatureGeneratorDefinition["tagQuery"]> => item != null) : undefined;
+  const not = Array.isArray(input.not)
+    ? input.not.map(normalizeMapTagQuery).filter((item): item is NonNullable<MapFeatureGeneratorDefinition["tagQuery"]> => item != null)
+    : normalizeMapTagQuery(input.not);
+  return {
+    ...(all && all.length > 0 ? { all } : {}),
+    ...(any && any.length > 0 ? { any } : {}),
+    ...(not && (!Array.isArray(not) || not.length > 0) ? { not } : {}),
   };
 }
 

@@ -66,6 +66,14 @@ scenarios/<scenario_id>/
 
 Scenario-owned uploaded assets live under `assets/uploads/` inside the scenario folder. Server-managed URLs use `/scenario-assets/<scenario_id>/assets/uploads/<relative_path>`; global upload roots and `/uploads/...` URLs are not valid authored or runtime targets.
 
+## Scenario Map Settings
+
+`map/hex-settings.json` is the scenario-owned source for generated map geography. It uses the sectioned v2 format with `seed`, `width`, `height`, `hexSize`, `chunkSize`, `wrapX: false`, and `generation.landmasses`, `generation.climate`, `generation.rivers`, `generation.regions`, and `generation.tags`.
+
+Supported scripts are `continents`, `pangaea`, and `archipelago`. Applying a scenario regenerates `.generated/hex-map.json` and `.generated/regions.json` when the settings hash changes. Those generated files are runtime artifacts, not authored source.
+
+Map generation exposes closed, localized `mapTags` on hexes. Scenario rules should use `tagQuery` for geography-sensitive deposits, features, building placement, adjacency, and visual rules. Do not author rules against private generator plate or landmass internals.
+
 Authored asset registry entries live in `common/assets/*.json` and point to local files under scenario `assets/`:
 
 ```json
@@ -93,6 +101,10 @@ Example:
   "nameKey": "mapFeature.ancientRuins.name",
   "visibility": "known",
   "allowedTerrains": ["plains", "hills", "desert"],
+  "tagQuery": {
+    "all": ["fertility:rich"],
+    "not": ["slope:rugged"]
+  },
   "global": { "min": 4, "max": 8 },
   "perRegion": { "max": 1 }
 }
@@ -100,7 +112,7 @@ Example:
 
 Feature visuals use one common PNG atlas at `assets/features/feature-atlas.png`. The atlas is `384x448`: six horizontal `64x64` variants per row, with rows assigned to current feature visual ids (`feature:forest`, `feature:dense_forest`, `feature:jungle`, `feature:marsh`, `feature:scrub`, `feature:snowcap`, `feature:ancient_ruins`). Missing scenario feature atlases use the client-owned fallback atlas; declared `asset:*` entries still need valid local files.
 
-Conditional feature frame rules live in `common/map_feature_visuals/*.json`. They are optional; when absent, the client uses built-in defaults. Conditions are evaluated against map artifact fields such as `terrain`, `feature`, `biome`, `temperatureBand`, `moistureBand`, `distanceToWater`, `isCoastal`, and `riverMask`.
+Conditional feature frame rules live in `common/map_feature_visuals/*.json`. They are optional; when absent, the client uses built-in defaults. Conditions are evaluated against map artifact fields such as `terrain`, `feature`, `biome`, `temperatureBand`, `moistureBand`, `distanceToWater`, `isCoastal`, `riverMask`, and `tagQuery`.
 
 ```json
 {
@@ -144,7 +156,16 @@ Resource deposits are authored as goods, not as a separate `resource:*` content 
 }
 ```
 
-`depletionMode` is `finite`, `renewable`, or `infinite`. Renewable deposits may also set `regenPerTurn` and `minRenewableAmount`. Generation rules can filter by `allowedHexTypes`, `deniedHexTypes`, `allowedClimates`, `deniedClimates`, `allowedLandscapes`, `deniedLandscapes`, `allowedFeatures`, `deniedFeatures`, `elevationMin`, and `elevationMax`, then apply `global` and/or `perRegion` count rules.
+`depletionMode` is `finite`, `renewable`, or `infinite`. Renewable deposits may also set `regenPerTurn` and `minRenewableAmount`. Generation rules can filter by `allowedHexTypes`, `deniedHexTypes`, `allowedClimates`, `deniedClimates`, `allowedLandscapes`, `deniedLandscapes`, `allowedFeatures`, `deniedFeatures`, `elevationMin`, `elevationMax`, and `tagQuery`, then apply `global` and/or `perRegion` count rules.
+
+`tagQuery` uses the same closed map-tag vocabulary as map feature generation. Use it for geography that should be readable and localized, for example:
+
+```json
+{
+  "all": ["fertility:rich", { "any": ["rainfall:wet", "basin:delta"] }],
+  "not": ["slope:rugged"]
+}
+```
 
 Generated deposits are written to `.generated/resource-deposits.json`. Do not manually edit that generated file. Authored region deposits live in `history/regions/*.json` under `resourceDeposits`; old `resources` entries are invalid for deposits.
 
@@ -317,19 +338,20 @@ New building construction requires a `targetHexId` chosen from a controlled regi
   "id": "building:watermill",
   "placement": {
     "allowedTerrains": ["plain", "hill"],
-    "deniedWaterKinds": ["ocean"]
+    "deniedWaterKinds": ["ocean"],
+    "tagQuery": { "any": ["basin:mainstem", "basin:delta"] }
   },
   "adjacencyEffects": [
     {
       "id": "river_watermill_bonus",
-      "when": { "adjacentToRiver": true },
+      "when": { "adjacentToRiver": true, "neighborTagQuery": { "any": ["river:major", "river:navigable"] } },
       "modifier": { "target": "building.throughput", "operation": "multiply", "value": 1.1 }
     }
   ]
 }
 ```
 
-`placement` can allow or deny terrain, features, and water kinds. One building or construction project occupies one building slot on a hex. `adjacencyEffects` are authored on the building and currently affect building throughput from adjacent terrain, features, rivers, or neighboring building ids.
+`placement` can allow or deny terrain, features, water kinds, and static `HexTile.mapTags` through `tagQuery`. One building or construction project occupies one building slot on a hex. `adjacencyEffects` are authored on the building and currently affect building throughput from adjacent terrain, features, rivers, neighboring building ids, or neighboring map tags through `when.neighborTagQuery`.
 
 Buildings may also define military deployment capability used by `Армия -> Формирование`. This is data-driven; core code does not hardcode barracks, ports, or airbases:
 

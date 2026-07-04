@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { HexMapArtifact, HexTile, WorldBase } from "@arcanorum/shared";
+import { DEFAULT_HEX_MAP_SETTINGS, type HexMapArtifact, type HexTile, type WorldBase } from "@arcanorum/shared";
 import { axialToPixel } from "./hexGeometry";
 import { resolvePainterlyTerrainZoomDetail } from "./hexTerrainMeshRenderer";
 import { buildCountryLabelSpecs, resolveLensTerrainBaseAlpha, resolveLensTerritoryFillAlpha, resolveLensVeilAlpha } from "./hexMapLensOverlayRenderer";
@@ -35,20 +35,13 @@ const tile: HexTile = {
 const map: HexMapArtifact = {
   version: 1,
   settings: {
+    ...DEFAULT_HEX_MAP_SETTINGS,
     seed: "test",
     width: 1,
     height: 1,
-    wrapX: true,
+    wrapX: false,
     hexSize: 24,
     chunkSize: 16,
-    seaLevel: 0.42,
-    temperature: 0.5,
-    moisture: 0.5,
-    mountains: 0.4,
-    rivers: 0.35,
-    forests: 0.45,
-    targetLandRegionSize: 40,
-    targetWaterRegionSize: 90,
   },
   tiles: [tile],
   riverEdges: [],

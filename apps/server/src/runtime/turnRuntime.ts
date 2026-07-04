@@ -7,6 +7,7 @@ import {
   type HexId,
   type Order,
   type RegionPopulation,
+  type UnitDomain,
   type WorldBase,
   type WorldDelta,
   type WsOutMessage,
@@ -120,7 +121,7 @@ type TurnRuntimeParams = {
   getRegionDerivedColonizationCosts: (hexId: string) => { pointsCost: number; ducatsCost: number };
   buildColonizationSettlementPopulation: (regionId: string, countryId: string, total: number) => RegionPopulation;
   areHexIdsAdjacentOrSame: (fromHexId: string, toHexId: string) => boolean;
-  getHexMovementCost: (hexId: string, countryId?: string) => number;
+  getHexMovementCost: (hexId: string, countryId?: string, fromHexId?: string, unitDomain?: UnitDomain) => number;
   enqueueBuildingAutoUpgradesTurn: () => void;
   resolveBuildingConstructionQueuesTurn: () => void;
   addResourceLedgerIncome: (input: ResourceLedgerEntryInput) => void;
@@ -206,7 +207,7 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
             news,
             areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
             getNeighborHexIds,
-            getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string) => number,
+            getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number,
             getHex: getHexForUnitMovement,
           });
           if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
@@ -298,7 +299,7 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           turnId: params.getTurnId(),
           movedUnitIds: movedMapUnitIds,
           news,
-          getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string) => number,
+          getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number,
         });
       },
       advanceUnitTrainingQueue: (news) => {

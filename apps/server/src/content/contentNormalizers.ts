@@ -12,6 +12,7 @@ import type {
   EquipmentStatKey,
   GoodDepositCountRule,
   GoodDepositDefinition,
+  MapTagQuery,
   MapResourceDepositVisibility,
   UnitCombatClass,
   UnitDomain,
@@ -653,6 +654,7 @@ function normalizeBuildingPlacement(input: unknown): BuildingPlacementRules | nu
     deniedWaterKinds: normalizeStringList(source.deniedWaterKinds) as BuildingPlacementRules["deniedWaterKinds"],
     allowedTags: normalizeStringList(source.allowedTags) as BuildingPlacementRules["allowedTags"],
     deniedTags: normalizeStringList(source.deniedTags) as BuildingPlacementRules["deniedTags"],
+    tagQuery: normalizeMapTagQuery(source.tagQuery),
   };
   return placement;
 }
@@ -675,6 +677,7 @@ function normalizeBuildingAdjacencyEffects(input: unknown): BuildingAdjacencyEff
         neighborTerrains: normalizeStringList(when.neighborTerrains) as BuildingAdjacencyEffect["when"]["neighborTerrains"],
         neighborFeatures: normalizeStringList(when.neighborFeatures) as BuildingAdjacencyEffect["when"]["neighborFeatures"],
         neighborTags: normalizeStringList(when.neighborTags) as BuildingAdjacencyEffect["when"]["neighborTags"],
+        neighborTagQuery: normalizeMapTagQuery(when.neighborTagQuery),
         neighborBuildingIds: normalizeStringList(when.neighborBuildingIds),
         adjacentToRiver: when.adjacentToRiver === true,
       },
@@ -867,8 +870,25 @@ function normalizeGoodDepositGenerationRules(input: unknown): GoodDepositDefinit
     deniedFeatures: normalizeStringList(source.deniedFeatures),
     elevationMin: normalizeOptionalUnitNumber(source.elevationMin),
     elevationMax: normalizeOptionalUnitNumber(source.elevationMax),
+    tagQuery: normalizeMapTagQuery(source.tagQuery),
     global: normalizeGoodDepositCountRule(source.global),
     perRegion: normalizeGoodDepositCountRule(source.perRegion),
+  };
+}
+
+function normalizeMapTagQuery(input: unknown): MapTagQuery | null {
+  if (typeof input === "string" && input.trim()) return input.trim();
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const source = input as Record<string, unknown>;
+  const all = Array.isArray(source.all) ? source.all.map(normalizeMapTagQuery).filter((item): item is MapTagQuery => item != null) : undefined;
+  const any = Array.isArray(source.any) ? source.any.map(normalizeMapTagQuery).filter((item): item is MapTagQuery => item != null) : undefined;
+  const not = Array.isArray(source.not)
+    ? source.not.map(normalizeMapTagQuery).filter((item): item is MapTagQuery => item != null)
+    : normalizeMapTagQuery(source.not);
+  return {
+    ...(all && all.length > 0 ? { all } : {}),
+    ...(any && any.length > 0 ? { any } : {}),
+    ...(not && (!Array.isArray(not) || not.length > 0) ? { not } : {}),
   };
 }
 

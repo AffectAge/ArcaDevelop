@@ -1,4 +1,4 @@
-import type { HexId, HexMapArtifact, HexTile } from "@arcanorum/shared";
+import { DEFAULT_HEX_MAP_SETTINGS, type HexId, type HexMapArtifact, type HexTile } from "@arcanorum/shared";
 import { describe, expect, it, vi } from "vitest";
 import { createPathPreviewCache, getNeighborTiles } from "./usePathPreviewCache";
 
@@ -48,7 +48,7 @@ describe("path preview cache", () => {
 function makeMapArtifact(tiles: HexTile[]): HexMapArtifact {
   return {
     version: 1,
-    settings: { seed: "test", width: 4, height: 4, hexSize: 10, seaLevel: 0.34, temperature: 0.5, moisture: 0.5, mountains: 0.4, rivers: 0.2, forests: 0.5, targetLandRegionSize: 8, targetWaterRegionSize: 16, chunkSize: 16, wrapX: false },
+    settings: { ...DEFAULT_HEX_MAP_SETTINGS, seed: "test", width: 4, height: 4, hexSize: 10, chunkSize: 16, wrapX: false },
     tiles,
     riverEdges: [],
     coastOverlays: [],

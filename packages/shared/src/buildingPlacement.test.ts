@@ -158,6 +158,33 @@ describe("evaluateBuildingPlacement", () => {
     expect(result.adjacencySources).toEqual([{ effectId: "city_support", operation: "add", stacks: 1, value: 0.1 }]);
     expect(result.throughputFactor).toBe(1.1);
   });
+
+  it("supports object map tag queries for placement and adjacency", () => {
+    const result = evaluateBuildingPlacement({
+      building: {
+        id: "building:orchard",
+        placement: { tagQuery: { all: ["fertility:rich"], not: ["slope:rugged"] } },
+        adjacencyEffects: [
+          {
+            id: "wet_neighbor",
+            when: { neighborTagQuery: { any: ["rainfall:wet", "basin:delta"] } },
+            perNeighbor: true,
+            modifier: { target: "building.throughput", operation: "add", value: 0.2 },
+          },
+        ],
+      },
+      countryId: "country:a",
+      hex: makeHex({ mapTags: ["fertility:rich", "slope:flat"] }),
+      neighborHexes: [
+        makeHex({ id: "hex:1:0", mapTags: ["rainfall:wet"] }),
+        makeHex({ id: "hex:0:1", mapTags: ["rainfall:dry"] }),
+      ],
+      world: makeWorld(),
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.adjacencySources).toEqual([{ effectId: "wet_neighbor", operation: "add", stacks: 1, value: 0.2 }]);
+  });
 });
 
 function makeWorld(overrides?: Partial<Parameters<typeof evaluateBuildingPlacement>[0]["world"]>) {
