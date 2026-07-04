@@ -9,7 +9,7 @@ describe("map feature generation", () => {
       typeId: "feature:ancient_ruins",
       category: "site",
       global: { count: 2 },
-      allowedTerrains: ["plains"],
+      tagQuery: "biome:plains",
     };
 
     const first = generateMapFeatures({ generators: [generator], mapArtifact: makeMap(), scenarioSeed: "seed:a" });
@@ -108,9 +108,6 @@ function makeTile(id: HexTile["id"], regionId: HexTile["regionId"]): HexTile {
     r: Number(r),
     chunkId: "hex-chunk:0:0",
     regionId,
-    terrain: "plains",
-    biome: "temperate_grassland",
-    feature: "none",
     waterKind: null,
     elevation: 0.2,
     moisture: 0.4,
@@ -121,7 +118,7 @@ function makeTile(id: HexTile["id"], regionId: HexTile["regionId"]): HexTile {
     isCoastal: false,
     riverMask: 0,
     riverWidth: 0,
-    mapTags: id === "hex:3:0" ? ["basin:delta", "slope:flat"] : [],
+    mapTags: id === "hex:3:0" ? ["biome:plains", "basin:delta", "slope:flat"] : ["biome:plains"],
     movementCost: 1,
     passable: true,
   };

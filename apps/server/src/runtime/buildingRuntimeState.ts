@@ -170,17 +170,14 @@ export function createBuildingRuntime(params: BuildingRuntimeParams) {
 
 function toPlacementHexTile(input: HexMapIndexEntry | undefined, cityHexIds: ReadonlySet<HexTile["id"]> = new Set()): HexTile | null {
   if (!input?.id || !input.regionId) return null;
-  const terrain = normalizePlacementTerrain(input.landscape ?? input.hexType);
   const waterKind = normalizePlacementWaterKind(input.landscape ?? input.hexType);
+  const mapTags = normalizePlacementMapTags(input.landscape ?? input.hexType, waterKind);
   return resolveEffectiveHexTile({
     id: input.id as HexTile["id"],
     q: 0,
     r: 0,
     chunkId: "hex-chunk:0:0",
     regionId: input.regionId as HexTile["regionId"],
-    terrain,
-    biome: waterKind === "ocean" || waterKind === "sea" ? "coastal_water" : terrain === "desert" ? "arid_desert" : "temperate_grassland",
-    feature: normalizePlacementFeature(input.landscape),
     waterKind,
     elevation: 0,
     moisture: 0,
@@ -188,24 +185,25 @@ function toPlacementHexTile(input: HexMapIndexEntry | undefined, cityHexIds: Rea
     temperatureBand: "frozen",
     moistureBand: "arid",
     distanceToWater: waterKind ? 0 : 3,
-    isCoastal: terrain === "coast",
+    isCoastal: mapTags.includes("coast:coastal"),
     riverMask: 0,
     riverWidth: 0,
+    mapTags,
     movementCost: 1,
     passable: true,
   }, cityHexIds);
 }
 
-function normalizePlacementTerrain(value: string | null | undefined): HexTerrain {
+function normalizePlacementMapTags(value: string | null | undefined, waterKind: HexWaterKind): HexTile["mapTags"] {
   const normalized = String(value ?? "").trim();
-  const allowed = new Set<HexTerrain>(["ocean", "sea", "lake", "coast", "plains", "grassland", "forest", "hills", "mountains", "desert", "tundra", "snow", "wetland"]);
-  return allowed.has(normalized as HexTerrain) ? normalized as HexTerrain : "plains";
-}
-
-function normalizePlacementFeature(value: string | null | undefined): HexFeature {
-  const normalized = String(value ?? "").trim();
-  const allowed = new Set<HexFeature>(["none", "forest", "dense_forest", "jungle", "marsh", "scrub", "snowcap"]);
-  return allowed.has(normalized as HexFeature) ? normalized as HexFeature : "none";
+  if (waterKind === "ocean") return ["water:ocean", "coast:inland", "fertility:barren", "movement:stop_on_enter"];
+  if (waterKind === "sea") return ["water:coastal", "feature:aquatic", "coast:coastal", "fertility:barren"];
+  if (waterKind === "lake") return ["water:lake", "water:fresh", "feature:aquatic", "coast:coastal", "fertility:barren"];
+  if (normalized === "desert") return ["biome:desert", "morphology:flat", "fertility:poor", "coast:inland"];
+  if (normalized === "hills") return ["biome:plains", "morphology:rough", "fertility:modest", "coast:inland", "movement:stop_on_enter"];
+  if (normalized === "mountains") return ["biome:plains", "morphology:mountainous", "fertility:poor", "coast:inland", "movement:stop_on_enter"];
+  if (normalized === "forest") return ["biome:grassland", "morphology:flat", "feature:vegetated", "fertility:fertile", "coast:inland", "movement:stop_on_enter"];
+  return ["biome:plains", "morphology:flat", "fertility:modest", "coast:inland"];
 }
 
 function normalizePlacementWaterKind(value: string | null | undefined): HexWaterKind {

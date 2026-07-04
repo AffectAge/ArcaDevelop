@@ -30,6 +30,7 @@ import {
   advanceUnitTrainingQueueTurn,
   resolveMapUnitAttackOrder,
   resolveMapUnitMoveOrder,
+  resolveMapUnitPromoteOrder,
   resolveMapUnitWaitOrder,
 } from "../mechanics/mapUnitMechanics";
 import type { HexMapIndexEntry } from "../map/hexIndex";
@@ -231,6 +232,16 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           return;
         }
         rejectedOrders.push({ playerId, reason: "UNIT_ATTACK_ATTACKER_NOT_FOUND", tempOrderId: order.id });
+      },
+      resolveUnitPromoteOrder: ({ order, playerId, rejectedOrders }) => {
+        const result = resolveMapUnitPromoteOrder({
+          order,
+          playerId,
+          worldBase: params.getWorldBase(),
+          unitTypes: params.getGameSettings().content.unitTypes,
+          unitSkillTrees: params.getGameSettings().content.unitSkillTrees,
+        });
+        if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
       },
       resolveUnitWaitOrder: ({ order, playerId, movedMapUnitIds, rejectedOrders }) => {
         const result = resolveMapUnitWaitOrder({

@@ -1,5 +1,5 @@
 {
-  "seed": "arcanorum-main-world-v2",
+  "seed": "default",
   "width": 360,
   "height": 160,
   "hexSize": 18,
@@ -10,10 +10,22 @@
     "landmasses": {
       "majorContinents": {
         "min": 2,
-        "max": 4
+        "max": 6
       },
-      "landRatio": 0.48,
-      "islandDensity": "medium"
+      "majorContinentSize": {
+        "min": 1200,
+        "max": 3600
+      },
+      "landRatio": 0.60,
+      "islandDensity": "high",
+      "islandSize": {
+        "min": 20,
+        "max": 200
+      },
+      "edgeOceanMargin": {
+        "min": 5,
+        "max": 8
+      }
     },
     "climate": {
       "preset": "earthlike",
@@ -21,7 +33,7 @@
       "rainfall": "balanced"
     },
     "rivers": {
-      "density": "rare",
+      "density": "normal",
       "navigable": true,
       "crossingPenalty": 1
     },

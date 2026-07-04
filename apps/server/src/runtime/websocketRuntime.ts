@@ -339,6 +339,7 @@ export async function submitOrderDeltaToRuntime(input: {
     delta.order.type !== "BUILD" &&
     delta.order.type !== "UNIT_MOVE" &&
     delta.order.type !== "UNIT_ATTACK" &&
+    delta.order.type !== "UNIT_PROMOTE" &&
     delta.order.type !== "UNIT_SKIP_TURN" &&
     delta.order.type !== "UNIT_SLEEP" &&
     delta.order.type !== "UNIT_WAKE" &&
@@ -361,6 +362,7 @@ export async function submitOrderDeltaToRuntime(input: {
   if (!validateColonizeOrder({ params, delta, send, turnId, worldBase, gameSettings })) return;
   if (!validateUnitMoveOrder({ params, delta, send, worldBase, playerOrders })) return;
   if (!validateUnitAttackOrder({ params, delta, send, worldBase, playerOrders })) return;
+  if (!validateUnitPromoteOrder({ params, delta, send, worldBase, playerOrders })) return;
   if (!validateUnitWaitOrder({ delta, send, worldBase, playerOrders })) return;
   if (!validateFoundCityOrderForSubmit({ params, delta, send, worldBase })) return;
   if (!(await validateBuildOrder({ params, delta, send, worldBase, gameSettings }))) return;
@@ -420,6 +422,48 @@ function validateUnitWaitOrder(input: {
     )
   ) {
     send({ type: "ERROR", code: "MAP_UNIT_ALREADY_QUEUED", message: "MAP_UNIT_ALREADY_QUEUED" });
+    return false;
+  }
+  return true;
+}
+
+function validateUnitPromoteOrder(input: {
+  params: WebSocketRuntimeParams;
+  delta: OrderDelta;
+  send: (message: WsOutMessage) => void;
+  worldBase: WorldBase;
+  playerOrders: Order[];
+}): boolean {
+  const { params, delta, send, worldBase, playerOrders } = input;
+  if (delta.order.type !== "UNIT_PROMOTE") return true;
+  const promoteOrder = delta.order;
+  const unit = worldBase.unitsById?.[promoteOrder.unitId];
+  if (!unit || unit.countryId !== promoteOrder.countryId) {
+    send({ type: "ERROR", code: "MAP_UNIT_NOT_FOUND", message: "MAP_UNIT_NOT_FOUND" });
+    return false;
+  }
+  if (unit.status === "captured" || unit.status === "destroyed") {
+    send({ type: "ERROR", code: "MAP_UNIT_UNAVAILABLE", message: "MAP_UNIT_UNAVAILABLE" });
+    return false;
+  }
+  const unitType = params.getGameSettings().content.unitTypes.find((candidate) => candidate.id === unit.unitTypeId);
+  const tree = unitType?.unitSkillTreeId
+    ? params.getGameSettings().content.unitSkillTrees.find((candidate) => candidate.id === unitType.unitSkillTreeId)
+    : null;
+  if (!tree || !tree.choiceGroups.some((group) => group.id === promoteOrder.choiceGroupId)) {
+    send({ type: "ERROR", code: "UNIT_PROMOTE_TREE_NOT_FOUND", message: "UNIT_PROMOTE_TREE_NOT_FOUND" });
+    return false;
+  }
+  if (
+    playerOrders.some(
+      (order) =>
+        order.countryId === promoteOrder.countryId &&
+        order.type === "UNIT_PROMOTE" &&
+        order.unitId === unit.id &&
+        order.choiceGroupId === promoteOrder.choiceGroupId,
+    )
+  ) {
+    send({ type: "ERROR", code: "UNIT_PROMOTE_ALREADY_QUEUED", message: "UNIT_PROMOTE_ALREADY_QUEUED" });
     return false;
   }
   return true;

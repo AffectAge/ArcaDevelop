@@ -1,26 +1,40 @@
+import { Delaunay } from "d3-delaunay";
+import FlatQueue from "flatqueue";
 import { createNoise2D } from "simplex-noise";
 import type {
-  HexBiome,
   HexChunkId,
   HexCoastOverlayRecord,
   HexDirection,
   HexDistanceToWater,
   HexEdgeRecord,
-  HexFeature,
-  HexMapTag,
   HexMapArtifact,
+  HexMapRange,
   HexMapScript,
   HexMapSettings,
+  HexMapTag,
   HexMoistureBand,
   HexRegionId,
   HexTemperatureBand,
-  HexTerrain,
   HexTile,
   HexWaterKind,
 } from "./contracts/hex-map";
 import { getNeighborAxial, HEX_DIRECTIONS, makeHexId } from "./hexGeometry";
 
-type TileDraft = Omit<HexTile, "regionId"> & { regionId: HexRegionId | null; landmassId: number | null; isHomeland: boolean; isIsland: boolean };
+type InternalTerrain = "ocean" | "sea" | "lake" | "plains" | "grassland" | "hills" | "mountains" | "desert" | "tundra" | "snow" | "wetland";
+type InternalFeature = "none" | "forest" | "dense_forest" | "jungle" | "marsh" | "scrub" | "snowcap";
+type CivBiome = "tundra" | "grassland" | "plains" | "desert" | "tropical";
+type Morphology = "flat" | "rough" | "mountainous";
+
+type TileDraft = Omit<HexTile, "regionId"> & {
+  regionId: HexRegionId | null;
+  landmassId: number | null;
+  isHomeland: boolean;
+  isIsland: boolean;
+  internalTerrain: InternalTerrain;
+  internalFeature: InternalFeature;
+  civBiome: CivBiome;
+  morphology: Morphology;
+};
 
 type LandmassSeed = {
   id: number;
@@ -43,8 +57,11 @@ export const DEFAULT_HEX_MAP_SETTINGS: HexMapSettings = {
     mapScript: "continents",
     landmasses: {
       majorContinents: { min: 2, max: 4 },
+      majorContinentSize: { min: 4_200, max: 7_200 },
       landRatio: 0.48,
       islandDensity: "medium",
+      islandSize: { min: 18, max: 220 },
+      edgeOceanMargin: { min: 5, max: 8 },
     },
     climate: {
       preset: "earthlike",
@@ -74,7 +91,10 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
   const temperatureNoise = createNoise2D(random);
   const featureNoise = createNoise2D(random);
   const seeds = buildLandmassSeeds(normalizedSettings, random);
+  const seedPoints = seeds.map((seed) => [seed.x, seed.y] as [number, number]);
+  const delaunay = seedPoints.length > 0 ? Delaunay.from(seedPoints) : null;
   const homelandSeedId = selectHomelandSeedId(seeds);
+  const edgeOceanMargin = resolveEdgeOceanMargin(normalizedSettings.generation.landmasses.edgeOceanMargin, random);
   const tiles: TileDraft[] = [];
   const tileById = new Map<string, TileDraft>();
 
@@ -83,8 +103,8 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
       const normalizedX = normalizedSettings.width <= 1 ? 0 : q / (normalizedSettings.width - 1);
       const normalizedY = normalizedSettings.height <= 1 ? 0 : r / (normalizedSettings.height - 1);
       const latitude = Math.abs(normalizedY - 0.5) * 2;
-      const landScore = resolveLandScore(normalizedX, normalizedY, seeds, elevationNoise);
-      const nearestSeed = resolveNearestLandmassSeed(normalizedX, normalizedY, seeds);
+      const dominantSeed = resolveDominantLandmassSeed(normalizedX, normalizedY, seeds, delaunay);
+      const landScore = resolveLandScore(normalizedX, normalizedY, seeds, elevationNoise, normalizedSettings, edgeOceanMargin);
       const elevation = clamp01(
         landScore * 0.72 +
           normalizedNoise(elevationNoise(q / 31, r / 31)) * 0.18 +
@@ -94,14 +114,14 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
       const waterKind = resolveWaterKind(landScore, elevation);
       const moisture = resolveMoisture(q, r, moistureNoise, normalizedSettings, waterKind);
       const temperature = resolveTemperature(q, r, latitude, elevation, temperatureNoise, normalizedSettings);
-      const terrain = resolveTerrain(elevation, moisture, temperature, waterKind);
-      const feature = resolveFeature(terrain, moisture, temperature, normalizedNoise(featureNoise(q / 15, r / 15)));
-      const temperatureBand = resolveTemperatureBand(temperature);
-      const moistureBand = resolveMoistureBand(moisture);
+      const internalTerrain = resolveInternalTerrain(elevation, moisture, temperature, waterKind);
+      const internalFeature = resolveInternalFeature(internalTerrain, moisture, temperature, normalizedNoise(featureNoise(q / 15, r / 15)));
+      const civBiome = resolveCivBiome(internalTerrain, internalFeature, moisture, temperature);
+      const morphology = resolveMorphology(internalTerrain, elevation);
       const id = makeHexId(q, r);
       const isLand = waterKind == null;
-      const landmassId = isLand ? nearestSeed?.id ?? null : null;
-      const isIsland = isLand && nearestSeed?.island === true;
+      const landmassId = isLand ? dominantSeed?.id ?? null : null;
+      const isIsland = isLand && dominantSeed?.island === true;
       const isHomeland = isLand && landmassId === homelandSeedId && !isIsland;
       const tile: TileDraft = {
         id,
@@ -109,46 +129,47 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
         r,
         chunkId: makeChunkId(q, r, normalizedSettings),
         regionId: null,
-        terrain,
-        feature,
         waterKind,
         elevation: roundMetric(elevation),
         moisture: roundMetric(moisture),
         temperature: roundMetric(temperature),
-        temperatureBand,
-        moistureBand,
-        biome: resolveBiome(terrain, feature, moisture, temperature, waterKind, false),
+        temperatureBand: resolveTemperatureBand(temperature),
+        moistureBand: resolveMoistureBand(moisture),
         distanceToWater: waterKind ? 0 : 3,
         isCoastal: false,
         riverMask: 0,
         riverWidth: 0,
         mapTags: [],
-        movementCost: resolveMovementCost(terrain, feature, waterKind),
+        movementCost: 1,
         passable: waterKind !== "ocean",
         landmassId,
         isHomeland,
         isIsland,
+        internalTerrain,
+        internalFeature,
+        civBiome,
+        morphology,
       };
       tiles.push(tile);
       tileById.set(id, tile);
     }
   }
 
+  promoteNearLandSeasToCoastalWater(tiles, tileById, normalizedSettings);
   const coastOverlays = buildCoastOverlays(tiles, tileById, normalizedSettings);
   let riverEdges = buildRiverEdges(tiles, tileById, normalizedSettings);
-  applyHydrologyMetadata(tiles, tileById, coastOverlays, riverEdges, normalizedSettings);
+  applyHydrologyMetadata(tiles, tileById, riverEdges, normalizedSettings);
   riverEdges = classifyRiverEdges(riverEdges, tiles, tileById, normalizedSettings);
-  applyHydrologyMetadata(tiles, tileById, coastOverlays, riverEdges, normalizedSettings);
-  assignRegions(tiles, tileById, normalizedSettings);
+  applyHydrologyMetadata(tiles, tileById, riverEdges, normalizedSettings);
   applyMapTags(tiles);
+  assignRegions(tiles, tileById, normalizedSettings);
+  assignCoastalWaterToLandRegions(tiles, tileById, normalizedSettings);
+  refreshMovementMetadata(tiles);
 
   return {
     version: 1,
     settings: normalizedSettings,
-    tiles: tiles.map(({ landmassId: _landmassId, isHomeland: _isHomeland, isIsland: _isIsland, ...tile }) => ({
-      ...tile,
-      regionId: tile.regionId ?? "region:hex_0_0",
-    })),
+    tiles: tiles.map(stripInternalTile),
     riverEdges,
     coastOverlays,
   };
@@ -156,35 +177,50 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
 
 export function enrichHexMapVisualMetadata(artifact: HexMapArtifact): HexMapArtifact {
   const settings = normalizeHexMapSettings(artifact.settings);
-  const tiles: TileDraft[] = artifact.tiles.map((tile) => {
-    const temperatureBand = tile.temperatureBand ?? resolveTemperatureBand(tile.temperature);
-    const moistureBand = tile.moistureBand ?? resolveMoistureBand(tile.moisture);
-    return {
-      ...tile,
-      temperatureBand,
-      moistureBand,
-      biome: tile.biome ?? resolveBiome(tile.terrain, tile.feature, tile.moisture, tile.temperature, tile.waterKind, false),
-      distanceToWater: tile.distanceToWater ?? (tile.waterKind ? 0 : 3),
-      isCoastal: tile.isCoastal ?? false,
-      riverMask: tile.riverMask ?? 0,
-      riverWidth: tile.riverWidth ?? 0,
-      mapTags: tile.mapTags ?? [],
-      regionId: tile.regionId ?? "region:hex_0_0",
-      landmassId: null,
-      isHomeland: tile.mapTags?.includes("continent:homeland") ?? false,
-      isIsland: tile.mapTags?.includes("landmass:island") ?? false,
-    };
-  });
+  const tiles: TileDraft[] = artifact.tiles.map((tile) => ({
+    ...tile,
+    temperatureBand: tile.temperatureBand ?? resolveTemperatureBand(tile.temperature),
+    moistureBand: tile.moistureBand ?? resolveMoistureBand(tile.moisture),
+    distanceToWater: tile.distanceToWater ?? (tile.waterKind ? 0 : 3),
+    isCoastal: tile.isCoastal ?? false,
+    riverMask: tile.riverMask ?? 0,
+    riverWidth: tile.riverWidth ?? 0,
+    mapTags: tile.mapTags ?? [],
+    regionId: tile.regionId ?? "region:hex_0_0",
+    landmassId: null,
+    isHomeland: tile.mapTags?.includes("continent:homeland") ?? false,
+    isIsland: tile.mapTags?.includes("landmass:island") ?? false,
+    internalTerrain: internalTerrainFromTags(tile),
+    internalFeature: internalFeatureFromTags(tile.mapTags ?? []),
+    civBiome: civBiomeFromTags(tile.mapTags ?? []),
+    morphology: morphologyFromTags(tile.mapTags ?? []),
+  }));
   const tileById = new Map<string, TileDraft>(tiles.map((tile) => [tile.id, tile]));
-  applyHydrologyMetadata(tiles, tileById, artifact.coastOverlays, artifact.riverEdges, settings);
+  applyHydrologyMetadata(tiles, tileById, artifact.riverEdges, settings);
   applyMapTags(tiles);
+  refreshMovementMetadata(tiles);
   return {
     ...artifact,
     settings,
-    tiles: tiles.map(({ landmassId: _landmassId, isHomeland: _isHomeland, isIsland: _isIsland, ...tile }) => ({
-      ...tile,
-      regionId: tile.regionId ?? "region:hex_0_0",
-    })),
+    tiles: tiles.map(stripInternalTile),
+  };
+}
+
+function stripInternalTile(tile: TileDraft): HexTile {
+  const {
+    landmassId: _landmassId,
+    isHomeland: _isHomeland,
+    isIsland: _isIsland,
+    internalTerrain: _internalTerrain,
+    internalFeature: _internalFeature,
+    civBiome: _civBiome,
+    morphology: _morphology,
+    ...publicTile
+  } = tile;
+  return {
+    ...publicTile,
+    regionId: publicTile.regionId ?? "region:hex_0_0",
+    mapTags: [...publicTile.mapTags].sort(),
   };
 }
 
@@ -223,36 +259,77 @@ function normalizeHexMapSettings(settings: HexMapSettings): HexMapSettings {
 function buildLandmassSeeds(settings: HexMapSettings, random: () => number): LandmassSeed[] {
   const script = settings.generation.mapScript;
   const majorCount = resolveMajorLandmassCount(script, settings.generation.landmasses.majorContinents, random);
+  const totalTiles = Math.max(1, settings.width * settings.height);
   const seeds: LandmassSeed[] = [];
   if (script === "pangaea") {
-    seeds.push({ id: 0, x: 0.5, y: 0.52, radiusX: 0.34, radiusY: 0.34, weight: 1.2, island: false });
+    const radius = resolveSeedRadiusFromHexSize(settings.generation.landmasses.majorContinentSize, totalTiles, random, 1.15, 0.56, { radiusX: 0.3, radiusY: 0.31 }, script);
+    seeds.push({ id: 0, x: 0.5, y: 0.52, radiusX: radius.radiusX, radiusY: radius.radiusY, weight: 1.2, island: false });
   } else {
     for (let index = 0; index < majorCount; index += 1) {
       const band = (index + 0.5) / majorCount;
+      const fallbackRadius = {
+        radiusX: script === "archipelago" ? 0.1 + random() * 0.07 : 0.17 + random() * 0.11,
+        radiusY: script === "archipelago" ? 0.1 + random() * 0.07 : 0.2 + random() * 0.1,
+      };
+      const radius = resolveSeedRadiusFromHexSize(settings.generation.landmasses.majorContinentSize, totalTiles, random, script === "archipelago" ? 0.86 : 1, script === "archipelago" ? 0.14 : 0.24, fallbackRadius, script);
       seeds.push({
         id: index,
-        x: clamp01(band + (random() - 0.5) * 0.18),
-        y: clamp01(0.28 + random() * 0.44),
-        radiusX: script === "archipelago" ? 0.12 + random() * 0.08 : 0.2 + random() * 0.13,
-        radiusY: script === "archipelago" ? 0.12 + random() * 0.08 : 0.22 + random() * 0.12,
-        weight: script === "archipelago" ? 0.74 : 1,
+        x: clamp01(0.12 + band * 0.76 + (random() - 0.5) * 0.12),
+        y: clamp01(0.26 + random() * 0.46),
+        radiusX: radius.radiusX,
+        radiusY: radius.radiusY,
+        weight: script === "archipelago" ? 0.76 : 1,
         island: false,
       });
     }
   }
   const islandCount = resolveIslandCount(script, settings.generation.landmasses.islandDensity);
   for (let index = 0; index < islandCount; index += 1) {
+    const fallbackRadius = {
+      radiusX: 0.022 + random() * (script === "archipelago" ? 0.053 : 0.026),
+      radiusY: 0.022 + random() * (script === "archipelago" ? 0.053 : 0.026),
+    };
+    const radius = resolveSeedRadiusFromHexSize(settings.generation.landmasses.islandSize, totalTiles, random, script === "archipelago" ? 0.78 : 0.64, script === "archipelago" ? 0.055 : 0.032, fallbackRadius, script);
     seeds.push({
       id: seeds.length,
-      x: random(),
-      y: 0.12 + random() * 0.76,
-      radiusX: 0.035 + random() * (script === "archipelago" ? 0.08 : 0.045),
-      radiusY: 0.035 + random() * (script === "archipelago" ? 0.08 : 0.045),
-      weight: script === "archipelago" ? 0.82 : 0.62,
+      x: 0.08 + random() * 0.84,
+      y: 0.1 + random() * 0.8,
+      radiusX: radius.radiusX,
+      radiusY: radius.radiusY,
+      weight: script === "archipelago" ? 0.84 : 0.6,
       island: true,
     });
   }
   return seeds;
+}
+
+function resolveSeedRadiusFromHexSize(
+  size: number | HexMapRange | undefined,
+  totalTiles: number,
+  random: () => number,
+  fillFactor: number,
+  maxMapShare: number,
+  fallback: { radiusX: number; radiusY: number },
+  script: HexMapScript,
+): { radiusX: number; radiusY: number } {
+  const targetHexes = resolveHexSizeRange(size, random);
+  if (targetHexes == null) return fallback;
+  const aspect = clamp(0.72 + random() * 0.72, 0.58, 1.58);
+  const normalizedArea = Math.min(maxMapShare, Math.max(1, targetHexes) / Math.max(1, totalTiles));
+  const baseRadius = Math.sqrt(normalizedArea / Math.max(0.1, Math.PI * fillFactor));
+  const scriptScale = script === "archipelago" ? 0.88 : script === "pangaea" ? 1.08 : 1;
+  return {
+    radiusX: clamp(baseRadius * Math.sqrt(aspect) * scriptScale, 0.012, 0.48),
+    radiusY: clamp(baseRadius / Math.sqrt(aspect) * scriptScale, 0.012, 0.48),
+  };
+}
+
+function resolveHexSizeRange(size: number | HexMapRange | undefined, random: () => number): number | null {
+  if (typeof size === "number" && Number.isFinite(size)) return Math.max(1, Math.floor(size));
+  if (!size || typeof size !== "object") return null;
+  const min = Math.max(1, Math.floor(Number(size.min) || 1));
+  const max = Math.max(min, Math.floor(Number(size.max) || min));
+  return min + Math.floor(random() * (max - min + 1));
 }
 
 function resolveMajorLandmassCount(script: HexMapScript, range: { min: number; max: number }, random: () => number): number {
@@ -270,26 +347,62 @@ function resolveIslandCount(script: HexMapScript, density: "low" | "medium" | "h
   return base;
 }
 
-function resolveLandScore(x: number, y: number, seeds: LandmassSeed[], noise: ReturnType<typeof createNoise2D>): number {
+function resolveLandScore(
+  x: number,
+  y: number,
+  seeds: LandmassSeed[],
+  noise: ReturnType<typeof createNoise2D>,
+  settings: HexMapSettings,
+  edgeOceanMargin: number,
+): number {
   let best = 0;
+  let bestMajor = Number.NEGATIVE_INFINITY;
+  let secondMajor = Number.NEGATIVE_INFINITY;
   for (const seed of seeds) {
-    const dx = (x - seed.x) / seed.radiusX;
-    const dy = (y - seed.y) / seed.radiusY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const score = (1 - distance) * seed.weight;
+    const score = seedInfluenceScore(x, y, seed);
     best = Math.max(best, score);
+    if (!seed.island) {
+      if (score > bestMajor) {
+        secondMajor = bestMajor;
+        bestMajor = score;
+      } else if (score > secondMajor) {
+        secondMajor = score;
+      }
+    }
   }
+  const marginX = edgeOceanMargin / Math.max(1, settings.width - 1);
+  const marginY = edgeOceanMargin / Math.max(1, settings.height - 1);
+  const edgeDistance = Math.min(x, y, 1 - x, 1 - y);
+  const edgePenalty = edgeDistance < Math.max(marginX, marginY) ? (1 - edgeDistance / Math.max(marginX, marginY)) * 1.5 : 0;
+  const boundaryPenalty = resolveMajorLandmassBoundaryPenalty(bestMajor, secondMajor, settings.generation.mapScript);
   const ragged = normalizedNoise(noise(x * 8 + 4, y * 8 - 7)) * 0.24 + normalizedNoise(noise(x * 27 - 3, y * 27 + 9)) * 0.1;
-  return best + ragged;
+  return best + ragged - edgePenalty - boundaryPenalty;
 }
 
-function resolveNearestLandmassSeed(x: number, y: number, seeds: LandmassSeed[]): LandmassSeed | null {
-  let best: { seed: LandmassSeed; distance: number } | null = null;
+function resolveMajorLandmassBoundaryPenalty(bestMajor: number, secondMajor: number, script: HexMapScript): number {
+  if (script === "pangaea" || !Number.isFinite(secondMajor) || secondMajor <= 0) return 0;
+  const closeness = Math.max(0, 1 - Math.abs(bestMajor - secondMajor) / 0.18);
+  return closeness * (script === "archipelago" ? 0.18 : 0.24);
+}
+
+function resolveDominantLandmassSeed(x: number, y: number, seeds: LandmassSeed[], delaunay: Delaunay<[number, number]> | null): LandmassSeed | null {
+  if (seeds.length === 0) return null;
+  const voronoiSeedId = delaunay != null ? seeds[delaunay.find(x, y)]?.id ?? null : null;
+  let best: { seed: LandmassSeed; score: number } | null = null;
   for (const seed of seeds) {
-    const distance = ((x - seed.x) / seed.radiusX) ** 2 + ((y - seed.y) / seed.radiusY) ** 2;
-    if (!best || distance < best.distance) best = { seed, distance };
+    const score = seedInfluenceScore(x, y, seed) + (seed.id === voronoiSeedId ? 0.0001 : 0);
+    if (!best || score > best.score) best = { seed, score };
   }
-  return best?.seed ?? null;
+  return best && best.score > 0.04 ? best.seed : null;
+}
+
+function seedInfluenceScore(x: number, y: number, seed: LandmassSeed): number {
+  const dx = (x - seed.x) / seed.radiusX;
+  const dy = (y - seed.y) / seed.radiusY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const score = (1 - distance) * seed.weight;
+  if (seed.island && distance > 1.08) return -1;
+  return score;
 }
 
 function selectHomelandSeedId(seeds: LandmassSeed[]): number | null {
@@ -300,6 +413,16 @@ function selectHomelandSeedId(seeds: LandmassSeed[]): number | null {
 
 function makeChunkId(q: number, r: number, settings: HexMapSettings): HexChunkId {
   return `hex-chunk:${Math.floor(q / settings.chunkSize)}:${Math.floor(r / settings.chunkSize)}`;
+}
+
+function resolveEdgeOceanMargin(input: number | HexMapRange | undefined, random: () => number): number {
+  if (typeof input === "number" && Number.isFinite(input)) return Math.max(0, Math.floor(input));
+  if (input && typeof input === "object") {
+    const min = Math.max(0, Math.floor(Number(input.min) || 0));
+    const max = Math.max(min, Math.floor(Number(input.max) || min));
+    return min + Math.floor(random() * (max - min + 1));
+  }
+  return 6;
 }
 
 function resolveWaterKind(landScore: number, elevation: number): HexWaterKind {
@@ -318,7 +441,7 @@ function resolveTemperature(q: number, r: number, latitude: number, elevation: n
   return clamp01((1 - latitude) * 0.68 + normalizedNoise(noise(q / 68 - 6, r / 68 + 18)) * 0.16 - Math.max(0, elevation - 0.65) * 0.24 + climateBias);
 }
 
-function resolveTerrain(elevation: number, moisture: number, temperature: number, waterKind: HexWaterKind): HexTerrain {
+function resolveInternalTerrain(elevation: number, moisture: number, temperature: number, waterKind: HexWaterKind): InternalTerrain {
   if (waterKind === "ocean") return "ocean";
   if (waterKind === "sea") return "sea";
   if (waterKind === "lake") return "lake";
@@ -331,19 +454,63 @@ function resolveTerrain(elevation: number, moisture: number, temperature: number
   return "plains";
 }
 
-function resolveBiome(terrain: HexTerrain, feature: HexFeature, moisture: number, temperature: number, waterKind: HexWaterKind, isCoastal: boolean): HexBiome {
-  if (waterKind === "ocean") return "deep_ocean";
-  if (waterKind === "sea") return "coastal_water";
-  if (waterKind === "lake") return "freshwater";
-  if (terrain === "wetland" && isCoastal) return "coastal_wetland";
-  if (terrain === "mountains" || terrain === "hills" || terrain === "snow") return "alpine";
-  if (terrain === "wetland" || feature === "marsh" || moisture > 0.82) return "swamp";
-  if (terrain === "tundra" || temperature < 0.22) return "tundra";
-  if (terrain === "desert") return "arid_desert";
-  if (feature === "jungle" || (temperature > 0.66 && moisture > 0.58)) return "tropical_rainforest";
-  if (feature === "dense_forest" || feature === "forest") return temperature < 0.44 ? "boreal_forest" : "temperate_forest";
-  if (feature === "scrub" || moisture < 0.34) return "dry_scrubland";
-  return "temperate_grassland";
+function resolveInternalFeature(terrain: InternalTerrain, moisture: number, temperature: number, noise: number): InternalFeature {
+  if (terrain === "ocean" || terrain === "sea" || terrain === "lake" || terrain === "desert") return "none";
+  if (terrain === "snow" || terrain === "mountains") return noise > 0.84 ? "snowcap" : "none";
+  if (terrain === "wetland") return noise > 0.42 ? "marsh" : "none";
+  if (temperature > 0.64 && moisture > 0.58 && noise > 0.54) return "jungle";
+  if (moisture > 0.52 && noise > 0.58) return noise > 0.86 ? "dense_forest" : "forest";
+  if (moisture < 0.4 && noise > 0.78) return "scrub";
+  return "none";
+}
+
+function resolveCivBiome(terrain: InternalTerrain, feature: InternalFeature, moisture: number, temperature: number): CivBiome {
+  if (terrain === "tundra" || terrain === "snow" || temperature < 0.22) return "tundra";
+  if (terrain === "desert") return "desert";
+  if (feature === "jungle" || (temperature > 0.66 && moisture > 0.58)) return "tropical";
+  if (terrain === "grassland" || moisture > 0.58) return "grassland";
+  return "plains";
+}
+
+function resolveMorphology(terrain: InternalTerrain, elevation: number): Morphology {
+  if (terrain === "mountains" || terrain === "snow" || elevation > 0.86) return "mountainous";
+  if (terrain === "hills" || terrain === "wetland" || elevation > 0.58) return "rough";
+  return "flat";
+}
+
+function internalTerrainFromTags(tile: HexTile): InternalTerrain {
+  const tags = new Set(tile.mapTags ?? []);
+  if (tags.has("water:ocean")) return "ocean";
+  if (tags.has("water:coastal")) return "sea";
+  if (tags.has("water:lake")) return "lake";
+  if (tags.has("biome:desert")) return "desert";
+  if (tags.has("biome:tundra")) return tags.has("feature:snow") ? "snow" : "tundra";
+  if (tags.has("morphology:mountainous")) return "mountains";
+  if (tags.has("morphology:rough")) return "hills";
+  if (tags.has("feature:wet")) return "wetland";
+  if (tags.has("biome:grassland")) return "grassland";
+  return "plains";
+}
+
+function internalFeatureFromTags(tags: readonly string[]): InternalFeature {
+  if (tags.includes("feature:snow")) return "snowcap";
+  if (tags.includes("feature:wet")) return "marsh";
+  if (tags.includes("feature:vegetated")) return "forest";
+  return "none";
+}
+
+function civBiomeFromTags(tags: readonly string[]): CivBiome {
+  if (tags.includes("biome:tundra")) return "tundra";
+  if (tags.includes("biome:grassland")) return "grassland";
+  if (tags.includes("biome:desert")) return "desert";
+  if (tags.includes("biome:tropical")) return "tropical";
+  return "plains";
+}
+
+function morphologyFromTags(tags: readonly string[]): Morphology {
+  if (tags.includes("morphology:mountainous")) return "mountainous";
+  if (tags.includes("morphology:rough")) return "rough";
+  return "flat";
 }
 
 function resolveTemperatureBand(temperature: number): HexTemperatureBand {
@@ -363,36 +530,15 @@ function resolveMoistureBand(moisture: number): HexMoistureBand {
   return "saturated";
 }
 
-function resolveFeature(terrain: HexTerrain, moisture: number, temperature: number, noise: number): HexFeature {
-  if (terrain === "ocean" || terrain === "sea" || terrain === "lake" || terrain === "desert") return "none";
-  if (terrain === "snow" || terrain === "mountains") return noise > 0.84 ? "snowcap" : "none";
-  if (terrain === "wetland") return noise > 0.42 ? "marsh" : "none";
-  if (temperature > 0.64 && moisture > 0.58 && noise > 0.54) return "jungle";
-  if (moisture > 0.52 && noise > 0.58) return noise > 0.86 ? "dense_forest" : "forest";
-  if (moisture < 0.4 && noise > 0.78) return "scrub";
-  return "none";
-}
-
-function resolveMovementCost(terrain: HexTerrain, feature: HexFeature, waterKind: HexWaterKind): number {
-  if (waterKind === "ocean") return 5;
-  if (waterKind === "sea" || waterKind === "lake") return 3;
-  const terrainCost: Record<HexTerrain, number> = {
-    ocean: 5,
-    sea: 3,
-    lake: 3,
-    coast: 2,
-    plains: 1,
-    grassland: 1,
-    forest: 2,
-    hills: 2,
-    mountains: 4,
-    desert: 2,
-    tundra: 2,
-    snow: 3,
-    wetland: 3,
-  };
-  const featureCost = feature === "dense_forest" || feature === "jungle" || feature === "marsh" ? 1 : 0;
-  return terrainCost[terrain] + featureCost;
+function promoteNearLandSeasToCoastalWater(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): void {
+  for (const tile of tiles) {
+    if (tile.waterKind !== "ocean") continue;
+    if (distanceToLand(tile, tileById, settings, 2) <= 2) {
+      tile.waterKind = "sea";
+      tile.internalTerrain = "sea";
+      tile.passable = true;
+    }
+  }
 }
 
 function buildCoastOverlays(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): HexCoastOverlayRecord[] {
@@ -410,16 +556,14 @@ function buildCoastOverlays(tiles: TileDraft[], tileById: Map<string, TileDraft>
   return overlays;
 }
 
-function applyHydrologyMetadata(tiles: TileDraft[], tileById: Map<string, TileDraft>, coastOverlays: HexCoastOverlayRecord[], riverEdges: HexEdgeRecord[], settings: HexMapSettings): void {
-  const coastalHexIds = new Set(coastOverlays.map((overlay) => overlay.hexId));
+function applyHydrologyMetadata(tiles: TileDraft[], tileById: Map<string, TileDraft>, riverEdges: HexEdgeRecord[], settings: HexMapSettings): void {
   const riverDrafts = collectRiverDrafts(riverEdges, tileById, settings);
   for (const tile of tiles) {
-    tile.isCoastal = coastalHexIds.has(tile.id);
+    tile.isCoastal = !tile.waterKind && distanceToWater(tile, tileById, settings, 1) === 1;
     tile.distanceToWater = resolveDistanceToWater(tile, tileById, settings);
     const riverDraft = riverDrafts.get(tile.id);
     tile.riverMask = riverDraft?.mask ?? 0;
     tile.riverWidth = roundMetric(riverDraft?.width ?? 0);
-    tile.biome = resolveBiome(tile.terrain, tile.feature, tile.moisture, tile.temperature, tile.waterKind, tile.isCoastal);
   }
 }
 
@@ -444,24 +588,47 @@ function collectRiverDrafts(riverEdges: HexEdgeRecord[], tileById: Map<string, T
 
 function resolveDistanceToWater(tile: TileDraft, tileById: Map<string, TileDraft>, settings: HexMapSettings): HexDistanceToWater {
   if (tile.waterKind) return 0;
+  return Math.min(3, distanceToWater(tile, tileById, settings, 3)) as HexDistanceToWater;
+}
+
+function distanceToWater(tile: TileDraft, tileById: Map<string, TileDraft>, settings: HexMapSettings, maxDistance: number): number {
   let frontier: TileDraft[] = [tile];
   const visited = new Set<string>([tile.id]);
-  for (let distance = 1; distance <= 3; distance += 1) {
+  for (let distance = 1; distance <= maxDistance; distance += 1) {
     const next: TileDraft[] = [];
     for (const current of frontier) {
       for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
         const neighborAxial = getNeighborAxial(current, direction as HexDirection, settings);
         const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
         if (!neighbor || visited.has(neighbor.id)) continue;
-        if (neighbor.waterKind) return distance as HexDistanceToWater;
+        if (neighbor.waterKind) return distance;
         visited.add(neighbor.id);
         next.push(neighbor);
       }
     }
     frontier = next;
-    if (frontier.length === 0) break;
   }
-  return 3;
+  return maxDistance + 1;
+}
+
+function distanceToLand(tile: TileDraft, tileById: Map<string, TileDraft>, settings: HexMapSettings, maxDistance: number): number {
+  let frontier: TileDraft[] = [tile];
+  const visited = new Set<string>([tile.id]);
+  for (let distance = 1; distance <= maxDistance; distance += 1) {
+    const next: TileDraft[] = [];
+    for (const current of frontier) {
+      for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
+        const neighborAxial = getNeighborAxial(current, direction as HexDirection, settings);
+        const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+        if (!neighbor || visited.has(neighbor.id)) continue;
+        if (!neighbor.waterKind) return distance;
+        visited.add(neighbor.id);
+        next.push(neighbor);
+      }
+    }
+    frontier = next;
+  }
+  return maxDistance + 1;
 }
 
 function buildRiverEdges(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): HexEdgeRecord[] {
@@ -521,71 +688,133 @@ function getDownhillNeighbor(tile: TileDraft, tileById: Map<string, TileDraft>, 
 }
 
 function assignRegions(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): void {
-  const queue: TileDraft[] = [];
-  for (const start of tiles) {
-    if (start.regionId) continue;
-    const groupKind = start.waterKind ? "water" : "land";
-    const targetSize = groupKind === "land" ? settings.generation.regions.targetLandRegionSize : settings.generation.regions.targetWaterRegionSize;
-    const regionId: HexRegionId = `region:hex_${start.q}_${start.r}`;
-    queue.length = 0;
-    queue.push(start);
-    start.regionId = regionId;
-    let cursor = 0;
-    while (cursor < queue.length && queue.length < targetSize) {
-      const current = queue[cursor]!;
-      cursor += 1;
-      const directions = [...HEX_DIRECTIONS.keys()] as HexDirection[];
-      directions.sort((left, right) => regionNeighborScore(current, left, tileById, settings) - regionNeighborScore(current, right, tileById, settings));
-      for (const direction of directions) {
-        const neighborAxial = getNeighborAxial(current, direction, settings);
-        const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
-        if (!neighbor || neighbor.regionId) continue;
-        if ((neighbor.waterKind ? "water" : "land") !== groupKind) continue;
-        if (neighbor.landmassId !== current.landmassId) continue;
-        if (neighbor.isHomeland !== current.isHomeland) continue;
-        neighbor.regionId = regionId;
-        queue.push(neighbor);
-        if (queue.length >= targetSize) break;
+  const landTiles = tiles.filter((tile) => !tile.waterKind);
+  assignRegionGroup(landTiles, tileById, settings, settings.generation.regions.targetLandRegionSize, false);
+  const oceanTiles = tiles.filter((tile) => tile.waterKind === "ocean");
+  assignRegionGroup(oceanTiles, tileById, settings, settings.generation.regions.targetWaterRegionSize, true);
+}
+
+function assignRegionGroup(groupTiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings, targetSize: number, waterGroup: boolean): void {
+  const anchors = groupTiles.filter((_, index) => index % Math.max(1, targetSize) === 0);
+  const queue = new FlatQueue<TileDraft>();
+  for (const anchor of anchors) {
+    const regionId: HexRegionId = `region:hex_${anchor.q}_${anchor.r}`;
+    anchor.regionId = regionId;
+    queue.push(anchor, 0);
+  }
+  while (queue.length > 0) {
+    const current = queue.pop();
+    if (!current?.regionId) continue;
+    for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
+      const neighborAxial = getNeighborAxial(current, direction as HexDirection, settings);
+      const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+      if (!neighbor || neighbor.regionId) continue;
+      if (waterGroup ? neighbor.waterKind !== "ocean" : neighbor.waterKind) continue;
+      if (!waterGroup && (neighbor.landmassId !== current.landmassId || neighbor.isHomeland !== current.isHomeland)) continue;
+      neighbor.regionId = current.regionId;
+      queue.push(neighbor, regionNeighborScore(current, neighbor, direction as HexDirection));
+    }
+  }
+  for (const tile of groupTiles) {
+    tile.regionId ??= `region:hex_${tile.q}_${tile.r}`;
+  }
+}
+
+function regionNeighborScore(tile: TileDraft, neighbor: TileDraft, direction: HexDirection): number {
+  let score = Math.abs(tile.elevation - neighbor.elevation) + Math.abs(tile.moisture - neighbor.moisture) * 0.5;
+  if (tile.morphology === "mountainous" || neighbor.morphology === "mountainous") score += 0.7;
+  if (tile.riverMask & (1 << direction)) score += 0.5;
+  if (tile.civBiome !== neighbor.civBiome) score += 0.25;
+  return score;
+}
+
+function assignCoastalWaterToLandRegions(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): void {
+  const queue = new FlatQueue<{ tile: TileDraft; regionId: HexRegionId; distance: number }>();
+  for (const land of tiles.filter((tile) => !tile.waterKind && tile.regionId)) {
+    for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
+      const neighborAxial = getNeighborAxial(land, direction as HexDirection, settings);
+      const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+      if (neighbor?.waterKind === "sea" || neighbor?.waterKind === "lake") {
+        queue.push({ tile: neighbor, regionId: land.regionId ?? "region:hex_0_0", distance: 1 }, 1);
+      }
+    }
+  }
+  const assigned = new Set<string>();
+  while (queue.length > 0) {
+    const item = queue.pop();
+    if (!item || assigned.has(item.tile.id) || item.distance > 2) continue;
+    item.tile.regionId = item.regionId;
+    assigned.add(item.tile.id);
+    for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
+      const neighborAxial = getNeighborAxial(item.tile, direction as HexDirection, settings);
+      const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+      if ((neighbor?.waterKind === "sea" || neighbor?.waterKind === "lake") && !assigned.has(neighbor.id)) {
+        queue.push({ tile: neighbor, regionId: item.regionId, distance: item.distance + 1 }, item.distance + 1 + neighbor.id.localeCompare(item.tile.id) * 0.000001);
       }
     }
   }
 }
 
-function regionNeighborScore(tile: TileDraft, direction: HexDirection, tileById: Map<string, TileDraft>, settings: HexMapSettings): number {
-  const neighborAxial = getNeighborAxial(tile, direction, settings);
-  const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
-  if (!neighbor) return 999;
-  let score = Math.abs(tile.elevation - neighbor.elevation) + Math.abs(tile.moisture - neighbor.moisture) * 0.5;
-  if (tile.terrain === "mountains" || neighbor.terrain === "mountains") score += 0.7;
-  if (tile.riverMask & (1 << direction)) score += 0.5;
-  return score;
-}
-
 function applyMapTags(tiles: TileDraft[]): void {
+  const maxR = Math.max(1, Math.max(...tiles.map((tile) => tile.r)));
   for (const tile of tiles) {
     const tags = new Set<HexMapTag>();
-    tags.add(tile.waterKind ? "fertility:barren" : fertilityTag(tile));
-    tags.add(rainfallTag(tile.moisture));
-    tags.add(slopeTag(tile.elevation, tile.terrain));
-    tags.add(latitudeTag(tile.r, tiles));
-    tags.add(elevationTag(tile.elevation));
-    tags.add(tile.waterKind ? "coast:inland" : tile.isCoastal ? "coast:coastal" : "coast:inland");
+    if (tile.waterKind === "ocean") tags.add("water:ocean");
+    if (tile.waterKind === "sea") tags.add("water:coastal");
+    if (tile.waterKind === "lake") tags.add("water:lake");
+    if (tile.waterKind === "lake" || tile.riverMask > 0) tags.add("water:fresh");
     if (!tile.waterKind) {
+      tags.add(`biome:${tile.civBiome}`);
+      tags.add(`morphology:${tile.morphology}`);
       tags.add(tile.isIsland ? "landmass:island" : "landmass:continent");
       if (!tile.isIsland) tags.add(tile.isHomeland ? "continent:homeland" : "continent:distant");
     }
-    if (tile.riverMask > 0) tags.add(tile.riverWidth >= 3 ? "river:navigable" : tile.riverWidth >= 2 ? "river:major" : "river:minor");
-    if (tile.riverMask > 0 && tile.elevation > 0.68) tags.add("basin:headwater");
-    if (tile.riverWidth >= 3) tags.add(tile.distanceToWater <= 1 ? "basin:delta" : "basin:mainstem");
+    if (tile.waterKind === "sea" || tile.waterKind === "lake") tags.add("feature:aquatic");
+    if (tile.internalFeature === "forest" || tile.internalFeature === "dense_forest" || tile.internalFeature === "jungle" || tile.internalFeature === "scrub") tags.add("feature:vegetated");
+    if (tile.internalFeature === "marsh" || tile.internalTerrain === "wetland") tags.add("feature:wet");
+    if (tile.internalFeature === "snowcap" || tile.internalTerrain === "snow") tags.add("feature:snow");
+    tags.add(tile.waterKind ? "fertility:barren" : fertilityTag(tile));
+    tags.add(rainfallTag(tile.moisture));
+    tags.add(slopeTag(tile.elevation, tile.morphology));
+    tags.add(latitudeTag(tile.r, maxR));
+    tags.add(elevationTag(tile.elevation));
+    tags.add(tile.isCoastal || tile.waterKind === "sea" ? "coast:coastal" : "coast:inland");
+    if (tile.riverMask > 0) {
+      tags.add(tile.riverWidth >= 3 ? "river:navigable" : tile.riverWidth >= 2 ? "river:major" : "river:minor");
+      tags.add(tile.riverWidth >= 3 ? "morphology:navigable_river" : "feature:minor_river");
+      if (tile.riverWidth >= 3 && tile.distanceToWater <= 1) tags.add("feature:floodplain");
+      if (tile.riverMask > 0 && tile.elevation > 0.68) tags.add("basin:headwater");
+      if (tile.riverWidth >= 3) tags.add(tile.distanceToWater <= 1 ? "basin:delta" : "basin:mainstem");
+    }
+    if (tile.morphology !== "flat" || tags.has("feature:vegetated") || tags.has("feature:wet") || tile.waterKind === "ocean") tags.add("movement:stop_on_enter");
     tile.mapTags = [...tags].sort();
   }
 }
 
+function refreshMovementMetadata(tiles: TileDraft[]): void {
+  for (const tile of tiles) {
+    tile.movementCost = resolveMovementCostFromTags(tile.mapTags, tile.waterKind);
+    tile.stopsMovementOnEnter = tile.mapTags.includes("movement:stop_on_enter");
+    tile.passable = tile.waterKind !== "ocean";
+  }
+}
+
+function resolveMovementCostFromTags(tags: readonly string[], waterKind: HexWaterKind): number {
+  if (waterKind === "ocean") return 5;
+  if (waterKind === "sea" || waterKind === "lake") return 3;
+  let cost = 1;
+  if (tags.includes("morphology:rough")) cost += 1;
+  if (tags.includes("morphology:mountainous")) cost += 3;
+  if (tags.includes("feature:vegetated") || tags.includes("feature:wet")) cost += 1;
+  if (tags.includes("feature:snow")) cost += 1;
+  return cost;
+}
+
 function fertilityTag(tile: TileDraft): HexMapTag {
-  if (tile.terrain === "desert" || tile.terrain === "snow" || tile.terrain === "mountains") return "fertility:poor";
-  if (tile.terrain === "wetland" || tile.biome === "tropical_rainforest") return "fertility:rich";
-  if (tile.terrain === "grassland" && tile.moisture > 0.55) return "fertility:fertile";
-  if (tile.terrain === "plains" || tile.terrain === "grassland") return "fertility:modest";
+  if (tile.civBiome === "desert" || tile.civBiome === "tundra" || tile.morphology === "mountainous") return "fertility:poor";
+  if (tile.internalTerrain === "wetland" || tile.civBiome === "tropical") return "fertility:rich";
+  if (tile.civBiome === "grassland" && tile.moisture > 0.55) return "fertility:fertile";
+  if (tile.civBiome === "plains" || tile.civBiome === "grassland") return "fertility:modest";
   return "fertility:poor";
 }
 
@@ -597,16 +826,15 @@ function rainfallTag(moisture: number): HexMapTag {
   return "rainfall:monsoon";
 }
 
-function slopeTag(elevation: number, terrain: HexTerrain): HexMapTag {
-  if (terrain === "mountains" || terrain === "snow") return "slope:rugged";
-  if (terrain === "hills" || elevation > 0.68) return "slope:steep";
+function slopeTag(elevation: number, morphology: Morphology): HexMapTag {
+  if (morphology === "mountainous") return "slope:rugged";
+  if (morphology === "rough" || elevation > 0.68) return "slope:steep";
   if (elevation > 0.54) return "slope:hilly";
   if (elevation > 0.4) return "slope:rolling";
   return "slope:flat";
 }
 
-function latitudeTag(r: number, tiles: TileDraft[]): HexMapTag {
-  const maxR = Math.max(1, Math.max(...tiles.map((tile) => tile.r)));
+function latitudeTag(r: number, maxR: number): HexMapTag {
   const latitude = Math.abs(r / maxR - 0.5) * 2;
   if (latitude > 0.86) return "latitude:polar";
   if (latitude > 0.68) return "latitude:subpolar";
@@ -633,6 +861,10 @@ function roundMetric(value: number): number {
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
 }
 
 function seededRandom(seed: string): () => number {

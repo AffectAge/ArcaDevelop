@@ -10,15 +10,17 @@ import type { UiLocale } from "../i18n/uiText";
 type Props = {
   open: boolean;
   showMapControls: boolean;
+  showZoomIndicator: boolean;
   edgeScrollEnabled: boolean;
   sortNotifications: boolean;
   onClose: () => void;
-  onSave: (settings: { showMapControls: boolean; edgeScrollEnabled: boolean; sortNotifications: boolean }) => void;
+  onSave: (settings: { showMapControls: boolean; showZoomIndicator: boolean; edgeScrollEnabled: boolean; sortNotifications: boolean }) => void;
 };
 
-export function ClientSettingsModal({ open, showMapControls, edgeScrollEnabled, sortNotifications, onClose, onSave }: Props) {
+export function ClientSettingsModal({ open, showMapControls, showZoomIndicator, edgeScrollEnabled, sortNotifications, onClose, onSave }: Props) {
   const { locale, setLocale, t } = useUiText();
   const [draftShowMapControls, setDraftShowMapControls] = useState(showMapControls);
+  const [draftShowZoomIndicator, setDraftShowZoomIndicator] = useState(showZoomIndicator);
   const [draftEdgeScrollEnabled, setDraftEdgeScrollEnabled] = useState(edgeScrollEnabled);
   const [draftSortNotifications, setDraftSortNotifications] = useState(sortNotifications);
   const [draftLocale, setDraftLocale] = useState<UiLocale>(locale);
@@ -27,11 +29,12 @@ export function ClientSettingsModal({ open, showMapControls, edgeScrollEnabled, 
   useEffect(() => {
     if (open) {
       setDraftShowMapControls(showMapControls);
+      setDraftShowZoomIndicator(showZoomIndicator);
       setDraftEdgeScrollEnabled(edgeScrollEnabled);
       setDraftSortNotifications(sortNotifications);
       setDraftLocale(locale);
     }
-  }, [edgeScrollEnabled, locale, open, showMapControls, sortNotifications]);
+  }, [edgeScrollEnabled, locale, open, showMapControls, showZoomIndicator, sortNotifications]);
 
   return (
     <AppModal open={open} onClose={onClose} modalKey="client-settings" zIndexClassName="z-[126]" paddingClassName="p-4" panelClassName="rounded-none">
@@ -85,6 +88,14 @@ export function ClientSettingsModal({ open, showMapControls, edgeScrollEnabled, 
                   />
 
                   <AppToggle
+                    checked={draftShowZoomIndicator}
+                    onChange={setDraftShowZoomIndicator}
+                    label={t("clientSettings.zoomIndicator")}
+                    description={t("clientSettings.zoomIndicatorDescription")}
+                    className="mt-3"
+                  />
+
+                  <AppToggle
                     checked={draftEdgeScrollEnabled}
                     onChange={setDraftEdgeScrollEnabled}
                     label={t("clientSettings.edgeScroll")}
@@ -116,7 +127,12 @@ export function ClientSettingsModal({ open, showMapControls, edgeScrollEnabled, 
                     type="button"
                     onClick={() => {
                       setLocale(draftLocale);
-                      onSave({ showMapControls: draftShowMapControls, edgeScrollEnabled: draftEdgeScrollEnabled, sortNotifications: draftSortNotifications });
+                      onSave({
+                        showMapControls: draftShowMapControls,
+                        showZoomIndicator: draftShowZoomIndicator,
+                        edgeScrollEnabled: draftEdgeScrollEnabled,
+                        sortNotifications: draftSortNotifications,
+                      });
                       onClose();
                     }}
                     variant="primary"

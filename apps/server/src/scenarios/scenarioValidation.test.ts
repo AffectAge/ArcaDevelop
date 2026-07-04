@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
 import { afterEach, describe, expect, it } from "vitest";
+import { HEX_MAP_TAGS } from "@arcanorum/shared";
 import { buildScenarioGeneratedIndexes, validateScenarioDirectory } from "./scenarioValidation";
 
 const tempDirs: string[] = [];
@@ -143,7 +144,7 @@ describe("scenarioValidation", () => {
       typeId: "feature:ancient_ruins",
       category: "site",
       global: { count: 3 },
-      allowedTerrains: ["plains", "hills"],
+      tagQuery: { any: ["biome:plains", "morphology:rough"] },
     });
 
     const result = await validateScenarioDirectory(scenarioDir);
@@ -161,8 +162,7 @@ describe("scenarioValidation", () => {
           frame: 5,
           priority: 10,
           conditions: {
-            terrains: ["mountains", "snow"],
-            biomes: ["alpine"],
+            tagQuery: { all: ["morphology:mountainous", "feature:snow"] },
             temperatureBands: ["cold", "frozen"],
             moistureBands: ["normal", "wet"],
             minElevation: 0.86,
@@ -1138,6 +1138,7 @@ async function createScenarioFixture(): Promise<string> {
     decision: { legacy: { name: "Legacy decision" } },
     event: { legacy: { name: "Legacy", title: "Legacy", description: "Legacy", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Economy" } },
+    ...makeMapTagLocalization("en"),
   });
   await writeJson(join(scenarioDir, "localisation/ru.json"), {
     scenario: { fixture: { name: "Fixture RU" } },
@@ -1148,6 +1149,7 @@ async function createScenarioFixture(): Promise<string> {
     decision: { legacy: { name: "Legacy decision RU" } },
     event: { legacy: { name: "Legacy RU", title: "Legacy RU", description: "Legacy RU", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Экономика" } },
+    ...makeMapTagLocalization("ru"),
   });
   await writeJson(join(scenarioDir, "map/hex-settings.json"), createHexSettings());
   await writeJson(join(scenarioDir, "history/regions/bohemia.json"), {
@@ -1184,16 +1186,37 @@ function createHexSettings(): Record<string, unknown> {
     width: 16,
     height: 12,
     hexSize: 24,
-    seaLevel: 0.42,
-    temperature: 0.5,
-    moisture: 0.5,
-    mountains: 0.78,
-    rivers: 0.45,
-    forests: 0.55,
-    targetLandRegionSize: 8,
-    targetWaterRegionSize: 12,
     chunkSize: 8,
-    wrapX: true,
+    wrapX: false,
+    generation: {
+      mapScript: "continents",
+      landmasses: {
+        majorContinents: { min: 2, max: 4 },
+        majorContinentSize: { min: 240, max: 420 },
+        landRatio: 0.48,
+        islandDensity: "medium",
+        islandSize: { min: 4, max: 32 },
+        edgeOceanMargin: { min: 4, max: 6 },
+      },
+      climate: {
+        preset: "earthlike",
+        temperature: "temperate",
+        rainfall: "balanced",
+      },
+      rivers: {
+        density: "rare",
+        navigable: true,
+        crossingPenalty: 1,
+      },
+      regions: {
+        targetLandRegionSize: 8,
+        targetWaterRegionSize: 12,
+        respectLandmassBoundaries: true,
+      },
+      tags: {
+        enabled: true,
+      },
+    },
   };
 }
 
@@ -1212,6 +1235,7 @@ async function addBuilding(scenarioDir: string, id: string): Promise<void> {
     decision: { legacy: { name: "Legacy decision" } },
     event: { legacy: { name: "Legacy", title: "Legacy", description: "Legacy", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Economy" } },
+    ...makeMapTagLocalization("en"),
   });
   await writeJson(join(scenarioDir, "localisation/ru.json"), {
     scenario: { fixture: { name: "Fixture RU" } },
@@ -1223,6 +1247,7 @@ async function addBuilding(scenarioDir: string, id: string): Promise<void> {
     decision: { legacy: { name: "Legacy decision RU" } },
     event: { legacy: { name: "Legacy RU", title: "Legacy RU", description: "Legacy RU", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Экономика" } },
+    ...makeMapTagLocalization("ru"),
   });
 }
 
@@ -1242,6 +1267,7 @@ async function addCulture(scenarioDir: string, id: string): Promise<void> {
     decision: { legacy: { name: "Legacy decision" } },
     event: { legacy: { name: "Legacy", title: "Legacy", description: "Legacy", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Economy" } },
+    ...makeMapTagLocalization("en"),
   });
   await writeJson(join(scenarioDir, "localisation/ru.json"), {
     scenario: { fixture: { name: "Fixture RU" } },
@@ -1253,7 +1279,12 @@ async function addCulture(scenarioDir: string, id: string): Promise<void> {
     decision: { legacy: { name: "Legacy decision RU" } },
     event: { legacy: { name: "Legacy RU", title: "Legacy RU", description: "Legacy RU", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Экономика" } },
+    ...makeMapTagLocalization("ru"),
   });
+}
+
+function makeMapTagLocalization(locale: "en" | "ru"): Record<string, string> {
+  return Object.fromEntries(HEX_MAP_TAGS.map((tag) => [`mapTag.${tag.replace(":", ".")}`, locale === "en" ? tag : `${tag} RU`]));
 }
 
 async function writeBuildingAtlas(path: string, width: number, height: number): Promise<void> {

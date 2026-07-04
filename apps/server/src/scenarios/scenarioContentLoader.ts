@@ -29,6 +29,8 @@ export const scenarioContentFileNames = [
   ["decisions", ["decisions.json"]],
   ["events", ["events.json"]],
   ["journalEntries", ["journal_entries.json", "journalEntries.json"]],
+  ["unitSkills", ["unit_skills.json", "unitSkills.json"]],
+  ["unitSkillTrees", ["unit_skill_trees.json", "unitSkillTrees.json"]],
   ["unitTypes", ["unit_types.json", "unitTypes.json"]],
   ["battalions", ["battalions.json"]],
   ["shipTypes", ["ship_types.json", "shipTypes.json"]],
@@ -42,6 +44,8 @@ export type ScenarioContentKey = (typeof scenarioContentFileNames)[number][0];
 
 const perEntityDirectoryAliases: Partial<Record<ScenarioContentKey, string[]>> = {
   journalEntries: ["journal_entries"],
+  unitSkills: ["unit_skills"],
+  unitSkillTrees: ["unit_skill_trees"],
   unitTypes: ["unit_types"],
 };
 

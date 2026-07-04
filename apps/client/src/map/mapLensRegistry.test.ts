@@ -15,9 +15,6 @@ const tile: HexTile = {
   r: 0,
   chunkId: "hex-chunk:0:0",
   regionId: "region:land:1",
-  terrain: "grassland",
-  biome: "temperate_grassland",
-  feature: "none",
   elevation: 0.5,
   moisture: 0.5,
   temperature: 0.5,
@@ -30,6 +27,7 @@ const tile: HexTile = {
   movementCost: 1,
   passable: true,
   waterKind: null,
+  mapTags: ["biome:grassland", "morphology:flat"],
 };
 
 const map: HexMapArtifact = {
@@ -60,9 +58,8 @@ const seaTile: HexTile = {
   id: "hex:0:1",
   r: 1,
   regionId: "region:water:1",
-  terrain: "sea",
-  biome: "coastal_water",
   waterKind: "sea",
+  mapTags: ["water:coastal", "feature:aquatic"],
 };
 
 const adjacentMap: HexMapArtifact = {

@@ -34,9 +34,7 @@ describe("feature atlas paths", () => {
 
   it("selects conditional frames from tile metadata before random fallback", () => {
     const alpineTile = makeTile({
-      terrain: "mountains",
-      biome: "alpine",
-      feature: "snowcap",
+      mapTags: ["morphology:mountainous", "feature:snow"],
       elevation: 0.9,
       temperature: 0.26,
       temperatureBand: "cold",
@@ -59,9 +57,6 @@ function makeTile(overrides: Partial<HexTile>): HexTile {
     r: 2,
     chunkId: "hex-chunk:0:0",
     regionId: "region:land:0",
-    terrain: "plains",
-    biome: "temperate_grassland",
-    feature: "none",
     waterKind: null,
     elevation: 0.5,
     moisture: 0.5,
@@ -72,6 +67,7 @@ function makeTile(overrides: Partial<HexTile>): HexTile {
     isCoastal: false,
     riverMask: 0,
     riverWidth: 0,
+    mapTags: ["biome:plains", "morphology:flat"],
     movementCost: 1,
     passable: true,
     ...overrides,

@@ -46,6 +46,8 @@ scenarios/<scenario_id>/
     races/*.json
     markets/*.json
     modifiers/*.json
+    unit_skills/*.json
+    unit_skill_trees/*.json
     map_feature_generators/*.json
     map_feature_visuals/*.json
     ai/
@@ -71,6 +73,20 @@ Scenario-owned uploaded assets live under `assets/uploads/` inside the scenario 
 `map/hex-settings.json` is the scenario-owned source for generated map geography. It uses the sectioned v2 format with `seed`, `width`, `height`, `hexSize`, `chunkSize`, `wrapX: false`, and `generation.landmasses`, `generation.climate`, `generation.rivers`, `generation.regions`, and `generation.tags`.
 
 Supported scripts are `continents`, `pangaea`, and `archipelago`. Applying a scenario regenerates `.generated/hex-map.json` and `.generated/regions.json` when the settings hash changes. Those generated files are runtime artifacts, not authored source.
+
+`generation.landmasses` can constrain landmass scale with hex-count ranges:
+
+```json
+{
+  "majorContinents": { "min": 2, "max": 4 },
+  "majorContinentSize": { "min": 4200, "max": 7200 },
+  "islandDensity": "medium",
+  "islandSize": { "min": 18, "max": 220 },
+  "edgeOceanMargin": { "min": 5, "max": 8 }
+}
+```
+
+`majorContinentSize` and `islandSize` are target seed sizes in generated hexes. Coast noise, ocean barriers, and neighboring landmasses can shift the final connected-component size, but the ranges keep islands and continents in distinct size bands. On very small maps, generator caps requested sizes to a bounded share of map area.
 
 Map generation exposes closed, localized `mapTags` on hexes. Scenario rules should use `tagQuery` for geography-sensitive deposits, features, building placement, adjacency, and visual rules. Do not author rules against private generator plate or landmass internals.
 
@@ -100,9 +116,8 @@ Example:
   "visualId": "feature:ancient_ruins",
   "nameKey": "mapFeature.ancientRuins.name",
   "visibility": "known",
-  "allowedTerrains": ["plains", "hills", "desert"],
   "tagQuery": {
-    "all": ["fertility:rich"],
+    "all": ["fertility:rich", { "any": ["biome:plains", "morphology:rough"] }],
     "not": ["slope:rugged"]
   },
   "global": { "min": 4, "max": 8 },
@@ -112,7 +127,9 @@ Example:
 
 Feature visuals use one common PNG atlas at `assets/features/feature-atlas.png`. The atlas is `384x448`: six horizontal `64x64` variants per row, with rows assigned to current feature visual ids (`feature:forest`, `feature:dense_forest`, `feature:jungle`, `feature:marsh`, `feature:scrub`, `feature:snowcap`, `feature:ancient_ruins`). Missing scenario feature atlases use the client-owned fallback atlas; declared `asset:*` entries still need valid local files.
 
-Conditional feature frame rules live in `common/map_feature_visuals/*.json`. They are optional; when absent, the client uses built-in defaults. Conditions are evaluated against map artifact fields such as `terrain`, `feature`, `biome`, `temperatureBand`, `moistureBand`, `distanceToWater`, `isCoastal`, `riverMask`, and `tagQuery`.
+Scenario utility visuals live under `assets/utils/`. The login screen and game-entry loading screen use `assets/utils/auth-background.png` by convention; this file is not referenced through game settings or authored URLs. If the active scenario does not provide it, the client uses `/game-assets/utils/fallback-auth-background.png`.
+
+Conditional feature frame rules live in `common/map_feature_visuals/*.json`. They are optional; when absent, the client uses built-in defaults. Conditions are evaluated against tag-only geography through `tagQuery`, plus technical visual metadata such as `temperatureBand`, `moistureBand`, `distanceToWater`, `isCoastal`, and `riverMask`.
 
 ```json
 {
@@ -123,8 +140,9 @@ Conditional feature frame rules live in `common/map_feature_visuals/*.json`. The
       "frame": 5,
       "priority": 10,
       "conditions": {
-        "terrains": ["mountains", "snow"],
-        "biomes": ["alpine"],
+        "tagQuery": {
+          "all": ["morphology:mountainous", "feature:snow"]
+        },
         "temperatureBands": ["cold", "frozen"],
         "minElevation": 0.86
       }
@@ -149,14 +167,14 @@ Resource deposits are authored as goods, not as a separate `resource:*` content 
     "maxAmount": 760,
     "visibility": "known",
     "generation": {
-      "allowedHexTypes": ["hills", "mountains"],
+      "tagQuery": { "any": ["morphology:rough", "morphology:mountainous"] },
       "global": { "min": 55, "max": 95 }
     }
   }
 }
 ```
 
-`depletionMode` is `finite`, `renewable`, or `infinite`. Renewable deposits may also set `regenPerTurn` and `minRenewableAmount`. Generation rules can filter by `allowedHexTypes`, `deniedHexTypes`, `allowedClimates`, `deniedClimates`, `allowedLandscapes`, `deniedLandscapes`, `allowedFeatures`, `deniedFeatures`, `elevationMin`, `elevationMax`, and `tagQuery`, then apply `global` and/or `perRegion` count rules.
+`depletionMode` is `finite`, `renewable`, or `infinite`. Renewable deposits may also set `regenPerTurn` and `minRenewableAmount`. Generation rules should filter geography with `tagQuery`, then may also use technical constraints such as `elevationMin`, `elevationMax`, and `global` and/or `perRegion` count rules. Old surface filters based on `terrain`, `biome`, or `feature` are not valid in generated map artifacts.
 
 `tagQuery` uses the same closed map-tag vocabulary as map feature generation. Use it for geography that should be readable and localized, for example:
 
@@ -193,6 +211,43 @@ Generated deposits are written to `.generated/resource-deposits.json`. Do not ma
 Buildings that extract goods use `extractions`. By default extraction requires a known matching deposit on the building `targetHexId`; set `requiresDeposit: false` only for authored exceptions.
 
 Resource deposit visuals use one shared scenario atlas at `assets/resources/resource-deposit-atlas.png`, with fallback `/game-assets/resources/fallback-resource-deposit-atlas.png`. Rows are assigned to supported good ids and columns are `4` visual tiers by stock ratio times `3` stable variants, each frame `64x64`.
+
+## Unit Skills
+
+Unit skills are scenario-authored content. Skill definitions live in `common/unit_skills/*.json`, and skill trees live in `common/unit_skill_trees/*.json`. Unit types may reference a tree with `unitSkillTreeId` and optional `startingSkillIds`.
+
+```json
+{
+  "id": "unit_skill:river_fighter",
+  "nameKey": "unitSkill.riverFighter.name",
+  "effects": [
+    {
+      "type": "modifier",
+      "target": "unit.attack",
+      "operation": "add",
+      "value": 2,
+      "when": { "targetTagQuery": "river:navigable" }
+    }
+  ]
+}
+```
+
+Skill trees own XP thresholds and choice groups:
+
+```json
+{
+  "id": "unit_skill_tree:warrior",
+  "levelThresholds": { "1": 0, "2": 10 },
+  "choiceGroups": [
+    {
+      "id": "group:level_2",
+      "unlockLevel": 2,
+      "choicesRequired": 1,
+      "options": ["unit_skill:river_fighter", "unit_skill:shield_wall"]
+    }
+  ]
+}
+```
 
 ## Defines
 

@@ -4157,9 +4157,9 @@ select,
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--arc-modal-backdrop);
+  background: transparent;
   padding: 16px;
-  backdrop-filter: blur(8px);
+  overflow: hidden;
 }
 
 .arc-entry-loading-modal {

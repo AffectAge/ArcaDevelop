@@ -13,6 +13,8 @@ import {
   normalizeContentEquipmentModules,
   normalizeContentRaces,
   normalizeContentShipTypes,
+  normalizeContentUnitSkills,
+  normalizeContentUnitSkillTrees,
   normalizeContentUnitTypes,
 } from "../content/contentNormalizers";
 import { normalizeTransportMode } from "../mechanics/marketTurnMechanics";
@@ -91,6 +93,8 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
       decisions: normalizeContentCultures((next as Partial<{ content?: { decisions?: unknown } }>).content?.decisions),
       events: normalizeContentCultures((next as Partial<{ content?: { events?: unknown } }>).content?.events),
       journalEntries: normalizeContentCultures((next as Partial<{ content?: { journalEntries?: unknown } }>).content?.journalEntries),
+      unitSkills: normalizeContentUnitSkills((next as Partial<{ content?: { unitSkills?: unknown } }>).content?.unitSkills),
+      unitSkillTrees: normalizeContentUnitSkillTrees((next as Partial<{ content?: { unitSkillTrees?: unknown } }>).content?.unitSkillTrees),
       unitTypes: normalizeContentUnitTypes((next as Partial<{ content?: { unitTypes?: unknown } }>).content?.unitTypes),
       battalions: normalizeContentBattalions((next as Partial<{ content?: { battalions?: unknown } }>).content?.battalions),
       shipTypes: normalizeContentShipTypes((next as Partial<{ content?: { shipTypes?: unknown } }>).content?.shipTypes),

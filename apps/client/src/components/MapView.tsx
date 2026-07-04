@@ -10,7 +10,6 @@ import {
   type ActiveModifierRow,
   type Country,
   type BuildingPlacementContent,
-  type HexFeature,
   type HexId,
   type Order,
   type HexMapArtifact,
@@ -146,6 +145,7 @@ type Props = {
   suggestedMapMode?: MapInteractionMode;
   suggestedMapLens?: MapLensId;
   showMapControls?: boolean;
+  showZoomIndicator?: boolean;
   showAntarctica?: boolean;
   buildingEntries?: Array<BuildingPlacementContent & { name?: string | null; logoUrl?: string | null }>;
   buildingOverviewToken?: string | null;
@@ -373,6 +373,7 @@ export function MapView({
   suggestedMapMode: _suggestedMapMode,
   suggestedMapLens,
   showMapControls = false,
+  showZoomIndicator = true,
   showAntarctica: _showAntarctica = false,
   buildingEntries = [],
   buildingOverviewToken = null,
@@ -396,7 +397,7 @@ export function MapView({
   onCancelCorridorPlacement,
   onConfirmCorridorPlacement,
 }: Props) {
-  const { t } = useUiText();
+  const { locale, t } = useUiText();
   const authCountryId = useGameStore((state) => state.auth?.countryId ?? null);
   const turnId = useGameStore((state) => state.turnId);
   const worldBase = useGameStore((state) => state.worldBase);
@@ -605,6 +606,10 @@ export function MapView({
     return { totalByRegion, maxPopulation };
   }, [worldBase?.regionPopulationByRegion]);
   const zoomBucket = useMemo(() => getMapZoomBucket(camera.scale), [camera.scale]);
+  const formattedZoom = useMemo(
+    () => `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(camera.scale)}x`,
+    [camera.scale, locale],
+  );
   const visibleRegionIds = useMemo(() => {
     const regions = new Set<string>();
     for (const hexId of viewportCulling.visibleTileIds) {
@@ -1156,15 +1161,14 @@ export function MapView({
         id: tile.id,
         name: worldBase?.hexNameById[tile.id] ?? t("hexMap.hexTitle", { id: tile.id.replace("hex:", "") }),
         regionId: tile.regionId,
-        terrain: t(`hexMap.terrain.${tile.terrain}`),
-        feature: hasCity ? `${t(`hexMap.feature.${tile.feature}`)} · ${t("hexMap.feature.city")}` : t(`hexMap.feature.${tile.feature}`),
+        surfaceSummary: resolveHexTagSummary(tile, t, hasCity),
         siteFeatures: siteFeatures.map((feature) => resolveMapFeatureLabel(feature, t)),
         resourceDeposit: deposit ? formatResourceDepositLabel(deposit) : null,
         water: tile.waterKind ? t(`hexMap.water.${tile.waterKind}`) : t("hexMap.water.none"),
         owner: ownerId ? t("hexMap.ownerCountry", { country: ownerId }) : t("hexMap.ownerNone"),
         controller: controllerId ? t("hexMap.ownerCountry", { country: controllerId }) : t("hexMap.ownerNone"),
         movementCost: tile.movementCost.toFixed(1),
-        mapTags: (tile.mapTags ?? []).map((tag) => t(resolveMapTagLabelKey(tag))),
+        tagGroups: resolveHexTagGroupRows(tile, t),
         divisionStack: t("hexMap.divisionStackValue", { current: stackCount, max: stackLimit }),
         divisionStackTooltip: {
           title: t("hexMap.divisionStack"),
@@ -2167,7 +2171,7 @@ export function MapView({
     const activeKeys = new Set<string>();
     let visibleSprites = 0;
     for (const tile of mapArtifact.tiles) {
-      if (tile.feature === "none") continue;
+      if (!resolveNaturalFeatureVisualId(tile)) continue;
       activeKeys.add(tile.id);
       if (!viewportCulling.visibleTileIds.has(tile.id) || !isTileInViewport(tile, camera, rect, size)) continue;
       const visible = updateNaturalFeatureSprite(getPooledSprite(layer, spritePool, tile.id), {
@@ -2881,9 +2885,20 @@ export function MapView({
           </div>
         </div>
       ) : null}
+      {showZoomIndicator ? (
+        <div
+          className={`arc-hud-panel pointer-events-none absolute left-4 z-30 rounded-xl p-1.5 ${showMapControls ? "bottom-24" : "bottom-4"}`}
+          aria-label={t("map.zoomIndicator.label")}
+        >
+          <div className="arc-hud-chip relative z-10 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs">
+            <span className="font-semibold text-[var(--arc-color-text-muted)]">{t("map.zoomIndicator.label")}</span>
+            <strong className="text-[var(--arc-color-text)]">{formattedZoom}</strong>
+          </div>
+        </div>
+      ) : null}
       {showMapControls ? (
         <MapControlsHud
-          view={{ zoom: camera.scale, lng: camera.x, lat: camera.y }}
+          view={{ lng: camera.x, lat: camera.y }}
           interactionLocked={interactionLocked}
           edgeScrollEnabled={edgeScrollEnabled}
           onZoomIn={() => setCameraTarget((current) => ({ ...current, scale: clampScale(current.scale * 1.16, cameraBounds) }))}
@@ -3118,11 +3133,10 @@ export function MapView({
             { label: t("map.lens.activeLens"), value: t(activeLensDescriptor.labelKey) },
             { label: t("hexMap.region"), value: hoverState.tile.regionId },
             {
-              label: t("hexMap.terrain"),
-              value: t(`hexMap.terrain.${hoverState.tile.terrain}`),
+              label: t("hexMap.surfaceSummary"),
+              value: resolveHexTagSummary(hoverState.tile, t, cityHexIds.has(hoverState.tile.id)),
             },
-            { label: t("hexMap.biome"), value: t(`hexMap.biome.${hoverState.tile.biome}`) },
-            { label: t("hexMap.feature"), value: cityHexIds.has(hoverState.tile.id) ? `${t(`hexMap.feature.${hoverState.tile.feature}`)} · ${t("hexMap.feature.city")}` : t(`hexMap.feature.${hoverState.tile.feature}`) },
+            ...resolveHexTagGroupRows(hoverState.tile, t).slice(0, 3),
             ...(mapFeaturesByHexId.get(hoverState.tile.id)?.length
               ? [
                   {
@@ -3638,7 +3652,7 @@ function updateNaturalFeatureSprite(sprite: Sprite, params: {
   size: number;
   onReady: () => void;
 }): boolean {
-  const visualId = resolveNaturalFeatureVisualId(params.tile.feature);
+  const visualId = resolveNaturalFeatureVisualId(params.tile);
   if (!visualId) {
     sprite.visible = false;
     return false;
@@ -3657,10 +3671,10 @@ function updateNaturalFeatureSprite(sprite: Sprite, params: {
   sprite.texture = texture;
   sprite.anchor.set(0.5, 0.72);
   sprite.position.set(center.x, center.y + params.size * 0.08);
-  const markerSize = getHexFillSpriteSize(params.size, resolveNaturalFeatureSpriteScale(params.tile.feature));
+  const markerSize = getHexFillSpriteSize(params.size, resolveNaturalFeatureSpriteScale(params.tile));
   sprite.width = markerSize;
   sprite.height = markerSize;
-  sprite.alpha = resolveNaturalFeatureAlpha(params.tile.feature);
+  sprite.alpha = resolveNaturalFeatureAlpha(params.tile);
   sprite.visible = true;
   return true;
 }
@@ -3763,21 +3777,86 @@ function updateMapUnitSprite(sprite: Sprite, params: {
   return true;
 }
 
-function resolveNaturalFeatureVisualId(feature: HexFeature): MapFeatureVisualId | null {
-  return feature === "none" ? null : NATURAL_FEATURE_VISUAL_IDS[feature];
+function resolveNaturalFeatureVisualId(tile: HexTile): MapFeatureVisualId | null {
+  const tag = tile.mapTags.find((item) => item === "feature:snow" || item === "feature:wet" || item === "feature:vegetated");
+  return tag ? NATURAL_FEATURE_VISUAL_IDS[tag] ?? null : null;
 }
 
-function resolveNaturalFeatureAlpha(feature: HexFeature): number {
-  if (feature === "snowcap") return 0.78;
-  if (feature === "scrub") return 0.74;
+function resolveNaturalFeatureAlpha(tile: HexTile): number {
+  if (tile.mapTags.includes("feature:snow")) return 0.78;
+  if (tile.mapTags.includes("rainfall:dry")) return 0.74;
   return 0.86;
 }
 
-function resolveNaturalFeatureSpriteScale(feature: HexFeature): number {
-  if (feature === "snowcap") return 1.5;
-  if (feature === "scrub") return 1.58;
-  if (feature === "forest" || feature === "dense_forest" || feature === "jungle" || feature === "marsh") return 1.82;
+function resolveNaturalFeatureSpriteScale(tile: HexTile): number {
+  if (tile.mapTags.includes("feature:snow")) return 1.5;
+  if (tile.mapTags.includes("rainfall:dry")) return 1.58;
+  if (tile.mapTags.includes("feature:vegetated") || tile.mapTags.includes("feature:wet")) return 1.82;
   return 1.7;
+}
+
+function resolveHexTagSummary(tile: HexTile, t: ReturnType<typeof useUiText>["t"], hasCity = false): string {
+  const tags = tile.mapTags ?? [];
+  const summaryTags = [
+    tags.find((tag) => tag.startsWith("water:")) ?? tags.find((tag) => tag.startsWith("biome:")),
+    tags.find((tag) => tag === "morphology:navigable_river") ?? tags.find((tag) => tag.startsWith("morphology:")),
+    tags.find((tag) => tag.startsWith("feature:") && tag !== "feature:aquatic") ??
+      tags.find((tag) => tag.startsWith("river:")) ??
+      tags.find((tag) => tag.startsWith("coast:")),
+    tags.find((tag) => tag.startsWith("fertility:")) ?? tags.find((tag) => tag.startsWith("rainfall:")),
+  ];
+  const labels = uniqueDefined(summaryTags).map((tag) => t(resolveMapTagLabelKey(tag)));
+  if (hasCity) labels.push(t("hexMap.feature.city"));
+  return labels.length > 0 ? labels.join(" · ") : t("mapTag.unknown");
+}
+
+function resolveHexTagGroupRows(tile: HexTile, t: ReturnType<typeof useUiText>["t"]): Array<{ label: string; value: string }> {
+  return [
+    {
+      label: t("hexMap.tagGroupClimate"),
+      tags: tagsByPrefixes(tile, ["biome:", "latitude:", "rainfall:"]),
+    },
+    {
+      label: t("hexMap.tagGroupRelief"),
+      tags: tagsByPrefixes(tile, ["morphology:", "slope:", "elevation:"]),
+    },
+    {
+      label: t("hexMap.tagGroupWater"),
+      tags: tagsByPrefixes(tile, ["water:", "river:", "coast:", "basin:"]),
+    },
+    {
+      label: t("hexMap.tagGroupFeatures"),
+      tags: tagsByPrefixes(tile, ["feature:"]),
+    },
+    {
+      label: t("hexMap.tagGroupValue"),
+      tags: tagsByPrefixes(tile, ["fertility:", "landmass:", "continent:"]),
+    },
+    {
+      label: t("hexMap.tagGroupMovement"),
+      tags: tagsByPrefixes(tile, ["movement:"]),
+    },
+  ]
+    .map((group) => ({
+      label: group.label,
+      value: group.tags.map((tag) => t(resolveMapTagLabelKey(tag))).join(", "),
+    }))
+    .filter((group) => group.value.length > 0);
+}
+
+function tagsByPrefixes(tile: HexTile, prefixes: string[]): string[] {
+  return (tile.mapTags ?? []).filter((tag) => prefixes.some((prefix) => tag.startsWith(prefix)));
+}
+
+function uniqueDefined(values: Array<string | undefined>): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    result.push(value);
+  }
+  return result;
 }
 
 function getHexFillSpriteSize(hexSize: number, multiplier: number): number {
@@ -3801,6 +3880,27 @@ function resolveMapTagLabelKey(tag: string): UiTextKey {
 
 const MAP_TAG_LABEL_KEYS = new Set<UiTextKey>([
   "mapTag.unknown",
+  "mapTag.biome.tundra",
+  "mapTag.biome.grassland",
+  "mapTag.biome.plains",
+  "mapTag.biome.desert",
+  "mapTag.biome.tropical",
+  "mapTag.morphology.flat",
+  "mapTag.morphology.rough",
+  "mapTag.morphology.mountainous",
+  "mapTag.morphology.navigable_river",
+  "mapTag.water.coastal",
+  "mapTag.water.ocean",
+  "mapTag.water.lake",
+  "mapTag.water.fresh",
+  "mapTag.feature.minor_river",
+  "mapTag.feature.floodplain",
+  "mapTag.feature.wet",
+  "mapTag.feature.vegetated",
+  "mapTag.feature.aquatic",
+  "mapTag.feature.snow",
+  "mapTag.feature.volcanic",
+  "mapTag.movement.stop_on_enter",
   "mapTag.fertility.barren",
   "mapTag.fertility.poor",
   "mapTag.fertility.modest",

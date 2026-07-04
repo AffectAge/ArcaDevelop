@@ -32,16 +32,22 @@ describe("generateHexMap", () => {
     expect(neighbor).toBeNull();
   });
 
-  it("does not mix land and water tiles inside generated regions", () => {
+  it("keeps generated land away from rectangular map edges", () => {
     const map = generateHexMap(TEST_SETTINGS);
-    const regionKinds = new Map<string, "land" | "water">();
+    const edgeTiles = map.tiles.filter((tile) => tile.q === 0 || tile.r === 0 || tile.q === map.settings.width - 1 || tile.r === map.settings.height - 1);
 
-    for (const tile of map.tiles) {
-      const kind = tile.waterKind ? "water" : "land";
-      const existing = regionKinds.get(tile.regionId);
-      expect(existing ?? kind).toBe(kind);
-      regionKinds.set(tile.regionId, kind);
-    }
+    expect(edgeTiles.length).toBeGreaterThan(0);
+    expect(edgeTiles.every((tile) => tile.waterKind != null)).toBe(true);
+  });
+
+  it("assigns coastal water to land regions while keeping ocean regions separate", () => {
+    const map = generateHexMap(TEST_SETTINGS);
+    const landRegionIds = new Set(map.tiles.filter((tile) => tile.waterKind == null).map((tile) => tile.regionId));
+    const oceanTiles = map.tiles.filter((tile) => tile.mapTags.includes("water:ocean"));
+
+    expect(oceanTiles.length).toBeGreaterThan(0);
+    expect(oceanTiles.every((tile) => !landRegionIds.has(tile.regionId))).toBe(true);
+    expect(map.tiles.some((tile) => tile.mapTags.includes("water:coastal") && landRegionIds.has(tile.regionId))).toBe(true);
   });
 
   it("uses valid river edges", () => {
@@ -59,12 +65,12 @@ describe("generateHexMap", () => {
     }
   });
 
-  it("adds visual map metadata for biome, bands, coasts, water distance, and rivers", () => {
+  it("adds visual map metadata for tags, bands, coasts, water distance, and rivers", () => {
     const map = generateHexMap(TEST_SETTINGS);
     const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
 
     for (const tile of map.tiles) {
-      expect(tile.biome).toMatch(/^(deep_ocean|coastal_water|freshwater|temperate_grassland|temperate_forest|boreal_forest|tropical_rainforest|dry_scrubland|arid_desert|alpine|tundra|swamp|coastal_wetland)$/);
+      expect(tile.mapTags.length).toBeGreaterThan(0);
       expect(tile.temperatureBand).toMatch(/^(frozen|cold|cool|temperate|warm|hot)$/);
       expect(tile.moistureBand).toMatch(/^(arid|dry|normal|wet|saturated)$/);
       expect(tile.distanceToWater).toBeGreaterThanOrEqual(0);
@@ -92,6 +98,84 @@ describe("generateHexMap", () => {
     expect(map.tiles.some((tile) => tile.mapTags?.includes("continent:homeland"))).toBe(true);
   });
 
+  it("keeps island-tagged landmasses smaller than continent landmasses", () => {
+    const map = generateHexMap({
+      ...TEST_SETTINGS,
+      seed: "island-size-regression",
+      width: 72,
+      height: 44,
+      generation: {
+        ...TEST_SETTINGS.generation,
+        landmasses: {
+          ...TEST_SETTINGS.generation.landmasses,
+          islandDensity: "high",
+          majorContinentSize: { min: 420, max: 760 },
+          islandSize: { min: 8, max: 55 },
+        },
+      },
+    });
+    const components = collectLandComponents(map);
+    const continentComponents = components.filter((component) => component.kind === "continent");
+    const islandComponents = components.filter((component) => component.kind === "island");
+    const largestContinent = Math.max(...continentComponents.map((component) => component.size));
+    const largestIsland = Math.max(0, ...islandComponents.map((component) => component.size));
+
+    expect(continentComponents.length).toBeGreaterThan(0);
+    expect(islandComponents.length).toBeGreaterThan(0);
+    expect(largestIsland).toBeLessThan(largestContinent * 0.45);
+  });
+
+  it("keeps continent seeds separated by ocean barriers on continents maps", () => {
+    const map = generateHexMap({
+      ...TEST_SETTINGS,
+      seed: "three-continents",
+      width: 96,
+      height: 56,
+      generation: {
+        ...TEST_SETTINGS.generation,
+        landmasses: {
+          ...TEST_SETTINGS.generation.landmasses,
+          majorContinents: { min: 3, max: 3 },
+          majorContinentSize: { min: 420, max: 760 },
+          islandSize: { min: 8, max: 55 },
+        },
+      },
+    });
+    const components = collectLandComponents(map);
+    const largeContinents = components.filter((component) => component.kind === "continent" && component.size >= 350);
+    const largestIsland = Math.max(0, ...components.filter((component) => component.kind === "island").map((component) => component.size));
+    const smallestLargeContinent = Math.min(...largeContinents.map((component) => component.size));
+
+    expect(largeContinents.length).toBeGreaterThanOrEqual(2);
+    expect(largestIsland).toBeLessThan(smallestLargeContinent * 0.2);
+  });
+
+  it("honors scenario-authored continent and island size ranges", () => {
+    const map = generateHexMap({
+      ...TEST_SETTINGS,
+      seed: "authored-landmass-size-ranges",
+      width: 96,
+      height: 56,
+      generation: {
+        ...TEST_SETTINGS.generation,
+        landmasses: {
+          ...TEST_SETTINGS.generation.landmasses,
+          majorContinents: { min: 3, max: 3 },
+          majorContinentSize: { min: 420, max: 760 },
+          islandDensity: "high",
+          islandSize: { min: 4, max: 35 },
+        },
+      },
+    });
+    const components = collectLandComponents(map);
+    const continents = components.filter((component) => component.kind === "continent" && component.size >= 120);
+    const islands = components.filter((component) => component.kind === "island");
+
+    expect(continents.length).toBeGreaterThanOrEqual(2);
+    expect(Math.max(...continents.map((component) => component.size))).toBeLessThan(1_200);
+    expect(Math.max(0, ...islands.map((component) => component.size))).toBeLessThan(90);
+  });
+
   it("smoke-generates all supported map scripts", () => {
     for (const mapScript of ["continents", "pangaea", "archipelago"] as const) {
       const map = generateHexMap({
@@ -110,3 +194,36 @@ describe("generateHexMap", () => {
     }
   });
 });
+
+function collectLandComponents(map: ReturnType<typeof generateHexMap>): Array<{ kind: "continent" | "island"; size: number }> {
+  const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
+  const visited = new Set<string>();
+  const components: Array<{ kind: "continent" | "island"; size: number }> = [];
+
+  for (const start of map.tiles) {
+    if (start.waterKind || visited.has(start.id)) continue;
+    const queue = [start.id];
+    visited.add(start.id);
+    let size = 0;
+    let islandTags = 0;
+    let continentTags = 0;
+    while (queue.length > 0) {
+      const tile = tileById.get(queue.pop()!);
+      if (!tile) continue;
+      size += 1;
+      if (tile.mapTags.includes("landmass:island")) islandTags += 1;
+      if (tile.mapTags.includes("landmass:continent")) continentTags += 1;
+      for (let direction = 0; direction < 6; direction += 1) {
+        const neighborAxial = getNeighborAxial(tile, direction as HexDirection, map.settings);
+        const neighborId = neighborAxial ? makeHexId(neighborAxial.q, neighborAxial.r) : null;
+        const neighbor = neighborId ? tileById.get(neighborId) : null;
+        if (!neighbor || neighbor.waterKind || visited.has(neighbor.id)) continue;
+        visited.add(neighbor.id);
+        queue.push(neighbor.id);
+      }
+    }
+    components.push({ kind: islandTags > continentTags ? "island" : "continent", size });
+  }
+
+  return components;
+}

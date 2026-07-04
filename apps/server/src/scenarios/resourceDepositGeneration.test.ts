@@ -18,7 +18,7 @@ describe("resourceDepositGeneration", () => {
             maxAmount: 20,
             visibility: "known",
             generation: {
-              allowedHexTypes: ["hills"],
+              tagQuery: "morphology:rough",
               global: { count: 1 },
             },
           },
@@ -38,7 +38,7 @@ describe("resourceDepositGeneration", () => {
             maxAmount: 20,
             visibility: "known",
             generation: {
-              allowedHexTypes: ["hills"],
+              tagQuery: "morphology:rough",
               global: { count: 1 },
             },
           },
@@ -107,16 +107,13 @@ function makeArtifact(): HexMapArtifact {
   };
 }
 
-function makeTile(id: HexTile["id"], regionId: HexTile["regionId"], terrain: HexTile["terrain"], mapTags: HexTile["mapTags"] = []): HexTile {
+function makeTile(id: HexTile["id"], regionId: HexTile["regionId"], terrain: string, mapTags: HexTile["mapTags"] = []): HexTile {
   return {
     id,
     regionId,
     q: Number(id.split(":")[1]),
     r: Number(id.split(":")[2]),
     chunkId: "hex-chunk:0:0",
-    terrain,
-    biome: "temperate_grassland",
-    feature: "none",
     waterKind: null,
     elevation: terrain === "hills" ? 0.6 : 0.2,
     moisture: 0.5,
@@ -127,7 +124,7 @@ function makeTile(id: HexTile["id"], regionId: HexTile["regionId"], terrain: Hex
     isCoastal: false,
     riverMask: 0,
     riverWidth: 0,
-    mapTags,
+    mapTags: mapTags.length > 0 ? mapTags : terrain === "hills" ? ["morphology:rough"] : ["biome:plains"],
     movementCost: 1,
     passable: true,
   };

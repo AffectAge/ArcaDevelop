@@ -1,4 +1,5 @@
 import type { HexId } from "./hex-map";
+import type { UnitSkillId } from "./units";
 
 export type OrderType =
   | "BUILD"
@@ -7,6 +8,7 @@ export type OrderType =
   | "COLONIZE"
   | "UNIT_MOVE"
   | "UNIT_ATTACK"
+  | "UNIT_PROMOTE"
   | "UNIT_SKIP_TURN"
   | "UNIT_SLEEP"
   | "UNIT_WAKE"
@@ -59,6 +61,13 @@ export type UnitAttackOrder = OrderBase & {
   targetUnitId?: string;
 };
 
+export type UnitPromoteOrder = OrderBase & {
+  type: "UNIT_PROMOTE";
+  unitId: string;
+  choiceGroupId: string;
+  skillIds: UnitSkillId[];
+};
+
 export type UnitSkipTurnOrder = OrderBase & {
   type: "UNIT_SKIP_TURN";
   unitId: string;
@@ -100,6 +109,7 @@ export type Order =
   | ColonizeOrder
   | UnitMoveOrder
   | UnitAttackOrder
+  | UnitPromoteOrder
   | UnitSkipTurnOrder
   | UnitSleepOrder
   | UnitWakeOrder

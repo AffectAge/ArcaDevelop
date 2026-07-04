@@ -55,9 +55,6 @@ export type HexTile = HexAxial & {
   id: HexId;
   chunkId: HexChunkId;
   regionId: RegionId;
-  terrain: HexTerrain;
-  biome: HexBiome;
-  feature: HexFeature;
   waterKind: HexWaterKind;
   elevation: number;
   moisture: number;
@@ -68,8 +65,9 @@ export type HexTile = HexAxial & {
   isCoastal: boolean;
   riverMask: number;
   riverWidth: number;
-  mapTags?: HexMapTag[];
+  mapTags: HexMapTag[];
   movementCost: number;
+  stopsMovementOnEnter?: boolean;
   passable: boolean;
 };
 
@@ -99,8 +97,11 @@ export type HexMapGenerationSettings = {
   mapScript: HexMapScript;
   landmasses: {
     majorContinents: HexMapRange;
+    majorContinentSize?: number | HexMapRange;
     landRatio: number;
     islandDensity: "low" | "medium" | "high";
+    islandSize?: number | HexMapRange;
+    edgeOceanMargin?: number | HexMapRange;
   };
   climate: {
     preset: "earthlike" | "scenario";
@@ -173,10 +174,6 @@ export type MapFeatureGeneratorDefinition = {
   tooltipKey?: string;
   assetId?: `asset:${string}`;
   visibility?: MapFeatureVisibility;
-  allowedTerrains?: HexTerrain[];
-  deniedTerrains?: HexTerrain[];
-  allowedFeatures?: HexFeature[];
-  deniedFeatures?: HexFeature[];
   allowedWaterKinds?: Array<Exclude<HexWaterKind, null>>;
   deniedWaterKinds?: Array<Exclude<HexWaterKind, null>>;
   tagQuery?: MapTagQuery;
@@ -189,9 +186,6 @@ export type MapFeatureGeneratorDefinition = {
 };
 
 export type MapFeatureVisualCondition = {
-  terrains?: HexTerrain[];
-  features?: HexFeature[];
-  biomes?: HexBiome[];
   waterKinds?: Array<Exclude<HexWaterKind, null>>;
   temperatureBands?: HexTemperatureBand[];
   moistureBands?: HexMoistureBand[];
@@ -219,6 +213,23 @@ export type MapFeatureVisualRuleDefinition = {
   id: `map_feature_visual:${string}`;
   visualId: MapFeatureVisualId;
   frames: MapFeatureVisualFrameRule[];
+};
+
+export type MapVisualLayer = "base" | "morphology" | "feature" | "water" | "river" | "coast";
+
+export type MapVisualProfileRule = {
+  id: `map_visual_rule:${string}`;
+  layer: MapVisualLayer;
+  priority?: number;
+  when: MapTagQuery;
+  materialId?: `map_material:${string}`;
+  overlayId?: `map_overlay:${string}`;
+  atlasFrame?: number;
+};
+
+export type MapVisualProfileDefinition = {
+  id: `map_visual_profile:${string}`;
+  rules: MapVisualProfileRule[];
 };
 
 export type MapTagQuery = string | {

@@ -39,6 +39,7 @@ export type ScenarioValidationIssueCode =
   | "INVALID_JOURNAL_DEFINITION"
   | "INVALID_BUILDING_ATLAS"
   | "INVALID_UNIT_ATLAS"
+  | "INVALID_UNIT_SKILL"
   | "INVALID_CITY_ATLAS"
   | "INVALID_FEATURE_ATLAS"
   | "INVALID_MAP_FEATURE_GENERATOR"
@@ -108,6 +109,8 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "asset", path: "common/assets" },
   { kind: "good", path: "common/goods" },
   { kind: "building", path: "common/buildings" },
+  { kind: "unitSkill", path: "common/unit_skills" },
+  { kind: "unitSkillTree", path: "common/unit_skill_trees" },
   { kind: "unitType", path: "common/unit_types" },
   { kind: "technology", path: "common/technologies" },
   { kind: "law", path: "common/laws" },
@@ -366,12 +369,14 @@ export async function validateScenarioDirectory(
   validateJournalDefinitions(root, loadedEntities, localizationKeys, issues);
   validateMapFeatureGenerators(root, loadedEntities, issues);
   validateMapFeatureVisuals(root, loadedEntities, issues);
+  validateUnitSkills(root, loadedEntities, issues);
   validateEntityLocalization(root, loadedEntities, localizationKeys, issues);
   await validateBuildingAtlases(root, loadedEntities, issues);
   await validateUnitAtlases(root, loadedEntities, issues);
   await validateCityAtlases(root, loadedEntities, issues);
   await validateFeatureAtlases(root, loadedEntities, issues);
   await validateGeneratedManifest(root, summary, issues, options.requireGeneratedIndexes === true);
+  await validateGeneratedMapArtifacts(root, issues);
 
   return {
     ok: issues.length === 0,
@@ -605,6 +610,31 @@ function sanitizeBuildingAtlasId(buildingId: string): string {
   return buildingId.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
+async function validateGeneratedMapArtifacts(root: string, issues: ScenarioValidationIssue[]): Promise<void> {
+  for (const fileName of ["hexes.json", "hex-map.json"]) {
+    const artifactPath = join(root, GENERATED_DIR, fileName);
+    if (!existsSync(artifactPath)) continue;
+    const loaded = await readJsonIfExists(artifactPath, root, issues);
+    if (!loaded) continue;
+    const tiles = Array.isArray(loaded.data)
+      ? loaded.data
+      : isObject(loaded.data) && Array.isArray(loaded.data.tiles)
+        ? loaded.data.tiles
+        : [];
+    for (const [index, tile] of tiles.entries()) {
+      if (!isObject(tile)) continue;
+      const legacyField = ["terrain", "biome", "feature"].find((field) => field in tile);
+      if (!legacyField) continue;
+      issues.push({
+        code: "INVALID_GENERATED_INDEX",
+        path: normalizePath(relative(root, artifactPath)),
+        message: `Generated map tile ${index} uses removed ${legacyField}; generated artifacts must be tag-only.`,
+      });
+      break;
+    }
+  }
+}
+
 async function validateUnitAtlases(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
   for (const unitType of entities.filter((entity) => entity.kind === "unitType")) {
     const relativePath = `assets/units/${sanitizeUnitAtlasId(unitType.id)}.png`;
@@ -767,9 +797,6 @@ function validateMapFeatureVisualConditions(value: unknown, label: string, path:
     return;
   }
   const allowedKeys = new Set([
-    "terrains",
-    "features",
-    "biomes",
     "waterKinds",
     "temperatureBands",
     "moistureBands",
@@ -793,9 +820,6 @@ function validateMapFeatureVisualConditions(value: unknown, label: string, path:
       message: `${label}.${key} is not a supported condition.`,
     });
   }
-  validateStringArrayCondition(value.terrains, label, "terrains", VALID_HEX_TERRAINS, path, issues);
-  validateStringArrayCondition(value.features, label, "features", VALID_HEX_FEATURES, path, issues);
-  validateStringArrayCondition(value.biomes, label, "biomes", VALID_HEX_BIOMES, path, issues);
   validateStringArrayCondition(value.waterKinds, label, "waterKinds", VALID_HEX_WATER_KINDS, path, issues);
   validateStringArrayCondition(value.temperatureBands, label, "temperatureBands", VALID_HEX_TEMPERATURE_BANDS, path, issues);
   validateStringArrayCondition(value.moistureBands, label, "moistureBands", VALID_HEX_MOISTURE_BANDS, path, issues);
@@ -810,6 +834,87 @@ function validateMapFeatureVisualConditions(value: unknown, label: string, path:
   validateOptionalBooleanCondition(value.isCoastal, label, "isCoastal", path, issues);
   validateOptionalBooleanCondition(value.hasRiver, label, "hasRiver", path, issues);
   validateMapTagQuery(value.tagQuery, label, path, "INVALID_MAP_FEATURE_VISUAL", issues);
+}
+
+function validateUnitSkills(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
+  const skillIds = new Set(entities.filter((entity) => entity.kind === "unitSkill").map((entity) => entity.id));
+  const treeIds = new Set(entities.filter((entity) => entity.kind === "unitSkillTree").map((entity) => entity.id));
+  const validTargets = new Set(["unit.attack", "unit.defense", "unit.ranged_attack", "unit.movement", "unit.vision", "unit.max_hp"]);
+
+  for (const skill of entities.filter((entity) => entity.kind === "unitSkill")) {
+    const path = normalizePath(relative(root, skill.path));
+    if (!skill.id.startsWith("unit_skill:")) {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.id must start with unit_skill:.` });
+    }
+    if (typeof skill.data.nameKey !== "string" || skill.data.nameKey.trim() === "") {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.nameKey is required.` });
+    }
+    const effects = skill.data.effects;
+    if (effects != null && !Array.isArray(effects)) {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.effects must be an array.` });
+      continue;
+    }
+    for (const [index, effect] of (Array.isArray(effects) ? effects : []).entries()) {
+      if (!isObject(effect)) {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.effects[${index}] must be an object.` });
+        continue;
+      }
+      if (effect.type !== "modifier" || typeof effect.target !== "string" || !validTargets.has(effect.target)) {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.effects[${index}] must be a unit-safe modifier effect.` });
+      }
+      if (effect.operation !== "add" && effect.operation !== "multiply") {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.effects[${index}].operation must be add or multiply.` });
+      }
+      if (typeof effect.value !== "number" || !Number.isFinite(effect.value)) {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.effects[${index}].value must be a finite number.` });
+      }
+      if (isObject(effect.when)) {
+        validateMapTagQuery(effect.when.selfTagQuery, `${skill.id}.effects[${index}].when.selfTagQuery`, path, "INVALID_UNIT_SKILL", issues);
+        validateMapTagQuery(effect.when.targetTagQuery, `${skill.id}.effects[${index}].when.targetTagQuery`, path, "INVALID_UNIT_SKILL", issues);
+      }
+    }
+  }
+
+  for (const tree of entities.filter((entity) => entity.kind === "unitSkillTree")) {
+    const path = normalizePath(relative(root, tree.path));
+    if (!tree.id.startsWith("unit_skill_tree:")) {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${tree.id}.id must start with unit_skill_tree:.` });
+    }
+    if (!isObject(tree.data.levelThresholds)) {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${tree.id}.levelThresholds must be an object.` });
+    }
+    const groups = tree.data.choiceGroups;
+    if (!Array.isArray(groups)) {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${tree.id}.choiceGroups must be an array.` });
+      continue;
+    }
+    for (const [index, group] of groups.entries()) {
+      if (!isObject(group)) {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${tree.id}.choiceGroups[${index}] must be an object.` });
+        continue;
+      }
+      const options = Array.isArray(group.options) ? group.options : [];
+      if (typeof group.id !== "string" || group.id.trim() === "" || !Number.isInteger(group.unlockLevel) || !Number.isInteger(group.choicesRequired)) {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${tree.id}.choiceGroups[${index}] has an invalid shape.` });
+      }
+      for (const skillId of [...options, ...(Array.isArray(group.prerequisiteSkillIds) ? group.prerequisiteSkillIds : [])]) {
+        if (typeof skillId === "string" && skillIds.has(skillId)) continue;
+        issues.push({ code: "BROKEN_REFERENCE", path, message: `${tree.id}.choiceGroups[${index}] references missing skill ${String(skillId)}.` });
+      }
+    }
+  }
+
+  for (const unitType of entities.filter((entity) => entity.kind === "unitType")) {
+    const path = normalizePath(relative(root, unitType.path));
+    const treeId = unitType.data.unitSkillTreeId;
+    if (treeId != null && (typeof treeId !== "string" || !treeIds.has(treeId))) {
+      issues.push({ code: "BROKEN_REFERENCE", path, message: `${unitType.id}.unitSkillTreeId references missing tree ${String(treeId)}.` });
+    }
+    for (const skillId of Array.isArray(unitType.data.startingSkillIds) ? unitType.data.startingSkillIds : []) {
+      if (typeof skillId === "string" && skillIds.has(skillId)) continue;
+      issues.push({ code: "BROKEN_REFERENCE", path, message: `${unitType.id}.startingSkillIds references missing skill ${String(skillId)}.` });
+    }
+  }
 }
 
 function validateOptionalNumberField(
@@ -1267,10 +1372,13 @@ function validateGenerationSection(generation: JsonObject, issues: ScenarioValid
     return;
   }
   validateIntegerRange(landmasses.majorContinents, "generation.landmasses.majorContinents", issues, 1, 12);
+  validateNumberOrIntegerRange(landmasses.majorContinentSize, "generation.landmasses.majorContinentSize", issues, 1, 2_000_000);
+  validateNumberOrIntegerRange(landmasses.edgeOceanMargin, "generation.landmasses.edgeOceanMargin", issues, 0, 64);
   validateUnitNumberField(landmasses.landRatio, "generation.landmasses.landRatio", issues);
   if (landmasses.islandDensity !== "low" && landmasses.islandDensity !== "medium" && landmasses.islandDensity !== "high") {
     issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.landmasses.islandDensity must be low, medium, or high." });
   }
+  validateNumberOrIntegerRange(landmasses.islandSize, "generation.landmasses.islandSize", issues, 1, 200_000);
   if (climate.preset !== "earthlike" && climate.preset !== "scenario") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.climate.preset must be earthlike or scenario." });
   if (climate.temperature !== "cold" && climate.temperature !== "temperate" && climate.temperature !== "hot") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.climate.temperature must be cold, temperate, or hot." });
   if (climate.rainfall !== "dry" && climate.rainfall !== "balanced" && climate.rainfall !== "wet") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.climate.rainfall must be dry, balanced, or wet." });
@@ -1286,6 +1394,15 @@ function validateIntegerRange(value: unknown, label: string, issues: ScenarioVal
   if (!isObject(value) || !Number.isInteger(value.min) || !Number.isInteger(value.max) || Number(value.min) < minAllowed || Number(value.max) > maxAllowed || Number(value.max) < Number(value.min)) {
     issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: `${label} must define integer min/max within ${minAllowed}-${maxAllowed}.` });
   }
+}
+
+function validateNumberOrIntegerRange(value: unknown, label: string, issues: ScenarioValidationIssue[], minAllowed: number, maxAllowed: number): void {
+  if (value == null) return;
+  if (Number.isInteger(value) && Number(value) >= minAllowed && Number(value) <= maxAllowed) return;
+  if (isObject(value) && Number.isInteger(value.min) && Number.isInteger(value.max) && Number(value.min) >= minAllowed && Number(value.max) <= maxAllowed && Number(value.max) >= Number(value.min)) {
+    return;
+  }
+  issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: `${label} must be an integer or integer min/max within ${minAllowed}-${maxAllowed}.` });
 }
 
 function validateUnitNumberField(value: unknown, label: string, issues: ScenarioValidationIssue[]): void {

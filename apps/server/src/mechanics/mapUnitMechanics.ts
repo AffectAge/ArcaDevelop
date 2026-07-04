@@ -5,6 +5,7 @@ import {
   type MapUnit,
   type Order,
   type UnitDomain,
+  type UnitSkillTreeDefinition,
   type UnitTrainingQueueItem,
   type UnitTypeDefinition,
   type WorldBase,
@@ -34,6 +35,11 @@ export type MapUnitAttackOrderResolution = {
 };
 
 export type MapUnitWaitOrderResolution = {
+  accepted: boolean;
+  rejectedOrder: MapUnitRejectedOrder | null;
+};
+
+export type MapUnitPromoteOrderResolution = {
   accepted: boolean;
   rejectedOrder: MapUnitRejectedOrder | null;
 };
@@ -198,6 +204,49 @@ export function resolveMapUnitWaitOrder(params: {
   return { accepted: true, rejectedOrder: null };
 }
 
+export function resolveMapUnitPromoteOrder(params: {
+  order: Order;
+  playerId: string;
+  worldBase: MapUnitWorldState;
+  unitTypes: readonly UnitTypeDefinition[];
+  unitSkillTrees: readonly UnitSkillTreeDefinition[];
+}): MapUnitPromoteOrderResolution {
+  const reject = (reason: string): MapUnitPromoteOrderResolution => ({
+    accepted: false,
+    rejectedOrder: { playerId: params.playerId, reason, tempOrderId: params.order.id },
+  });
+  if (params.order.type !== "UNIT_PROMOTE") return reject("INVALID_ORDER_TYPE");
+  const order = params.order;
+  params.worldBase.unitsById ??= {};
+  const unit = params.worldBase.unitsById[order.unitId];
+  if (!unit || unit.countryId !== order.countryId) return reject("MAP_UNIT_NOT_FOUND");
+  if (unit.status === "captured" || unit.status === "destroyed") return reject("MAP_UNIT_UNAVAILABLE");
+  const unitType = getUnitType(params.unitTypes, unit.unitTypeId);
+  if (!unitType?.unitSkillTreeId) return reject("UNIT_PROMOTE_TREE_NOT_FOUND");
+  const tree = params.unitSkillTrees.find((candidate) => candidate.id === unitType.unitSkillTreeId);
+  if (!tree) return reject("UNIT_PROMOTE_TREE_NOT_FOUND");
+  const group = tree.choiceGroups.find((candidate) => candidate.id === order.choiceGroupId);
+  if (!group) return reject("UNIT_PROMOTE_GROUP_NOT_FOUND");
+  const currentSkills = new Set(unit.skillIds ?? []);
+  const completedGroups = new Set(unit.completedChoiceGroupIds ?? []);
+  if (completedGroups.has(group.id)) return reject("UNIT_PROMOTE_GROUP_COMPLETED");
+  if (resolveUnitLevel(unit.experience, tree.levelThresholds) < group.unlockLevel) return reject("UNIT_PROMOTE_LEVEL_LOCKED");
+  if (order.skillIds.length !== group.choicesRequired) return reject("UNIT_PROMOTE_CHOICE_COUNT_INVALID");
+  const uniqueSkillIds = new Set(order.skillIds);
+  if (uniqueSkillIds.size !== order.skillIds.length) return reject("UNIT_PROMOTE_DUPLICATE_SKILL");
+  for (const skillId of order.skillIds) {
+    if (!group.options.includes(skillId)) return reject("UNIT_PROMOTE_SKILL_NOT_IN_GROUP");
+    if (currentSkills.has(skillId)) return reject("UNIT_PROMOTE_DUPLICATE_SKILL");
+  }
+  for (const prerequisiteSkillId of group.prerequisiteSkillIds ?? []) {
+    if (!currentSkills.has(prerequisiteSkillId)) return reject("UNIT_PROMOTE_PREREQUISITE_MISSING");
+  }
+  unit.skillIds = [...currentSkills, ...order.skillIds];
+  unit.completedChoiceGroupIds = [...completedGroups, group.id];
+  params.worldBase.unitsById[unit.id] = unit;
+  return { accepted: true, rejectedOrder: null };
+}
+
 export function advanceStoredMapUnitRoutesTurn(params: {
   worldBase: MapUnitWorldState;
   unitTypes: readonly UnitTypeDefinition[];
@@ -251,6 +300,8 @@ export function advanceUnitTrainingQueueTurn(params: {
         hp: unitType.stats.maxHp,
         movementPoints: unitType.stats.movement,
         experience: 0,
+        skillIds: [...(unitType.startingSkillIds ?? [])],
+        completedChoiceGroupIds: [],
         status: unitType.domain === "air" ? "based" : "idle",
         path: [],
         targetHexId: null,
@@ -410,6 +461,16 @@ function hexDistance(left: HexId, right: HexId): number {
   const rightCoords = parseHexId(right);
   if (!leftCoords || !rightCoords) return Number.POSITIVE_INFINITY;
   return axialDistance(leftCoords, rightCoords);
+}
+
+function resolveUnitLevel(experience: number, levelThresholds: Record<string, number>): number {
+  let level = 1;
+  for (const [rawLevel, rawThreshold] of Object.entries(levelThresholds)) {
+    const nextLevel = Number(rawLevel);
+    if (!Number.isInteger(nextLevel) || nextLevel < 1 || !Number.isFinite(rawThreshold)) continue;
+    if (experience >= rawThreshold) level = Math.max(level, nextLevel);
+  }
+  return level;
 }
 
 function parseHexId(hexId: HexId): { q: number; r: number } | null {

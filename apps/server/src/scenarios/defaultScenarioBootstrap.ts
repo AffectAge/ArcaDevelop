@@ -25,6 +25,27 @@ const DEFAULT_COUNTRY_ID = "country:default";
 const DEFAULT_REGION_AREA_KM2 = 1000;
 
 const DEFAULT_MAP_TAG_LOCALIZATION_EN: Record<string, string> = {
+  "mapTag.biome.tundra": "Tundra",
+  "mapTag.biome.grassland": "Grassland",
+  "mapTag.biome.plains": "Plains",
+  "mapTag.biome.desert": "Desert",
+  "mapTag.biome.tropical": "Tropical",
+  "mapTag.morphology.flat": "Flat",
+  "mapTag.morphology.rough": "Rough",
+  "mapTag.morphology.mountainous": "Mountainous",
+  "mapTag.morphology.navigable_river": "Navigable river tile",
+  "mapTag.water.coastal": "Coastal water",
+  "mapTag.water.ocean": "Ocean",
+  "mapTag.water.lake": "Lake",
+  "mapTag.water.fresh": "Fresh water",
+  "mapTag.feature.minor_river": "Minor river",
+  "mapTag.feature.floodplain": "Floodplain",
+  "mapTag.feature.wet": "Wet",
+  "mapTag.feature.vegetated": "Vegetated",
+  "mapTag.feature.aquatic": "Aquatic",
+  "mapTag.feature.snow": "Snow",
+  "mapTag.feature.volcanic": "Volcanic",
+  "mapTag.movement.stop_on_enter": "Stops movement on enter",
   "mapTag.fertility.barren": "Barren",
   "mapTag.fertility.poor": "Poor fertility",
   "mapTag.fertility.modest": "Modest fertility",
@@ -65,6 +86,27 @@ const DEFAULT_MAP_TAG_LOCALIZATION_EN: Record<string, string> = {
 };
 
 const DEFAULT_MAP_TAG_LOCALIZATION_RU: Record<string, string> = {
+  "mapTag.biome.tundra": "Тундра",
+  "mapTag.biome.grassland": "Луга",
+  "mapTag.biome.plains": "Степи",
+  "mapTag.biome.desert": "Пустыня",
+  "mapTag.biome.tropical": "Тропики",
+  "mapTag.morphology.flat": "Ровная местность",
+  "mapTag.morphology.rough": "Сложный рельеф",
+  "mapTag.morphology.mountainous": "Горная местность",
+  "mapTag.morphology.navigable_river": "Судоходная речная клетка",
+  "mapTag.water.coastal": "Прибрежные воды",
+  "mapTag.water.ocean": "Океан",
+  "mapTag.water.lake": "Озеро",
+  "mapTag.water.fresh": "Пресная вода",
+  "mapTag.feature.minor_river": "Малая река",
+  "mapTag.feature.floodplain": "Пойма",
+  "mapTag.feature.wet": "Сырая местность",
+  "mapTag.feature.vegetated": "Растительность",
+  "mapTag.feature.aquatic": "Водная особенность",
+  "mapTag.feature.snow": "Снег",
+  "mapTag.feature.volcanic": "Вулканическая местность",
+  "mapTag.movement.stop_on_enter": "Останавливает движение при входе",
   "mapTag.fertility.barren": "Бесплодная земля",
   "mapTag.fertility.poor": "Низкая урожайность",
   "mapTag.fertility.modest": "Средняя урожайность",
@@ -358,16 +400,16 @@ function buildHexMapIndex(artifact: HexMapArtifact, regionColorById: Map<string,
       hexColor: colorForTerrain(tile),
       regionColor: regionColorById.get(tile.regionId) ?? "#64748b",
       areaKm2: DEFAULT_REGION_AREA_KM2,
-      hexType: tile.terrain,
+      hexType: resolveIndexHexType(tile),
       centerX: Math.round(center.x * 100) / 100,
       centerY: Math.round(center.y * 100) / 100,
       sourceCenterX: Math.round(center.x * 100) / 100,
       sourceCenterY: Math.round(center.y * 100) / 100,
       neighbors: buildNeighborIds(tile, artifact.settings),
-      climate: tile.biome,
+      climate: resolveIndexClimate(tile),
       pollution: 0,
       radiation: 0,
-      landscape: tile.feature === "none" ? tile.terrain : tile.feature,
+      landscape: resolveIndexLandscape(tile),
       continent: tile.waterKind ? "continent:water" : "continent:land",
       strategicRegion: tile.regionId,
       fertileLandKm2: tile.waterKind ? 0 : Math.round(DEFAULT_REGION_AREA_KM2 * fertilityForTile(tile)),
@@ -430,21 +472,20 @@ function hashJson(value: unknown): string {
 
 function fertilityForTile(tile: HexTile): number {
   if (tile.waterKind) return 0;
-  if (tile.terrain === "grassland" || tile.terrain === "plains") return 0.75;
-  if (tile.terrain === "wetland" || tile.feature === "forest" || tile.feature === "dense_forest") return 0.55;
-  if (tile.terrain === "hills") return 0.35;
-  if (tile.terrain === "desert" || tile.terrain === "tundra") return 0.2;
-  if (tile.terrain === "mountains" || tile.terrain === "snow") return 0.08;
+  if (hasTag(tile, "fertility:rich")) return 0.9;
+  if (hasTag(tile, "fertility:fertile")) return 0.75;
+  if (hasTag(tile, "fertility:modest")) return 0.55;
+  if (hasTag(tile, "fertility:poor")) return 0.2;
   return 0.4;
 }
 
 function colorForRegion(tile: HexTile): string {
   if (tile.waterKind) return "#2f7f98";
-  if (tile.biome === "arid_desert" || tile.biome === "dry_scrubland") return "#b8a45f";
-  if (tile.biome === "tropical_rainforest") return "#3d8b52";
-  if (tile.biome === "tundra" || tile.biome === "alpine") return "#8a9aa3";
-  if (tile.biome === "swamp" || tile.biome === "coastal_wetland") return "#5f8e68";
-  if (tile.biome === "boreal_forest" || tile.biome === "temperate_forest") return "#4f7f45";
+  if (hasTag(tile, "biome:desert")) return "#b8a45f";
+  if (hasTag(tile, "biome:tropical")) return "#3d8b52";
+  if (hasTag(tile, "biome:tundra") || hasTag(tile, "morphology:mountainous")) return "#8a9aa3";
+  if (hasTag(tile, "feature:wet")) return "#5f8e68";
+  if (hasTag(tile, "feature:vegetated")) return "#4f7f45";
   return "#5f8f52";
 }
 
@@ -464,7 +505,31 @@ function colorForTerrain(tile: HexTile): string {
     snow: "#d5d9d3",
     wetland: "#5f8e68",
   };
-  return colors[tile.terrain] ?? "#64748b";
+  return colors[resolveIndexHexType(tile)] ?? "#64748b";
+}
+
+function resolveIndexHexType(tile: HexTile): string {
+  if (hasTag(tile, "water:ocean")) return "ocean";
+  if (hasTag(tile, "water:coastal")) return "sea";
+  if (hasTag(tile, "water:lake")) return "lake";
+  if (hasTag(tile, "morphology:mountainous")) return "mountains";
+  if (hasTag(tile, "morphology:rough")) return "hills";
+  if (hasTag(tile, "biome:desert")) return "desert";
+  if (hasTag(tile, "biome:tundra")) return hasTag(tile, "feature:snow") ? "snow" : "tundra";
+  if (hasTag(tile, "biome:grassland")) return "grassland";
+  return "plains";
+}
+
+function resolveIndexClimate(tile: HexTile): string {
+  return tile.mapTags.find((tag) => tag.startsWith("biome:")) ?? tile.mapTags.find((tag) => tag.startsWith("water:")) ?? "biome:plains";
+}
+
+function resolveIndexLandscape(tile: HexTile): string {
+  return tile.mapTags.find((tag) => tag.startsWith("feature:")) ?? tile.mapTags.find((tag) => tag.startsWith("morphology:")) ?? resolveIndexHexType(tile);
+}
+
+function hasTag(tile: HexTile, tag: string): boolean {
+  return tile.mapTags.includes(tag as HexTile["mapTags"][number]);
 }
 
 function sanitizeRegionId(regionId: string): string {

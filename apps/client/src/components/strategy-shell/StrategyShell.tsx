@@ -80,15 +80,14 @@ export type StrategyShellSelectedHexDetails = {
   id: HexId;
   name: string;
   regionId: string;
-  terrain: string;
-  feature: string;
+  surfaceSummary: string;
   siteFeatures: string[];
   resourceDeposit: string | null;
   water: string;
   owner: string;
   controller: string;
   movementCost: string;
-  mapTags: string[];
+  tagGroups: Array<{ label: string; value: string }>;
   divisionStack: string;
   divisionStackTooltip?: TooltipStructuredContent;
 };
@@ -993,15 +992,16 @@ function HexDetailsPanel({ details }: { details: StrategyShellSelectedHexDetails
       </div>
       <div className="mt-3 grid gap-2">
         <HexDetailsRow label={t("hexMap.region")} value={details.regionId} />
-        <HexDetailsRow label={t("hexMap.terrain")} value={details.terrain} />
-        <HexDetailsRow label={t("hexMap.feature")} value={details.feature} />
+        <HexDetailsRow label={t("hexMap.surfaceSummary")} value={details.surfaceSummary} />
         <HexDetailsRow label={t("hexMap.siteFeature")} value={details.siteFeatures.length > 0 ? details.siteFeatures.join(", ") : t("map.common.none")} />
         <HexDetailsRow label={t("hexMap.resourceDeposit")} value={details.resourceDeposit ?? t("map.common.none")} />
         <HexDetailsRow label={t("hexMap.water")} value={details.water} />
         <HexDetailsRow label={t("hexMap.owner")} value={details.owner} />
         <HexDetailsRow label={t("shell.hex.controller")} value={details.controller} />
         <HexDetailsRow label={t("hexMap.movementCost")} value={details.movementCost} />
-        <HexDetailsRow label={t("hexMap.mapTags")} value={details.mapTags.length > 0 ? details.mapTags.join(", ") : t("map.common.none")} />
+        {details.tagGroups.map((group) => (
+          <HexDetailsRow key={group.label} label={group.label} value={group.value} />
+        ))}
         <HexDetailsRow label={t("hexMap.divisionStack")} value={details.divisionStack} tooltip={details.divisionStackTooltip} />
       </div>
     </section>

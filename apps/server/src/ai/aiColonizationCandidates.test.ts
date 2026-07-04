@@ -248,5 +248,8 @@ function makeHex(id: string, regionId: string | null, neighbors: string[]) {
     hexType: "plains",
     climate: "temperate_grassland",
     landscape: "plains",
+    mapTags: ["biome:plains", "morphology:flat", "landmass:continent"],
+    waterKind: null,
+    passable: true,
   };
 }

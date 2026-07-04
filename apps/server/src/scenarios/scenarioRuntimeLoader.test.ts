@@ -44,14 +44,13 @@ describe("scenario runtime loader", () => {
     expect(worldBase.regionPopulationTreasuryByRegion["region:bohemia"]).toBe(15);
     expect(worldBase.regionColonizationByRegion["region:bohemia"]).toEqual({ cost: 50, disabled: true });
     expect(worldBase.regionResourceDepositsByRegion["region:bohemia"]?.[0]?.goodId).toBe("good:grain");
-    expect(Object.values(worldBase.civilianUnitsById)).toEqual([
+    expect(Object.values(worldBase.unitsById ?? {})).toEqual([
       expect.objectContaining({
         countryId: "country:bohemia",
-        type: "colonizer",
+        unitTypeId: "unit:colonizer",
         hexId: "hex:0:0",
         status: "idle",
         movementPoints: 3,
-        maxMovementPoints: 3,
       }),
     ]);
   });
@@ -119,7 +118,7 @@ async function createScenarioFixture(): Promise<string> {
     id: "country:bohemia",
     resources: { gold: 10 },
   });
-  await writeJson(join(scenarioDir, ".generated/hex-map-artifact.json"), {
+  await writeJson(join(scenarioDir, ".generated/hex-map.json"), {
     version: 1,
     settings: {
       seed: "fixture",
@@ -139,7 +138,7 @@ async function createScenarioFixture(): Promise<string> {
     },
     tiles: [
       makeHexTile({ id: "hex:0:0", regionId: "region:bohemia" }),
-      makeHexTile({ id: "hex:1:0", regionId: "region:water", waterKind: "sea", terrain: "sea", passable: true }),
+      makeHexTile({ id: "hex:1:0", regionId: "region:water", waterKind: "sea", passable: true }),
     ],
     riverEdges: [],
     coastOverlays: [],
@@ -185,6 +184,8 @@ function makeWorldBase(currentTurnId: number): WorldBase {
     fleetsById: {},
     airWingsById: {},
     militaryFormationQueueByCountry: {},
+    unitsById: {},
+    unitTrainingQueueByCountry: {},
     civilianUnitsById: {},
     civilianUnitQueueByCountry: {},
     settlementProjectsById: {},
@@ -208,7 +209,6 @@ function makeHexTile(overrides: Partial<{
   id: string;
   regionId: string;
   waterKind: "ocean" | "sea" | "lake" | null;
-  terrain: string;
   passable: boolean;
 }> = {}): Record<string, unknown> {
   return {
@@ -217,9 +217,6 @@ function makeHexTile(overrides: Partial<{
     r: 0,
     chunkId: "hex-chunk:0:0",
     regionId: overrides.regionId ?? "region:bohemia",
-    terrain: overrides.terrain ?? "plains",
-    biome: "temperate_grassland",
-    feature: "none",
     waterKind: overrides.waterKind ?? null,
     elevation: 0.5,
     moisture: 0.5,
@@ -230,6 +227,7 @@ function makeHexTile(overrides: Partial<{
     isCoastal: false,
     riverMask: 0,
     riverWidth: 0,
+    mapTags: overrides.waterKind ? ["water:coastal"] : ["biome:plains", "morphology:flat", "landmass:continent"],
     movementCost: 1,
     passable: overrides.passable ?? true,
   };

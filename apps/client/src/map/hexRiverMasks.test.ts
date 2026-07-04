@@ -69,9 +69,6 @@ function makeTile(q: number, r: number): HexTile {
     r,
     chunkId: "hex-chunk:0:0",
     regionId: "region:land:test",
-    terrain: "plains",
-    biome: "temperate_grassland",
-    feature: "none",
     waterKind: null,
     elevation: 0.7,
     moisture: 0.5,
@@ -82,6 +79,7 @@ function makeTile(q: number, r: number): HexTile {
     isCoastal: false,
     riverMask: 0,
     riverWidth: 0,
+    mapTags: ["biome:plains", "morphology:flat"],
     movementCost: 1,
     passable: true,
   };

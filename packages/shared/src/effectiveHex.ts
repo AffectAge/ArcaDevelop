@@ -5,13 +5,11 @@ export type EffectiveHexTag = "city";
 
 export type EffectiveHexState = {
   hexId: HexId;
-  baseTerrain: HexTile["terrain"];
   tags: EffectiveHexTag[];
   hasCity: boolean;
 };
 
 export type EffectiveHexTile = HexTile & {
-  baseTerrain: HexTile["terrain"];
   tags: EffectiveHexTag[];
   hasCity: boolean;
 };
@@ -33,7 +31,6 @@ export function resolveEffectiveHexState(hex: HexTile, cityHexIds: ReadonlySet<H
   const hasCity = cityHexIds.has(hex.id);
   return {
     hexId: hex.id,
-    baseTerrain: hex.terrain,
     tags: hasCity ? ["city"] : [],
     hasCity,
   };
@@ -43,7 +40,6 @@ export function resolveEffectiveHexTile(hex: HexTile, cityHexIds: ReadonlySet<He
   const state = resolveEffectiveHexState(hex, cityHexIds);
   return {
     ...hex,
-    baseTerrain: state.baseTerrain,
     tags: state.tags,
     hasCity: state.hasCity,
   };

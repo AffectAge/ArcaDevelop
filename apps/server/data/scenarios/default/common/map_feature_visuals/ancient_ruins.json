@@ -13,7 +13,7 @@
     {
       "frame": 2,
       "conditions": {
-        "terrains": ["hills", "mountains"]
+        "tagQuery": { "any": ["morphology:rough", "morphology:mountainous"] }
       }
     },
     {

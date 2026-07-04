@@ -170,14 +170,8 @@ function addGeneratedDeposit(
 function matchesDepositRules(tile: HexTile, definition: GoodDepositDefinition): boolean {
   const rules = definition.generation;
   if (!rules) return false;
-  if (rules.allowedHexTypes?.length && !rules.allowedHexTypes.includes(tile.terrain)) return false;
-  if (rules.deniedHexTypes?.includes(tile.terrain)) return false;
-  if (rules.allowedLandscapes?.length && !rules.allowedLandscapes.includes(tile.terrain)) return false;
-  if (rules.deniedLandscapes?.includes(tile.terrain)) return false;
   if (rules.allowedClimates?.length && !rules.allowedClimates.includes(tile.temperatureBand)) return false;
   if (rules.deniedClimates?.includes(tile.temperatureBand)) return false;
-  if (rules.allowedFeatures?.length && !rules.allowedFeatures.includes(tile.feature)) return false;
-  if (rules.deniedFeatures?.includes(tile.feature)) return false;
   if (typeof rules.elevationMin === "number" && tile.elevation < rules.elevationMin) return false;
   if (typeof rules.elevationMax === "number" && tile.elevation > rules.elevationMax) return false;
   if (!matchesMapTagQuery(tile.mapTags, rules.tagQuery)) return false;

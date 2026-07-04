@@ -57,6 +57,8 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
       decisions: [],
       events: [],
       journalEntries: [],
+      unitSkills: [],
+      unitSkillTrees: [],
       unitTypes: DEFAULT_UNIT_TYPES,
       battalions: ensureDefaultBattalions([]),
       shipTypes: ensureDefaultMilitaryContent([], DEFAULT_SHIP_TYPES),

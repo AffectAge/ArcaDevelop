@@ -6,7 +6,7 @@
       "frame": 0,
       "weight": 2,
       "conditions": {
-        "biomes": ["alpine"]
+        "tagQuery": { "all": ["elevation:mountain"] }
       }
     },
     {
@@ -27,14 +27,14 @@
       "frame": 3,
       "priority": 5,
       "conditions": {
-        "terrains": ["snow"]
+        "tagQuery": "feature:snow"
       }
     },
     {
       "frame": 4,
       "priority": 10,
       "conditions": {
-        "terrains": ["mountains", "snow"],
+        "tagQuery": { "all": ["morphology:mountainous", "feature:snow"] },
         "minElevation": 0.78,
         "maxTemperature": 0.24
       }
@@ -43,7 +43,7 @@
       "frame": 5,
       "priority": 10,
       "conditions": {
-        "terrains": ["mountains", "snow"],
+        "tagQuery": { "all": ["morphology:mountainous", "feature:snow"] },
         "minElevation": 0.86
       }
     }

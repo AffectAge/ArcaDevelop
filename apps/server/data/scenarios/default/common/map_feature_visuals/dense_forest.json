@@ -6,14 +6,14 @@
       "frame": 0,
       "weight": 2,
       "conditions": {
-        "biomes": ["temperate_forest"]
+        "tagQuery": { "all": ["biome:grassland", "feature:vegetated"] }
       }
     },
     {
       "frame": 1,
       "weight": 2,
       "conditions": {
-        "biomes": ["boreal_forest"]
+        "tagQuery": { "all": ["biome:tundra", "feature:vegetated"] }
       }
     },
     {

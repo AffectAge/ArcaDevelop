@@ -1,4 +1,4 @@
-import type { HexBiome, HexTerrain, HexTile } from "@arcanorum/shared";
+import type { HexTile } from "@arcanorum/shared";
 
 export type TerrainMaterialId = "deep_water" | "coastal_water" | "fresh_water" | "grass" | "plains" | "forest" | "hills" | "rock" | "sand" | "tundra" | "snow" | "wetland" | "city";
 export type HexTerrainShaderQuality = "low" | "medium" | "high";
@@ -101,18 +101,19 @@ export const generatedHexMaterialPack: HexMaterialPackManifest = {
   },
 };
 
-export function resolveTerrainMaterialId(tile: Pick<HexTile, "terrain" | "biome" | "waterKind">): TerrainMaterialId {
-  if (tile.waterKind === "ocean" || tile.terrain === "ocean") return "deep_water";
-  if (tile.waterKind === "sea" || tile.terrain === "sea" || tile.terrain === "coast") return "coastal_water";
-  if (tile.waterKind === "lake" || tile.terrain === "lake") return "fresh_water";
-  if (tile.terrain === "desert" || tile.biome === "arid_desert" || tile.biome === "dry_scrubland") return "sand";
-  if (tile.terrain === "snow") return "snow";
-  if (tile.terrain === "tundra" || tile.biome === "tundra") return "tundra";
-  if (tile.terrain === "mountains") return "rock";
-  if (tile.terrain === "hills" || tile.biome === "alpine") return "hills";
-  if (tile.terrain === "wetland" || tile.biome === "swamp" || tile.biome === "coastal_wetland") return "wetland";
-  if (tile.terrain === "forest" || tile.biome === "boreal_forest" || tile.biome === "temperate_forest" || tile.biome === "tropical_rainforest") return "forest";
-  if (tile.terrain === "plains") return "plains";
+export function resolveTerrainMaterialId(tile: Pick<HexTile, "mapTags" | "waterKind">): TerrainMaterialId {
+  const tags = tile.mapTags ?? [];
+  if (tile.waterKind === "ocean" || tags.includes("water:ocean")) return "deep_water";
+  if (tile.waterKind === "sea" || tags.includes("water:coastal")) return "coastal_water";
+  if (tile.waterKind === "lake" || tags.includes("water:lake")) return "fresh_water";
+  if (tags.includes("feature:snow")) return "snow";
+  if (tags.includes("biome:desert")) return "sand";
+  if (tags.includes("biome:tundra")) return "tundra";
+  if (tags.includes("morphology:mountainous")) return "rock";
+  if (tags.includes("morphology:rough")) return "hills";
+  if (tags.includes("feature:wet")) return "wetland";
+  if (tags.includes("feature:vegetated")) return "forest";
+  if (tags.includes("biome:plains")) return "plains";
   return "grass";
 }
 

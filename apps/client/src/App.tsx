@@ -70,6 +70,13 @@ import type { MapInteractionMode, MapLensId } from "./map/mapLensTypes";
 import type { UiTextKey } from "./i18n/uiText";
 import { useUiText } from "./i18n/useUiText";
 
+const AUTH_BACKGROUND_FILE_NAME = "auth-background.png";
+const AUTH_BACKGROUND_FALLBACK_URL = "/game-assets/utils/fallback-auth-background.png";
+
+function normalizeScenarioAssetSegment(scenarioId: string | null | undefined): string {
+  return scenarioId && /^[a-zA-Z0-9_-]+$/.test(scenarioId) ? scenarioId : "default";
+}
+
 type SessionCountry = {
   name: string;
   color: string;
@@ -360,7 +367,7 @@ export default function App() {
     | { type: "region"; hexId: string; hexName: string; createIfMissing: boolean }
     | null
   >(null);
-  const [uiBackgroundImageUrl, setUiBackgroundImageUrl] = useState<string | null>(null);
+  const [authBackgroundUrl, setAuthBackgroundUrl] = useState(AUTH_BACKGROUND_FALLBACK_URL);
   const [resourceGrowthByTurn, setResourceGrowthByTurn] = useState<{
     culture: number;
     science: number;
@@ -393,10 +400,17 @@ export default function App() {
   const [hexRenameDucatsCost, setHexRenameDucatsCost] = useState(25);
   const [showAntarctica, setShowAntarctica] = useState(false);
   const [showMapControls, setShowMapControls] = useState(false);
+  const [showZoomIndicator, setShowZoomIndicator] = useState(true);
+  const [showZoomIndicatorLoadedKey, setShowZoomIndicatorLoadedKey] = useState<string | null>(null);
   const [edgeScrollEnabled, setEdgeScrollEnabled] = useState(true);
   const [sortNotifications, setSortNotifications] = useState(true);
   const [publicUiLoaded, setPublicUiLoaded] = useState(false);
   const [activeScenarioId, setActiveScenarioId] = useState("default");
+
+  const scenarioAuthBackgroundUrl = useMemo(
+    () => `/scenario-assets/${normalizeScenarioAssetSegment(activeScenarioId)}/assets/utils/${AUTH_BACKGROUND_FILE_NAME}`,
+    [activeScenarioId],
+  );
 
   const countryColorById = useMemo(
     () => Object.fromEntries(countries.map((item) => [item.id, item.color] as const)),
@@ -406,6 +420,10 @@ export default function App() {
     () => Object.fromEntries(countries.map((item) => [item.id, item.name] as const)),
     [countries],
   );
+
+  useEffect(() => {
+    setAuthBackgroundUrl(scenarioAuthBackgroundUrl);
+  }, [scenarioAuthBackgroundUrl]);
   const countryById = useMemo(() => new Map(countries.map((item) => [item.id, item] as const)), [countries]);
   const [buildingEntries, setBuildingEntries] = useState<ContentEntry[]>([]);
   const [unitTypeEntries, setUnitTypeEntries] = useState<UnitTypeDefinition[]>([]);
@@ -768,6 +786,28 @@ export default function App() {
   }, [auth?.countryId, showMapControls]);
 
   useEffect(() => {
+    const key = `arc.ui.${auth?.countryId ?? "guest"}.map.showZoomIndicator`;
+    try {
+      const raw = localStorage.getItem(key);
+      setShowZoomIndicator(raw == null ? true : raw === "1");
+    } catch {
+      setShowZoomIndicator(true);
+    } finally {
+      setShowZoomIndicatorLoadedKey(key);
+    }
+  }, [auth?.countryId]);
+
+  useEffect(() => {
+    const key = `arc.ui.${auth?.countryId ?? "guest"}.map.showZoomIndicator`;
+    if (showZoomIndicatorLoadedKey !== key) return;
+    try {
+      localStorage.setItem(key, showZoomIndicator ? "1" : "0");
+    } catch {
+      // ignore storage failures
+    }
+  }, [auth?.countryId, showZoomIndicator, showZoomIndicatorLoadedKey]);
+
+  useEffect(() => {
     const settings = readMapNavigationSettings(auth?.countryId);
     setEdgeScrollEnabled(settings.edgeScrollEnabled);
     const onNavigationSettingsChanged = () => {
@@ -841,7 +881,6 @@ export default function App() {
           setDemolitionCostConstructionPercent(ui.economy.demolitionCostConstructionPercent ?? 20);
           setShowAntarctica(ui.map?.showAntarctica ?? true);
           setActiveScenarioId(ui.activeScenarioId ?? "default");
-          setUiBackgroundImageUrl(ui.map?.backgroundImageUrl ?? null);
           setHexRenameDucatsCost(ui.customization?.hexRenameDucats ?? 25);
           setTurnTimerUi({
             enabled: ui.turnTimer?.enabled ?? false,
@@ -2719,6 +2758,7 @@ export default function App() {
         suggestedMapMode={resolveSuggestedMapMode(activeStrategyMode)}
         suggestedMapLens={resolveSuggestedMapLens(activeStrategyMode)}
         showMapControls={showMapControls}
+        showZoomIndicator={showZoomIndicator}
         showAntarctica={showAntarctica}
         buildingEntries={buildingEntries}
         buildingOverviewToken={auth?.token ?? null}
@@ -2770,14 +2810,15 @@ export default function App() {
             className="absolute inset-0 z-40 flex items-center justify-center bg-[#05080d]"
           >
             <div className="pointer-events-none absolute inset-0 bg-[#05080d]" />
-            {uiBackgroundImageUrl ? (
-              <div
-                className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat opacity-35"
-                style={{ backgroundImage: `url("${uiBackgroundImageUrl}")` }}
-                aria-hidden="true"
-              />
-            ) : null}
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(5,8,13,0.15),rgba(5,8,13,0.78)_72%)]" />
+            <img
+              src={authBackgroundUrl}
+              className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover object-center opacity-70"
+              aria-hidden="true"
+              onError={() => {
+                setAuthBackgroundUrl((current) => (current === AUTH_BACKGROUND_FALLBACK_URL ? current : AUTH_BACKGROUND_FALLBACK_URL));
+              }}
+            />
+            <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_45%,rgba(5,8,13,0.12),rgba(5,8,13,0.64)_72%)]" />
             <div className="relative z-10">
               <AuthPanel
                 onSuccess={onAuthSuccess}
@@ -2813,12 +2854,21 @@ export default function App() {
             exit={{ opacity: 0 }}
             className="arc-entry-loading-backdrop"
           >
+            <img
+              src={authBackgroundUrl}
+              className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover object-center opacity-70"
+              aria-hidden="true"
+              onError={() => {
+                setAuthBackgroundUrl((current) => (current === AUTH_BACKGROUND_FALLBACK_URL ? current : AUTH_BACKGROUND_FALLBACK_URL));
+              }}
+            />
+            <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_45%,rgba(5,8,13,0.14),rgba(5,8,13,0.66)_72%)]" />
             <motion.div
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
-              className="arc-building-overview-modal arc-entry-loading-modal"
+              className="arc-building-overview-modal arc-entry-loading-modal relative z-10"
             >
               {entryLoadingGate === "loading" ? (
                 <>
@@ -3325,7 +3375,6 @@ export default function App() {
               points: updated.colonization.pointsCostPer1000Km2,
               ducats: updated.colonization.ducatsCostPer1000Km2,
             });
-            setUiBackgroundImageUrl(updated.map?.backgroundImageUrl ?? null);
             setResourceGrowthByTurn((prev) => ({
               ...prev,
               culture: updated.economy.baseCulturePerTurn ?? 1,
@@ -3390,11 +3439,18 @@ export default function App() {
         <ClientSettingsModal
           open={clientSettingsOpen}
           showMapControls={showMapControls}
+          showZoomIndicator={showZoomIndicator}
           edgeScrollEnabled={edgeScrollEnabled}
           sortNotifications={sortNotifications}
           onClose={() => setClientSettingsOpen(false)}
-          onSave={({ showMapControls: nextShowMapControls, edgeScrollEnabled: nextEdgeScrollEnabled, sortNotifications: nextSortNotifications }) => {
+          onSave={({
+            showMapControls: nextShowMapControls,
+            showZoomIndicator: nextShowZoomIndicator,
+            edgeScrollEnabled: nextEdgeScrollEnabled,
+            sortNotifications: nextSortNotifications,
+          }) => {
             setShowMapControls(nextShowMapControls);
+            setShowZoomIndicator(nextShowZoomIndicator);
             setEdgeScrollEnabled(nextEdgeScrollEnabled);
             writeMapNavigationSettings(auth.countryId, { edgeScrollEnabled: nextEdgeScrollEnabled });
             setSortNotifications(nextSortNotifications);

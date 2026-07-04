@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { MapUnit, Order, UnitTypeDefinition } from "@arcanorum/shared";
-import { resolveMapUnitMoveOrder, resolveMapUnitWaitOrder } from "./mapUnitMechanics";
+import type { MapUnit, Order, UnitSkillTreeDefinition, UnitTypeDefinition } from "@arcanorum/shared";
+import { resolveMapUnitMoveOrder, resolveMapUnitPromoteOrder, resolveMapUnitWaitOrder } from "./mapUnitMechanics";
 
 describe("mapUnitMechanics wait orders", () => {
   it("skips a map unit for the current turn", () => {
@@ -17,6 +17,33 @@ describe("mapUnitMechanics wait orders", () => {
     expect(result.rejectedOrder).toBeNull();
     expect(worldBase.unitsById["unit:a"]).toMatchObject({ status: "idle", movementPoints: 0, lastActionTurnId: 7 });
     expect(movedUnitIds.has("unit:a")).toBe(true);
+  });
+
+  it("applies a valid unit skill choice group once", () => {
+    const worldBase = { unitsById: { "unit:a": makeUnit("unit:a", { experience: 10 }) } };
+    const result = resolveMapUnitPromoteOrder({
+      order: makePromoteOrder(["unit_skill:river_fighter"]),
+      playerId: "player:a",
+      worldBase,
+      unitTypes: [makeUnitType("unit:warrior", "land", { unitSkillTreeId: "unit_skill_tree:warrior" })],
+      unitSkillTrees: [makeSkillTree()],
+    });
+
+    expect(result.rejectedOrder).toBeNull();
+    expect(worldBase.unitsById["unit:a"]?.skillIds).toEqual(["unit_skill:river_fighter"]);
+    expect(worldBase.unitsById["unit:a"]?.completedChoiceGroupIds).toEqual(["group:level_2"]);
+  });
+
+  it("rejects unit skill choices with the wrong choice count", () => {
+    const result = resolveMapUnitPromoteOrder({
+      order: makePromoteOrder([]),
+      playerId: "player:a",
+      worldBase: { unitsById: { "unit:a": makeUnit("unit:a", { experience: 10 }) } },
+      unitTypes: [makeUnitType("unit:warrior", "land", { unitSkillTreeId: "unit_skill_tree:warrior" })],
+      unitSkillTrees: [makeSkillTree()],
+    });
+
+    expect(result.rejectedOrder).toMatchObject({ reason: "UNIT_PROMOTE_CHOICE_COUNT_INVALID" });
   });
 
   it("puts a map unit to sleep until a manual order wakes it", () => {
@@ -111,7 +138,7 @@ function makeUnit(id: string, overrides: Partial<MapUnit> = {}): MapUnit {
   };
 }
 
-function makeUnitType(id: string, domain: UnitTypeDefinition["domain"]): UnitTypeDefinition {
+function makeUnitType(id: string, domain: UnitTypeDefinition["domain"], overrides: Partial<UnitTypeDefinition> = {}): UnitTypeDefinition {
   return {
     id,
     domain,
@@ -120,6 +147,37 @@ function makeUnitType(id: string, domain: UnitTypeDefinition["domain"]): UnitTyp
     stats: { maxHp: 100, attack: 1, defense: 1, movement: 2, vision: 1 },
     productionCost: {},
     visual: { frameWidth: 1, frameHeight: 1, states: {} },
+    ...overrides,
+  };
+}
+
+function makeSkillTree(): UnitSkillTreeDefinition {
+  return {
+    id: "unit_skill_tree:warrior",
+    levelThresholds: { "1": 0, "2": 10 },
+    choiceGroups: [
+      {
+        id: "group:level_2",
+        unlockLevel: 2,
+        choicesRequired: 1,
+        options: ["unit_skill:river_fighter", "unit_skill:shield_wall"],
+      },
+    ],
+  };
+}
+
+function makePromoteOrder(skillIds: Array<`unit_skill:${string}`>): Order {
+  return {
+    id: "order:promote",
+    type: "UNIT_PROMOTE",
+    turnId: 7,
+    playerId: "player:a",
+    countryId: "country:a",
+    unitId: "unit:a",
+    choiceGroupId: "group:level_2",
+    skillIds,
+    payload: {},
+    createdAt: "2026-01-01T00:00:00.000Z",
   };
 }
 

@@ -4,7 +4,7 @@ import { createPathPreviewCache, getNeighborTiles } from "./usePathPreviewCache"
 
 describe("path preview cache", () => {
   it("caches land and water paths separately", () => {
-    const mapArtifact = makeMapArtifact([makeTile(0, 0), makeTile(1, 0, { waterKind: "sea", terrain: "sea", biome: "coastal_water" })]);
+    const mapArtifact = makeMapArtifact([makeTile(0, 0), makeTile(1, 0, { waterKind: "sea", mapTags: ["water:coastal", "feature:aquatic"] })]);
     const tileById = new Map(mapArtifact.tiles.map((tile) => [tile.id, tile] as const));
     const findLandPath = vi.fn(() => ["hex:0:0", "hex:1:0"] as HexId[]);
     const findWaterPath = vi.fn(() => ["hex:1:0"] as HexId[]);
@@ -62,9 +62,6 @@ function makeTile(q: number, r: number, overrides?: Partial<HexTile>): HexTile {
     r,
     chunkId: "hex-chunk:0:0",
     regionId: "region:a",
-    terrain: "plains",
-    biome: "temperate_grassland",
-    feature: "none",
     waterKind: null,
     elevation: 0.5,
     moisture: 0.5,
@@ -75,6 +72,7 @@ function makeTile(q: number, r: number, overrides?: Partial<HexTile>): HexTile {
     isCoastal: false,
     riverMask: 0,
     riverWidth: 0,
+    mapTags: ["biome:plains", "morphology:flat"],
     movementCost: 1,
     passable: true,
     ...overrides,

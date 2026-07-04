@@ -18,6 +18,8 @@ import {
   normalizeContentEquipmentModules,
   normalizeContentRaces,
   normalizeContentShipTypes,
+  normalizeContentUnitSkills,
+  normalizeContentUnitSkillTrees,
   normalizeContentUnitTypes,
 } from "../content/contentNormalizers";
 import type { GameSettings } from "../runtime/gameSettingsTypes";
@@ -85,6 +87,8 @@ export function normalizeScenarioContentForRuntime(source: unknown): GameSetting
     decisions: normalizeContentCultures(contentSource.decisions),
     events: normalizeContentCultures(contentSource.events),
     journalEntries: normalizeContentCultures(contentSource.journalEntries ?? contentSource.journal_entries),
+    unitSkills: normalizeContentUnitSkills(contentSource.unitSkills ?? contentSource.unit_skills),
+    unitSkillTrees: normalizeContentUnitSkillTrees(contentSource.unitSkillTrees ?? contentSource.unit_skill_trees),
     unitTypes: normalizeContentUnitTypes(contentSource.unitTypes ?? contentSource.unit_types),
     battalions: normalizeContentBattalions(contentSource.battalions),
     shipTypes: normalizeContentShipTypes(contentSource.shipTypes ?? contentSource.ship_types),

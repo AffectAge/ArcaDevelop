@@ -104,6 +104,9 @@ describe("turnResolver", () => {
         movedMapUnitIds.add("unit:b");
         calls.push("order:unit-attack");
       },
+      resolveUnitPromoteOrder: () => {
+        calls.push("order:unit-promote");
+      },
       resolveUnitWaitOrder: () => {
         calls.push("order:unit-wait");
       },

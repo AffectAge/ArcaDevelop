@@ -111,18 +111,6 @@ export function evaluateBuildingPlacement(params: {
     return blocked({ code: "BUILD_PLACEMENT_OCCUPIED", params: { hexId: hex.id } });
   }
   const placement = params.building.placement ?? {};
-  if (matchesList(hex.terrain, placement.deniedTerrains)) {
-    return blocked({ code: "BUILD_PLACEMENT_TERRAIN_DENIED", params: { terrain: hex.terrain } });
-  }
-  if (!allowsList(hex.terrain, placement.allowedTerrains)) {
-    return blocked({ code: "BUILD_PLACEMENT_TERRAIN_NOT_ALLOWED", params: { terrain: hex.terrain } });
-  }
-  if (matchesList(hex.feature, placement.deniedFeatures)) {
-    return blocked({ code: "BUILD_PLACEMENT_FEATURE_DENIED", params: { feature: hex.feature } });
-  }
-  if (!allowsList(hex.feature, placement.allowedFeatures)) {
-    return blocked({ code: "BUILD_PLACEMENT_FEATURE_NOT_ALLOWED", params: { feature: hex.feature } });
-  }
   const waterKind = hex.waterKind ?? "none";
   if (matchesList(waterKind, placement.deniedWaterKinds)) {
     return blocked({ code: "BUILD_PLACEMENT_WATER_DENIED", params: { waterKind } });
@@ -220,8 +208,6 @@ function countMatchingNeighbors(
 ): number {
   let count = 0;
   for (const neighbor of params.neighborHexes ?? []) {
-    if (effect.when.neighborTerrains?.length && !matchesList(neighbor.terrain, effect.when.neighborTerrains)) continue;
-    if (effect.when.neighborFeatures?.length && !matchesList(neighbor.feature, effect.when.neighborFeatures)) continue;
     if (effect.when.neighborTags?.length && !effect.when.neighborTags.some((tag) => hexHasTag(neighbor, tag))) continue;
     if (!matchesMapTagQuery(neighbor.mapTags ?? neighbor.tags, effect.when.neighborTagQuery)) continue;
     if (effect.when.neighborBuildingIds?.length) {

@@ -23,6 +23,7 @@ project_assets/
 - `project_assets` contains source/reference assets, not scenario-owned runtime uploads.
 
 Repo-owned base client assets that are part of the game itself live under `apps/client/public/game-assets/`. Resource point icons use `apps/client/public/game-assets/resource-icons/*.png`; generated hex terrain material textures use `apps/client/public/game-assets/hex-materials/*.png`. These assets are not scenario-owned uploads and are not configured through runtime game settings.
+Repo-owned fallback art uses the same tree; for example, the login/loading background fallback is `apps/client/public/game-assets/utils/fallback-auth-background.png` when the active scenario does not provide `assets/utils/auth-background.png`.
 
 ## Target Server Layout After Refactor
 

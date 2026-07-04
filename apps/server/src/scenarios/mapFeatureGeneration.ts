@@ -2,9 +2,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join, relative, resolve } from "node:path";
 import { matchesMapTagQuery } from "@arcanorum/shared";
 import type {
-  HexFeature,
   HexMapArtifact,
-  HexTerrain,
   HexWaterKind,
   MapFeatureGeneratorDefinition,
   MapFeatureInstance,
@@ -202,10 +200,6 @@ export function normalizeMapFeatureGenerator(input: unknown, path = "map_feature
     tooltipKey: normalizeOptionalString(input.tooltipKey),
     assetId: normalizeAssetId(input.assetId),
     visibility: normalizeVisibility(input.visibility),
-    allowedTerrains: normalizeEnumArray(input.allowedTerrains, VALID_TERRAINS),
-    deniedTerrains: normalizeEnumArray(input.deniedTerrains, VALID_TERRAINS),
-    allowedFeatures: normalizeEnumArray(input.allowedFeatures, VALID_FEATURES),
-    deniedFeatures: normalizeEnumArray(input.deniedFeatures, VALID_FEATURES),
     allowedWaterKinds: normalizeEnumArray(input.allowedWaterKinds, VALID_WATER_KINDS),
     deniedWaterKinds: normalizeEnumArray(input.deniedWaterKinds, VALID_WATER_KINDS),
     tagQuery: normalizeMapTagQuery(input.tagQuery),
@@ -225,10 +219,6 @@ function selectGeneratorCandidates(generator: MapFeatureGeneratorDefinition, map
     .filter((tile) => tile.passable)
     .filter((tile) => !generator.regions?.include || generator.regions.include.includes(tile.regionId))
     .filter((tile) => !generator.regions?.exclude?.includes(tile.regionId))
-    .filter((tile) => !generator.allowedTerrains || generator.allowedTerrains.includes(tile.terrain))
-    .filter((tile) => !generator.deniedTerrains?.includes(tile.terrain))
-    .filter((tile) => !generator.allowedFeatures || generator.allowedFeatures.includes(tile.feature))
-    .filter((tile) => !generator.deniedFeatures?.includes(tile.feature))
     .filter((tile) => !generator.allowedWaterKinds || (tile.waterKind != null && generator.allowedWaterKinds.includes(tile.waterKind)))
     .filter((tile) => !(tile.waterKind != null && generator.deniedWaterKinds?.includes(tile.waterKind)))
     .filter((tile) => matchesMapTagQuery(tile.mapTags, generator.tagQuery))
@@ -384,20 +374,4 @@ function normalizePath(path: string): string {
   return path.replaceAll("\\", "/");
 }
 
-const VALID_TERRAINS: readonly HexTerrain[] = [
-  "ocean",
-  "sea",
-  "lake",
-  "coast",
-  "plains",
-  "grassland",
-  "forest",
-  "hills",
-  "mountains",
-  "desert",
-  "tundra",
-  "snow",
-  "wetland",
-];
-const VALID_FEATURES: readonly HexFeature[] = ["none", "forest", "dense_forest", "jungle", "marsh", "scrub", "snowcap"];
 const VALID_WATER_KINDS: readonly Exclude<HexWaterKind, null>[] = ["ocean", "sea", "lake"];

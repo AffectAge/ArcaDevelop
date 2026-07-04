@@ -1177,6 +1177,8 @@ export type UiTextKey =
   | "clientSettings.localNote"
   | "clientSettings.mapControls"
   | "clientSettings.mapControlsDescription"
+  | "clientSettings.zoomIndicator"
+  | "clientSettings.zoomIndicatorDescription"
   | "clientSettings.edgeScroll"
   | "clientSettings.edgeScrollDescription"
   | "clientSettings.save"
@@ -1515,6 +1517,7 @@ export type UiTextKey =
   | "locale.russian"
   | "map.controls.zoomIn"
   | "map.controls.zoomOut"
+  | "map.zoomIndicator.label"
   | "map.controls.resetView"
   | "map.controls.lockInteraction"
   | "map.controls.unlockInteraction"
@@ -1603,6 +1606,7 @@ export type UiTextKey =
   | "hexMap.terrain"
   | "hexMap.biome"
   | "hexMap.feature"
+  | "hexMap.surfaceSummary"
   | "hexMap.siteFeature"
   | "hexMap.resourceDeposit"
   | "hexMap.water"
@@ -1611,7 +1615,34 @@ export type UiTextKey =
   | "hexMap.ownerNone"
   | "hexMap.movementCost"
   | "hexMap.mapTags"
+  | "hexMap.tagGroupClimate"
+  | "hexMap.tagGroupRelief"
+  | "hexMap.tagGroupWater"
+  | "hexMap.tagGroupFeatures"
+  | "hexMap.tagGroupValue"
+  | "hexMap.tagGroupMovement"
   | "mapTag.unknown"
+  | "mapTag.biome.tundra"
+  | "mapTag.biome.grassland"
+  | "mapTag.biome.plains"
+  | "mapTag.biome.desert"
+  | "mapTag.biome.tropical"
+  | "mapTag.morphology.flat"
+  | "mapTag.morphology.rough"
+  | "mapTag.morphology.mountainous"
+  | "mapTag.morphology.navigable_river"
+  | "mapTag.water.coastal"
+  | "mapTag.water.ocean"
+  | "mapTag.water.lake"
+  | "mapTag.water.fresh"
+  | "mapTag.feature.minor_river"
+  | "mapTag.feature.floodplain"
+  | "mapTag.feature.wet"
+  | "mapTag.feature.vegetated"
+  | "mapTag.feature.aquatic"
+  | "mapTag.feature.snow"
+  | "mapTag.feature.volcanic"
+  | "mapTag.movement.stop_on_enter"
   | "mapTag.fertility.barren"
   | "mapTag.fertility.poor"
   | "mapTag.fertility.modest"
@@ -4548,6 +4579,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "clientSettings.localNote": "Settings are saved locally for each country.",
     "clientSettings.mapControls": "Map controls panel",
     "clientSettings.mapControlsDescription": "Zoom, reset, and map lock buttons in the lower right corner.",
+    "clientSettings.zoomIndicator": "Zoom indicator",
+    "clientSettings.zoomIndicatorDescription": "Show the current map zoom level in the lower left corner.",
     "clientSettings.edgeScroll": "Edge scrolling",
     "clientSettings.edgeScrollDescription": "Move the map when the pointer reaches the screen edge.",
     "clientSettings.save": "Save",
@@ -4886,6 +4919,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "locale.russian": "Russian",
     "map.controls.zoomIn": "Zoom in",
     "map.controls.zoomOut": "Zoom out",
+    "map.zoomIndicator.label": "Zoom",
     "map.controls.resetView": "Reset center and zoom",
     "map.controls.lockInteraction": "Lock pan/zoom",
     "map.controls.unlockInteraction": "Unlock pan/zoom",
@@ -4974,6 +5008,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.terrain": "Terrain",
     "hexMap.biome": "Biome",
     "hexMap.feature": "Feature",
+    "hexMap.surfaceSummary": "Summary",
     "hexMap.siteFeature": "Special feature",
     "hexMap.resourceDeposit": "Deposit",
     "hexMap.water": "Water",
@@ -4982,7 +5017,34 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.ownerNone": "Unowned",
     "hexMap.movementCost": "Move cost",
     "hexMap.mapTags": "Map tags",
+    "hexMap.tagGroupClimate": "Climate",
+    "hexMap.tagGroupRelief": "Relief",
+    "hexMap.tagGroupWater": "Water and rivers",
+    "hexMap.tagGroupFeatures": "Features",
+    "hexMap.tagGroupValue": "Land value",
+    "hexMap.tagGroupMovement": "Movement",
     "mapTag.unknown": "Unknown tag",
+    "mapTag.biome.tundra": "Tundra",
+    "mapTag.biome.grassland": "Grassland",
+    "mapTag.biome.plains": "Plains",
+    "mapTag.biome.desert": "Desert",
+    "mapTag.biome.tropical": "Tropical",
+    "mapTag.morphology.flat": "Flat",
+    "mapTag.morphology.rough": "Rough",
+    "mapTag.morphology.mountainous": "Mountainous",
+    "mapTag.morphology.navigable_river": "Navigable river tile",
+    "mapTag.water.coastal": "Coastal water",
+    "mapTag.water.ocean": "Ocean",
+    "mapTag.water.lake": "Lake",
+    "mapTag.water.fresh": "Fresh water",
+    "mapTag.feature.minor_river": "Minor river",
+    "mapTag.feature.floodplain": "Floodplain",
+    "mapTag.feature.wet": "Wet",
+    "mapTag.feature.vegetated": "Vegetated",
+    "mapTag.feature.aquatic": "Aquatic",
+    "mapTag.feature.snow": "Snow",
+    "mapTag.feature.volcanic": "Volcanic",
+    "mapTag.movement.stop_on_enter": "Stops movement on enter",
     "mapTag.fertility.barren": "Barren",
     "mapTag.fertility.poor": "Poor fertility",
     "mapTag.fertility.modest": "Modest fertility",
@@ -7918,6 +7980,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "clientSettings.localNote": "Настройки сохраняются локально отдельно для каждой страны.",
     "clientSettings.mapControls": "Панель управления картой",
     "clientSettings.mapControlsDescription": "Кнопки зума, сброса и блокировки карты в правом нижнем углу.",
+    "clientSettings.zoomIndicator": "Индикатор масштаба",
+    "clientSettings.zoomIndicatorDescription": "Показывает текущий масштаб карты в левом нижнем углу.",
     "clientSettings.edgeScroll": "Прокрутка у края",
     "clientSettings.edgeScrollDescription": "Перемещает карту, когда курсор подходит к краю экрана.",
     "clientSettings.save": "Сохранить",
@@ -8256,6 +8320,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "locale.russian": "Русский",
     "map.controls.zoomIn": "Приблизить карту",
     "map.controls.zoomOut": "Отдалить карту",
+    "map.zoomIndicator.label": "Масштаб",
     "map.controls.resetView": "Сбросить центр и масштаб",
     "map.controls.lockInteraction": "Заблокировать pan/zoom",
     "map.controls.unlockInteraction": "Разблокировать pan/zoom",
@@ -8344,6 +8409,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.terrain": "Местность",
     "hexMap.biome": "Биом",
     "hexMap.feature": "Особенность",
+    "hexMap.surfaceSummary": "Сводка",
     "hexMap.siteFeature": "Особый объект",
     "hexMap.resourceDeposit": "Залежь",
     "hexMap.water": "Вода",
@@ -8352,7 +8418,34 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.ownerNone": "Нет владельца",
     "hexMap.movementCost": "Стоимость хода",
     "hexMap.mapTags": "Теги карты",
+    "hexMap.tagGroupClimate": "Климат",
+    "hexMap.tagGroupRelief": "Рельеф",
+    "hexMap.tagGroupWater": "Вода и реки",
+    "hexMap.tagGroupFeatures": "Особенности",
+    "hexMap.tagGroupValue": "Качество земли",
+    "hexMap.tagGroupMovement": "Передвижение",
     "mapTag.unknown": "Неизвестный тег",
+    "mapTag.biome.tundra": "Тундра",
+    "mapTag.biome.grassland": "Луга",
+    "mapTag.biome.plains": "Степи",
+    "mapTag.biome.desert": "Пустыня",
+    "mapTag.biome.tropical": "Тропики",
+    "mapTag.morphology.flat": "Ровная местность",
+    "mapTag.morphology.rough": "Сложный рельеф",
+    "mapTag.morphology.mountainous": "Горная местность",
+    "mapTag.morphology.navigable_river": "Судоходная речная клетка",
+    "mapTag.water.coastal": "Прибрежные воды",
+    "mapTag.water.ocean": "Океан",
+    "mapTag.water.lake": "Озеро",
+    "mapTag.water.fresh": "Пресная вода",
+    "mapTag.feature.minor_river": "Малая река",
+    "mapTag.feature.floodplain": "Пойма",
+    "mapTag.feature.wet": "Сырая местность",
+    "mapTag.feature.vegetated": "Растительность",
+    "mapTag.feature.aquatic": "Водная особенность",
+    "mapTag.feature.snow": "Снег",
+    "mapTag.feature.volcanic": "Вулканическая местность",
+    "mapTag.movement.stop_on_enter": "Останавливает движение при входе",
     "mapTag.fertility.barren": "Бесплодная земля",
     "mapTag.fertility.poor": "Низкая урожайность",
     "mapTag.fertility.modest": "Средняя урожайность",

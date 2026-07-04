@@ -6,7 +6,7 @@
       "frame": 0,
       "weight": 2,
       "conditions": {
-        "biomes": ["swamp"]
+        "tagQuery": "feature:wet"
       }
     },
     {
@@ -34,7 +34,7 @@
       "frame": 4,
       "priority": 8,
       "conditions": {
-        "biomes": ["coastal_wetland"],
+        "tagQuery": "feature:wet",
         "isCoastal": true
       }
     },

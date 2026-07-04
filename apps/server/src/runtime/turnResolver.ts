@@ -28,6 +28,11 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
     rejectedOrders: WorldDelta["rejectedOrders"];
     news: EventLogEntry[];
   }) => void;
+  resolveUnitPromoteOrder: (params: {
+    order: Order;
+    playerId: string;
+    rejectedOrders: WorldDelta["rejectedOrders"];
+  }) => void;
   resolveUnitWaitOrder: (params: {
     order: Order;
     playerId: string;
@@ -116,6 +121,9 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
       }
       if (order.type === "UNIT_ATTACK") {
         deps.resolveUnitAttackOrder({ order, playerId, movedMapUnitIds, rejectedOrders, news });
+      }
+      if (order.type === "UNIT_PROMOTE") {
+        deps.resolveUnitPromoteOrder({ order, playerId, rejectedOrders });
       }
       if (order.type === "UNIT_SKIP_TURN" || order.type === "UNIT_SLEEP" || order.type === "UNIT_WAKE") {
         deps.resolveUnitWaitOrder({ order, playerId, movedMapUnitIds, rejectedOrders });

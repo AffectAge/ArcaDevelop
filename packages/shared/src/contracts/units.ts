@@ -1,4 +1,4 @@
-import type { HexId } from "./hex-map";
+import type { HexId, MapTagQuery } from "./hex-map";
 
 export type UnitDomain = "civilian" | "land" | "naval" | "air";
 
@@ -21,6 +21,50 @@ export type UnitProductionCost = {
   goods?: Array<{ goodId: string; amount: number }>;
 };
 
+export type UnitSkillId = `unit_skill:${string}`;
+export type UnitSkillTreeId = `unit_skill_tree:${string}`;
+
+export type UnitSkillModifierTarget =
+  | "unit.attack"
+  | "unit.defense"
+  | "unit.ranged_attack"
+  | "unit.movement"
+  | "unit.vision"
+  | "unit.max_hp";
+
+export type UnitSkillModifierEffect = {
+  type: "modifier";
+  target: UnitSkillModifierTarget;
+  operation: "add" | "multiply";
+  value: number;
+  when?: {
+    selfTagQuery?: MapTagQuery | null;
+    targetTagQuery?: MapTagQuery | null;
+  } | null;
+};
+
+export type UnitSkillDefinition = {
+  id: UnitSkillId;
+  nameKey: string;
+  descriptionKey?: string | null;
+  effects: UnitSkillModifierEffect[];
+};
+
+export type UnitSkillTreeChoiceGroup = {
+  id: string;
+  unlockLevel: number;
+  choicesRequired: number;
+  options: UnitSkillId[];
+  prerequisiteSkillIds?: UnitSkillId[];
+};
+
+export type UnitSkillTreeDefinition = {
+  id: UnitSkillTreeId;
+  nameKey?: string | null;
+  levelThresholds: Record<string, number>;
+  choiceGroups: UnitSkillTreeChoiceGroup[];
+};
+
 export type UnitVisualDefinition = {
   atlasAssetId?: string | null;
   atlasPath?: string | null;
@@ -38,6 +82,8 @@ export type UnitTypeDefinition = {
   stats: UnitStats;
   productionCost: UnitProductionCost;
   unlockTechnologyId?: string | null;
+  unitSkillTreeId?: UnitSkillTreeId | null;
+  startingSkillIds?: UnitSkillId[];
   visual: UnitVisualDefinition;
   canFoundCity?: boolean;
 };
@@ -52,7 +98,8 @@ export type MapUnit = {
   hp: number;
   movementPoints: number;
   experience: number;
-  promotionIds?: string[];
+  skillIds?: UnitSkillId[];
+  completedChoiceGroupIds?: string[];
   status: MapUnitStatus;
   path: HexId[];
   targetHexId?: HexId | null;

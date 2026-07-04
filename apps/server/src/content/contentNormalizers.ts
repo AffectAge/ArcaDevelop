@@ -16,6 +16,12 @@ import type {
   MapResourceDepositVisibility,
   UnitCombatClass,
   UnitDomain,
+  UnitSkillDefinition,
+  UnitSkillId,
+  UnitSkillModifierEffect,
+  UnitSkillModifierTarget,
+  UnitSkillTreeDefinition,
+  UnitSkillTreeId,
   UnitTypeDefinition,
 } from "@arcanorum/shared";
 import {
@@ -58,6 +64,14 @@ import type {
 const ASSET_TYPES = new Set<AssetContentEntry["type"]>(["icon", "atlas", "image"]);
 const UNIT_DOMAINS = new Set<UnitDomain>(["civilian", "land", "naval", "air"]);
 const UNIT_CLASSES = new Set<UnitCombatClass>(["civilian", "melee", "ranged", "cavalry", "siege", "naval_melee", "naval_ranged", "air"]);
+const UNIT_SKILL_MODIFIER_TARGETS = new Set<UnitSkillModifierTarget>([
+  "unit.attack",
+  "unit.defense",
+  "unit.ranged_attack",
+  "unit.movement",
+  "unit.vision",
+  "unit.max_hp",
+]);
 
 export const DEFAULT_UNIT_TYPES: UnitTypeDefinition[] = [
   {
@@ -1093,6 +1107,11 @@ export function normalizeContentUnitTypes(input: unknown): GameSettings["content
         typeof entry.unlockTechnologyId === "string" && entry.unlockTechnologyId.trim()
           ? entry.unlockTechnologyId.trim().slice(0, 160)
           : null,
+      unitSkillTreeId:
+        typeof entry.unitSkillTreeId === "string" && /^unit_skill_tree:[a-zA-Z0-9_.:-]+$/.test(entry.unitSkillTreeId)
+          ? (entry.unitSkillTreeId as UnitSkillTreeId)
+          : null,
+      startingSkillIds: normalizeUnitSkillIds(entry.startingSkillIds),
       visual: {
         atlasAssetId: normalizeAssetId(visualSource.atlasAssetId),
         atlasPath: typeof visualSource.atlasPath === "string" && visualSource.atlasPath.trim() ? visualSource.atlasPath.trim().slice(0, 240) : null,
@@ -1107,6 +1126,107 @@ export function normalizeContentUnitTypes(input: unknown): GameSettings["content
     if (!byId.has(fallback.id)) byId.set(fallback.id, fallback);
   }
   return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id, "en"));
+}
+
+export function normalizeContentUnitSkills(input: unknown): GameSettings["content"]["unitSkills"] {
+  const rows = Array.isArray(input) ? input : [];
+  const byId = new Map<UnitSkillDefinition["id"], UnitSkillDefinition>();
+  for (const raw of rows) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+    const entry = raw as Record<string, unknown>;
+    const id = typeof entry.id === "string" && /^unit_skill:[a-zA-Z0-9_.:-]+$/.test(entry.id) ? (entry.id as UnitSkillId) : null;
+    const nameKey = typeof entry.nameKey === "string" && entry.nameKey.trim() ? entry.nameKey.trim().slice(0, 180) : "";
+    if (!id || !nameKey || byId.has(id)) continue;
+    byId.set(id, {
+      id,
+      nameKey,
+      descriptionKey: typeof entry.descriptionKey === "string" && entry.descriptionKey.trim() ? entry.descriptionKey.trim().slice(0, 180) : null,
+      effects: normalizeUnitSkillEffects(entry.effects),
+    });
+  }
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id, "en"));
+}
+
+export function normalizeContentUnitSkillTrees(input: unknown): GameSettings["content"]["unitSkillTrees"] {
+  const rows = Array.isArray(input) ? input : [];
+  const byId = new Map<UnitSkillTreeDefinition["id"], UnitSkillTreeDefinition>();
+  for (const raw of rows) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+    const entry = raw as Record<string, unknown>;
+    const id =
+      typeof entry.id === "string" && /^unit_skill_tree:[a-zA-Z0-9_.:-]+$/.test(entry.id)
+        ? (entry.id as UnitSkillTreeDefinition["id"])
+        : null;
+    if (!id || byId.has(id)) continue;
+    byId.set(id, {
+      id,
+      nameKey: typeof entry.nameKey === "string" && entry.nameKey.trim() ? entry.nameKey.trim().slice(0, 180) : null,
+      levelThresholds: normalizeUnitSkillLevelThresholds(entry.levelThresholds),
+      choiceGroups: normalizeUnitSkillChoiceGroups(entry.choiceGroups),
+    });
+  }
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id, "en"));
+}
+
+function normalizeUnitSkillIds(input: unknown): UnitSkillId[] {
+  return normalizeStringList(input).filter((id): id is UnitSkillId => /^unit_skill:[a-zA-Z0-9_.:-]+$/.test(id));
+}
+
+function normalizeUnitSkillEffects(input: unknown): UnitSkillModifierEffect[] {
+  const rows = Array.isArray(input) ? input : [];
+  return rows.flatMap((raw): UnitSkillModifierEffect[] => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+    const entry = raw as Record<string, unknown>;
+    if (entry.type !== "modifier") return [];
+    const target = typeof entry.target === "string" && UNIT_SKILL_MODIFIER_TARGETS.has(entry.target as UnitSkillModifierTarget)
+      ? (entry.target as UnitSkillModifierTarget)
+      : null;
+    const operation = entry.operation === "add" || entry.operation === "multiply" ? entry.operation : null;
+    const value = typeof entry.value === "number" && Number.isFinite(entry.value) ? Number(entry.value.toFixed(3)) : null;
+    if (!target || !operation || value == null) return [];
+    const when = entry.when && typeof entry.when === "object" && !Array.isArray(entry.when) ? (entry.when as Record<string, unknown>) : null;
+    return [{
+      type: "modifier",
+      target,
+      operation,
+      value,
+      when: when
+        ? {
+            selfTagQuery: normalizeMapTagQuery(when.selfTagQuery),
+            targetTagQuery: normalizeMapTagQuery(when.targetTagQuery),
+          }
+        : null,
+    }];
+  });
+}
+
+function normalizeUnitSkillLevelThresholds(input: unknown): Record<string, number> {
+  const thresholds: Record<string, number> = { "1": 0 };
+  if (!input || typeof input !== "object" || Array.isArray(input)) return thresholds;
+  for (const [rawLevel, rawValue] of Object.entries(input as Record<string, unknown>)) {
+    const level = Number(rawLevel);
+    if (!Number.isInteger(level) || level < 1 || level > 100 || typeof rawValue !== "number" || !Number.isFinite(rawValue)) continue;
+    thresholds[String(level)] = Math.max(0, Math.floor(rawValue));
+  }
+  return thresholds;
+}
+
+function normalizeUnitSkillChoiceGroups(input: unknown): UnitSkillTreeDefinition["choiceGroups"] {
+  const rows = Array.isArray(input) ? input : [];
+  return rows.flatMap((raw): UnitSkillTreeDefinition["choiceGroups"] => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+    const entry = raw as Record<string, unknown>;
+    const id = typeof entry.id === "string" && /^[a-zA-Z0-9_.:-]+$/.test(entry.id) ? entry.id.slice(0, 120) : "";
+    const options = normalizeUnitSkillIds(entry.options);
+    if (!id || options.length === 0) return [];
+    return [{
+      id,
+      unlockLevel: normalizeUnitInteger(entry.unlockLevel, 1, 100, 1),
+      choicesRequired: normalizeUnitInteger(entry.choicesRequired, 1, Math.max(1, options.length), 1),
+      options,
+      prerequisiteSkillIds: normalizeUnitSkillIds(entry.prerequisiteSkillIds),
+    }];
+  });
 }
 
 function normalizeUnitNumber(input: unknown, min: number, max: number, fallback: number): number {
