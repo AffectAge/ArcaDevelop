@@ -1,0 +1,23 @@
+{
+  "id": "religion_group:ancestor_rites",
+  "nameKey": "religionGroup.ancestorRites.name",
+  "descriptionKey": "religionGroup.ancestorRites.description",
+  "color": "#d6b66a",
+  "iconAssetId": "asset:identity.ancestor_rites",
+  "modifiers": [
+    {
+      "id": "lineage_oaths",
+      "label": "Lineage oaths",
+      "scope": "country",
+      "effects": [
+        { "stat": "culture_gain", "mode": "add", "value": 1 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.1,
+    "standardOfLiving": 8,
+    "loyalists": 50,
+    "ideologies": { "ideology:default": 1 }
+  }
+}

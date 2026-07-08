@@ -20,7 +20,6 @@ import type { createScenarioServerRuntime } from "./scenarioServerRuntime";
 import type { createTurnOrderRuntimeFacade } from "./turnOrderRuntimeFacade";
 import type { createUiNotificationRuntime } from "./uiNotificationRuntime";
 import type { createWorldDeltaBroadcastRuntime } from "./worldDeltaBroadcastRuntime";
-import type { createWorldPopulationRuntime } from "./worldPopulationRuntime";
 import type { ResourceLedgerRuntime } from "./resourceLedgerRuntime";
 import type { GameSettings } from "./gameSettingsTypes";
 import type { MarketPriceRuntimeState } from "./marketPriceRuntimeState";
@@ -69,7 +68,6 @@ type ServerMainRouteRegistrationRuntimeParams = {
   marketPriceRuntimeState: MarketPriceRuntimeState;
   colonizationRuntime: ReturnType<typeof createColonizationRuntimeFacade>;
   buildingRuntime: ReturnType<typeof createBuildingSystemsRuntime>["buildingRuntime"];
-  worldPopulationRuntime: ReturnType<typeof createWorldPopulationRuntime>;
   turnOrderRuntime: ReturnType<typeof createTurnOrderRuntimeFacade>;
   uiNotificationRuntime: UiNotificationRuntime;
   worldDeltaBroadcastRuntime: ReturnType<typeof createWorldDeltaBroadcastRuntime>;
@@ -317,7 +315,6 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
     turnOrderRuntime: params.turnOrderRuntime,
     colonizationRuntime: params.colonizationRuntime,
     buildingRuntime: params.buildingRuntime,
-    worldPopulationRuntime: params.worldPopulationRuntime,
     countryWorldRuntime: params.countryWorldRuntime,
     worldDeltaBroadcastRuntime: params.worldDeltaBroadcastRuntime,
     resourceLedgerRuntime: params.resourceLedgerRuntime,

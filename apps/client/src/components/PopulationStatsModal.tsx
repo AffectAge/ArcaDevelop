@@ -1,15 +1,13 @@
-import type { RegionPopulation, WorldBase } from "@arcanorum/shared";
+import type { PopulationPop, RegionPopulation, WorldBase } from "@arcanorum/shared";
 import * as echarts from "echarts";
 import type { EChartsType } from "echarts";
-import { BarChart3, Briefcase, FileText, Flame, Globe2, MapPinned, Package, Palette, ScrollText, Sticker, UserRound, Users } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchContentEntries, type ContentEntryKind } from "../lib/api";
+import { BarChart3, Briefcase, ChevronDown, ChevronRight, CircleDot, Globe2, ListTree, MapPinned, RotateCcw, Rows3, Users } from "lucide-react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { fetchContentEntries } from "../lib/api";
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 import { AppButton } from "./ui/AppButton";
 import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppEmptyState, AppSection, AppSectionHeader, AppToolbar } from "./ui/AppSurface";
-import { AppCell, AppHeadCell, AppTable, AppTableShell } from "./ui/AppTable";
 
 type Props = {
   open: boolean;
@@ -20,149 +18,110 @@ type Props = {
 };
 
 type ViewMode = "country" | "world";
-type PanelSection = "general" | "groups" | "needs" | "finance" | "religions" | "cultures" | "professions" | "ideologies" | "races" | "branding";
-type PopulationDimensionKey = "culturePct" | "ideologyPct" | "religionPct" | "racePct" | "professionPct";
-type PopulationPopField = "cultureId" | "religionId" | "raceId";
+type TableMode = "atomic" | "grouped";
+type FilterKey = "profession" | "region" | "culture" | "religion" | "discrimination" | "employment" | "sol";
 
-type PopulationAggregate = {
-  totalPopulation: number;
-  regionCount: number;
-  breakdown: Record<PopulationDimensionKey, Record<string, number>>;
-};
+type PopulationFilterState = Record<FilterKey, string[]>;
 
 type ContentEntryMeta = {
   name: string;
   color: string;
   logoUrl: string | null;
-  malePortraitUrl: string | null;
-  femalePortraitUrl: string | null;
 };
 
-type PopulationContentKind = "cultures" | "ideologies" | "religions" | "races" | "professions" | "goods";
+type PopulationContentKind = "cultures" | "ideologies" | "religions" | "races" | "professions";
 
 type NeedCategoryKey = "survival" | "basic" | "comfort" | "luxury";
 
-type BreakdownRow = {
+type NeedCategoryStats = Record<NeedCategoryKey, { required: number; fulfilled: number; spend: number }>;
+
+type PopulationAtomicRow = {
   id: string;
-  label: string;
-  pct: number;
-  color: string;
-  imageUrl: string | null;
+  popId: string;
+  regionId: string;
+  regionName: string;
+  professionId: string;
+  professionName: string;
+  cultureId: string;
+  cultureName: string;
+  religionId: string;
+  religionName: string;
+  raceId: string;
+  raceName: string;
+  size: number;
+  radicals: number;
+  loyalists: number;
+  standardOfLiving: number;
+  politicalStrength: number;
+  jobStatus: string;
+  employmentKey: EmploymentKey;
+  employmentLabel: string;
+  employed: number;
+  openJobs: number;
+  discriminationKey: "accepted" | "discriminated";
+  discriminationLabel: string;
+  discriminationReasons: string[];
+  discriminationPenalty: number;
+  solBucket: SolBucketKey;
+  solBucketLabel: string;
+  ideologyLabel: string;
+  income: number;
+  spend: number;
+  ducats: number;
+  needsSatisfaction: number;
+  needsByCategory: NeedCategoryStats;
+  qualificationLimit: number;
+  qualificationShortages: Record<string, number>;
 };
 
-type FinanceFlowRow = {
+type PopulationGroupedRow = Omit<PopulationAtomicRow, "id" | "popId"> & {
+  id: string;
+  popId: string;
+  rowCount: number;
+  children: PopulationAtomicRow[];
+};
+
+type PopulationTableRow = PopulationAtomicRow | PopulationGroupedRow;
+
+type PopulationChartDatum = {
   id: string;
   label: string;
   value: number;
   color: string;
+  filterKey?: FilterKey;
 };
 
-type RegionFinanceRow = {
-  regionId: string;
-  regionName: string;
-  population: number;
-  treasury: number;
-  income: number;
-  expenses: number;
-  netBalance: number;
-  capitalPerCapita: number;
+type ChartDefinition = {
+  id: "population" | "politicalStrength" | "region" | "culture" | "religion" | "profession";
+  titleKey: UiTextKey;
+  filterKey?: FilterKey;
+  valueKind: "population" | "politicalStrength";
+  groupBy: (row: PopulationAtomicRow) => { id: string; label: string; color: string };
 };
 
-type PopulationGroupRow = {
+type FilterOption = {
   id: string;
-  regionName: string;
-  size: number;
-  culture: string;
-  religion: string;
-  race: string;
-  professionCount: number;
-  averageSoL: number;
-  satisfaction: number;
-  ducats: number;
-  radicals: number;
-  loyalists: number;
-  births: number;
-  deaths: number;
-};
-
-type PopulationProfessionRow = {
-  id: string;
-  regionName: string;
-  groupId: string;
-  profession: string;
-  size: number;
-  ducats: number;
-  standardOfLiving: number;
-  satisfaction: number;
-  income: number;
-  spend: number;
-  radicals: number;
-  loyalists: number;
-  births: number;
-  deaths: number;
-  categorySatisfaction: Record<NeedCategoryKey, number>;
-};
-
-type NeedCategoryRow = {
-  category: NeedCategoryKey;
   label: string;
-  required: number;
-  fulfilled: number;
-  spend: number;
-  satisfaction: number;
+  count: number;
+  color: string;
 };
 
-type NeedDeficitRow = {
-  goodId: string;
-  goodName: string;
-  amount: number;
+type EmploymentKey = "employed" | "partial" | "unemployed" | "no_open_jobs";
+type SolBucketKey = "low" | "struggling" | "stable" | "prosperous";
+
+const FILTER_KEYS: FilterKey[] = ["profession", "region", "culture", "religion", "discrimination", "employment", "sol"];
+
+const EMPTY_FILTERS: PopulationFilterState = {
+  profession: [],
+  region: [],
+  culture: [],
+  religion: [],
+  discrimination: [],
+  employment: [],
+  sol: [],
 };
 
-type NeedBudgetShortageRow = {
-  goodId: string;
-  goodName: string;
-  amount: number;
-};
-
-const DIMENSION_LABELS: Array<{ key: PopulationDimensionKey; labelKey: UiTextKey }> = [
-  { key: "culturePct", labelKey: "population.dimensionCultures" },
-  { key: "ideologyPct", labelKey: "population.dimensionIdeologies" },
-  { key: "religionPct", labelKey: "population.dimensionReligions" },
-  { key: "racePct", labelKey: "population.dimensionRaces" },
-  { key: "professionPct", labelKey: "population.dimensionProfessions" },
-];
-
-const STAT_TABS: Array<{
-  id: PanelSection;
-  labelKey: UiTextKey;
-  icon: typeof FileText;
-  dimension?: PopulationDimensionKey;
-}> = [
-  { id: "general", labelKey: "population.sectionGeneral", icon: FileText },
-  { id: "groups", labelKey: "population.sectionGroups", icon: Users },
-  { id: "needs", labelKey: "population.sectionNeeds", icon: Package },
-  { id: "finance", labelKey: "population.sectionFinance", icon: BarChart3 },
-  { id: "religions", labelKey: "population.sectionReligions", icon: ScrollText, dimension: "religionPct" },
-  { id: "cultures", labelKey: "population.sectionCultures", icon: Palette, dimension: "culturePct" },
-  { id: "professions", labelKey: "population.sectionProfessions", icon: Briefcase, dimension: "professionPct" },
-  { id: "ideologies", labelKey: "population.sectionIdeologies", icon: Flame, dimension: "ideologyPct" },
-  { id: "races", labelKey: "population.sectionRaces", icon: UserRound, dimension: "racePct" },
-  { id: "branding", labelKey: "population.sectionBranding", icon: Sticker },
-];
-
-const KIND_BY_DIMENSION: Record<PopulationDimensionKey, PopulationContentKind> = {
-  culturePct: "cultures",
-  ideologyPct: "ideologies",
-  religionPct: "religions",
-  racePct: "races",
-  professionPct: "professions",
-};
-
-const POP_FIELD_BY_DIMENSION: Record<"culturePct" | "religionPct" | "racePct", PopulationPopField> = {
-  culturePct: "cultureId",
-  religionPct: "religionId",
-  racePct: "raceId",
-};
+const NEED_CATEGORY_KEYS: NeedCategoryKey[] = ["survival", "basic", "comfort", "luxury"];
 
 const NEED_CATEGORY_LABEL_KEYS: Record<NeedCategoryKey, UiTextKey> = {
   survival: "population.categorySurvival",
@@ -171,41 +130,39 @@ const NEED_CATEGORY_LABEL_KEYS: Record<NeedCategoryKey, UiTextKey> = {
   luxury: "population.categoryLuxury",
 };
 
-function formatInt(value: number): string {
-  return new Intl.NumberFormat("ru-RU").format(Math.max(0, Math.floor(value)));
-}
+const FILTER_LABEL_KEYS: Record<FilterKey, UiTextKey> = {
+  profession: "population.filter.profession",
+  region: "population.filter.region",
+  culture: "population.filter.culture",
+  religion: "population.filter.religion",
+  discrimination: "population.filter.discrimination",
+  employment: "population.filter.employment",
+  sol: "population.filter.sol",
+};
 
 const FALLBACK_COLORS = [
-  "#4ade80",
-  "#38bdf8",
-  "#f59e0b",
-  "#f87171",
-  "#a78bfa",
-  "#22d3ee",
-  "#fb7185",
-  "#84cc16",
-  "#f97316",
-  "#60a5fa",
+  "#9fbf82",
+  "#d0a257",
+  "#7f9bbd",
+  "#b97878",
+  "#8f7fc4",
+  "#69a992",
+  "#c28f62",
+  "#b6b05f",
+  "#7bb1b5",
+  "#a978a8",
 ];
 
-const NEGATIVE_BALANCE_STREAK_TARGET = 3;
-const LOW_CAPITAL_PER_CAPITA_THRESHOLD = 0.1;
-
-function colorFromId(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i += 1) {
-    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  }
-  return FALLBACK_COLORS[hash % FALLBACK_COLORS.length] ?? "#9ca3af";
+function formatInt(value: number): string {
+  return new Intl.NumberFormat("ru-RU").format(Math.max(0, Math.floor(Number(value) || 0)));
 }
 
-function round3(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  return Number(value.toFixed(3));
-}
-
-function getPopulationTotal(population: RegionPopulation | null | undefined): number {
-  return Math.max(0, Math.floor((population?.pops ?? []).reduce((sum, pop) => sum + Math.max(0, Number(pop.size)), 0)));
+function formatCompact(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(abs >= 10_000_000_000 ? 0 : 1)}B`;
+  if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)}M`;
+  if (abs >= 1_000) return `${(value / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}K`;
+  return formatInt(value);
 }
 
 function formatSignedInt(value: number): string {
@@ -215,455 +172,367 @@ function formatSignedInt(value: number): string {
   return "0";
 }
 
-function weightedAverage(rows: Array<{ value: number; weight: number }>, fallback = 0): number {
-  const totalWeight = rows.reduce((sum, row) => sum + Math.max(0, row.weight), 0);
-  if (totalWeight <= 0) return fallback;
-  return rows.reduce((sum, row) => sum + Math.max(0, row.value) * Math.max(0, row.weight), 0) / totalWeight;
+function round3(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Number(value.toFixed(3));
+}
+
+function colorFromId(id: string): string {
+  let hash = 0;
+  for (let index = 0; index < id.length; index += 1) {
+    hash = (hash * 31 + id.charCodeAt(index)) >>> 0;
+  }
+  return FALLBACK_COLORS[hash % FALLBACK_COLORS.length] ?? "#9fbf82";
+}
+
+function normalizeColor(value: string | null | undefined, id: string): string {
+  if (value && /^#[0-9a-fA-F]{6}$/.test(value.trim())) return value.trim();
+  return colorFromId(id);
+}
+
+function getPopulationTotal(population: RegionPopulation | null | undefined): number {
+  return Math.max(0, Math.floor((population?.pops ?? []).reduce((sum, pop) => sum + Math.max(0, Number(pop.size)), 0)));
 }
 
 function resolveScopeRegionIds(worldBase: WorldBase | null, scope: ViewMode, countryId: string): string[] {
   if (!worldBase) return [];
   const ownerByRegion = worldBase.regionOwner ?? {};
   const populationByRegion = worldBase.regionPopulationByRegion ?? {};
-  return Object.keys(populationByRegion).filter((regionId) => scope === "world" || ownerByRegion[regionId] === countryId);
+  return Object.keys(populationByRegion)
+    .filter((regionId) => scope === "world" || ownerByRegion[regionId] === countryId)
+    .sort((left, right) => left.localeCompare(right));
 }
 
-function normalizeColor(value: string | null | undefined, id: string): string {
-  if (!value) return colorFromId(id);
-  const trimmed = value.trim();
-  if (trimmed.length === 0) return colorFromId(id);
-  return trimmed;
-}
-
-function aggregatePopulation(
-  worldBase: WorldBase | null,
-  scope: "country" | "world",
-  countryId: string,
-): PopulationAggregate {
-  const empty: PopulationAggregate = {
-    totalPopulation: 0,
-    regionCount: 0,
-    breakdown: {
-      culturePct: {},
-      ideologyPct: {},
-      religionPct: {},
-      racePct: {},
-      professionPct: {},
-    },
+function emptyNeedStats(): NeedCategoryStats {
+  return {
+    survival: { required: 0, fulfilled: 0, spend: 0 },
+    basic: { required: 0, fulfilled: 0, spend: 0 },
+    comfort: { required: 0, fulfilled: 0, spend: 0 },
+    luxury: { required: 0, fulfilled: 0, spend: 0 },
   };
-  if (!worldBase) return empty;
+}
 
-  const byRegion = worldBase.regionPopulationByRegion ?? {};
-  const ownerByRegion = worldBase.regionOwner ?? {};
-  const regionIds = Object.keys(byRegion).filter((regionId) => scope === "world" || ownerByRegion[regionId] === countryId);
-  if (regionIds.length === 0) {
-    return empty;
+function addNeedStats(target: NeedCategoryStats, pop: PopulationPop): void {
+  for (const category of NEED_CATEGORY_KEYS) {
+    const row = pop.lastNeedsByCategory?.[category];
+    if (!row) continue;
+    target[category].required = round3(target[category].required + Math.max(0, Number(row.required ?? 0)));
+    target[category].fulfilled = round3(target[category].fulfilled + Math.max(0, Number(row.fulfilled ?? 0)));
+    target[category].spend = round3(target[category].spend + Math.max(0, Number(row.spend ?? 0)));
+  }
+}
+
+function mergeNeedStats(rows: PopulationAtomicRow[]): NeedCategoryStats {
+  const result = emptyNeedStats();
+  for (const row of rows) {
+    for (const category of NEED_CATEGORY_KEYS) {
+      result[category].required = round3(result[category].required + row.needsByCategory[category].required);
+      result[category].fulfilled = round3(result[category].fulfilled + row.needsByCategory[category].fulfilled);
+      result[category].spend = round3(result[category].spend + row.needsByCategory[category].spend);
+    }
+  }
+  return result;
+}
+
+function resolveEmploymentKey(pop: PopulationPop): EmploymentKey {
+  const size = Math.max(0, Number(pop.size));
+  const employed = Math.max(0, Number(pop.lastEmployed ?? 0));
+  const openJobs = Math.max(0, Number(pop.lastOpenJobs ?? 0));
+  const jobStatus = String(pop.lastJobStatus ?? "");
+  if (employed >= size && size > 0 && !jobStatus.includes("unemployed")) return "employed";
+  if (employed > 0) return "partial";
+  if (openJobs <= 0) return "no_open_jobs";
+  return "unemployed";
+}
+
+function resolveEmploymentLabel(key: EmploymentKey, t: (key: UiTextKey, params?: Record<string, string | number>) => string): string {
+  if (key === "employed") return t("population.employment.employed");
+  if (key === "partial") return t("population.employment.partial");
+  if (key === "no_open_jobs") return t("population.employment.noOpenJobs");
+  return t("population.employment.unemployed");
+}
+
+function resolveSolBucket(value: number): SolBucketKey {
+  if (value <= 7) return "low";
+  if (value <= 10) return "struggling";
+  if (value <= 14) return "stable";
+  return "prosperous";
+}
+
+function resolveSolBucketLabel(key: SolBucketKey, t: (key: UiTextKey, params?: Record<string, string | number>) => string): string {
+  if (key === "low") return t("population.sol.low");
+  if (key === "struggling") return t("population.sol.struggling");
+  if (key === "stable") return t("population.sol.stable");
+  return t("population.sol.prosperous");
+}
+
+function resolveTopIdeologyLabel(pop: PopulationPop, ideologies: Record<string, ContentEntryMeta>, t: (key: UiTextKey, params?: Record<string, string | number>) => string): string {
+  const [ideologyId] = Object.entries(pop.ideologies ?? {}).sort((left, right) => Number(right[1]) - Number(left[1]))[0] ?? [];
+  if (!ideologyId) return t("population.none");
+  return ideologies[ideologyId]?.name ?? ideologyId;
+}
+
+function resolveTopIdeologyForRows(rows: PopulationAtomicRow[], t: (key: UiTextKey, params?: Record<string, string | number>) => string): string {
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    totals.set(row.ideologyLabel, (totals.get(row.ideologyLabel) ?? 0) + row.size);
+  }
+  const [label] = [...totals.entries()].sort((left, right) => right[1] - left[1])[0] ?? [];
+  return label ?? t("population.none");
+}
+
+function passesFilterValue(selected: string[], value: string): boolean {
+  return selected.length === 0 || selected.includes(value);
+}
+
+function rowMatchesFilters(row: PopulationAtomicRow, filters: PopulationFilterState, except?: FilterKey): boolean {
+  if (except !== "profession" && !passesFilterValue(filters.profession, row.professionId)) return false;
+  if (except !== "region" && !passesFilterValue(filters.region, row.regionId)) return false;
+  if (except !== "culture" && !passesFilterValue(filters.culture, row.cultureId)) return false;
+  if (except !== "religion" && !passesFilterValue(filters.religion, row.religionId)) return false;
+  if (except !== "discrimination" && !passesFilterValue(filters.discrimination, row.discriminationKey)) return false;
+  if (except !== "employment" && !passesFilterValue(filters.employment, row.employmentKey)) return false;
+  if (except !== "sol" && !passesFilterValue(filters.sol, row.solBucket)) return false;
+  return true;
+}
+
+function toggleFilterValue(filters: PopulationFilterState, key: FilterKey, id: string): PopulationFilterState {
+  const current = filters[key];
+  const next = current.includes(id) ? current.filter((value) => value !== id) : [...current, id];
+  return { ...filters, [key]: next };
+}
+
+function calculateAverage(rows: PopulationAtomicRow[], selector: (row: PopulationAtomicRow) => number): number {
+  const total = rows.reduce((sum, row) => sum + row.size, 0);
+  if (total <= 0) return 0;
+  return rows.reduce((sum, row) => sum + selector(row) * row.size, 0) / total;
+}
+
+function buildGroupedRows(rows: PopulationAtomicRow[], t: (key: UiTextKey, params?: Record<string, string | number>) => string): PopulationGroupedRow[] {
+  const groups = new Map<string, PopulationAtomicRow[]>();
+  for (const row of rows) {
+    const key = [
+      row.professionId,
+      row.cultureId,
+      row.religionId,
+      row.raceId,
+      row.regionId,
+      row.jobStatus,
+      row.discriminationKey,
+    ].join("|");
+    groups.set(key, [...(groups.get(key) ?? []), row]);
   }
 
-  let totalPopulation = 0;
-  const weighted: PopulationAggregate["breakdown"] = {
-    culturePct: {},
-    ideologyPct: {},
-    religionPct: {},
-    racePct: {},
-    professionPct: {},
-  };
-
-  for (const regionId of regionIds) {
-    const population = byRegion[regionId] as RegionPopulation | undefined;
-    if (!population) continue;
-    const regionTotal = getPopulationTotal(population);
-    if (regionTotal <= 0) continue;
-    totalPopulation += regionTotal;
-    for (const pop of population.pops) {
-      const size = Math.max(0, Number(pop.size));
-      if (size <= 0) continue;
-      for (const { key } of DIMENSION_LABELS) {
-        if (key === "ideologyPct") {
-          for (const [valueKey, amount] of Object.entries(pop.ideologies)) {
-            weighted[key][valueKey] = (weighted[key][valueKey] ?? 0) + Math.max(0, Number(amount));
-          }
-        } else if (key === "professionPct") {
-          for (const [valueKey, amount] of Object.entries(pop.professions)) {
-            weighted[key][valueKey] = (weighted[key][valueKey] ?? 0) + Math.max(0, Number(amount.size));
-          }
-        } else {
-          const valueKey = pop[POP_FIELD_BY_DIMENSION[key]];
-          weighted[key][valueKey] = (weighted[key][valueKey] ?? 0) + size;
+  return [...groups.entries()]
+    .map(([id, children]) => {
+      const first = children[0]!;
+      const size = children.reduce((sum, row) => sum + row.size, 0);
+      const radicals = children.reduce((sum, row) => sum + row.radicals, 0);
+      const loyalists = children.reduce((sum, row) => sum + row.loyalists, 0);
+      const politicalStrength = children.reduce((sum, row) => sum + row.politicalStrength, 0);
+      const income = children.reduce((sum, row) => sum + row.income, 0);
+      const spend = children.reduce((sum, row) => sum + row.spend, 0);
+      const ducats = children.reduce((sum, row) => sum + row.ducats, 0);
+      const employed = children.reduce((sum, row) => sum + row.employed, 0);
+      const openJobs = children.reduce((sum, row) => sum + row.openJobs, 0);
+      const qualificationLimit = children.reduce((sum, row) => sum + row.qualificationLimit, 0);
+      const qualificationShortages: Record<string, number> = {};
+      for (const row of children) {
+        for (const [category, value] of Object.entries(row.qualificationShortages)) {
+          qualificationShortages[category] = round3((qualificationShortages[category] ?? 0) + Math.max(0, Number(value)));
         }
       }
+      return {
+        ...first,
+        id,
+        popId: t("population.groupedPopCount", { count: children.length }),
+        size,
+        radicals,
+        loyalists,
+        politicalStrength,
+        income: round3(income),
+        spend: round3(spend),
+        ducats: round3(ducats),
+        employed: round3(employed),
+        openJobs: round3(openJobs),
+        qualificationLimit: round3(qualificationLimit),
+        qualificationShortages,
+        standardOfLiving: round3(calculateAverage(children, (row) => row.standardOfLiving)),
+        needsSatisfaction: round3(calculateAverage(children, (row) => row.needsSatisfaction)),
+        ideologyLabel: resolveTopIdeologyForRows(children, t),
+        needsByCategory: mergeNeedStats(children),
+        rowCount: children.length,
+        children,
+      };
+    })
+    .sort((left, right) => right.size - left.size || left.id.localeCompare(right.id));
+}
+
+function buildOptions(
+  rows: PopulationAtomicRow[],
+  getId: (row: PopulationAtomicRow) => string,
+  getLabel: (row: PopulationAtomicRow) => string,
+  getColor: (row: PopulationAtomicRow) => string,
+): FilterOption[] {
+  const map = new Map<string, FilterOption>();
+  for (const row of rows) {
+    const id = getId(row);
+    const existing = map.get(id);
+    if (existing) {
+      existing.count += row.size;
+      continue;
+    }
+    map.set(id, { id, label: getLabel(row), count: row.size, color: getColor(row) });
+  }
+  return [...map.values()].sort((left, right) => right.count - left.count || left.label.localeCompare(right.label));
+}
+
+function buildChartData(params: {
+  rows: PopulationAtomicRow[];
+  valueKind: ChartDefinition["valueKind"];
+  filterKey?: FilterKey;
+  groupBy: ChartDefinition["groupBy"];
+}): PopulationChartDatum[] {
+  const map = new Map<string, PopulationChartDatum>();
+  for (const row of params.rows) {
+    const group = params.groupBy(row);
+    const value = params.valueKind === "politicalStrength" ? row.politicalStrength : row.size;
+    const existing = map.get(group.id);
+    if (existing) {
+      existing.value = round3(existing.value + value);
+    } else {
+      map.set(group.id, { ...group, value: round3(value), filterKey: params.filterKey });
     }
   }
+  return [...map.values()].filter((row) => row.value > 0).sort((left, right) => right.value - left.value || left.label.localeCompare(right.label));
+}
 
-  if (totalPopulation <= 0) {
-    return {
-      totalPopulation: 0,
-      regionCount: regionIds.length,
-      breakdown: {
-        culturePct: {},
-        ideologyPct: {},
-        religionPct: {},
-        racePct: {},
-        professionPct: {},
+function PopulationTreemapCard(props: {
+  title: string;
+  valueKind: "population" | "politicalStrength";
+  data: PopulationChartDatum[];
+  selectedIds: string[];
+  onSelect: (datum: PopulationChartDatum) => void;
+}) {
+  const { t } = useUiText();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const chartRef = useRef<EChartsType | null>(null);
+  const topRows = props.data.slice(0, 5);
+  const total = props.data.reduce((sum, row) => sum + row.value, 0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const chart = chartRef.current ?? echarts.init(containerRef.current);
+    chartRef.current = chart;
+    chart.off("click");
+    chart.on("click", (params) => {
+      const eventData = params.data && typeof params.data === "object" ? params.data as Record<string, unknown> : null;
+      const datumId = typeof eventData?.id === "string" ? eventData.id : null;
+      const datum = props.data.find((row) => row.id === datumId);
+      if (datum) props.onSelect(datum);
+    });
+    chart.setOption({
+      animationDuration: 220,
+      backgroundColor: "transparent",
+      tooltip: {
+        trigger: "item",
+        formatter: (params: { name: string; value: number }) => {
+          const value = props.valueKind === "politicalStrength" ? formatCompact(params.value) : formatCompact(params.value);
+          return `${params.name}: ${value}`;
+        },
       },
+      series: [
+        {
+          type: "treemap",
+          roam: false,
+          nodeClick: false,
+          breadcrumb: { show: false },
+          top: 4,
+          left: 4,
+          right: 4,
+          bottom: 4,
+          label: { show: false },
+          itemStyle: {
+            borderColor: "rgba(21, 16, 10, 0.72)",
+            borderWidth: 1,
+            gapWidth: 1,
+          },
+          emphasis: {
+            label: { show: true, color: "#fff7df", fontSize: 11, overflow: "truncate" },
+            itemStyle: { borderColor: "#e8cc8b", borderWidth: 2 },
+          },
+          data: props.data.map((row) => ({
+            id: row.id,
+            name: row.label,
+            value: row.value,
+            itemStyle: {
+              color: row.color,
+              opacity: props.selectedIds.length === 0 || props.selectedIds.includes(row.id) ? 0.94 : 0.42,
+            },
+          })),
+        },
+      ],
+    }, { notMerge: true });
+
+    const onResize = () => chart.resize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [props]);
+
+  useEffect(() => {
+    return () => {
+      chartRef.current?.dispose();
+      chartRef.current = null;
     };
-  }
+  }, []);
 
-  const normalized: PopulationAggregate["breakdown"] = {
-    culturePct: {},
-    ideologyPct: {},
-    religionPct: {},
-    racePct: {},
-    professionPct: {},
-  };
-  for (const { key } of DIMENSION_LABELS) {
-    for (const [valueKey, weightedValue] of Object.entries(weighted[key])) {
-      normalized[key][valueKey] = (weightedValue / totalPopulation) * 100;
-    }
-  }
-
-  return {
-    totalPopulation,
-    regionCount: regionIds.length,
-    breakdown: normalized,
-  };
+  return (
+    <section className="arc-pop-overview-chart-card">
+      <div className="arc-pop-overview-chart-title">{props.title}</div>
+      <div className="arc-pop-overview-chart-frame">
+        {props.data.length > 0 ? (
+          <div ref={containerRef} className="arc-pop-overview-chart-canvas" />
+        ) : (
+          <div className="arc-pop-overview-chart-empty">{t("population.noData")}</div>
+        )}
+      </div>
+      <div className="arc-pop-overview-chart-legend">
+        {topRows.map((row) => (
+          <button key={row.id} type="button" className="arc-pop-overview-legend-row" onClick={() => props.onSelect(row)}>
+            <span className="arc-pop-overview-color" style={{ backgroundColor: row.color }} />
+            <span className="arc-pop-overview-legend-label">{row.label}</span>
+            <strong>{props.valueKind === "politicalStrength" ? formatCompact(row.value) : formatCompact(row.value)}</strong>
+          </button>
+        ))}
+        {topRows.length === 0 ? <span className="arc-pop-overview-muted">{t("population.noData")}</span> : null}
+      </div>
+      <div className="arc-pop-overview-chart-total">{formatCompact(total)}</div>
+    </section>
+  );
 }
 
 export function PopulationStatsModal({ open, onClose, worldBase, countryId, countryName }: Props) {
   const { t } = useUiText();
   const [mode, setMode] = useState<ViewMode>("country");
-  const [section, setSection] = useState<PanelSection>("general");
-  const [selectedByDimension, setSelectedByDimension] = useState<Partial<Record<PopulationDimensionKey, string>>>({});
-  const [hoveredByDimension, setHoveredByDimension] = useState<Partial<Record<PopulationDimensionKey, string>>>({});
+  const [tableMode, setTableMode] = useState<TableMode>("atomic");
+  const [filters, setFilters] = useState<PopulationFilterState>(EMPTY_FILTERS);
+  const [collapsedFilters, setCollapsedFilters] = useState<Record<FilterKey, boolean>>({
+    profession: false,
+    region: false,
+    culture: true,
+    religion: true,
+    discrimination: true,
+    employment: true,
+    sol: true,
+  });
+  const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [entryByKindById, setEntryByKindById] = useState<Record<PopulationContentKind, Record<string, ContentEntryMeta>>>({
     cultures: {},
     ideologies: {},
     religions: {},
     races: {},
     professions: {},
-    goods: {},
   });
-  const pieRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<EChartsType | null>(null);
-  const groupVitalsChartRef = useRef<HTMLDivElement | null>(null);
-  const groupLoyaltyChartRef = useRef<HTMLDivElement | null>(null);
-  const groupVitalsInstanceRef = useRef<EChartsType | null>(null);
-  const groupLoyaltyInstanceRef = useRef<EChartsType | null>(null);
-  const prevTreasuryByModeRef = useRef<Record<ViewMode, number | null>>({ country: null, world: null });
-  const treasuryTurnByModeRef = useRef<Record<ViewMode, number>>({ country: 0, world: 0 });
-  const negativeStreakByModeRef = useRef<Record<ViewMode, Record<string, number>>>({ country: {}, world: {} });
-  const negativeStreakTurnByModeRef = useRef<Record<ViewMode, number>>({ country: 0, world: 0 });
-  const [treasuryDeltaByMode, setTreasuryDeltaByMode] = useState<Record<ViewMode, number | null>>({ country: null, world: null });
-  const [negativeStreakTick, setNegativeStreakTick] = useState(0);
-
-  const countryStats = useMemo(() => aggregatePopulation(worldBase, "country", countryId), [countryId, worldBase]);
-  const worldStats = useMemo(() => aggregatePopulation(worldBase, "world", countryId), [countryId, worldBase]);
-  const stats = mode === "country" ? countryStats : worldStats;
-  const title = mode === "country" ? t("population.countryTitle", { country: countryName }) : t("population.worldTitle");
-  const subtitle = mode === "country" ? t("population.countryRegionSubtitle") : t("population.worldRegionSubtitle");
-  const activeTab = STAT_TABS.find((tab) => tab.id === section) ?? STAT_TABS[0];
-  const activeTabLabel = t(activeTab.labelKey);
-  const activeDimension = activeTab.dimension ?? null;
-  const scopedRegionIds = useMemo(() => resolveScopeRegionIds(worldBase, mode, countryId), [countryId, mode, worldBase]);
-
-  const populationTables = useMemo(() => {
-    const groupRows: PopulationGroupRow[] = [];
-    const professionRows: PopulationProfessionRow[] = [];
-    if (!worldBase) return { groupRows, professionRows };
-    const populationByRegion = worldBase.regionPopulationByRegion ?? {};
-    const regionNameById: Record<string, string> = {};
-
-    for (const regionId of scopedRegionIds) {
-      const population = populationByRegion[regionId];
-      if (!population) continue;
-      const regionName = regionNameById[regionId] ?? regionId;
-      for (const pop of population.pops ?? []) {
-        const professionStates = Object.entries(pop.professions ?? {});
-        const size = Math.max(0, Number(pop.size));
-        const groupDucats = professionStates.reduce((sum, [, state]) => sum + Math.max(0, Number(state.ducats)), 0);
-        const groupRadicals = professionStates.reduce((sum, [, state]) => sum + Math.max(0, Number(state.radicals)), 0);
-        const groupLoyalists = professionStates.reduce((sum, [, state]) => sum + Math.max(0, Number(state.loyalists)), 0);
-        const groupBirths = professionStates.reduce((sum, [, state]) => sum + Math.max(0, Number(state.lastBirths)), 0);
-        const groupDeaths = professionStates.reduce((sum, [, state]) => sum + Math.max(0, Number(state.lastDeaths)), 0);
-        const averageSoL = weightedAverage(
-          professionStates.map(([, state]) => ({ value: Number(state.standardOfLiving), weight: Number(state.size) })),
-        );
-        const satisfaction = weightedAverage(
-          professionStates.map(([, state]) => ({ value: Number(state.lastNeedsSatisfaction), weight: Number(state.size) })),
-          1,
-        );
-
-        groupRows.push({
-          id: `${regionId}:${pop.id}`,
-          regionName,
-          size,
-          culture: entryByKindById.cultures[pop.cultureId]?.name ?? pop.cultureId,
-          religion: entryByKindById.religions[pop.religionId]?.name ?? pop.religionId,
-          race: entryByKindById.races[pop.raceId]?.name ?? pop.raceId,
-          professionCount: professionStates.length,
-          averageSoL,
-          satisfaction,
-          ducats: groupDucats,
-          radicals: groupRadicals,
-          loyalists: groupLoyalists,
-          births: groupBirths,
-          deaths: groupDeaths,
-        });
-
-        for (const [professionId, state] of professionStates) {
-          professionRows.push({
-            id: `${regionId}:${pop.id}:${professionId}`,
-            regionName,
-            groupId: pop.id,
-            profession: entryByKindById.professions[professionId]?.name ?? professionId,
-            size: Math.max(0, Number(state.size)),
-            ducats: Math.max(0, Number(state.ducats)),
-            standardOfLiving: Math.max(0, Number(state.standardOfLiving)),
-            satisfaction: Math.max(0, Number(state.lastNeedsSatisfaction)),
-            income: Math.max(0, Number(state.lastIncomeDucats)),
-            spend: Math.max(0, Number(state.lastNeedsSpendDucats)),
-            radicals: Math.max(0, Number(state.radicals)),
-            loyalists: Math.max(0, Number(state.loyalists)),
-            births: Math.max(0, Number(state.lastBirths)),
-            deaths: Math.max(0, Number(state.lastDeaths)),
-            categorySatisfaction: {
-              survival: Math.max(0, Number(state.lastNeedsByCategory?.survival?.satisfaction ?? 1)),
-              basic: Math.max(0, Number(state.lastNeedsByCategory?.basic?.satisfaction ?? 1)),
-              comfort: Math.max(0, Number(state.lastNeedsByCategory?.comfort?.satisfaction ?? 1)),
-              luxury: Math.max(0, Number(state.lastNeedsByCategory?.luxury?.satisfaction ?? 1)),
-            },
-          });
-        }
-      }
-    }
-
-    return {
-      groupRows: groupRows.sort((a, b) => b.size - a.size),
-      professionRows: professionRows.sort((a, b) => b.size - a.size),
-    };
-  }, [entryByKindById, scopedRegionIds, worldBase]);
-
-  const financeStats = useMemo(() => {
-    if (!worldBase) {
-      return {
-        totalTreasury: 0,
-        totalPopulation: 0,
-        incomeRows: [
-          { id: "wages", label: t("population.flowWages"), value: 0, color: "#34d399" },
-          { id: "transfers", label: t("population.flowTransfers"), value: 0, color: "#60a5fa" },
-          { id: "other-income", label: t("population.flowOtherIncome"), value: 0, color: "#f59e0b" },
-        ] satisfies FinanceFlowRow[],
-        expenseRows: [
-          { id: "goods", label: t("population.flowGoodsExpense"), value: 0, color: "#f87171" },
-          { id: "taxes", label: t("population.flowTaxes"), value: 0, color: "#fb7185" },
-          { id: "other-expense", label: t("population.flowOtherExpense"), value: 0, color: "#a78bfa" },
-        ] satisfies FinanceFlowRow[],
-        totalIncome: 0,
-        totalExpenses: 0,
-        netBalance: 0,
-        byRegion: [] as RegionFinanceRow[],
-      };
-    }
-
-    const populationByRegion = worldBase.regionPopulationByRegion ?? {};
-    const regionNameById: Record<string, string> = {};
-
-    let totalTreasury = 0;
-    let totalPopulation = 0;
-    let wagesIncome = 0;
-    let transferIncome = 0;
-    let otherIncome = 0;
-    let goodsExpense = 0;
-    let taxesExpense = 0;
-    let otherExpense = 0;
-
-    const byRegion: RegionFinanceRow[] = [];
-
-    for (const regionId of scopedRegionIds) {
-      const population = getPopulationTotal(populationByRegion[regionId]);
-      const regionPops = populationByRegion[regionId]?.pops ?? [];
-      const professionStates = regionPops.flatMap((pop) => Object.values(pop.professions ?? {}));
-      const treasury = round3(professionStates.reduce((sum, state) => sum + Math.max(0, Number(state.ducats)), 0));
-      const wages = round3(professionStates.reduce((sum, state) => sum + Math.max(0, Number(state.lastIncomeDucats)), 0));
-      const needsSpend = round3(professionStates.reduce((sum, state) => sum + Math.max(0, Number(state.lastNeedsSpendDucats)), 0));
-      const income = round3(wages);
-      const expenses = needsSpend;
-      const netBalance = round3(income - expenses);
-      const capitalPerCapita = population > 0 ? treasury / population : 0;
-
-      totalTreasury = round3(totalTreasury + treasury);
-      totalPopulation += population;
-      wagesIncome = round3(wagesIncome + wages);
-      goodsExpense = round3(goodsExpense + needsSpend);
-
-      byRegion.push({
-        regionId,
-        regionName: regionNameById[regionId] ?? regionId,
-        population,
-        treasury,
-        income,
-        expenses,
-        netBalance,
-        capitalPerCapita,
-      });
-    }
-
-    const incomeRows: FinanceFlowRow[] = [
-      { id: "wages", label: t("population.flowWages"), value: wagesIncome, color: "#34d399" },
-      { id: "transfers", label: t("population.flowTransfers"), value: transferIncome, color: "#60a5fa" },
-      { id: "other-income", label: t("population.flowOtherIncome"), value: otherIncome, color: "#f59e0b" },
-    ];
-    const expenseRows: FinanceFlowRow[] = [
-      { id: "goods", label: t("population.flowGoodsExpense"), value: goodsExpense, color: "#f87171" },
-      { id: "taxes", label: t("population.flowTaxes"), value: taxesExpense, color: "#fb7185" },
-      { id: "other-expense", label: t("population.flowOtherExpense"), value: otherExpense, color: "#a78bfa" },
-    ];
-    const totalIncome = round3(incomeRows.reduce((sum, row) => sum + row.value, 0));
-    const totalExpenses = round3(expenseRows.reduce((sum, row) => sum + row.value, 0));
-    const netBalance = round3(totalIncome - totalExpenses);
-
-    return {
-      totalTreasury,
-      totalPopulation,
-      incomeRows,
-      expenseRows,
-      totalIncome,
-      totalExpenses,
-      netBalance,
-      byRegion: byRegion.sort((a, b) => b.treasury - a.treasury),
-    };
-  }, [scopedRegionIds, t, worldBase]);
-
-  const needsDiagnostics = useMemo(() => {
-    const emptyRows: NeedCategoryRow[] = (Object.keys(NEED_CATEGORY_LABEL_KEYS) as NeedCategoryKey[]).map((category) => ({
-      category,
-      label: t(NEED_CATEGORY_LABEL_KEYS[category]),
-      required: 0,
-      fulfilled: 0,
-      spend: 0,
-      satisfaction: 1,
-    }));
-    if (!worldBase) {
-      return { categoryRows: emptyRows, deficitRows: [] as NeedDeficitRow[], budgetShortageRows: [] as NeedBudgetShortageRow[] };
-    }
-
-    const byCategory = Object.fromEntries(
-      (Object.keys(NEED_CATEGORY_LABEL_KEYS) as NeedCategoryKey[]).map((category) => [
-        category,
-        { required: 0, fulfilled: 0, spend: 0 },
-      ]),
-    ) as Record<NeedCategoryKey, { required: number; fulfilled: number; spend: number }>;
-    const deficitByGood: Record<string, number> = {};
-    const budgetShortageByGood: Record<string, number> = {};
-
-    for (const regionId of scopedRegionIds) {
-      const regionPops = worldBase.regionPopulationByRegion?.[regionId]?.pops ?? [];
-      for (const pop of regionPops) {
-        for (const state of Object.values(pop.professions ?? {})) {
-          for (const category of Object.keys(NEED_CATEGORY_LABEL_KEYS) as NeedCategoryKey[]) {
-            const row = state.lastNeedsByCategory?.[category];
-            if (!row) continue;
-            byCategory[category].required = round3(byCategory[category].required + Math.max(0, Number(row.required ?? 0)));
-            byCategory[category].fulfilled = round3(byCategory[category].fulfilled + Math.max(0, Number(row.fulfilled ?? 0)));
-            byCategory[category].spend = round3(byCategory[category].spend + Math.max(0, Number(row.spend ?? 0)));
-          }
-          for (const [goodId, amount] of Object.entries(state.lastNeedsDeficitByGood ?? {})) {
-            deficitByGood[goodId] = round3((deficitByGood[goodId] ?? 0) + Math.max(0, Number(amount)));
-          }
-          for (const [goodId, amount] of Object.entries(state.lastNeedsBudgetShortageByGood ?? {})) {
-            budgetShortageByGood[goodId] = round3((budgetShortageByGood[goodId] ?? 0) + Math.max(0, Number(amount)));
-          }
-        }
-      }
-    }
-
-    const categoryRows: NeedCategoryRow[] = (Object.keys(NEED_CATEGORY_LABEL_KEYS) as NeedCategoryKey[]).map((category) => {
-      const row = byCategory[category];
-      return {
-        category,
-        label: t(NEED_CATEGORY_LABEL_KEYS[category]),
-        required: row.required,
-        fulfilled: row.fulfilled,
-        spend: row.spend,
-        satisfaction: row.required > 0 ? row.fulfilled / row.required : 1,
-      };
-    });
-
-    const deficitRows: NeedDeficitRow[] = Object.entries(deficitByGood)
-      .map(([goodId, amount]) => ({
-        goodId,
-        goodName: entryByKindById.goods[goodId]?.name ?? goodId,
-        amount,
-      }))
-      .filter((row) => row.amount > 0)
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 12);
-
-    const budgetShortageRows: NeedBudgetShortageRow[] = Object.entries(budgetShortageByGood)
-      .map(([goodId, amount]) => ({
-        goodId,
-        goodName: entryByKindById.goods[goodId]?.name ?? goodId,
-        amount,
-      }))
-      .filter((row) => row.amount > 0)
-      .sort((a, b) => b.amount - a.amount);
-
-    return { categoryRows, deficitRows, budgetShortageRows };
-  }, [entryByKindById.goods, scopedRegionIds, worldBase]);
-
-  useEffect(() => {
-    if (!open || !worldBase) return;
-    const currentTurn = Math.max(1, Number(worldBase.turnId ?? 1));
-    if (treasuryTurnByModeRef.current[mode] === currentTurn) return;
-    treasuryTurnByModeRef.current[mode] = currentTurn;
-    const previous = prevTreasuryByModeRef.current[mode];
-    const nextDelta = previous == null ? null : round3(financeStats.totalTreasury - previous);
-    prevTreasuryByModeRef.current[mode] = financeStats.totalTreasury;
-    setTreasuryDeltaByMode((prev) => ({ ...prev, [mode]: nextDelta }));
-  }, [financeStats.totalTreasury, mode, open, worldBase]);
-
-  useEffect(() => {
-    if (!open || !worldBase) return;
-    const currentTurn = Math.max(1, Number(worldBase.turnId ?? 1));
-    if (negativeStreakTurnByModeRef.current[mode] === currentTurn) return;
-    negativeStreakTurnByModeRef.current[mode] = currentTurn;
-    const prevStreak = negativeStreakByModeRef.current[mode] ?? {};
-    const nextStreak: Record<string, number> = { ...prevStreak };
-    const activeRegionIds = new Set(financeStats.byRegion.map((row) => row.regionId));
-    for (const regionId of Object.keys(nextStreak)) {
-      if (!activeRegionIds.has(regionId)) {
-        delete nextStreak[regionId];
-      }
-    }
-    for (const row of financeStats.byRegion) {
-      if (row.netBalance < 0) {
-        nextStreak[row.regionId] = (nextStreak[row.regionId] ?? 0) + 1;
-      } else {
-        nextStreak[row.regionId] = 0;
-      }
-    }
-    negativeStreakByModeRef.current[mode] = nextStreak;
-    setNegativeStreakTick((prev) => prev + 1);
-  }, [financeStats.byRegion, mode, open, worldBase]);
-
-  const negativeBalanceAlerts = useMemo(() => {
-    const streakByRegion = negativeStreakByModeRef.current[mode] ?? {};
-    return financeStats.byRegion
-      .map((row) => ({
-        ...row,
-        streak: streakByRegion[row.regionId] ?? 0,
-      }))
-      .filter((row) => row.streak >= NEGATIVE_BALANCE_STREAK_TARGET)
-      .sort((a, b) => b.streak - a.streak);
-  }, [financeStats.byRegion, mode, negativeStreakTick]);
-
-  const lowCapitalAlerts = useMemo(
-    () =>
-      financeStats.byRegion
-        .filter((row) => row.population > 0 && row.capitalPerCapita < LOW_CAPITAL_PER_CAPITA_THRESHOLD)
-        .sort((a, b) => a.capitalPerCapita - b.capitalPerCapita),
-    [financeStats.byRegion],
-  );
 
   useEffect(() => {
     if (!open) return;
@@ -674,849 +543,409 @@ export function PopulationStatsModal({ open, onClose, worldBase, countryId, coun
       fetchContentEntries("religions"),
       fetchContentEntries("races"),
       fetchContentEntries("professions"),
-      fetchContentEntries("goods"),
     ])
-      .then(([cultures, ideologies, religions, races, professions, goods]) => {
+      .then(([cultures, ideologies, religions, races, professions]) => {
         if (cancelled) return;
         setEntryByKindById({
-          cultures: Object.fromEntries(
-            cultures.map((entry) => [entry.id, { name: entry.name, color: entry.color, logoUrl: entry.logoUrl ?? null, malePortraitUrl: null, femalePortraitUrl: null }]),
-          ),
-          ideologies: Object.fromEntries(
-            ideologies.map((entry) => [entry.id, { name: entry.name, color: entry.color, logoUrl: entry.logoUrl ?? null, malePortraitUrl: null, femalePortraitUrl: null }]),
-          ),
-          religions: Object.fromEntries(
-            religions.map((entry) => [entry.id, { name: entry.name, color: entry.color, logoUrl: entry.logoUrl ?? null, malePortraitUrl: null, femalePortraitUrl: null }]),
-          ),
-          races: Object.fromEntries(
-            races.map((entry) => [
-              entry.id,
-              {
-                name: entry.name,
-                color: entry.color,
-                logoUrl: entry.logoUrl ?? null,
-                malePortraitUrl: entry.malePortraitUrl ?? null,
-                femalePortraitUrl: entry.femalePortraitUrl ?? null,
-              },
-            ]),
-          ),
-          professions: Object.fromEntries(
-            professions.map((entry) => [entry.id, { name: entry.name, color: entry.color, logoUrl: entry.logoUrl ?? null, malePortraitUrl: null, femalePortraitUrl: null }]),
-          ),
-          goods: Object.fromEntries(
-            goods.map((entry) => [entry.id, { name: entry.name, color: entry.color, logoUrl: entry.logoUrl ?? null, malePortraitUrl: null, femalePortraitUrl: null }]),
-          ),
+          cultures: Object.fromEntries(cultures.map((entry) => [entry.id, { name: entry.name, color: entry.color, logoUrl: entry.logoUrl ?? null }])),
+          ideologies: Object.fromEntries(ideologies.map((entry) => [entry.id, { name: entry.name, color: entry.color, logoUrl: entry.logoUrl ?? null }])),
+          religions: Object.fromEntries(religions.map((entry) => [entry.id, { name: entry.name, color: entry.color, logoUrl: entry.logoUrl ?? null }])),
+          races: Object.fromEntries(races.map((entry) => [entry.id, { name: entry.name, color: entry.color, logoUrl: entry.logoUrl ?? null }])),
+          professions: Object.fromEntries(professions.map((entry) => [entry.id, { name: entry.name, color: entry.color, logoUrl: entry.logoUrl ?? null }])),
         });
       })
       .catch(() => {
         if (cancelled) return;
-        setEntryByKindById({
-          cultures: {},
-          ideologies: {},
-          religions: {},
-          races: {},
-          professions: {},
-          goods: {},
-        });
+        setEntryByKindById({ cultures: {}, ideologies: {}, religions: {}, races: {}, professions: {} });
       });
-
     return () => {
       cancelled = true;
     };
   }, [open]);
 
-  const activeRows: BreakdownRow[] = useMemo(() => {
-    if (!activeDimension) return [];
-    const kind = KIND_BY_DIMENSION[activeDimension];
-    const entryById = entryByKindById[kind] ?? {};
-    return Object.entries(stats.breakdown[activeDimension])
-      .map(([id, rawPct]) => {
-        const pct = Math.max(0, Math.min(100, rawPct));
-        const entry = entryById[id];
-        return {
-          id,
-          label: entry?.name ?? id,
-          pct,
-          color: normalizeColor(entry?.color, id),
-          imageUrl:
-            kind === "races"
-              ? (entry?.malePortraitUrl ?? entry?.femalePortraitUrl ?? entry?.logoUrl ?? null)
-              : (entry?.logoUrl ?? null),
-        } satisfies BreakdownRow;
-      })
-      .filter((row) => row.pct > 0)
-      .sort((a, b) => b.pct - a.pct)
-      .slice(0, 200);
-  }, [activeDimension, entryByKindById, stats]);
+  const scopedRegionIds = useMemo(() => resolveScopeRegionIds(worldBase, mode, countryId), [countryId, mode, worldBase]);
 
-  const topCulture = useMemo(() => {
-    const [id, pct] = Object.entries(stats.breakdown.culturePct).sort((a, b) => b[1] - a[1])[0] ?? [];
-    if (!id || !pct || pct <= 0) return null;
+  const atomicRows = useMemo<PopulationAtomicRow[]>(() => {
+    if (!worldBase) return [];
+    const rows: PopulationAtomicRow[] = [];
+    for (const regionId of scopedRegionIds) {
+      const population = worldBase.regionPopulationByRegion?.[regionId];
+      if (!population) continue;
+      for (const pop of population.pops ?? []) {
+        const size = Math.max(0, Number(pop.size));
+        if (size <= 0) continue;
+        const professionMeta = entryByKindById.professions[pop.professionId];
+        const cultureMeta = entryByKindById.cultures[pop.cultureId];
+        const religionMeta = entryByKindById.religions[pop.religionId];
+        const raceMeta = entryByKindById.races[pop.raceId];
+        const employmentKey = resolveEmploymentKey(pop);
+        const discriminationKey = pop.lastDiscriminationStatus === "discriminated" ? "discriminated" : "accepted";
+        const standardOfLiving = Math.max(0, Number(pop.standardOfLiving ?? 0));
+        const solBucket = resolveSolBucket(standardOfLiving);
+        const needsByCategory = emptyNeedStats();
+        addNeedStats(needsByCategory, pop);
+        rows.push({
+          id: `${regionId}:${pop.id}`,
+          popId: pop.id,
+          regionId,
+          regionName: regionId,
+          professionId: pop.professionId,
+          professionName: professionMeta?.name ?? pop.professionId,
+          cultureId: pop.cultureId,
+          cultureName: cultureMeta?.name ?? pop.cultureId,
+          religionId: pop.religionId,
+          religionName: religionMeta?.name ?? pop.religionId,
+          raceId: pop.raceId,
+          raceName: raceMeta?.name ?? pop.raceId,
+          size,
+          radicals: Math.max(0, Number(pop.radicals ?? 0)),
+          loyalists: Math.max(0, Number(pop.loyalists ?? 0)),
+          standardOfLiving,
+          politicalStrength: Math.max(0, Number(pop.politicalStrength ?? 0)),
+          jobStatus: String(pop.lastJobStatus ?? "unemployed"),
+          employmentKey,
+          employmentLabel: resolveEmploymentLabel(employmentKey, t),
+          employed: Math.max(0, Number(pop.lastEmployed ?? 0)),
+          openJobs: Math.max(0, Number(pop.lastOpenJobs ?? 0)),
+          discriminationKey,
+          discriminationLabel: discriminationKey === "discriminated" ? t("population.discriminated") : t("population.accepted"),
+          discriminationReasons: pop.lastDiscriminationReasons ?? [],
+          discriminationPenalty: Math.max(0, Number(pop.lastDiscriminationPenalty ?? 0)),
+          solBucket,
+          solBucketLabel: resolveSolBucketLabel(solBucket, t),
+          ideologyLabel: resolveTopIdeologyLabel(pop, entryByKindById.ideologies, t),
+          income: Math.max(0, Number(pop.lastIncomeDucats ?? 0)),
+          spend: Math.max(0, Number(pop.lastNeedsSpendDucats ?? 0)),
+          ducats: Math.max(0, Number(pop.ducats ?? 0)),
+          needsSatisfaction: Math.max(0, Number(pop.lastNeedsSatisfaction ?? 1)),
+          needsByCategory,
+          qualificationLimit: Math.max(0, Number(pop.lastQualificationLimit ?? 0)),
+          qualificationShortages: pop.lastQualificationShortageByCategory ?? {},
+        });
+      }
+    }
+    return rows.sort((left, right) => right.size - left.size || left.id.localeCompare(right.id));
+  }, [entryByKindById, scopedRegionIds, t, worldBase]);
+
+  const filteredRows = useMemo(() => atomicRows.filter((row) => rowMatchesFilters(row, filters)), [atomicRows, filters]);
+  const groupedRows = useMemo(() => buildGroupedRows(filteredRows, t), [filteredRows, t]);
+  const visibleRows: PopulationTableRow[] = tableMode === "atomic" ? filteredRows : groupedRows;
+  const totalPopulation = filteredRows.reduce((sum, row) => sum + row.size, 0);
+  const totalPoliticalStrength = filteredRows.reduce((sum, row) => sum + row.politicalStrength, 0);
+  const selectedFilterCount = FILTER_KEYS.reduce((sum, key) => sum + filters[key].length, 0);
+
+  const filterOptions = useMemo<Record<FilterKey, FilterOption[]>>(() => {
+    const rowsFor = (key: FilterKey) => atomicRows.filter((row) => rowMatchesFilters(row, filters, key));
     return {
-      label: entryByKindById.cultures[id]?.name ?? id,
-      pct,
-      count: (stats.totalPopulation * pct) / 100,
+      profession: buildOptions(rowsFor("profession"), (row) => row.professionId, (row) => row.professionName, (row) => normalizeColor(entryByKindById.professions[row.professionId]?.color, row.professionId)),
+      region: buildOptions(rowsFor("region"), (row) => row.regionId, (row) => row.regionName, (row) => colorFromId(row.regionId)),
+      culture: buildOptions(rowsFor("culture"), (row) => row.cultureId, (row) => row.cultureName, (row) => normalizeColor(entryByKindById.cultures[row.cultureId]?.color, row.cultureId)),
+      religion: buildOptions(rowsFor("religion"), (row) => row.religionId, (row) => row.religionName, (row) => normalizeColor(entryByKindById.religions[row.religionId]?.color, row.religionId)),
+      discrimination: buildOptions(rowsFor("discrimination"), (row) => row.discriminationKey, (row) => row.discriminationLabel, (row) => (row.discriminationKey === "discriminated" ? "#b97878" : "#69a992")),
+      employment: buildOptions(rowsFor("employment"), (row) => row.employmentKey, (row) => row.employmentLabel, (row) => colorFromId(row.employmentKey)),
+      sol: buildOptions(rowsFor("sol"), (row) => row.solBucket, (row) => row.solBucketLabel, (row) => colorFromId(row.solBucket)),
     };
-  }, [entryByKindById.cultures, stats.breakdown.culturePct, stats.totalPopulation]);
+  }, [atomicRows, entryByKindById, filters]);
 
-  const topReligion = useMemo(() => {
-    const [id, pct] = Object.entries(stats.breakdown.religionPct).sort((a, b) => b[1] - a[1])[0] ?? [];
-    if (!id || !pct || pct <= 0) return null;
-    return {
-      label: entryByKindById.religions[id]?.name ?? id,
-      pct,
-      count: (stats.totalPopulation * pct) / 100,
-    };
-  }, [entryByKindById.religions, stats.breakdown.religionPct, stats.totalPopulation]);
+  const chartDefinitions = useMemo<ChartDefinition[]>(() => [
+    {
+      id: "population",
+      titleKey: "population.chart.population",
+      filterKey: "employment",
+      valueKind: "population",
+      groupBy: (row) => ({ id: row.employmentKey, label: row.employmentLabel, color: colorFromId(row.employmentKey) }),
+    },
+    {
+      id: "politicalStrength",
+      titleKey: "population.chart.politicalStrength",
+      filterKey: "profession",
+      valueKind: "politicalStrength",
+      groupBy: (row) => ({ id: row.professionId, label: row.professionName, color: normalizeColor(entryByKindById.professions[row.professionId]?.color, row.professionId) }),
+    },
+    {
+      id: "region",
+      titleKey: "population.chart.region",
+      filterKey: "region",
+      valueKind: "population",
+      groupBy: (row) => ({ id: row.regionId, label: row.regionName, color: colorFromId(row.regionId) }),
+    },
+    {
+      id: "culture",
+      titleKey: "population.chart.culture",
+      filterKey: "culture",
+      valueKind: "population",
+      groupBy: (row) => ({ id: row.cultureId, label: row.cultureName, color: normalizeColor(entryByKindById.cultures[row.cultureId]?.color, row.cultureId) }),
+    },
+    {
+      id: "religion",
+      titleKey: "population.chart.religion",
+      filterKey: "religion",
+      valueKind: "population",
+      groupBy: (row) => ({ id: row.religionId, label: row.religionName, color: normalizeColor(entryByKindById.religions[row.religionId]?.color, row.religionId) }),
+    },
+    {
+      id: "profession",
+      titleKey: "population.chart.profession",
+      filterKey: "profession",
+      valueKind: "population",
+      groupBy: (row) => ({ id: row.professionId, label: row.professionName, color: normalizeColor(entryByKindById.professions[row.professionId]?.color, row.professionId) }),
+    },
+  ], [entryByKindById]);
 
-  useEffect(() => {
-    if (!open) {
-      chartRef.current?.dispose();
-      chartRef.current = null;
-      return;
-    }
-    if (!activeDimension) return;
-    if (!pieRef.current) return;
+  const toggleFilter = (key: FilterKey, id: string) => setFilters((prev) => toggleFilterValue(prev, key, id));
+  const resetFilters = () => setFilters(EMPTY_FILTERS);
+  const toggleExpanded = (id: string) => setExpandedRows((prev) => (prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]));
 
-    const existing = chartRef.current;
-    const chart =
-      existing && existing.getDom() === pieRef.current
-        ? existing
-        : (() => {
-            existing?.dispose();
-            return echarts.init(pieRef.current!);
-          })();
-    chartRef.current = chart;
-    const selectedId = selectedByDimension[activeDimension] ?? activeRows[0]?.id;
-    const hoveredId = hoveredByDimension[activeDimension] ?? null;
-
-    chart.off("mouseover");
-    chart.off("mouseout");
-    chart.off("click");
-
-    chart.on("mouseover", (params: { componentType?: string; dataIndex?: number }) => {
-      if (params.componentType !== "series") return;
-      if (typeof params.dataIndex !== "number") return;
-      const row = activeRows[params.dataIndex];
-      if (!row) return;
-      setHoveredByDimension((prev) => ({ ...prev, [activeDimension]: row.id }));
-    });
-
-    chart.on("mouseout", () => {
-      setHoveredByDimension((prev) => ({ ...prev, [activeDimension]: undefined }));
-    });
-
-    chart.on("click", (params: { componentType?: string; dataIndex?: number }) => {
-      if (params.componentType !== "series") return;
-      if (typeof params.dataIndex !== "number") return;
-      const row = activeRows[params.dataIndex];
-      if (!row) return;
-      setSelectedByDimension((prev) => ({ ...prev, [activeDimension]: row.id }));
-    });
-
-    chart.setOption({
-      animationDuration: 280,
-      backgroundColor: "transparent",
-      tooltip: {
-        trigger: "item",
-        backgroundColor: "transparent",
-        borderWidth: 0,
-        padding: 0,
-        formatter: (params: { seriesName: string; name: string; value: number; percent: number; color?: string }) => {
-          const pieceColor = params.color ?? "#334155";
-          const peopleCount = t("population.peopleCount", { count: formatInt((stats.totalPopulation * params.value) / 100) });
-          return `
-            <div style="
-              background:${pieceColor}dd;
-              border:1px solid ${pieceColor};
-              color:#f8fafc;
-              border-radius:8px;
-              padding:8px 10px;
-              box-shadow:0 6px 18px rgba(0,0,0,0.35);
-              backdrop-filter: blur(4px);
-            ">
-              <div style="font-weight:700; margin-bottom:2px;">${params.seriesName}</div>
-              <div>${params.name}: ${params.value.toFixed(2)}%</div>
-              <div style="opacity:0.92;">${peopleCount}</div>
-            </div>
-          `;
-        },
-      },
-      series: [
-        {
-          name: activeTabLabel,
-          type: "pie",
-          radius: "48%",
-          center: ["50%", "50%"],
-          avoidLabelOverlap: true,
-          selectedMode: "single",
-          label: {
-            show: true,
-            color: "#e2e8f0",
-            position: "outside",
-            formatter: "{b}\n{d}%",
-            fontSize: 11,
-            fontWeight: 700,
-            lineHeight: 14,
-          },
-          labelLine: { show: true, length: 12, length2: 10, smooth: 0.2 },
-          data: activeRows.map((row) => ({
-            name: row.label,
-            value: row.pct,
-            selected: row.id === selectedId,
-            itemStyle: {
-              color: row.color,
-              opacity: hoveredId ? (hoveredId === row.id ? 1 : 0.35) : 1,
-            },
-            label: {
-              color: row.color,
-            },
-            labelLine: {
-              lineStyle: {
-                color: row.color,
-              },
-            },
-          })),
-          emphasis: {
-            scale: true,
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.5)",
-            },
-          },
-        },
-      ],
-    }, { notMerge: true });
-
-    const onResize = () => chart.resize();
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-    };
-  }, [open, activeDimension, activeRows, activeTabLabel, hoveredByDimension, selectedByDimension, stats.totalPopulation, t]);
-
-  useEffect(() => {
-    return () => {
-      chartRef.current?.dispose();
-      chartRef.current = null;
-      groupVitalsInstanceRef.current?.dispose();
-      groupVitalsInstanceRef.current = null;
-      groupLoyaltyInstanceRef.current?.dispose();
-      groupLoyaltyInstanceRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!open || section !== "groups") {
-      groupVitalsInstanceRef.current?.dispose();
-      groupVitalsInstanceRef.current = null;
-      groupLoyaltyInstanceRef.current?.dispose();
-      groupLoyaltyInstanceRef.current = null;
-      return;
-    }
-    const totals = populationTables.groupRows.reduce(
-      (acc, row) => ({
-        births: acc.births + row.births,
-        deaths: acc.deaths + row.deaths,
-        radicals: acc.radicals + row.radicals,
-        loyalists: acc.loyalists + row.loyalists,
-      }),
-      { births: 0, deaths: 0, radicals: 0, loyalists: 0 },
-    );
-    if (groupVitalsChartRef.current) {
-      const chart = groupVitalsInstanceRef.current ?? echarts.init(groupVitalsChartRef.current);
-      groupVitalsInstanceRef.current = chart;
-      chart.setOption({
-        animationDuration: 240,
-        backgroundColor: "transparent",
-        tooltip: { trigger: "item" },
-        grid: { left: 56, right: 18, top: 16, bottom: 34 },
-        xAxis: {
-          type: "category",
-          data: [t("population.births"), t("population.deaths")],
-          axisLabel: { color: "#94a3b8" },
-          axisLine: { lineStyle: { color: "#334155" } },
-        },
-        yAxis: {
-          type: "value",
-          axisLabel: { color: "#94a3b8" },
-          splitLine: { lineStyle: { color: "rgba(148,163,184,0.14)" } },
-        },
-        series: [
-          {
-            name: mode === "country" ? t("population.scopeCountry") : t("population.scopeWorld"),
-            type: "bar",
-            data: [
-              { value: totals.births, itemStyle: { color: "#34d399" } },
-              { value: totals.deaths, itemStyle: { color: "#fb7185" } },
-            ],
-          },
-        ],
-      }, { notMerge: true });
-    }
-    if (groupLoyaltyChartRef.current) {
-      const chart = groupLoyaltyInstanceRef.current ?? echarts.init(groupLoyaltyChartRef.current);
-      groupLoyaltyInstanceRef.current = chart;
-      chart.setOption({
-        animationDuration: 240,
-        backgroundColor: "transparent",
-        tooltip: { trigger: "item" },
-        grid: { left: 56, right: 18, top: 16, bottom: 34 },
-        xAxis: {
-          type: "category",
-          data: [t("population.radicals"), t("population.loyalists")],
-          axisLabel: { color: "#94a3b8" },
-          axisLine: { lineStyle: { color: "#334155" } },
-        },
-        yAxis: {
-          type: "value",
-          axisLabel: { color: "#94a3b8" },
-          splitLine: { lineStyle: { color: "rgba(148,163,184,0.14)" } },
-        },
-        series: [
-          {
-            name: mode === "country" ? t("population.scopeCountry") : t("population.scopeWorld"),
-            type: "bar",
-            data: [
-              { value: totals.radicals, itemStyle: { color: "#fb7185" } },
-              { value: totals.loyalists, itemStyle: { color: "#34d399" } },
-            ],
-          },
-        ],
-      }, { notMerge: true });
-    }
-    const onResize = () => {
-      groupVitalsInstanceRef.current?.resize();
-      groupLoyaltyInstanceRef.current?.resize();
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [mode, open, populationTables.groupRows, section, t]);
-
-  const renderDimensionStats = (dimension: PopulationDimensionKey) => {
-    const dimensionLabel = t(DIMENSION_LABELS.find((item) => item.key === dimension)?.labelKey ?? "population.noData");
-    const selectedId = selectedByDimension[dimension] ?? activeRows[0]?.id ?? null;
-    const hoveredId = hoveredByDimension[dimension] ?? null;
-
+  const renderFilterGroup = (key: FilterKey) => {
+    const collapsed = collapsedFilters[key];
+    const options = filterOptions[key];
     return (
-      <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <AppCard className="arc-pop-card">
-          <div className="arc-pop-label mb-2">{dimensionLabel}</div>
-          {activeRows.length === 0 ? (
-            <div className="arc-pop-muted flex h-[420px] items-center justify-center text-sm">{t("population.noData")}</div>
-          ) : (
-            <div ref={pieRef} className="h-[420px] w-full" />
-          )}
-        </AppCard>
-        <AppCard className="arc-pop-card min-h-0">
-          <div className="arc-pop-label mb-2">{t("population.legendCount", { count: activeRows.length })}</div>
-          <div className="arc-scrollbar max-h-[420px] space-y-2 overflow-auto pr-1">
-            {activeRows.map((row) => (
-              <button
-                key={row.id}
-                type="button"
-                onClick={() => setSelectedByDimension((prev) => ({ ...prev, [dimension]: row.id }))}
-                onMouseEnter={() => setHoveredByDimension((prev) => ({ ...prev, [dimension]: row.id }))}
-                onMouseLeave={() => setHoveredByDimension((prev) => ({ ...prev, [dimension]: undefined }))}
-                className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-2 text-left transition ${
-                  selectedId === row.id
-                    ? "border-[var(--arc-color-atlas-primary)] bg-[color-mix(in_srgb,var(--arc-color-atlas-primary)_10%,var(--arc-color-atlas-paper))]"
-                    : hoveredId === row.id
-                      ? "border-[var(--arc-color-atlas-line-strong)] bg-[var(--arc-color-atlas-paper-soft)]"
-                      : "border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-paper)] hover:border-[var(--arc-color-atlas-line-strong)]"
-                }`}
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  {row.imageUrl ? (
-                    <img
-                      src={row.imageUrl}
-                      alt=""
-                      className={`h-5 w-5 rounded-sm object-cover ${dimension === "racePct" ? "border border-[var(--arc-color-atlas-line)]" : ""}`}
-                    />
-                  ) : (
-                    <span
-                      className="inline-flex h-5 w-5 items-center justify-center rounded-sm border text-[10px]"
-                      style={{ borderColor: `${row.color}99`, backgroundColor: `${row.color}22`, color: row.color }}
-                    >
-                      {row.label.slice(0, 1).toUpperCase()}
-                    </span>
-                  )}
-                  <span className="truncate text-sm text-[var(--arc-color-atlas-ink)]">{row.label}</span>
-                </span>
-                <span className="ml-2 shrink-0 text-right">
-                  <span className="block tabular-nums text-xs text-arc-accent">{row.pct.toFixed(2)}%</span>
-                  <span className="arc-pop-muted block tabular-nums text-[11px]">
-                    {t("population.peopleCount", { count: formatInt((stats.totalPopulation * row.pct) / 100) })}
-                  </span>
-                </span>
-              </button>
-            ))}
-            {activeRows.length === 0 && <div className="arc-pop-muted text-xs">{t("population.noData")}</div>}
+      <section className="arc-pop-overview-filter-group">
+        <button
+          type="button"
+          className="arc-pop-overview-filter-header"
+          onClick={() => setCollapsedFilters((prev) => ({ ...prev, [key]: !prev[key] }))}
+        >
+          {collapsed ? <ChevronRight size={15} /> : <ChevronDown size={15} />}
+          <span>{t(FILTER_LABEL_KEYS[key])}</span>
+          {filters[key].length > 0 ? <strong>{filters[key].length}</strong> : null}
+        </button>
+        {!collapsed ? (
+          <div className="arc-pop-overview-filter-options">
+            {options.map((option) => {
+              const selected = filters[key].includes(option.id);
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={`arc-pop-overview-filter-chip ${selected ? "arc-pop-overview-filter-chip--selected" : ""}`}
+                  onClick={() => toggleFilter(key, option.id)}
+                >
+                  <span className="arc-pop-overview-color" style={{ backgroundColor: option.color }} />
+                  <span>{option.label}</span>
+                  <strong>{formatCompact(option.count)}</strong>
+                </button>
+              );
+            })}
+            {options.length === 0 ? <div className="arc-pop-overview-muted">{t("population.noData")}</div> : null}
           </div>
-        </AppCard>
-      </div>
+        ) : null}
+      </section>
     );
   };
 
-  const renderFlowRows = (rows: FinanceFlowRow[]) => {
-    const total = rows.reduce((sum, row) => sum + row.value, 0);
+  const renderRowDetails = (row: PopulationTableRow) => {
+    const shortageRows = Object.entries(row.qualificationShortages).filter(([, value]) => Number(value) > 0);
     return (
-      <div className="space-y-2.5">
-        {rows.map((row) => {
-          const pct = total > 0 ? Math.max(0, Math.min(100, (row.value / total) * 100)) : 0;
-          return (
-            <div key={row.id} className="arc-pop-card p-2.5">
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="truncate text-xs text-[var(--arc-color-atlas-ink)]">{row.label}</span>
-                <span className="shrink-0 text-xs tabular-nums text-[var(--arc-color-atlas-ink)]">{formatInt(row.value)} {t("population.ducats")}</span>
-              </div>
-              <div className="h-2 overflow-hidden bg-[var(--arc-color-atlas-paper-deep)]">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${pct}%`,
-                    backgroundColor: row.color,
-                  }}
-                />
-              </div>
-              <div className="arc-pop-muted mt-1 text-[11px] tabular-nums">{pct.toFixed(2)}%</div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const renderGroupsTable = () => (
-    <div className="space-y-4">
-      <div>
-        <div className="arc-pop-section-title">{t("population.popGroupsTitle")}</div>
-        <div className="arc-pop-section-subtitle">{t("population.popGroupsDescription")}</div>
-      </div>
-      <div className="grid gap-3 xl:grid-cols-2">
-        <AppCard className="arc-pop-card">
-          <div className="arc-pop-label mb-2">{t("population.birthsDeaths")}</div>
-          <div ref={groupVitalsChartRef} className="h-[300px] w-full" />
-        </AppCard>
-        <AppCard className="arc-pop-card">
-          <div className="arc-pop-label mb-2">{t("population.radicalsLoyalists")}</div>
-          <div ref={groupLoyaltyChartRef} className="h-[300px] w-full" />
-        </AppCard>
-      </div>
-      <AppCard className="arc-pop-card">
-        <AppSectionHeader title={t("population.groupsByRegion")} icon={<Users size={14} />} />
-        <AppTableShell className="max-h-[560px]">
-          <AppTable className="min-w-[980px]">
-            <thead className="sticky top-0 z-10 bg-[var(--arc-color-atlas-paper-soft)] text-[var(--arc-color-atlas-muted)]">
-              <tr>
-                <AppHeadCell>{t("population.regionColumn")}</AppHeadCell>
-                <AppHeadCell>{t("population.cultureColumn")}</AppHeadCell>
-                <AppHeadCell>{t("population.religionColumn")}</AppHeadCell>
-                <AppHeadCell>{t("population.raceColumn")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.sizeColumn")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.professionsShort")}</AppHeadCell>
-                <AppHeadCell className="text-right">SoL</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.sectionNeeds")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.ducats")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.radicalsLoyalistsShort")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.birthsDeathsShort")}</AppHeadCell>
-              </tr>
-            </thead>
-            <tbody>
-              {populationTables.groupRows.map((row) => (
-                <tr key={row.id} className="text-[var(--arc-color-atlas-ink)]">
-                  <AppCell>{row.regionName}</AppCell>
-                  <AppCell>{row.culture}</AppCell>
-                  <AppCell>{row.religion}</AppCell>
-                  <AppCell>{row.race}</AppCell>
-                  <AppCell className="text-right tabular-nums">{formatInt(row.size)}</AppCell>
-                  <AppCell className="text-right tabular-nums">{formatInt(row.professionCount)}</AppCell>
-                  <AppCell className="text-right tabular-nums">{row.averageSoL.toFixed(2)}</AppCell>
-                  <AppCell className="text-right tabular-nums">{(row.satisfaction * 100).toFixed(1)}%</AppCell>
-                  <AppCell className="text-right tabular-nums">{formatInt(row.ducats)}</AppCell>
-                  <AppCell className="text-right tabular-nums">
-                    <span className="text-rose-300">{formatInt(row.radicals)}</span>
-                    <span className="arc-pop-muted"> / </span>
-                    <span className="text-[var(--arc-color-atlas-good)]">{formatInt(row.loyalists)}</span>
-                  </AppCell>
-                  <AppCell className="text-right tabular-nums">
-                    <span className="text-[var(--arc-color-atlas-good)]">{formatInt(row.births)}</span>
-                    <span className="arc-pop-muted"> / </span>
-                    <span className="text-rose-300">{formatInt(row.deaths)}</span>
-                  </AppCell>
-                </tr>
-              ))}
-              {populationTables.groupRows.length === 0 && (
-                <tr>
-                  <td colSpan={11}>
-                    <AppEmptyState className="my-1">{t("population.noData")}</AppEmptyState>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </AppTable>
-        </AppTableShell>
-      </AppCard>
-    </div>
-  );
-
-  const renderNeedsTable = () => (
-    <div className="space-y-4">
-      <div>
-        <div className="arc-pop-section-title">{t("population.professionNeedsTitle")}</div>
-        <div className="arc-pop-section-subtitle">{t("population.professionNeedsDescription")}</div>
-      </div>
-      <div className="grid gap-3 xl:grid-cols-[1.2fr_0.8fr_0.8fr]">
-        <AppCard className="arc-pop-card">
-          <div className="arc-pop-label mb-3">{t("population.coverage")}</div>
-          <AppTableShell>
-            <AppTable className="min-w-[520px] text-xs">
-              <thead className="text-[var(--arc-color-atlas-muted)]">
-                <tr>
-                  <AppHeadCell>{t("population.categoryColumn")}</AppHeadCell>
-                  <AppHeadCell className="text-right">{t("population.required")}</AppHeadCell>
-                  <AppHeadCell className="text-right">{t("population.fulfilled")}</AppHeadCell>
-                  <AppHeadCell className="text-right">{t("population.coverage")}</AppHeadCell>
-                  <AppHeadCell className="text-right">{t("population.expenseColumn")}</AppHeadCell>
-                </tr>
-              </thead>
-              <tbody>
-                {needsDiagnostics.categoryRows.map((row) => (
-                  <tr key={row.category} className="text-[var(--arc-color-atlas-ink)]">
-                    <AppCell>{row.label}</AppCell>
-                    <AppCell className="text-right tabular-nums">{formatInt(row.required)}</AppCell>
-                    <AppCell className="text-right tabular-nums">{formatInt(row.fulfilled)}</AppCell>
-                    <AppCell className={`text-right tabular-nums ${row.required <= 0 ? "arc-pop-muted" : row.satisfaction < 0.75 ? "text-rose-300" : row.satisfaction < 0.95 ? "text-[var(--arc-color-atlas-warning)]" : "text-[var(--arc-color-atlas-good)]"}`}>
-                      {row.required <= 0 ? "—" : `${(row.satisfaction * 100).toFixed(1)}%`}
-                    </AppCell>
-                    <AppCell className="text-right tabular-nums">{formatInt(row.spend)}</AppCell>
-                  </tr>
-                ))}
-              </tbody>
-            </AppTable>
-          </AppTableShell>
-        </AppCard>
-        <AppCard className="arc-pop-card">
-          <div className="arc-pop-label mb-3">{t("population.marketDeficitGoods")}</div>
-          <div className="space-y-2">
-            {needsDiagnostics.deficitRows.map((row) => (
-              <div key={row.goodId} className="arc-pop-card flex items-center justify-between gap-3 px-3 py-2 text-xs">
-                <span className="truncate">{row.goodName}</span>
-                <span className="tabular-nums text-rose-300">{formatInt(row.amount)}</span>
-              </div>
-            ))}
-            {needsDiagnostics.deficitRows.length === 0 && (
-              <div className="arc-pop-card px-3 py-6 text-center text-sm">{t("population.marketGoodsAvailable")}</div>
-            )}
-          </div>
-        </AppCard>
-        <AppCard className="arc-pop-card">
-          <div className="arc-pop-label mb-3">{t("population.needBudgetShortage")}</div>
-          <div className="space-y-2">
-            {needsDiagnostics.budgetShortageRows.map((row) => (
-              <div key={row.goodId} className="arc-pop-card flex items-center justify-between gap-3 px-3 py-2 text-xs">
-                <span className="truncate">{row.goodName}</span>
-                <span className="tabular-nums text-[var(--arc-color-atlas-warning)]">{formatInt(row.amount)}</span>
-              </div>
-            ))}
-            {needsDiagnostics.budgetShortageRows.length === 0 && (
-              <div className="arc-pop-card px-3 py-6 text-center text-sm">{t("population.budgetEnough")}</div>
-            )}
-          </div>
-        </AppCard>
-      </div>
-      <AppCard className="arc-pop-card">
-        <AppSectionHeader title={t("population.professionsByPopGroups")} icon={<Briefcase size={14} />} />
-        <AppTableShell className="max-h-[560px]">
-          <AppTable className="min-w-[1320px] text-xs">
-            <thead className="sticky top-0 z-10 bg-[var(--arc-color-atlas-paper-soft)] text-[var(--arc-color-atlas-muted)]">
-              <tr>
-                <AppHeadCell>{t("population.regionColumn")}</AppHeadCell>
-                <AppHeadCell>{t("population.groupColumn")}</AppHeadCell>
-                <AppHeadCell>{t("population.professionColumn")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.sizeColumn")}</AppHeadCell>
-                <AppHeadCell className="text-right">SoL</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.satisfactionShort")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.survivalShort")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.categoryBasic")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.comfortShort")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.categoryLuxury")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.wallet")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.incomePerTurn")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.totalExpenses")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.balance")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.radicalsLoyalistsShort")}</AppHeadCell>
-                <AppHeadCell className="text-right">{t("population.birthsDeathsShort")}</AppHeadCell>
-              </tr>
-            </thead>
-            <tbody>
-              {populationTables.professionRows.map((row) => {
-                const balance = row.income - row.spend;
+      <tr className="arc-pop-overview-row-detail">
+        <td colSpan={14}>
+          <div className="arc-pop-overview-detail-grid">
+            <section>
+              <h4>{t("population.detail.needs")}</h4>
+              {NEED_CATEGORY_KEYS.map((category) => {
+                const stats = row.needsByCategory[category];
+                const satisfaction = stats.required > 0 ? stats.fulfilled / stats.required : 1;
                 return (
-                  <tr key={row.id} className="text-[var(--arc-color-atlas-ink)]">
-                    <AppCell>{row.regionName}</AppCell>
-                    <AppCell className="arc-pop-muted max-w-[180px] truncate">{row.groupId}</AppCell>
-                    <AppCell>{row.profession}</AppCell>
-                    <AppCell className="text-right tabular-nums">{formatInt(row.size)}</AppCell>
-                    <AppCell className="text-right tabular-nums">{row.standardOfLiving.toFixed(2)}</AppCell>
-                    <AppCell className={`text-right tabular-nums ${row.satisfaction < 0.7 ? "text-rose-300" : row.satisfaction < 1 ? "text-[var(--arc-color-atlas-warning)]" : "text-[var(--arc-color-atlas-good)]"}`}>
-                      {(row.satisfaction * 100).toFixed(1)}%
-                    </AppCell>
-                    <AppCell className={`text-right tabular-nums ${row.categorySatisfaction.survival < 0.9 ? "text-rose-300" : "text-[var(--arc-color-atlas-good)]"}`}>{(row.categorySatisfaction.survival * 100).toFixed(0)}%</AppCell>
-                    <AppCell className={`text-right tabular-nums ${row.categorySatisfaction.basic < 0.85 ? "text-rose-300" : row.categorySatisfaction.basic < 1 ? "text-[var(--arc-color-atlas-warning)]" : "text-[var(--arc-color-atlas-good)]"}`}>{(row.categorySatisfaction.basic * 100).toFixed(0)}%</AppCell>
-                    <AppCell className="text-right tabular-nums text-[var(--arc-color-atlas-ink)]">{(row.categorySatisfaction.comfort * 100).toFixed(0)}%</AppCell>
-                    <AppCell className="arc-pop-muted text-right tabular-nums">{(row.categorySatisfaction.luxury * 100).toFixed(0)}%</AppCell>
-                    <AppCell className="text-right tabular-nums">{formatInt(row.ducats)}</AppCell>
-                    <AppCell className="text-right tabular-nums text-[var(--arc-color-atlas-good)]">+{formatInt(row.income)}</AppCell>
-                    <AppCell className="text-right tabular-nums text-rose-300">-{formatInt(row.spend)}</AppCell>
-                    <AppCell className={`text-right tabular-nums ${balance >= 0 ? "text-[var(--arc-color-atlas-good)]" : "text-rose-300"}`}>{formatSignedInt(balance)}</AppCell>
-                    <AppCell className="text-right tabular-nums">
-                      <span className="text-rose-300">{formatInt(row.radicals)}</span>
-                      <span className="arc-pop-muted"> / </span>
-                      <span className="text-[var(--arc-color-atlas-good)]">{formatInt(row.loyalists)}</span>
-                    </AppCell>
-                    <AppCell className="text-right tabular-nums">
-                      <span className="text-[var(--arc-color-atlas-good)]">{formatInt(row.births)}</span>
-                      <span className="arc-pop-muted"> / </span>
-                      <span className="text-rose-300">{formatInt(row.deaths)}</span>
-                    </AppCell>
-                  </tr>
+                  <div key={category} className="arc-pop-overview-detail-row">
+                    <span>{t(NEED_CATEGORY_LABEL_KEYS[category])}</span>
+                    <strong>{stats.required > 0 ? `${Math.round(satisfaction * 100)}%` : t("population.none")}</strong>
+                  </div>
                 );
               })}
-              {populationTables.professionRows.length === 0 && (
-                <tr>
-                  <td colSpan={16}>
-                    <AppEmptyState className="my-1">{t("population.noData")}</AppEmptyState>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </AppTable>
-        </AppTableShell>
-      </AppCard>
-    </div>
-  );
+            </section>
+            <section>
+              <h4>{t("population.detail.finance")}</h4>
+              <div className="arc-pop-overview-detail-row"><span>{t("population.incomePerTurn")}</span><strong>+{formatCompact(row.income)}</strong></div>
+              <div className="arc-pop-overview-detail-row"><span>{t("population.totalExpenses")}</span><strong>-{formatCompact(row.spend)}</strong></div>
+              <div className="arc-pop-overview-detail-row"><span>{t("population.wallet")}</span><strong>{formatCompact(row.ducats)}</strong></div>
+            </section>
+            <section>
+              <h4>{t("population.detail.qualifications")}</h4>
+              <div className="arc-pop-overview-detail-row"><span>{t("population.qualifications")}</span><strong>{formatCompact(row.qualificationLimit)}</strong></div>
+              {shortageRows.length > 0 ? shortageRows.map(([category, value]) => (
+                <div key={category} className="arc-pop-overview-detail-row">
+                  <span>{category}</span>
+                  <strong>{formatCompact(Number(value))}</strong>
+                </div>
+              )) : <div className="arc-pop-overview-muted">{t("population.none")}</div>}
+            </section>
+            <section>
+              <h4>{t("population.detail.status")}</h4>
+              <div className="arc-pop-overview-detail-row"><span>{t("population.employment")}</span><strong>{row.employmentLabel}</strong></div>
+              <div className="arc-pop-overview-detail-row"><span>{t("population.discrimination")}</span><strong>{row.discriminationLabel}</strong></div>
+              <div className="arc-pop-overview-detail-row"><span>{t("population.detail.reasons")}</span><strong>{row.discriminationReasons.join(", ") || t("population.none")}</strong></div>
+            </section>
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
+  const title = mode === "country" ? t("population.countryTitle", { country: countryName }) : t("population.worldTitle");
+  const subtitle = mode === "country" ? t("population.countryRegionSubtitle") : t("population.worldRegionSubtitle");
 
   return (
-    <AppModal open={open} onClose={onClose} modalKey="population" panelClassName="arc-pop-panel overflow-hidden" zIndexClassName="z-[205]">
-            <AppModalHeader title={t("population.panelTitle")} description={subtitle} onClose={onClose} />
+    <AppModal
+      open={open}
+      onClose={onClose}
+      modalKey="population"
+      panelClassName="arc-building-overview-modal arc-pop-overview-modal !rounded-none !border-0 !p-0"
+      paddingClassName="p-[11px]"
+      zIndexClassName="z-[205]"
+    >
+      <header className="arc-building-overview-header">
+        <div>
+          <div className="arc-building-overview-title">{t("population.panelTitle")}</div>
+          <p>{subtitle}</p>
+        </div>
+        <div className="arc-pop-overview-header-actions">
+          <span>{title}</span>
+          <strong>{formatCompact(totalPopulation)}</strong>
+          <AppButton type="button" variant="ghost" size="icon" onClick={onClose} aria-label={t("common.close")}>
+            <ChevronRight size={16} />
+          </AppButton>
+        </div>
+      </header>
 
-            <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-              <AppSection className="p-3">
-                <span className="arc-pop-label mb-2 block">{t("population.scope")}</span>
-                <div className="space-y-2">
-                  <AppButton
-                    type="button"
-                    onClick={() => setMode("country")}
-                    variant={mode === "country" ? "primary" : "ghost"}
-                    className="w-full justify-start"
-                    icon={<MapPinned size={15} />}
-                  >
-                    <span>{countryName}</span>
-                  </AppButton>
-                  <AppButton
-                    type="button"
-                    onClick={() => setMode("world")}
-                    variant={mode === "world" ? "primary" : "ghost"}
-                    className="w-full justify-start"
-                    icon={<Globe2 size={15} />}
-                  >
-                    <span>{t("population.scopeWorld")}</span>
-                  </AppButton>
-                </div>
-              </AppSection>
+      <div className="arc-building-overview-body arc-pop-overview-body">
+        <aside className="arc-pop-overview-sidebar arc-scrollbar">
+          <div className="arc-pop-overview-panel-title">
+            <ChevronDown size={16} />
+            <span>{t("population.filtersTitle")}</span>
+          </div>
+          <button type="button" className="arc-pop-overview-reset" onClick={resetFilters} disabled={selectedFilterCount === 0}>
+            <RotateCcw size={14} />
+            <span>{t("population.resetFilters")}</span>
+          </button>
+          <div className="arc-pop-overview-scope">
+            <button type="button" className={mode === "country" ? "is-active" : ""} onClick={() => setMode("country")}>
+              <MapPinned size={14} />
+              <span>{countryName}</span>
+            </button>
+            <button type="button" className={mode === "world" ? "is-active" : ""} onClick={() => setMode("world")}>
+              <Globe2 size={14} />
+              <span>{t("population.scopeWorld")}</span>
+            </button>
+          </div>
+          {FILTER_KEYS.map((key) => (
+            <div key={key}>{renderFilterGroup(key)}</div>
+          ))}
+        </aside>
 
-              <div className="grid min-h-0 gap-4 lg:grid-rows-[auto_minmax(0,1fr)]">
-                <AppToolbar className="mb-0">
-                <div className="arc-scrollbar flex items-center gap-2 overflow-auto">
-                  {STAT_TABS.map((tab) => {
-                    const TabIcon = tab.icon;
-                    return (
-                      <AppButton
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setSection(tab.id)}
-                        variant={section === tab.id ? "primary" : "ghost"}
-                        size="sm"
-                        className="shrink-0"
-                        icon={<TabIcon size={14} />}
-                      >
-                        {t(tab.labelKey)}
-                      </AppButton>
-                    );
-                  })}
-                </div>
-                </AppToolbar>
+        <main className="arc-pop-overview-main">
+          <section className="arc-pop-overview-section-title">
+            <ChevronDown size={16} />
+            <span>{t("population.chartsTitle")}</span>
+            <strong>{t("population.rowsShown", { count: visibleRows.length })}</strong>
+          </section>
+          <div className="arc-pop-overview-charts arc-scrollbar">
+            {chartDefinitions.map((definition) => {
+              const rows = atomicRows.filter((row) => rowMatchesFilters(row, filters, definition.filterKey));
+              const data = buildChartData({
+                rows,
+                valueKind: definition.valueKind,
+                filterKey: definition.filterKey,
+                groupBy: definition.groupBy,
+              });
+              const selectedIds = definition.filterKey ? filters[definition.filterKey] : [];
+              return (
+                <PopulationTreemapCard
+                  key={definition.id}
+                  title={t(definition.titleKey)}
+                  valueKind={definition.valueKind}
+                  data={data}
+                  selectedIds={selectedIds}
+                  onSelect={(datum) => {
+                    if (datum.filterKey) toggleFilter(datum.filterKey, datum.id);
+                  }}
+                />
+              );
+            })}
+          </div>
 
-                <AppSection className="overflow-auto p-4">
-                  <div className="mb-4 grid gap-3 md:grid-cols-3">
-                    <AppCard className="arc-pop-card">
-                      <div className="arc-pop-label">{t("population.totalPopulation")}</div>
-                      <div className="arc-pop-value mt-1 text-lg">{formatInt(stats.totalPopulation)}</div>
-                    </AppCard>
-                    <AppCard className="arc-pop-card">
-                      <div className="arc-pop-label">{t("population.largestCulture")}</div>
-                      <div className="arc-pop-value mt-1 truncate text-sm">{topCulture?.label ?? t("population.noData")}</div>
-                      <div className="arc-pop-muted text-[11px]">
-                        {topCulture ? `${topCulture.pct.toFixed(2)}% · ${t("population.peopleCount", { count: formatInt(topCulture.count) })}` : "—"}
-                      </div>
-                    </AppCard>
-                    <AppCard className="arc-pop-card">
-                      <div className="arc-pop-label">{t("population.dominantReligion")}</div>
-                      <div className="arc-pop-value mt-1 truncate text-sm">{topReligion?.label ?? t("population.noData")}</div>
-                      <div className="arc-pop-muted text-[11px]">
-                        {topReligion ? `${topReligion.pct.toFixed(2)}% · ${t("population.peopleCount", { count: formatInt(topReligion.count) })}` : "—"}
-                      </div>
-                    </AppCard>
-                  </div>
-
-                  {section === "general" && (
-                    <>
-                      <div className="mb-4">
-                        <div className="arc-pop-section-title">{title}</div>
-                        <div className="arc-pop-section-subtitle">{t("population.aggregatedData")}</div>
-                      </div>
-
-                      <div className="mb-4 grid gap-3 md:grid-cols-2">
-                        <AppCard className="arc-pop-card">
-                          <div className="arc-pop-muted flex items-center gap-2 text-xs">
-                            <Users size={13} />
-                            <span>{t("population.totalPopulation")}</span>
-                          </div>
-                          <div className="arc-pop-value mt-2 text-2xl">{formatInt(stats.totalPopulation)}</div>
-                        </AppCard>
-                        <AppCard className="arc-pop-card">
-                          <div className="arc-pop-muted flex items-center gap-2 text-xs">
-                            <BarChart3 size={13} />
-                            <span>{t("population.regionsInScope")}</span>
-                          </div>
-                          <div className="arc-pop-value mt-2 text-2xl">{formatInt(stats.regionCount)}</div>
-                        </AppCard>
-                      </div>
-
-                      <div className="space-y-3">
-                        {DIMENSION_LABELS.map((dimension) => (
-                          <AppCard key={dimension.key} className="arc-pop-card">
-                            <div className="arc-pop-label mb-2">{t(dimension.labelKey)}</div>
-                            <div className="arc-pop-muted text-sm">{t("population.openTabPrompt", { tab: t(dimension.labelKey) })}</div>
-                          </AppCard>
-                        ))}
-                      </div>
-                    </>
-                  )}
-
-                  {section === "groups" && renderGroupsTable()}
-
-                  {section === "needs" && renderNeedsTable()}
-
-                  {section === "finance" && (
-                    <div className="space-y-4">
-                      <div>
-                        <div className="arc-pop-section-title">{t("population.financeTitle")}</div>
-                        <div className="arc-pop-section-subtitle">{t("population.financeDescription")}</div>
-                      </div>
-
-                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-                        <AppCard className="arc-pop-card">
-                          <div className="arc-pop-label">{t("population.totalCapital")}</div>
-                          <div className="arc-pop-value mt-1 text-lg">{formatInt(financeStats.totalTreasury)} {t("population.ducats")}</div>
-                        </AppCard>
-                        <AppCard className="arc-pop-card">
-                          <div className="arc-pop-label">{t("population.lastTurnChange")}</div>
-                          <div
-                            className={`mt-1 text-lg font-semibold ${
-                              (treasuryDeltaByMode[mode] ?? 0) > 0
-                                ? "text-[var(--arc-color-atlas-good)]"
-                                : (treasuryDeltaByMode[mode] ?? 0) < 0
-                                  ? "text-rose-300"
-                                  : "text-[var(--arc-color-atlas-ink)]"
-                            }`}
-                          >
-                            {treasuryDeltaByMode[mode] == null ? "—" : `${formatSignedInt(treasuryDeltaByMode[mode] ?? 0)} ${t("population.ducats")}`}
-                          </div>
-                        </AppCard>
-                        <AppCard className="arc-pop-card">
-                          <div className="arc-pop-label">{t("population.incomePerTurn")}</div>
-                          <div className="mt-1 text-lg font-semibold text-[var(--arc-color-atlas-good)]">+{formatInt(financeStats.totalIncome)} {t("population.ducats")}</div>
-                        </AppCard>
-                        <AppCard className="arc-pop-card">
-                          <div className="arc-pop-label">{t("population.totalExpenses")}</div>
-                          <div className="mt-1 text-lg font-semibold text-rose-300">-{formatInt(financeStats.totalExpenses)} {t("population.ducats")}</div>
-                        </AppCard>
-                        <AppCard className="arc-pop-card">
-                          <div className="arc-pop-label">{t("population.netBalance")}</div>
-                          <div className={`mt-1 text-lg font-semibold ${financeStats.netBalance >= 0 ? "text-[var(--arc-color-atlas-good)]" : "text-rose-300"}`}>
-                            {formatSignedInt(financeStats.netBalance)} {t("population.ducats")}
-                          </div>
-                        </AppCard>
-                      </div>
-
-                      <div className="grid gap-3 lg:grid-cols-2">
-                        <AppCard className="arc-pop-card">
-                          <div className="arc-pop-label mb-2">{t("population.incomeStructure")}</div>
-                          {renderFlowRows(financeStats.incomeRows)}
-                        </AppCard>
-                        <AppCard className="arc-pop-card">
-                          <div className="arc-pop-label mb-2">{t("population.expenseStructure")}</div>
-                          {renderFlowRows(financeStats.expenseRows)}
-                        </AppCard>
-                      </div>
-
-                      <AppCard className="arc-pop-card">
-                        <div className="arc-pop-label mb-2">{t("population.financeAlerts")}</div>
-                        <div className="space-y-2">
-                          {negativeBalanceAlerts.length > 0 ? (
-                            negativeBalanceAlerts.map((row) => (
-                              <div key={`neg-${row.regionId}`} className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-                                {t("population.negativeRegionBalanceAlert", {
-                                  region: row.regionName,
-                                  turns: row.streak,
-                                  balance: formatSignedInt(row.netBalance),
-                                })}
-                              </div>
-                            ))
-                          ) : (
-                            <AppCard className="arc-pop-card px-3 py-2 text-sm">
-                              {t("population.noNegativeRegionBalance", { turns: NEGATIVE_BALANCE_STREAK_TARGET })}
-                            </AppCard>
-                          )}
-                          {lowCapitalAlerts.length > 0 ? (
-                            lowCapitalAlerts.map((row) => (
-                              <div key={`low-${row.regionId}`} className="arc-market-warning-card px-3 py-2 text-sm">
-                                {t("population.lowRegionCapitalAlert", {
-                                  region: row.regionName,
-                                  capital: row.capitalPerCapita.toFixed(3),
-                                })}
-                              </div>
-                            ))
-                          ) : (
-                            <AppCard className="arc-pop-card px-3 py-2 text-sm">
-                              {t("population.noLowRegionCapital")}
-                            </AppCard>
-                          )}
-                        </div>
-                      </AppCard>
-                    </div>
-                  )}
-
-                  {activeDimension && renderDimensionStats(activeDimension)}
-
-                  {section === "branding" && (
-                    <div className="space-y-4">
-                      <div>
-                        <div className="arc-pop-section-title">{t("population.brandingTitle")}</div>
-                        <div className="arc-pop-section-subtitle">{t("population.brandingDescription")}</div>
-                      </div>
-                      <AppCard className="arc-pop-card p-4">
-                        <div className="arc-pop-label mb-2">{t("population.status")}</div>
-                        <div className="arc-pop-muted text-sm">{t("population.visualReserved")}</div>
-                      </AppCard>
-                    </div>
-                  )}
-                </AppSection>
+          <section className="arc-pop-overview-table-panel">
+            <div className="arc-pop-overview-table-toolbar">
+              <div className="arc-pop-overview-section-title">
+                <Rows3 size={16} />
+                <span>{t("population.tableTitle")}</span>
+                <strong>{formatCompact(totalPopulation)}</strong>
+                <strong>{t("population.tablePoliticalStrength", { value: formatCompact(totalPoliticalStrength) })}</strong>
+              </div>
+              <div className="arc-pop-overview-table-mode">
+                <button type="button" className={tableMode === "atomic" ? "is-active" : ""} onClick={() => setTableMode("atomic")}>
+                  <CircleDot size={14} />
+                  <span>{t("population.mode.atomic")}</span>
+                </button>
+                <button type="button" className={tableMode === "grouped" ? "is-active" : ""} onClick={() => setTableMode("grouped")}>
+                  <ListTree size={14} />
+                  <span>{t("population.mode.grouped")}</span>
+                </button>
               </div>
             </div>
+
+            <div className="arc-pop-overview-table-shell arc-scrollbar">
+              <table className="arc-pop-overview-table">
+                <thead>
+                  <tr>
+                    <th>{t("population.sizeColumn")}</th>
+                    <th>{t("population.professionColumn")}</th>
+                    <th>{t("population.cultureColumn")}</th>
+                    <th>{t("population.religionColumn")}</th>
+                    <th>{t("population.raceColumn")}</th>
+                    <th>{t("population.regionColumn")}</th>
+                    <th>{t("population.table.workplace")}</th>
+                    <th>{t("population.radicals")}</th>
+                    <th>{t("population.loyalists")}</th>
+                    <th>{t("population.table.sol")}</th>
+                    <th>{t("population.table.politicalStrength")}</th>
+                    <th>{t("population.table.ideologyInterest")}</th>
+                    <th>{t("population.discrimination")}</th>
+                    <th>{t("population.table.actions")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRows.map((row) => {
+                    const expanded = expandedRows.includes(row.id);
+                    return (
+                      <Fragment key={row.id}>
+                        <tr className="arc-pop-overview-table-row">
+                          <td><strong>{formatCompact(row.size)}</strong></td>
+                          <td>{row.professionName}</td>
+                          <td>{row.cultureName}</td>
+                          <td>{row.religionName}</td>
+                          <td>{row.raceName}</td>
+                          <td>{row.regionName}</td>
+                          <td>{row.employmentLabel}</td>
+                          <td className="is-bad">{formatCompact(row.radicals)}</td>
+                          <td className="is-good">{formatCompact(row.loyalists)}</td>
+                          <td>{row.solBucketLabel} ({row.standardOfLiving.toFixed(1)})</td>
+                          <td>{formatCompact(row.politicalStrength)}</td>
+                          <td>{row.ideologyLabel}</td>
+                          <td className={row.discriminationKey === "discriminated" ? "is-bad" : "is-good"}>{row.discriminationLabel}</td>
+                          <td>
+                            <button type="button" className="arc-pop-overview-detail-button" onClick={() => toggleExpanded(row.id)}>
+                              {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                              <span>{t("population.table.details")}</span>
+                            </button>
+                          </td>
+                        </tr>
+                        {expanded ? renderRowDetails(row) : null}
+                      </Fragment>
+                    );
+                  })}
+                  {visibleRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={14}>
+                        <div className="arc-pop-overview-empty">{t("population.noData")}</div>
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
     </AppModal>
   );
 }

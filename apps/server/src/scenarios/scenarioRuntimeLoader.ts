@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { enrichHexMapVisualMetadata, type HexMapArtifact, type WorldBase } from "@arcanorum/shared";
 import {
@@ -29,6 +29,7 @@ import { loadRawScenarioContent } from "./scenarioContentLoader";
 import { ensureGeneratedResourceDeposits, loadGeneratedResourceDeposits } from "./resourceDepositGeneration";
 import {
   buildHexOwnerFromRegionHistory,
+  buildCountryPopulationAcceptanceFromHistory,
   buildRegionControllerFromRegionHistory,
   buildRegionOwnerFromRegionHistory,
   buildResourcesByCountryFromHistory,
@@ -60,6 +61,8 @@ export function normalizeScenarioContentForRuntime(source: unknown): GameSetting
   return {
     assets: normalizeContentAssets(contentSource.assets),
     races: ensureDefaultRace(normalizeContentRaces(contentSource.races)),
+    cultureGroups: normalizeContentCultures(contentSource.cultureGroups ?? contentSource.culture_groups),
+    religionGroups: normalizeContentCultures(contentSource.religionGroups ?? contentSource.religion_groups),
     resourceCategories: normalizeContentCultures(contentSource.resourceCategories ?? contentSource.resource_categories).map((entry) => ({
       ...entry,
       logoUrl: normalizeContentLogoUrl("resourceCategories", entry.logoUrl),
@@ -140,6 +143,33 @@ export function loadResourcesByCountryFromHistory(history: ScenarioHistory | nul
   return buildResourcesByCountryFromHistory(history);
 }
 
+function applyScenarioCountryIdentity(base: WorldBase): void {
+  base.countryIdentityByCountryId ??= {};
+  base.countryPopulationAcceptanceByCountryId ??= {};
+  for (const countryId of Object.keys(base.resourcesByCountry)) {
+    const cultureId = `culture:${countryId}`;
+    const religionId = `religion:${countryId}`;
+    const raceId = "race:default";
+    base.countryIdentityByCountryId[countryId] = {
+      cultureId,
+      religionId,
+      raceId,
+      cultureGroupId: "culture_group:riverine_city_states",
+      religionGroupId: "religion_group:temple_cults",
+    };
+    const acceptance = base.countryPopulationAcceptanceByCountryId[countryId] ?? {
+      acceptedCultureIds: [],
+      acceptedReligionIds: [],
+      acceptedRaceIds: [],
+    };
+    base.countryPopulationAcceptanceByCountryId[countryId] = {
+      acceptedCultureIds: [...new Set([...acceptance.acceptedCultureIds, cultureId])],
+      acceptedReligionIds: [...new Set([...acceptance.acceptedReligionIds, religionId])],
+      acceptedRaceIds: [...new Set([...acceptance.acceptedRaceIds, raceId])],
+    };
+  }
+}
+
 export function buildWorldBaseFromScenarioRuntime(params: {
   currentTurnId: number;
   scenarioDir: string | null;
@@ -152,7 +182,10 @@ export function buildWorldBaseFromScenarioRuntime(params: {
   base.regionOwner = loadRegionOwnerFromRegionHistory(history);
   base.regionController = loadRegionControllerFromRegionHistory(history);
   base.hexOwner = loadHexOwnerFromRegionHistory(history);
+  base.countryPopulationAcceptanceByCountryId = buildCountryPopulationAcceptanceFromHistory(history);
+  applyScenarioCountryIdentity(base);
   applyAuthoredStateFromHistory(base, history, params);
+  applyScenarioPopulationFiles(base, params);
   applyGeneratedResourceDeposits(base, params);
   if (setup.countryResources) base.resourcesByCountry = params.normalizeResourcesByCountryMap(setup.countryResources);
   if (setup.hexOwners) base.hexOwner = normalizeScenarioStringMap(setup.hexOwners);
@@ -209,7 +242,6 @@ function applyAuthoredStateFromHistory(
   normalizers: Pick<
     BuildWorldBaseFromScenarioRuntimeDeps,
     | "normalizeRegionColonizationMap"
-    | "normalizeRegionPopulationMap"
     | "normalizeRegionBuildingsMap"
     | "normalizeRegionBuildingDucatsMap"
     | "normalizeRegionPopulationTreasuryMap"
@@ -219,12 +251,44 @@ function applyAuthoredStateFromHistory(
 ): void {
   if (!history || history.regions.length === 0) return;
   base.regionColonizationByRegion = normalizers.normalizeRegionColonizationMap(mapRegionField(history, "colonization"));
-  base.regionPopulationByRegion = normalizers.normalizeRegionPopulationMap(mapRegionPopulation(history));
   base.regionBuildingsByRegion = normalizers.normalizeRegionBuildingsMap(mapRegionArrayField(history, "buildings"));
   base.regionBuildingDucatsByRegion = normalizers.normalizeRegionBuildingDucatsMap(mapRegionObjectField(history, "buildingDucats"));
   base.regionPopulationTreasuryByRegion = normalizers.normalizeRegionPopulationTreasuryMap(mapRegionField(history, "populationTreasury"));
   base.regionConstructionQueueByRegion = normalizers.normalizeRegionConstructionQueueMap(mapRegionArrayField(history, "construction"));
   base.regionResourceDepositsByRegion = normalizers.normalizeRegionResourceDepositsMap(mapRegionArrayField(history, "resourceDeposits"));
+}
+
+function applyScenarioPopulationFiles(
+  base: WorldBase,
+  params: {
+    scenarioDir: string | null;
+    normalizeRegionPopulationMap: (input: unknown) => WorldBase["regionPopulationByRegion"];
+  },
+): void {
+  if (!params.scenarioDir) return;
+  const rows = loadScenarioPopulationRows(params.scenarioDir);
+  if (Object.keys(rows).length === 0) return;
+  base.regionPopulationByRegion = {
+    ...base.regionPopulationByRegion,
+    ...params.normalizeRegionPopulationMap(rows),
+  };
+}
+
+function loadScenarioPopulationRows(scenarioDir: string): Record<string, unknown> {
+  const populationDir = resolve(scenarioDir, "common", "populations");
+  if (!existsSync(populationDir)) return {};
+  const rows: Record<string, unknown> = {};
+  for (const entry of listJsonObjectsRecursively(populationDir)) {
+    const candidates = Array.isArray(entry.regions) ? entry.regions : [entry];
+    for (const candidate of candidates) {
+      if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) continue;
+      const row = candidate as Record<string, unknown>;
+      const regionId = typeof row.regionId === "string" ? row.regionId.trim() : "";
+      if (!regionId) throw new Error("population-file-missing-regionId");
+      rows[regionId] = { pops: Array.isArray(row.pops) ? row.pops : [] };
+    }
+  }
+  return rows;
 }
 
 function applyGeneratedResourceDeposits(
@@ -264,17 +328,6 @@ function applyGeneratedResourceDeposits(
   }
 }
 
-function mapRegionPopulation(history: ScenarioHistory): Record<string, unknown> {
-  return Object.fromEntries(
-    history.regions.map((region) => [
-      region.id,
-      Array.isArray(region.data.pops) && region.data.pops.length > 0
-        ? { pops: region.data.pops }
-        : { populationTotal: 0 },
-    ]),
-  );
-}
-
 function mapRegionArrayField(history: ScenarioHistory, field: string): Record<string, unknown> {
   return Object.fromEntries(
     history.regions.map((region) => [region.id, Array.isArray(region.data[field]) ? region.data[field] : []]),
@@ -294,4 +347,20 @@ function mapRegionObjectField(history: ScenarioHistory, field: string): Record<s
 
 function mapRegionField(history: ScenarioHistory, field: string): Record<string, unknown> {
   return Object.fromEntries(history.regions.map((region) => [region.id, region.data[field]]));
+}
+
+function listJsonObjectsRecursively(dir: string): Record<string, unknown>[] {
+  if (!existsSync(dir)) return [];
+  const result: Record<string, unknown>[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const childPath = resolve(dir, entry.name);
+    if (entry.isDirectory()) {
+      result.push(...listJsonObjectsRecursively(childPath));
+      continue;
+    }
+    if (!entry.isFile() || !entry.name.toLowerCase().endsWith(".json")) continue;
+    const parsed = JSON.parse(readFileSync(childPath, "utf8")) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) result.push(parsed as Record<string, unknown>);
+  }
+  return result;
 }

@@ -10,6 +10,7 @@ import { registerAuthRegistrationRoutes } from "../routes/authRegistrationRoutes
 import type { AdminCountryDbRecord } from "../routes/adminCountryRoutes";
 import type { ImageDimensionRule } from "../uploads/uploadValidation";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
+import type { GameSettings } from "./gameSettingsTypes";
 
 type AccountUploadMiddleware = {
   fields: (fields: Array<{ name: string; maxCount?: number }>) => express.RequestHandler;
@@ -32,6 +33,7 @@ type AccountRouteRuntimeParams = {
   };
   getTurnId: () => number;
   getWorldBase: () => WorldBase;
+  getGameSettings: () => GameSettings;
   getRegistrationRequiresAdminApproval: () => boolean;
   getInitialColonizationPoints: () => number;
   getInitialConstructionPoints: () => number;
@@ -89,9 +91,15 @@ export function registerAccountRouteRuntime(params: AccountRouteRuntimeParams): 
     masks: params.masks,
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,
+    getGameSettings: params.getGameSettings,
     getRegistrationRequiresAdminApproval: params.getRegistrationRequiresAdminApproval,
     getInitialColonizationPoints: params.getInitialColonizationPoints,
     getInitialConstructionPoints: params.getInitialConstructionPoints,
+    countryIdentityNameExists: async (kind, name) => {
+      const where = kind === "culture" ? { cultureName: name } : { religionName: name };
+      const existing = await params.prisma.country.findFirst({ where, select: { id: true } });
+      return Boolean(existing);
+    },
     countAdminCountries: () => params.prisma.country.count({ where: { isAdmin: true } }),
     createCountry: async (data) =>
       params.prisma.country.create({ data, select: params.countrySelect }) as Promise<AdminCountryDbRecord>,

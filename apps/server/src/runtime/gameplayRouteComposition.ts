@@ -1,7 +1,6 @@
 import type express from "express";
 import type { EventLogEntry, Order, WsOutMessage } from "@arcanorum/shared";
 import type { PrismaClient } from "@prisma/client";
-import type { PopulationDomainKeys } from "../mechanics/populationMechanics";
 import type { RouteAuth } from "../security/routeAuth";
 import type { BuildingContentEntry, GameSettings } from "./gameSettingsTypes";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
@@ -45,20 +44,6 @@ type GameplayRouteCompositionParams = {
     getBuildingMaxLevel: (building: BuildingContentEntry | undefined) => number;
     getBuildingUpgradeCosts: (building: BuildingContentEntry | undefined) => { costConstruction: number; costDucats: number };
     getBuildingConstructionTotalCostByLevel: (building: BuildingContentEntry | undefined, levelRaw: number) => number;
-  };
-  worldPopulationRuntime: {
-    getPopulationDomainKeys: () => PopulationDomainKeys;
-    buildRandomRegionPopulation: (
-      hexId: string,
-      domains: PopulationDomainKeys,
-      populationTotal?: number,
-    ) => ReturnType<HexDeps["buildRandomRegionPopulation"]>;
-    normalizePopulationPops: (
-      rawPops: unknown,
-      hexId: string,
-      domains: PopulationDomainKeys,
-    ) => ReturnType<HexDeps["normalizePopulationPops"]>;
-    isEqualRegionPopulation: HexDeps["isEqualRegionPopulation"];
   };
   countryWorldRuntime: {
     ensureCountryInWorldBase: CountryActionDeps["ensureCountryInWorldBase"];
@@ -138,16 +123,6 @@ export function registerGameplayRouteComposition(params: GameplayRouteCompositio
     getHexRenameDucatsCost: params.getHexRenameDucatsCost,
     getRegionColonizationConfig: params.colonizationRuntime.getRegionColonizationConfig,
     getRegionDerivedColonizationCosts: params.colonizationRuntime.getRegionDerivedColonizationCosts,
-    getPopulationDomainKeys: () => params.worldPopulationRuntime.getPopulationDomainKeys(),
-    buildRandomRegionPopulation: (hexId, domains, populationTotal) =>
-      params.worldPopulationRuntime.buildRandomRegionPopulation(
-        hexId,
-        domains as PopulationDomainKeys,
-        populationTotal,
-      ),
-    normalizePopulationPops: (rawPops, hexId, domains) =>
-      params.worldPopulationRuntime.normalizePopulationPops(rawPops, hexId, domains as PopulationDomainKeys),
-    isEqualRegionPopulation: params.worldPopulationRuntime.isEqualRegionPopulation,
     cleanupRegionColonizationProgress: params.colonizationRuntime.cleanupRegionColonizationProgress,
     recalculateAllRegionColonizationCosts: params.colonizationRuntime.recalculateAllRegionColonizationCosts,
     ensureCountryInWorldBase: params.countryWorldRuntime.ensureCountryInWorldBase,

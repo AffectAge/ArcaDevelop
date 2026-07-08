@@ -10,7 +10,6 @@ type PopulationSystemsRuntimeParams = {
   getWorldBase: () => WorldBase;
   getTurnId: () => number;
   getHexIndex: () => HexMapIndexEntry[];
-  getHexAreaKm2: (hexId: string) => number;
   getHexOwner: (hexId: string) => string | null;
   marketPriceRuntimeState: MarketPriceRuntimeState;
   getActiveCountryModifierRows: Parameters<typeof createWorldPopulationRuntime>[0]["getActiveCountryModifierRows"];
@@ -47,7 +46,6 @@ export function createPopulationSystemsRuntime(params: PopulationSystemsRuntimeP
     getWorldBase: params.getWorldBase,
     getTurnId: params.getTurnId,
     getHexIndex: params.getHexIndex,
-    getHexAreaKm2: params.getHexAreaKm2,
     getHexOwner: params.getHexOwner,
     setLatestMarketOverview: params.marketPriceRuntimeState.setLatestMarketOverview,
     getActiveCountryModifierRows: params.getActiveCountryModifierRows,

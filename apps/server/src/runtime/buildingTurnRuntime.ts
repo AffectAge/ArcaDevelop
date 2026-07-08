@@ -2,7 +2,6 @@ import type {
   BuildingInstance,
   ExplanationRecord,
   ModifierStat,
-  PopulationProfessionState,
   RegionPopulation,
   WorldBase,
 } from "@arcanorum/shared";
@@ -67,8 +66,11 @@ import {
   calculateWageMultipliers,
   calculateWorkforceDemand,
   getPopulationTotal,
+  allocatePopulationJobs,
   resolveRegionPopulationNeedsTurn,
   type CultureNeed,
+  type PopulationAcceptanceContentEntry,
+  type PopulationAcceptanceContext,
   type PopulationDimensionKey,
   type PopulationDomainKeys,
 } from "../mechanics/populationMechanics";
@@ -116,7 +118,7 @@ export type ResolveBuildingsTurnRuntimeDeps = {
 
 export type ResolveBuildingsTurnRuntimeResult = {
   latestMarketOverview: MarketOverviewState;
-  nextProfessionsByPopIdByHex: Record<string, Record<string, Record<string, PopulationProfessionState>>>;
+  nextPopulationByRegion: Record<string, RegionPopulation>;
 };
 
 type RegionTurnContext = {
@@ -172,7 +174,8 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   const neighborHexesById = new Map<string, HexMapIndexEntry[]>();
   const goodById = new Map(gameSettings.content.goods.map((entry) => [entry.id, entry] as const));
   const professionById = new Map(gameSettings.content.professions.map((entry) => [entry.id, entry] as const));
-  const nextProfessionsByPopIdByHex: Record<string, Record<string, Record<string, PopulationProfessionState>>> = {};
+  const lawById = new Map(gameSettings.content.laws.map((entry) => [entry.id, entry] as const));
+  const nextPopulationByRegion: Record<string, RegionPopulation> = {};
   const smoothing = Number(
     Math.max(0, Math.min(1, gameSettings.economy.marketPriceSmoothing ?? defaultMarketPriceSmoothing)).toFixed(3),
   );
@@ -444,6 +447,18 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
 
     const getEffectivePopulationGoodPrice = (goodId: string): number =>
       Math.max(0.001, Math.min(getCountryGoodPrice(ownerCountryId, goodId), getGlobalGoodPrice(goodId)));
+    const activeLaws = getActivePopulationLaws(worldBase.parliamentByCountry[ownerCountryId]?.activeLawByGroupId, lawById);
+    const acceptanceContext = buildPopulationAcceptanceContext({
+      countryId: ownerCountryId,
+      baseAcceptance: worldBase.countryPopulationAcceptanceByCountryId?.[ownerCountryId],
+      activeLaws,
+    });
+    const getNeedsForPop = (pop: RegionPopulation["pops"][number]): CultureNeed[] => sortCultureNeedsByPriority([
+      ...getActiveCultureNeeds(pop.professionId, pop.standardOfLiving),
+      ...getActiveCultureNeeds(pop.cultureId, pop.standardOfLiving),
+      ...getActiveCultureNeeds(pop.raceId, pop.standardOfLiving),
+      ...getActiveCultureNeeds(pop.religionId, pop.standardOfLiving),
+    ]);
 
     const purchasePopulationGood = (
       goodId: string,
@@ -722,18 +737,28 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     const activeBuildingInstances = finalizedRegionBuildings.activeBuildingInstances;
 
     if (populationTotal > 0) {
-      const provinceNeeds = resolveRegionPopulationNeedsTurn({
+      const hiredPopulation = allocatePopulationJobs({
         population,
-        employedByProfession,
-        professionIds: domains.professionPct,
+        demandByProfession: employedByProfession,
         fallbackProfessionId: fallbackByDimension.professionPct,
+        professionsById: professionById,
+        acceptanceContext,
+        activeLaws,
+      }).nextPopulation;
+      const provinceNeeds = resolveRegionPopulationNeedsTurn({
+        population: hiredPopulation,
+        demandByProfession: employedByProfession,
+        fallbackProfessionId: fallbackByDimension.professionPct,
+        professionsById: professionById,
+        acceptanceContext,
+        activeLaws,
         wagesByProfession,
-        getNeedsForPop: (pop, state) => sortCultureNeedsByPriority(getActiveCultureNeeds(pop.cultureId, state.standardOfLiving)),
+        getNeedsForPop,
         getGoodPrice: getEffectivePopulationGoodPrice,
         getAvailableGoodAmount,
         purchaseGood: purchasePopulationGood,
       });
-      nextProfessionsByPopIdByHex[regionId] = provinceNeeds.nextProfessionsByPopId;
+      nextPopulationByRegion[regionId] = provinceNeeds.nextPopulation;
       for (const [goodId, amount] of Object.entries(provinceNeeds.demandRequestedByGood)) {
         addCountryGood(demandRequestedByCountry, marketId, goodId, amount);
         addGlobalGood(demandRequestedGlobal, goodId, amount);
@@ -815,7 +840,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     getTransportCorridorCapacity: (corridor) => getTransportCorridorCapacity(corridor),
     pushCountryAlert,
   });
-  return { latestMarketOverview, nextProfessionsByPopIdByHex };
+  return { latestMarketOverview, nextPopulationByRegion };
 }
 
 function buildRegionTurnContexts(params: {
@@ -855,6 +880,46 @@ function buildRegionTurnContexts(params: {
           .sort((left, right) => left.instanceId.localeCompare(right.instanceId)),
       }];
     });
+}
+
+function getActivePopulationLaws(
+  activeLawByGroupId: Record<string, string> | undefined,
+  lawById: ReadonlyMap<string, PopulationAcceptanceContentEntry>,
+): PopulationAcceptanceContentEntry[] {
+  return Object.values(activeLawByGroupId ?? {})
+    .map((lawId) => lawById.get(lawId))
+    .filter((law): law is PopulationAcceptanceContentEntry => Boolean(law));
+}
+
+function buildPopulationAcceptanceContext(params: {
+  countryId: string;
+  baseAcceptance?: {
+    acceptedCultureIds?: string[];
+    acceptedReligionIds?: string[];
+    acceptedRaceIds?: string[];
+  };
+  activeLaws: PopulationAcceptanceContentEntry[];
+}): PopulationAcceptanceContext {
+  const acceptedCultureIds = new Set<string>(params.baseAcceptance?.acceptedCultureIds ?? []);
+  const acceptedReligionIds = new Set<string>(params.baseAcceptance?.acceptedReligionIds ?? []);
+  const acceptedRaceIds = new Set<string>(params.baseAcceptance?.acceptedRaceIds ?? []);
+  for (const law of params.activeLaws) {
+    if (law.acceptanceMode === "replace") {
+      acceptedCultureIds.clear();
+      acceptedReligionIds.clear();
+      acceptedRaceIds.clear();
+    }
+    for (const id of law.acceptedCultureIds ?? []) acceptedCultureIds.add(id);
+    for (const id of law.acceptedReligionIds ?? []) acceptedReligionIds.add(id);
+    for (const id of law.acceptedRaceIds ?? []) acceptedRaceIds.add(id);
+  }
+  return {
+    countryId: params.countryId,
+    acceptedCultureIds,
+    acceptedReligionIds,
+    acceptedRaceIds,
+    activeLawIds: new Set(params.activeLaws.map((law) => law.id)),
+  };
 }
 
 function resolveAdjacencyThroughputFactor(params: {

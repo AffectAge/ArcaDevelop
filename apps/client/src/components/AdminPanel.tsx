@@ -1,25 +1,20 @@
 import { Listbox } from "@headlessui/react";
 import { useEffect, useMemo, useState } from "react";
-import { BellRing, Check, ChevronDown, Flag, Map as MapIcon, Palette, RotateCcw, Shield, Trash2, Upload, Users } from "lucide-react";
+import { BellRing, Check, ChevronDown, Flag, Map as MapIcon, Palette, RotateCcw, Shield, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import type { Country, PopulationPop, RegionPopulation } from "@arcanorum/shared";
+import type { Country } from "@arcanorum/shared";
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 import {
-  adminClearPopulation,
   adminBroadcastUiNotification,
   adminDeleteCountry,
-  adminGeneratePopulation,
   adminResetRegionColonizationCostToAuto,
   adminSetCountryPunishment,
   adminUpdateCountry,
-  adminUpdateRegionPopulation,
   adminUpdateRegion,
   fetchAdminRegions,
   fetchAdminHexes,
   fetchCountries,
-  type AdminPopulationScope,
-  type AdminPopulationStrategy,
   type AdminHexItem,
   type AdminRegionItem,
 } from "../lib/api";
@@ -39,7 +34,6 @@ type Props = {
 const categories = [
   { id: "countries", labelKey: "adminPanel.category.countries", icon: Flag },
   { id: "provinces", labelKey: "adminPanel.category.provinces", icon: MapIcon },
-  { id: "population", labelKey: "adminPanel.category.population", icon: Users },
   { id: "notifications", labelKey: "adminPanel.category.notifications", icon: BellRing },
 ] as const;
 
@@ -52,55 +46,11 @@ const listboxOptionsClass = "arc-scrollbar absolute z-30 mt-2 max-h-64 w-full ov
 const optionClass = (active: boolean) =>
   `relative cursor-pointer rounded-md px-3 py-2 pr-9 transition ${active ? "bg-[rgb(var(--theme-accent-soft))] text-[rgb(var(--theme-accent))]" : "text-[rgb(var(--theme-text-secondary))]"}`;
 
-const populationScopeOptions: Array<{ id: AdminPopulationScope; labelKey: UiTextKey }> = [
-  { id: "region", labelKey: "adminPanel.scope.region" },
-  { id: "country", labelKey: "adminPanel.scope.country" },
-  { id: "world", labelKey: "adminPanel.scope.world" },
-];
-
-const populationStrategyOptions: Array<{ id: AdminPopulationStrategy; labelKey: UiTextKey }> = [
-  { id: "random", labelKey: "adminPanel.strategy.random" },
-  { id: "custom", labelKey: "adminPanel.strategy.custom" },
-];
-
 const broadcastCategoryOptions: Array<{ id: "system" | "politics" | "economy"; labelKey: UiTextKey }> = [
   { id: "system", labelKey: "notifications.category.system" },
   { id: "politics", labelKey: "notifications.category.politics" },
   { id: "economy", labelKey: "notifications.category.economy" },
 ];
-
-const DEFAULT_POPULATION_POPS: PopulationPop[] = [
-  {
-    id: "pop:default",
-    size: 10000,
-    cultureId: "culture:default",
-    religionId: "religion:default",
-    raceId: "race:default",
-    ideologies: { "ideology:default": 10000 },
-    professions: {
-      "profession:default": {
-        size: 10000,
-        ducats: 0,
-        standardOfLiving: 8,
-        radicals: 0,
-        loyalists: 0,
-        lastIncomeDucats: 0,
-        lastNeedsSpendDucats: 0,
-        lastNeedsSatisfaction: 1,
-        lastBirths: 0,
-        lastDeaths: 0,
-      },
-    },
-  },
-];
-
-function stringifyPopulationPops(value: PopulationPop[]): string {
-  return JSON.stringify(value, null, 2);
-}
-
-function getPopulationTotal(population: RegionPopulation | null | undefined): number {
-  return Math.max(0, Math.floor((population?.pops ?? []).reduce((sum, pop) => sum + Math.max(0, Number(pop.size)), 0)));
-}
 
 export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCountryUpdated, initialHexId }: Props) {
   const { t, locale } = useUiText();
@@ -131,12 +81,6 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
   const [regionColonizationCost, setRegionColonizationCost] = useState(100);
   const [regionColonizationDisabled, setRegionColonizationDisabled] = useState(false);
   const [provinceSearch, setHexSearch] = useState("");
-  const [populationScope, setPopulationScope] = useState<AdminPopulationScope>("region");
-  const [populationStrategy, setPopulationStrategy] = useState<AdminPopulationStrategy>("random");
-  const [populationTargetCountryId, setPopulationTargetCountryId] = useState<string>("");
-  const [populationTotalInput, setPopulationTotalInput] = useState<string>("");
-  const [populationPopsJson, setPopulationPopsJson] = useState<string>(stringifyPopulationPops(DEFAULT_POPULATION_POPS));
-  const [RegionPopulationPopsJson, setRegionPopulationPopsJson] = useState<string>(stringifyPopulationPops(DEFAULT_POPULATION_POPS));
   const [broadcastCategory, setBroadcastCategory] = useState<"system" | "politics" | "economy">("system");
   const [broadcastTitle, setBroadcastTitle] = useState("");
   const [broadcastMessage, setBroadcastMessage] = useState("");
@@ -195,9 +139,6 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
         if (!selectedCountryId && countryList.length > 0) {
           setSelectedCountryId(countryList[0].id);
         }
-        if (!populationTargetCountryId && countryList.length > 0) {
-          setPopulationTargetCountryId(countryList[0].id);
-        }
         if (!selectedHexId && provinceList.length > 0) {
           setSelectedHexId(provinceList[0].id);
         }
@@ -242,8 +183,6 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     setHexOwnerCountryId(selectedRegion.ownerCountryId ?? "");
     setRegionColonizationCost(selectedRegion.colonizationCost);
     setRegionColonizationDisabled(selectedRegion.colonizationDisabled);
-    const population = selectedRegion.population ?? null;
-    setRegionPopulationPopsJson(stringifyPopulationPops(population?.pops ?? []));
   }, [selectedRegion]);
 
   useEffect(() => {
@@ -441,189 +380,9 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     }
   };
 
-  const parsePopulationPopsJson = (raw: string): PopulationPop[] => {
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      throw new Error("INVALID_POPULATION_POPS_JSON");
-    }
-    return parsed.map((raw, index) => {
-      if (!raw || typeof raw !== "object") {
-        throw new Error("INVALID_POPULATION_POP");
-      }
-      const row = raw as Partial<PopulationPop>;
-      const size = Number(row.size);
-      if (!Number.isFinite(size) || size < 0) {
-        throw new Error("INVALID_POPULATION_POP_SIZE");
-      }
-      const requireId = (value: unknown): string => {
-        if (typeof value !== "string" || !value.trim()) {
-          throw new Error("INVALID_POPULATION_POP_ID");
-        }
-        return value.trim();
-      };
-      const requireCountMap = (value: unknown): Record<string, number> => {
-        if (!value || typeof value !== "object" || Array.isArray(value)) {
-          throw new Error("INVALID_POPULATION_POP_MAP");
-        }
-        const result: Record<string, number> = {};
-        for (const [key, amount] of Object.entries(value as Record<string, unknown>)) {
-          const num = Number(amount);
-          if (!key.trim() || !Number.isFinite(num) || num < 0) {
-            throw new Error("INVALID_POPULATION_POP_MAP");
-          }
-          result[key.trim()] = Math.floor(num);
-        }
-        return result;
-      };
-      const requireProfessionMap = (value: unknown): PopulationPop["professions"] => {
-        if (!value || typeof value !== "object" || Array.isArray(value)) {
-          throw new Error("INVALID_POPULATION_POP_MAP");
-        }
-        const result: PopulationPop["professions"] = {};
-        for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
-          if (!key.trim()) throw new Error("INVALID_POPULATION_POP_MAP");
-          if (typeof raw === "number") {
-            result[key.trim()] = {
-              size: Math.max(0, Math.floor(raw)),
-              ducats: 0,
-              standardOfLiving: 8,
-              radicals: 0,
-              loyalists: 0,
-              lastIncomeDucats: 0,
-              lastNeedsSpendDucats: 0,
-              lastNeedsSatisfaction: 1,
-              lastBirths: 0,
-              lastDeaths: 0,
-            };
-          } else if (raw && typeof raw === "object") {
-            const row = raw as Partial<PopulationPop["professions"][string]>;
-            result[key.trim()] = {
-              size: Math.max(0, Math.floor(Number(row.size ?? 0))),
-              ducats: Math.max(0, Number(row.ducats ?? 0)),
-              standardOfLiving: Math.max(0, Number(row.standardOfLiving ?? 8)),
-              radicals: Math.max(0, Math.floor(Number(row.radicals ?? 0))),
-              loyalists: Math.max(0, Math.floor(Number(row.loyalists ?? 0))),
-              lastIncomeDucats: Math.max(0, Number(row.lastIncomeDucats ?? 0)),
-              lastNeedsSpendDucats: Math.max(0, Number(row.lastNeedsSpendDucats ?? 0)),
-              lastNeedsSatisfaction: Math.max(0, Number(row.lastNeedsSatisfaction ?? 1)),
-              lastBirths: Math.max(0, Math.floor(Number(row.lastBirths ?? 0))),
-              lastDeaths: Math.max(0, Math.floor(Number(row.lastDeaths ?? 0))),
-            };
-          }
-        }
-        return result;
-      };
-      return {
-        id: typeof row.id === "string" && row.id.trim() ? row.id.trim() : `pop:${index}`,
-        size: Math.floor(size),
-        cultureId: requireId(row.cultureId),
-        religionId: requireId(row.religionId),
-        raceId: requireId(row.raceId),
-        ideologies: requireCountMap(row.ideologies),
-        professions: requireProfessionMap(row.professions),
-      };
-    });
-  };
-
   const reloadAdminRegions = async () => {
     const regionList = await fetchAdminRegions(token);
     setRegions(regionList);
-  };
-
-  const generatePopulation = async () => {
-    if (populationScope === "region" && !selectedRegionId) {
-      toast.error(t("adminPanel.selectRegion"));
-      return;
-    }
-    if (populationScope === "country" && !populationTargetCountryId) {
-      toast.error(t("adminPanel.selectCountry"));
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const payload: Parameters<typeof adminGeneratePopulation>[1] = {
-        scope: populationScope,
-        strategy: populationStrategy,
-        regionId: populationScope === "region" ? selectedRegionId : undefined,
-        countryId: populationScope === "country" ? populationTargetCountryId : undefined,
-      };
-      const total = Number(populationTotalInput);
-      if (Number.isFinite(total) && populationTotalInput.trim() !== "") {
-        payload.populationTotal = Math.max(0, Math.floor(total));
-      }
-      if (populationStrategy === "custom") {
-        payload.pops = parsePopulationPopsJson(populationPopsJson);
-      }
-      const result = await adminGeneratePopulation(token, payload);
-      await reloadAdminRegions();
-      toast.success(t("adminPanel.populationGenerated", { count: result.updatedCount }));
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "ADMIN_POPULATION_GENERATE_FAILED";
-      if (msg.startsWith("INVALID_POPULATION_POP")) {
-        toast.error(t("adminPanel.populationJsonInvalid"));
-      } else if (msg === "COUNTRY_HAS_NO_REGIONS") {
-        toast.error(t("adminPanel.countryHasNoRegions"));
-      } else {
-        toast.error(t("adminPanel.populationGenerateFailed"));
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const clearPopulation = async () => {
-    if (populationScope === "region" && !selectedRegionId) {
-      toast.error(t("adminPanel.selectRegion"));
-      return;
-    }
-    if (populationScope === "country" && !populationTargetCountryId) {
-      toast.error(t("adminPanel.selectCountry"));
-      return;
-    }
-    setSaving(true);
-    try {
-      const result = await adminClearPopulation(token, {
-        scope: populationScope,
-        regionId: populationScope === "region" ? selectedRegionId : undefined,
-        countryId: populationScope === "country" ? populationTargetCountryId : undefined,
-      });
-      await reloadAdminRegions();
-      toast.success(t("adminPanel.populationCleared", { count: result.updatedCount }));
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "ADMIN_POPULATION_CLEAR_FAILED";
-      if (msg === "COUNTRY_HAS_NO_REGIONS") {
-        toast.error(t("adminPanel.countryHasNoRegions"));
-      } else {
-        toast.error(t("adminPanel.populationClearFailed"));
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveRegionPopulation = async () => {
-    if (!selectedRegion) {
-      toast.error(t("adminPanel.selectRegion"));
-      return;
-    }
-    setSaving(true);
-    try {
-      await adminUpdateRegionPopulation(token, selectedRegion.id, {
-        pops: parsePopulationPopsJson(RegionPopulationPopsJson),
-      });
-      await reloadAdminRegions();
-      toast.success(t("adminPanel.regionPopulationUpdated"));
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "ADMIN_POPULATION_UPDATE_FAILED";
-      if (msg.startsWith("INVALID_POPULATION_POP")) {
-        toast.error(t("adminPanel.populationJsonInvalid"));
-      } else {
-        toast.error(t("adminPanel.regionPopulationUpdateFailed"));
-      }
-    } finally {
-      setSaving(false);
-    }
   };
 
   return (
@@ -848,256 +607,6 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
                         </div>
                       )}
                     </>
-                  )}
-
-                  {activeCategory === "population" && (
-                    <div className="space-y-4">
-                      <div className={panelClass}>
-                        <div className="mb-3 text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("adminPanel.populationGenerateTitle")}</div>
-                        <div className="grid gap-3 md:grid-cols-2">
-                          <div>
-                            <label className={labelClass}>{t("adminPanel.populationScope")}</label>
-                            <Listbox value={populationScope} onChange={setPopulationScope}>
-                              <div className="relative">
-                                <Listbox.Button className={listboxButtonClass}>
-                                  {t(populationScopeOptions.find((option) => option.id === populationScope)?.labelKey ?? "adminPanel.scope.region")}
-                                  <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-text-muted))]" />
-                                </Listbox.Button>
-                                <Listbox.Options className={listboxOptionsClass}>
-                                  {populationScopeOptions.map((option) => (
-                                    <Listbox.Option
-                                      key={option.id}
-                                      value={option.id}
-                                      className={({ active }) => optionClass(active)}
-                                    >
-                                      {({ selected }) => (
-                                        <>
-                                          <span className={selected ? "text-[rgb(var(--theme-accent))]" : ""}>{t(option.labelKey)}</span>
-                                          {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-accent))]" />}
-                                        </>
-                                      )}
-                                    </Listbox.Option>
-                                  ))}
-                                </Listbox.Options>
-                              </div>
-                            </Listbox>
-                          </div>
-
-                          <div>
-                            <label className={labelClass}>{t("adminPanel.populationStrategy")}</label>
-                            <Listbox value={populationStrategy} onChange={setPopulationStrategy}>
-                              <div className="relative">
-                                <Listbox.Button className={listboxButtonClass}>
-                                  {t(populationStrategyOptions.find((option) => option.id === populationStrategy)?.labelKey ?? "adminPanel.strategy.random")}
-                                  <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-text-muted))]" />
-                                </Listbox.Button>
-                                <Listbox.Options className={listboxOptionsClass}>
-                                  {populationStrategyOptions.map((option) => (
-                                    <Listbox.Option
-                                      key={option.id}
-                                      value={option.id}
-                                      className={({ active }) => optionClass(active)}
-                                    >
-                                      {({ selected }) => (
-                                        <>
-                                          <span className={selected ? "text-[rgb(var(--theme-accent))]" : ""}>{t(option.labelKey)}</span>
-                                          {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-accent))]" />}
-                                        </>
-                                      )}
-                                    </Listbox.Option>
-                                  ))}
-                                </Listbox.Options>
-                              </div>
-                            </Listbox>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 grid gap-3 md:grid-cols-2">
-                          {populationScope === "region" && (
-                            <div>
-                              <label className={labelClass}>{t("adminPanel.scope.region")}</label>
-                              <Listbox value={selectedRegionId} onChange={setSelectedRegionId}>
-                                <div className="relative">
-                                  <Listbox.Button className={listboxButtonClass}>
-                                    {selectedRegion ? selectedRegion.id : t("adminPanel.selectRegion")}
-                                    <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-text-muted))]" />
-                                  </Listbox.Button>
-                                  <Listbox.Options className={listboxOptionsClass}>
-                                    {regions.map((region) => (
-                                      <Listbox.Option
-                                        key={region.id}
-                                        value={region.id}
-                                        className={({ active }) => optionClass(active)}
-                                      >
-                                        {({ selected }) => (
-                                          <>
-                                            <span className={selected ? "text-[rgb(var(--theme-accent))]" : ""}>{region.id}</span>
-                                            {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-accent))]" />}
-                                          </>
-                                        )}
-                                      </Listbox.Option>
-                                    ))}
-                                  </Listbox.Options>
-                                </div>
-                              </Listbox>
-                            </div>
-                          )}
-
-                          {populationScope === "country" && (
-                            <div>
-                              <label className={labelClass}>{t("auth.country")}</label>
-                              <Listbox value={populationTargetCountryId} onChange={setPopulationTargetCountryId}>
-                                <div className="relative">
-                                  <Listbox.Button className={listboxButtonClass}>
-                                    {countries.find((c) => c.id === populationTargetCountryId)?.name ?? t("adminPanel.selectCountry")}
-                                    <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-text-muted))]" />
-                                  </Listbox.Button>
-                                  <Listbox.Options className={listboxOptionsClass}>
-                                    {countries.map((country) => (
-                                      <Listbox.Option
-                                        key={country.id}
-                                        value={country.id}
-                                        className={({ active }) => optionClass(active)}
-                                      >
-                                        {({ selected }) => (
-                                          <>
-                                            <span className={selected ? "text-[rgb(var(--theme-accent))]" : ""}>{country.name}</span>
-                                            {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-accent))]" />}
-                                          </>
-                                        )}
-                                      </Listbox.Option>
-                                    ))}
-                                  </Listbox.Options>
-                                </div>
-                              </Listbox>
-                            </div>
-                          )}
-
-                          <div>
-                            <label className={labelClass}>{t("adminPanel.populationTotalOptional")}</label>
-                            <input
-                              type="number"
-                              min={0}
-                              value={populationTotalInput}
-                              onChange={(e) => setPopulationTotalInput(e.target.value)}
-                              placeholder={t("adminPanel.populationTotalPlaceholder")}
-                              className={inputClass}
-                            />
-                          </div>
-                        </div>
-
-                        {populationStrategy === "custom" && (
-                          <div className="mt-3">
-                            <label className={labelClass}>{t("adminPanel.popGroupsJson")}</label>
-                            <textarea
-                              value={populationPopsJson}
-                              onChange={(e) => setPopulationPopsJson(e.target.value)}
-                              rows={10}
-                              className={`${inputClass} font-mono text-xs`}
-                            />
-                          </div>
-                        )}
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={generatePopulation}
-                            disabled={saving}
-                            className="rounded-lg bg-[rgb(var(--theme-accent))] px-4 py-2 text-sm font-semibold text-[rgb(var(--theme-accent-contrast))] disabled:opacity-60"
-                          >
-                            {t("adminPanel.generatePopulation")}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={clearPopulation}
-                            disabled={saving}
-                            className="inline-flex items-center gap-2 rounded-lg bg-[rgb(var(--theme-danger-soft))] px-4 py-2 text-sm font-semibold text-[rgb(var(--theme-danger))] disabled:opacity-60"
-                          >
-                            <Trash2 size={14} />
-                            {t("adminPanel.clearPopulation")}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className={panelClass}>
-                        <div className="mb-3 text-sm font-semibold text-[rgb(var(--theme-text-primary))]">{t("adminPanel.regionPopulationEditTitle")}</div>
-                        <div className="grid gap-3 md:grid-cols-2">
-                          <div>
-                            <label className={labelClass}>{t("adminPanel.scope.region")}</label>
-                            <Listbox value={selectedRegionId} onChange={setSelectedRegionId}>
-                              <div className="relative">
-                                <Listbox.Button className={listboxButtonClass}>
-                                  {selectedRegion ? selectedRegion.id : t("adminPanel.selectRegion")}
-                                  <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-text-muted))]" />
-                                </Listbox.Button>
-                                <Listbox.Options className={listboxOptionsClass}>
-                                  {regions.map((region) => (
-                                    <Listbox.Option
-                                      key={region.id}
-                                      value={region.id}
-                                      className={({ active }) => optionClass(active)}
-                                    >
-                                      {({ selected }) => (
-                                        <>
-                                          <span className={selected ? "text-[rgb(var(--theme-accent))]" : ""}>{region.id}</span>
-                                          {selected && <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--theme-accent))]" />}
-                                        </>
-                                      )}
-                                    </Listbox.Option>
-                                  ))}
-                                </Listbox.Options>
-                              </div>
-                            </Listbox>
-                          </div>
-                          <div className="rounded-lg border border-[rgb(var(--theme-border-subtle))] bg-[rgb(var(--theme-surface-2))] px-3 py-2 text-sm text-[rgb(var(--theme-text-primary))]">
-                            <div className="text-xs text-[rgb(var(--theme-text-muted))]">{t("adminPanel.populationTotalByPops")}</div>
-                            <div className="mt-1 font-semibold text-[rgb(var(--theme-text-primary))]">{getPopulationTotal(selectedRegion?.population ?? null).toLocaleString(locale === "ru" ? "ru-RU" : "en-US")}</div>
-                          </div>
-                        </div>
-
-                        <div className="mt-3">
-                          <label className={labelClass}>{t("adminPanel.popGroupsJson")}</label>
-                          <textarea
-                            value={RegionPopulationPopsJson}
-                            onChange={(e) => setRegionPopulationPopsJson(e.target.value)}
-                            rows={12}
-                            className={`${inputClass} font-mono text-xs`}
-                          />
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={saveRegionPopulation}
-                            disabled={saving || !selectedRegion}
-                            className="rounded-lg bg-[rgb(var(--theme-accent))] px-4 py-2 text-sm font-semibold text-[rgb(var(--theme-accent-contrast))] disabled:opacity-60"
-                          >
-                            {t("adminPanel.saveRegionPopulation")}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (!selectedRegion) return;
-                              setSaving(true);
-                              try {
-                                await adminClearPopulation(token, { scope: "region", regionId: selectedRegion.id });
-                                await reloadAdminRegions();
-                                toast.success(t("adminPanel.regionPopulationCleared"));
-                              } catch {
-                                toast.error(t("adminPanel.regionPopulationClearFailed"));
-                              } finally {
-                                setSaving(false);
-                              }
-                            }}
-                            disabled={saving || !selectedRegion}
-                            className="inline-flex items-center gap-2 rounded-lg bg-[rgb(var(--theme-danger-soft))] px-4 py-2 text-sm font-semibold text-[rgb(var(--theme-danger))] disabled:opacity-60"
-                          >
-                            <Trash2 size={14} />
-                            {t("adminPanel.clearRegion")}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
                   )}
 
                   {activeCategory === "notifications" && (

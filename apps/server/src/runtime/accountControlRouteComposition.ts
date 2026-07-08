@@ -23,6 +23,7 @@ type AccountControlRouteCompositionParams = {
   masks: AccountDeps["masks"] & CountryManagementDeps["masks"];
   getTurnId: () => number;
   getWorldBase: AccountDeps["getWorldBase"];
+  getGameSettings: AccountDeps["getGameSettings"];
   getOrdersByTurn: CountryManagementDeps["getOrdersByTurn"];
   getResolveReadyByTurn: CountryManagementDeps["getResolveReadyByTurn"];
   getCustomizationSettings: () => GameSettings["customization"];
@@ -139,6 +140,7 @@ export function registerAccountControlRouteComposition(params: AccountControlRou
     masks: params.masks,
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,
+    getGameSettings: params.getGameSettings,
     getRegistrationRequiresAdminApproval: params.getRegistrationRequiresAdminApproval,
     getInitialColonizationPoints: params.getInitialColonizationPoints,
     getInitialConstructionPoints: params.getInitialConstructionPoints,

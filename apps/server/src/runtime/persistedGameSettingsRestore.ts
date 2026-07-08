@@ -60,6 +60,8 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
     content: {
       assets: normalizeContentAssets((next as Partial<{ content?: { assets?: unknown } }>).content?.assets),
       races: normalizeContentRaces((next as Partial<{ content?: { races?: unknown } }>).content?.races),
+      cultureGroups: normalizeContentCultures((next as Partial<{ content?: { cultureGroups?: unknown } }>).content?.cultureGroups),
+      religionGroups: normalizeContentCultures((next as Partial<{ content?: { religionGroups?: unknown } }>).content?.religionGroups),
       resourceCategories: normalizeContentCultures(
         (next as Partial<{ content?: { resourceCategories?: unknown } }>).content?.resourceCategories,
       ).map((entry) => ({

@@ -1,4 +1,4 @@
-import type { ActiveModifierRow, AirWing, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionAvailabilityReason, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, EquipmentClass, EquipmentFrame, EquipmentModule, EquipmentProductionLine, EquipmentVariant, EventResolvedScope, EventTriggerExplanation, Fleet, GameEventDefinition, IdeologyAttractionRule, JournalEntryDefinition, LawParliamentPowerEffect, LoginPayload, MapUnit, MilitaryBranch, MilitaryEquipmentRequirement, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, PopulationPop, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, TurnActionChecklist, UnitTrainingQueueItem, UnitTypeDefinition, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import type { ActiveModifierRow, AirWing, Country, CountryDecisionRecord, CountryEventRecord, CountryParliament, CountryParliamentPowerBill, CountryParliamentPowers, CountryTechnologyState, DecisionAvailabilityReason, DecisionDefinition, DiplomacyProposal, Division, DivisionTemplate, DivisionTemplateBattalion, EquipmentClass, EquipmentFrame, EquipmentModule, EquipmentProductionLine, EquipmentVariant, EventResolvedScope, EventTriggerExplanation, Fleet, GameEventDefinition, IdeologyAttractionRule, JournalEntryDefinition, LawParliamentPowerEffect, LoginPayload, MapUnit, MilitaryBranch, MilitaryEquipmentRequirement, MilitaryFormationQueueItem, MilitaryTemplateComponent, ModifierDefinition, Order, RegionPopulation, ResourceTotals, ServerStatus, TreatyClause, TurnActionChecklist, UnitTrainingQueueItem, UnitTypeDefinition, WorldBase, WsOutMessage } from "@arcanorum/shared";
 import { resolveAuthoredAssetUrl, type ScenarioAssetEntry, type ScenarioAssetRegistryPayload } from "../assets/scenarioAssetResolver";
 import { apiBase } from "./apiBase";
 
@@ -9,6 +9,7 @@ export type ContentCulture = {
   id: string;
   nameKey?: string | null;
   name: string;
+  descriptionKey?: string | null;
   description: string;
   color: string;
   logoUrl: string | null;
@@ -69,6 +70,15 @@ export type ContentCulture = {
   event?: GameEventDefinition | null;
   journalEntry?: JournalEntryDefinition | null;
   ideologyAttractionRules?: IdeologyAttractionRule[] | null;
+  startingPop?: {
+    literacy?: number;
+    ducats?: number;
+    standardOfLiving?: number;
+    radicals?: number;
+    loyalists?: number;
+    qualificationsByCategory?: Record<string, number>;
+    ideologies?: Record<string, number>;
+  } | null;
   needsProfile?: {
     tiers: Array<{
       id: string;
@@ -79,7 +89,7 @@ export type ContentCulture = {
         category: "survival" | "basic" | "comfort" | "luxury";
         amountPerPerson: number;
         weight: number;
-        goods: Array<{ goodId: string; weight: number }>;
+        goods: Array<{ goodId: string; weight: number; taboo?: boolean; obsessionMultiplier?: number }>;
       }>;
     }>;
   } | null;
@@ -159,6 +169,7 @@ export type ContentCulture = {
 export type ContentEntry = ContentCulture;
 export type ContentEntryKind =
   | "cultures"
+  | "cultureGroups"
   | "resourceCategories"
   | "hexTypes"
   | "hexClimates"
@@ -166,6 +177,7 @@ export type ContentEntryKind =
   | "hexContinents"
   | "hexStrategicRegions"
   | "religions"
+  | "religionGroups"
   | "professions"
   | "ideologies"
   | "interestGroups"
@@ -1710,13 +1722,29 @@ export async function login(payload: LoginPayload): Promise<{ token: string; pla
 export async function register(payload: {
   countryName: string;
   countryColor: string;
+  cultureGroupId: string;
+  cultureName: string;
+  cultureColor: string;
+  religionGroupId: string;
+  religionName: string;
+  religionColor: string;
+  raceId: string;
   password: string;
   flagFile?: File | null;
   crestFile?: File | null;
+  cultureLogoFile?: File | null;
+  religionLogoFile?: File | null;
 }): Promise<Country> {
   const formData = new FormData();
   formData.set("countryName", payload.countryName);
   formData.set("countryColor", payload.countryColor);
+  formData.set("cultureGroupId", payload.cultureGroupId);
+  formData.set("cultureName", payload.cultureName);
+  formData.set("cultureColor", payload.cultureColor);
+  formData.set("religionGroupId", payload.religionGroupId);
+  formData.set("religionName", payload.religionName);
+  formData.set("religionColor", payload.religionColor);
+  formData.set("raceId", payload.raceId);
   formData.set("password", payload.password);
 
   if (payload.flagFile) {
@@ -1725,6 +1753,12 @@ export async function register(payload: {
 
   if (payload.crestFile) {
     formData.set("crest", payload.crestFile);
+  }
+  if (payload.cultureLogoFile) {
+    formData.set("cultureLogo", payload.cultureLogoFile);
+  }
+  if (payload.religionLogoFile) {
+    formData.set("religionLogo", payload.religionLogoFile);
   }
 
   const response = await fetch(`${API}/auth/register`, {
@@ -2622,9 +2656,6 @@ export type AdminRegionItem = {
   population?: RegionPopulation | null;
 };
 
-export type AdminPopulationScope = "region" | "country" | "world";
-export type AdminPopulationStrategy = "random" | "custom";
-
 export async function startCountryColonization(token: string, regionId: string): Promise<void> {
   const response = await fetch(`${API}/country/colonization/start`, {
     method: "POST",
@@ -2835,68 +2866,3 @@ export async function adminRecalculateAutoRegionCosts(token: string): Promise<{ 
   return { updatedCount: data.updatedCount };
 }
 
-export async function adminGeneratePopulation(
-  token: string,
-  payload: {
-    scope: AdminPopulationScope;
-    regionId?: string;
-    countryId?: string;
-    strategy: AdminPopulationStrategy;
-    populationTotal?: number;
-    pops?: PopulationPop[];
-  },
-): Promise<{ ok: true; updatedCount: number; scope: AdminPopulationScope; strategy: AdminPopulationStrategy }> {
-  const response = await fetch(`${API}/admin/population/generate`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_POPULATION_GENERATE_FAILED");
-  }
-  return (await response.json()) as { ok: true; updatedCount: number; scope: AdminPopulationScope; strategy: AdminPopulationStrategy };
-}
-
-export async function adminClearPopulation(
-  token: string,
-  payload: { scope: AdminPopulationScope; regionId?: string; countryId?: string },
-): Promise<{ ok: true; updatedCount: number; scope: AdminPopulationScope }> {
-  const response = await fetch(`${API}/admin/population/clear`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_POPULATION_CLEAR_FAILED");
-  }
-  return (await response.json()) as { ok: true; updatedCount: number; scope: AdminPopulationScope };
-}
-
-export async function adminUpdateRegionPopulation(
-  token: string,
-  regionId: string,
-  payload: { pops: PopulationPop[] },
-): Promise<{ id: string; population: RegionPopulation | null }> {
-  const response = await fetch(`${API}/admin/population/regions/${encodeURIComponent(regionId)}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error ?? "ADMIN_POPULATION_UPDATE_FAILED");
-  }
-  const data = (await response.json()) as { region: { id: string; population: RegionPopulation | null } };
-  return data.region;
-}

@@ -33,6 +33,8 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
     content: {
       assets: [],
       races: ensureDefaultRace([]),
+      cultureGroups: [],
+      religionGroups: [],
       resourceCategories: [],
       hexTypes: [],
       hexClimates: [],

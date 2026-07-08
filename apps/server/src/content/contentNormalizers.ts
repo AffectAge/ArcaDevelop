@@ -235,6 +235,46 @@ export function normalizeNumberRecord(input: unknown, min: number, max: number, 
   return normalized;
 }
 
+function normalizeDiscriminationEffects(input: unknown): GameContentEntry["discrimination"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const row = input as Record<string, unknown>;
+  const normalizePct = (value: unknown): number | undefined =>
+    typeof value === "number" && Number.isFinite(value) ? Number(Math.max(0, Math.min(1, value)).toFixed(3)) : undefined;
+  const normalizeRate = (value: unknown): number | undefined =>
+    typeof value === "number" && Number.isFinite(value) ? Number(Math.max(0, Math.min(1_000_000, value)).toFixed(3)) : undefined;
+  const result: NonNullable<GameContentEntry["discrimination"]> = {
+    wagePenaltyPct: normalizePct(row.wagePenaltyPct),
+    hiringPenaltyPct: normalizePct(row.hiringPenaltyPct),
+    qualificationGrowthPenaltyPct: normalizePct(row.qualificationGrowthPenaltyPct),
+    politicalStrengthPenaltyPct: normalizePct(row.politicalStrengthPenaltyPct),
+    radicalizationPerTurn: normalizeRate(row.radicalizationPerTurn),
+  };
+  return Object.values(result).some((value) => value != null) ? result : null;
+}
+
+function normalizeIdentityStartingPop(input: unknown): GameContentEntry["startingPop"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const row = input as Record<string, unknown>;
+  const normalizeFinite = (value: unknown, min: number, max: number): number | undefined =>
+    typeof value === "number" && Number.isFinite(value) ? Number(Math.max(min, Math.min(max, value)).toFixed(3)) : undefined;
+  const normalizeCount = (value: unknown): number | undefined =>
+    typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : undefined;
+  const result: NonNullable<GameContentEntry["startingPop"]> = {
+    literacy: normalizeFinite(row.literacy, 0, 1),
+    ducats: normalizeFinite(row.ducats, 0, 1_000_000),
+    standardOfLiving: normalizeFinite(row.standardOfLiving, 0, 99),
+    radicals: normalizeCount(row.radicals),
+    loyalists: normalizeCount(row.loyalists),
+    qualificationsByCategory: normalizeNumberRecord(row.qualificationsByCategory, 0, 1_000_000),
+    ideologies: normalizeNumberRecord(row.ideologies, 0, 1_000_000),
+  };
+  return Object.values(result).some((value) => value != null && (!isRecord(value) || Object.keys(value).length > 0)) ? result : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
 export function normalizeContentCultures(input: unknown): GameSettings["content"]["cultures"] {
   if (!Array.isArray(input)) return [];
   const seen = new Set<string>();
@@ -243,7 +283,9 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
     if (!raw || typeof raw !== "object") continue;
     const row = raw as Partial<{
       id: unknown;
+      nameKey: unknown;
       name: unknown;
+      descriptionKey: unknown;
       description: unknown;
       color: unknown;
       logoUrl: unknown;
@@ -259,6 +301,13 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       femalePortraitAssetId: unknown;
       baseWage: unknown;
       needsProfile: unknown;
+      qualificationRequirements: unknown;
+      qualificationGrowthRules: unknown;
+      acceptedCultureIds: unknown;
+      acceptedReligionIds: unknown;
+      acceptedRaceIds: unknown;
+      acceptanceMode: unknown;
+      discrimination: unknown;
       ideologyWeights: unknown;
       interestGroupWeights: unknown;
       professionWeights: unknown;
@@ -286,9 +335,13 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       event: unknown;
       journalEntry: unknown;
       ideologyAttractionRules: unknown;
+      startingPop: unknown;
     }>;
     const id = typeof row.id === "string" ? row.id.trim() : "";
+    const nameKey = typeof row.nameKey === "string" && row.nameKey.trim() ? row.nameKey.trim().slice(0, 180) : null;
     const name = typeof row.name === "string" ? row.name.trim() : "";
+    const descriptionKey =
+      typeof row.descriptionKey === "string" && row.descriptionKey.trim() ? row.descriptionKey.trim().slice(0, 180) : null;
     const description = typeof row.description === "string" ? row.description.trim() : "";
     const color = typeof row.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(row.color.trim()) ? row.color.trim() : "#4ade80";
     const logoUrl = typeof row.logoUrl === "string" || row.logoUrl === null ? (row.logoUrl ?? null) : null;
@@ -306,6 +359,7 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
     const femalePortraitAssetId = normalizeAssetId(row.femalePortraitAssetId);
     const baseWage =
       typeof row.baseWage === "number" && Number.isFinite(row.baseWage) ? Math.max(0, Number(row.baseWage)) : undefined;
+    const acceptanceMode = row.acceptanceMode === "replace" ? "replace" : row.acceptanceMode === "add" ? "add" : undefined;
     const discipline =
       typeof row.discipline === "number" && Number.isFinite(row.discipline) ? Math.min(1, Math.max(0, row.discipline)) : undefined;
     const basePoliticalStrength =
@@ -341,7 +395,9 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
     seen.add(id);
     items.push({
       id,
+      nameKey,
       name: name.slice(0, 80),
+      descriptionKey,
       description: description.slice(0, 5000),
       color,
       logoUrl,
@@ -357,6 +413,13 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       femalePortraitAssetId,
       baseWage: baseWage == null ? undefined : Number(baseWage.toFixed(3)),
       needsProfile: normalizeCultureNeedsProfile(row.needsProfile),
+      qualificationRequirements: normalizeNumberRecord(row.qualificationRequirements, 0, 1_000_000),
+      qualificationGrowthRules: normalizeNumberRecord(row.qualificationGrowthRules, -1_000_000, 1_000_000),
+      acceptedCultureIds: normalizeCountryIdList(row.acceptedCultureIds),
+      acceptedReligionIds: normalizeCountryIdList(row.acceptedReligionIds),
+      acceptedRaceIds: normalizeCountryIdList(row.acceptedRaceIds),
+      acceptanceMode,
+      discrimination: normalizeDiscriminationEffects(row.discrimination),
       ideologyWeights: normalizeNumberRecord(row.ideologyWeights, 0, 100),
       interestGroupWeights: normalizeNumberRecord(row.interestGroupWeights, 0, 100),
       professionWeights: normalizeNumberRecord(row.professionWeights, 0, 100),
@@ -384,6 +447,7 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       event: normalizeGameEvent(row.event),
       journalEntry: normalizeJournalEntry(row.journalEntry),
       ideologyAttractionRules: normalizeIdeologyAttractionRules(row.ideologyAttractionRules),
+      startingPop: normalizeIdentityStartingPop(row.startingPop),
     });
   }
   return items;

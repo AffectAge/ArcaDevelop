@@ -24,6 +24,8 @@ export function createUploadStartupCleanupRuntime(params: UploadStartupCleanupRu
         select: {
           flagUrl: true,
           crestUrl: true,
+          cultureLogoUrl: true,
+          religionLogoUrl: true,
         },
       });
       cleanupOrphanUploads({

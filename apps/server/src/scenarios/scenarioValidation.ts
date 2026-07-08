@@ -40,6 +40,7 @@ export type ScenarioValidationIssueCode =
   | "INVALID_BUILDING_ATLAS"
   | "INVALID_UNIT_ATLAS"
   | "INVALID_UNIT_SKILL"
+  | "INVALID_POPULATION_DEFINITION"
   | "INVALID_CITY_ATLAS"
   | "INVALID_FEATURE_ATLAS"
   | "INVALID_MAP_FEATURE_GENERATOR"
@@ -116,8 +117,10 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "law", path: "common/laws" },
   { kind: "lawGroup", path: "common/lawGroups" },
   { kind: "culture", path: "common/cultures" },
+  { kind: "cultureGroup", path: "common/culture_groups" },
   { kind: "resourceCategory", path: "common/resourceCategories" },
   { kind: "religion", path: "common/religions" },
+  { kind: "religionGroup", path: "common/religion_groups" },
   { kind: "ideology", path: "common/ideologies" },
   { kind: "profession", path: "common/professions" },
   { kind: "race", path: "common/races" },
@@ -363,6 +366,7 @@ export async function validateScenarioDirectory(
   await validateHexMapSettings(root, localizationKeys, issues);
   validateHexHeavyFields(root, loadedEntities, issues);
   validateRegionMembership(root, loadedEntities, issues);
+  await validatePopulationDefinitions(root, loadedEntities, issues);
   validateEntityReferences(root, loadedEntities, issues);
   validateDecisionDefinitions(root, loadedEntities, issues);
   validateEventDefinitions(root, loadedEntities, localizationKeys, issues);
@@ -1462,6 +1466,7 @@ async function validateDefines(root: string, issues: ScenarioValidationIssue[]):
       defines.resourceLedger,
       VALIDATION_RESOURCE_LEDGER_DEFAULTS,
     );
+    validatePopulationDefines(defines.population, issues);
     normalizeScenarioTurnTimerDefines(
       defines.turnTimer,
       VALIDATION_TURN_TIMER_DEFAULTS,
@@ -1472,6 +1477,150 @@ async function validateDefines(root: string, issues: ScenarioValidationIssue[]):
       path: "common/defines.json",
       message: error instanceof Error ? error.message : "Invalid scenario defines.",
     });
+  }
+}
+
+function validatePopulationDefines(population: { qualificationCategories?: unknown } | undefined, issues: ScenarioValidationIssue[]): void {
+  if (population == null || population.qualificationCategories == null) return;
+  if (!Array.isArray(population.qualificationCategories)) {
+    issues.push({
+      code: "INVALID_DEFINES",
+      path: "common/defines.json",
+      message: "population.qualificationCategories must be an array of non-empty string ids.",
+    });
+    return;
+  }
+  for (const [index, category] of population.qualificationCategories.entries()) {
+    if (typeof category === "string" && category.trim()) continue;
+    issues.push({
+      code: "INVALID_DEFINES",
+      path: "common/defines.json",
+      message: `population.qualificationCategories[${index}] must be a non-empty string id.`,
+    });
+  }
+}
+
+async function validatePopulationDefinitions(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
+  const populationDir = join(root, "common/populations");
+  if (!existsSync(populationDir)) return;
+
+  const regionIds = new Set(entities.filter((entity) => entity.kind === "region").map((entity) => entity.id));
+  const cultureIds = new Set(entities.filter((entity) => entity.kind === "culture").map((entity) => entity.id));
+  const religionIds = new Set(entities.filter((entity) => entity.kind === "religion").map((entity) => entity.id));
+  const raceIds = new Set(entities.filter((entity) => entity.kind === "race").map((entity) => entity.id));
+  const professionIds = new Set(entities.filter((entity) => entity.kind === "profession").map((entity) => entity.id));
+  const qualificationCategories = await loadPopulationQualificationCategories(root, entities, issues);
+
+  for (const file of await listJsonFiles(populationDir)) {
+    const loaded = await readJsonIfExists(file, root, issues);
+    if (!loaded) continue;
+    const path = normalizePath(relative(root, file));
+    const rows = isObject(loaded.data) && Array.isArray(loaded.data.regions) ? loaded.data.regions : [loaded.data];
+    for (const [rowIndex, row] of rows.entries()) {
+      const label = `${path}${rows.length > 1 ? `.regions[${rowIndex}]` : ""}`;
+      if (!isObject(row)) {
+        issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${label} must be a population object.` });
+        continue;
+      }
+      if ("populationTotal" in row) {
+        issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${label}.populationTotal is removed; author atomic pops explicitly.` });
+      }
+      if (typeof row.regionId !== "string" || !regionIds.has(row.regionId)) {
+        issues.push({ code: "BROKEN_REFERENCE", path, message: `${label}.regionId references missing region ${String(row.regionId)}.` });
+      }
+      if (row.pops != null && !Array.isArray(row.pops)) {
+        issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${label}.pops must be an array.` });
+        continue;
+      }
+      for (const [popIndex, pop] of (Array.isArray(row.pops) ? row.pops : []).entries()) {
+        validatePopulationPopDefinition(label, popIndex, pop, { cultureIds, religionIds, raceIds, professionIds, qualificationCategories }, issues, path);
+      }
+    }
+  }
+}
+
+function validatePopulationPopDefinition(
+  label: string,
+  popIndex: number,
+  pop: unknown,
+  refs: {
+    cultureIds: Set<string>;
+    religionIds: Set<string>;
+    raceIds: Set<string>;
+    professionIds: Set<string>;
+    qualificationCategories: Set<string>;
+  },
+  issues: ScenarioValidationIssue[],
+  path: string,
+): void {
+  const popLabel = `${label}.pops[${popIndex}]`;
+  if (!isObject(pop)) {
+    issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${popLabel} must be an object.` });
+    return;
+  }
+  if ("professions" in pop) {
+    issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${popLabel}.professions is removed; professionId is the atomic pop identity.` });
+  }
+  validatePopulationReference(pop, "cultureId", refs.cultureIds, popLabel, issues, path);
+  validatePopulationReference(pop, "religionId", refs.religionIds, popLabel, issues, path);
+  validatePopulationReference(pop, "raceId", refs.raceIds, popLabel, issues, path);
+  validatePopulationReference(pop, "professionId", refs.professionIds, popLabel, issues, path);
+  if (typeof pop.size !== "number" || !Number.isFinite(pop.size) || pop.size < 0) {
+    issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${popLabel}.size must be a non-negative finite number.` });
+  }
+  validateQualificationRecord(pop.qualificationsByCategory, `${popLabel}.qualificationsByCategory`, refs.qualificationCategories, issues, path);
+}
+
+function validatePopulationReference(
+  pop: JsonObject,
+  field: string,
+  ids: Set<string>,
+  label: string,
+  issues: ScenarioValidationIssue[],
+  path: string,
+): void {
+  const value = pop[field];
+  if (typeof value === "string" && ids.has(value)) return;
+  issues.push({ code: "BROKEN_REFERENCE", path, message: `${label}.${field} references missing id ${String(value)}.` });
+}
+
+async function loadPopulationQualificationCategories(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<Set<string>> {
+  const categories = new Set<string>();
+  const loaded = await readJsonIfExists(join(root, "common/defines.json"), root, issues);
+  const rawCategories = isObject(loaded?.data) && isObject(loaded.data.population) ? loaded.data.population.qualificationCategories : undefined;
+  if (Array.isArray(rawCategories)) {
+    for (const category of rawCategories) {
+      if (typeof category === "string" && category.trim()) categories.add(category.trim());
+      else issues.push({ code: "INVALID_DEFINES", path: "common/defines.json", message: "population.qualificationCategories must contain non-empty string ids." });
+    }
+  }
+
+  for (const profession of entities.filter((entity) => entity.kind === "profession")) {
+    validateQualificationRecord(profession.data.qualificationRequirements, `${profession.id}.qualificationRequirements`, categories, issues, normalizePath(relative(root, profession.path)));
+    validateQualificationRecord(profession.data.qualificationGrowthRules, `${profession.id}.qualificationGrowthRules`, categories, issues, normalizePath(relative(root, profession.path)));
+  }
+  return categories;
+}
+
+function validateQualificationRecord(
+  value: unknown,
+  label: string,
+  qualificationCategories: Set<string>,
+  issues: ScenarioValidationIssue[],
+  path: string,
+): void {
+  if (value == null) return;
+  if (!isObject(value)) {
+    issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${label} must be an object.` });
+    return;
+  }
+  for (const [category, amount] of Object.entries(value)) {
+    if (qualificationCategories.size === 0 || !qualificationCategories.has(category)) {
+      issues.push({ code: "BROKEN_REFERENCE", path, message: `${label}.${category} references an unknown qualification category.` });
+    }
+    if (typeof amount !== "number" || !Number.isFinite(amount)) {
+      issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${label}.${category} must be a finite number.` });
+    }
   }
 }
 
@@ -1531,6 +1680,9 @@ function validateEntityReferences(root: string, entities: LoadedEntity[], issues
   const ids = new Set(entities.map((entity) => entity.id));
   const countries = new Set(entities.filter((entity) => entity.kind === "country").map((entity) => entity.id));
   const goods = new Set(entities.filter((entity) => entity.kind === "good").map((entity) => entity.id));
+  const cultures = new Set(entities.filter((entity) => entity.kind === "culture").map((entity) => entity.id));
+  const religions = new Set(entities.filter((entity) => entity.kind === "religion").map((entity) => entity.id));
+  const races = new Set(entities.filter((entity) => entity.kind === "race").map((entity) => entity.id));
 
   for (const region of entities.filter((entity) => entity.kind === "region")) {
     validateOptionalReference(root, region, "ownerCountryId", countries, issues);
@@ -1540,8 +1692,65 @@ function validateEntityReferences(root: string, entities: LoadedEntity[], issues
     validateRegionResources(root, region, goods, issues);
   }
 
+  for (const country of entities.filter((entity) => entity.kind === "country")) {
+    validateReferenceArray(root, country, "acceptedCultureIds", cultures, issues);
+    validateReferenceArray(root, country, "acceptedReligionIds", religions, issues);
+    validateReferenceArray(root, country, "acceptedRaceIds", races, issues);
+  }
+
   for (const entity of entities) {
+    if (entity.kind === "law") {
+      validateReferenceArray(root, entity, "acceptedCultureIds", cultures, issues);
+      validateReferenceArray(root, entity, "acceptedReligionIds", religions, issues);
+      validateReferenceArray(root, entity, "acceptedRaceIds", races, issues);
+    }
     validateKnownStableReferences(root, entity, ids, issues);
+  }
+
+  validateNeedsProfiles(root, entities, goods, issues);
+}
+
+function validateNeedsProfiles(root: string, entities: LoadedEntity[], goods: Set<string>, issues: ScenarioValidationIssue[]): void {
+  for (const entity of entities.filter((item) => item.kind === "culture" || item.kind === "race" || item.kind === "religion" || item.kind === "profession")) {
+    const profile = entity.data.needsProfile;
+    if (profile == null) continue;
+    const path = normalizePath(relative(root, entity.path));
+    if (!isObject(profile) || !Array.isArray(profile.tiers)) {
+      issues.push({ code: "BROKEN_REFERENCE", path, message: `${entity.id}.needsProfile.tiers must be an array.` });
+      continue;
+    }
+    for (const [tierIndex, tier] of profile.tiers.entries()) {
+      if (!isObject(tier) || !Array.isArray(tier.needs)) {
+        issues.push({ code: "BROKEN_REFERENCE", path, message: `${entity.id}.needsProfile.tiers[${tierIndex}].needs must be an array.` });
+        continue;
+      }
+      for (const [needIndex, need] of tier.needs.entries()) {
+        if (!isObject(need) || !Array.isArray(need.goods) || need.goods.length === 0) {
+          issues.push({ code: "BROKEN_REFERENCE", path, message: `${entity.id}.needsProfile.tiers[${tierIndex}].needs[${needIndex}].goods must be a non-empty array.` });
+          continue;
+        }
+        for (const [goodIndex, good] of need.goods.entries()) {
+          const goodLabel = `${entity.id}.needsProfile.tiers[${tierIndex}].needs[${needIndex}].goods[${goodIndex}]`;
+          if (!isObject(good) || typeof good.goodId !== "string" || !goods.has(good.goodId)) {
+            issues.push({
+              code: "BROKEN_REFERENCE",
+              path,
+              message: `${goodLabel} references missing good ${String(isObject(good) ? good.goodId : good)}.`,
+            });
+            continue;
+          }
+          if (good.taboo != null && typeof good.taboo !== "boolean") {
+            issues.push({ code: "BROKEN_REFERENCE", path, message: `${goodLabel}.taboo must be boolean when provided.` });
+          }
+          if (
+            good.obsessionMultiplier != null &&
+            (typeof good.obsessionMultiplier !== "number" || !Number.isFinite(good.obsessionMultiplier) || good.obsessionMultiplier < 1)
+          ) {
+            issues.push({ code: "BROKEN_REFERENCE", path, message: `${goodLabel}.obsessionMultiplier must be a finite number >= 1 when provided.` });
+          }
+        }
+      }
+    }
   }
 }
 

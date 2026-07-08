@@ -1113,6 +1113,10 @@ export type UiTextKey =
   | "auth.accountLockedTime"
   | "auth.accountLockedTurn"
   | "auth.chooseCountry"
+  | "auth.chooseCultureGroup"
+  | "auth.chooseReligionGroup"
+  | "auth.chooseRace"
+  | "auth.clearImage"
   | "auth.clientVersion"
   | "auth.country"
   | "auth.countryColor"
@@ -1124,6 +1128,7 @@ export type UiTextKey =
   | "auth.crestHint"
   | "auth.crestInvalid"
   | "auth.crestPreview"
+  | "auth.customColor"
   | "auth.enterGame"
   | "auth.enterPassword"
   | "auth.fileTooLarge"
@@ -1131,7 +1136,21 @@ export type UiTextKey =
   | "auth.flagHint"
   | "auth.flagInvalid"
   | "auth.flagPreview"
+  | "auth.cultureColor"
+  | "auth.cultureGroup"
+  | "auth.cultureLogo"
+  | "auth.cultureName"
+  | "auth.backToLogin"
+  | "auth.confirmMissingTitle"
+  | "auth.confirmReady"
   | "auth.imageFormatInvalid"
+  | "auth.identity"
+  | "auth.identityBonuses"
+  | "auth.identityLogoHint"
+  | "auth.identityLogoInvalid"
+  | "auth.identityNoDescription"
+  | "auth.identityOptions"
+  | "auth.identitySelectPrompt"
   | "auth.invalidHex"
   | "auth.invalidPassword"
   | "auth.knowledge"
@@ -1142,7 +1161,11 @@ export type UiTextKey =
   | "auth.loginSuccess"
   | "auth.min2"
   | "auth.min8"
+  | "auth.missingValue"
+  | "auth.nextStep"
   | "auth.noFileSelected"
+  | "auth.noBonuses"
+  | "auth.noStartingPopChanges"
   | "auth.onlyImages"
   | "auth.password"
   | "auth.passwordComplexityAria"
@@ -1155,6 +1178,8 @@ export type UiTextKey =
   | "auth.passwordMismatch"
   | "auth.presetColor"
   | "auth.register"
+  | "auth.previousStep"
+  | "auth.replaceImage"
   | "auth.registrationError"
   | "auth.registrationPendingApproval"
   | "auth.registrationPendingDescription"
@@ -1162,12 +1187,33 @@ export type UiTextKey =
   | "auth.registrationSentMessage"
   | "auth.rememberMe"
   | "auth.repeatPassword"
+  | "auth.religionColor"
+  | "auth.religionGroup"
+  | "auth.religionLogo"
+  | "auth.religionName"
+  | "auth.race"
   | "auth.selectCountry"
   | "auth.selectImage"
   | "auth.serverStatus.maintenance"
   | "auth.serverStatus.offline"
   | "auth.serverStatus.online"
   | "auth.serverUnavailable"
+  | "auth.startingPopulation"
+  | "auth.startingPop.ducats"
+  | "auth.startingPop.ducatsLabel"
+  | "auth.startingPop.literacy"
+  | "auth.startingPop.literacyLabel"
+  | "auth.startingPop.loyalists"
+  | "auth.startingPop.loyalistsLabel"
+  | "auth.startingPop.radicals"
+  | "auth.startingPop.radicalsLabel"
+  | "auth.startingPop.sol"
+  | "auth.startingPop.solLabel"
+  | "auth.step.confirm"
+  | "auth.step.culture"
+  | "auth.step.info"
+  | "auth.step.race"
+  | "auth.step.religion"
   | "auth.waitButton"
   | "clientSettings.description"
   | "clientSettings.descriptionTitle"
@@ -1515,6 +1561,24 @@ export type UiTextKey =
   | "army.unitName"
   | "locale.english"
   | "locale.russian"
+  | "cultureGroup.highlandClans.description"
+  | "cultureGroup.highlandClans.name"
+  | "cultureGroup.maritimeLeagues.description"
+  | "cultureGroup.maritimeLeagues.name"
+  | "cultureGroup.riverineCityStates.description"
+  | "cultureGroup.riverineCityStates.name"
+  | "race.dwarf.description"
+  | "race.dwarf.name"
+  | "race.elf.description"
+  | "race.elf.name"
+  | "race.human.description"
+  | "race.human.name"
+  | "religionGroup.ancestorRites.description"
+  | "religionGroup.ancestorRites.name"
+  | "religionGroup.celestialOrders.description"
+  | "religionGroup.celestialOrders.name"
+  | "religionGroup.templeCults.description"
+  | "religionGroup.templeCults.name"
   | "map.controls.zoomIn"
   | "map.controls.zoomOut"
   | "map.zoomIndicator.label"
@@ -2511,6 +2575,39 @@ export type UiTextKey =
   | "population.lowRegionCapitalAlert"
   | "population.aggregatedData"
   | "population.balance"
+  | "population.chart.culture"
+  | "population.chart.politicalStrength"
+  | "population.chart.population"
+  | "population.chart.profession"
+  | "population.chart.region"
+  | "population.chart.religion"
+  | "population.chartsTitle"
+  | "population.discrimination"
+  | "population.detail.finance"
+  | "population.detail.needs"
+  | "population.detail.qualifications"
+  | "population.detail.reasons"
+  | "population.detail.status"
+  | "population.employment"
+  | "population.employment.employed"
+  | "population.employment.noOpenJobs"
+  | "population.employment.partial"
+  | "population.employment.unemployed"
+  | "population.filter.culture"
+  | "population.filter.discrimination"
+  | "population.filter.employment"
+  | "population.filter.profession"
+  | "population.filter.region"
+  | "population.filter.religion"
+  | "population.filter.sol"
+  | "population.filtersTitle"
+  | "population.qualifications"
+  | "population.accepted"
+  | "population.discriminated"
+  | "population.none"
+  | "population.discriminationTooltip"
+  | "population.employmentTooltip"
+  | "population.qualificationTooltip"
   | "population.brandingDescription"
   | "population.brandingTitle"
   | "population.births"
@@ -2594,6 +2691,23 @@ export type UiTextKey =
   | "population.expenseStructure"
   | "population.fulfilled"
   | "population.groupColumn"
+  | "population.groupedPopCount"
+  | "population.mode.atomic"
+  | "population.mode.grouped"
+  | "population.resetFilters"
+  | "population.rowsShown"
+  | "population.sol.low"
+  | "population.sol.prosperous"
+  | "population.sol.stable"
+  | "population.sol.struggling"
+  | "population.table.actions"
+  | "population.table.details"
+  | "population.table.ideologyInterest"
+  | "population.table.politicalStrength"
+  | "population.table.sol"
+  | "population.table.workplace"
+  | "population.tablePoliticalStrength"
+  | "population.tableTitle"
   | "population.wallet"
   | "buildings.regionRequired"
   | "buildings.regionDependency"
@@ -4515,6 +4629,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.accountLockedTime": "Account is locked until {time}",
     "auth.accountLockedTurn": "Account is locked until turn #{turn}",
     "auth.chooseCountry": "Choose a country",
+    "auth.chooseCultureGroup": "Choose culture group",
+    "auth.chooseReligionGroup": "Choose religion group",
+    "auth.chooseRace": "Choose race",
+    "auth.clearImage": "Clear image",
     "auth.clientVersion": "client v0.1.0",
     "auth.country": "Country",
     "auth.countryColor": "Country color",
@@ -4526,6 +4644,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.crestHint": "PNG/JPG/WEBP up to 4MB, maximum 128x192, ratio 2:3",
     "auth.crestInvalid": "Crest: maximum 128x192, ratio 2:3",
     "auth.crestPreview": "Crest preview",
+    "auth.customColor": "Pick",
     "auth.enterGame": "Sign in",
     "auth.enterPassword": "Enter password",
     "auth.fileTooLarge": "File is too large (up to 4MB)",
@@ -4533,7 +4652,21 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.flagHint": "PNG/JPG/WEBP up to 4MB, maximum 192x128, ratio 3:2",
     "auth.flagInvalid": "Flag: maximum 192x128, ratio 3:2",
     "auth.flagPreview": "Flag preview",
+    "auth.cultureColor": "Culture color",
+    "auth.cultureGroup": "Culture group",
+    "auth.cultureLogo": "Culture logo",
+    "auth.cultureName": "Culture name",
+    "auth.backToLogin": "Back to login",
+    "auth.confirmMissingTitle": "Complete these fields",
+    "auth.confirmReady": "All required fields are ready. The country can be created.",
     "auth.imageFormatInvalid": "Check format: flag 192x128 (3:2), crest 128x192 (2:3)",
+    "auth.identity": "Country identity",
+    "auth.identityBonuses": "Bonuses",
+    "auth.identityLogoHint": "PNG/JPG/WEBP up to 4MB, maximum 128x192, ratio 2:3",
+    "auth.identityLogoInvalid": "Identity logo: maximum 128x192, ratio 2:3",
+    "auth.identityNoDescription": "No description authored.",
+    "auth.identityOptions": "Identity options",
+    "auth.identitySelectPrompt": "Select an option to inspect its bonuses and starting population.",
     "auth.invalidHex": "Enter a valid HEX color",
     "auth.invalidPassword": "Invalid password",
     "auth.knowledge": "Knowledge archive",
@@ -4544,7 +4677,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.loginSuccess": "Signed in",
     "auth.min2": "Minimum 2 characters",
     "auth.min8": "Minimum 8 characters",
+    "auth.missingValue": "Missing",
+    "auth.nextStep": "Next",
     "auth.noFileSelected": "Not selected",
+    "auth.noBonuses": "No direct modifier bonuses.",
+    "auth.noStartingPopChanges": "No starting population changes.",
     "auth.onlyImages": "Only images are allowed",
     "auth.password": "Password",
     "auth.passwordComplexityAria": "Password complexity check",
@@ -4556,7 +4693,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.passwordLengthOk": "Password length is good",
     "auth.passwordMismatch": "Passwords do not match",
     "auth.presetColor": "Choose {color}",
+    "auth.previousStep": "Previous",
     "auth.register": "Register",
+    "auth.replaceImage": "Replace image",
     "auth.registrationError": "Registration failed",
     "auth.registrationPendingApproval": "Registration is awaiting administrator approval",
     "auth.registrationPendingDescription": "You can enter the game after the request is approved.",
@@ -4564,12 +4703,33 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.registrationSentMessage": "Country {country} has been sent to administrators for approval.",
     "auth.rememberMe": "Remember me",
     "auth.repeatPassword": "Repeat password",
+    "auth.religionColor": "Religion color",
+    "auth.religionGroup": "Religion group",
+    "auth.religionLogo": "Religion logo",
+    "auth.religionName": "Religion name",
+    "auth.race": "Race",
     "auth.selectCountry": "Select country",
     "auth.selectImage": "Choose image",
     "auth.serverStatus.maintenance": "Maintenance",
     "auth.serverStatus.offline": "Offline",
     "auth.serverStatus.online": "Online",
     "auth.serverUnavailable": "Server unavailable",
+    "auth.startingPopulation": "Starting population",
+    "auth.startingPop.ducats": "Starting ducats: {value}",
+    "auth.startingPop.ducatsLabel": "Ducats",
+    "auth.startingPop.literacy": "Literacy: {value}%",
+    "auth.startingPop.literacyLabel": "Literacy",
+    "auth.startingPop.loyalists": "Loyalists: {value}",
+    "auth.startingPop.loyalistsLabel": "Loyalists",
+    "auth.startingPop.radicals": "Radicals: {value}",
+    "auth.startingPop.radicalsLabel": "Radicals",
+    "auth.startingPop.sol": "Standard of living: {value}",
+    "auth.startingPop.solLabel": "SoL",
+    "auth.step.confirm": "Confirm",
+    "auth.step.culture": "Culture",
+    "auth.step.info": "Info",
+    "auth.step.race": "Race",
+    "auth.step.religion": "Religion",
     "auth.waitButton": "I will wait",
     "clientSettings.description": "These settings do not affect the server game and apply only in your browser.",
     "clientSettings.descriptionTitle": "Description",
@@ -4917,6 +5077,24 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.unitName": "Unit name",
     "locale.english": "English",
     "locale.russian": "Russian",
+    "cultureGroup.highlandClans.description": "Fortified upland communities with strong kinship law and stonework traditions. Their settlers are cohesive and build early infrastructure faster.",
+    "cultureGroup.highlandClans.name": "Highland Clans",
+    "cultureGroup.maritimeLeagues.description": "Harbor leagues built around shipyards, pilots, and coastal compacts. Their early state is wealthier and better prepared to expand overseas.",
+    "cultureGroup.maritimeLeagues.name": "Maritime Leagues",
+    "cultureGroup.riverineCityStates.description": "Cities raised on river crossings, granaries, docks, and toll roads. Their settlers begin with practical literacy and better early revenues.",
+    "cultureGroup.riverineCityStates.name": "Riverine City-States",
+    "race.dwarf.description": "Compact craft societies with strong guild discipline and deep construction traditions.",
+    "race.dwarf.name": "Dwarf",
+    "race.elf.description": "Long-lived communities with strong written traditions and refined civic memory.",
+    "race.elf.name": "Elf",
+    "race.human.description": "Adaptable, politically flexible settlers with balanced early institutions.",
+    "race.human.name": "Human",
+    "religionGroup.ancestorRites.description": "Lineage shrines and household rites bind new settlements to remembered founders. Their first settlers are more loyal.",
+    "religionGroup.ancestorRites.name": "Ancestor Rites",
+    "religionGroup.celestialOrders.description": "Astral schools that read legitimacy in calendars, omens, and precise records. Their settlements begin with stronger scholarship.",
+    "religionGroup.celestialOrders.name": "Celestial Orders",
+    "religionGroup.templeCults.description": "Organized priesthoods centered on civic temples, calendars, and offerings. They give the state a stronger early religious base.",
+    "religionGroup.templeCults.name": "Temple Cults",
     "map.controls.zoomIn": "Zoom in",
     "map.controls.zoomOut": "Zoom out",
     "map.zoomIndicator.label": "Zoom",
@@ -5913,6 +6091,39 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "population.lowRegionCapitalAlert": "{region}: low capital per capita ({capital} ducats/person)",
     "population.aggregatedData": "Aggregated population data",
     "population.balance": "Balance",
+    "population.chart.culture": "Culture",
+    "population.chart.politicalStrength": "Political Strength",
+    "population.chart.population": "Population",
+    "population.chart.profession": "Profession",
+    "population.chart.region": "State",
+    "population.chart.religion": "Religion",
+    "population.chartsTitle": "Charts",
+    "population.discrimination": "Acceptance",
+    "population.detail.finance": "Finance",
+    "population.detail.needs": "Needs",
+    "population.detail.qualifications": "Qualifications",
+    "population.detail.reasons": "Reasons",
+    "population.detail.status": "Status",
+    "population.employment": "Jobs",
+    "population.employment.employed": "Employed",
+    "population.employment.noOpenJobs": "No open jobs",
+    "population.employment.partial": "Partially employed",
+    "population.employment.unemployed": "Unemployed",
+    "population.filter.culture": "Culture",
+    "population.filter.discrimination": "Discrimination",
+    "population.filter.employment": "Employment",
+    "population.filter.profession": "Profession",
+    "population.filter.region": "State",
+    "population.filter.religion": "Religion",
+    "population.filter.sol": "Standard of Living",
+    "population.filtersTitle": "Filters",
+    "population.qualifications": "Qualifications",
+    "population.accepted": "Accepted",
+    "population.discriminated": "Discriminated",
+    "population.none": "none",
+    "population.discriminationTooltip": "Status: {status}. Reasons: {reasons}. Penalty: {penalty}%.",
+    "population.employmentTooltip": "Status: {status}. Employed: {employed}. Open jobs: {openJobs}.",
+    "population.qualificationTooltip": "Qualification limit: {limit}. Shortages: {shortages}.",
     "population.brandingDescription": "Preparation for population panel visual settings",
     "population.brandingTitle": "Logo and style",
     "population.births": "Births",
@@ -5996,6 +6207,23 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "population.expenseStructure": "Expense structure",
     "population.fulfilled": "Fulfilled",
     "population.groupColumn": "Group",
+    "population.groupedPopCount": "{count} groups",
+    "population.mode.atomic": "Atomic",
+    "population.mode.grouped": "Grouped",
+    "population.resetFilters": "Reset",
+    "population.rowsShown": "{shown} / {total} rows",
+    "population.sol.low": "Impoverished (0-7)",
+    "population.sol.prosperous": "Prosperous (15+)",
+    "population.sol.stable": "Stable (11-14)",
+    "population.sol.struggling": "Struggling (8-10)",
+    "population.table.actions": "Actions",
+    "population.table.details": "Details",
+    "population.table.ideologyInterest": "Ideology",
+    "population.table.politicalStrength": "Political Strength",
+    "population.table.sol": "Standard of Living",
+    "population.table.workplace": "Workplace",
+    "population.tablePoliticalStrength": "Political Strength: {value}",
+    "population.tableTitle": "Pop groups",
     "population.wallet": "Wallet",
     "buildings.regionRequired": "No region selected",
     "buildings.regionDependency": "Requires building in region: {building}",
@@ -7916,6 +8144,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.accountLockedTime": "Аккаунт заблокирован до {time}",
     "auth.accountLockedTurn": "Аккаунт заблокирован до хода #{turn}",
     "auth.chooseCountry": "Выберите страну",
+    "auth.chooseCultureGroup": "Выберите культурную группу",
+    "auth.chooseReligionGroup": "Выберите религиозную группу",
+    "auth.chooseRace": "Выберите расу",
+    "auth.clearImage": "Очистить изображение",
     "auth.clientVersion": "client v0.1.0",
     "auth.country": "Страна",
     "auth.countryColor": "Цвет страны",
@@ -7927,6 +8159,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.crestHint": "PNG/JPG/WEBP до 4MB, максимум 128x192, соотношение 2:3",
     "auth.crestInvalid": "Герб: максимум 128x192, соотношение 2:3",
     "auth.crestPreview": "Предпросмотр герба",
+    "auth.customColor": "Выбрать",
     "auth.enterGame": "Войти",
     "auth.enterPassword": "Введите пароль",
     "auth.fileTooLarge": "Файл слишком большой (до 4MB)",
@@ -7934,7 +8167,21 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.flagHint": "PNG/JPG/WEBP до 4MB, максимум 192x128, соотношение 3:2",
     "auth.flagInvalid": "Флаг: максимум 192x128, соотношение 3:2",
     "auth.flagPreview": "Предпросмотр флага",
+    "auth.cultureColor": "Цвет культуры",
+    "auth.cultureGroup": "Культурная группа",
+    "auth.cultureLogo": "Логотип культуры",
+    "auth.cultureName": "Название культуры",
+    "auth.backToLogin": "Назад ко входу",
+    "auth.confirmMissingTitle": "Заполните эти поля",
+    "auth.confirmReady": "Все обязательные поля готовы. Страну можно создать.",
     "auth.imageFormatInvalid": "Проверьте формат: флаг 192x128 (3:2), герб 128x192 (2:3)",
+    "auth.identity": "Идентичность страны",
+    "auth.identityBonuses": "Бонусы",
+    "auth.identityLogoHint": "PNG/JPG/WEBP до 4MB, максимум 128x192, соотношение 2:3",
+    "auth.identityLogoInvalid": "Логотип идентичности: максимум 128x192, соотношение 2:3",
+    "auth.identityNoDescription": "Описание не задано.",
+    "auth.identityOptions": "Варианты идентичности",
+    "auth.identitySelectPrompt": "Выберите вариант, чтобы увидеть бонусы и стартовое население.",
     "auth.invalidHex": "Введите валидный HEX-цвет",
     "auth.invalidPassword": "Неверный пароль",
     "auth.knowledge": "Хранилище знаний",
@@ -7945,7 +8192,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.loginSuccess": "Успешный вход",
     "auth.min2": "Минимум 2 символа",
     "auth.min8": "Минимум 8 символов",
+    "auth.missingValue": "Не заполнено",
+    "auth.nextStep": "Далее",
     "auth.noFileSelected": "Не выбран",
+    "auth.noBonuses": "Прямых бонусов модификаторов нет.",
+    "auth.noStartingPopChanges": "Изменений стартового населения нет.",
     "auth.onlyImages": "Разрешены только изображения",
     "auth.password": "Пароль",
     "auth.passwordComplexityAria": "Проверка сложности пароля",
@@ -7957,7 +8208,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.passwordLengthOk": "Длина пароля подходит",
     "auth.passwordMismatch": "Пароли не совпадают",
     "auth.presetColor": "Выбрать {color}",
+    "auth.previousStep": "Назад",
     "auth.register": "Регистрация",
+    "auth.replaceImage": "Заменить изображение",
     "auth.registrationError": "Ошибка регистрации",
     "auth.registrationPendingApproval": "Регистрация ожидает подтверждения администратора",
     "auth.registrationPendingDescription": "Вы сможете войти в игру после одобрения заявки.",
@@ -7965,12 +8218,33 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.registrationSentMessage": "Страна {country} отправлена на подтверждение администраторам.",
     "auth.rememberMe": "Запомнить меня",
     "auth.repeatPassword": "Повтор пароля",
+    "auth.religionColor": "Цвет религии",
+    "auth.religionGroup": "Религиозная группа",
+    "auth.religionLogo": "Логотип религии",
+    "auth.religionName": "Название религии",
+    "auth.race": "Раса",
     "auth.selectCountry": "Выберите страну",
     "auth.selectImage": "Выбрать изображение",
     "auth.serverStatus.maintenance": "Технические работы",
     "auth.serverStatus.offline": "Оффлайн",
     "auth.serverStatus.online": "Онлайн",
     "auth.serverUnavailable": "Сервер недоступен",
+    "auth.startingPopulation": "Стартовое население",
+    "auth.startingPop.ducats": "Стартовые дукаты: {value}",
+    "auth.startingPop.ducatsLabel": "Дукаты",
+    "auth.startingPop.literacy": "Грамотность: {value}%",
+    "auth.startingPop.literacyLabel": "Грамотность",
+    "auth.startingPop.loyalists": "Лоялисты: {value}",
+    "auth.startingPop.loyalistsLabel": "Лоялисты",
+    "auth.startingPop.radicals": "Радикалы: {value}",
+    "auth.startingPop.radicalsLabel": "Радикалы",
+    "auth.startingPop.sol": "Уровень жизни: {value}",
+    "auth.startingPop.solLabel": "УЖ",
+    "auth.step.confirm": "Итог",
+    "auth.step.culture": "Культура",
+    "auth.step.info": "Инфо",
+    "auth.step.race": "Раса",
+    "auth.step.religion": "Религия",
     "auth.waitButton": "Буду ждать",
     "clientSettings.description": "Эти параметры не влияют на серверную игру и применяются только в вашем браузере.",
     "clientSettings.descriptionTitle": "Описание",
@@ -8318,6 +8592,24 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.unitName": "Название части",
     "locale.english": "Английский",
     "locale.russian": "Русский",
+    "cultureGroup.highlandClans.description": "Укрепленные горные общины с сильным родовым правом и традициями каменного строительства. Их поселенцы сплоченнее и быстрее строят раннюю инфраструктуру.",
+    "cultureGroup.highlandClans.name": "Горные кланы",
+    "cultureGroup.maritimeLeagues.description": "Портовые союзы вокруг верфей, лоцманов и прибрежных договоров. Их раннее государство богаче и лучше готово к заморскому расширению.",
+    "cultureGroup.maritimeLeagues.name": "Морские лиги",
+    "cultureGroup.riverineCityStates.description": "Города на речных переправах, зернохранилищах, причалах и пошлинных дорогах. Их поселенцы начинают с практической грамотностью и лучшими ранними доходами.",
+    "cultureGroup.riverineCityStates.name": "Речные города-государства",
+    "race.dwarf.description": "Компактные ремесленные общества с сильной цеховой дисциплиной и глубокими строительными традициями.",
+    "race.dwarf.name": "Дварф",
+    "race.elf.description": "Долгоживущие общины с сильными письменными традициями и утонченной гражданской памятью.",
+    "race.elf.name": "Эльф",
+    "race.human.description": "Гибкие и политически адаптивные поселенцы со сбалансированными ранними институтами.",
+    "race.human.name": "Человек",
+    "religionGroup.ancestorRites.description": "Родовые святилища и домашние обряды связывают новые поселения с памятью основателей. Первые поселенцы дают больше лоялистов.",
+    "religionGroup.ancestorRites.name": "Культы предков",
+    "religionGroup.celestialOrders.description": "Астральные школы, читающие легитимность в календарях, знамениях и точных записях. Их поселения начинают с более сильной ученостью.",
+    "religionGroup.celestialOrders.name": "Небесные ордены",
+    "religionGroup.templeCults.description": "Организованные жречества вокруг городских храмов, календарей и подношений. Они дают государству более сильную раннюю религиозную основу.",
+    "religionGroup.templeCults.name": "Храмовые культы",
     "map.controls.zoomIn": "Приблизить карту",
     "map.controls.zoomOut": "Отдалить карту",
     "map.zoomIndicator.label": "Масштаб",
@@ -9314,6 +9606,39 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "population.lowRegionCapitalAlert": "{region}: низкий капитал на душу ({capital} дукат/чел.)",
     "population.aggregatedData": "Агрегированные данные по населению",
     "population.balance": "Баланс",
+    "population.chart.culture": "Культура",
+    "population.chart.politicalStrength": "Политическая сила",
+    "population.chart.population": "Население",
+    "population.chart.profession": "Профессия",
+    "population.chart.region": "Регион",
+    "population.chart.religion": "Религия",
+    "population.chartsTitle": "Графики",
+    "population.discrimination": "Принятие",
+    "population.detail.finance": "Финансы",
+    "population.detail.needs": "Потребности",
+    "population.detail.qualifications": "Квалификации",
+    "population.detail.reasons": "Причины",
+    "population.detail.status": "Статус",
+    "population.employment": "Работа",
+    "population.employment.employed": "Заняты",
+    "population.employment.noOpenJobs": "Нет открытых мест",
+    "population.employment.partial": "Частично заняты",
+    "population.employment.unemployed": "Безработные",
+    "population.filter.culture": "Культура",
+    "population.filter.discrimination": "Дискриминация",
+    "population.filter.employment": "Занятость",
+    "population.filter.profession": "Профессия",
+    "population.filter.region": "Регион",
+    "population.filter.religion": "Религия",
+    "population.filter.sol": "Уровень жизни",
+    "population.filtersTitle": "Фильтры",
+    "population.qualifications": "Квалификации",
+    "population.accepted": "Приняты",
+    "population.discriminated": "Дискриминированы",
+    "population.none": "нет",
+    "population.discriminationTooltip": "Статус: {status}. Причины: {reasons}. Штраф: {penalty}%.",
+    "population.employmentTooltip": "Статус: {status}. Занято: {employed}. Открытых рабочих мест: {openJobs}.",
+    "population.qualificationTooltip": "Лимит квалификаций: {limit}. Дефицит: {shortages}.",
     "population.brandingDescription": "Подготовка визуальных настроек панели населения",
     "population.brandingTitle": "Логотип и стиль",
     "population.births": "Рождения",
@@ -9397,6 +9722,23 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "population.expenseStructure": "Структура расходов",
     "population.fulfilled": "Куплено",
     "population.groupColumn": "Группа",
+    "population.groupedPopCount": "{count} групп",
+    "population.mode.atomic": "Атомарно",
+    "population.mode.grouped": "Группами",
+    "population.resetFilters": "Сбросить",
+    "population.rowsShown": "{shown} / {total} строк",
+    "population.sol.low": "Бедствуют (0-7)",
+    "population.sol.prosperous": "Процветают (15+)",
+    "population.sol.stable": "Стабильно (11-14)",
+    "population.sol.struggling": "Нуждаются (8-10)",
+    "population.table.actions": "Действия",
+    "population.table.details": "Детали",
+    "population.table.ideologyInterest": "Идеология",
+    "population.table.politicalStrength": "Политическая сила",
+    "population.table.sol": "Уровень жизни",
+    "population.table.workplace": "Работа",
+    "population.tablePoliticalStrength": "Политическая сила: {value}",
+    "population.tableTitle": "Pop-группы",
     "population.wallet": "Кошелек",
     "buildings.regionRequired": "Не выбран регион",
     "buildings.regionDependency": "Нужно здание в регионе: {building}",

@@ -36,6 +36,7 @@ export function resolveScenarioUploadPublicPrefix(scenarioId = activeUploadScena
 
 const contentUploadKinds = [
   "cultures",
+  "cultureGroups",
   "resourceCategories",
   "hexTypes",
   "hexClimates",
@@ -43,6 +44,7 @@ const contentUploadKinds = [
   "hexContinents",
   "hexStrategicRegions",
   "religions",
+  "religionGroups",
   "professions",
   "ideologies",
   "interestGroups",
@@ -71,6 +73,8 @@ export function ensureUploadDirectories(): void {
     resolveUploadDir("flags"),
     resolveUploadDir("crests"),
     resolveUploadDir("markets"),
+    resolveUploadDir("culture-logos"),
+    resolveUploadDir("religion-logos"),
     resolveUploadDir("ui-backgrounds"),
     resolveUploadDir("civilopedia"),
     resolveUploadDir("division-icons"),
@@ -88,12 +92,14 @@ export function resolveContentUploadDir(kind?: string): string {
 export function resolveContentUploadUrlSegment(kind?: string): string {
   if (!kind) return "cultures";
   if (kind === "resourceCategories") return "resource-categories";
+  if (kind === "cultureGroups") return "culture-groups";
   if (kind === "hexTypes") return "province-types";
   if (kind === "hexClimates") return "province-climates";
   if (kind === "hexLandscapes") return "province-landscapes";
   if (kind === "hexContinents") return "province-continents";
   if (kind === "hexStrategicRegions") return "province-strategic-regions";
   if (kind === "interestGroups") return "interest-groups";
+  if (kind === "religionGroups") return "religion-groups";
   if (kind === "lawGroups") return "law-groups";
   if (kind === "shipTypes") return "ship-types";
   if (kind === "aircraftTypes") return "aircraft-types";

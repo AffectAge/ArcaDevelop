@@ -43,6 +43,18 @@ describe("scenario runtime loader", () => {
     expect(worldBase.regionBuildingDucatsByRegion["region:bohemia"]).toEqual({ "building:farm": 25 });
     expect(worldBase.regionPopulationTreasuryByRegion["region:bohemia"]).toBe(15);
     expect(worldBase.regionColonizationByRegion["region:bohemia"]).toEqual({ cost: 50, disabled: true });
+    expect(worldBase.countryPopulationAcceptanceByCountryId?.["country:bohemia"]).toEqual({
+      acceptedCultureIds: ["culture:bohemian", "culture:country:bohemia"],
+      acceptedReligionIds: ["religion:solar", "religion:country:bohemia"],
+      acceptedRaceIds: ["race:human", "race:default"],
+    });
+    expect(worldBase.countryIdentityByCountryId?.["country:bohemia"]).toEqual({
+      cultureId: "culture:country:bohemia",
+      religionId: "religion:country:bohemia",
+      raceId: "race:default",
+      cultureGroupId: "culture_group:riverine_city_states",
+      religionGroupId: "religion_group:temple_cults",
+    });
     expect(worldBase.regionResourceDepositsByRegion["region:bohemia"]?.[0]?.goodId).toBe("good:grain");
     expect(Object.values(worldBase.unitsById ?? {})).toEqual([
       expect.objectContaining({
@@ -64,17 +76,6 @@ async function createScenarioFixture(): Promise<string> {
     hexIds: ["hex:0:0"],
     ownerCountryId: "country:bohemia",
     controllerCountryId: "country:bohemia",
-    pops: [
-      {
-        id: "pop:bohemia:farmers",
-        size: 1000,
-        cultureId: "culture:bohemian",
-        religionId: "religion:solar",
-        raceId: "race:human",
-        ideologies: {},
-        professions: {},
-      },
-    ],
     buildings: [
       {
         instanceId: "building-instance:farm",
@@ -116,7 +117,30 @@ async function createScenarioFixture(): Promise<string> {
   });
   await writeJson(join(scenarioDir, "history/countries/bohemia.json"), {
     id: "country:bohemia",
+    acceptedCultureIds: ["culture:bohemian"],
+    acceptedReligionIds: ["religion:solar"],
+    acceptedRaceIds: ["race:human"],
     resources: { gold: 10 },
+  });
+  await writeJson(join(scenarioDir, "common/populations/bohemia.json"), {
+    regionId: "region:bohemia",
+    pops: [
+      {
+        id: "pop:bohemia:farmers",
+        size: 1000,
+        cultureId: "culture:bohemian",
+        religionId: "religion:solar",
+        raceId: "race:human",
+        professionId: "profession:farmers",
+        literacy: 0.2,
+        ducats: 0,
+        standardOfLiving: 8,
+        radicals: 0,
+        loyalists: 0,
+        qualificationsByCategory: {},
+        ideologies: {},
+      },
+    ],
   });
   await writeJson(join(scenarioDir, ".generated/hex-map.json"), {
     version: 1,

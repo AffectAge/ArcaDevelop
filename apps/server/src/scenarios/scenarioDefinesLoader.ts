@@ -64,6 +64,9 @@ export type ScenarioDefines = {
     retentionTurns?: unknown;
     maxEntriesPerTurn?: unknown;
   };
+  population?: {
+    qualificationCategories?: unknown;
+  };
   turnTimer?: {
     enabled?: unknown;
     secondsPerTurn?: unknown;
@@ -329,6 +332,12 @@ const scenarioDefinesShapeSchema = z
       .object({
         retentionTurns: z.unknown().optional(),
         maxEntriesPerTurn: z.unknown().optional(),
+      })
+      .strict()
+      .optional(),
+    population: z
+      .object({
+        qualificationCategories: z.unknown().optional(),
       })
       .strict()
       .optional(),

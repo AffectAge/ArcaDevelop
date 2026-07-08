@@ -7,6 +7,21 @@ import type { CivilianUnit, CivilianUnitQueueItem, CityMarker, EquipmentProducti
 import type { MapUnit, UnitTrainingQueueItem } from "./units";
 import type { BuildingInstance, RegionConstructionProject, RegionPopulation, RegionResourceDeposit, RegionResourceExplorationProject } from "./region-state";
 import type { CountryParliament, CountryTechnologyState } from "./politics";
+
+export type CountryPopulationAcceptance = {
+  acceptedCultureIds: string[];
+  acceptedReligionIds: string[];
+  acceptedRaceIds: string[];
+};
+
+export type CountryIdentityState = {
+  cultureId: string;
+  religionId: string;
+  raceId: string;
+  cultureGroupId: string;
+  religionGroupId: string;
+};
+
 export type WorldBase = {
   turnId: number;
   resourcesByCountry: Record<string, ResourceTotals>;
@@ -34,6 +49,8 @@ export type WorldBase = {
   countryEventFlagsByCountryId: Record<string, Record<string, string | number | boolean>>;
   journalEntriesByCountryId: Record<string, CountryJournalState>;
   countryModifiersByCountryId: Record<string, CountryAppliedModifier[]>;
+  countryPopulationAcceptanceByCountryId?: Record<string, CountryPopulationAcceptance>;
+  countryIdentityByCountryId?: Record<string, CountryIdentityState>;
   unitsById?: Record<string, MapUnit>;
   unitTrainingQueueByCountry?: Record<string, UnitTrainingQueueItem[]>;
   divisionTemplatesByCountry: Record<string, DivisionTemplate[]>;

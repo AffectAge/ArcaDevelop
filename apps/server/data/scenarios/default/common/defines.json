@@ -60,6 +60,9 @@
     "retentionTurns": 20,
     "maxEntriesPerTurn": 10000
   },
+  "population": {
+    "qualificationCategories": ["labor", "artisan", "technical", "academic", "military"]
+  },
   "turnTimer": {
     "enabled": true,
     "secondsPerTurn": 86400,

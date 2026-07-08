@@ -127,6 +127,8 @@ export function registerCountryManagementRouteRuntime(params: CountryManagementR
         resolveReadyByTurn: params.getResolveReadyByTurn(),
         flagUrl: target.flagUrl,
         crestUrl: target.crestUrl,
+        cultureLogoUrl: target.cultureLogoUrl,
+        religionLogoUrl: target.religionLogoUrl,
       }),
     removeCountryOrdersAndReadiness: (countryId) =>
       removeCountryOrdersAndReadinessFromState({

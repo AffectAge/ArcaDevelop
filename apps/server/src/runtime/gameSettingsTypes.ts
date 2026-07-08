@@ -27,6 +27,7 @@ export type GameContentEntry = {
   id: string;
   nameKey?: string | null;
   name: string;
+  descriptionKey?: string | null;
   description: string;
   color: string;
   logoUrl: string | null;
@@ -42,6 +43,19 @@ export type GameContentEntry = {
   femalePortraitAssetId?: string | null;
   baseWage?: number | null;
   needsProfile?: CultureNeedsProfile | null;
+  qualificationRequirements?: Record<string, number>;
+  qualificationGrowthRules?: Record<string, number>;
+  acceptedCultureIds?: string[];
+  acceptedReligionIds?: string[];
+  acceptedRaceIds?: string[];
+  acceptanceMode?: "add" | "replace";
+  discrimination?: {
+    wagePenaltyPct?: number;
+    hiringPenaltyPct?: number;
+    qualificationGrowthPenaltyPct?: number;
+    politicalStrengthPenaltyPct?: number;
+    radicalizationPerTurn?: number;
+  } | null;
   ideologyWeights?: Record<string, number>;
   interestGroupWeights?: Record<string, number>;
   professionWeights?: Record<string, number>;
@@ -69,6 +83,17 @@ export type GameContentEntry = {
   event?: GameEventDefinition | null;
   journalEntry?: JournalEntryDefinition | null;
   ideologyAttractionRules?: IdeologyAttractionRule[];
+  startingPop?: CountryIdentityStartingPop | null;
+};
+
+export type CountryIdentityStartingPop = {
+  literacy?: number;
+  ducats?: number;
+  standardOfLiving?: number;
+  radicals?: number;
+  loyalists?: number;
+  qualificationsByCategory?: Record<string, number>;
+  ideologies?: Record<string, number>;
 };
 
 export type AssetContentEntry = {
@@ -280,6 +305,8 @@ export type GameSettings = {
   content: {
     assets: AssetContentEntry[];
     races: GameContentEntry[];
+    cultureGroups: GameContentEntry[];
+    religionGroups: GameContentEntry[];
     resourceCategories: GameContentEntry[];
     hexTypes: GameContentEntry[];
     hexClimates: GameContentEntry[];

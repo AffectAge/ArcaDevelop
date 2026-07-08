@@ -13,6 +13,17 @@ model Country {
   color        String
   flagUrl      String?
   crestUrl     String?
+  cultureId    String   @unique
+  cultureName  String   @unique
+  cultureColor String
+  cultureLogoUrl String?
+  religionId   String   @unique
+  religionName String   @unique
+  religionColor String
+  religionLogoUrl String?
+  cultureGroupId String
+  religionGroupId String
+  raceId       String
   passwordHash String
   isLocked         Boolean   @default(false)
   isAdmin          Boolean   @default(false)

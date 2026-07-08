@@ -15,6 +15,17 @@ export type AdminCountryDbRecord = {
   color: string;
   flagUrl: string | null;
   crestUrl: string | null;
+  cultureId: string;
+  cultureName: string;
+  cultureColor: string;
+  cultureLogoUrl: string | null;
+  religionId: string;
+  religionName: string;
+  religionColor: string;
+  religionLogoUrl: string | null;
+  cultureGroupId: string;
+  religionGroupId: string;
+  raceId: string;
   isAdmin: boolean;
   isLocked: boolean;
   blockedUntilTurn: number | null;
@@ -103,7 +114,12 @@ export type AdminCountryRoutesDependencies = {
   makeVersionedUploadUrl: (relativePath: string) => string;
   buildCountryDeletionPlan: (
     countryId: string,
-    target: { flagUrl?: string | null; crestUrl?: string | null },
+    target: {
+      flagUrl?: string | null;
+      crestUrl?: string | null;
+      cultureLogoUrl?: string | null;
+      religionLogoUrl?: string | null;
+    },
   ) => CountryDeletionPlan;
   removeCountryOrdersAndReadiness: (countryId: string) => void;
   cleanupWorldBaseAfterCountryRemoval: (countryId: string) => void;
@@ -279,6 +295,8 @@ export function registerAdminCountryRoutes(app: express.Express, deps: AdminCoun
 
     deps.removeUploadedByUrl(target.flagUrl);
     deps.removeUploadedByUrl(target.crestUrl);
+    deps.removeUploadedByUrl(target.cultureLogoUrl);
+    deps.removeUploadedByUrl(target.religionLogoUrl);
     deps.removeCountryOrdersAndReadiness(countryIdParam);
     deps.cleanupWorldBaseAfterCountryRemoval(countryIdParam);
     deps.cleanupMarketsAfterCountryRemoval(countryIdParam);

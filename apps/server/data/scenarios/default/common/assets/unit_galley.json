@@ -1,0 +1,7 @@
+{
+  "id": "asset:unit.galley",
+  "type": "atlas",
+  "path": "assets/units/galley.png",
+  "width": 256,
+  "height": 64
+}

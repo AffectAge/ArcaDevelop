@@ -3,7 +3,6 @@ import type {
   BuildingInstance,
   ModifierStat,
   PopulationPop,
-  PopulationProfessionState,
   RegionConstructionProject,
   RegionPopulation,
   RegionResourceDeposit,
@@ -13,11 +12,10 @@ import type {
 import { DEFAULT_BUILDING_DURABILITY_MAX } from "../mechanics/buildingMechanics";
 import { normalizeIdeologyAttractionRules } from "../mechanics/contentDefinitionNormalizers";
 import {
-  buildRandomRegionPopulation as buildRandomRegionPopulationInState,
-  buildSinglePopRegionPopulation,
   getActiveCultureNeeds as getActiveCultureNeedsFromState,
   isEqualRegionPopulation as isEqualRegionPopulationInState,
-  normalizePopulationPops as normalizePopulationPopsInState,
+  makeAtomicPopulationPop,
+  normalizePopulationPopsStrict,
   normalizeRegionPopulation as normalizeRegionPopulationInState,
   normalizeRegionPopulationMap as normalizeRegionPopulationMapInState,
   resolvePopulationFallbackKeys as resolvePopulationFallbackKeysInState,
@@ -48,6 +46,7 @@ import {
 } from "./provinceStateNormalizers";
 import { resolveBuildingsTurnForRuntime } from "./buildingTurnRuntime";
 import type { BuildingContentEntry, GameSettings, TransportCorridorEntry } from "./gameSettingsTypes";
+import type { CountryIdentityStartingPop } from "./gameSettingsTypes";
 import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 
 type WorldPopulationRuntimeParams = {
@@ -56,7 +55,6 @@ type WorldPopulationRuntimeParams = {
   getTurnId: () => number;
   getHexIndex: () => HexMapIndexEntry[];
   getRegionIds?: () => string[];
-  getHexAreaKm2: (hexId: string) => number;
   getHexOwner: (hexId: string) => string | null;
   setLatestMarketOverview: (overview: MarketOverviewState) => void;
   getActiveCountryModifierRows: (countryId: string) => Array<{ id: string; sourceId: string; label: string }>;
@@ -106,6 +104,25 @@ type WorldPopulationRuntimeParams = {
 
 export type WorldPopulationRuntime = ReturnType<typeof createWorldPopulationRuntime>;
 
+function mergeIdentityStartingPop(...sources: Array<CountryIdentityStartingPop | null | undefined>): CountryIdentityStartingPop {
+  const merged: CountryIdentityStartingPop = {};
+  for (const source of sources) {
+    if (!source) continue;
+    if (source.literacy != null) merged.literacy = source.literacy;
+    if (source.ducats != null) merged.ducats = source.ducats;
+    if (source.standardOfLiving != null) merged.standardOfLiving = source.standardOfLiving;
+    if (source.radicals != null) merged.radicals = source.radicals;
+    if (source.loyalists != null) merged.loyalists = source.loyalists;
+    if (source.qualificationsByCategory) {
+      merged.qualificationsByCategory = { ...(merged.qualificationsByCategory ?? {}), ...source.qualificationsByCategory };
+    }
+    if (source.ideologies) {
+      merged.ideologies = { ...(merged.ideologies ?? {}), ...source.ideologies };
+    }
+  }
+  return merged;
+}
+
 export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParams) {
   function getPopulationDomainKeys(): PopulationDomainKeys {
     const gameSettings = params.getGameSettings();
@@ -114,11 +131,12 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
     gameSettings.content.religions = ensureDefaultReligion(gameSettings.content.religions);
     gameSettings.content.races = ensureDefaultRace(gameSettings.content.races);
     gameSettings.content.professions = ensureDefaultUnemployedProfession(gameSettings.content.professions);
+    const runtimeIdentities = Object.values(params.getWorldBase().countryIdentityByCountryId ?? {});
     return {
-      culturePct: gameSettings.content.cultures.map((entry) => entry.id),
+      culturePct: [...new Set([...gameSettings.content.cultures.map((entry) => entry.id), ...runtimeIdentities.map((entry) => entry.cultureId)])],
       ideologyPct: gameSettings.content.ideologies.map((entry) => entry.id),
-      religionPct: gameSettings.content.religions.map((entry) => entry.id),
-      racePct: gameSettings.content.races.map((entry) => entry.id),
+      religionPct: [...new Set([...gameSettings.content.religions.map((entry) => entry.id), ...runtimeIdentities.map((entry) => entry.religionId)])],
+      racePct: [...new Set([...gameSettings.content.races.map((entry) => entry.id), ...runtimeIdentities.map((entry) => entry.raceId)])],
       professionPct: gameSettings.content.professions.map((entry) => entry.id),
     };
   }
@@ -138,11 +156,10 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
   }
 
   function normalizePopulationPops(rawPops: unknown, hexId: string, domains: PopulationDomainKeys): PopulationPop[] {
-    return normalizePopulationPopsInState({
+    return normalizePopulationPopsStrict({
       rawPops,
-      hexId,
+      regionId: hexId,
       domains,
-      fallbackByDimension: resolvePopulationFallbackKeys(domains),
     });
   }
 
@@ -150,23 +167,40 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
     return isEqualRegionPopulationInState(prevValue, nextValue);
   }
 
-  function buildDefaultRegionPopulation(hexId: string, domains: PopulationDomainKeys): RegionPopulation {
-    return normalizeRegionPopulationInState({
-      input: null,
-      hexId,
-      domains,
-      fallbackByDimension: resolvePopulationFallbackKeys(domains),
-      getHexAreaKm2: params.getHexAreaKm2,
-    });
-  }
-
   function buildColonizationSettlementPopulation(regionId: string, countryId: string, total: number): RegionPopulation {
-    return buildSinglePopRegionPopulation({
-      hexId: regionId,
-      total,
-      fallbackByDimension: resolvePopulationFallbackKeys(getPopulationDomainKeys()),
-      popId: `pop:${toPopulationIdSegment(regionId)}:settlers:${toPopulationIdSegment(countryId)}`,
-    });
+    const size = Math.max(0, Math.floor(Number(total) || 0));
+    if (size <= 0) return { pops: [] };
+    const identity = params.getWorldBase().countryIdentityByCountryId?.[countryId];
+    if (!identity) {
+      throw new Error(`COUNTRY_IDENTITY_REQUIRED:${countryId}`);
+    }
+    const content = params.getGameSettings().content;
+    const startingPop = mergeIdentityStartingPop(
+      content.cultureGroups.find((entry) => entry.id === identity.cultureGroupId)?.startingPop,
+      content.religionGroups.find((entry) => entry.id === identity.religionGroupId)?.startingPop,
+      content.races.find((entry) => entry.id === identity.raceId)?.startingPop,
+    );
+    return {
+      pops: [
+        makeAtomicPopulationPop({
+          id: `pop:${regionId}:settlers:${countryId}`,
+          size,
+          cultureId: identity.cultureId,
+          religionId: identity.religionId,
+          raceId: identity.raceId,
+          professionId: "profession:unemployed",
+          qualificationsByCategory: startingPop.qualificationsByCategory,
+          ideologies: startingPop.ideologies,
+          previous: {
+            literacy: startingPop.literacy,
+            ducats: startingPop.ducats,
+            standardOfLiving: startingPop.standardOfLiving,
+            radicals: startingPop.radicals,
+            loyalists: startingPop.loyalists,
+          },
+        }),
+      ],
+    };
   }
 
   function normalizeRegionPopulation(
@@ -176,24 +210,8 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
   ): RegionPopulation {
     return normalizeRegionPopulationInState({
       input,
-      hexId,
+      regionId: hexId,
       domains,
-      fallbackByDimension: resolvePopulationFallbackKeys(domains),
-      getHexAreaKm2: params.getHexAreaKm2,
-    });
-  }
-
-  function buildRandomRegionPopulation(
-    hexId: string,
-    domains: PopulationDomainKeys,
-    populationTotalOverride?: number,
-  ): RegionPopulation {
-    return buildRandomRegionPopulationInState({
-      hexId,
-      domains,
-      fallbackByDimension: resolvePopulationFallbackKeys(domains),
-      getHexAreaKm2: params.getHexAreaKm2,
-      populationTotalOverride,
     });
   }
 
@@ -203,8 +221,6 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       input,
       regionIds: getRuntimeRegionIds(),
       domains,
-      fallbackByDimension: resolvePopulationFallbackKeys(domains),
-      getHexAreaKm2: params.getHexAreaKm2,
     });
   }
 
@@ -250,7 +266,13 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
   }
 
   function getActiveCultureNeeds(cultureId: string, standardOfLiving: number): CultureNeed[] {
-    const profile = params.getGameSettings().content.cultures.find((entry) => entry.id === cultureId)?.needsProfile ?? null;
+    const content = params.getGameSettings().content;
+    const profile =
+      content.professions.find((entry) => entry.id === cultureId)?.needsProfile ??
+      content.cultures.find((entry) => entry.id === cultureId)?.needsProfile ??
+      content.races.find((entry) => entry.id === cultureId)?.needsProfile ??
+      content.religions.find((entry) => entry.id === cultureId)?.needsProfile ??
+      null;
     return getActiveCultureNeedsFromState(profile, standardOfLiving);
   }
 
@@ -258,7 +280,7 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
     return sortCultureNeedsByPriorityFromState(needs);
   }
 
-  function resolveBuildingsTurn(): Record<string, Record<string, Record<string, PopulationProfessionState>>> {
+  function resolveBuildingsTurn(): Record<string, RegionPopulation> {
     const result = resolveBuildingsTurnForRuntime({
       hexHexIndex: params.getHexIndex(),
       buildingBaseThroughput: params.buildingBaseThroughput,
@@ -298,14 +320,14 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       worldBase: params.getWorldBase(),
     });
     params.setLatestMarketOverview(result.latestMarketOverview);
-    return result.nextProfessionsByPopIdByHex;
+    return result.nextPopulationByRegion;
   }
 
   function resolvePopulationTurn(): void {
     const gameSettings = params.getGameSettings();
     const worldBase = params.getWorldBase();
     const domains = getPopulationDomainKeys();
-    const professionByHex = resolveBuildingsTurn();
+    const nextPopulationByRegion = resolveBuildingsTurn();
     const ideologyContent = gameSettings.content.ideologies.map((ideology) => ({
       id: ideology.id,
       ideologyAttractionRules: normalizeIdeologyAttractionRules(ideology.ideologyAttractionRules),
@@ -313,11 +335,9 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
     const result = resolvePopulationTurnForRegions({
       regionIds: getRuntimeRegionIds(),
       currentPopulationByRegion: worldBase.regionPopulationByRegion,
-      nextProfessionsByRegion: professionByHex,
+      nextPopulationByRegion,
       domains,
-      fallbackByDimension: resolvePopulationFallbackKeys(domains),
       ideologies: ideologyContent,
-      getHexAreaKm2: params.getHexAreaKm2,
       getIdeologyContext: (regionId) => {
         const countryId = worldBase.regionController[regionId] ?? worldBase.regionOwner[regionId] ?? null;
         const activeLawIds = new Set<string>();
@@ -352,7 +372,6 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
   }
 
   function defaultWorldBase(currentTurnId: number): WorldBase {
-    const domains = getPopulationDomainKeys();
     const regionPopulationByRegion: Record<string, RegionPopulation> = {};
     const regionBuildingsByRegion: Record<string, BuildingInstance[]> = {};
     const regionBuildingDucatsByRegion: Record<string, Record<string, number>> = {};
@@ -362,7 +381,7 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
     const regionResourceExplorationQueueByRegion: Record<string, RegionResourceExplorationProject[]> = {};
     const regionResourceExplorationCountByRegion: Record<string, number> = {};
     for (const regionId of getRuntimeRegionIds()) {
-      regionPopulationByRegion[regionId] = buildDefaultRegionPopulation(regionId, domains);
+      regionPopulationByRegion[regionId] = { pops: [] };
       regionBuildingsByRegion[regionId] = [];
       regionBuildingDucatsByRegion[regionId] = {};
       regionPopulationTreasuryByRegion[regionId] = 0;
@@ -398,6 +417,8 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       countryEventFlagsByCountryId: {},
       journalEntriesByCountryId: {},
       countryModifiersByCountryId: {},
+      countryPopulationAcceptanceByCountryId: {},
+      countryIdentityByCountryId: {},
       unitsById: {},
       unitTrainingQueueByCountry: {},
       divisionTemplatesByCountry: {},
@@ -424,8 +445,6 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
 
   return {
     buildColonizationSettlementPopulation,
-    buildDefaultRegionPopulation,
-    buildRandomRegionPopulation,
     defaultWorldBase,
     getActiveCultureNeeds,
     getPopulationDomainKeys,
@@ -445,8 +464,4 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
     resolvePopulationTurn,
     sortCultureNeedsByPriority,
   };
-}
-
-function toPopulationIdSegment(value: string): string {
-  return value.trim().replace(/[^A-Za-z0-9:_-]+/g, "_").replace(/:/g, "_") || "unknown";
 }

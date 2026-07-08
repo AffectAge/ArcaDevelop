@@ -3,82 +3,12 @@ import type { EventLogEntry, PopulationPop } from "@arcanorum/shared";
 import { describe, expect, it, vi } from "vitest";
 import type { RouteAuth } from "../security/routeAuth";
 import {
-  adminPopulationGenerateSchema,
   registerAdminHexMutationRoutes,
   type AdminHexMutationRoutesDependencies,
   type AdminHexMutationWorldState,
 } from "./adminHexMutationRoutes";
 
 describe("adminHexMutationRoutes", () => {
-  it("validates admin population generation payloads", () => {
-    expect(adminPopulationGenerateSchema.safeParse({ scope: "world", strategy: "random" }).success).toBe(true);
-    expect(adminPopulationGenerateSchema.safeParse({ scope: "region", strategy: "unknown" }).success).toBe(false);
-    expect(adminPopulationGenerateSchema.safeParse({ scope: "region", hexId: "province:a", strategy: "random" }).success).toBe(false);
-  });
-
-  it("generates custom population for regions controlled by a country", async () => {
-    const deps = makeDeps();
-    const app = makeApp(deps);
-
-    const response = await request(app, "/admin/population/generate", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        scope: "country",
-        countryId: "country:a",
-        strategy: "custom",
-        pops: [makeRawPop({ id: "pop:custom", size: 123 })],
-      }),
-    });
-
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, updatedCount: 1, scope: "country", strategy: "custom" });
-    expect(deps.world.regionPopulationByRegion["region:a"]).toEqual({ pops: [makePop({ id: "pop:custom", size: 123 })] });
-    expect(deps.world.regionPopulationByRegion["region:b"]).toBeUndefined();
-    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({ mask: 16 });
-  });
-
-  it("clears world population only when values change", async () => {
-    const deps = makeDeps({
-      regionPopulationByRegion: {
-        "region:a": { pops: [makePop()] },
-        "region:b": { pops: [] },
-      },
-    });
-    const app = makeApp(deps);
-
-    const response = await request(app, "/admin/population/clear", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ scope: "world" }),
-    });
-
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, updatedCount: 1, scope: "world" });
-    expect(deps.world.regionPopulationByRegion["region:a"]).toEqual({ pops: [] });
-    expect(deps.world.regionPopulationByRegion["region:b"]).toEqual({ pops: [] });
-  });
-
-  it("updates one region population through the normalizer dependency", async () => {
-    const deps = makeDeps();
-    const app = makeApp(deps);
-
-    const response = await request(app, "/admin/population/regions/region:a", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ pops: [makeRawPop({ id: "pop:patched", size: 77 })] }),
-    });
-
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
-      region: {
-        id: "region:a",
-        population: { pops: [makePop({ id: "pop:patched", size: 77 })] },
-      },
-    });
-    expect(deps.savePersistentState).toHaveBeenCalledOnce();
-  });
-
   it("updates region colonization settings, owner, and cleanup state", async () => {
     const deps = makeDeps({
       colonyProgressByRegion: { "region:a": { "country:b": 50 } },
@@ -223,16 +153,6 @@ function makeDeps(
       };
     },
     getRegionDerivedColonizationCosts: () => ({ pointsCost: 21, ducatsCost: 0 }),
-    getPopulationDomainKeys: () => ({ marker: "domains" }),
-    buildRandomRegionPopulation: (regionId, _domains, populationTotal) => ({
-      pops: [makePop({ id: `pop:${regionId}:random`, size: populationTotal ?? 100 })],
-    }),
-    normalizePopulationPops: (rawPops) =>
-      Array.isArray(rawPops)
-        ? rawPops.map((row, index) => makePop({ id: String(row?.id ?? `pop:${index}`), size: Number(row?.size ?? 0) }))
-        : [],
-    isEqualRegionPopulation: (previousPopulation, nextPopulation) =>
-      JSON.stringify(previousPopulation ?? null) === JSON.stringify(nextPopulation),
     cleanupRegionColonizationProgress: vi.fn((regionId: string) => {
       delete world.colonyProgressByRegion[regionId];
     }),
@@ -247,10 +167,6 @@ function makeDeps(
   };
 }
 
-function makeRawPop(overrides?: Partial<PopulationPop>): Partial<PopulationPop> {
-  return makePop(overrides);
-}
-
 function makePop(overrides?: Partial<PopulationPop>): PopulationPop {
   return {
     id: "pop:default",
@@ -258,24 +174,27 @@ function makePop(overrides?: Partial<PopulationPop>): PopulationPop {
     cultureId: "culture:default",
     religionId: "religion:default",
     raceId: "race:default",
+    professionId: "profession:unemployed",
+    literacy: 0,
+    ducats: 0,
+    standardOfLiving: 10,
+    radicals: 0,
+    loyalists: 0,
+    qualificationsByCategory: {},
     ideologies: { "ideology:default": 100 },
-    professions: {
-      "profession:workers": {
-        size: 100,
-        ducats: 0,
-        standardOfLiving: 10,
-        radicals: 0,
-        loyalists: 0,
-        lastIncomeDucats: 0,
-        lastNeedsSpendDucats: 0,
-        lastNeedsSatisfaction: 1,
-        lastNeedsByCategory: {},
-        lastNeedsDeficitByGood: {},
-        lastNeedsBudgetShortageByGood: {},
-        lastBirths: 0,
-        lastDeaths: 0,
-      },
-    },
+    lastIncomeDucats: 0,
+    lastNeedsSpendDucats: 0,
+    lastNeedsSatisfaction: 1,
+    lastNeedsByCategory: {},
+    lastNeedsDeficitByGood: {},
+    lastNeedsBudgetShortageByGood: {},
+    lastBirths: 0,
+    lastDeaths: 0,
+    lastEmployed: 0,
+    lastOpenJobs: 0,
+    lastQualificationLimit: 0,
+    lastDiscriminationPenalty: 0,
+    politicalStrength: 0,
     ...overrides,
   };
 }

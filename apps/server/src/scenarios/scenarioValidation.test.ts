@@ -418,6 +418,111 @@ describe("scenarioValidation", () => {
     expect(result.issues.some((issue) => issue.code === "INVALID_DEFINES")).toBe(true);
   });
 
+  it("validates authored atomic population files", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await addPopulationDomains(scenarioDir);
+    await writeJson(join(scenarioDir, "common/defines.json"), {
+      population: {
+        qualificationCategories: ["labor", "technical"],
+      },
+    });
+    await writeJson(join(scenarioDir, "common/populations/bohemia.json"), {
+      regionId: "region:bohemia",
+      pops: [
+        {
+          id: "pop:bohemia:workers",
+          size: 1000,
+          cultureId: "culture:bohemian",
+          religionId: "religion:solar",
+          raceId: "race:human",
+          professionId: "profession:workers",
+          qualificationsByCategory: {
+            labor: 1000,
+            technical: 25,
+          },
+        },
+      ],
+    });
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects removed population shapes and unknown qualification categories", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await addPopulationDomains(scenarioDir);
+    await writeJson(join(scenarioDir, "common/defines.json"), {
+      population: {
+        qualificationCategories: ["labor"],
+      },
+    });
+    await writeJson(join(scenarioDir, "common/populations/bohemia.json"), {
+      regionId: "region:bohemia",
+      populationTotal: 1000,
+      pops: [
+        {
+          id: "pop:legacy",
+          size: 1000,
+          cultureId: "culture:bohemian",
+          religionId: "religion:solar",
+          raceId: "race:human",
+          professionId: "profession:workers",
+          professions: {
+            "profession:workers": { size: 1000 },
+          },
+          qualificationsByCategory: {
+            technical: 5,
+          },
+        },
+      ],
+    });
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "INVALID_POPULATION_DEFINITION", message: expect.stringContaining("populationTotal") }),
+        expect.objectContaining({ code: "INVALID_POPULATION_DEFINITION", message: expect.stringContaining(".professions is removed") }),
+        expect.objectContaining({ code: "BROKEN_REFERENCE", message: expect.stringContaining("unknown qualification category") }),
+      ]),
+    );
+  });
+
+  it("validates country-authored accepted population groups", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await addPopulationDomains(scenarioDir);
+    await writeJson(join(scenarioDir, "history/countries/bohemia.json"), {
+      id: "country:bohemia",
+      nameKey: "country.bohemia.name",
+      color: "#a33f2f",
+      controlMode: "open",
+      acceptedCultureIds: ["culture:bohemian"],
+      acceptedReligionIds: ["religion:solar"],
+      acceptedRaceIds: ["race:human"],
+    });
+
+    const valid = await validateScenarioDirectory(scenarioDir);
+    expect(valid.ok).toBe(true);
+
+    await writeJson(join(scenarioDir, "history/countries/bohemia.json"), {
+      id: "country:bohemia",
+      nameKey: "country.bohemia.name",
+      color: "#a33f2f",
+      controlMode: "open",
+      acceptedCultureIds: ["culture:missing"],
+    });
+
+    const invalid = await validateScenarioDirectory(scenarioDir);
+    expect(invalid.ok).toBe(false);
+    expect(invalid.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "BROKEN_REFERENCE", message: expect.stringContaining("acceptedCultureIds") }),
+      ]),
+    );
+  });
+
   it("fails on legacy raw event fields", async () => {
     const scenarioDir = await createScenarioFixture();
     await writeJson(join(scenarioDir, "common/events/legacy.json"), {
@@ -1280,6 +1385,24 @@ async function addCulture(scenarioDir: string, id: string): Promise<void> {
     event: { legacy: { name: "Legacy RU", title: "Legacy RU", description: "Legacy RU", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Экономика" } },
     ...makeMapTagLocalization("ru"),
+  });
+}
+
+async function addPopulationDomains(scenarioDir: string): Promise<void> {
+  await writeJson(join(scenarioDir, "common/cultures/bohemian.json"), {
+    id: "culture:bohemian",
+  });
+  await writeJson(join(scenarioDir, "common/religions/solar.json"), {
+    id: "religion:solar",
+  });
+  await writeJson(join(scenarioDir, "common/races/human.json"), {
+    id: "race:human",
+  });
+  await writeJson(join(scenarioDir, "common/professions/workers.json"), {
+    id: "profession:workers",
+    qualificationRequirements: {
+      labor: 1,
+    },
   });
 }
 

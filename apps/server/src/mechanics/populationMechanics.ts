@@ -1,4 +1,4 @@
-import type { IdeologyAttractionRule, PopulationPop, PopulationProfessionState, RegionPopulation } from "@arcanorum/shared";
+import type { IdeologyAttractionRule, PopulationPop, RegionPopulation } from "@arcanorum/shared";
 
 export type PopulationDimensionKey = "culturePct" | "ideologyPct" | "religionPct" | "racePct" | "professionPct";
 
@@ -12,31 +12,13 @@ export type PopulationDomainKeys = {
 
 export type PopulationDomainContent = Record<PopulationDimensionKey, Array<{ id: string; name?: string | null }>>;
 
-export type PopulationBreakdownMaps = {
-  culturePct: Record<string, number>;
-  ideologyPct: Record<string, number>;
-  religionPct: Record<string, number>;
-  racePct: Record<string, number>;
-  professionPct: Record<string, number>;
-};
-
-export type PopulationProfessionMetrics = {
-  averageSoL: number;
-  radicalPct: number;
-  loyalistPct: number;
-  professionShareById: Record<string, number>;
-};
-
-export type PopulationIdeologyContentEntry = {
-  id: string;
-  ideologyAttractionRules?: IdeologyAttractionRule[];
-};
-
 export type CultureNeedCategory = "survival" | "basic" | "comfort" | "luxury";
 
 export type CultureNeedGoodLike = {
   goodId: string;
   weight: number;
+  taboo?: boolean;
+  obsessionMultiplier?: number;
 };
 
 export type CultureNeedGood = CultureNeedGoodLike;
@@ -77,14 +59,42 @@ export type PopulationNeedsPurchaseResult = {
   wallet: number;
 };
 
-export type PopulationProfessionNeedsResult = {
-  nextState: PopulationProfessionState;
-  demandRequestedByGood: Record<string, number>;
+export type PopulationIdeologyContentEntry = {
+  id: string;
+  ideologyAttractionRules?: IdeologyAttractionRule[];
 };
 
-export type RegionPopulationNeedsResult = {
-  nextProfessionsByPopId: Record<string, Record<string, PopulationProfessionState>>;
-  demandRequestedByGood: Record<string, number>;
+export type PopulationAcceptanceContentEntry = {
+  id: string;
+  acceptedCultureIds?: string[];
+  acceptedReligionIds?: string[];
+  acceptedRaceIds?: string[];
+  acceptanceMode?: "add" | "replace";
+  discrimination?: {
+    wagePenaltyPct?: number;
+    hiringPenaltyPct?: number;
+    qualificationGrowthPenaltyPct?: number;
+    politicalStrengthPenaltyPct?: number;
+    radicalizationPerTurn?: number;
+  } | null;
+};
+
+export type PopulationAcceptanceContext = {
+  countryId: string | null;
+  acceptedCultureIds: Set<string>;
+  acceptedReligionIds: Set<string>;
+  acceptedRaceIds: Set<string>;
+  activeLawIds: Set<string>;
+};
+
+export type PopulationDiscriminationResult = {
+  status: "accepted" | "discriminated";
+  reasons: string[];
+  wagePenaltyPct: number;
+  hiringPenaltyPct: number;
+  qualificationGrowthPenaltyPct: number;
+  politicalStrengthPenaltyPct: number;
+  radicalizationPerTurn: number;
 };
 
 export type RegionPopulationIdeologyContext = {
@@ -114,11 +124,42 @@ export type WorkforceDemandSummary = {
   totalWorkforceDemand: number;
 };
 
-export const POPULATION_MIN_TOTAL = 100;
-export const POPULATION_DEFAULT_BASE_TOTAL = 10_000;
+export type PopulationJobAllocationResult = {
+  nextPopulation: RegionPopulation;
+  employedByProfession: Record<string, number>;
+};
+
+export type PopulationNeedsTurnResult = {
+  nextPopulation: RegionPopulation;
+  demandRequestedByGood: Record<string, number>;
+};
+
+export type ProfessionQualificationEntry = {
+  id: string;
+  qualificationRequirements?: Record<string, number>;
+  qualificationGrowthRules?: Record<string, number>;
+};
+
 export const POPULATION_BIRTH_RATE = 0.012;
 export const POPULATION_DEATH_RATE = 0.008;
 export const DEFAULT_STANDARD_OF_LIVING = 8;
+export const DEFAULT_LITERACY = 0.1;
+
+export const POPULATION_FALLBACK_KEY_BY_DIMENSION: Record<PopulationDimensionKey, string> = {
+  culturePct: "culture:default",
+  ideologyPct: "ideology:default",
+  religionPct: "religion:default",
+  racePct: "race:default",
+  professionPct: "profession:unemployed",
+};
+
+export const POPULATION_FALLBACK_NAME_BY_DIMENSION: Record<PopulationDimensionKey, string> = {
+  culturePct: "Без культуры",
+  ideologyPct: "Без идеологии",
+  religionPct: "Атеизм",
+  racePct: "Люди",
+  professionPct: "Безработные",
+};
 
 export const CULTURE_NEED_CATEGORY_ORDER: Record<CultureNeedCategory, number> = {
   survival: 0,
@@ -134,22 +175,6 @@ export const CULTURE_NEED_CATEGORY_SATISFACTION_WEIGHT: Record<CultureNeedCatego
   luxury: 0.6,
 };
 
-export const POPULATION_FALLBACK_KEY_BY_DIMENSION: Record<PopulationDimensionKey, string> = {
-  culturePct: "culture:default",
-  ideologyPct: "ideology:default",
-  religionPct: "religion:default",
-  racePct: "race:default",
-  professionPct: "profession:default",
-};
-
-export const POPULATION_FALLBACK_NAME_BY_DIMENSION: Record<PopulationDimensionKey, string> = {
-  culturePct: "Без культуры",
-  ideologyPct: "Без идеологии",
-  religionPct: "Атеизм",
-  racePct: "Люди",
-  professionPct: "Безработные",
-};
-
 export function normalizeCultureNeedsProfile(input: unknown): CultureNeedsProfile | null {
   if (!input || typeof input !== "object") return null;
   const tiersRaw = (input as { tiers?: unknown }).tiers;
@@ -163,14 +188,21 @@ export function normalizeCultureNeedsProfile(input: unknown): CultureNeedsProfil
     for (const [needIndex, needRaw] of needsRaw.entries()) {
       if (!needRaw || typeof needRaw !== "object") continue;
       const need = needRaw as Partial<CultureNeed>;
-      const goodsRaw = Array.isArray(need.goods) ? need.goods : [];
-      const goods: CultureNeedGood[] = goodsRaw
-        .map((raw) => {
+      const goods = (Array.isArray(need.goods) ? need.goods : [])
+        .map((raw): CultureNeedGood | null => {
           if (!raw || typeof raw !== "object") return null;
           const row = raw as Partial<CultureNeedGood>;
           const goodId = typeof row.goodId === "string" ? row.goodId.trim() : "";
-          const weight = typeof row.weight === "number" && Number.isFinite(row.weight) ? Math.max(0.001, row.weight) : 1;
-          return goodId ? { goodId, weight: Number(weight.toFixed(3)) } : null;
+          const weight = Number(row.weight);
+          const obsessionMultiplier = Number(row.obsessionMultiplier);
+          return goodId
+            ? {
+                goodId,
+                weight: Number(Math.max(0.001, Number.isFinite(weight) ? weight : 1).toFixed(3)),
+                taboo: row.taboo === true,
+                obsessionMultiplier: Number(Math.max(1, Number.isFinite(obsessionMultiplier) ? obsessionMultiplier : 1).toFixed(3)),
+              }
+            : null;
         })
         .filter((row): row is CultureNeedGood => row != null);
       const id = typeof need.id === "string" && need.id.trim() ? need.id.trim().slice(0, 80) : `need-${needIndex + 1}`;
@@ -179,28 +211,14 @@ export function normalizeCultureNeedsProfile(input: unknown): CultureNeedsProfil
         need.category === "survival" || need.category === "basic" || need.category === "comfort" || need.category === "luxury"
           ? need.category
           : "basic";
-      const amountPerPerson =
-        typeof need.amountPerPerson === "number" && Number.isFinite(need.amountPerPerson)
-          ? Math.max(0, Number(need.amountPerPerson))
-          : 0;
-      const weight = typeof need.weight === "number" && Number.isFinite(need.weight) ? Math.max(0.001, Number(need.weight)) : 1;
-      if (!id || amountPerPerson <= 0 || goods.length === 0) continue;
-      needs.push({
-        id,
-        label,
-        category,
-        amountPerPerson: Number(amountPerPerson.toFixed(6)),
-        weight: Number(weight.toFixed(3)),
-        goods,
-      });
+      const amountPerPerson = Math.max(0, Number(need.amountPerPerson) || 0);
+      const weight = Math.max(0.001, Number(need.weight) || 1);
+      if (amountPerPerson <= 0 || goods.length === 0) continue;
+      needs.push({ id, label, category, amountPerPerson: round6(amountPerPerson), weight: round3(weight), goods });
     }
     const id = typeof tier.id === "string" && tier.id.trim() ? tier.id.trim().slice(0, 80) : `tier-${tierIndex + 1}`;
-    const minStandardOfLiving =
-      typeof tier.minStandardOfLiving === "number" && Number.isFinite(tier.minStandardOfLiving)
-        ? Math.max(0, Number(tier.minStandardOfLiving))
-        : 0;
-    if (needs.length === 0) continue;
-    tiers.push({ id, minStandardOfLiving: Number(minStandardOfLiving.toFixed(3)), needs });
+    const minStandardOfLiving = Math.max(0, Number(tier.minStandardOfLiving) || 0);
+    if (needs.length > 0) tiers.push({ id, minStandardOfLiving: round3(minStandardOfLiving), needs });
   }
   tiers.sort((a, b) => a.minStandardOfLiving - b.minStandardOfLiving || a.id.localeCompare(b.id));
   return tiers.length > 0 ? { tiers } : null;
@@ -226,9 +244,7 @@ export function sortCultureNeedsByPriority(needs: CultureNeed[]): CultureNeed[] 
 }
 
 export function normalizeCompareText(value: string | null | undefined): string {
-  return String(value ?? "")
-    .trim()
-    .toLocaleLowerCase("ru-RU");
+  return String(value ?? "").trim().toLocaleLowerCase("ru-RU");
 }
 
 export function resolvePopulationFallbackKeys(params: {
@@ -239,22 +255,8 @@ export function resolvePopulationFallbackKeys(params: {
   for (const dimension of Object.keys(fallbackByDimension) as PopulationDimensionKey[]) {
     const allowed = new Set(params.domains[dimension]);
     const wantedName = normalizeCompareText(POPULATION_FALLBACK_NAME_BY_DIMENSION[dimension]);
-    const wantedFallbackId = normalizeCompareText(POPULATION_FALLBACK_KEY_BY_DIMENSION[dimension]);
-    const found =
-      params.content[dimension].find((entry) => {
-        const name = normalizeCompareText(entry.name);
-        const id = normalizeCompareText(entry.id);
-        return (name && name === wantedName) || id === wantedFallbackId;
-      }) ?? null;
-    if (found?.id && allowed.has(found.id)) {
-      fallbackByDimension[dimension] = found.id;
-      continue;
-    }
-    if (allowed.has(POPULATION_FALLBACK_KEY_BY_DIMENSION[dimension])) {
-      fallbackByDimension[dimension] = POPULATION_FALLBACK_KEY_BY_DIMENSION[dimension];
-      continue;
-    }
-    fallbackByDimension[dimension] = (params.domains[dimension]?.[0] ?? POPULATION_FALLBACK_KEY_BY_DIMENSION[dimension]).trim();
+    const found = params.content[dimension].find((entry) => normalizeCompareText(entry.name) === wantedName || normalizeCompareText(entry.id) === normalizeCompareText(POPULATION_FALLBACK_KEY_BY_DIMENSION[dimension]));
+    fallbackByDimension[dimension] = found?.id && allowed.has(found.id) ? found.id : (params.domains[dimension][0] ?? POPULATION_FALLBACK_KEY_BY_DIMENSION[dimension]);
   }
   return fallbackByDimension;
 }
@@ -270,93 +272,38 @@ export function hashStringToUInt32(input: string): number {
 
 export function normalizePercentageMap(input: unknown, allowedKeys: string[], fallbackKey: string): Record<string, number> {
   const fallback = fallbackKey.trim() || "default";
-  const normalizedKeys = [...new Set(allowedKeys.map((key) => key.trim()).filter(Boolean))];
-  const keys = normalizedKeys.length > 0 ? normalizedKeys : [fallback];
+  const keys = [...new Set(allowedKeys.map((key) => key.trim()).filter(Boolean))];
+  const allowed = keys.length > 0 ? keys : [fallback];
   const source = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
-  const rawByKey = new Map<string, number>();
+  const raw: Record<string, number> = {};
   let total = 0;
-
-  for (const key of keys) {
-    const raw = source[key];
-    const value = typeof raw === "number" && Number.isFinite(raw) ? Math.max(0, raw) : 0;
-    rawByKey.set(key, value);
+  for (const key of allowed) {
+    const value = Math.max(0, Number(source[key]) || 0);
+    if (value <= 0) continue;
+    raw[key] = value;
     total += value;
   }
-
-  if (total <= 0) {
-    return { [keys[0]]: 100 };
+  if (total <= 0) return { [allowed[0]]: 100 };
+  const result: Record<string, number> = {};
+  let allocated = 0;
+  const rows = Object.entries(raw).map(([key, value]) => ({ key, exact: (value / total) * 10000 }));
+  for (const row of rows) {
+    const units = Math.floor(row.exact);
+    if (units > 0) {
+      result[row.key] = units / 100;
+      allocated += units;
+    }
   }
-
-  const unitsByKey = new Map<string, number>();
-  const fractional: Array<{ key: string; remainder: number }> = [];
-  let usedUnits = 0;
-  for (const key of keys) {
-    const scaled = ((rawByKey.get(key) ?? 0) * 10000) / total;
-    const baseUnits = Math.floor(scaled);
-    unitsByKey.set(key, baseUnits);
-    usedUnits += baseUnits;
-    fractional.push({ key, remainder: scaled - baseUnits });
-  }
-
-  fractional.sort((a, b) => b.remainder - a.remainder || a.key.localeCompare(b.key));
-  let remainingUnits = 10000 - usedUnits;
+  rows.sort((a, b) => (b.exact % 1) - (a.exact % 1) || a.key.localeCompare(b.key));
+  let remaining = 10000 - allocated;
   let index = 0;
-  while (remainingUnits > 0 && fractional.length > 0) {
-    const row = fractional[index % fractional.length];
-    unitsByKey.set(row.key, (unitsByKey.get(row.key) ?? 0) + 1);
-    remainingUnits -= 1;
+  while (remaining > 0 && rows.length > 0) {
+    const key = rows[index % rows.length].key;
+    result[key] = round3((result[key] ?? 0) + 0.01);
+    remaining -= 1;
     index += 1;
   }
-
-  const result: Record<string, number> = {};
-  for (const key of keys) {
-    const units = unitsByKey.get(key) ?? 0;
-    if (units <= 0) continue;
-    result[key] = units / 100;
-  }
-  return Object.keys(result).length > 0 ? result : { [keys[0]]: 100 };
-}
-
-export function buildDeterministicPctMap(keys: string[], seed: string, fallbackKey: string): Record<string, number> {
-  if (keys.length <= 1) {
-    const key = (keys[0] ?? fallbackKey).trim() || fallbackKey;
-    return { [key]: 100 };
-  }
-  const weighted: Record<string, number> = {};
-  for (const key of keys) {
-    weighted[key] = (hashStringToUInt32(`${seed}:${key}`) % 1000) + 1;
-  }
-  return normalizePercentageMap(weighted, keys, fallbackKey);
-}
-
-export function buildRandomPctMap(params: {
-  keys: string[];
-  fallbackKey: string;
-  random?: () => number;
-}): Record<string, number> {
-  const sourceKeys = params.keys.length > 0 ? params.keys : [params.fallbackKey];
-  const random = params.random ?? Math.random;
-  const weights: Record<string, number> = {};
-  for (const key of sourceKeys) {
-    weights[key] = random() * 100 + 1;
-  }
-  return normalizePercentageMap(weights, sourceKeys, params.fallbackKey);
-}
-
-export function isEqualPercentageMap(prevValue: Record<string, number> | undefined, nextValue: Record<string, number>): boolean {
-  if (!prevValue) return false;
-  const prevKeys = Object.keys(prevValue);
-  const nextKeys = Object.keys(nextValue);
-  if (prevKeys.length !== nextKeys.length) return false;
-  for (const key of nextKeys) {
-    if ((prevValue[key] ?? Number.NaN) !== nextValue[key]) return false;
-  }
-  return true;
-}
-
-export function getPopulationTotal(population: RegionPopulation | undefined | null): number {
-  if (!population) return 0;
-  return Math.max(0, Math.floor(population.pops.reduce((sum, pop) => sum + Math.max(0, Number(pop.size)), 0)));
+  return Object.keys(result).length > 0 ? result : { [allowed[0]]: 100 };
 }
 
 export function normalizePopulationCountMap(
@@ -367,33 +314,33 @@ export function normalizePopulationCountMap(
 ): Record<string, number> {
   const target = Math.max(0, Math.floor(targetTotal));
   if (target <= 0) return {};
-  const validKeys = new Set(keys);
+  const allowed = new Set(keys);
+  const source = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
   const raw: Record<string, number> = {};
-  if (input && typeof input === "object" && !Array.isArray(input)) {
-    for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
-      const id = key.trim();
-      const amount = typeof value === "number" && Number.isFinite(value) ? Math.max(0, Number(value)) : 0;
-      if (!id || !validKeys.has(id) || amount <= 0) continue;
-      raw[id] = (raw[id] ?? 0) + amount;
-    }
-  }
-  const rawTotal = Object.values(raw).reduce((sum, value) => sum + value, 0);
-  if (rawTotal <= 0) return { [fallbackKey]: target };
-
-  const normalized: Record<string, number> = {};
-  let allocated = 0;
-  for (const [key, value] of Object.entries(raw)) {
-    const amount = Math.floor((value / rawTotal) * target);
+  let total = 0;
+  for (const [key, value] of Object.entries(source)) {
+    const id = key.trim();
+    if (!id || !allowed.has(id)) continue;
+    const amount = Math.max(0, Number(value) || 0);
     if (amount <= 0) continue;
-    normalized[key] = amount;
-    allocated += amount;
+    raw[id] = (raw[id] ?? 0) + amount;
+    total += amount;
+  }
+  if (total <= 0) return { [fallbackKey]: target };
+  const result: Record<string, number> = {};
+  let allocated = 0;
+  for (const [key, amount] of Object.entries(raw)) {
+    const value = Math.floor((amount / total) * target);
+    if (value <= 0) continue;
+    result[key] = value;
+    allocated += value;
   }
   const remainder = target - allocated;
   if (remainder > 0) {
-    const key = normalized[fallbackKey] != null ? fallbackKey : (Object.keys(normalized)[0] ?? fallbackKey);
-    normalized[key] = (normalized[key] ?? 0) + remainder;
+    const key = result[fallbackKey] != null ? fallbackKey : (Object.keys(result)[0] ?? fallbackKey);
+    result[key] = (result[key] ?? 0) + remainder;
   }
-  return normalized;
+  return result;
 }
 
 export function buildPopulationCountMapFromPct(
@@ -404,453 +351,126 @@ export function buildPopulationCountMapFromPct(
   return normalizePopulationCountMap(pctMap, Object.keys(pctMap), fallbackKey, targetTotal);
 }
 
-export function makePopulationProfessionState(size: number, previous?: Partial<PopulationProfessionState>): PopulationProfessionState {
-  const nextSize = Math.max(0, Math.floor(size));
+export function makeAtomicPopulationPop(input: {
+  id: string;
+  size: number;
+  cultureId: string;
+  religionId: string;
+  raceId: string;
+  professionId: string;
+  ideologies?: Record<string, number>;
+  qualificationsByCategory?: Record<string, number>;
+  previous?: Partial<PopulationPop>;
+}): PopulationPop {
+  const size = Math.max(0, Math.floor(Number(input.size) || 0));
+  const previous = input.previous ?? {};
   return {
-    size: nextSize,
-    ducats: round3(Math.max(0, Number(previous?.ducats ?? 0))),
-    standardOfLiving: round3(Math.max(0, Number(previous?.standardOfLiving ?? DEFAULT_STANDARD_OF_LIVING))),
-    radicals: Math.max(0, Math.floor(Number(previous?.radicals ?? 0))),
-    loyalists: Math.max(0, Math.floor(Number(previous?.loyalists ?? 0))),
-    lastIncomeDucats: round3(Math.max(0, Number(previous?.lastIncomeDucats ?? 0))),
-    lastNeedsSpendDucats: round3(Math.max(0, Number(previous?.lastNeedsSpendDucats ?? 0))),
-    lastNeedsSatisfaction: round3(Math.max(0, Number(previous?.lastNeedsSatisfaction ?? 1))),
-    lastNeedsByCategory: Object.fromEntries(
-      Object.entries(previous?.lastNeedsByCategory ?? {})
-        .filter(([, row]) => row && typeof row === "object")
-        .map(([key, row]) => [
-          key,
-          {
-            required: round3(Math.max(0, Number(row?.required ?? 0))),
-            fulfilled: round3(Math.max(0, Number(row?.fulfilled ?? 0))),
-            spend: round3(Math.max(0, Number(row?.spend ?? 0))),
-            satisfaction: round3(Math.max(0, Number(row?.satisfaction ?? 0))),
-          },
-        ]),
-    ),
-    lastNeedsDeficitByGood: Object.fromEntries(
-      Object.entries(previous?.lastNeedsDeficitByGood ?? {})
-        .filter(([goodId, value]) => goodId.trim().length > 0 && Number(value) > 0)
-        .map(([goodId, value]) => [goodId, round3(Math.max(0, Number(value)))]),
-    ),
-    lastNeedsBudgetShortageByGood: Object.fromEntries(
-      Object.entries(previous?.lastNeedsBudgetShortageByGood ?? {})
-        .filter(([goodId, value]) => goodId.trim().length > 0 && Number(value) > 0)
-        .map(([goodId, value]) => [goodId, round3(Math.max(0, Number(value)))]),
-    ),
-    lastBirths: Math.max(0, Math.floor(Number(previous?.lastBirths ?? 0))),
-    lastDeaths: Math.max(0, Math.floor(Number(previous?.lastDeaths ?? 0))),
-  };
-}
-
-export function normalizeProfessionStateMap(
-  input: unknown,
-  keys: string[],
-  fallbackKey: string,
-  targetTotal: number,
-): Record<string, PopulationProfessionState> {
-  const target = Math.max(0, Math.floor(targetTotal));
-  if (target <= 0) return {};
-  const rawCounts: Record<string, number> = {};
-  const previousByKey: Record<string, Partial<PopulationProfessionState>> = {};
-  if (input && typeof input === "object" && !Array.isArray(input)) {
-    for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
-      const id = key.trim();
-      if (!id || !keys.includes(id)) continue;
-      if (typeof value === "number") {
-        rawCounts[id] = Math.max(0, Number(value));
-      } else if (value && typeof value === "object") {
-        const row = value as Partial<PopulationProfessionState>;
-        rawCounts[id] = Math.max(0, Number(row.size ?? 0));
-        previousByKey[id] = row;
-      }
-    }
-  }
-  const counts = normalizePopulationCountMap(rawCounts, keys, fallbackKey, target);
-  return Object.fromEntries(Object.entries(counts).map(([key, size]) => [key, makePopulationProfessionState(size, previousByKey[key])]));
-}
-
-export function buildRedistributedProfessionStateMap(
-  nextCounts: Record<string, number>,
-  previousStates: Record<string, PopulationProfessionState>,
-): Record<string, PopulationProfessionState> {
-  const nextTotal = Object.values(nextCounts).reduce((sum, value) => sum + Math.max(0, Math.floor(Number(value) || 0)), 0);
-  if (nextTotal <= 0) return {};
-
-  const previousEntries = Object.entries(previousStates ?? {}).filter(([, state]) => state && Number(state.size) > 0);
-  const previousTotalSize = previousEntries.reduce((sum, [, state]) => sum + Math.max(0, Number(state.size)), 0);
-  const previousTotalDucats = previousEntries.reduce((sum, [, state]) => sum + Math.max(0, Number(state.ducats)), 0);
-  const averageSoL =
-    previousTotalSize > 0
-      ? previousEntries.reduce((sum, [, state]) => sum + Math.max(0, Number(state.standardOfLiving)) * Math.max(0, Number(state.size)), 0) / previousTotalSize
-      : DEFAULT_STANDARD_OF_LIVING;
-  const averageNeedsSatisfaction =
-    previousTotalSize > 0
-      ? previousEntries.reduce((sum, [, state]) => sum + Math.max(0, Number(state.lastNeedsSatisfaction)) * Math.max(0, Number(state.size)), 0) / previousTotalSize
-      : 1;
-  const radicalsPerCapita =
-    previousTotalSize > 0 ? previousEntries.reduce((sum, [, state]) => sum + Math.max(0, Number(state.radicals)), 0) / previousTotalSize : 0;
-  const loyalistsPerCapita =
-    previousTotalSize > 0 ? previousEntries.reduce((sum, [, state]) => sum + Math.max(0, Number(state.loyalists)), 0) / previousTotalSize : 0;
-
-  const result: Record<string, PopulationProfessionState> = {};
-  for (const [professionId, sizeRaw] of Object.entries(nextCounts)) {
-    const size = Math.max(0, Math.floor(Number(sizeRaw) || 0));
-    if (size <= 0) continue;
-    const previous = previousStates?.[professionId];
-    const next = makePopulationProfessionState(size, previous);
-    const sizeShare = nextTotal > 0 ? size / nextTotal : 0;
-    next.ducats = round3(previousTotalDucats * sizeShare);
-    if (!previous && previousTotalSize > 0) {
-      next.standardOfLiving = round3(averageSoL);
-      next.lastNeedsSatisfaction = round3(averageNeedsSatisfaction);
-    }
-    next.radicals = Math.max(0, Math.floor(radicalsPerCapita * size));
-    next.loyalists = Math.max(0, Math.floor(loyalistsPerCapita * size));
-    result[professionId] = next;
-  }
-  return result;
-}
-
-export function normalizePopulationPop(params: {
-  raw: unknown;
-  hexId: string;
-  domains: PopulationDomainKeys;
-  fallbackByDimension: Record<PopulationDimensionKey, string>;
-  index: number;
-}): PopulationPop | null {
-  if (!params.raw || typeof params.raw !== "object") return null;
-  const row = params.raw as Partial<PopulationPop>;
-  const size = typeof row.size === "number" && Number.isFinite(row.size) ? Math.max(0, Math.floor(row.size)) : 0;
-  if (size <= 0) return null;
-  const pick = (value: unknown, keys: string[], fallback: string): string => {
-    const id = typeof value === "string" ? value.trim() : "";
-    return id && keys.includes(id) ? id : fallback;
-  };
-  const id = typeof row.id === "string" && row.id.trim() ? row.id.trim().slice(0, 120) : `pop:${params.hexId}:${params.index}`;
-  return {
-    id,
+    id: input.id,
     size,
-    cultureId: pick(row.cultureId, params.domains.culturePct, params.fallbackByDimension.culturePct),
-    religionId: pick(row.religionId, params.domains.religionPct, params.fallbackByDimension.religionPct),
-    raceId: pick(row.raceId, params.domains.racePct, params.fallbackByDimension.racePct),
-    ideologies: normalizePopulationCountMap(row.ideologies, params.domains.ideologyPct, params.fallbackByDimension.ideologyPct, size),
-    professions: normalizeProfessionStateMap(row.professions, params.domains.professionPct, params.fallbackByDimension.professionPct, size),
+    cultureId: input.cultureId,
+    religionId: input.religionId,
+    raceId: input.raceId,
+    professionId: input.professionId,
+    literacy: round3(clamp01(Number(previous.literacy ?? DEFAULT_LITERACY))),
+    ducats: round3(Math.max(0, Number(previous.ducats ?? 0))),
+    standardOfLiving: round3(Math.max(0, Number(previous.standardOfLiving ?? DEFAULT_STANDARD_OF_LIVING))),
+    radicals: Math.max(0, Math.floor(Number(previous.radicals ?? 0))),
+    loyalists: Math.max(0, Math.floor(Number(previous.loyalists ?? 0))),
+    qualificationsByCategory: normalizeNumberRecord(input.qualificationsByCategory ?? previous.qualificationsByCategory ?? {}),
+    ideologies: normalizePopulationCountMap(input.ideologies ?? previous.ideologies ?? {}, Object.keys(input.ideologies ?? previous.ideologies ?? { "ideology:default": 1 }), Object.keys(input.ideologies ?? previous.ideologies ?? { "ideology:default": 1 })[0] ?? "ideology:default", size),
+    lastIncomeDucats: round3(Math.max(0, Number(previous.lastIncomeDucats ?? 0))),
+    lastNeedsSpendDucats: round3(Math.max(0, Number(previous.lastNeedsSpendDucats ?? 0))),
+    lastNeedsSatisfaction: round3(Math.max(0, Number(previous.lastNeedsSatisfaction ?? 1))),
+    lastNeedsByCategory: normalizeNeedCategoryStats(previous.lastNeedsByCategory),
+    lastNeedsDeficitByGood: normalizeNumberRecord(previous.lastNeedsDeficitByGood ?? {}),
+    lastNeedsBudgetShortageByGood: normalizeNumberRecord(previous.lastNeedsBudgetShortageByGood ?? {}),
+    lastBirths: Math.max(0, Math.floor(Number(previous.lastBirths ?? 0))),
+    lastDeaths: Math.max(0, Math.floor(Number(previous.lastDeaths ?? 0))),
+    lastJobStatus: previous.lastJobStatus ?? (input.professionId.includes("unemployed") ? "unemployed" : "employed"),
+    lastEmployed: round3(Math.max(0, Number(previous.lastEmployed ?? (input.professionId.includes("unemployed") ? 0 : size)))),
+    lastOpenJobs: round3(Math.max(0, Number(previous.lastOpenJobs ?? 0))),
+    lastQualificationLimit: round3(Math.max(0, Number(previous.lastQualificationLimit ?? size))),
+    lastDiscriminationPenalty: round3(Math.max(0, Number(previous.lastDiscriminationPenalty ?? 0))),
+    politicalStrength: round3(Math.max(0, Number(previous.politicalStrength ?? size))),
   };
 }
 
-export function normalizePopulationPops(params: {
+export function normalizePopulationPopsStrict(params: {
   rawPops: unknown;
-  hexId: string;
+  regionId: string;
   domains: PopulationDomainKeys;
-  fallbackByDimension: Record<PopulationDimensionKey, string>;
 }): PopulationPop[] {
   if (!Array.isArray(params.rawPops)) return [];
   const seen = new Set<string>();
   const pops: PopulationPop[] = [];
   for (const [index, raw] of params.rawPops.entries()) {
-    const pop = normalizePopulationPop({
-      raw,
-      hexId: params.hexId,
-      domains: params.domains,
-      fallbackByDimension: params.fallbackByDimension,
-      index,
-    });
-    if (!pop) continue;
-    let id = pop.id;
+    if (!raw || typeof raw !== "object") continue;
+    const row = raw as Partial<PopulationPop> & { professions?: unknown };
+    if (row.professions != null) {
+      throw new Error(`population-old-professions-shape:${params.regionId}`);
+    }
+    const size = Math.max(0, Math.floor(Number(row.size) || 0));
+    if (size <= 0) continue;
+    const cultureId = requireKnownId(row.cultureId, params.domains.culturePct, "cultureId", params.regionId);
+    const religionId = requireKnownId(row.religionId, params.domains.religionPct, "religionId", params.regionId);
+    const raceId = requireKnownId(row.raceId, params.domains.racePct, "raceId", params.regionId);
+    const professionId = requireKnownId(row.professionId, params.domains.professionPct, "professionId", params.regionId);
+    const baseId = typeof row.id === "string" && row.id.trim() ? row.id.trim() : `pop:${params.regionId}:${index}`;
+    let id = baseId;
     let suffix = 2;
     while (seen.has(id)) {
-      id = `${pop.id}:${suffix}`;
+      id = `${baseId}:${suffix}`;
       suffix += 1;
     }
     seen.add(id);
-    pops.push({ ...pop, id });
+    pops.push(makeAtomicPopulationPop({
+      id,
+      size,
+      cultureId,
+      religionId,
+      raceId,
+      professionId,
+      ideologies: row.ideologies,
+      qualificationsByCategory: row.qualificationsByCategory,
+      previous: row,
+    }));
   }
   return pops;
 }
 
-export function isEqualRegionPopulation(prevValue: RegionPopulation | undefined, nextValue: RegionPopulation): boolean {
-  if (!prevValue) return false;
-  if (prevValue.pops.length !== nextValue.pops.length) return false;
-  for (let index = 0; index < nextValue.pops.length; index += 1) {
-    const prev = prevValue.pops[index];
-    const next = nextValue.pops[index];
-    if (
-      !prev ||
-      prev.id !== next.id ||
-      prev.size !== next.size ||
-      prev.cultureId !== next.cultureId ||
-      prev.religionId !== next.religionId ||
-      prev.raceId !== next.raceId ||
-      !isEqualPercentageMap(prev.ideologies, next.ideologies) ||
-      JSON.stringify(prev.professions) !== JSON.stringify(next.professions)
-    ) {
-      return false;
-    }
-  }
-  return true;
-}
-
-export function buildSinglePopRegionPopulation(params: {
-  hexId: string;
-  total: number;
-  fallbackByDimension: Record<PopulationDimensionKey, string>;
-  popId?: string;
-}): RegionPopulation {
-  const size = Math.max(0, Math.floor(params.total));
-  return {
-    pops:
-      size > 0
-        ? [
-            {
-              id: params.popId ?? `pop:${params.hexId}:default`,
-              size,
-              cultureId: params.fallbackByDimension.culturePct,
-              religionId: params.fallbackByDimension.religionPct,
-              raceId: params.fallbackByDimension.racePct,
-              ideologies: { [params.fallbackByDimension.ideologyPct]: size },
-              professions: { [params.fallbackByDimension.professionPct]: makePopulationProfessionState(size) },
-            },
-          ]
-        : [],
-  };
-}
-
-export function buildRegionPopulationFromBreakdowns(params: {
-  hexId: string;
-  total: number;
-  fallbackByDimension: Record<PopulationDimensionKey, string>;
-  maps: PopulationBreakdownMaps;
-}): RegionPopulation {
-  const populationTotal = Math.max(0, Math.floor(params.total));
-  if (populationTotal <= 0) return { pops: [] };
-
-  const entriesByDimension = {
-    culturePct: Object.entries(params.maps.culturePct).filter(([, pct]) => pct > 0),
-    religionPct: Object.entries(params.maps.religionPct).filter(([, pct]) => pct > 0),
-    racePct: Object.entries(params.maps.racePct).filter(([, pct]) => pct > 0),
-  };
-  const pops: PopulationPop[] = [];
-  let allocated = 0;
-  for (const [cultureId, culturePct] of entriesByDimension.culturePct) {
-    for (const [religionId, religionPct] of entriesByDimension.religionPct) {
-      for (const [raceId, racePct] of entriesByDimension.racePct) {
-        const share = (culturePct / 100) * (religionPct / 100) * (racePct / 100);
-        const size = Math.floor(populationTotal * share);
-        if (size <= 0) continue;
-        allocated += size;
-        pops.push({
-          id: `pop:${params.hexId}:${pops.length}`,
-          size,
-          cultureId,
-          religionId,
-          raceId,
-          ideologies: buildPopulationCountMapFromPct(params.maps.ideologyPct, size, params.fallbackByDimension.ideologyPct),
-          professions: Object.fromEntries(
-            Object.entries(buildPopulationCountMapFromPct(params.maps.professionPct, size, params.fallbackByDimension.professionPct)).map(
-              ([professionId, professionSize]) => [professionId, makePopulationProfessionState(professionSize)],
-            ),
-          ),
-        });
-      }
-    }
-  }
-  if (pops.length === 0) {
-    return buildSinglePopRegionPopulation({
-      hexId: params.hexId,
-      total: populationTotal,
-      fallbackByDimension: params.fallbackByDimension,
-    });
-  }
-  const remainder = populationTotal - allocated;
-  if (remainder > 0) {
-    pops[0] = { ...pops[0], size: pops[0].size + remainder };
-  }
-  return { pops };
-}
-
-export function buildDefaultRegionPopulation(params: {
-  hexId: string;
-  domains: PopulationDomainKeys;
-  fallbackByDimension: Record<PopulationDimensionKey, string>;
-  getHexAreaKm2: (hexId: string) => number;
-}): RegionPopulation {
-  const areaKm2 = Math.max(1, params.getHexAreaKm2(params.hexId) ?? 1_000);
-  const seed = hashStringToUInt32(params.hexId);
-  const areaBasedPopulation = Math.floor(areaKm2 * 120);
-  const populationTotal = Math.max(POPULATION_MIN_TOTAL, areaBasedPopulation + POPULATION_DEFAULT_BASE_TOTAL + (seed % 5000));
-  return buildSinglePopRegionPopulation({
-    hexId: params.hexId,
-    total: populationTotal,
-    fallbackByDimension: params.fallbackByDimension,
-  });
-}
-
 export function normalizeRegionPopulation(params: {
   input: unknown;
-  hexId: string;
+  regionId: string;
   domains: PopulationDomainKeys;
-  fallbackByDimension: Record<PopulationDimensionKey, string>;
-  getHexAreaKm2: (hexId: string) => number;
 }): RegionPopulation {
-  const fallback = buildDefaultRegionPopulation(params);
-  if (!params.input || typeof params.input !== "object") {
-    return fallback;
-  }
-  const row = params.input as Partial<RegionPopulation> & Partial<{ populationTotal: unknown }>;
-  const pops = normalizePopulationPops({
-    rawPops: row.pops,
-    hexId: params.hexId,
-    domains: params.domains,
-    fallbackByDimension: params.fallbackByDimension,
-  });
-  if (pops.length > 0) return { pops };
-  if (typeof row.populationTotal === "number" && Number.isFinite(row.populationTotal)) {
-    return buildSinglePopRegionPopulation({
-      hexId: params.hexId,
-      total: row.populationTotal <= 0 ? 0 : Math.max(POPULATION_MIN_TOTAL, Math.floor(row.populationTotal)),
-      fallbackByDimension: params.fallbackByDimension,
-    });
-  }
-  return fallback;
-}
-
-export function buildRandomRegionPopulation(params: {
-  hexId: string;
-  domains: PopulationDomainKeys;
-  fallbackByDimension: Record<PopulationDimensionKey, string>;
-  getHexAreaKm2: (hexId: string) => number;
-  populationTotalOverride?: number;
-  random?: () => number;
-}): RegionPopulation {
-  const fallback = buildDefaultRegionPopulation(params);
-  const total =
-    typeof params.populationTotalOverride === "number" && Number.isFinite(params.populationTotalOverride)
-      ? Math.max(0, Math.floor(params.populationTotalOverride))
-      : getPopulationTotal(fallback);
-  return buildRegionPopulationFromBreakdowns({
-    hexId: params.hexId,
-    total,
-    fallbackByDimension: params.fallbackByDimension,
-    maps: {
-      culturePct: buildRandomPctMap({ keys: params.domains.culturePct, fallbackKey: params.fallbackByDimension.culturePct, random: params.random }),
-      ideologyPct: buildRandomPctMap({ keys: params.domains.ideologyPct, fallbackKey: params.fallbackByDimension.ideologyPct, random: params.random }),
-      religionPct: buildRandomPctMap({ keys: params.domains.religionPct, fallbackKey: params.fallbackByDimension.religionPct, random: params.random }),
-      racePct: buildRandomPctMap({ keys: params.domains.racePct, fallbackKey: params.fallbackByDimension.racePct, random: params.random }),
-      professionPct: { [params.fallbackByDimension.professionPct]: 100 },
-    },
-  });
+  if (params.input == null) return { pops: [] };
+  if (!params.input || typeof params.input !== "object") throw new Error(`population-invalid-region:${params.regionId}`);
+  const row = params.input as Partial<RegionPopulation> & { populationTotal?: unknown; pops?: unknown };
+  if (row.populationTotal != null) throw new Error(`population-old-populationTotal:${params.regionId}`);
+  return { pops: normalizePopulationPopsStrict({ rawPops: row.pops ?? [], regionId: params.regionId, domains: params.domains }) };
 }
 
 export function normalizeRegionPopulationMap(params: {
   input: unknown;
   regionIds: string[];
   domains: PopulationDomainKeys;
-  fallbackByDimension: Record<PopulationDimensionKey, string>;
-  getHexAreaKm2: (regionId: string) => number;
 }): Record<string, RegionPopulation> {
   const normalized: Record<string, RegionPopulation> = {};
   if (params.input && typeof params.input === "object") {
     for (const [regionId, raw] of Object.entries(params.input as Record<string, unknown>)) {
-      normalized[regionId] = normalizeRegionPopulation({
-        input: raw,
-        hexId: regionId,
-        domains: params.domains,
-        fallbackByDimension: params.fallbackByDimension,
-        getHexAreaKm2: params.getHexAreaKm2,
-      });
+      normalized[regionId] = normalizeRegionPopulation({ input: raw, regionId, domains: params.domains });
     }
   }
-  for (const regionId of params.regionIds) {
-    if (!normalized[regionId]) {
-      normalized[regionId] = buildDefaultRegionPopulation({
-        hexId: regionId,
-        domains: params.domains,
-        fallbackByDimension: params.fallbackByDimension,
-        getHexAreaKm2: params.getHexAreaKm2,
-      });
-    }
-  }
+  for (const regionId of params.regionIds) normalized[regionId] ??= { pops: [] };
   return normalized;
 }
 
-export function resolvePopulationTurnForRegion(params: {
-  currentPopulation: RegionPopulation;
-  nextProfessionsByPopId?: Record<string, Record<string, PopulationProfessionState>>;
-}): RegionPopulation {
-  if (getPopulationTotal(params.currentPopulation) <= 0) {
-    return params.currentPopulation;
-  }
-  const growthRate = POPULATION_BIRTH_RATE - POPULATION_DEATH_RATE;
-  return {
-    pops: params.currentPopulation.pops.map((pop) => {
-      const nextSize = Math.max(1, Math.floor(pop.size * Math.max(0.8, 1 + growthRate)));
-      const professions =
-        params.nextProfessionsByPopId?.[pop.id] ??
-        normalizeProfessionStateMap(
-          pop.professions,
-          Object.keys(pop.professions),
-          Object.keys(pop.professions)[0] ?? "profession:default",
-          nextSize,
-        );
-      const professionSize = Object.values(professions).reduce((sum, state) => sum + Math.max(0, state.size), 0);
-      const populationSize = Math.max(0, Math.floor(professionSize));
-      return {
-        ...pop,
-        size: populationSize,
-        ideologies: normalizePopulationCountMap(
-          pop.ideologies,
-          Object.keys(pop.ideologies),
-          Object.keys(pop.ideologies)[0] ?? "ideology:default",
-          populationSize,
-        ),
-        professions,
-      };
-    }),
-  };
+export function isEqualRegionPopulation(prevValue: RegionPopulation | undefined, nextValue: RegionPopulation): boolean {
+  return JSON.stringify(prevValue ?? { pops: [] }) === JSON.stringify(nextValue ?? { pops: [] });
 }
 
-export function resolvePopulationTurnForRegions(params: {
-  regionIds: string[];
-  currentPopulationByRegion: Record<string, RegionPopulation | undefined>;
-  nextProfessionsByRegion: Record<string, Record<string, Record<string, PopulationProfessionState>> | undefined>;
-  domains: PopulationDomainKeys;
-  fallbackByDimension: Record<PopulationDimensionKey, string>;
-  ideologies: PopulationIdeologyContentEntry[];
-  getHexAreaKm2: (regionId: string) => number;
-  getIdeologyContext: (regionId: string) => RegionPopulationIdeologyContext;
-}): ResolvePopulationTurnResult {
-  const nextPopulationByRegion: Record<string, RegionPopulation> = {};
-  const changedRegionIds: string[] = [];
-
-  for (const regionId of params.regionIds) {
-    const currentPopulation = normalizeRegionPopulation({
-      input: params.currentPopulationByRegion[regionId],
-      hexId: regionId,
-      domains: params.domains,
-      fallbackByDimension: params.fallbackByDimension,
-      getHexAreaKm2: params.getHexAreaKm2,
-    });
-    const nextPopulation = resolvePopulationTurnForRegion({
-      currentPopulation,
-      nextProfessionsByPopId: params.nextProfessionsByRegion[regionId],
-    });
-    const ideologyContext = params.getIdeologyContext(regionId);
-    const nextPopulationWithIdeology = applyIdeologyAttractionToPopulation({
-      population: nextPopulation,
-      ideologies: params.ideologies,
-      countryId: ideologyContext.countryId,
-      activeLawIds: ideologyContext.activeLawIds,
-      activeModifierIds: ideologyContext.activeModifierIds,
-      provinceBuildingIds: ideologyContext.provinceBuildingIds,
-    });
-    nextPopulationByRegion[regionId] = nextPopulationWithIdeology;
-    if (!isEqualRegionPopulation(params.currentPopulationByRegion[regionId], nextPopulationWithIdeology)) {
-      changedRegionIds.push(regionId);
-    }
-  }
-
-  return { nextPopulationByRegion, changedRegionIds };
+export function getPopulationTotal(population: RegionPopulation | undefined | null): number {
+  return Math.max(0, Math.floor((population?.pops ?? []).reduce((sum, pop) => sum + Math.max(0, Number(pop.size)), 0)));
 }
 
 export function calculateWorkforceDemand(sources: WorkforceDemandSource[]): WorkforceDemandSummary {
@@ -877,9 +497,7 @@ export function calculateLaborCoverage(populationTotal: number, totalWorkforceDe
 export function calculateAvailableProfessionPopulation(population: RegionPopulation): Record<string, number> {
   const availableByProfession: Record<string, number> = {};
   for (const pop of population.pops) {
-    for (const [professionId, state] of Object.entries(pop.professions)) {
-      availableByProfession[professionId] = round3((availableByProfession[professionId] ?? 0) + Math.max(0, Number(state.size)));
-    }
+    availableByProfession[pop.professionId] = round3((availableByProfession[pop.professionId] ?? 0) + Math.max(0, Number(pop.size)));
   }
   return availableByProfession;
 }
@@ -892,79 +510,92 @@ export function calculateWageMultipliers(params: {
   for (const [professionId, demand] of Object.entries(params.demandByProfession)) {
     const available = Math.max(1, params.availableByProfession[professionId] ?? 0);
     const shortageRatio = demand / available;
-    const multiplier = shortageRatio > 1 ? 1 + (shortageRatio - 1) * 0.5 : 1;
-    wageMultiplierByProfession[professionId] = round3(Math.max(0.5, Math.min(3, multiplier)));
+    wageMultiplierByProfession[professionId] = round3(Math.max(0.5, Math.min(3, shortageRatio > 1 ? 1 + (shortageRatio - 1) * 0.5 : 1)));
   }
   return wageMultiplierByProfession;
 }
 
-export function buildNextProfessionsByPopId(params: {
+export function allocatePopulationJobs(params: {
   population: RegionPopulation;
-  employedByProfession: Record<string, number>;
-  professionIds: string[];
+  demandByProfession: Record<string, number>;
   fallbackProfessionId: string;
-}): Record<string, Record<string, PopulationProfessionState>> {
-  const populationTotal = getPopulationTotal(params.population);
-  if (populationTotal <= 0) return {};
-  const employedTotalRaw = Object.values(params.employedByProfession).reduce((sum, value) => sum + Math.max(0, Number(value)), 0);
-  const employedScale = employedTotalRaw > populationTotal && employedTotalRaw > 0 ? populationTotal / employedTotalRaw : 1;
-  const professionDistributionRaw: Record<string, number> = {};
-  let employedTotalScaled = 0;
-  for (const [professionId, value] of Object.entries(params.employedByProfession)) {
-    const scaled = round3(Math.max(0, Number(value)) * employedScale);
-    if (scaled <= 0) continue;
-    professionDistributionRaw[professionId] = scaled;
-    employedTotalScaled = round3(employedTotalScaled + scaled);
-  }
-  const unemployed = round3(Math.max(0, populationTotal - employedTotalScaled));
-  professionDistributionRaw[params.fallbackProfessionId] = round3(
-    Math.max(0, Number(professionDistributionRaw[params.fallbackProfessionId] ?? 0)) + unemployed,
-  );
-
-  const result: Record<string, Record<string, PopulationProfessionState>> = {};
-  for (const pop of params.population.pops) {
-    const normalizedCounts = normalizePopulationCountMap(
-      professionDistributionRaw,
-      params.professionIds,
-      params.fallbackProfessionId,
-      Math.max(0, Number(pop.size)),
-    );
-    result[pop.id] = buildRedistributedProfessionStateMap(normalizedCounts, pop.professions ?? {});
-  }
-  return result;
-}
-
-export function calculateProfessionTotalsByPopId(
-  byPopId: Record<string, Record<string, PopulationProfessionState>>,
-): Record<string, number> {
-  const professionTotals: Record<string, number> = {};
-  for (const byProfession of Object.values(byPopId)) {
-    for (const [professionId, state] of Object.entries(byProfession)) {
-      professionTotals[professionId] = round3((professionTotals[professionId] ?? 0) + Math.max(0, state.size));
+  professionsById?: ReadonlyMap<string, ProfessionQualificationEntry>;
+  acceptanceContext?: PopulationAcceptanceContext;
+  activeLaws?: PopulationAcceptanceContentEntry[];
+}): PopulationJobAllocationResult {
+  const remainingDemand: Record<string, number> = { ...params.demandByProfession };
+  const employedByProfession: Record<string, number> = {};
+  const nextPops: PopulationPop[] = [];
+  const sortedPops = [...params.population.pops].sort((left, right) => {
+    const leftDiscrimination = resolvePopDiscrimination({ pop: left, context: params.acceptanceContext, activeLaws: params.activeLaws });
+    const rightDiscrimination = resolvePopDiscrimination({ pop: right, context: params.acceptanceContext, activeLaws: params.activeLaws });
+    if (leftDiscrimination.status !== rightDiscrimination.status) return leftDiscrimination.status === "accepted" ? -1 : 1;
+    return right.size - left.size || left.id.localeCompare(right.id);
+  });
+  for (const pop of sortedPops) {
+    const discrimination = resolvePopDiscrimination({ pop, context: params.acceptanceContext, activeLaws: params.activeLaws });
+    const qualificationLimit = resolvePopQualificationLimit(pop, params.professionsById?.get(pop.professionId));
+    let remainingPopSize = Math.max(0, pop.size);
+    let remainingQualification = round3(qualificationLimit * (1 - discrimination.hiringPenaltyPct));
+    for (const professionId of Object.keys(remainingDemand).sort()) {
+      const wanted = Math.max(0, remainingDemand[professionId] ?? 0);
+      const professionQualification = params.professionsById?.get(professionId);
+      const professionLimit = resolvePopQualificationLimit(pop, professionQualification);
+      remainingQualification = Math.min(remainingQualification, round3(professionLimit * (1 - discrimination.hiringPenaltyPct)));
+      if (wanted <= 0 || remainingPopSize <= 0 || remainingQualification <= 0) continue;
+      const employed = Math.min(remainingPopSize, wanted, remainingQualification);
+      const shortage = resolveQualificationShortageByCategory(pop, professionQualification, employed);
+      remainingDemand[professionId] = round3(Math.max(0, wanted - employed));
+      employedByProfession[professionId] = round3((employedByProfession[professionId] ?? 0) + employed);
+      nextPops.push({
+        ...pop,
+        id: professionId === pop.professionId ? pop.id : `${pop.id}:${toPopulationIdSegment(professionId)}`,
+        size: Math.floor(employed),
+        professionId,
+        lastJobStatus: "employed",
+        lastEmployed: round3(employed),
+        lastOpenJobs: round3(remainingDemand[professionId] ?? 0),
+        lastQualificationLimit: round3(qualificationLimit),
+        lastQualificationShortageByCategory: shortage,
+        lastDiscriminationStatus: discrimination.status,
+        lastDiscriminationReasons: discrimination.reasons,
+        lastDiscriminationPenalty: discrimination.hiringPenaltyPct,
+      });
+      remainingPopSize = round3(remainingPopSize - employed);
+      remainingQualification = round3(remainingQualification - employed);
+    }
+    if (remainingPopSize > 0) {
+      nextPops.push({
+        ...pop,
+        id: pop.professionId === params.fallbackProfessionId ? pop.id : `${pop.id}:unemployed`,
+        size: Math.floor(remainingPopSize),
+        professionId: params.fallbackProfessionId,
+        lastJobStatus: "unemployed",
+        lastEmployed: 0,
+        lastOpenJobs: round3(Object.values(remainingDemand).reduce((sum, value) => sum + Math.max(0, Number(value)), 0)),
+        lastQualificationLimit: round3(qualificationLimit),
+        lastQualificationShortageByCategory: resolveQualificationShortageByCategory(pop, params.professionsById?.get(pop.professionId), 0),
+        lastDiscriminationStatus: discrimination.status,
+        lastDiscriminationReasons: discrimination.reasons,
+        lastDiscriminationPenalty: discrimination.hiringPenaltyPct,
+      });
     }
   }
-  return professionTotals;
+  return { nextPopulation: mergeCompatiblePops({ pops: nextPops }), employedByProfession };
 }
 
-export function getPopProfessionMetrics(pop: PopulationPop): PopulationProfessionMetrics {
+export function getPopProfessionMetrics(pop: PopulationPop): {
+  averageSoL: number;
+  radicalPct: number;
+  loyalistPct: number;
+  professionShareById: Record<string, number>;
+} {
   const total = Math.max(1, Number(pop.size));
-  let weightedSoL = 0;
-  let radicals = 0;
-  let loyalists = 0;
-  const professionShareById: Record<string, number> = {};
-  for (const [professionId, state] of Object.entries(pop.professions ?? {})) {
-    const size = Math.max(0, Number(state.size ?? 0));
-    if (size <= 0) continue;
-    professionShareById[professionId] = size / total;
-    weightedSoL += Math.max(0, Number(state.standardOfLiving ?? DEFAULT_STANDARD_OF_LIVING)) * size;
-    radicals += Math.max(0, Number(state.radicals ?? 0));
-    loyalists += Math.max(0, Number(state.loyalists ?? 0));
-  }
   return {
-    averageSoL: round3(weightedSoL / total),
-    radicalPct: round3((radicals / total) * 100),
-    loyalistPct: round3((loyalists / total) * 100),
-    professionShareById,
+    averageSoL: round3(pop.standardOfLiving),
+    radicalPct: round3((Math.max(0, pop.radicals) / total) * 100),
+    loyalistPct: round3((Math.max(0, pop.loyalists) / total) * 100),
+    professionShareById: { [pop.professionId]: 1 },
   };
 }
 
@@ -975,32 +606,21 @@ export function evaluateIdeologyAttractionRule(params: {
   activeLawIds: Set<string>;
   activeModifierIds: Set<string>;
   provinceBuildingIds: Set<string>;
-  metrics: PopulationProfessionMetrics;
+  metrics: ReturnType<typeof getPopProfessionMetrics>;
 }): number {
   const { rule, pop, countryId, activeLawIds, activeModifierIds, provinceBuildingIds, metrics } = params;
   const threshold = Math.max(0, Number(rule.threshold ?? 0));
   let match = 0;
-  if (rule.type === "sol_below") {
-    match = metrics.averageSoL < threshold ? Math.min(1, (threshold - metrics.averageSoL) / Math.max(1, threshold)) : 0;
-  } else if (rule.type === "sol_above") {
-    match = metrics.averageSoL > threshold ? Math.min(1, (metrics.averageSoL - threshold) / Math.max(1, threshold)) : 0;
-  } else if (rule.type === "radicals_above") {
-    match = metrics.radicalPct > threshold ? Math.min(1, (metrics.radicalPct - threshold) / 100) : 0;
-  } else if (rule.type === "loyalists_above") {
-    match = metrics.loyalistPct > threshold ? Math.min(1, (metrics.loyalistPct - threshold) / 100) : 0;
-  } else if (rule.type === "profession_is") {
-    match = rule.targetId ? metrics.professionShareById[rule.targetId] ?? 0 : 0;
-  } else if (rule.type === "religion_is") {
-    match = rule.targetId && pop.religionId === rule.targetId ? 1 : 0;
-  } else if (rule.type === "culture_is") {
-    match = rule.targetId && pop.cultureId === rule.targetId ? 1 : 0;
-  } else if (rule.type === "law_active") {
-    match = rule.targetId && activeLawIds.has(rule.targetId) ? 1 : 0;
-  } else if (rule.type === "has_building") {
-    match = rule.targetId && provinceBuildingIds.has(rule.targetId) ? 1 : 0;
-  } else if (rule.type === "country_modifier_active" || rule.type === "region_modifier_active") {
-    match = rule.targetId && activeModifierIds.has(rule.targetId) ? 1 : 0;
-  }
+  if (rule.type === "sol_below") match = metrics.averageSoL < threshold ? Math.min(1, (threshold - metrics.averageSoL) / Math.max(1, threshold)) : 0;
+  else if (rule.type === "sol_above") match = metrics.averageSoL > threshold ? Math.min(1, (metrics.averageSoL - threshold) / Math.max(1, threshold)) : 0;
+  else if (rule.type === "radicals_above") match = metrics.radicalPct > threshold ? Math.min(1, (metrics.radicalPct - threshold) / 100) : 0;
+  else if (rule.type === "loyalists_above") match = metrics.loyalistPct > threshold ? Math.min(1, (metrics.loyalistPct - threshold) / 100) : 0;
+  else if (rule.type === "profession_is") match = rule.targetId && pop.professionId === rule.targetId ? 1 : 0;
+  else if (rule.type === "religion_is") match = rule.targetId && pop.religionId === rule.targetId ? 1 : 0;
+  else if (rule.type === "culture_is") match = rule.targetId && pop.cultureId === rule.targetId ? 1 : 0;
+  else if (rule.type === "law_active") match = rule.targetId && activeLawIds.has(rule.targetId) ? 1 : 0;
+  else if (rule.type === "has_building") match = rule.targetId && provinceBuildingIds.has(rule.targetId) ? 1 : 0;
+  else if (rule.type === "country_modifier_active" || rule.type === "region_modifier_active") match = rule.targetId && activeModifierIds.has(rule.targetId) ? 1 : 0;
   if (rule.invert) match = match > 0 ? 0 : 1;
   if (!countryId && (rule.type === "law_active" || rule.type === "country_modifier_active")) return 0;
   return Math.max(0, Number(rule.weight ?? 0)) * Math.max(0, Math.min(1, match));
@@ -1016,114 +636,117 @@ export function applyIdeologyAttractionToPopulation(params: {
   attractionRate?: number;
 }): RegionPopulation {
   const ideologyIds = params.ideologies.map((entry) => entry.id);
-  if (ideologyIds.length === 0 || params.population.pops.length === 0) return params.population;
+  if (ideologyIds.length === 0) return params.population;
   const attractionRate = Math.max(0, Math.min(1, params.attractionRate ?? 0.02));
   return {
     pops: params.population.pops.map((pop) => {
       const total = Math.max(0, Math.floor(pop.size));
       if (total <= 0) return pop;
       const metrics = getPopProfessionMetrics(pop);
-      const targetScores: Record<string, number> = {};
+      const scores: Record<string, number> = {};
       for (const ideology of params.ideologies) {
         const score = (ideology.ideologyAttractionRules ?? []).reduce(
-          (sum, rule) =>
-            sum +
-            evaluateIdeologyAttractionRule({
-              rule,
-              pop,
-              countryId: params.countryId,
-              activeLawIds: params.activeLawIds,
-              activeModifierIds: params.activeModifierIds,
-              provinceBuildingIds: params.provinceBuildingIds,
-              metrics,
-            }),
+          (sum, rule) => sum + evaluateIdeologyAttractionRule({ rule, pop, countryId: params.countryId, activeLawIds: params.activeLawIds, activeModifierIds: params.activeModifierIds, provinceBuildingIds: params.provinceBuildingIds, metrics }),
           0,
         );
-        if (score > 0) targetScores[ideology.id] = score;
+        if (score > 0) scores[ideology.id] = score;
       }
-      const scoreTotal = Object.values(targetScores).reduce((sum, value) => sum + value, 0);
+      const scoreTotal = Object.values(scores).reduce((sum, value) => sum + value, 0);
       if (scoreTotal <= 0) return pop;
       const current = normalizePopulationCountMap(pop.ideologies, ideologyIds, ideologyIds[0] ?? "ideology:default", total);
       const mixed: Record<string, number> = {};
       for (const ideologyId of ideologyIds) {
-        const currentAmount = current[ideologyId] ?? 0;
-        const targetAmount = ((targetScores[ideologyId] ?? 0) / scoreTotal) * total;
-        mixed[ideologyId] = currentAmount * (1 - attractionRate) + targetAmount * attractionRate;
+        mixed[ideologyId] = (current[ideologyId] ?? 0) * (1 - attractionRate) + ((scores[ideologyId] ?? 0) / scoreTotal) * total * attractionRate;
       }
-      return {
-        ...pop,
-        ideologies: normalizePopulationCountMap(mixed, ideologyIds, ideologyIds[0] ?? "ideology:default", total),
-      };
+      return { ...pop, ideologies: normalizePopulationCountMap(mixed, ideologyIds, ideologyIds[0] ?? "ideology:default", total) };
     }),
   };
 }
 
-export function getTargetStandardOfLiving(satisfaction: number, walletToNeedsRatio: number): number {
-  const base =
-    satisfaction < 0.35 ? 3 :
-    satisfaction < 0.6 ? 6 :
-    satisfaction < 0.85 ? 9 :
-    satisfaction < 1 ? 11 :
-    satisfaction < 1.25 ? 14 :
-    satisfaction < 1.6 ? 18 :
-    22;
-  return round3(Math.max(0, Math.min(30, base + Math.max(0, Math.min(4, walletToNeedsRatio)))));
-}
-
-export function getCategorySatisfactionValue(
-  categoryStats: Record<string, { satisfaction: number }>,
-  category: CultureNeedCategory,
-): number {
-  return Math.max(0, Math.min(1.5, Number(categoryStats[category]?.satisfaction ?? 1)));
-}
-
-export function applyNeedsStructureToTargetSoL(
-  targetSoL: number,
-  categoryStats: Record<string, { satisfaction: number }>,
-): number {
-  const survival = getCategorySatisfactionValue(categoryStats, "survival");
-  const basic = getCategorySatisfactionValue(categoryStats, "basic");
-  const comfort = getCategorySatisfactionValue(categoryStats, "comfort");
-  const luxury = getCategorySatisfactionValue(categoryStats, "luxury");
-  const survivalPenalty = Math.max(0, 1 - survival) * 8;
-  const basicPenalty = Math.max(0, 0.95 - basic) * 4;
-  const comfortPenalty = Math.max(0, 0.8 - comfort) * 2;
-  const luxuryBonus = Math.max(0, luxury - 0.95) * 1.25;
-  return round3(Math.max(0, Math.min(30, targetSoL - survivalPenalty - basicPenalty - comfortPenalty + luxuryBonus)));
-}
-
-export function getBirthDeathRatesBySoL(
-  standardOfLiving: number,
-  satisfaction: number,
-  categoryStats: Record<string, { satisfaction: number }>,
-): { birthRate: number; deathRate: number } {
-  const sol = Math.max(0, standardOfLiving);
-  const survival = getCategorySatisfactionValue(categoryStats, "survival");
-  const basic = getCategorySatisfactionValue(categoryStats, "basic");
-  const birthRate =
-    POPULATION_BIRTH_RATE * (sol < 8 ? 1.1 : sol > 18 ? 0.75 : 1) * (survival < 0.85 ? 0.92 : 1) * (basic < 0.75 ? 0.96 : 1);
-  const needPenalty = satisfaction < 0.6 ? (0.6 - satisfaction) * 0.03 : 0;
-  const survivalPenalty = survival < 0.95 ? (0.95 - survival) * 0.05 : 0;
-  const basicPenalty = basic < 0.8 ? (0.8 - basic) * 0.015 : 0;
-  const deathRate =
-    POPULATION_DEATH_RATE * (sol < 6 ? 1.8 : sol < 10 ? 1.2 : sol > 18 ? 0.7 : 1) +
-    needPenalty +
-    survivalPenalty +
-    basicPenalty;
-  return { birthRate, deathRate };
-}
-
-export function resolvePopulationProfessionNeedsTurn(params: {
-  state: PopulationProfessionState;
-  previous?: PopulationProfessionState;
-  needs: CultureNeedLike[];
-  income: number;
+export function resolveRegionPopulationNeedsTurn(params: {
+  population: RegionPopulation;
+  demandByProfession: Record<string, number>;
+  wagesByProfession: Record<string, number>;
+  fallbackProfessionId: string;
+  professionsById?: ReadonlyMap<string, ProfessionQualificationEntry>;
+  acceptanceContext?: PopulationAcceptanceContext;
+  activeLaws?: PopulationAcceptanceContentEntry[];
+  getNeedsForPop: (pop: PopulationPop) => CultureNeedLike[];
   getGoodPrice: (goodId: string) => number;
   getAvailableGoodAmount: (goodId: string) => number;
   purchaseGood: (goodId: string, requestedPhysicalAmount: number, wallet: number) => PopulationNeedsPurchaseResult;
-}): PopulationProfessionNeedsResult {
-  const state = params.state;
-  let wallet = round3(Math.max(0, state.ducats + params.income));
+}): PopulationNeedsTurnResult {
+  const allocation = allocatePopulationJobs({
+    population: params.population,
+    demandByProfession: params.demandByProfession,
+    fallbackProfessionId: params.fallbackProfessionId,
+    professionsById: params.professionsById,
+    acceptanceContext: params.acceptanceContext,
+    activeLaws: params.activeLaws,
+  });
+  const professionTotals = calculateAvailableProfessionPopulation(allocation.nextPopulation);
+  const demandRequestedByGood: Record<string, number> = {};
+  const nextPops = allocation.nextPopulation.pops.map((pop) => {
+    const professionTotal = Math.max(1, professionTotals[pop.professionId] ?? pop.size);
+    const discrimination = resolvePopDiscrimination({ pop, context: params.acceptanceContext, activeLaws: params.activeLaws });
+    const income = round3(Math.max(0, Number(params.wagesByProfession[pop.professionId] ?? 0)) * (pop.size / professionTotal) * (1 - discrimination.wagePenaltyPct));
+    const result = resolvePopulationPopNeedsTurn({
+      pop,
+      needs: params.getNeedsForPop(pop),
+      income,
+      discrimination,
+      profession: params.professionsById?.get(pop.professionId),
+      getGoodPrice: params.getGoodPrice,
+      getAvailableGoodAmount: params.getAvailableGoodAmount,
+      purchaseGood: params.purchaseGood,
+    });
+    for (const [goodId, amount] of Object.entries(result.demandRequestedByGood)) {
+      demandRequestedByGood[goodId] = round3((demandRequestedByGood[goodId] ?? 0) + amount);
+    }
+    return result.nextPop;
+  });
+  return { nextPopulation: mergeCompatiblePops({ pops: nextPops }), demandRequestedByGood };
+}
+
+export function resolvePopulationTurnForRegions(params: {
+  regionIds: string[];
+  currentPopulationByRegion: Record<string, RegionPopulation | undefined>;
+  nextPopulationByRegion: Record<string, RegionPopulation | undefined>;
+  domains: PopulationDomainKeys;
+  ideologies: PopulationIdeologyContentEntry[];
+  getIdeologyContext: (regionId: string) => RegionPopulationIdeologyContext;
+}): ResolvePopulationTurnResult {
+  const nextPopulationByRegion: Record<string, RegionPopulation> = {};
+  const changedRegionIds: string[] = [];
+  for (const regionId of params.regionIds) {
+    const current = normalizeRegionPopulation({ input: params.currentPopulationByRegion[regionId], regionId, domains: params.domains });
+    const base = params.nextPopulationByRegion[regionId] ?? current;
+    const ideologyContext = params.getIdeologyContext(regionId);
+    const next = applyIdeologyAttractionToPopulation({
+      population: base,
+      ideologies: params.ideologies,
+      countryId: ideologyContext.countryId,
+      activeLawIds: ideologyContext.activeLawIds,
+      activeModifierIds: ideologyContext.activeModifierIds,
+      provinceBuildingIds: ideologyContext.provinceBuildingIds,
+    });
+    nextPopulationByRegion[regionId] = next;
+    if (!isEqualRegionPopulation(params.currentPopulationByRegion[regionId], next)) changedRegionIds.push(regionId);
+  }
+  return { nextPopulationByRegion, changedRegionIds };
+}
+
+function resolvePopulationPopNeedsTurn(params: {
+  pop: PopulationPop;
+  needs: CultureNeedLike[];
+  income: number;
+  discrimination: PopulationDiscriminationResult;
+  profession?: ProfessionQualificationEntry;
+  getGoodPrice: (goodId: string) => number;
+  getAvailableGoodAmount: (goodId: string) => number;
+  purchaseGood: (goodId: string, requestedPhysicalAmount: number, wallet: number) => PopulationNeedsPurchaseResult;
+}): { nextPop: PopulationPop; demandRequestedByGood: Record<string, number> } {
+  let wallet = round3(Math.max(0, params.pop.ducats + params.income));
   let weightedSatisfiedNeed = 0;
   let totalNeedWeight = 0;
   let needsSpend = 0;
@@ -1132,148 +755,83 @@ export function resolvePopulationProfessionNeedsTurn(params: {
   const deficitByGood: Record<string, number> = {};
   const budgetShortageByGood: Record<string, number> = {};
   const demandRequestedByGood: Record<string, number> = {};
-
   for (const need of params.needs) {
-    const required = round3(state.size * need.amountPerPerson);
+    const required = round3(params.pop.size * need.amountPerPerson);
     if (required <= 0) continue;
     const categoryWeight = CULTURE_NEED_CATEGORY_SATISFACTION_WEIGHT[need.category] * need.weight;
     totalNeedWeight += categoryWeight;
     const categoryEntry = categoryStats[need.category] ?? { required: 0, fulfilled: 0, spend: 0, satisfaction: 0 };
     categoryEntry.required = round3(categoryEntry.required + required);
     categoryStats[need.category] = categoryEntry;
-    let remainingNeedUnits = required;
     const viableGoods = need.goods
-      .map((good) => {
-        const effectivePerUnit = Math.max(0.001, good.weight);
-        const price = params.getGoodPrice(good.goodId);
-        return {
-          ...good,
-          effectivePerUnit,
-          price,
-          theoreticalCostPerNeedUnit: price / effectivePerUnit,
-        };
-      })
-      .filter((good) => Number.isFinite(good.theoreticalCostPerNeedUnit) && good.theoreticalCostPerNeedUnit > 0)
-      .sort((a, b) => a.theoreticalCostPerNeedUnit - b.theoreticalCostPerNeedUnit || b.weight - a.weight);
+      .filter((good) => good.taboo !== true)
+      .map((good) => ({
+        ...good,
+        effectivePerUnit: Math.max(0.001, good.weight),
+        preferenceWeight: Math.max(0.001, good.weight) * Math.max(1, good.obsessionMultiplier ?? 1),
+        price: params.getGoodPrice(good.goodId),
+      }))
+      .filter((good) => Number.isFinite(good.price) && good.price > 0)
+      .sort((a, b) => a.price / a.preferenceWeight - b.price / b.preferenceWeight || b.preferenceWeight - a.preferenceWeight);
     if (viableGoods.length === 0) continue;
-    theoreticalNeedCost += required * viableGoods[0].theoreticalCostPerNeedUnit;
-
-    let pass = 0;
-    while (remainingNeedUnits > 0.001 && wallet > 0.001 && pass < 6) {
-      pass += 1;
-      const options = viableGoods
-        .map((good) => {
-          const availablePhysicalAmount = params.getAvailableGoodAmount(good.goodId);
-          if (availablePhysicalAmount <= 0) return null;
-          const desiredPhysicalAmount = Math.max(0.001, remainingNeedUnits / good.effectivePerUnit);
-          const availabilityFactor = 0.25 + Math.min(1.75, availablePhysicalAmount / desiredPhysicalAmount);
-          const score = (Math.max(0.001, good.weight) * availabilityFactor) / Math.max(0.001, good.price);
-          return {
-            ...good,
-            availablePhysicalAmount,
-            score,
-          };
-        })
-        .filter((good): good is NonNullable<typeof good> => good != null && good.score > 0.000001);
-      if (options.length === 0) {
-        const fallbackGood = viableGoods[0];
-        if (fallbackGood) {
-          const marketDeficitPhysicalAmount = round3(Math.max(0, remainingNeedUnits / fallbackGood.effectivePerUnit));
-          if (marketDeficitPhysicalAmount > 0) {
-            deficitByGood[fallbackGood.goodId] = round3((deficitByGood[fallbackGood.goodId] ?? 0) + marketDeficitPhysicalAmount);
-          }
-        }
-        break;
+    theoreticalNeedCost += required * (viableGoods[0].price / viableGoods[0].effectivePerUnit);
+    let remainingNeedUnits = required;
+    for (const good of viableGoods) {
+      if (remainingNeedUnits <= 0.001 || wallet <= 0.001) break;
+      const requestedPhysicalAmount = round3(Math.min(remainingNeedUnits / good.effectivePerUnit, wallet / good.price));
+      if (requestedPhysicalAmount <= 0) continue;
+      demandRequestedByGood[good.goodId] = round3((demandRequestedByGood[good.goodId] ?? 0) + requestedPhysicalAmount);
+      if (params.getAvailableGoodAmount(good.goodId) <= 0) {
+        deficitByGood[good.goodId] = round3((deficitByGood[good.goodId] ?? 0) + requestedPhysicalAmount);
+        continue;
       }
-      const scoreSum = options.reduce((sum, good) => sum + good.score, 0);
-      if (scoreSum <= 0) break;
-
-      let fulfilledNeedUnitsThisPass = 0;
-      for (const option of options) {
-        if (remainingNeedUnits <= 0.001 || wallet <= 0.001) break;
-        const allocatedNeedUnits = round3(Math.min(remainingNeedUnits, (remainingNeedUnits * option.score) / scoreSum));
-        if (allocatedNeedUnits <= 0) continue;
-        const requestedPhysicalAmount = round3(Math.min(allocatedNeedUnits / option.effectivePerUnit, wallet / option.price));
-        if (requestedPhysicalAmount <= 0) continue;
-        demandRequestedByGood[option.goodId] = round3((demandRequestedByGood[option.goodId] ?? 0) + requestedPhysicalAmount);
-        const purchase = params.purchaseGood(option.goodId, requestedPhysicalAmount, wallet);
-        const deficitPhysicalAmount = round3(Math.max(0, requestedPhysicalAmount - purchase.purchasedPhysicalAmount));
-        if (deficitPhysicalAmount > 0) {
-          deficitByGood[option.goodId] = round3((deficitByGood[option.goodId] ?? 0) + deficitPhysicalAmount);
-        }
-        if (purchase.purchasedPhysicalAmount <= 0 || purchase.spent <= 0) continue;
-        wallet = purchase.wallet;
-        needsSpend = round3(needsSpend + purchase.spent);
-        categoryEntry.spend = round3(categoryEntry.spend + purchase.spent);
-        const fulfilledNeedUnits = round3(purchase.purchasedPhysicalAmount * option.effectivePerUnit);
-        remainingNeedUnits = round3(Math.max(0, remainingNeedUnits - fulfilledNeedUnits));
-        categoryEntry.fulfilled = round3(categoryEntry.fulfilled + fulfilledNeedUnits);
-        fulfilledNeedUnitsThisPass = round3(fulfilledNeedUnitsThisPass + fulfilledNeedUnits);
-      }
-      if (fulfilledNeedUnitsThisPass <= 0.001) break;
+      const purchase = params.purchaseGood(good.goodId, requestedPhysicalAmount, wallet);
+      wallet = purchase.wallet;
+      needsSpend = round3(needsSpend + purchase.spent);
+      categoryEntry.spend = round3(categoryEntry.spend + purchase.spent);
+      const fulfilledNeedUnits = round3(purchase.purchasedPhysicalAmount * good.effectivePerUnit);
+      remainingNeedUnits = round3(Math.max(0, remainingNeedUnits - fulfilledNeedUnits));
+      categoryEntry.fulfilled = round3(categoryEntry.fulfilled + fulfilledNeedUnits);
+      const deficit = round3(Math.max(0, requestedPhysicalAmount - purchase.purchasedPhysicalAmount));
+      if (deficit > 0) deficitByGood[good.goodId] = round3((deficitByGood[good.goodId] ?? 0) + deficit);
     }
-
     if (remainingNeedUnits > 0.001 && wallet <= 0.001) {
-      const fallbackGood = viableGoods[0];
-      if (fallbackGood) {
-        const budgetShortagePhysicalAmount = round3(Math.max(0, remainingNeedUnits / fallbackGood.effectivePerUnit));
-        if (budgetShortagePhysicalAmount > 0) {
-          budgetShortageByGood[fallbackGood.goodId] = round3((budgetShortageByGood[fallbackGood.goodId] ?? 0) + budgetShortagePhysicalAmount);
-        }
-      }
+      const good = viableGoods[0];
+      budgetShortageByGood[good.goodId] = round3((budgetShortageByGood[good.goodId] ?? 0) + remainingNeedUnits / good.effectivePerUnit);
     }
-
     const needSatisfaction = Math.max(0, Math.min(1.5, (required - remainingNeedUnits) / required));
     weightedSatisfiedNeed += needSatisfaction * categoryWeight;
   }
-
   const satisfaction = totalNeedWeight > 0 ? round3(weightedSatisfiedNeed / totalNeedWeight) : 1;
-  const previousSoL = Math.max(0, Number(params.previous?.standardOfLiving ?? state.standardOfLiving));
-  for (const row of Object.values(categoryStats)) {
-    row.satisfaction = row.required > 0 ? round3(row.fulfilled / row.required) : 1;
-  }
-  const targetSoL = applyNeedsStructureToTargetSoL(
-    getTargetStandardOfLiving(satisfaction, theoreticalNeedCost > 0 ? wallet / theoreticalNeedCost : 1),
-    categoryStats,
-  );
-  const nextSoL = round3(previousSoL * 0.8 + targetSoL * 0.2);
+  for (const row of Object.values(categoryStats)) row.satisfaction = row.required > 0 ? round3(row.fulfilled / row.required) : 1;
+  const targetSoL = getTargetStandardOfLiving(satisfaction, theoreticalNeedCost > 0 ? wallet / theoreticalNeedCost : 1);
+  const nextSoL = round3(params.pop.standardOfLiving * 0.8 + targetSoL * 0.2);
   const { birthRate, deathRate } = getBirthDeathRatesBySoL(nextSoL, satisfaction, categoryStats);
-  const births = Math.floor(state.size * birthRate);
-  const deaths = Math.floor(state.size * deathRate);
-  const nextSize = Math.max(0, state.size + births - deaths);
-  const solDelta = nextSoL - previousSoL;
-  const survivalSatisfaction = getCategorySatisfactionValue(categoryStats, "survival");
-  const basicSatisfaction = getCategorySatisfactionValue(categoryStats, "basic");
-  const comfortSatisfaction = getCategorySatisfactionValue(categoryStats, "comfort");
-  const luxurySatisfaction = getCategorySatisfactionValue(categoryStats, "luxury");
-  const radicals = Math.max(
-    0,
-    Math.floor(
-      (params.previous?.radicals ?? state.radicals) * 0.98 +
-      (solDelta < 0 ? state.size * Math.abs(solDelta) * 0.01 : 0) +
-      (satisfaction < 0.6 ? state.size * (0.6 - satisfaction) * 0.02 : 0) +
-      (survivalSatisfaction < 0.9 ? state.size * (0.9 - survivalSatisfaction) * 0.03 : 0) +
-      (basicSatisfaction < 0.8 ? state.size * (0.8 - basicSatisfaction) * 0.012 : 0),
-    ),
+  const births = Math.floor(params.pop.size * birthRate);
+  const deaths = Math.floor(params.pop.size * deathRate);
+  const nextSize = Math.max(0, params.pop.size + births - deaths);
+  const solDelta = nextSoL - params.pop.standardOfLiving;
+  const discriminationRadicals = params.discrimination.status === "discriminated"
+    ? params.pop.size * params.discrimination.radicalizationPerTurn
+    : 0;
+  const radicals = Math.max(0, Math.floor(params.pop.radicals * 0.98 + discriminationRadicals + (solDelta < 0 ? params.pop.size * Math.abs(solDelta) * 0.01 : 0) + (satisfaction < 0.6 ? params.pop.size * (0.6 - satisfaction) * 0.02 : 0)));
+  const loyalists = Math.max(0, Math.floor(params.pop.loyalists * 0.98 + (solDelta > 0 ? params.pop.size * solDelta * 0.008 : 0)));
+  const politicalStrength = round3(
+    nextSize *
+      Math.max(0.05, nextSoL / 10) *
+      Math.max(0.1, params.pop.literacy) *
+      (1 - params.discrimination.politicalStrengthPenaltyPct),
   );
-  const loyalists = Math.max(
-    0,
-    Math.floor(
-      (params.previous?.loyalists ?? state.loyalists) * 0.98 +
-      (solDelta > 0 ? state.size * solDelta * 0.008 : 0) +
-      (comfortSatisfaction > 0.95 ? state.size * (comfortSatisfaction - 0.95) * 0.006 : 0) +
-      (luxurySatisfaction > 0.98 ? state.size * (luxurySatisfaction - 0.98) * 0.004 : 0),
-    ),
-  );
-
   return {
-    nextState: {
-      ...state,
+    nextPop: {
+      ...params.pop,
       size: nextSize,
       ducats: wallet,
       standardOfLiving: nextSoL,
       radicals,
       loyalists,
+      literacy: round3(Math.min(1, params.pop.literacy + Math.max(0, nextSoL - 8) * 0.0005)),
+      qualificationsByCategory: growQualifications(params.pop, nextSoL, params.profession, params.discrimination),
       lastIncomeDucats: params.income,
       lastNeedsSpendDucats: needsSpend,
       lastNeedsSatisfaction: satisfaction,
@@ -1282,60 +840,197 @@ export function resolvePopulationProfessionNeedsTurn(params: {
       lastNeedsBudgetShortageByGood: budgetShortageByGood,
       lastBirths: births,
       lastDeaths: deaths,
+      lastDiscriminationStatus: params.discrimination.status,
+      lastDiscriminationReasons: params.discrimination.reasons,
+      lastDiscriminationPenalty: Math.max(params.discrimination.wagePenaltyPct, params.discrimination.hiringPenaltyPct, params.discrimination.politicalStrengthPenaltyPct),
+      politicalStrength,
     },
     demandRequestedByGood,
   };
 }
 
-export function resolveRegionPopulationNeedsTurn(params: {
-  population: RegionPopulation;
-  employedByProfession: Record<string, number>;
-  wagesByProfession: Record<string, number>;
-  professionIds: string[];
-  fallbackProfessionId: string;
-  getNeedsForPop: (pop: PopulationPop, state: PopulationProfessionState) => CultureNeedLike[];
-  getGoodPrice: (goodId: string) => number;
-  getAvailableGoodAmount: (goodId: string) => number;
-  purchaseGood: (goodId: string, requestedPhysicalAmount: number, wallet: number) => PopulationNeedsPurchaseResult;
-}): RegionPopulationNeedsResult {
-  const nextProfessionsByPopId = buildNextProfessionsByPopId({
-    population: params.population,
-    employedByProfession: params.employedByProfession,
-    professionIds: params.professionIds,
-    fallbackProfessionId: params.fallbackProfessionId,
-  });
-  const professionTotals = calculateProfessionTotalsByPopId(nextProfessionsByPopId);
-  const demandRequestedByGood: Record<string, number> = {};
+export function getTargetStandardOfLiving(satisfaction: number, walletToNeedsRatio: number): number {
+  const base = satisfaction < 0.35 ? 3 : satisfaction < 0.6 ? 6 : satisfaction < 0.85 ? 9 : satisfaction < 1 ? 11 : satisfaction < 1.25 ? 14 : satisfaction < 1.6 ? 18 : 22;
+  return round3(Math.max(0, Math.min(30, base + Math.max(0, Math.min(4, walletToNeedsRatio)))));
+}
 
-  for (const pop of params.population.pops) {
-    const byProfession = nextProfessionsByPopId[pop.id];
-    if (!byProfession) continue;
-    for (const [professionId, state] of Object.entries(byProfession)) {
-      const previous = pop.professions[professionId];
-      const professionTotal = Math.max(1, professionTotals[professionId] ?? state.size);
-      const income = round3(Math.max(0, Number(params.wagesByProfession[professionId] ?? 0)) * (state.size / professionTotal));
-      const needsResult = resolvePopulationProfessionNeedsTurn({
-        state,
-        previous,
-        needs: params.getNeedsForPop(pop, state),
-        income,
-        getGoodPrice: params.getGoodPrice,
-        getAvailableGoodAmount: params.getAvailableGoodAmount,
-        purchaseGood: params.purchaseGood,
-      });
-      for (const [goodId, amount] of Object.entries(needsResult.demandRequestedByGood)) {
-        demandRequestedByGood[goodId] = round3((demandRequestedByGood[goodId] ?? 0) + amount);
-      }
-      byProfession[professionId] = needsResult.nextState;
+export function getBirthDeathRatesBySoL(
+  standardOfLiving: number,
+  satisfaction: number,
+  categoryStats: Record<string, { satisfaction: number }>,
+): { birthRate: number; deathRate: number } {
+  const sol = Math.max(0, standardOfLiving);
+  const survival = Math.max(0, Math.min(1.5, Number(categoryStats.survival?.satisfaction ?? 1)));
+  const basic = Math.max(0, Math.min(1.5, Number(categoryStats.basic?.satisfaction ?? 1)));
+  const birthRate = POPULATION_BIRTH_RATE * (sol < 8 ? 1.1 : sol > 18 ? 0.75 : 1) * (survival < 0.85 ? 0.92 : 1) * (basic < 0.75 ? 0.96 : 1);
+  const deathRate = POPULATION_DEATH_RATE * (sol < 6 ? 1.8 : sol < 10 ? 1.2 : sol > 18 ? 0.7 : 1) + (satisfaction < 0.6 ? (0.6 - satisfaction) * 0.03 : 0) + (survival < 0.95 ? (0.95 - survival) * 0.05 : 0);
+  return { birthRate, deathRate };
+}
+
+function mergeCompatiblePops(population: RegionPopulation): RegionPopulation {
+  const byKey = new Map<string, PopulationPop>();
+  for (const pop of population.pops) {
+    if (pop.size <= 0) continue;
+    const key = `${pop.cultureId}|${pop.religionId}|${pop.raceId}|${pop.professionId}`;
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, pop);
+      continue;
     }
+    const total = existing.size + pop.size;
+    byKey.set(key, {
+      ...pop,
+      id: existing.id,
+      size: total,
+      ducats: round3(existing.ducats + pop.ducats),
+      radicals: existing.radicals + pop.radicals,
+      loyalists: existing.loyalists + pop.loyalists,
+      standardOfLiving: round3((existing.standardOfLiving * existing.size + pop.standardOfLiving * pop.size) / Math.max(1, total)),
+      literacy: round3((existing.literacy * existing.size + pop.literacy * pop.size) / Math.max(1, total)),
+    });
   }
+  return { pops: [...byKey.values()].sort((a, b) => a.id.localeCompare(b.id)) };
+}
 
+function resolvePopQualificationLimit(pop: PopulationPop, profession?: ProfessionQualificationEntry | null): number {
+  const requirements = profession?.qualificationRequirements ?? {};
+  const entries = Object.entries(requirements).filter(([, required]) => required > 0);
+  if (entries.length === 0) {
+    const values = Object.values(pop.qualificationsByCategory ?? {});
+    if (values.length === 0) return pop.professionId.includes("unemployed") ? 0 : pop.size;
+    return Math.max(0, Math.min(pop.size, Math.max(...values)));
+  }
+  let limit = pop.size;
+  for (const [category, requiredPerWorker] of entries) {
+    const available = Math.max(0, Number(pop.qualificationsByCategory?.[category] ?? 0));
+    limit = Math.min(limit, available / Math.max(0.001, requiredPerWorker));
+  }
+  return Math.max(0, Math.min(pop.size, Math.floor(limit)));
+}
+
+function resolveQualificationShortageByCategory(
+  pop: PopulationPop,
+  profession: ProfessionQualificationEntry | null | undefined,
+  targetWorkers: number,
+): Record<string, number> {
+  const shortages: Record<string, number> = {};
+  for (const [category, requiredPerWorker] of Object.entries(profession?.qualificationRequirements ?? {})) {
+    const required = Math.max(0, requiredPerWorker) * Math.max(0, targetWorkers);
+    const available = Math.max(0, Number(pop.qualificationsByCategory?.[category] ?? 0));
+    const shortage = round3(Math.max(0, required - available));
+    if (shortage > 0) shortages[category] = shortage;
+  }
+  return shortages;
+}
+
+export function resolvePopDiscrimination(params: {
+  pop: PopulationPop;
+  context?: PopulationAcceptanceContext;
+  activeLaws?: PopulationAcceptanceContentEntry[];
+}): PopulationDiscriminationResult {
+  const context = params.context;
+  if (!context || !context.countryId) return emptyDiscrimination("accepted", []);
+  let acceptedCultureIds = new Set(context.acceptedCultureIds);
+  let acceptedReligionIds = new Set(context.acceptedReligionIds);
+  let acceptedRaceIds = new Set(context.acceptedRaceIds);
+  const lawEffects: Array<NonNullable<PopulationAcceptanceContentEntry["discrimination"]>> = [];
+  for (const law of params.activeLaws ?? []) {
+    if (law.acceptanceMode === "replace") {
+      acceptedCultureIds = new Set(law.acceptedCultureIds ?? []);
+      acceptedReligionIds = new Set(law.acceptedReligionIds ?? []);
+      acceptedRaceIds = new Set(law.acceptedRaceIds ?? []);
+    } else {
+      for (const id of law.acceptedCultureIds ?? []) acceptedCultureIds.add(id);
+      for (const id of law.acceptedReligionIds ?? []) acceptedReligionIds.add(id);
+      for (const id of law.acceptedRaceIds ?? []) acceptedRaceIds.add(id);
+    }
+    if (law.discrimination) lawEffects.push(law.discrimination);
+  }
+  const reasons: string[] = [];
+  if (acceptedCultureIds.size > 0 && !acceptedCultureIds.has(params.pop.cultureId)) reasons.push("culture");
+  if (acceptedReligionIds.size > 0 && !acceptedReligionIds.has(params.pop.religionId)) reasons.push("religion");
+  if (acceptedRaceIds.size > 0 && !acceptedRaceIds.has(params.pop.raceId)) reasons.push("race");
+  if (reasons.length === 0) return emptyDiscrimination("accepted", []);
+  const merged = lawEffects.reduce<Omit<PopulationDiscriminationResult, "status" | "reasons">>((acc, effect) => ({
+    wagePenaltyPct: Math.max(acc.wagePenaltyPct, effect.wagePenaltyPct ?? 0),
+    hiringPenaltyPct: Math.max(acc.hiringPenaltyPct, effect.hiringPenaltyPct ?? 0),
+    qualificationGrowthPenaltyPct: Math.max(acc.qualificationGrowthPenaltyPct, effect.qualificationGrowthPenaltyPct ?? 0),
+    politicalStrengthPenaltyPct: Math.max(acc.politicalStrengthPenaltyPct, effect.politicalStrengthPenaltyPct ?? 0),
+    radicalizationPerTurn: Math.max(acc.radicalizationPerTurn, effect.radicalizationPerTurn ?? 0),
+  }), {
+    wagePenaltyPct: 0.15,
+    hiringPenaltyPct: 0.25,
+    qualificationGrowthPenaltyPct: 0.25,
+    politicalStrengthPenaltyPct: 0.5,
+    radicalizationPerTurn: 0.001,
+  });
+  return { status: "discriminated", reasons, ...merged };
+}
+
+function emptyDiscrimination(status: "accepted" | "discriminated", reasons: string[]): PopulationDiscriminationResult {
   return {
-    nextProfessionsByPopId,
-    demandRequestedByGood,
+    status,
+    reasons,
+    wagePenaltyPct: 0,
+    hiringPenaltyPct: 0,
+    qualificationGrowthPenaltyPct: 0,
+    politicalStrengthPenaltyPct: 0,
+    radicalizationPerTurn: 0,
   };
+}
+
+function growQualifications(
+  pop: PopulationPop,
+  standardOfLiving: number,
+  profession: ProfessionQualificationEntry | undefined,
+  discrimination: PopulationDiscriminationResult,
+): Record<string, number> {
+  const next = { ...pop.qualificationsByCategory };
+  const growth = Math.max(0.01, pop.literacy * 0.05 + Math.max(0, standardOfLiving - 8) * 0.01) * (1 - discrimination.qualificationGrowthPenaltyPct);
+  for (const key of Object.keys(next)) next[key] = round3(Math.min(pop.size, Math.max(0, next[key]) + growth));
+  for (const [key, value] of Object.entries(profession?.qualificationGrowthRules ?? {})) {
+    next[key] = round3(Math.max(0, Math.min(pop.size, (next[key] ?? 0) + value * (1 - discrimination.qualificationGrowthPenaltyPct))));
+  }
+  return next;
+}
+
+function toPopulationIdSegment(value: string): string {
+  return value.trim().replace(/[^A-Za-z0-9:_-]+/g, "_").replace(/:/g, "_") || "unknown";
+}
+
+function requireKnownId(value: unknown, allowed: string[], field: string, regionId: string): string {
+  const id = typeof value === "string" ? value.trim() : "";
+  if (!id) throw new Error(`population-missing-${field}:${regionId}`);
+  if (!allowed.includes(id)) throw new Error(`population-unknown-${field}:${regionId}:${id}`);
+  return id;
+}
+
+function normalizeNumberRecord(input: Record<string, unknown>): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(input)
+      .filter(([key, value]) => key.trim().length > 0 && Number(value) > 0)
+      .map(([key, value]) => [key, round3(Math.max(0, Number(value)))]),
+  );
+}
+
+function normalizeNeedCategoryStats(input: PopulationPop["lastNeedsByCategory"]): PopulationPop["lastNeedsByCategory"] {
+  if (!input) return {};
+  return Object.fromEntries(Object.entries(input).map(([key, row]) => [key, {
+    required: round3(Math.max(0, Number(row.required))),
+    fulfilled: round3(Math.max(0, Number(row.fulfilled))),
+    spend: round3(Math.max(0, Number(row.spend))),
+    satisfaction: round3(Math.max(0, Number(row.satisfaction))),
+  }]));
 }
 
 function round3(value: number): number {
   return Math.round(value * 1000) / 1000;
+}
+
+function round6(value: number): number {
+  return Math.round(value * 1_000_000) / 1_000_000;
+}
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
 }

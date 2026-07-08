@@ -208,6 +208,9 @@ export const DEFAULT_SCENARIO_DEFINES: Required<ScenarioDefines> = {
     retentionTurns: 20,
     maxEntriesPerTurn: 10_000,
   },
+  population: {
+    qualificationCategories: ["labor", "artisan", "technical", "academic", "military"],
+  },
   turnTimer: {
     enabled: true,
     secondsPerTurn: 86_400,

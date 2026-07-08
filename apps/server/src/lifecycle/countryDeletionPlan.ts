@@ -1,7 +1,7 @@
 import type { Order, WorldBase } from "@arcanorum/shared";
 
 export type CountryDeletionAssetRef = {
-  kind: "flag" | "crest";
+  kind: "flag" | "crest" | "cultureLogo" | "religionLogo";
   url: string;
 };
 
@@ -40,6 +40,8 @@ export function planCountryDeletion(params: {
   resolveReadyByTurn?: Map<number, Set<string>>;
   flagUrl?: string | null;
   crestUrl?: string | null;
+  cultureLogoUrl?: string | null;
+  religionLogoUrl?: string | null;
 }): CountryDeletionPlan {
   const { countryId, worldBase } = params;
   const colonizationHexIds: string[] = [];
@@ -104,7 +106,7 @@ export function planCountryDeletion(params: {
     countryModifiersEntry: countryId in worldBase.countryModifiersByCountryId,
     orderTurns: collectOrderTurns(countryId, params.ordersByTurn),
     resolveReadyTurns: collectResolveReadyTurns(countryId, params.resolveReadyByTurn),
-    assetRefs: collectAssetRefs(params.flagUrl, params.crestUrl),
+    assetRefs: collectAssetRefs(params.flagUrl, params.crestUrl, params.cultureLogoUrl, params.religionLogoUrl),
   };
 }
 
@@ -124,9 +126,16 @@ function collectResolveReadyTurns(countryId: string, resolveReadyByTurn: Map<num
     .sort((a, b) => a - b);
 }
 
-function collectAssetRefs(flagUrl: string | null | undefined, crestUrl: string | null | undefined): CountryDeletionAssetRef[] {
+function collectAssetRefs(
+  flagUrl: string | null | undefined,
+  crestUrl: string | null | undefined,
+  cultureLogoUrl: string | null | undefined,
+  religionLogoUrl: string | null | undefined,
+): CountryDeletionAssetRef[] {
   const refs: CountryDeletionAssetRef[] = [];
   if (flagUrl) refs.push({ kind: "flag", url: flagUrl });
   if (crestUrl) refs.push({ kind: "crest", url: crestUrl });
+  if (cultureLogoUrl) refs.push({ kind: "cultureLogo", url: cultureLogoUrl });
+  if (religionLogoUrl) refs.push({ kind: "religionLogo", url: religionLogoUrl });
   return refs;
 }

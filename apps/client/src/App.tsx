@@ -1086,10 +1086,8 @@ export default function App() {
       if (controllingCountryId !== auth.countryId) continue;
       for (const pop of population?.pops ?? []) {
         total += Math.max(0, Number(pop.size ?? 0));
-        for (const professionState of Object.values(pop.professions ?? {})) {
-          births += Math.max(0, Number(professionState.lastBirths ?? 0));
-          deaths += Math.max(0, Number(professionState.lastDeaths ?? 0));
-        }
+        births += Math.max(0, Number(pop.lastBirths ?? 0));
+        deaths += Math.max(0, Number(pop.lastDeaths ?? 0));
       }
     }
 
@@ -1740,9 +1738,7 @@ export default function App() {
         pops += 1;
         const size = Math.max(0, Number(pop.size ?? 0));
         cultureTotals.set(pop.cultureId, (cultureTotals.get(pop.cultureId) ?? 0) + size);
-        for (const [professionId, state] of Object.entries(pop.professions ?? {})) {
-          professionTotals.set(professionId, (professionTotals.get(professionId) ?? 0) + Math.max(0, Number(state.size ?? 0)));
-        }
+        professionTotals.set(pop.professionId, (professionTotals.get(pop.professionId) ?? 0) + size);
       }
     }
     const topCulture = [...cultureTotals.entries()].sort((a, b) => b[1] - a[1])[0];

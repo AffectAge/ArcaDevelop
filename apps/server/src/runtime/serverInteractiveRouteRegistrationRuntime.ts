@@ -105,6 +105,7 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
     },
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,
+    getGameSettings: params.getGameSettings,
     getOrdersByTurn: () => params.turnStateRuntime.ordersByTurn,
     getResolveReadyByTurn: () => params.turnStateRuntime.resolveReadyByTurn,
     getCustomizationSettings: () => params.getGameSettings().customization,

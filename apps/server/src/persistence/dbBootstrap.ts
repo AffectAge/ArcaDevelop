@@ -26,6 +26,17 @@ export async function ensureCorePrismaTables(prisma: PrismaBootstrapClient): Pro
       color TEXT NOT NULL,
       flagUrl TEXT,
       crestUrl TEXT,
+      cultureId TEXT NOT NULL UNIQUE,
+      cultureName TEXT NOT NULL UNIQUE,
+      cultureColor TEXT NOT NULL,
+      cultureLogoUrl TEXT,
+      religionId TEXT NOT NULL UNIQUE,
+      religionName TEXT NOT NULL UNIQUE,
+      religionColor TEXT NOT NULL,
+      religionLogoUrl TEXT,
+      cultureGroupId TEXT NOT NULL,
+      religionGroupId TEXT NOT NULL,
+      raceId TEXT NOT NULL,
       passwordHash TEXT NOT NULL,
       isLocked INTEGER NOT NULL DEFAULT 0,
       isAdmin INTEGER NOT NULL DEFAULT 0,
@@ -38,6 +49,19 @@ export async function ensureCorePrismaTables(prisma: PrismaBootstrapClient): Pro
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  await assertRequiredTableColumns(prisma, "Country", [
+    "cultureId",
+    "cultureName",
+    "cultureColor",
+    "cultureLogoUrl",
+    "religionId",
+    "religionName",
+    "religionColor",
+    "religionLogoUrl",
+    "cultureGroupId",
+    "religionGroupId",
+    "raceId",
+  ]);
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS GameState (
       id TEXT PRIMARY KEY NOT NULL,
@@ -55,6 +79,19 @@ export async function ensureCorePrismaTables(prisma: PrismaBootstrapClient): Pro
     columnName: "adminAuditLogJson",
     definition: "JSONB NOT NULL DEFAULT '[]'",
   });
+}
+
+async function assertRequiredTableColumns(
+  prisma: PrismaBootstrapClient,
+  tableName: string,
+  columnNames: string[],
+): Promise<void> {
+  const rows = await prisma.$queryRawUnsafe<Array<{ name: string }>>(`PRAGMA table_info(${tableName})`);
+  const existing = new Set(rows.map((row) => row.name));
+  const missing = columnNames.filter((columnName) => !existing.has(columnName));
+  if (missing.length > 0) {
+    throw new Error(`DEV_RESET_REQUIRED: ${tableName} is missing required columns: ${missing.join(", ")}`);
+  }
 }
 
 async function ensureTableColumn(

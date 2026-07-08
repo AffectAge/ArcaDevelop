@@ -118,7 +118,7 @@ describe("settlementMechanics", () => {
     ]);
   });
 
-  it("completes a settlement into region ownership, population, and a city marker", () => {
+  it("completes a settlement into region ownership and a city marker without hidden population", () => {
     const worldBase = makeWorldBase({
       resourcesByCountry: { "country:a": makeResources({ colonization: 20 }) },
       settlementProjectsById: {
@@ -161,7 +161,7 @@ describe("settlementMechanics", () => {
     });
     expect(worldBase.regionOwner["region:a"]).toBe("country:a");
     expect(worldBase.regionController["region:a"]).toBe("country:a");
-    expect(worldBase.regionPopulationByRegion["region:a"]?.pops[0]?.size).toBe(100);
+    expect(worldBase.regionPopulationByRegion["region:a"]?.pops).toEqual([]);
   });
 });
 
@@ -253,17 +253,8 @@ function makeResources(overrides?: Partial<WorldBase["resourcesByCountry"][strin
 }
 
 function makeSettlementPopulation(regionId: string, countryId: string, total: number) {
-  return {
-    pops: [
-      {
-        id: `pop:${regionId}:${countryId}`,
-        size: total,
-        cultureId: "culture:a",
-        religionId: "religion:a",
-        raceId: "race:a",
-        ideologies: {},
-        professions: {},
-      },
-    ],
-  };
+  void regionId;
+  void countryId;
+  void total;
+  return { pops: [] };
 }

@@ -1,11 +1,19 @@
 import type { HexId, MapTagQuery, RegionId } from "./hex-map";
 
-export type PopulationProfessionState = {
+export type PopulationPop = {
+  id: string;
   size: number;
+  cultureId: string;
+  religionId: string;
+  raceId: string;
+  professionId: string;
+  literacy: number;
   ducats: number;
   standardOfLiving: number;
   radicals: number;
   loyalists: number;
+  qualificationsByCategory: Record<string, number>;
+  ideologies: Record<string, number>;
   lastIncomeDucats: number;
   lastNeedsSpendDucats: number;
   lastNeedsSatisfaction: number;
@@ -19,16 +27,15 @@ export type PopulationProfessionState = {
   lastNeedsBudgetShortageByGood?: Record<string, number>;
   lastBirths: number;
   lastDeaths: number;
-};
-
-export type PopulationPop = {
-  id: string;
-  size: number;
-  cultureId: string;
-  religionId: string;
-  raceId: string;
-  ideologies: Record<string, number>;
-  professions: Record<string, PopulationProfessionState>;
+  lastJobStatus?: "employed" | "unemployed" | "blocked";
+  lastEmployed: number;
+  lastOpenJobs: number;
+  lastQualificationLimit: number;
+  lastQualificationShortageByCategory?: Record<string, number>;
+  lastDiscriminationStatus?: "accepted" | "discriminated";
+  lastDiscriminationReasons?: string[];
+  lastDiscriminationPenalty: number;
+  politicalStrength: number;
 };
 
 export type RegionPopulation = {

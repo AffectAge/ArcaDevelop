@@ -1,5 +1,5 @@
 import type express from "express";
-import type { EventLogEntry, HexMapArtifact, MapFeatureInstance, MapFeatureVisualRuleDefinition, PopulationPop, RegionPopulation, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import type { EventLogEntry, HexMapArtifact, MapFeatureInstance, MapFeatureVisualRuleDefinition, WorldBase, WsOutMessage } from "@arcanorum/shared";
 import type { PrismaClient } from "@prisma/client";
 import { registerAdminHexMutationRoutes } from "../routes/adminHexMutationRoutes";
 import { registerCountryHexCustomizationRoutes } from "../routes/countryHexCustomizationRoutes";
@@ -33,17 +33,6 @@ type HexRouteRuntimeParams = {
   getHexRenameDucatsCost: () => number;
   getRegionColonizationConfig: (regionId: string) => RegionColonizationConfig;
   getRegionDerivedColonizationCosts: (regionId: string) => { pointsCost: number; ducatsCost: number };
-  getPopulationDomainKeys: () => unknown;
-  buildRandomRegionPopulation: (
-    regionId: string,
-    domains: unknown,
-    populationTotal: number | undefined,
-  ) => RegionPopulation;
-  normalizePopulationPops: (rawPops: unknown, regionId: string, domains: unknown) => PopulationPop[];
-  isEqualRegionPopulation: (
-    previousPopulation: RegionPopulation | undefined,
-    nextPopulation: RegionPopulation,
-  ) => boolean;
   cleanupRegionColonizationProgress: (regionId: string) => void;
   recalculateAllRegionColonizationCosts: () => number;
   ensureCountryInWorldBase: (countryId: string) => void;
@@ -110,10 +99,6 @@ export function registerHexRouteRuntime(params: HexRouteRuntimeParams): void {
     getWorldBase: params.getWorldBase,
     getRegionColonizationConfig: params.getRegionColonizationConfig,
     getRegionDerivedColonizationCosts: params.getRegionDerivedColonizationCosts,
-    getPopulationDomainKeys: params.getPopulationDomainKeys,
-    buildRandomRegionPopulation: params.buildRandomRegionPopulation,
-    normalizePopulationPops: params.normalizePopulationPops,
-    isEqualRegionPopulation: params.isEqualRegionPopulation,
     cleanupRegionColonizationProgress: params.cleanupRegionColonizationProgress,
     recalculateAllRegionColonizationCosts: params.recalculateAllRegionColonizationCosts,
     countryExists: async (countryId) =>

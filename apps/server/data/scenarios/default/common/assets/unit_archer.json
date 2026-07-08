@@ -1,0 +1,7 @@
+{
+  "id": "asset:unit.archer",
+  "type": "atlas",
+  "path": "assets/units/archer.png",
+  "width": 256,
+  "height": 64
+}

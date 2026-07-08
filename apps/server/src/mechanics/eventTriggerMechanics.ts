@@ -356,9 +356,7 @@ export function getRegionPopulationStatTotal(
   if (!population) return 0;
   let total = 0;
   for (const pop of population.pops) {
-    for (const profession of Object.values(pop.professions)) {
-      total += Number(profession[stat]) || 0;
-    }
+    total += Number(pop[stat]) || 0;
   }
   return Number(total.toFixed(3));
 }
@@ -372,12 +370,10 @@ export function getRegionStandardOfLiving(
   let weightedTotal = 0;
   let sizeTotal = 0;
   for (const pop of population.pops) {
-    for (const profession of Object.values(pop.professions)) {
-      const size = Number(profession.size) || 0;
-      if (size <= 0) continue;
-      weightedTotal += (Number(profession.standardOfLiving) || 0) * size;
-      sizeTotal += size;
-    }
+    const size = Number(pop.size) || 0;
+    if (size <= 0) continue;
+    weightedTotal += (Number(pop.standardOfLiving) || 0) * size;
+    sizeTotal += size;
   }
   if (sizeTotal <= 0) return 0;
   return Number((weightedTotal / sizeTotal).toFixed(3));

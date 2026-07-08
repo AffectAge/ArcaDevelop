@@ -510,6 +510,22 @@ export const culturePayloadSchema = z.object({
   explorationLargeVeinMin: z.number().finite().min(0).optional(),
   explorationLargeVeinMax: z.number().finite().min(0).optional(),
   baseWage: z.number().finite().min(0).optional(),
+  qualificationRequirements: z.record(z.string().trim().min(1).max(120), z.number().finite().min(0)).optional(),
+  qualificationGrowthRules: z.record(z.string().trim().min(1).max(120), z.number().finite()).optional(),
+  acceptedCultureIds: z.array(z.string().trim().min(1).max(120)).optional(),
+  acceptedReligionIds: z.array(z.string().trim().min(1).max(120)).optional(),
+  acceptedRaceIds: z.array(z.string().trim().min(1).max(120)).optional(),
+  acceptanceMode: z.enum(["add", "replace"]).optional(),
+  discrimination: z
+    .object({
+      wagePenaltyPct: z.number().finite().min(0).max(1).optional(),
+      hiringPenaltyPct: z.number().finite().min(0).max(1).optional(),
+      qualificationGrowthPenaltyPct: z.number().finite().min(0).max(1).optional(),
+      politicalStrengthPenaltyPct: z.number().finite().min(0).max(1).optional(),
+      radicalizationPerTurn: z.number().finite().min(0).optional(),
+    })
+    .nullable()
+    .optional(),
   needsProfile: z
     .object({
       tiers: z.array(
@@ -527,6 +543,8 @@ export const culturePayloadSchema = z.object({
                 z.object({
                   goodId: z.string().trim().min(1).max(120),
                   weight: z.number().finite().min(0.001),
+                  taboo: z.boolean().optional(),
+                  obsessionMultiplier: z.number().finite().min(1).optional(),
                 }),
               ),
             }),
@@ -618,6 +636,7 @@ export const culturePayloadSchema = z.object({
 
 export const contentEntryKindSchema = z.enum([
   "cultures",
+  "cultureGroups",
   "resourceCategories",
   "hexTypes",
   "hexClimates",
@@ -625,6 +644,7 @@ export const contentEntryKindSchema = z.enum([
   "hexContinents",
   "hexStrategicRegions",
   "religions",
+  "religionGroups",
   "professions",
   "ideologies",
   "interestGroups",
@@ -726,7 +746,14 @@ export function sanitizeContentEntryByKind(
       explorationLargeVeinMax,
     };
   }
-  if (kind === "professions") return { baseWage: Number(Math.max(0, payload.baseWage ?? 1).toFixed(3)) };
+  if (kind === "professions") {
+    return {
+      baseWage: Number(Math.max(0, payload.baseWage ?? 1).toFixed(3)),
+      needsProfile: normalizeCultureNeedsProfile(payload.needsProfile),
+      qualificationRequirements: normalizeNumberRecord(payload.qualificationRequirements, 0, 1_000_000),
+      qualificationGrowthRules: normalizeNumberRecord(payload.qualificationGrowthRules, -1_000_000, 1_000_000),
+    };
+  }
   if (isMilitaryContentKind(kind)) {
     return {
       manpower: Math.max(0, Math.floor(payload.manpower ?? 1000)),
@@ -805,7 +832,7 @@ export function sanitizeContentEntryByKind(
       },
     };
   }
-  if (kind === "cultures") return { needsProfile: normalizeCultureNeedsProfile(payload.needsProfile) };
+  if (kind === "cultures" || kind === "races" || kind === "religions") return { needsProfile: normalizeCultureNeedsProfile(payload.needsProfile) };
   if (kind === "ideologies") return { ideologyAttractionRules: normalizeIdeologyAttractionRules(payload.ideologyAttractionRules) };
   if (kind === "parties") {
     return {
@@ -857,6 +884,11 @@ export function sanitizeContentEntryByKind(
       enactmentDifficulty: Number(Math.max(0.1, payload.enactmentDifficulty ?? 1).toFixed(3)),
       votingDurationTurns: Math.max(1, Math.floor(payload.votingDurationTurns ?? 3)),
       parliamentPower: normalizeLawParliamentPowerEffect(payload.parliamentPower),
+      acceptedCultureIds: normalizeCountryIdList(payload.acceptedCultureIds),
+      acceptedReligionIds: normalizeCountryIdList(payload.acceptedReligionIds),
+      acceptedRaceIds: normalizeCountryIdList(payload.acceptedRaceIds),
+      acceptanceMode: payload.acceptanceMode ?? "add",
+      discrimination: payload.discrimination ?? null,
     };
   }
   if (kind === "technologies") {

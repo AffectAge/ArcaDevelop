@@ -11,6 +11,17 @@ export const countrySelect = {
   color: true,
   flagUrl: true,
   crestUrl: true,
+  cultureId: true,
+  cultureName: true,
+  cultureColor: true,
+  cultureLogoUrl: true,
+  religionId: true,
+  religionName: true,
+  religionColor: true,
+  religionLogoUrl: true,
+  cultureGroupId: true,
+  religionGroupId: true,
+  raceId: true,
   isAdmin: true,
   isLocked: true,
   blockedUntilTurn: true,
@@ -27,6 +38,17 @@ type CountryRow = {
   color: string;
   flagUrl: string | null;
   crestUrl: string | null;
+  cultureId: string;
+  cultureName: string;
+  cultureColor: string;
+  cultureLogoUrl: string | null;
+  religionId: string;
+  religionName: string;
+  religionColor: string;
+  religionLogoUrl: string | null;
+  cultureGroupId: string;
+  religionGroupId: string;
+  raceId: string;
   isAdmin: boolean;
   isLocked: boolean;
   blockedUntilTurn: number | null;

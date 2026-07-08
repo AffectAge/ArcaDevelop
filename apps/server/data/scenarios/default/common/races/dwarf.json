@@ -1,0 +1,24 @@
+{
+  "id": "race:dwarf",
+  "nameKey": "race.dwarf.name",
+  "descriptionKey": "race.dwarf.description",
+  "color": "#c08457",
+  "iconAssetId": "asset:identity.dwarf",
+  "modifiers": [
+    {
+      "id": "guild_masons",
+      "label": "Guild masons",
+      "scope": "country",
+      "effects": [
+        { "stat": "construction_gain", "mode": "add", "value": 1 },
+        { "stat": "gold_gain", "mode": "add", "value": 1 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.11,
+    "standardOfLiving": 9,
+    "ideologies": { "ideology:default": 1 },
+    "qualificationsByCategory": { "artisan": 0.2, "technical": 0.1 }
+  }
+}

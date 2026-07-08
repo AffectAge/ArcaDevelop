@@ -1,0 +1,23 @@
+{
+  "id": "culture_group:riverine_city_states",
+  "nameKey": "cultureGroup.riverineCityStates.name",
+  "descriptionKey": "cultureGroup.riverineCityStates.description",
+  "color": "#38bdf8",
+  "iconAssetId": "asset:identity.riverine_city_states",
+  "modifiers": [
+    {
+      "id": "river_tolls",
+      "label": "River tolls",
+      "scope": "country",
+      "effects": [
+        { "stat": "ducats_gain", "mode": "add", "value": 1 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.14,
+    "standardOfLiving": 8,
+    "ideologies": { "ideology:default": 1 },
+    "qualificationsByCategory": { "labor": 0.2, "artisan": 0.1 }
+  }
+}

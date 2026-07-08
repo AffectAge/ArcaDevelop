@@ -1,4 +1,4 @@
-import type { CountryParliament, CountryParliamentPowerBill, PopulationProfessionState, ResourceTotals } from "@arcanorum/shared";
+import type { CountryParliament, CountryParliamentPowerBill, PopulationPop, ResourceTotals } from "@arcanorum/shared";
 import { describe, expect, it } from "vitest";
 import {
   allocateSeats,
@@ -225,10 +225,27 @@ describe("parliamentMechanics", () => {
               cultureId: "culture:a",
               religionId: "religion:a",
               raceId: "race:a",
+              professionId: "workers",
+              literacy: 0,
+              ducats: 0,
+              standardOfLiving: 0,
+              radicals: 10,
+              loyalists: 20,
+              qualificationsByCategory: {},
               ideologies: {},
-              professions: {
-                workers: makeProfession({ size: 100, radicals: 10, loyalists: 20 }),
-              },
+              lastIncomeDucats: 0,
+              lastNeedsSpendDucats: 0,
+              lastNeedsSatisfaction: 0,
+              lastNeedsByCategory: {},
+              lastNeedsDeficitByGood: {},
+              lastNeedsBudgetShortageByGood: {},
+              lastBirths: 0,
+              lastDeaths: 0,
+              lastEmployed: 100,
+              lastOpenJobs: 0,
+              lastQualificationLimit: 100,
+              lastDiscriminationPenalty: 0,
+              politicalStrength: 0,
             },
           ],
         },
@@ -247,7 +264,7 @@ describe("parliamentMechanics", () => {
       },
     });
 
-    expect(groups.map((group) => group.groupId)).toEqual(["interest-group:industry", "interest-group:labor"]);
+    expect(groups.map((group) => group.groupId)).toEqual(["interest-group:labor", "interest-group:industry"]);
     expect(groups.find((group) => group.groupId === "interest-group:labor")).toMatchObject({
       loyalists: 20,
       radicals: 10,
@@ -260,17 +277,7 @@ describe("parliamentMechanics", () => {
       regionOwner: { "region:a": "country:a" },
       regionPopulationByRegion: {
         "region:a": {
-          pops: [
-            {
-              id: "pop:a",
-              size: 100,
-              cultureId: "culture:a",
-              religionId: "religion:a",
-              raceId: "race:a",
-              ideologies: { "ideology:liberal": 100 },
-              professions: {},
-            },
-          ],
+          pops: [makePopulationPop({ ideologies: { "ideology:liberal": 100 } })],
         },
       },
       parliamentByCountry: {
@@ -311,17 +318,7 @@ describe("parliamentMechanics", () => {
       regionOwner: { "region:a": "country:a" },
       regionPopulationByRegion: {
         "region:a": {
-          pops: [
-            {
-              id: "pop:a",
-              size: 100,
-              cultureId: "culture:a",
-              religionId: "religion:a",
-              raceId: "race:a",
-              ideologies: { "ideology:liberal": 100 },
-              professions: {},
-            },
-          ],
+          pops: [makePopulationPop({ ideologies: { "ideology:liberal": 100 } })],
         },
       },
     });
@@ -408,18 +405,34 @@ function makePowerBill(overrides?: Partial<CountryParliamentPowerBill>): Country
   };
 }
 
-function makeProfession(overrides?: Partial<PopulationProfessionState>): PopulationProfessionState {
+function makePopulationPop(overrides?: Partial<PopulationPop>): PopulationPop {
   return {
-    size: 0,
-    standardOfLiving: 0,
+    id: "pop:a",
+    size: 100,
+    cultureId: "culture:a",
+    religionId: "religion:a",
+    raceId: "race:a",
+    professionId: "profession:unemployed",
+    literacy: 0,
     ducats: 0,
+    standardOfLiving: 0,
     radicals: 0,
     loyalists: 0,
+    qualificationsByCategory: {},
+    ideologies: {},
     lastIncomeDucats: 0,
     lastNeedsSpendDucats: 0,
     lastNeedsSatisfaction: 0,
+    lastNeedsByCategory: {},
+    lastNeedsDeficitByGood: {},
+    lastNeedsBudgetShortageByGood: {},
     lastBirths: 0,
     lastDeaths: 0,
+    lastEmployed: 0,
+    lastOpenJobs: 0,
+    lastQualificationLimit: 0,
+    lastDiscriminationPenalty: 0,
+    politicalStrength: 0,
     ...overrides,
   };
 }
