@@ -367,6 +367,39 @@ function IdentitySummaryTile({
   );
 }
 
+function ColorSwatch({ value }: { value: string }) {
+  const safeColor = colord(value).isValid() ? colord(value).toHex() : "#111827";
+  return <span className="arc-auth-summary-mini-swatch" style={{ backgroundColor: safeColor }} />;
+}
+
+function LogoColorPreview({
+  src,
+  label,
+  fallback,
+  color,
+}: {
+  src: string | null;
+  label: string;
+  fallback: string;
+  color?: string;
+}) {
+  return (
+    <span className="arc-auth-summary-logo-color">
+      {color ? <ColorSwatch value={color} /> : <span className="arc-auth-summary-mini-swatch arc-auth-summary-mini-swatch--empty" aria-hidden="true" />}
+      <ImagePreviewBadge src={src} label={label} fallback={fallback} />
+    </span>
+  );
+}
+
+function IdentityPreviewSlot({ entry, t }: { entry: ContentEntry | null; t: AuthTranslator }) {
+  return (
+    <span className="arc-auth-summary-logo-color">
+      <span className="arc-auth-summary-mini-swatch arc-auth-summary-mini-swatch--empty" aria-hidden="true" />
+      {entry ? <IdentityEmblem entry={entry} t={t} /> : <span />}
+    </span>
+  );
+}
+
 function IdentitySelectionPanel({
   entries,
   selectedId,
@@ -657,7 +690,6 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
   const selectedCultureGroup = cultureGroups.find((entry) => entry.id === registerValues.cultureGroupId) ?? null;
   const selectedReligionGroup = religionGroups.find((entry) => entry.id === registerValues.religionGroupId) ?? null;
   const selectedRace = races.find((entry) => entry.id === registerValues.raceId) ?? null;
-  const firstMissingRegistrationStep = getFirstMissingRegistrationStep(registerValues);
   const currentStepIndex = REGISTER_STEPS.findIndex((step) => step.id === registerStep);
   const goToNextRegisterStep = () => {
     const next = REGISTER_STEPS[Math.min(REGISTER_STEPS.length - 1, Math.max(0, currentStepIndex) + 1)];
@@ -1073,7 +1105,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
             >
               <form onSubmit={submitRegister} className="arc-auth-wizard-form">
                 {registerStep === "info" && (
-                  <div className="arc-auth-wizard-panel">
+                  <div className="arc-auth-wizard-panel arc-auth-wizard-panel--confirm">
                     <div className="arc-auth-panel-title">{t("auth.step.info")}</div>
                     <div className="arc-auth-info-columns">
                     <section className="arc-auth-info-section arc-auth-kit-section">
@@ -1239,42 +1271,58 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                 )}
 
                 {registerStep === "confirm" && (
-                  <div className="arc-auth-wizard-panel">
+                  <div className="arc-auth-wizard-panel arc-auth-wizard-panel--confirm">
                     <div className="arc-auth-panel-title">{t("auth.step.confirm")}</div>
                     <div className="arc-auth-summary-layout">
                       <section className="arc-auth-summary-copy">
                         <div className="arc-auth-summary-kicker">{t("auth.confirmPreviewTitle")}</div>
                         <h2>{registerValues.countryName || t("auth.missingValue")}</h2>
-                        <p>{t("auth.confirmPreviewDescription")}</p>
-                        <div className="arc-auth-summary-color-row">
-                          <span>{t("auth.countryColor")}</span>
-                          <strong>{colord(registerValues.countryColor).isValid() ? colord(registerValues.countryColor).toHex() : t("auth.missingValue")}</strong>
-                          <span
-                            className="arc-auth-confirm-swatch"
-                            style={{ backgroundColor: colord(registerValues.countryColor).isValid() ? colord(registerValues.countryColor).toHex() : "#111827" }}
-                          />
-                        </div>
                         <div className="arc-auth-summary-info arc-auth-summary-info--left">
                           <div className="arc-auth-summary-info__title">{t("auth.confirmCultureReligion")}</div>
                           <div className="arc-auth-summary-row">
+                            <span>{t("auth.countryColor")}</span>
+                            <strong>{registerValues.countryName || t("auth.missingValue")}</strong>
+                            <LogoColorPreview
+                              src={flagPreviewUrl ?? crestPreviewUrl}
+                              label={t("auth.country")}
+                              fallback={t("auth.noFileSelected")}
+                              color={registerValues.countryColor}
+                            />
+                          </div>
+                          <div className="arc-auth-summary-row">
                             <span>{t("auth.cultureName")}</span>
                             <strong>{registerValues.cultureName || t("auth.missingValue")}</strong>
-                            <ImagePreviewBadge src={cultureLogoPreviewUrl} label={t("auth.cultureLogo")} fallback={t("auth.noFileSelected")} />
+                            <LogoColorPreview
+                              src={cultureLogoPreviewUrl}
+                              label={t("auth.cultureLogo")}
+                              fallback={t("auth.noFileSelected")}
+                              color={registerValues.cultureColor}
+                            />
                           </div>
                           <div className="arc-auth-summary-row">
                             <span>{t("auth.step.culture")}</span>
                             <strong>{selectedCultureGroup ? getIdentityName(selectedCultureGroup, t) : t("auth.chooseCultureGroup")}</strong>
-                            {selectedCultureGroup ? <IdentityEmblem entry={selectedCultureGroup} t={t} /> : <span />}
+                            <IdentityPreviewSlot entry={selectedCultureGroup} t={t} />
                           </div>
                           <div className="arc-auth-summary-row">
                             <span>{t("auth.religionName")}</span>
                             <strong>{registerValues.religionName || t("auth.missingValue")}</strong>
-                            <ImagePreviewBadge src={religionLogoPreviewUrl} label={t("auth.religionLogo")} fallback={t("auth.noFileSelected")} />
+                            <LogoColorPreview
+                              src={religionLogoPreviewUrl}
+                              label={t("auth.religionLogo")}
+                              fallback={t("auth.noFileSelected")}
+                              color={registerValues.religionColor}
+                            />
                           </div>
                           <div className="arc-auth-summary-row">
                             <span>{t("auth.step.religion")}</span>
                             <strong>{selectedReligionGroup ? getIdentityName(selectedReligionGroup, t) : t("auth.chooseReligionGroup")}</strong>
-                            {selectedReligionGroup ? <IdentityEmblem entry={selectedReligionGroup} t={t} /> : <span />}
+                            <IdentityPreviewSlot entry={selectedReligionGroup} t={t} />
+                          </div>
+                          <div className="arc-auth-summary-row">
+                            <span>{t("auth.race")}</span>
+                            <strong>{selectedRace ? getIdentityName(selectedRace, t) : t("auth.chooseRace")}</strong>
+                            <IdentityPreviewSlot entry={selectedRace} t={t} />
                           </div>
                         </div>
                       </section>
@@ -1283,16 +1331,15 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                           <SummaryImageSlot src={flagPreviewUrl} label={t("auth.flag")} fallback={t("auth.noFileSelected")} className="arc-auth-summary-asset--flag" />
                           <SummaryImageSlot src={crestPreviewUrl} label={t("auth.crest")} fallback={t("auth.noFileSelected")} className="arc-auth-summary-asset--crest" />
                         </div>
-                        <div className="arc-auth-summary-identity-grid">
-                          <IdentitySummaryTile label={t("auth.step.culture")} entry={selectedCultureGroup} t={t} fallback={t("auth.chooseCultureGroup")} />
-                          <IdentitySummaryTile label={t("auth.step.religion")} entry={selectedReligionGroup} t={t} fallback={t("auth.chooseReligionGroup")} />
-                          <IdentitySummaryTile label={t("auth.step.race")} entry={selectedRace} t={t} fallback={t("auth.chooseRace")} />
+                        <div className="arc-auth-summary-identity-frame">
+                          <div className="arc-auth-summary-identity-grid">
+                            <IdentitySummaryTile label={t("auth.step.culture")} entry={selectedCultureGroup} t={t} fallback={t("auth.chooseCultureGroup")} />
+                            <IdentitySummaryTile label={t("auth.step.religion")} entry={selectedReligionGroup} t={t} fallback={t("auth.chooseReligionGroup")} />
+                            <IdentitySummaryTile label={t("auth.step.race")} entry={selectedRace} t={t} fallback={t("auth.chooseRace")} />
+                          </div>
                         </div>
                       </aside>
                     </div>
-                    {!firstMissingRegistrationStep ? (
-                      <div className="arc-auth-ready-box">{t("auth.confirmReady")}</div>
-                    ) : null}
                   </div>
                 )}
 

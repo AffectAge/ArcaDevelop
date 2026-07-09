@@ -1254,11 +1254,8 @@ export type UiTextKey =
   | "auth.cultureLogo"
   | "auth.cultureName"
   | "auth.backToLogin"
-  | "auth.confirmMissingTitle"
   | "auth.confirmCultureReligion"
-  | "auth.confirmPreviewDescription"
   | "auth.confirmPreviewTitle"
-  | "auth.confirmReady"
   | "auth.imageFormatInvalid"
   | "auth.identity"
   | "auth.identityBonuses"
@@ -4898,11 +4895,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.cultureLogo": "Culture logo",
     "auth.cultureName": "Culture name",
     "auth.backToLogin": "Back to login",
-    "auth.confirmMissingTitle": "Complete these fields",
     "auth.confirmCultureReligion": "Culture and religion",
-    "auth.confirmPreviewDescription": "Review the visual identity, selected groups, and player-authored culture and religion before creation.",
     "auth.confirmPreviewTitle": "Founding preview",
-    "auth.confirmReady": "All required fields are ready. The country can be created.",
     "auth.imageFormatInvalid": "Check format: flag 192x128 (3:2), crest 128x192 (2:3)",
     "auth.identity": "Country identity",
     "auth.identityBonuses": "Bonuses",
@@ -8541,11 +8535,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.cultureLogo": "Логотип культуры",
     "auth.cultureName": "Название культуры",
     "auth.backToLogin": "Назад ко входу",
-    "auth.confirmMissingTitle": "Заполните эти поля",
     "auth.confirmCultureReligion": "Культура и религия",
-    "auth.confirmPreviewDescription": "Проверьте визуальную идентичность, выбранные группы, культуру и религию перед созданием.",
     "auth.confirmPreviewTitle": "Предпросмотр основания",
-    "auth.confirmReady": "Все обязательные поля готовы. Страну можно создать.",
     "auth.imageFormatInvalid": "Проверьте формат: флаг 192x128 (3:2), герб 128x192 (2:3)",
     "auth.identity": "Идентичность страны",
     "auth.identityBonuses": "Бонусы",
