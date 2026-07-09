@@ -1,8 +1,9 @@
 import { Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { AppButton } from "./AppButton";
+import { playUiSound } from "../../lib/audio/uiSoundService";
 
 type AppModalProps = {
   open: boolean;
@@ -34,6 +35,10 @@ export function AppModal({
   paddingClassName = "p-4 md:p-6",
 }: AppModalProps) {
   const modalClassName = modalKey ? `arc-modal arc-modal--${modalKey}` : "arc-modal";
+
+  useEffect(() => {
+    if (open) playUiSound("modal.open");
+  }, [open]);
 
   return (
     <Dialog open={open} onClose={onClose} className={`relative ${zIndexClassName} ${modalClassName} ${className}`}>
@@ -70,6 +75,7 @@ export function AppModalHeader({ title, description, actions, onClose, closeDisa
             size="icon"
             onClick={onClose}
             disabled={closeDisabled}
+            sound="modal.close"
             className="arc-modal-close-button border-[var(--arc-modal-close-border)] bg-[var(--arc-modal-close-bg)] text-[var(--arc-modal-close-text)] hover:border-[var(--arc-modal-close-hover-border)] hover:bg-[var(--arc-modal-close-hover-bg)] hover:text-[var(--arc-modal-close-hover-text)]"
           >
             <X size={16} />

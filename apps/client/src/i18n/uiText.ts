@@ -116,6 +116,119 @@ export type UiTextKey =
   | "common.unknown"
   | "common.no"
   | "common.yes"
+  | "templates.action.codex"
+  | "templates.asset.clear"
+  | "templates.asset.flagHint"
+  | "templates.asset.flagReady"
+  | "templates.asset.flagTitle"
+  | "templates.asset.flagUpload"
+  | "templates.button.danger"
+  | "templates.button.ghost"
+  | "templates.button.primary"
+  | "templates.button.secondary"
+  | "templates.chart.area"
+  | "templates.chart.bar"
+  | "templates.chart.donut"
+  | "templates.chart.line"
+  | "templates.chartsTitle"
+  | "templates.choice.discipline"
+  | "templates.choice.disciplineDescription"
+  | "templates.choice.harmony"
+  | "templates.choice.harmonyDescription"
+  | "templates.choice.knowledge"
+  | "templates.choice.knowledgeDescription"
+  | "templates.choice.envoys"
+  | "templates.choice.envoysDescription"
+  | "templates.choice.omens"
+  | "templates.choice.omensDescription"
+  | "templates.choice.resolve"
+  | "templates.choice.resolveDescription"
+  | "templates.choice.stewardship"
+  | "templates.choice.stewardshipDescription"
+  | "templates.choice.trade"
+  | "templates.choice.tradeDescription"
+  | "templates.choiceModalDescription"
+  | "templates.choiceModalTitle"
+  | "templates.colorPicker"
+  | "templates.detail.cost"
+  | "templates.detail.description"
+  | "templates.detail.effects"
+  | "templates.detail.favorite"
+  | "templates.detail.goldPerTurn"
+  | "templates.detail.pinHint"
+  | "templates.detail.subtitle"
+  | "templates.detail.title"
+  | "templates.detail.turns"
+  | "templates.dismissNotification"
+  | "templates.effect.armyStrength"
+  | "templates.effect.caravan"
+  | "templates.effect.constructionSpeed"
+  | "templates.effect.envoyCount"
+  | "templates.effect.fortification"
+  | "templates.effect.legitimacy"
+  | "templates.effect.maintenance"
+  | "templates.effect.omenRisk"
+  | "templates.effect.populationGrowth"
+  | "templates.effect.researchSpeed"
+  | "templates.effect.ritualPower"
+  | "templates.effect.scholarSlot"
+  | "templates.effect.tradeIncome"
+  | "templates.effect.treatyCost"
+  | "templates.effect.unrest"
+  | "templates.effect.warWeariness"
+  | "templates.field.culture"
+  | "templates.field.description"
+  | "templates.field.name"
+  | "templates.galleryTitle"
+  | "templates.icon.add"
+  | "templates.icon.edit"
+  | "templates.icon.view"
+  | "templates.notification.build"
+  | "templates.notification.envoy"
+  | "templates.notification.research"
+  | "templates.notificationsTitle"
+  | "templates.placeholder.culture"
+  | "templates.placeholder.description"
+  | "templates.resource.culture"
+  | "templates.resource.gold"
+  | "templates.resource.influence"
+  | "templates.resource.science"
+  | "templates.resourcesTitle"
+  | "templates.sample.country"
+  | "templates.scrollbarRow"
+  | "templates.scrollbarTitle"
+  | "templates.section.buttons"
+  | "templates.section.fields"
+  | "templates.section.switches"
+  | "templates.selected"
+  | "templates.showAll"
+  | "templates.status.active"
+  | "templates.status.available"
+  | "templates.status.locked"
+  | "templates.status.pending"
+  | "templates.status.unavailable"
+  | "templates.tab.culture"
+  | "templates.tab.info"
+  | "templates.tab.race"
+  | "templates.tab.religion"
+  | "templates.tab.result"
+  | "templates.tabsAria"
+  | "templates.tech.bureaucracy"
+  | "templates.tech.civilService"
+  | "templates.tech.codes"
+  | "templates.tech.education"
+  | "templates.tech.planning"
+  | "templates.tech.supply"
+  | "templates.techTitle"
+  | "templates.tooltip.description"
+  | "templates.tooltip.eyebrow"
+  | "templates.tooltip.maintenance"
+  | "templates.tooltip.requirement"
+  | "templates.tooltip.title"
+  | "templates.toggle.description"
+  | "templates.toggle.locked"
+  | "templates.toggle.on"
+  | "templates.turnCost"
   | "commandPalette.action.budget"
   | "commandPalette.action.province"
   | "commandPalette.action.resolve"
@@ -1112,6 +1225,7 @@ export type UiTextKey =
   | "auth.accountLockedPermanent"
   | "auth.accountLockedTime"
   | "auth.accountLockedTurn"
+  | "auth.access"
   | "auth.chooseCountry"
   | "auth.chooseCultureGroup"
   | "auth.chooseReligionGroup"
@@ -1128,7 +1242,6 @@ export type UiTextKey =
   | "auth.crestHint"
   | "auth.crestInvalid"
   | "auth.crestPreview"
-  | "auth.customColor"
   | "auth.enterGame"
   | "auth.enterPassword"
   | "auth.fileTooLarge"
@@ -1142,6 +1255,9 @@ export type UiTextKey =
   | "auth.cultureName"
   | "auth.backToLogin"
   | "auth.confirmMissingTitle"
+  | "auth.confirmCultureReligion"
+  | "auth.confirmPreviewDescription"
+  | "auth.confirmPreviewTitle"
   | "auth.confirmReady"
   | "auth.imageFormatInvalid"
   | "auth.identity"
@@ -1176,13 +1292,13 @@ export type UiTextKey =
   | "auth.passwordLengthNeed"
   | "auth.passwordLengthOk"
   | "auth.passwordMismatch"
-  | "auth.presetColor"
   | "auth.register"
   | "auth.previousStep"
   | "auth.replaceImage"
   | "auth.registrationError"
   | "auth.registrationPendingApproval"
   | "auth.registrationPendingDescription"
+  | "auth.registrationSteps"
   | "auth.registrationSent"
   | "auth.registrationSentMessage"
   | "auth.rememberMe"
@@ -1577,8 +1693,20 @@ export type UiTextKey =
   | "religionGroup.ancestorRites.name"
   | "religionGroup.celestialOrders.description"
   | "religionGroup.celestialOrders.name"
+  | "religionGroup.dawnMysteries.description"
+  | "religionGroup.dawnMysteries.name"
+  | "religionGroup.earthMotherCults.description"
+  | "religionGroup.earthMotherCults.name"
+  | "religionGroup.riverOracles.description"
+  | "religionGroup.riverOracles.name"
+  | "religionGroup.sacredFlame.description"
+  | "religionGroup.sacredFlame.name"
+  | "religionGroup.stormPact.description"
+  | "religionGroup.stormPact.name"
   | "religionGroup.templeCults.description"
   | "religionGroup.templeCults.name"
+  | "religionGroup.veilScholars.description"
+  | "religionGroup.veilScholars.name"
   | "map.controls.zoomIn"
   | "map.controls.zoomOut"
   | "map.zoomIndicator.label"
@@ -3632,6 +3760,119 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "common.unknown": "Unknown",
     "common.no": "No",
     "common.yes": "Yes",
+    "templates.action.codex": "Codex",
+    "templates.asset.clear": "Clear image",
+    "templates.asset.flagHint": "Click the card to choose an image.",
+    "templates.asset.flagReady": "Preview uses the selected local image.",
+    "templates.asset.flagTitle": "Flag preview",
+    "templates.asset.flagUpload": "Choose flag image",
+    "templates.button.danger": "Danger",
+    "templates.button.ghost": "Ghost",
+    "templates.button.primary": "Primary",
+    "templates.button.secondary": "Secondary",
+    "templates.chart.area": "Area chart",
+    "templates.chart.bar": "Bar chart",
+    "templates.chart.donut": "Donut chart",
+    "templates.chart.line": "Line chart",
+    "templates.chartsTitle": "Chart examples",
+    "templates.choice.discipline": "Path of Discipline",
+    "templates.choice.disciplineDescription": "A strong army and order inside the state.",
+    "templates.choice.harmony": "Path of Harmony",
+    "templates.choice.harmonyDescription": "Unity with people and land brings stability.",
+    "templates.choice.knowledge": "Path of Knowledge",
+    "templates.choice.knowledgeDescription": "Develop science and education to outpace time.",
+    "templates.choice.envoys": "Path of Envoys",
+    "templates.choice.envoysDescription": "Court messengers turn distance into leverage.",
+    "templates.choice.omens": "Path of Omens",
+    "templates.choice.omensDescription": "Ritual signs guide decisions before rivals can react.",
+    "templates.choice.resolve": "Path of Resolve",
+    "templates.choice.resolveDescription": "Defensive doctrine makes the realm harder to break.",
+    "templates.choice.stewardship": "Path of Stewardship",
+    "templates.choice.stewardshipDescription": "Careful administrators turn orders into lasting works.",
+    "templates.choice.trade": "Path of Trade",
+    "templates.choice.tradeDescription": "Wealth comes to those who rule trade routes.",
+    "templates.choiceModalDescription": "Dedications give permanent bonuses to your state. Choose one.",
+    "templates.choiceModalTitle": "Choose Dedication",
+    "templates.colorPicker": "Choose color",
+    "templates.detail.cost": "Cost",
+    "templates.detail.description": "A Greek unique quarter. Created in a district of the same type as Odeon and Parthenon.",
+    "templates.detail.effects": "Effects",
+    "templates.detail.favorite": "Mark detail as favorite",
+    "templates.detail.goldPerTurn": "{value} gold",
+    "templates.detail.pinHint": "Hold Shift to pin tooltip",
+    "templates.detail.subtitle": "Unique quarter",
+    "templates.detail.title": "Acropolis",
+    "templates.detail.turns": "Turns",
+    "templates.dismissNotification": "Dismiss notification",
+    "templates.effect.armyStrength": "Warrior strength",
+    "templates.effect.caravan": "Trade caravan",
+    "templates.effect.constructionSpeed": "Construction speed",
+    "templates.effect.envoyCount": "Envoys",
+    "templates.effect.fortification": "Fortification",
+    "templates.effect.legitimacy": "Legitimacy",
+    "templates.effect.maintenance": "Maintenance",
+    "templates.effect.omenRisk": "Omen risk",
+    "templates.effect.populationGrowth": "Population growth",
+    "templates.effect.researchSpeed": "Research speed",
+    "templates.effect.ritualPower": "Ritual power",
+    "templates.effect.scholarSlot": "Scholar slot",
+    "templates.effect.tradeIncome": "Trade income",
+    "templates.effect.treatyCost": "Treaty cost",
+    "templates.effect.unrest": "Unrest",
+    "templates.effect.warWeariness": "War weariness",
+    "templates.field.culture": "Culture",
+    "templates.field.description": "Description",
+    "templates.field.name": "Name",
+    "templates.galleryTitle": "Imperial Command UI Kit",
+    "templates.icon.add": "Add",
+    "templates.icon.edit": "Edit",
+    "templates.icon.view": "View",
+    "templates.notification.build": "Construction completed",
+    "templates.notification.envoy": "Envoy arrived",
+    "templates.notification.research": "Research completed",
+    "templates.notificationsTitle": "Notifications",
+    "templates.placeholder.culture": "Choose culture",
+    "templates.placeholder.description": "Optional description",
+    "templates.resource.culture": "Culture",
+    "templates.resource.gold": "Gold",
+    "templates.resource.influence": "Influence",
+    "templates.resource.science": "Science",
+    "templates.resourcesTitle": "Resources",
+    "templates.sample.country": "Lantian Federation",
+    "templates.scrollbarRow": "Scrollable row {index}",
+    "templates.scrollbarTitle": "Scrollbar example",
+    "templates.section.buttons": "Buttons",
+    "templates.section.fields": "Fields",
+    "templates.section.switches": "Switches",
+    "templates.selected": "Selected",
+    "templates.showAll": "Show all",
+    "templates.status.active": "Active",
+    "templates.status.available": "Available",
+    "templates.status.locked": "Locked",
+    "templates.status.pending": "Pending",
+    "templates.status.unavailable": "Unavailable",
+    "templates.tab.culture": "Culture",
+    "templates.tab.info": "Info",
+    "templates.tab.race": "Race",
+    "templates.tab.religion": "Religion",
+    "templates.tab.result": "Result",
+    "templates.tabsAria": "Registration steps",
+    "templates.tech.bureaucracy": "Bureaucracy",
+    "templates.tech.civilService": "Civil Service",
+    "templates.tech.codes": "Law Codes",
+    "templates.tech.education": "Education",
+    "templates.tech.planning": "Urban Planning",
+    "templates.tech.supply": "Army Supply",
+    "templates.techTitle": "Technology Tree Example",
+    "templates.tooltip.description": "Created in a matching district and grants permanent state effects.",
+    "templates.tooltip.eyebrow": "Tooltip",
+    "templates.tooltip.maintenance": "Maintenance",
+    "templates.tooltip.requirement": "Requirement",
+    "templates.tooltip.title": "Unique Quarter",
+    "templates.toggle.description": "Used by modal and HUD templates.",
+    "templates.toggle.locked": "Locked",
+    "templates.toggle.on": "On",
+    "templates.turnCost": "{turns} turns",
     "commandPalette.action.budget": "Open budget",
     "commandPalette.action.province": "Go to province selection",
     "commandPalette.action.resolve": "Request resolve",
@@ -4628,6 +4869,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.accountLockedPermanent": "Account is locked permanently",
     "auth.accountLockedTime": "Account is locked until {time}",
     "auth.accountLockedTurn": "Account is locked until turn #{turn}",
+    "auth.access": "Access",
     "auth.chooseCountry": "Choose a country",
     "auth.chooseCultureGroup": "Choose culture group",
     "auth.chooseReligionGroup": "Choose religion group",
@@ -4644,7 +4886,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.crestHint": "PNG/JPG/WEBP up to 4MB, maximum 128x192, ratio 2:3",
     "auth.crestInvalid": "Crest: maximum 128x192, ratio 2:3",
     "auth.crestPreview": "Crest preview",
-    "auth.customColor": "Pick",
     "auth.enterGame": "Sign in",
     "auth.enterPassword": "Enter password",
     "auth.fileTooLarge": "File is too large (up to 4MB)",
@@ -4658,6 +4899,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.cultureName": "Culture name",
     "auth.backToLogin": "Back to login",
     "auth.confirmMissingTitle": "Complete these fields",
+    "auth.confirmCultureReligion": "Culture and religion",
+    "auth.confirmPreviewDescription": "Review the visual identity, selected groups, and player-authored culture and religion before creation.",
+    "auth.confirmPreviewTitle": "Founding preview",
     "auth.confirmReady": "All required fields are ready. The country can be created.",
     "auth.imageFormatInvalid": "Check format: flag 192x128 (3:2), crest 128x192 (2:3)",
     "auth.identity": "Country identity",
@@ -4692,13 +4936,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.passwordLengthNeed": "Needs at least 8 characters",
     "auth.passwordLengthOk": "Password length is good",
     "auth.passwordMismatch": "Passwords do not match",
-    "auth.presetColor": "Choose {color}",
     "auth.previousStep": "Previous",
     "auth.register": "Register",
     "auth.replaceImage": "Replace image",
     "auth.registrationError": "Registration failed",
     "auth.registrationPendingApproval": "Registration is awaiting administrator approval",
     "auth.registrationPendingDescription": "You can enter the game after the request is approved.",
+    "auth.registrationSteps": "Registration steps",
     "auth.registrationSent": "Registration request sent",
     "auth.registrationSentMessage": "Country {country} has been sent to administrators for approval.",
     "auth.rememberMe": "Remember me",
@@ -4726,10 +4970,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.startingPop.sol": "Standard of living: {value}",
     "auth.startingPop.solLabel": "SoL",
     "auth.step.confirm": "Confirm",
-    "auth.step.culture": "Culture",
-    "auth.step.info": "Info",
+    "auth.step.culture": "Culture group",
+    "auth.step.info": "Information",
     "auth.step.race": "Race",
-    "auth.step.religion": "Religion",
+    "auth.step.religion": "Religious group",
     "auth.waitButton": "I will wait",
     "clientSettings.description": "These settings do not affect the server game and apply only in your browser.",
     "clientSettings.descriptionTitle": "Description",
@@ -5093,8 +5337,20 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "religionGroup.ancestorRites.name": "Ancestor Rites",
     "religionGroup.celestialOrders.description": "Astral schools that read legitimacy in calendars, omens, and precise records. Their settlements begin with stronger scholarship.",
     "religionGroup.celestialOrders.name": "Celestial Orders",
+    "religionGroup.dawnMysteries.description": "Initiates greet each day with public vows, processions, and rites of renewal. Their first settlements build trust around shared ceremonies.",
+    "religionGroup.dawnMysteries.name": "Dawn Mysteries",
+    "religionGroup.earthMotherCults.description": "Seasonal shrines, field blessings, and kinship feasts bind worship to land and harvest. Their communities begin with steadier material reserves.",
+    "religionGroup.earthMotherCults.name": "Earth Mother Cults",
+    "religionGroup.riverOracles.description": "Diviners read currents, floods, and ferry ledgers as signs of fortune. Their early states are better prepared for tolls and trade.",
+    "religionGroup.riverOracles.name": "River Oracles",
+    "religionGroup.sacredFlame.description": "Hearth temples keep oath-fires burning through war, winter, and founding rites. Their followers organize labor with disciplined zeal.",
+    "religionGroup.sacredFlame.name": "Sacred Flame",
+    "religionGroup.stormPact.description": "Worshippers swear before thunder, sea wind, and open sky. Their first expeditions are bold and suited to frontier expansion.",
+    "religionGroup.stormPact.name": "Storm Pact",
     "religionGroup.templeCults.description": "Organized priesthoods centered on civic temples, calendars, and offerings. They give the state a stronger early religious base.",
     "religionGroup.templeCults.name": "Temple Cults",
+    "religionGroup.veilScholars.description": "Quiet orders preserve forbidden commentaries, star charts, and coded doctrine. Their settlements begin with stronger learned circles.",
+    "religionGroup.veilScholars.name": "Veil Scholars",
     "map.controls.zoomIn": "Zoom in",
     "map.controls.zoomOut": "Zoom out",
     "map.zoomIndicator.label": "Zoom",
@@ -7147,6 +7403,119 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "common.unknown": "Неизвестно",
     "common.no": "Нет",
     "common.yes": "Да",
+    "templates.action.codex": "Кодекс",
+    "templates.asset.clear": "Очистить изображение",
+    "templates.asset.flagHint": "Нажмите на карточку, чтобы выбрать изображение.",
+    "templates.asset.flagReady": "Превью использует выбранное локальное изображение.",
+    "templates.asset.flagTitle": "Превью флага",
+    "templates.asset.flagUpload": "Выбрать изображение флага",
+    "templates.button.danger": "Опасность",
+    "templates.button.ghost": "Призрачная",
+    "templates.button.primary": "Первичная",
+    "templates.button.secondary": "Вторичная",
+    "templates.chart.area": "График области",
+    "templates.chart.bar": "Столбчатый график",
+    "templates.chart.donut": "Кольцевая диаграмма",
+    "templates.chart.line": "Линейный график",
+    "templates.chartsTitle": "Примеры графиков",
+    "templates.choice.discipline": "Путь дисциплины",
+    "templates.choice.disciplineDescription": "Сильная армия и порядок внутри государства.",
+    "templates.choice.harmony": "Путь гармонии",
+    "templates.choice.harmonyDescription": "Единство с народом и землей приносит стабильность.",
+    "templates.choice.knowledge": "Путь знаний",
+    "templates.choice.knowledgeDescription": "Развивайте науку и образование, чтобы опережать время.",
+    "templates.choice.envoys": "Путь послов",
+    "templates.choice.envoysDescription": "Придворные гонцы превращают расстояние в рычаг влияния.",
+    "templates.choice.omens": "Путь знамений",
+    "templates.choice.omensDescription": "Ритуальные знаки направляют решения быстрее соперников.",
+    "templates.choice.resolve": "Путь стойкости",
+    "templates.choice.resolveDescription": "Оборонная доктрина делает державу труднее сломить.",
+    "templates.choice.stewardship": "Путь управления",
+    "templates.choice.stewardshipDescription": "Внимательные управители превращают приказы в прочные дела.",
+    "templates.choice.trade": "Путь торговли",
+    "templates.choice.tradeDescription": "Богатство приходит к тем, кто правит торговыми путями.",
+    "templates.choiceModalDescription": "Посвящения дают постоянные бонусы вашему государству. Выберите одно.",
+    "templates.choiceModalTitle": "Выберите посвящение",
+    "templates.colorPicker": "Выбрать цвет",
+    "templates.detail.cost": "Стоимость",
+    "templates.detail.description": "Греческий уникальный квартал. Создается в районе такого же типа, что и Одеон с Парфеноном.",
+    "templates.detail.effects": "Эффекты",
+    "templates.detail.favorite": "Отметить деталь избранной",
+    "templates.detail.goldPerTurn": "{value} золота",
+    "templates.detail.pinHint": "Зажмите Shift для закрепления подсказки",
+    "templates.detail.subtitle": "Уникальный квартал",
+    "templates.detail.title": "Акрополь",
+    "templates.detail.turns": "Ходы",
+    "templates.dismissNotification": "Скрыть уведомление",
+    "templates.effect.armyStrength": "Сила воинов",
+    "templates.effect.caravan": "Торговый караван",
+    "templates.effect.constructionSpeed": "Скорость строительства",
+    "templates.effect.envoyCount": "Послы",
+    "templates.effect.fortification": "Укрепления",
+    "templates.effect.legitimacy": "Легитимность",
+    "templates.effect.maintenance": "Содержание",
+    "templates.effect.omenRisk": "Риск знамений",
+    "templates.effect.populationGrowth": "Рост населения",
+    "templates.effect.researchSpeed": "Скорость исследований",
+    "templates.effect.ritualPower": "Сила ритуалов",
+    "templates.effect.scholarSlot": "Ячейка ученых",
+    "templates.effect.tradeIncome": "Доход от торговли",
+    "templates.effect.treatyCost": "Стоимость договоров",
+    "templates.effect.unrest": "Недовольство",
+    "templates.effect.warWeariness": "Военная усталость",
+    "templates.field.culture": "Культура",
+    "templates.field.description": "Описание",
+    "templates.field.name": "Название",
+    "templates.galleryTitle": "Imperial Command UI Kit",
+    "templates.icon.add": "Добавить",
+    "templates.icon.edit": "Изменить",
+    "templates.icon.view": "Посмотреть",
+    "templates.notification.build": "Строительство завершено",
+    "templates.notification.envoy": "Посол прибыл",
+    "templates.notification.research": "Исследование завершено",
+    "templates.notificationsTitle": "Уведомления",
+    "templates.placeholder.culture": "Выберите культуру",
+    "templates.placeholder.description": "Описание необязательно",
+    "templates.resource.culture": "Культура",
+    "templates.resource.gold": "Золото",
+    "templates.resource.influence": "Влияние",
+    "templates.resource.science": "Наука",
+    "templates.resourcesTitle": "Ресурсы",
+    "templates.sample.country": "Лантийская Федерация",
+    "templates.scrollbarRow": "Строка прокрутки {index}",
+    "templates.scrollbarTitle": "Пример скроллбара",
+    "templates.section.buttons": "Кнопки",
+    "templates.section.fields": "Поля ввода",
+    "templates.section.switches": "Переключатели",
+    "templates.selected": "Выбрано",
+    "templates.showAll": "Показать все",
+    "templates.status.active": "Активно",
+    "templates.status.available": "Доступно",
+    "templates.status.locked": "Заблокировано",
+    "templates.status.pending": "В ожидании",
+    "templates.status.unavailable": "Недоступно",
+    "templates.tab.culture": "Культура",
+    "templates.tab.info": "Инфо",
+    "templates.tab.race": "Раса",
+    "templates.tab.religion": "Религия",
+    "templates.tab.result": "Итог",
+    "templates.tabsAria": "Шаги регистрации",
+    "templates.tech.bureaucracy": "Бюрократия",
+    "templates.tech.civilService": "Государственная служба",
+    "templates.tech.codes": "Кодексы законов",
+    "templates.tech.education": "Образование",
+    "templates.tech.planning": "Городское планирование",
+    "templates.tech.supply": "Снабжение армии",
+    "templates.techTitle": "Пример дерева технологий",
+    "templates.tooltip.description": "Создается в подходящем районе и дает постоянные эффекты государству.",
+    "templates.tooltip.eyebrow": "Подсказка",
+    "templates.tooltip.maintenance": "Обслуживание",
+    "templates.tooltip.requirement": "Требование",
+    "templates.tooltip.title": "Уникальный квартал",
+    "templates.toggle.description": "Используется шаблонами модалок и HUD.",
+    "templates.toggle.locked": "Заблокировано",
+    "templates.toggle.on": "Вкл.",
+    "templates.turnCost": "{turns} ход.",
     "commandPalette.action.budget": "Открыть бюджет",
     "commandPalette.action.province": "К выбору гекса",
     "commandPalette.action.resolve": "Запросить резолв",
@@ -8143,6 +8512,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.accountLockedPermanent": "Аккаунт заблокирован бессрочно",
     "auth.accountLockedTime": "Аккаунт заблокирован до {time}",
     "auth.accountLockedTurn": "Аккаунт заблокирован до хода #{turn}",
+    "auth.access": "Доступ",
     "auth.chooseCountry": "Выберите страну",
     "auth.chooseCultureGroup": "Выберите культурную группу",
     "auth.chooseReligionGroup": "Выберите религиозную группу",
@@ -8159,7 +8529,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.crestHint": "PNG/JPG/WEBP до 4MB, максимум 128x192, соотношение 2:3",
     "auth.crestInvalid": "Герб: максимум 128x192, соотношение 2:3",
     "auth.crestPreview": "Предпросмотр герба",
-    "auth.customColor": "Выбрать",
     "auth.enterGame": "Войти",
     "auth.enterPassword": "Введите пароль",
     "auth.fileTooLarge": "Файл слишком большой (до 4MB)",
@@ -8173,6 +8542,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.cultureName": "Название культуры",
     "auth.backToLogin": "Назад ко входу",
     "auth.confirmMissingTitle": "Заполните эти поля",
+    "auth.confirmCultureReligion": "Культура и религия",
+    "auth.confirmPreviewDescription": "Проверьте визуальную идентичность, выбранные группы, культуру и религию перед созданием.",
+    "auth.confirmPreviewTitle": "Предпросмотр основания",
     "auth.confirmReady": "Все обязательные поля готовы. Страну можно создать.",
     "auth.imageFormatInvalid": "Проверьте формат: флаг 192x128 (3:2), герб 128x192 (2:3)",
     "auth.identity": "Идентичность страны",
@@ -8207,13 +8579,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.passwordLengthNeed": "Нужно минимум 8 символов",
     "auth.passwordLengthOk": "Длина пароля подходит",
     "auth.passwordMismatch": "Пароли не совпадают",
-    "auth.presetColor": "Выбрать {color}",
     "auth.previousStep": "Назад",
     "auth.register": "Регистрация",
     "auth.replaceImage": "Заменить изображение",
     "auth.registrationError": "Ошибка регистрации",
     "auth.registrationPendingApproval": "Регистрация ожидает подтверждения администратора",
     "auth.registrationPendingDescription": "Вы сможете войти в игру после одобрения заявки.",
+    "auth.registrationSteps": "Шаги регистрации",
     "auth.registrationSent": "Заявка на регистрацию отправлена",
     "auth.registrationSentMessage": "Страна {country} отправлена на подтверждение администраторам.",
     "auth.rememberMe": "Запомнить меня",
@@ -8241,10 +8613,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.startingPop.sol": "Уровень жизни: {value}",
     "auth.startingPop.solLabel": "УЖ",
     "auth.step.confirm": "Итог",
-    "auth.step.culture": "Культура",
-    "auth.step.info": "Инфо",
+    "auth.step.culture": "Культурная группа",
+    "auth.step.info": "Информация",
     "auth.step.race": "Раса",
-    "auth.step.religion": "Религия",
+    "auth.step.religion": "Религиозная группа",
     "auth.waitButton": "Буду ждать",
     "clientSettings.description": "Эти параметры не влияют на серверную игру и применяются только в вашем браузере.",
     "clientSettings.descriptionTitle": "Описание",
@@ -8608,8 +8980,20 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "religionGroup.ancestorRites.name": "Культы предков",
     "religionGroup.celestialOrders.description": "Астральные школы, читающие легитимность в календарях, знамениях и точных записях. Их поселения начинают с более сильной ученостью.",
     "religionGroup.celestialOrders.name": "Небесные ордены",
+    "religionGroup.dawnMysteries.description": "Посвященные встречают каждый день публичными обетами, шествиями и обрядами обновления. Их первые поселения быстрее строят доверие вокруг общих церемоний.",
+    "religionGroup.dawnMysteries.name": "Мистерии рассвета",
+    "religionGroup.earthMotherCults.description": "Сезонные святилища, благословения полей и родовые пиры связывают веру с землей и урожаем. Их общины начинают с более устойчивыми материальными запасами.",
+    "religionGroup.earthMotherCults.name": "Культы Матери-земли",
+    "religionGroup.riverOracles.description": "Прорицатели читают течения, паводки и записи перевозчиков как знаки судьбы. Их ранние государства лучше готовы к пошлинам и торговле.",
+    "religionGroup.riverOracles.name": "Речные оракулы",
+    "religionGroup.sacredFlame.description": "Храмовые очаги хранят огни клятв во время войн, зим и обрядов основания. Их последователи организуют труд с дисциплинированным рвением.",
+    "religionGroup.sacredFlame.name": "Священное пламя",
+    "religionGroup.stormPact.description": "Верующие клянутся перед громом, морским ветром и открытым небом. Их первые экспедиции смелы и лучше подходят для пограничного расширения.",
+    "religionGroup.stormPact.name": "Грозовой пакт",
     "religionGroup.templeCults.description": "Организованные жречества вокруг городских храмов, календарей и подношений. Они дают государству более сильную раннюю религиозную основу.",
     "religionGroup.templeCults.name": "Храмовые культы",
+    "religionGroup.veilScholars.description": "Тихие ордены хранят запретные комментарии, звездные карты и шифрованное учение. Их поселения начинают с более сильными учеными кругами.",
+    "religionGroup.veilScholars.name": "Ученые Завесы",
     "map.controls.zoomIn": "Приблизить карту",
     "map.controls.zoomOut": "Отдалить карту",
     "map.zoomIndicator.label": "Масштаб",

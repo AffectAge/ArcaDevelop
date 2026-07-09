@@ -32,6 +32,7 @@ import { RegistrationApprovalModal } from "./components/RegistrationApprovalModa
 import { ElectionResultsModal } from "./components/ElectionResultsModal";
 import { BuildingAtlasIcon } from "./components/BuildingAtlasIcon";
 import { BuildingOverviewModal } from "./components/BuildingOverviewModal";
+import { GameTemplateGallery } from "./components/templates";
 import {
   adminReviewRegistration,
   apiBase,
@@ -369,6 +370,7 @@ export default function App() {
     | null
   >(null);
   const [authBackgroundUrl, setAuthBackgroundUrl] = useState(AUTH_BACKGROUND_FALLBACK_URL);
+  const [authPanelMode, setAuthPanelMode] = useState<"login" | "register">("login");
   const [resourceGrowthByTurn, setResourceGrowthByTurn] = useState<{
     culture: number;
     science: number;
@@ -2717,6 +2719,12 @@ export default function App() {
   const entryLoadingProgressPercent = Math.round(
     (((worldBase ? 1 : 0) + (publicUiLoaded ? 1 : 0) + (country ? 1 : 0) + (mapReady ? 1 : 0)) / 4) * 100,
   );
+  const showTemplateGallery =
+    typeof window !== "undefined" && (window.location.pathname === "/templates" || new URLSearchParams(window.location.search).get("view") === "templates");
+
+  if (showTemplateGallery) {
+    return <GameTemplateGallery />;
+  }
 
   return (
     <div className="relative h-screen overflow-hidden bg-arc-bg text-[var(--arc-color-text)]">
@@ -2815,21 +2823,28 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-40 flex items-center justify-center bg-[#05080d]"
+            className={`absolute inset-0 z-40 flex items-center justify-center bg-[#05080d] ${authPanelMode === "register" ? "arc-auth-screen--kit" : ""}`}
           >
             <div className="pointer-events-none absolute inset-0 bg-[#05080d]" />
-            <img
-              src={authBackgroundUrl}
-              className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover object-center opacity-70"
-              aria-hidden="true"
-              onError={() => {
-                setAuthBackgroundUrl((current) => (current === AUTH_BACKGROUND_FALLBACK_URL ? current : AUTH_BACKGROUND_FALLBACK_URL));
-              }}
-            />
-            <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_45%,rgba(5,8,13,0.12),rgba(5,8,13,0.64)_72%)]" />
+            {authPanelMode === "login" ? (
+              <>
+                <img
+                  src={authBackgroundUrl}
+                  className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover object-center opacity-70"
+                  aria-hidden="true"
+                  onError={() => {
+                    setAuthBackgroundUrl((current) => (current === AUTH_BACKGROUND_FALLBACK_URL ? current : AUTH_BACKGROUND_FALLBACK_URL));
+                  }}
+                />
+                <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_45%,rgba(5,8,13,0.12),rgba(5,8,13,0.64)_72%)]" />
+              </>
+            ) : (
+              <div className="pointer-events-none absolute inset-0 z-[1] arc-auth-kit-backdrop" />
+            )}
             <div className="relative z-10">
               <AuthPanel
                 onSuccess={onAuthSuccess}
+                onModeChange={setAuthPanelMode}
                 onOpenCivilopedia={() => {
                   setCivilopediaIntent(null);
                   setCivilopediaOpen(true);

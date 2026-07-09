@@ -10,7 +10,8 @@
       "label": "Astral tables",
       "scope": "country",
       "effects": [
-        { "stat": "science_gain", "mode": "add", "value": 1 }
+        { "stat": "science_gain", "mode": "add", "value": 1 },
+        { "stat": "technology_cost", "mode": "add", "value": -5 }
       ]
     }
   ],

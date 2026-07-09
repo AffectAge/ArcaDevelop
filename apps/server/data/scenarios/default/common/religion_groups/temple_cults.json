@@ -10,7 +10,8 @@
       "label": "Temple calendar",
       "scope": "country",
       "effects": [
-        { "stat": "religion_gain", "mode": "add", "value": 1 }
+        { "stat": "religion_gain", "mode": "add", "value": 1 },
+        { "stat": "ducats_gain", "mode": "add", "value": 1 }
       ]
     }
   ],

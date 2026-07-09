@@ -10,7 +10,8 @@
       "label": "Lineage oaths",
       "scope": "country",
       "effects": [
-        { "stat": "culture_gain", "mode": "add", "value": 1 }
+        { "stat": "culture_gain", "mode": "add", "value": 1 },
+        { "stat": "religion_gain", "mode": "add", "value": 1 }
       ]
     }
   ],

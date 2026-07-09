@@ -82,6 +82,7 @@ apps/client/src/
   app/
   components/
     ui/
+    templates/
     map-hud/
     feature/
   features/
@@ -105,11 +106,13 @@ Folder responsibilities:
 
 - `app`: app shell, providers, high-level orchestration.
 - `components/ui`: reusable generic UI primitives.
+- `components/templates`: reusable game-interface compositions built from `components/ui`, such as choice modals, detail panels, tooltip cards, resource panels, notification lists, tabs, action bars, and demo galleries. Templates must not own gameplay state or server API calls.
 - `components/map-hud`: map overlay controls and HUD components.
 - `components/feature`: temporary bridge for obsolete feature components during migration.
 - `features`: domain-oriented UI modules.
 - `store`: client state slices and selectors.
 - `lib`: small client adapters, API clients, and utilities with clear ownership.
+- `lib/audio`: browser-only UI audio adapters and sound-event routing. It may own sound settings and sprite registration, but not gameplay logic or scenario content.
 - `i18n`: localization keys, helpers, and validation.
 - `theme`: scenario theme loading and token application.
 - `map`: map-specific layers, selectors, and rendering helpers.

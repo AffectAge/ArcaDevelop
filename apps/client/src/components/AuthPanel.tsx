@@ -1,5 +1,5 @@
 import { Listbox } from "@headlessui/react";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,10 +13,8 @@ import {
   GraduationCap,
   Hammer,
   Heart,
-  ImagePlus,
   LoaderCircle,
   LogIn,
-  Palette,
   Ruler,
   Server,
   ShieldCheck,
@@ -24,7 +22,6 @@ import {
   Star,
   UserPlus,
   Users,
-  X,
   Zap,
   type LucideIcon,
 } from "lucide-react";
@@ -34,6 +31,16 @@ import type { Country, ServerStatus } from "@arcanorum/shared";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import { Tooltip } from "./Tooltip";
+import { AppButton } from "./ui/AppButton";
+import {
+  GameChoiceGrid,
+  GameColorPickerButton,
+  GameDetailPanel,
+  GameImageUploadCard,
+  GameTabs,
+  GameTextField,
+  type GameChoiceItem,
+} from "./templates";
 import { useUiText } from "../i18n/useUiText";
 import type { UiTextKey } from "../i18n/uiText";
 
@@ -82,6 +89,7 @@ export type AuthSuccess = {
 type Props = {
   onSuccess: (payload: AuthSuccess) => void;
   onOpenCivilopedia?: () => void;
+  onModeChange?: (mode: AuthMode) => void;
 };
 
 const statusMeta: Record<ServerStatus, { labelKey: UiTextKey; cls: string }> = {
@@ -90,7 +98,6 @@ const statusMeta: Record<ServerStatus, { labelKey: UiTextKey; cls: string }> = {
   maintenance: { labelKey: "auth.serverStatus.maintenance", cls: "bg-[var(--arc-color-warning-top)]" },
 };
 
-const presetColors = ["#4ade80", "#22d3ee", "#60a5fa", "#f59e0b", "#ef4444", "#a78bfa"];
 const AUTH_LABEL_CLASS = "arc-auth-label";
 const AUTH_INPUT_CLASS = "arc-auth-input";
 const AUTH_OPTION_CLASS = (active: boolean) =>
@@ -119,7 +126,6 @@ function ImageUploadFrame({
   previewUrl,
   hint,
   onChange,
-  onClear,
   t,
 }: {
   label: string;
@@ -127,42 +133,21 @@ function ImageUploadFrame({
   previewUrl: string | null;
   hint: string;
   onChange: (file: File | null) => void;
-  onClear: () => void;
   t: AuthTranslator;
 }) {
   return (
     <div className="arc-auth-upload-field">
       <div className="arc-auth-upload-heading">
         <label className={AUTH_LABEL_CLASS}>{label}</label>
-        {file && (
-          <Tooltip content={t("auth.clearImage")}>
-            <button type="button" className="arc-auth-upload-clear" onClick={onClear} aria-label={t("auth.clearImage")}>
-              <X size={13} />
-            </button>
-          </Tooltip>
-        )}
       </div>
       <Tooltip content={file ? t("auth.replaceImage") : t("auth.selectImage")}>
-        <label className={`arc-auth-upload-frame ${previewUrl ? "arc-auth-upload-frame--filled" : ""}`}>
-          {previewUrl ? (
-            <img src={previewUrl} alt="" aria-hidden="true" />
-          ) : (
-            <span className="arc-auth-upload-empty">
-              <ImagePlus size={18} />
-              <span>{t("auth.selectImage")}</span>
-            </span>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(event) => {
-              onChange(event.target.files?.[0] ?? null);
-              event.currentTarget.value = "";
-            }}
-            aria-label={label}
-          />
-        </label>
+        <GameImageUploadCard
+          label={label}
+          clearLabel={t("auth.clearImage")}
+          file={file}
+          src={previewUrl}
+          onFileChange={onChange}
+        />
       </Tooltip>
       {file && <div className="arc-auth-upload-file" title={file.name}>{file.name}</div>}
       <p className="arc-auth-hint">{hint}</p>
@@ -186,37 +171,8 @@ function ColorPickerField({
   const safeColor = colord(value).isValid() ? colord(value).toHex() : "#4ade80";
   return (
     <div>
-      <label className="arc-auth-label arc-auth-label-row">
-        <Palette size={13} /> {label}
-      </label>
-      <div className="arc-auth-color-choice">
-        <span className="arc-auth-color-preview" style={{ backgroundColor: safeColor }} />
-        <div className="arc-auth-color-swatches">
-          {presetColors.map((color) => {
-            const selected = colord(color).toHex() === safeColor;
-            return (
-              <button
-                key={color}
-                type="button"
-                onClick={() => onChange(color)}
-                className={`arc-auth-color-preset ${selected ? "arc-auth-color-preset--selected" : ""}`}
-                style={{ backgroundColor: color }}
-                aria-label={t("auth.presetColor", { color })}
-              />
-            );
-          })}
-        </div>
-        <label className="arc-auth-color-custom">
-          <Palette size={14} />
-          {t("auth.customColor")}
-          <input
-            type="color"
-            value={safeColor}
-            onChange={(event) => onChange(event.target.value)}
-            aria-label={label}
-          />
-        </label>
-      </div>
+      <label className={AUTH_LABEL_CLASS}>{label}</label>
+      <GameColorPickerButton value={safeColor} label={label} onChange={onChange} />
       <FieldError text={error} />
     </div>
   );
@@ -255,15 +211,6 @@ function IdentityEmblem({
   );
 }
 
-function formatModifierEffect(
-  t: AuthTranslator,
-  effect: ContentModifierEffect,
-): string {
-  const statKey = `modifiers.stat.${effect.stat}` as UiTextKey;
-  const value = effect.mode === "mult" ? `x${effect.value}` : effect.value > 0 ? `+${effect.value}` : `${effect.value}`;
-  return `${t(statKey)} ${value}`;
-}
-
 function formatEffectValue(effect: ContentModifierEffect): string {
   if (effect.mode === "mult") return `x${effect.value}`;
   return effect.value > 0 ? `+${effect.value}` : `${effect.value}`;
@@ -279,18 +226,6 @@ function getModifierIcon(stat: string): LucideIcon {
   return Zap;
 }
 
-function StatChip({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
-  return (
-    <div className="arc-auth-stat-chip">
-      <span className="arc-auth-stat-chip__icon">
-        <Icon size={15} />
-      </span>
-      <span className="arc-auth-stat-chip__label">{label}</span>
-      <span className="arc-auth-stat-chip__value">{value}</span>
-    </div>
-  );
-}
-
 function IdentityDetails({
   entry,
   t,
@@ -300,9 +235,12 @@ function IdentityDetails({
 }) {
   if (!entry) {
     return (
-      <div className="arc-auth-identity-detail arc-auth-identity-detail--empty">
-        {t("auth.identitySelectPrompt")}
-      </div>
+      <GameDetailPanel
+        title={t("auth.identity")}
+        description={t("auth.identitySelectPrompt")}
+        sections={[]}
+        className="arc-auth-kit-detail"
+      />
     );
   }
   const modifierEffects = (entry.modifiers ?? []).flatMap((modifier) => modifier.effects ?? []);
@@ -318,41 +256,113 @@ function IdentityDetails({
     startingPop?.loyalists != null ? { icon: Users, label: t("auth.startingPop.loyalistsLabel"), value: `+${startingPop.loyalists}` } : null,
     startingPop?.radicals != null ? { icon: Zap, label: t("auth.startingPop.radicalsLabel"), value: `+${startingPop.radicals}` } : null,
   ].filter((row): row is { icon: LucideIcon; label: string; value: string } => Boolean(row));
+  const bonusRows = modifierEffects.length
+    ? modifierEffects.map((effect, index) => {
+        const Icon = getModifierIcon(effect.stat);
+        return {
+          label: t(`modifiers.stat.${effect.stat}`),
+          value: formatEffectValue(effect),
+          icon: <Icon key={`${effect.stat}:${index}`} size={14} aria-hidden="true" />,
+        };
+      })
+    : [{ label: t("auth.noBonuses"), value: "-", icon: undefined }];
+  const populationRows = startingRows.length
+    ? startingRows.map((row) => ({
+        label: row.label,
+        value: row.value,
+        icon: <row.icon size={14} aria-hidden="true" />,
+      }))
+    : [{ label: t("auth.noStartingPopChanges"), value: "-", icon: undefined }];
+
   return (
-    <div className="arc-auth-identity-detail">
-      <div className="arc-auth-identity-detail__header">
-        <IdentityEmblem entry={entry} t={t} size="large" />
-        <div>
-          <div className="arc-auth-identity-detail__name">{getIdentityName(entry, t)}</div>
-          <div className="arc-auth-identity-detail__id">{entry.id}</div>
-        </div>
-      </div>
-      <p className="arc-auth-identity-detail__description">{getIdentityDescription(entry, t) || t("auth.identityNoDescription")}</p>
-      <div className="arc-auth-identity-section-title">{t("auth.identityBonuses")}</div>
-      {modifierEffects.length > 0 ? (
-        <div className="arc-auth-stat-chip-grid">
-          {modifierEffects.map((effect, index) => (
-            <StatChip
-              key={`${effect.stat}:${index}`}
-              icon={getModifierIcon(effect.stat)}
-              label={t(`modifiers.stat.${effect.stat}`)}
-              value={formatEffectValue(effect)}
-            />
-          ))}
-        </div>
+    <GameDetailPanel
+      title={getIdentityName(entry, t)}
+      description={getIdentityDescription(entry, t) || t("auth.identityNoDescription")}
+      icon={<IdentityEmblem entry={entry} t={t} size="large" />}
+      sections={[
+        { title: t("auth.identityBonuses"), rows: bonusRows },
+        { title: t("auth.startingPopulation"), rows: populationRows },
+      ]}
+      className="arc-auth-kit-detail"
+    />
+  );
+}
+
+function buildIdentityChoices(entries: ContentEntry[], t: AuthTranslator): GameChoiceItem[] {
+  return entries.map((entry) => {
+    const modifierEffects = (entry.modifiers ?? []).flatMap((modifier) => modifier.effects ?? []);
+    return {
+      id: entry.id,
+      title: getIdentityName(entry, t),
+      description: getIdentityDescription(entry, t) || t("auth.identityNoDescription"),
+      accentColor: entry.color || "var(--arc-color-gold)",
+      icon: <IdentityEmblem entry={entry} t={t} />,
+      effects: modifierEffects.slice(0, 2).map((effect, index) => {
+        const Icon = getModifierIcon(effect.stat);
+        return {
+          id: `${entry.id}:${effect.stat}:${index}`,
+          label: t(`modifiers.stat.${effect.stat}`),
+          value: formatEffectValue(effect),
+          icon: <Icon size={13} aria-hidden="true" />,
+          valueColor: effect.value >= 0 ? "var(--arc-color-success-text)" : "var(--arc-color-danger-text)",
+        };
+      }),
+    };
+  });
+}
+
+function ImagePreviewBadge({ src, label, fallback }: { src: string | null; label: string; fallback: string }) {
+  if (!src) return <span>{fallback}</span>;
+  return (
+    <span className="arc-auth-confirm-image" aria-label={label}>
+      <img src={src} alt="" aria-hidden="true" />
+    </span>
+  );
+}
+
+function SummaryImageSlot({
+  src,
+  label,
+  fallback,
+  className = "",
+}: {
+  src: string | null;
+  label: string;
+  fallback: string;
+  className?: string;
+}) {
+  return (
+    <div className={`arc-auth-summary-asset ${className}`}>
+      <div className="arc-auth-summary-asset__label">{label}</div>
+      {src ? (
+        <img src={src} alt="" aria-hidden="true" />
       ) : (
-        <div className="arc-auth-identity-muted">{t("auth.noBonuses")}</div>
+        <div className="arc-auth-summary-asset__empty">{fallback}</div>
       )}
-      <div className="arc-auth-identity-section-title">{t("auth.startingPopulation")}</div>
-      {startingRows.length > 0 ? (
-        <div className="arc-auth-stat-chip-grid">
-          {startingRows.map((row) => (
-            <StatChip key={`${row.label}:${row.value}`} icon={row.icon} label={row.label} value={row.value} />
-          ))}
-        </div>
+    </div>
+  );
+}
+
+function IdentitySummaryTile({
+  label,
+  entry,
+  t,
+  fallback,
+}: {
+  label: string;
+  entry: ContentEntry | null;
+  t: AuthTranslator;
+  fallback: string;
+}) {
+  return (
+    <div className="arc-auth-summary-identity">
+      {entry ? (
+        <IdentityEmblem entry={entry} t={t} />
       ) : (
-        <div className="arc-auth-identity-muted">{t("auth.noStartingPopChanges")}</div>
+        <span className="arc-auth-summary-identity__empty">?</span>
       )}
+      <span>{label}</span>
+      <strong>{entry ? getIdentityName(entry, t) : fallback}</strong>
     </div>
   );
 }
@@ -371,47 +381,39 @@ function IdentitySelectionPanel({
   const selectedEntry = entries.find((entry) => entry.id === selectedId) ?? null;
   return (
     <div className="arc-auth-identity-layout">
-      <div className="arc-auth-identity-grid" role="listbox" aria-label={t("auth.identityOptions")}>
-        {entries.map((entry) => {
-          const selected = entry.id === selectedId;
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              className={`arc-auth-identity-tile ${selected ? "arc-auth-identity-tile--selected" : ""}`}
-              onClick={() => onSelect(entry.id)}
-              role="option"
-              aria-selected={selected}
-              aria-label={getIdentityName(entry, t)}
-            >
-              <IdentityEmblem entry={entry} t={t} />
-              {selected && <Check size={14} className="arc-auth-identity-tile__check" />}
-            </button>
-          );
-        })}
+      <div className="arc-auth-kit-choice-frame">
+        <GameChoiceGrid
+          choices={buildIdentityChoices(entries, t)}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          selectedLabel={t("templates.selected")}
+          ariaLabel={t("auth.identityOptions")}
+          className="arc-auth-kit-choice-grid"
+        />
       </div>
       <IdentityDetails entry={selectedEntry} t={t} />
     </div>
   );
 }
 
-function getMissingRegistrationFields(
-  values: RegisterFormValues,
-  t: AuthTranslator,
-): string[] {
-  const missing: string[] = [];
-  if (!values.countryName.trim()) missing.push(t("auth.countryName"));
-  if (!colord(values.countryColor).isValid()) missing.push(t("auth.countryColor"));
-  if (!values.cultureGroupId) missing.push(t("auth.cultureGroup"));
-  if (!values.cultureName.trim()) missing.push(t("auth.cultureName"));
-  if (!colord(values.cultureColor).isValid()) missing.push(t("auth.cultureColor"));
-  if (!values.religionGroupId) missing.push(t("auth.religionGroup"));
-  if (!values.religionName.trim()) missing.push(t("auth.religionName"));
-  if (!colord(values.religionColor).isValid()) missing.push(t("auth.religionColor"));
-  if (!values.raceId) missing.push(t("auth.race"));
-  if (values.password.length < 8) missing.push(t("auth.password"));
-  if (!values.confirmPassword || values.password !== values.confirmPassword) missing.push(t("auth.repeatPassword"));
-  return missing;
+function getFirstMissingRegistrationStep(values: RegisterFormValues): RegisterStep | null {
+  if (
+    !values.countryName.trim() ||
+    !colord(values.countryColor).isValid() ||
+    !values.cultureName.trim() ||
+    !colord(values.cultureColor).isValid() ||
+    !values.religionName.trim() ||
+    !colord(values.religionColor).isValid() ||
+    values.password.length < 8 ||
+    !values.confirmPassword ||
+    values.password !== values.confirmPassword
+  ) {
+    return "info";
+  }
+  if (!values.cultureGroupId) return "culture";
+  if (!values.religionGroupId) return "religion";
+  if (!values.raceId) return "race";
+  return null;
 }
 
 async function isImageWithinRule(
@@ -439,7 +441,7 @@ async function isImageWithinRule(
   });
 }
 
-export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
+export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props) {
   const { t } = useUiText();
   const loginSchema = useMemo(
     () =>
@@ -494,6 +496,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(8);
   const [submitting, setSubmitting] = useState(false);
+  const registerWheelStepAtRef = useRef(0);
   const [flagFile, setFlagFile] = useState<File | null>(null);
   const [crestFile, setCrestFile] = useState<File | null>(null);
   const [cultureLogoFile, setCultureLogoFile] = useState<File | null>(null);
@@ -528,6 +531,10 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
       confirmPassword: "",
     },
   });
+
+  useEffect(() => {
+    onModeChange?.(authMode);
+  }, [authMode, onModeChange]);
 
   useEffect(() => {
     try {
@@ -650,8 +657,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
   const selectedCultureGroup = cultureGroups.find((entry) => entry.id === registerValues.cultureGroupId) ?? null;
   const selectedReligionGroup = religionGroups.find((entry) => entry.id === registerValues.religionGroupId) ?? null;
   const selectedRace = races.find((entry) => entry.id === registerValues.raceId) ?? null;
-  const missingRegistrationFields = getMissingRegistrationFields(registerValues, t);
-  const canSubmitRegistration = missingRegistrationFields.length === 0 && !submitting;
+  const firstMissingRegistrationStep = getFirstMissingRegistrationStep(registerValues);
   const currentStepIndex = REGISTER_STEPS.findIndex((step) => step.id === registerStep);
   const goToNextRegisterStep = () => {
     const next = REGISTER_STEPS[Math.min(REGISTER_STEPS.length - 1, Math.max(0, currentStepIndex) + 1)];
@@ -661,6 +667,35 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
     const previous = REGISTER_STEPS[Math.max(0, Math.max(0, currentStepIndex) - 1)];
     if (previous) setRegisterStep(previous.id);
   };
+  const goToFirstMissingRegisterStep = useCallback((values: RegisterFormValues) => {
+    const missingStep = getFirstMissingRegistrationStep(values);
+    if (!missingStep) return false;
+    setRegisterStep(missingStep);
+    return true;
+  }, []);
+  const handleRegisterWizardWheel = useCallback((event: WheelEvent) => {
+    if (registrationPendingModal.open) return;
+    const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+    if (delta === 0) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest("input, textarea, select")) return;
+    if (target?.closest(".arc-auth-kit-detail, .arc-auth-kit-choice-frame, .arc-auth-kit-choice-grid, .arc-kit-choice-card__effects")) return;
+    event.preventDefault();
+    const now = Date.now();
+    if (now - registerWheelStepAtRef.current < 260) return;
+    registerWheelStepAtRef.current = now;
+    if (delta > 0) {
+      goToNextRegisterStep();
+      return;
+    }
+    goToPreviousRegisterStep();
+  }, [goToNextRegisterStep, goToPreviousRegisterStep, registrationPendingModal.open]);
+
+  useEffect(() => {
+    if (authMode !== "register") return undefined;
+    window.addEventListener("wheel", handleRegisterWizardWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleRegisterWizardWheel);
+  }, [authMode, handleRegisterWizardWheel]);
 
   const passwordChecks = useMemo(() => {
     return {
@@ -738,6 +773,10 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
   });
 
   const submitRegister = registerForm.handleSubmit(async (values) => {
+    if (goToFirstMissingRegisterStep(values)) {
+      return;
+    }
+
     if (flagFile && !(await isImageWithinRule(flagFile, { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 }))) {
       toast.error(t("auth.flagInvalid"));
       return;
@@ -813,6 +852,8 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
     } finally {
       setSubmitting(false);
     }
+  }, () => {
+    goToFirstMissingRegisterStep(registerForm.getValues());
   });
 
   return (
@@ -847,29 +888,33 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
               </div>
               <div className="arc-auth-pending-description">{t("auth.registrationPendingDescription")}</div>
               <div className="flex justify-center">
-                <button
+                <AppButton
                   type="button"
                   onClick={() => setRegistrationPendingModal({ open: false, countryName: "" })}
-                  className="arc-auth-primary-button"
+                  variant="primary"
+                  size="lg"
+                  sound="action.confirm"
                 >
                   {t("auth.waitButton")}
-                </button>
+                </AppButton>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-      <header className="arc-building-overview-header">
-        <div>
-          <div className="arc-building-overview-title arc-auth-title">ARCANORUM</div>
-          <p>{t("auth.clientVersion")}</p>
-        </div>
-        <div className="arc-auth-server-status">
-          <Server size={14} />
-          <span className={`arc-auth-status-dot ${statusMeta[serverStatus].cls} ${serverStatus === "online" ? "pulse-status" : ""}`} />
-          {t(statusMeta[serverStatus].labelKey)}
-        </div>
-      </header>
+      {authMode === "login" ? (
+        <header className="arc-building-overview-header">
+          <div>
+            <div className="arc-building-overview-title arc-auth-title">ARCANORUM</div>
+            <p>{t("auth.clientVersion")}</p>
+          </div>
+          <div className="arc-auth-server-status">
+            <Server size={14} />
+            <span className={`arc-auth-status-dot ${statusMeta[serverStatus].cls} ${serverStatus === "online" ? "pulse-status" : ""}`} />
+            {t(statusMeta[serverStatus].labelKey)}
+          </div>
+        </header>
+      ) : null}
 
       {loading ? (
         <div className="arc-building-overview-body">
@@ -979,46 +1024,44 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                   {t("auth.rememberMe")}
                 </label>
 
-                <button disabled={submitting} className="arc-auth-primary-button arc-auth-full-button">
-                  <ShieldCheck size={15} />
+                <AppButton type="submit" disabled={submitting} variant="primary" size="lg" icon={<ShieldCheck size={15} aria-hidden="true" />} className="w-full" sound="action.confirm">
                   {submitting ? t("auth.loginPending") : t("auth.enterGame")}
-                </button>
-                <button
+                </AppButton>
+                <AppButton
                   type="button"
                   onClick={() => {
                     setAuthMode("register");
                     setRegisterStep("info");
                   }}
-                  className="arc-auth-secondary-button arc-auth-full-button"
+                  variant="secondary"
+                  size="lg"
+                  icon={<UserPlus size={15} aria-hidden="true" />}
+                  className="w-full"
                 >
-                  <UserPlus size={15} />
                   {t("auth.createCountry")}
-                </button>
-                <button
+                </AppButton>
+                <AppButton
                   type="button"
                   onClick={onOpenCivilopedia}
-                  className="arc-auth-secondary-button arc-auth-full-button"
+                  variant="ghost"
+                  size="lg"
+                  icon={<BookOpen size={15} aria-hidden="true" />}
+                  className="w-full"
                 >
-                  <BookOpen size={15} />
                   {t("auth.knowledge")}
-                </button>
+                </AppButton>
               </form>
           </motion.div>
         </motion.div>
       ) : (
         <>
-          <div className="arc-auth-tabs arc-auth-tabs--wizard">
-            {REGISTER_STEPS.map((step) => (
-              <button
-                key={step.id}
-                type="button"
-                onClick={() => setRegisterStep(step.id)}
-                className={`arc-auth-tab arc-auth-wizard-tab ${registerStep === step.id ? "arc-auth-tab--selected" : ""}`}
-              >
-                <span>{t(step.labelKey)}</span>
-              </button>
-            ))}
-          </div>
+          <GameTabs
+            ariaLabel={t("auth.registrationSteps")}
+            activeId={registerStep}
+            onChange={(id) => setRegisterStep(id as RegisterStep)}
+            className="arc-auth-kit-tabs"
+            tabs={REGISTER_STEPS.map((step) => ({ id: step.id, label: t(step.labelKey) }))}
+          />
 
           <motion.div className="arc-building-overview-body arc-auth-body arc-auth-wizard-body">
             <motion.div
@@ -1032,104 +1075,51 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                 {registerStep === "info" && (
                   <div className="arc-auth-wizard-panel">
                     <div className="arc-auth-panel-title">{t("auth.step.info")}</div>
-                <div>
-                  <label className={AUTH_LABEL_CLASS}>{t("auth.countryName")}</label>
-                  <input className={AUTH_INPUT_CLASS} {...registerForm.register("countryName")} />
-                  <FieldError text={registerForm.formState.errors.countryName?.message} />
-                </div>
+                    <div className="arc-auth-info-columns">
+                    <section className="arc-auth-info-section arc-auth-kit-section">
+                      <h3 className="arc-kit-section-title">{t("auth.country")}</h3>
+                      <div className="arc-auth-identity-editor">
+                        <GameTextField
+                          label={t("auth.countryName")}
+                          error={registerForm.formState.errors.countryName?.message}
+                          invalid={Boolean(registerForm.formState.errors.countryName)}
+                          {...registerForm.register("countryName")}
+                        />
+                        <ColorPickerField
+                          label={t("auth.countryColor")}
+                          value={registerColor}
+                          onChange={(value) => registerForm.setValue("countryColor", value, { shouldDirty: true, shouldValidate: true })}
+                          error={registerForm.formState.errors.countryColor?.message}
+                          t={t}
+                        />
+                        <ImageUploadFrame
+                          label={t("auth.flag")}
+                          file={flagFile}
+                          previewUrl={flagPreviewUrl}
+                          hint={t("auth.flagHint")}
+                          onChange={setFlagFile}
+                          t={t}
+                        />
+                        <ImageUploadFrame
+                          label={t("auth.crest")}
+                          file={crestFile}
+                          previewUrl={crestPreviewUrl}
+                          hint={t("auth.crestHint")}
+                          onChange={setCrestFile}
+                          t={t}
+                        />
+                      </div>
+                    </section>
 
-                <ColorPickerField
-                  label={t("auth.countryColor")}
-                  value={registerColor}
-                  onChange={(value) => registerForm.setValue("countryColor", value, { shouldDirty: true, shouldValidate: true })}
-                  error={registerForm.formState.errors.countryColor?.message}
-                  t={t}
-                />
-
-                <div className="arc-auth-upload-grid">
-                  <ImageUploadFrame
-                    label={t("auth.flag")}
-                    file={flagFile}
-                    previewUrl={flagPreviewUrl}
-                    hint={t("auth.flagHint")}
-                    onChange={setFlagFile}
-                    onClear={() => setFlagFile(null)}
-                    t={t}
-                  />
-                  <ImageUploadFrame
-                    label={t("auth.crest")}
-                    file={crestFile}
-                    previewUrl={crestPreviewUrl}
-                    hint={t("auth.crestHint")}
-                    onChange={setCrestFile}
-                    onClear={() => setCrestFile(null)}
-                    t={t}
-                  />
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div>
-                    <label className={AUTH_LABEL_CLASS}>{t("auth.password")}</label>
-                    <input type="password" className={AUTH_INPUT_CLASS} {...registerForm.register("password")} />
-                    <FieldError text={registerForm.formState.errors.password?.message} />
-                    <div className="mt-2 flex gap-2">
-                      <Tooltip
-                        content={
-                          registerPasswordChecks.length
-                            ? t("auth.passwordLengthOk")
-                            : t("auth.passwordLengthNeed")
-                        }
-                      >
-                        <span
-                          className={`${
-                            registerPasswordChecks.length
-                              ? AUTH_STATUS_OK_CLASS
-                              : AUTH_STATUS_IDLE_CLASS
-                          }`}
-                          aria-label={t("auth.passwordLengthAria")}
-                        >
-                          <Ruler size={14} />
-                        </span>
-                      </Tooltip>
-                      <Tooltip
-                        content={
-                          registerPasswordChecks.complexity
-                            ? t("auth.passwordComplexityOk")
-                            : t("auth.passwordComplexityNeed")
-                        }
-                      >
-                        <span
-                          className={`${
-                            registerPasswordChecks.complexity
-                              ? AUTH_STATUS_OK_CLASS
-                              : AUTH_STATUS_IDLE_CLASS
-                          }`}
-                          aria-label={t("auth.passwordComplexityAria")}
-                        >
-                          <Sparkles size={14} />
-                        </span>
-                      </Tooltip>
-                    </div>
-                  </div>
-                  <div>
-                    <label className={AUTH_LABEL_CLASS}>{t("auth.repeatPassword")}</label>
-                    <input type="password" className={AUTH_INPUT_CLASS} {...registerForm.register("confirmPassword")} />
-                    <FieldError text={registerForm.formState.errors.confirmPassword?.message} />
-                  </div>
-                </div>
-                  </div>
-                )}
-
-                {registerStep === "culture" && (
-                  <div className="arc-auth-wizard-panel">
-                    <div className="arc-auth-panel-title">{t("auth.step.culture")}</div>
-                    <div className="arc-auth-info-section arc-auth-identity-form">
-                      <div className="arc-auth-wizard-fields">
-                        <div>
-                          <label className={AUTH_LABEL_CLASS}>{t("auth.cultureName")}</label>
-                          <input className={AUTH_INPUT_CLASS} {...registerForm.register("cultureName")} />
-                          <FieldError text={registerForm.formState.errors.cultureName?.message} />
-                        </div>
+                    <section className="arc-auth-info-section arc-auth-kit-section">
+                      <h3 className="arc-kit-section-title">{t("auth.step.culture")}</h3>
+                      <div className="arc-auth-identity-editor">
+                        <GameTextField
+                          label={t("auth.cultureName")}
+                          error={registerForm.formState.errors.cultureName?.message}
+                          invalid={Boolean(registerForm.formState.errors.cultureName)}
+                          {...registerForm.register("cultureName")}
+                        />
                         <ColorPickerField
                           label={t("auth.cultureColor")}
                           value={registerValues.cultureColor}
@@ -1143,30 +1133,20 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                           previewUrl={cultureLogoPreviewUrl}
                           hint={t("auth.identityLogoHint")}
                           onChange={setCultureLogoFile}
-                          onClear={() => setCultureLogoFile(null)}
                           t={t}
                         />
                       </div>
-                    </div>
-                    <IdentitySelectionPanel
-                      entries={cultureGroups}
-                      selectedId={registerValues.cultureGroupId}
-                      onSelect={(value) => registerForm.setValue("cultureGroupId", value, { shouldDirty: true, shouldValidate: true })}
-                      t={t}
-                    />
-                  </div>
-                )}
+                    </section>
 
-                {registerStep === "religion" && (
-                  <div className="arc-auth-wizard-panel">
-                    <div className="arc-auth-panel-title">{t("auth.step.religion")}</div>
-                    <div className="arc-auth-info-section arc-auth-identity-form">
-                      <div className="arc-auth-wizard-fields">
-                        <div>
-                          <label className={AUTH_LABEL_CLASS}>{t("auth.religionName")}</label>
-                          <input className={AUTH_INPUT_CLASS} {...registerForm.register("religionName")} />
-                          <FieldError text={registerForm.formState.errors.religionName?.message} />
-                        </div>
+                    <section className="arc-auth-info-section arc-auth-kit-section">
+                      <h3 className="arc-kit-section-title">{t("auth.step.religion")}</h3>
+                      <div className="arc-auth-identity-editor">
+                        <GameTextField
+                          label={t("auth.religionName")}
+                          error={registerForm.formState.errors.religionName?.message}
+                          invalid={Boolean(registerForm.formState.errors.religionName)}
+                          {...registerForm.register("religionName")}
+                        />
                         <ColorPickerField
                           label={t("auth.religionColor")}
                           value={registerValues.religionColor}
@@ -1180,11 +1160,63 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                           previewUrl={religionLogoPreviewUrl}
                           hint={t("auth.identityLogoHint")}
                           onChange={setReligionLogoFile}
-                          onClear={() => setReligionLogoFile(null)}
                           t={t}
                         />
                       </div>
+                    </section>
+
+                    <section className="arc-auth-info-section arc-auth-kit-section">
+                      <h3 className="arc-kit-section-title">{t("auth.access")}</h3>
+                      <div className="grid gap-3">
+                        <div>
+                          <GameTextField
+                            type="password"
+                            label={t("auth.password")}
+                            error={registerForm.formState.errors.password?.message}
+                            invalid={Boolean(registerForm.formState.errors.password)}
+                            {...registerForm.register("password")}
+                          />
+                          <div className="mt-2 flex gap-2">
+                            <Tooltip content={registerPasswordChecks.length ? t("auth.passwordLengthOk") : t("auth.passwordLengthNeed")}>
+                              <span className={`${registerPasswordChecks.length ? AUTH_STATUS_OK_CLASS : AUTH_STATUS_IDLE_CLASS}`} aria-label={t("auth.passwordLengthAria")}>
+                                <Ruler size={14} />
+                              </span>
+                            </Tooltip>
+                            <Tooltip content={registerPasswordChecks.complexity ? t("auth.passwordComplexityOk") : t("auth.passwordComplexityNeed")}>
+                              <span className={`${registerPasswordChecks.complexity ? AUTH_STATUS_OK_CLASS : AUTH_STATUS_IDLE_CLASS}`} aria-label={t("auth.passwordComplexityAria")}>
+                                <Sparkles size={14} />
+                              </span>
+                            </Tooltip>
+                          </div>
+                        </div>
+                        <GameTextField
+                          type="password"
+                          label={t("auth.repeatPassword")}
+                          error={registerForm.formState.errors.confirmPassword?.message}
+                          invalid={Boolean(registerForm.formState.errors.confirmPassword)}
+                          {...registerForm.register("confirmPassword")}
+                        />
+                      </div>
+                    </section>
                     </div>
+                  </div>
+                )}
+
+                {registerStep === "culture" && (
+                  <div className="arc-auth-wizard-panel arc-auth-wizard-panel--identity">
+                    <div className="arc-auth-panel-title">{t("auth.step.culture")}</div>
+                    <IdentitySelectionPanel
+                      entries={cultureGroups}
+                      selectedId={registerValues.cultureGroupId}
+                      onSelect={(value) => registerForm.setValue("cultureGroupId", value, { shouldDirty: true, shouldValidate: true })}
+                      t={t}
+                    />
+                  </div>
+                )}
+
+                {registerStep === "religion" && (
+                  <div className="arc-auth-wizard-panel arc-auth-wizard-panel--identity">
+                    <div className="arc-auth-panel-title">{t("auth.step.religion")}</div>
                     <IdentitySelectionPanel
                       entries={religionGroups}
                       selectedId={registerValues.religionGroupId}
@@ -1195,7 +1227,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                 )}
 
                 {registerStep === "race" && (
-                  <div className="arc-auth-wizard-panel">
+                  <div className="arc-auth-wizard-panel arc-auth-wizard-panel--identity">
                     <div className="arc-auth-panel-title">{t("auth.step.race")}</div>
                     <IdentitySelectionPanel
                       entries={races}
@@ -1209,50 +1241,63 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                 {registerStep === "confirm" && (
                   <div className="arc-auth-wizard-panel">
                     <div className="arc-auth-panel-title">{t("auth.step.confirm")}</div>
-                    <div className="arc-auth-confirm-grid">
-                      <div className="arc-auth-preview-card">
-                        <div className="arc-auth-preview-title">{t("auth.country")}</div>
-                        <div className="arc-auth-confirm-name">{registerValues.countryName || t("auth.missingValue")}</div>
-                        <div className="arc-auth-confirm-row">
+                    <div className="arc-auth-summary-layout">
+                      <section className="arc-auth-summary-copy">
+                        <div className="arc-auth-summary-kicker">{t("auth.confirmPreviewTitle")}</div>
+                        <h2>{registerValues.countryName || t("auth.missingValue")}</h2>
+                        <p>{t("auth.confirmPreviewDescription")}</p>
+                        <div className="arc-auth-summary-color-row">
                           <span>{t("auth.countryColor")}</span>
-                          <span className="arc-auth-confirm-swatch" style={{ backgroundColor: colord(registerValues.countryColor).isValid() ? colord(registerValues.countryColor).toHex() : "#111827" }} />
+                          <strong>{colord(registerValues.countryColor).isValid() ? colord(registerValues.countryColor).toHex() : t("auth.missingValue")}</strong>
+                          <span
+                            className="arc-auth-confirm-swatch"
+                            style={{ backgroundColor: colord(registerValues.countryColor).isValid() ? colord(registerValues.countryColor).toHex() : "#111827" }}
+                          />
                         </div>
-                      </div>
-                      <div className="arc-auth-preview-card">
-                        <div className="arc-auth-preview-title">{t("auth.identity")}</div>
-                        <div className="arc-auth-confirm-identity">
-                          {selectedCultureGroup && <IdentityEmblem entry={selectedCultureGroup} t={t} />}
-                          <span>{selectedCultureGroup ? getIdentityName(selectedCultureGroup, t) : t("auth.chooseCultureGroup")}</span>
+                        <div className="arc-auth-summary-info arc-auth-summary-info--left">
+                          <div className="arc-auth-summary-info__title">{t("auth.confirmCultureReligion")}</div>
+                          <div className="arc-auth-summary-row">
+                            <span>{t("auth.cultureName")}</span>
+                            <strong>{registerValues.cultureName || t("auth.missingValue")}</strong>
+                            <ImagePreviewBadge src={cultureLogoPreviewUrl} label={t("auth.cultureLogo")} fallback={t("auth.noFileSelected")} />
+                          </div>
+                          <div className="arc-auth-summary-row">
+                            <span>{t("auth.step.culture")}</span>
+                            <strong>{selectedCultureGroup ? getIdentityName(selectedCultureGroup, t) : t("auth.chooseCultureGroup")}</strong>
+                            {selectedCultureGroup ? <IdentityEmblem entry={selectedCultureGroup} t={t} /> : <span />}
+                          </div>
+                          <div className="arc-auth-summary-row">
+                            <span>{t("auth.religionName")}</span>
+                            <strong>{registerValues.religionName || t("auth.missingValue")}</strong>
+                            <ImagePreviewBadge src={religionLogoPreviewUrl} label={t("auth.religionLogo")} fallback={t("auth.noFileSelected")} />
+                          </div>
+                          <div className="arc-auth-summary-row">
+                            <span>{t("auth.step.religion")}</span>
+                            <strong>{selectedReligionGroup ? getIdentityName(selectedReligionGroup, t) : t("auth.chooseReligionGroup")}</strong>
+                            {selectedReligionGroup ? <IdentityEmblem entry={selectedReligionGroup} t={t} /> : <span />}
+                          </div>
                         </div>
-                        <div className="arc-auth-confirm-identity">
-                          {selectedReligionGroup && <IdentityEmblem entry={selectedReligionGroup} t={t} />}
-                          <span>{selectedReligionGroup ? getIdentityName(selectedReligionGroup, t) : t("auth.chooseReligionGroup")}</span>
+                      </section>
+                      <aside className="arc-auth-summary-preview" aria-label={t("auth.confirmPreviewTitle")}>
+                        <div className="arc-auth-summary-assets">
+                          <SummaryImageSlot src={flagPreviewUrl} label={t("auth.flag")} fallback={t("auth.noFileSelected")} className="arc-auth-summary-asset--flag" />
+                          <SummaryImageSlot src={crestPreviewUrl} label={t("auth.crest")} fallback={t("auth.noFileSelected")} className="arc-auth-summary-asset--crest" />
                         </div>
-                        <div className="arc-auth-confirm-identity">
-                          {selectedRace && <IdentityEmblem entry={selectedRace} t={t} />}
-                          <span>{selectedRace ? getIdentityName(selectedRace, t) : t("auth.chooseRace")}</span>
+                        <div className="arc-auth-summary-identity-grid">
+                          <IdentitySummaryTile label={t("auth.step.culture")} entry={selectedCultureGroup} t={t} fallback={t("auth.chooseCultureGroup")} />
+                          <IdentitySummaryTile label={t("auth.step.religion")} entry={selectedReligionGroup} t={t} fallback={t("auth.chooseReligionGroup")} />
+                          <IdentitySummaryTile label={t("auth.step.race")} entry={selectedRace} t={t} fallback={t("auth.chooseRace")} />
                         </div>
-                      </div>
+                      </aside>
                     </div>
-                    {missingRegistrationFields.length > 0 ? (
-                      <div className="arc-auth-missing-list">
-                        <div className="arc-auth-preview-title">{t("auth.confirmMissingTitle")}</div>
-                        {missingRegistrationFields.map((field) => (
-                          <span key={field}>{field}</span>
-                        ))}
-                      </div>
-                    ) : (
+                    {!firstMissingRegistrationStep ? (
                       <div className="arc-auth-ready-box">{t("auth.confirmReady")}</div>
-                    )}
-                    <button disabled={!canSubmitRegistration} className="arc-auth-primary-button arc-auth-full-button">
-                      <UserPlus size={15} />
-                      {submitting ? t("auth.creating") : t("auth.createCountry")}
-                    </button>
+                    ) : null}
                   </div>
                 )}
 
                 <div className="arc-auth-wizard-actions">
-                  <button
+                  <AppButton
                     type="button"
                     onClick={() => {
                       if (registerStep === "info") {
@@ -1261,17 +1306,22 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia }: Props) {
                       }
                       goToPreviousRegisterStep();
                     }}
-                    className="arc-auth-wizard-action"
+                    variant="ghost"
+                    size="lg"
+                    icon={<ArrowLeft size={15} aria-hidden="true" />}
                   >
-                    <ArrowLeft size={15} />
                     <span>{registerStep === "info" ? t("auth.backToLogin") : t("auth.previousStep")}</span>
-                  </button>
+                  </AppButton>
                   {registerStep !== "confirm" && (
-                    <button type="button" onClick={goToNextRegisterStep} className="arc-auth-wizard-action arc-auth-wizard-action--primary">
+                    <AppButton type="button" onClick={goToNextRegisterStep} variant="primary" size="lg" icon={<ArrowRight size={15} aria-hidden="true" />}>
                       <span>{t("auth.nextStep")}</span>
-                      <ArrowRight size={15} />
-                    </button>
+                    </AppButton>
                   )}
+                  {registerStep === "confirm" ? (
+                    <AppButton type="submit" disabled={submitting} variant="primary" size="lg" icon={<UserPlus size={15} aria-hidden="true" />} sound="action.confirm">
+                      {submitting ? t("auth.creating") : t("auth.createCountry")}
+                    </AppButton>
+                  ) : null}
                 </div>
               </form>
             </motion.div>
