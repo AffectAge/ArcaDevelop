@@ -29,7 +29,7 @@ import { fetchContentEntries, fetchCountries, fetchServerStatus, login, register
 import type { ContentEntry } from "../lib/api";
 import type { Country, ServerStatus } from "@arcanorum/shared";
 import { toast } from "sonner";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { Tooltip } from "./Tooltip";
 import { AppButton } from "./ui/AppButton";
 import {
@@ -113,6 +113,12 @@ const REGISTER_STEPS: Array<{ id: RegisterStep; labelKey: UiTextKey }> = [
   { id: "race", labelKey: "auth.step.race" },
   { id: "confirm", labelKey: "auth.step.confirm" },
 ];
+const REGISTER_STEP_INDEX = new Map<RegisterStep, number>(REGISTER_STEPS.map((step, index) => [step.id, index]));
+const REGISTER_STEP_VARIANTS: Variants = {
+  enter: (direction: number) => ({ opacity: 0, x: direction > 0 ? 34 : -34 }),
+  center: { opacity: 1, x: 0 },
+  exit: (direction: number) => ({ opacity: 0, x: direction > 0 ? -34 : 34 }),
+};
 
 function FieldError({ text }: { text?: string }) {
   if (!text) {
@@ -513,6 +519,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
   const [races, setRaces] = useState<ContentEntry[]>([]);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [registerStep, setRegisterStep] = useState<RegisterStep>("info");
+  const [registerStepDirection, setRegisterStepDirection] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(8);
   const [submitting, setSubmitting] = useState(false);
@@ -678,20 +685,29 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
   const selectedReligionGroup = religionGroups.find((entry) => entry.id === registerValues.religionGroupId) ?? null;
   const selectedRace = races.find((entry) => entry.id === registerValues.raceId) ?? null;
   const currentStepIndex = REGISTER_STEPS.findIndex((step) => step.id === registerStep);
+  const setRegisterStepWithDirection = useCallback((nextStep: RegisterStep) => {
+    setRegisterStepDirection((previousDirection) => {
+      const currentIndex = REGISTER_STEP_INDEX.get(registerStep) ?? 0;
+      const nextIndex = REGISTER_STEP_INDEX.get(nextStep) ?? currentIndex;
+      if (nextIndex === currentIndex) return previousDirection;
+      return nextIndex > currentIndex ? 1 : -1;
+    });
+    setRegisterStep(nextStep);
+  }, [registerStep]);
   const goToNextRegisterStep = () => {
     const next = REGISTER_STEPS[Math.min(REGISTER_STEPS.length - 1, Math.max(0, currentStepIndex) + 1)];
-    if (next) setRegisterStep(next.id);
+    if (next) setRegisterStepWithDirection(next.id);
   };
   const goToPreviousRegisterStep = () => {
     const previous = REGISTER_STEPS[Math.max(0, Math.max(0, currentStepIndex) - 1)];
-    if (previous) setRegisterStep(previous.id);
+    if (previous) setRegisterStepWithDirection(previous.id);
   };
   const goToFirstMissingRegisterStep = useCallback((values: RegisterFormValues) => {
     const missingStep = getFirstMissingRegistrationStep(values);
     if (!missingStep) return false;
-    setRegisterStep(missingStep);
+    setRegisterStepWithDirection(missingStep);
     return true;
-  }, []);
+  }, [setRegisterStepWithDirection]);
   const handleRegisterWizardWheel = useCallback((event: WheelEvent) => {
     if (registrationPendingModal.open) return;
     const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
@@ -1050,7 +1066,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                   type="button"
                   onClick={() => {
                     setAuthMode("register");
-                    setRegisterStep("info");
+                    setRegisterStepWithDirection("info");
                   }}
                   variant="secondary"
                   size="lg"
@@ -1077,22 +1093,26 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
           <GameTabs
             ariaLabel={t("auth.registrationSteps")}
             activeId={registerStep}
-            onChange={(id) => setRegisterStep(id as RegisterStep)}
+            onChange={(id) => setRegisterStepWithDirection(id as RegisterStep)}
             className="arc-auth-kit-tabs"
             tabs={REGISTER_STEPS.map((step) => ({ id: step.id, label: t(step.labelKey) }))}
           />
 
           <motion.div className="arc-building-overview-body arc-auth-body arc-auth-wizard-body">
-            <motion.div
-              className="arc-auth-wizard-motion"
-              key={registerStep}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.16, ease: "easeOut" }}
-            >
+            <AnimatePresence mode="wait" initial={false} custom={registerStepDirection}>
+              <motion.div
+                className="arc-auth-wizard-motion"
+                key={registerStep}
+                custom={registerStepDirection}
+                variants={REGISTER_STEP_VARIANTS}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              >
               <form onSubmit={submitRegister} className="arc-auth-wizard-form">
                 {registerStep === "info" && (
-                  <div className="arc-auth-wizard-panel arc-auth-wizard-panel--confirm">
+                  <div className="arc-auth-wizard-panel">
                     <div className="arc-auth-panel-title">{t("auth.step.info")}</div>
                     <div className="arc-auth-info-columns">
                     <section className="arc-auth-info-section arc-auth-kit-section">
@@ -1359,7 +1379,8 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                   ) : null}
                 </div>
               </form>
-            </motion.div>
+              </motion.div>
+            </AnimatePresence>
           </motion.div>
         </>
       )}
