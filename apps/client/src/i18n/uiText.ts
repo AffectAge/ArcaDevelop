@@ -189,6 +189,7 @@ export type UiTextKey =
   | "templates.notificationsTitle"
   | "templates.placeholder.culture"
   | "templates.placeholder.description"
+  | "templates.panel.description"
   | "templates.previewChip.color"
   | "templates.previewChip.empty"
   | "templates.previewChip.group"
@@ -204,6 +205,7 @@ export type UiTextKey =
   | "templates.scrollbarTitle"
   | "templates.section.buttons"
   | "templates.section.fields"
+  | "templates.section.panel"
   | "templates.section.switches"
   | "templates.selected"
   | "templates.showAll"
@@ -3833,6 +3835,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.notification.envoy": "Envoy arrived",
     "templates.notification.research": "Research completed",
     "templates.notificationsTitle": "Notifications",
+    "templates.panel.description": "Reusable cut-corner surface for modal groups and status panels.",
     "templates.placeholder.culture": "Choose culture",
     "templates.placeholder.description": "Optional description",
     "templates.previewChip.color": "Color preview",
@@ -3850,6 +3853,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.scrollbarTitle": "Scrollbar example",
     "templates.section.buttons": "Buttons",
     "templates.section.fields": "Fields",
+    "templates.section.panel": "Frame panel",
     "templates.section.switches": "Switches",
     "templates.selected": "Selected",
     "templates.showAll": "Show all",
@@ -7478,6 +7482,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.notification.envoy": "Посол прибыл",
     "templates.notification.research": "Исследование завершено",
     "templates.notificationsTitle": "Уведомления",
+    "templates.panel.description": "Переиспользуемая cut-corner поверхность для групп в модалках и статусных панелей.",
     "templates.placeholder.culture": "Выберите культуру",
     "templates.placeholder.description": "Описание необязательно",
     "templates.previewChip.color": "Превью цвета",
@@ -7495,6 +7500,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.scrollbarTitle": "Пример скроллбара",
     "templates.section.buttons": "Кнопки",
     "templates.section.fields": "Поля ввода",
+    "templates.section.panel": "Панель-рамка",
     "templates.section.switches": "Переключатели",
     "templates.selected": "Выбрано",
     "templates.showAll": "Показать все",

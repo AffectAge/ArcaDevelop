@@ -1,4 +1,3 @@
-import { Listbox } from "@headlessui/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -8,7 +7,6 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
-  Check,
   Coins,
   GraduationCap,
   Hammer,
@@ -36,9 +34,11 @@ import {
   GameChoiceGrid,
   GameColorPickerButton,
   GameDetailPanel,
+  GameFramePanel,
   GameImageUploadCard,
   GamePreviewChip,
   GamePreviewChipGroup,
+  GameSelectField,
   GameTabs,
   GameTextField,
   type GameChoiceItem,
@@ -101,9 +101,6 @@ const statusMeta: Record<ServerStatus, { labelKey: UiTextKey; cls: string }> = {
 };
 
 const AUTH_LABEL_CLASS = "arc-auth-label";
-const AUTH_INPUT_CLASS = "arc-auth-input";
-const AUTH_OPTION_CLASS = (active: boolean) =>
-  `arc-auth-option ${active ? "arc-auth-option--active" : ""}`;
 const AUTH_STATUS_OK_CLASS = "arc-auth-check arc-auth-check--ok";
 const AUTH_STATUS_IDLE_CLASS = "arc-auth-check";
 const REGISTER_STEPS: Array<{ id: RegisterStep; labelKey: UiTextKey }> = [
@@ -675,8 +672,13 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
     return () => clearInterval(timer);
   }, [loading]);
 
-  const selectedCountryId = loginForm.watch("countryId");
-  const selectedCountry = countries.find((c) => c.id === selectedCountryId);
+  const countryOptions = useMemo(
+    () => [
+      { value: "", label: t("auth.selectCountry") },
+      ...countries.map((country) => ({ value: country.id, label: country.name })),
+    ],
+    [countries, t],
+  );
   const loginPassword = loginForm.watch("password");
   const registerValues = registerForm.watch();
   const registerPassword = registerForm.watch("password");
@@ -943,8 +945,10 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
             <div className="arc-building-overview-title arc-auth-title">ARCANORUM</div>
             <p>{t("auth.clientVersion")}</p>
           </div>
-          <div className="arc-auth-server-status">
-            <Server size={14} />
+          <div className="arc-auth-server-status" data-status={serverStatus}>
+            <span className="arc-auth-server-status__icon">
+              <Server size={14} aria-hidden="true" />
+            </span>
             <span className={`arc-auth-status-dot ${statusMeta[serverStatus].cls} ${serverStatus === "online" ? "pulse-status" : ""}`} />
             {t(statusMeta[serverStatus].labelKey)}
           </div>
@@ -967,53 +971,24 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
       ) : authMode === "login" ? (
         <motion.div layout transition={{ layout: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } }} className="arc-building-overview-body arc-auth-body arc-scrollbar">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: "easeOut" }}>
-              <form onSubmit={submitLogin} className="space-y-4">
-                <div>
-                  <label className={AUTH_LABEL_CLASS}>{t("auth.country")}</label>
-                  <Listbox
-                    value={selectedCountryId}
-                    onChange={(value: string) => loginForm.setValue("countryId", value, { shouldDirty: true, shouldValidate: true })}
-                  >
-                    <div className="relative">
-                      <Listbox.Button className={`${AUTH_INPUT_CLASS} pr-10 text-left`}>
-                        {selectedCountry ? selectedCountry.name : t("auth.selectCountry")}
-                      </Listbox.Button>
-                      <Listbox.Options className="arc-scrollbar arc-auth-options">
-                        <Listbox.Option
-                          value=""
-                          className={({ active }) => AUTH_OPTION_CLASS(active)}
-                        >
-                          {({ selected }) => (
-                            <>
-                              <span className={selected ? "arc-auth-selected-option" : ""}>{t("auth.selectCountry")}</span>
-                              {selected && <Check size={14} className="arc-auth-option-check" />}
-                            </>
-                          )}
-                        </Listbox.Option>
-                        {countries.map((country) => (
-                          <Listbox.Option
-                            key={country.id}
-                            value={country.id}
-                            className={({ active }) => AUTH_OPTION_CLASS(active)}
-                          >
-                            {({ selected }) => (
-                              <>
-                                <span className={selected ? "arc-auth-selected-option" : ""}>{country.name}</span>
-                                {selected && <Check size={14} className="arc-auth-option-check" />}
-                              </>
-                            )}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
-                    </div>
-                  </Listbox>
-                  <FieldError text={loginForm.formState.errors.countryId?.message} />
-                </div>
+            <GameFramePanel className="arc-auth-login-panel">
+              <form onSubmit={submitLogin} className="arc-auth-login-form">
+                <GameSelectField
+                  label={t("auth.country")}
+                  options={countryOptions}
+                  error={loginForm.formState.errors.countryId?.message}
+                  invalid={Boolean(loginForm.formState.errors.countryId)}
+                  {...loginForm.register("countryId")}
+                />
 
                 <div>
-                  <label className={AUTH_LABEL_CLASS}>{t("auth.password")}</label>
-                  <input type="password" className={AUTH_INPUT_CLASS} {...loginForm.register("password")} />
-                  <FieldError text={loginForm.formState.errors.password?.message} />
+                  <GameTextField
+                    type="password"
+                    label={t("auth.password")}
+                    error={loginForm.formState.errors.password?.message}
+                    invalid={Boolean(loginForm.formState.errors.password)}
+                    {...loginForm.register("password")}
+                  />
                   <div className="mt-2 flex gap-2">
                     <Tooltip
                       content={
@@ -1054,9 +1029,9 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                   </div>
                 </div>
 
-                <label className="arc-auth-checkbox">
-                  <input type="checkbox" className="accent-arc-accent" {...loginForm.register("rememberMe")} />
-                  {t("auth.rememberMe")}
+                <label className="arc-auth-checkbox arc-auth-kit-checkbox">
+                  <input type="checkbox" {...loginForm.register("rememberMe")} />
+                  <span>{t("auth.rememberMe")}</span>
                 </label>
 
                 <AppButton type="submit" disabled={submitting} variant="primary" size="lg" icon={<ShieldCheck size={15} aria-hidden="true" />} className="w-full" sound="action.confirm">
@@ -1086,6 +1061,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                   {t("auth.knowledge")}
                 </AppButton>
               </form>
+            </GameFramePanel>
           </motion.div>
         </motion.div>
       ) : (

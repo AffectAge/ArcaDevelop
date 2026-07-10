@@ -29,6 +29,7 @@ import { GameChartPreview, type GameChartPreviewType } from "./GameChartPreview"
 import { GameChoiceModal, type GameChoiceItem } from "./GameChoiceModal";
 import { GameColorPickerButton } from "./GameColorPickerButton";
 import { GameDetailPanel } from "./GameDetailPanel";
+import { GameFramePanel } from "./GameFramePanel";
 import { GameImageUploadCard } from "./GameImageUploadCard";
 import { GameNotificationList } from "./GameNotificationList";
 import { GamePreviewChip, GamePreviewChipGroup } from "./GamePreviewChip";
@@ -222,6 +223,10 @@ export function GameTemplateGallery() {
 
             <div className="grid gap-3 md:col-span-2">
               <h3 className="arc-kit-section-title">{t("templates.section.fields")}</h3>
+              <GameFramePanel>
+                <div className="arc-kit-asset-sample__title">{t("templates.section.panel")}</div>
+                <div className="arc-kit-asset-sample__hint">{t("templates.panel.description")}</div>
+              </GameFramePanel>
               <div className="grid gap-3 md:grid-cols-2">
                 <GameTextField label={t("templates.field.name")} defaultValue={t("templates.sample.country")} />
                 <GameTextField label={t("templates.field.culture")} placeholder={t("templates.placeholder.culture")} />

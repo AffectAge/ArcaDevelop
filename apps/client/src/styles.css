@@ -312,6 +312,37 @@ select,
   padding: 22px;
 }
 
+.arc-kit-frame-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--arc-kit-surface-soft) 46%, #050708);
+  color: var(--arc-kit-text);
+  padding: 14px;
+  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+  --arc-kit-inner-fill: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--arc-kit-surface) 88%, #030506),
+    color-mix(in srgb, var(--arc-kit-surface-soft) 78%, #030506)
+  );
+  --arc-kit-inner-cut: 12px;
+}
+
+.arc-kit-frame-panel::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--arc-kit-inner-fill);
+  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+}
+
+.arc-kit-frame-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
 .arc-kit-modal__close {
   position: absolute;
   top: 14px;
@@ -755,6 +786,26 @@ select,
 .arc-kit-text-field__control--textarea {
   min-height: 72px;
   resize: vertical;
+}
+
+.arc-kit-select-field__control {
+  appearance: none;
+  padding-right: 38px;
+}
+
+.arc-kit-select-field__control option {
+  background: var(--arc-kit-control);
+  color: var(--arc-kit-text);
+}
+
+.arc-kit-select-field__icon {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  z-index: 1;
+  color: var(--arc-color-gold);
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 
 .arc-kit-text-field__frame:hover,
@@ -5003,6 +5054,13 @@ select,
 
 .arc-auth-modal {
   width: min(94vw, 660px);
+  background: var(--arc-kit-border-muted);
+  color: var(--arc-kit-text);
+  box-shadow: var(--arc-shadow-panel);
+}
+
+.arc-auth-modal::before {
+  background: color-mix(in srgb, var(--arc-kit-surface) 96%, transparent);
 }
 
 .arc-auth-modal--wizard {
@@ -5014,31 +5072,23 @@ select,
   box-shadow: var(--arc-shadow-panel);
 }
 
-.arc-auth-modal--wizard::before {
-  background:
-    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--arc-color-gold) 9%, transparent), transparent 42%),
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-kit-surface) 96%, transparent), color-mix(in srgb, var(--arc-kit-surface-soft) 92%, transparent));
-}
-
-.arc-auth-modal--wizard .arc-building-overview-header {
+.arc-auth-modal .arc-building-overview-header {
   border-bottom: 1px solid var(--arc-kit-divider);
   color: var(--arc-kit-text);
 }
 
-.arc-auth-modal--wizard .arc-building-overview-title,
-.arc-auth-modal--wizard .arc-auth-panel-title {
+.arc-auth-modal .arc-building-overview-title,
+.arc-auth-modal .arc-auth-panel-title {
   color: var(--arc-kit-gold-strong);
 }
 
-.arc-auth-modal--wizard .arc-building-overview-header p,
-.arc-auth-modal--wizard .arc-auth-hint,
-.arc-auth-modal--wizard .arc-auth-server-status {
-  border-color: var(--arc-kit-border-muted);
-  background: var(--arc-kit-surface-soft);
+.arc-auth-modal .arc-building-overview-header p,
+.arc-auth-modal .arc-auth-hint,
+.arc-auth-modal .arc-auth-server-status {
   color: var(--arc-kit-text-muted);
 }
 
-.arc-auth-modal--wizard .arc-auth-body {
+.arc-auth-modal .arc-auth-body {
   background: transparent;
   color: var(--arc-kit-text);
 }
@@ -5048,16 +5098,46 @@ select,
 }
 
 .arc-auth-server-status {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--arc-color-atlas-line);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 72%, white);
-  color: var(--arc-color-atlas-muted);
+  overflow: hidden;
+  background: var(--arc-kit-border-muted);
+  color: var(--arc-kit-text-muted);
   font-size: 11px;
   font-weight: 800;
   padding: 8px 10px;
   text-transform: uppercase;
+  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  --arc-kit-inner-fill: var(--arc-kit-surface-soft);
+  --arc-kit-inner-cut: 8px;
+}
+
+.arc-auth-server-status::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--arc-kit-inner-fill);
+  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+}
+
+.arc-auth-server-status > * {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-auth-server-status__icon {
+  display: inline-grid;
+  height: 22px;
+  width: 22px;
+  place-items: center;
+  background: var(--arc-kit-border-muted);
+  color: var(--arc-color-gold);
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
 }
 
 .arc-auth-status-dot {
@@ -5075,6 +5155,10 @@ select,
 
 .arc-auth-body {
   max-height: min(62vh, 620px);
+}
+
+.arc-auth-login-panel {
+  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-surface) 96%, transparent);
 }
 
 .arc-auth-tabs {
@@ -5133,72 +5217,59 @@ select,
   margin-bottom: 4px;
 }
 
-.arc-auth-input,
-.arc-auth-file-field {
-  min-width: 0;
-  width: 100%;
-  border: 1px solid var(--arc-color-atlas-line);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 80%, white);
-  color: var(--arc-color-atlas-ink);
-  font-size: 12px;
-  outline: none;
-  padding: 8px 9px;
-  transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease;
+.arc-auth-login-form {
+  display: grid;
+  gap: 14px;
 }
 
-.arc-auth-file-field {
-  display: flex;
-  cursor: pointer;
-  align-items: center;
-  gap: 8px;
-}
-
-.arc-auth-input:hover,
-.arc-auth-file-field:hover,
-.arc-auth-input:focus-visible {
-  border-color: var(--arc-color-atlas-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--arc-color-atlas-primary) 18%, transparent);
-}
-
-.arc-auth-options {
-  position: absolute;
-  z-index: 260;
-  margin-top: 8px;
-  max-height: 14rem;
-  width: 100%;
-  overflow: auto;
-  border: 1px solid var(--arc-color-atlas-line-strong);
-  background: var(--arc-color-atlas-paper-soft);
-  box-shadow: var(--arc-shadow-atlas-panel);
-  outline: none;
-  padding: 4px;
-}
-
-.arc-auth-option {
+.arc-auth-login-form [data-arc-button] {
   position: relative;
-  cursor: pointer;
-  color: var(--arc-color-atlas-muted);
-  font-size: 12px;
-  padding: 8px 32px 8px 9px;
+  isolation: isolate;
+  min-height: 44px;
+  border: 0;
+  border-radius: 0 !important;
+  background: var(--arc-kit-border-muted);
+  color: var(--arc-kit-text);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  --arc-kit-button-inner: color-mix(in srgb, var(--arc-kit-control) 84%, transparent);
+  --arc-kit-button-inner-cut: 9px;
 }
 
-.arc-auth-option--active,
-.arc-auth-selected-option {
-  color: var(--arc-color-atlas-ink);
-}
-
-.arc-auth-option--active {
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 12%, var(--arc-color-atlas-paper-soft));
-}
-
-.arc-auth-option-check {
+.arc-auth-login-form [data-arc-button]::before {
+  content: "";
   position: absolute;
-  right: 10px;
-  top: 50%;
-  color: var(--arc-color-atlas-primary);
-  transform: translateY(-50%);
+  inset: 1px;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--arc-kit-button-inner);
+  clip-path: polygon(0 0, calc(100% - var(--arc-kit-button-inner-cut)) 0, 100% var(--arc-kit-button-inner-cut), 100% 100%, var(--arc-kit-button-inner-cut) 100%, 0 calc(100% - var(--arc-kit-button-inner-cut)));
+}
+
+.arc-auth-login-form [data-arc-button][data-variant="primary"] {
+  background: color-mix(in srgb, var(--arc-color-primary-top) 72%, var(--arc-kit-border-muted));
+  --arc-kit-button-inner: linear-gradient(180deg, var(--arc-color-primary-top), var(--arc-color-primary-bottom));
+  color: var(--arc-color-text);
+}
+
+.arc-auth-login-form [data-arc-button][data-variant="secondary"] {
+  background: var(--arc-kit-border);
+  --arc-kit-button-inner: var(--arc-kit-control);
+}
+
+.arc-auth-login-form [data-arc-button][data-variant="ghost"] {
+  background: var(--arc-kit-border-muted);
+  --arc-kit-button-inner: var(--arc-kit-surface-soft);
+  color: var(--arc-kit-text-muted);
+}
+
+.arc-auth-login-form [data-arc-button]:hover:not(:disabled),
+.arc-auth-login-form [data-arc-button]:focus-visible {
+  filter: brightness(1.08) drop-shadow(0 0 10px color-mix(in srgb, var(--arc-color-gold) 18%, transparent));
+}
+
+.arc-auth-login-form [data-arc-button] > * {
+  position: relative;
+  z-index: 1;
 }
 
 .arc-auth-error {
@@ -5236,6 +5307,44 @@ select,
   gap: 8px;
   color: var(--arc-color-atlas-muted);
   font-size: 12px;
+}
+
+.arc-auth-kit-checkbox {
+  position: relative;
+  isolation: isolate;
+  min-height: 40px;
+  overflow: hidden;
+  background: var(--arc-kit-border-muted);
+  color: var(--arc-kit-text-muted);
+  cursor: pointer;
+  padding: 9px 11px;
+  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-control) 88%, black);
+  --arc-kit-inner-cut: 8px;
+}
+
+.arc-auth-kit-checkbox::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--arc-kit-inner-fill);
+  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+}
+
+.arc-auth-kit-checkbox input {
+  position: relative;
+  z-index: 1;
+  height: 16px;
+  width: 16px;
+  accent-color: var(--arc-color-gold);
+}
+
+.arc-auth-kit-checkbox span {
+  position: relative;
+  z-index: 1;
+  font-weight: 800;
 }
 
 .arc-auth-primary-button,
