@@ -37,6 +37,8 @@ import {
   GameColorPickerButton,
   GameDetailPanel,
   GameImageUploadCard,
+  GamePreviewChip,
+  GamePreviewChipGroup,
   GameTabs,
   GameTextField,
   type GameChoiceItem,
@@ -149,8 +151,6 @@ function ImageUploadFrame({
           onFileChange={onChange}
         />
       </Tooltip>
-      {file && <div className="arc-auth-upload-file" title={file.name}>{file.name}</div>}
-      <p className="arc-auth-hint">{hint}</p>
     </div>
   );
 }
@@ -312,12 +312,7 @@ function buildIdentityChoices(entries: ContentEntry[], t: AuthTranslator): GameC
 }
 
 function ImagePreviewBadge({ src, label, fallback }: { src: string | null; label: string; fallback: string }) {
-  if (!src) return <span>{fallback}</span>;
-  return (
-    <span className="arc-auth-confirm-image" aria-label={label}>
-      <img src={src} alt="" aria-hidden="true" />
-    </span>
-  );
+  return <GamePreviewChip src={src} label={label} emptyLabel={fallback} />;
 }
 
 function SummaryImageSlot({
@@ -367,11 +362,6 @@ function IdentitySummaryTile({
   );
 }
 
-function ColorSwatch({ value }: { value: string }) {
-  const safeColor = colord(value).isValid() ? colord(value).toHex() : "#111827";
-  return <span className="arc-auth-summary-mini-swatch" style={{ backgroundColor: safeColor }} />;
-}
-
 function LogoColorPreview({
   src,
   label,
@@ -383,20 +373,17 @@ function LogoColorPreview({
   fallback: string;
   color?: string;
 }) {
+  const safeColor = color && colord(color).isValid() ? colord(color).toHex() : null;
   return (
-    <span className="arc-auth-summary-logo-color">
-      {color ? <ColorSwatch value={color} /> : <span className="arc-auth-summary-mini-swatch arc-auth-summary-mini-swatch--empty" aria-hidden="true" />}
-      <ImagePreviewBadge src={src} label={label} fallback={fallback} />
-    </span>
+    <GamePreviewChipGroup color={safeColor} src={src} label={label} emptyLabel={fallback} className="arc-auth-summary-logo-color" />
   );
 }
 
 function IdentityPreviewSlot({ entry, t }: { entry: ContentEntry | null; t: AuthTranslator }) {
   return (
-    <span className="arc-auth-summary-logo-color">
-      <span className="arc-auth-summary-mini-swatch arc-auth-summary-mini-swatch--empty" aria-hidden="true" />
-      {entry ? <IdentityEmblem entry={entry} t={t} /> : <span />}
-    </span>
+    <GamePreviewChipGroup className="arc-auth-summary-logo-color">
+      {entry ? <IdentityEmblem entry={entry} t={t} /> : null}
+    </GamePreviewChipGroup>
   );
 }
 
@@ -814,15 +801,15 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
       return;
     }
 
-    if (crestFile && !(await isImageWithinRule(crestFile, { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 }))) {
+    if (crestFile && !(await isImageWithinRule(crestFile, { maxWidth: 128, maxHeight: 146, ratioWidth: 64, ratioHeight: 73 }))) {
       toast.error(t("auth.crestInvalid"));
       return;
     }
-    if (cultureLogoFile && !(await isImageWithinRule(cultureLogoFile, { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 }))) {
+    if (cultureLogoFile && !(await isImageWithinRule(cultureLogoFile, { maxWidth: 64, maxHeight: 64, ratioWidth: 1, ratioHeight: 1 }))) {
       toast.error(t("auth.identityLogoInvalid"));
       return;
     }
-    if (religionLogoFile && !(await isImageWithinRule(religionLogoFile, { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 }))) {
+    if (religionLogoFile && !(await isImageWithinRule(religionLogoFile, { maxWidth: 64, maxHeight: 64, ratioWidth: 1, ratioHeight: 1 }))) {
       toast.error(t("auth.identityLogoInvalid"));
       return;
     }
@@ -1208,6 +1195,14 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                             invalid={Boolean(registerForm.formState.errors.password)}
                             {...registerForm.register("password")}
                           />
+                          <GameTextField
+                            type="password"
+                            label={t("auth.repeatPassword")}
+                            error={registerForm.formState.errors.confirmPassword?.message}
+                            invalid={Boolean(registerForm.formState.errors.confirmPassword)}
+                            className="mt-3"
+                            {...registerForm.register("confirmPassword")}
+                          />
                           <div className="mt-2 flex gap-2">
                             <Tooltip content={registerPasswordChecks.length ? t("auth.passwordLengthOk") : t("auth.passwordLengthNeed")}>
                               <span className={`${registerPasswordChecks.length ? AUTH_STATUS_OK_CLASS : AUTH_STATUS_IDLE_CLASS}`} aria-label={t("auth.passwordLengthAria")}>
@@ -1221,13 +1216,6 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                             </Tooltip>
                           </div>
                         </div>
-                        <GameTextField
-                          type="password"
-                          label={t("auth.repeatPassword")}
-                          error={registerForm.formState.errors.confirmPassword?.message}
-                          invalid={Boolean(registerForm.formState.errors.confirmPassword)}
-                          {...registerForm.register("confirmPassword")}
-                        />
                       </div>
                     </section>
                     </div>

@@ -31,6 +31,7 @@ import { GameColorPickerButton } from "./GameColorPickerButton";
 import { GameDetailPanel } from "./GameDetailPanel";
 import { GameImageUploadCard } from "./GameImageUploadCard";
 import { GameNotificationList } from "./GameNotificationList";
+import { GamePreviewChip, GamePreviewChipGroup } from "./GamePreviewChip";
 import { GameResourcePanel } from "./GameResourcePanel";
 import { GameScrollList } from "./GameScrollList";
 import { GameTabs } from "./GameTabs";
@@ -227,6 +228,19 @@ export function GameTemplateGallery() {
               </div>
               <GameTextField multiline rows={2} label={t("templates.field.description")} placeholder={t("templates.placeholder.description")} />
               <GameColorPickerButton value={selectedColor} label={t("templates.colorPicker")} onChange={setSelectedColor} />
+              <div className="arc-kit-preview-chip-sample">
+                <div className="arc-kit-asset-sample__title">{t("templates.previewChipsTitle")}</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <GamePreviewChip color={selectedColor} label={t("templates.previewChip.color")} />
+                  <GamePreviewChip label={t("templates.previewChip.icon")}>
+                    <Crown size={22} aria-hidden="true" />
+                  </GamePreviewChip>
+                  <GamePreviewChip emptyLabel={t("templates.previewChip.empty")} />
+                  <GamePreviewChipGroup color={selectedColor} label={t("templates.previewChip.group")}>
+                    <Flag size={22} aria-hidden="true" />
+                  </GamePreviewChipGroup>
+                </div>
+              </div>
               <div className="arc-kit-asset-sample">
                 <GameImageUploadCard
                   label={t("templates.asset.flagUpload")}

@@ -6,6 +6,7 @@ export * from "./GameColorPickerButton";
 export * from "./GameDetailPanel";
 export * from "./GameImageUploadCard";
 export * from "./GameNotificationList";
+export * from "./GamePreviewChip";
 export * from "./GameResourcePanel";
 export * from "./GameScrollList";
 export * from "./GameTabs";

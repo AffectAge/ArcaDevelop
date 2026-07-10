@@ -935,6 +935,65 @@ select,
   pointer-events: none;
 }
 
+.arc-kit-preview-chip {
+  --arc-kit-preview-chip-fill: color-mix(in srgb, var(--arc-kit-control) 82%, transparent);
+  --arc-kit-preview-chip-cut: 9px;
+  --arc-kit-preview-chip-inner-cut: 8px;
+  position: relative;
+  display: inline-grid;
+  height: 42px;
+  width: 42px;
+  place-items: center;
+  overflow: hidden;
+  background: var(--arc-kit-border-muted);
+  color: var(--arc-kit-text-muted);
+  clip-path: polygon(0 0, calc(100% - var(--arc-kit-preview-chip-cut)) 0, 100% var(--arc-kit-preview-chip-cut), 100% 100%, var(--arc-kit-preview-chip-cut) 100%, 0 calc(100% - var(--arc-kit-preview-chip-cut)));
+}
+
+.arc-kit-preview-chip::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--arc-kit-preview-chip-fill);
+  clip-path: polygon(0 0, calc(100% - var(--arc-kit-preview-chip-inner-cut)) 0, 100% var(--arc-kit-preview-chip-inner-cut), 100% 100%, var(--arc-kit-preview-chip-inner-cut) 100%, 0 calc(100% - var(--arc-kit-preview-chip-inner-cut)));
+}
+
+.arc-kit-preview-chip > * {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-kit-preview-chip img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.arc-kit-preview-chip--empty {
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.arc-kit-preview-chip--placeholder {
+  visibility: hidden;
+}
+
+.arc-kit-preview-chip-group {
+  display: inline-grid;
+  grid-template-columns: 42px 42px;
+  align-items: center;
+  justify-self: end;
+  gap: 7px;
+}
+
+.arc-kit-preview-chip-sample {
+  display: grid;
+  gap: 8px;
+}
+
 .arc-kit-asset-sample {
   display: flex;
   align-items: center;
@@ -4973,10 +5032,6 @@ select,
 
 .arc-auth-modal--wizard .arc-building-overview-header p,
 .arc-auth-modal--wizard .arc-auth-hint,
-.arc-auth-modal--wizard .arc-auth-upload-file {
-  color: var(--arc-kit-text-muted);
-}
-
 .arc-auth-modal--wizard .arc-auth-server-status {
   border-color: var(--arc-kit-border-muted);
   background: var(--arc-kit-surface-soft);
@@ -5601,22 +5656,6 @@ select,
   border: 1px solid var(--arc-color-atlas-line);
 }
 
-.arc-auth-confirm-image {
-  display: inline-flex;
-  height: 42px;
-  width: 42px;
-  overflow: hidden;
-  border: 1px solid var(--arc-color-gold);
-  background: color-mix(in srgb, var(--arc-kit-control) 82%, transparent);
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
-}
-
-.arc-auth-confirm-image img {
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
-}
-
 .arc-auth-summary-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
@@ -5631,12 +5670,15 @@ select,
 .arc-auth-summary-asset,
 .arc-auth-summary-identity,
 .arc-auth-summary-info,
-.arc-auth-summary-row {
+.arc-auth-summary-row,
+.arc-auth-summary-identity-frame {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   background: var(--arc-kit-border-muted);
   clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-surface) 96%, transparent);
+  --arc-kit-inner-cut: 12px;
 }
 
 .arc-auth-summary-copy::before,
@@ -5644,14 +5686,26 @@ select,
 .arc-auth-summary-asset::before,
 .arc-auth-summary-identity::before,
 .arc-auth-summary-info::before,
-.arc-auth-summary-row::before {
+.arc-auth-summary-row::before,
+.arc-auth-summary-identity-frame::before {
   content: "";
   position: absolute;
   inset: 1px;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
-  background: color-mix(in srgb, var(--arc-kit-surface) 96%, transparent);
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  background: var(--arc-kit-inner-fill);
+  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+}
+
+.arc-auth-summary-copy > *,
+.arc-auth-summary-preview > *,
+.arc-auth-summary-asset > *,
+.arc-auth-summary-identity > *,
+.arc-auth-summary-info > *,
+.arc-auth-summary-row > *,
+.arc-auth-summary-identity-frame > * {
+  position: relative;
+  z-index: 1;
 }
 
 .arc-auth-summary-copy {
@@ -5725,10 +5779,11 @@ select,
 .arc-auth-summary-asset--crest img {
   position: absolute;
   inset: 1px;
+  z-index: 1;
   height: calc(100% - 2px);
   width: calc(100% - 2px);
   object-fit: cover;
-  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
 }
 
 .arc-auth-summary-asset--crest {
@@ -5750,24 +5805,10 @@ select,
 }
 
 .arc-auth-summary-identity-frame {
-  position: relative;
-  isolation: isolate;
   min-height: 0;
   overflow: auto;
-  background: var(--arc-kit-border-muted);
   padding: 8px;
-  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
   scrollbar-width: none;
-}
-
-.arc-auth-summary-identity-frame::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  z-index: -1;
-  pointer-events: none;
-  background: color-mix(in srgb, var(--arc-kit-surface) 96%, transparent);
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
 }
 
 .arc-auth-summary-identity-frame::-webkit-scrollbar {
@@ -5872,35 +5913,20 @@ select,
   white-space: nowrap;
 }
 
-.arc-auth-summary-mini-swatch {
-  display: inline-block;
-  height: 42px;
-  width: 42px;
-  border: 1px solid var(--arc-kit-border-muted);
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
-}
-
-.arc-auth-summary-mini-swatch--empty {
-  visibility: hidden;
-}
-
 .arc-auth-summary-logo-color {
-  display: inline-grid;
-  grid-template-columns: 42px 42px;
   justify-self: end;
-  align-items: center;
-  gap: 7px;
 }
 
 .arc-auth-summary-row .arc-auth-identity-emblem {
   height: 42px;
   width: 42px;
+  background: transparent;
+  clip-path: none;
   font-size: 10px;
 }
 
-.arc-auth-summary-row .arc-auth-confirm-image {
-  height: 42px;
-  width: 42px;
+.arc-auth-summary-row .arc-auth-identity-emblem::before {
+  display: none;
 }
 
 @media (max-width: 980px) {
@@ -5989,15 +6015,6 @@ select,
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-}
-
-.arc-auth-upload-file {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--arc-color-atlas-muted);
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .arc-auth-loading-card {

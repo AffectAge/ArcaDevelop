@@ -189,6 +189,11 @@ export type UiTextKey =
   | "templates.notificationsTitle"
   | "templates.placeholder.culture"
   | "templates.placeholder.description"
+  | "templates.previewChip.color"
+  | "templates.previewChip.empty"
+  | "templates.previewChip.group"
+  | "templates.previewChip.icon"
+  | "templates.previewChipsTitle"
   | "templates.resource.culture"
   | "templates.resource.gold"
   | "templates.resource.influence"
@@ -3830,6 +3835,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.notificationsTitle": "Notifications",
     "templates.placeholder.culture": "Choose culture",
     "templates.placeholder.description": "Optional description",
+    "templates.previewChip.color": "Color preview",
+    "templates.previewChip.empty": "Empty preview",
+    "templates.previewChip.group": "Grouped preview",
+    "templates.previewChip.icon": "Icon preview",
+    "templates.previewChipsTitle": "Preview chips",
     "templates.resource.culture": "Culture",
     "templates.resource.gold": "Gold",
     "templates.resource.influence": "Influence",
@@ -4880,8 +4890,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.createCountry": "Create country",
     "auth.creating": "Creating...",
     "auth.crest": "Crest",
-    "auth.crestHint": "PNG/JPG/WEBP up to 4MB, maximum 128x192, ratio 2:3",
-    "auth.crestInvalid": "Crest: maximum 128x192, ratio 2:3",
+    "auth.crestHint": "PNG/JPG/WEBP up to 4MB, maximum 128x146",
+    "auth.crestInvalid": "Crest: maximum 128x146",
     "auth.crestPreview": "Crest preview",
     "auth.enterGame": "Sign in",
     "auth.enterPassword": "Enter password",
@@ -4897,11 +4907,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.backToLogin": "Back to login",
     "auth.confirmCultureReligion": "Culture and religion",
     "auth.confirmPreviewTitle": "Founding preview",
-    "auth.imageFormatInvalid": "Check format: flag 192x128 (3:2), crest 128x192 (2:3)",
+    "auth.imageFormatInvalid": "Check format: flag 192x128 (3:2), crest 128x146, logos 64x64",
     "auth.identity": "Country identity",
     "auth.identityBonuses": "Bonuses",
-    "auth.identityLogoHint": "PNG/JPG/WEBP up to 4MB, maximum 128x192, ratio 2:3",
-    "auth.identityLogoInvalid": "Identity logo: maximum 128x192, ratio 2:3",
+    "auth.identityLogoHint": "PNG/JPG/WEBP up to 4MB, maximum 64x64",
+    "auth.identityLogoInvalid": "Identity logo: maximum 64x64",
     "auth.identityNoDescription": "No description authored.",
     "auth.identityOptions": "Identity options",
     "auth.identitySelectPrompt": "Select an option to inspect its bonuses and starting population.",
@@ -7470,6 +7480,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.notificationsTitle": "Уведомления",
     "templates.placeholder.culture": "Выберите культуру",
     "templates.placeholder.description": "Описание необязательно",
+    "templates.previewChip.color": "Превью цвета",
+    "templates.previewChip.empty": "Пустое превью",
+    "templates.previewChip.group": "Сгруппированное превью",
+    "templates.previewChip.icon": "Превью иконки",
+    "templates.previewChipsTitle": "Preview-чипы",
     "templates.resource.culture": "Культура",
     "templates.resource.gold": "Золото",
     "templates.resource.influence": "Влияние",
@@ -8520,8 +8535,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.createCountry": "Создать страну",
     "auth.creating": "Создание...",
     "auth.crest": "Герб",
-    "auth.crestHint": "PNG/JPG/WEBP до 4MB, максимум 128x192, соотношение 2:3",
-    "auth.crestInvalid": "Герб: максимум 128x192, соотношение 2:3",
+    "auth.crestHint": "PNG/JPG/WEBP до 4MB, максимум 128x146",
+    "auth.crestInvalid": "Герб: максимум 128x146",
     "auth.crestPreview": "Предпросмотр герба",
     "auth.enterGame": "Войти",
     "auth.enterPassword": "Введите пароль",
@@ -8537,11 +8552,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.backToLogin": "Назад ко входу",
     "auth.confirmCultureReligion": "Культура и религия",
     "auth.confirmPreviewTitle": "Предпросмотр основания",
-    "auth.imageFormatInvalid": "Проверьте формат: флаг 192x128 (3:2), герб 128x192 (2:3)",
+    "auth.imageFormatInvalid": "Проверьте формат: флаг 192x128 (3:2), герб 128x146, логотипы 64x64",
     "auth.identity": "Идентичность страны",
     "auth.identityBonuses": "Бонусы",
-    "auth.identityLogoHint": "PNG/JPG/WEBP до 4MB, максимум 128x192, соотношение 2:3",
-    "auth.identityLogoInvalid": "Логотип идентичности: максимум 128x192, соотношение 2:3",
+    "auth.identityLogoHint": "PNG/JPG/WEBP до 4MB, максимум 64x64",
+    "auth.identityLogoInvalid": "Логотип идентичности: максимум 64x64",
     "auth.identityNoDescription": "Описание не задано.",
     "auth.identityOptions": "Варианты идентичности",
     "auth.identitySelectPrompt": "Выберите вариант, чтобы увидеть бонусы и стартовое население.",
