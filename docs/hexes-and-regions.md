@@ -82,7 +82,7 @@ Generated region IDs must be based on anchor coordinates, not transient cluster 
 
 Scenario rules can query tags through the object DSL with `all`, `any`, and `not`. This DSL is valid for deposits, map feature generators, building placement, adjacency checks, and feature visual rules.
 
-Rivers are edge properties, not water hexes. River edges may include `riverClass`, `navigable`, and `crossingCost`. Naval units may move along navigable river edges even when the destination hex is land; land and civilian units pay the fixed crossing penalty when crossing a major navigable river edge.
+Rivers are edge properties, not water hexes. River edges may include `riverClass`, `navigable`, and `crossingCost`; adjacent hexes expose matching public tags such as `river:major` and `river:navigable` for tooltips and scenario tag queries. Naval units may move along navigable river edges even when the destination hex is land; land and civilian units pay the fixed crossing penalty when crossing a major navigable river edge.
 
 ## Selection And UI
 

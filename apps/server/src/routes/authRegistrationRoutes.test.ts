@@ -185,7 +185,12 @@ function makeApp(deps: AuthRegistrationRoutesDependencies): express.Express {
 function makeDeps(options?: {
   adminCountryCount?: number;
   requireApproval?: boolean;
-  uploadFiles?: { flag?: Express.Multer.File[]; crest?: Express.Multer.File[] };
+  uploadFiles?: {
+    flag?: Express.Multer.File[];
+    crest?: Express.Multer.File[];
+    cultureLogo?: Express.Multer.File[];
+    religionLogo?: Express.Multer.File[];
+  };
   createCountry?: AuthRegistrationRoutesDependencies["createCountry"];
   loginCountry?: AuthRegistrationCountryRecord | null;
   reviewCountry?: AdminCountryDbRecord | null;
@@ -209,8 +214,9 @@ function makeDeps(options?: {
         next();
       },
     },
-    flagImageRule: { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 },
-    crestImageRule: { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 },
+    flagImageRule: { maxWidth: 192, maxHeight: 128 },
+    crestImageRule: { maxWidth: 128, maxHeight: 146 },
+    identityLogoImageRule: { maxWidth: 64, maxHeight: 64 },
     masks: { resourcesByCountry: 1, hexOwner: 2, colonyProgressByRegion: 4, unitEquipmentState: 8 },
     getTurnId: () => 4,
     getWorldBase: () => world as WorldBase & AuthRegistrationWorldState,

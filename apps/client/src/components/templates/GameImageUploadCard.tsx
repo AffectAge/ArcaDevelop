@@ -10,7 +10,7 @@ type GameImageUploadCardProps = {
   disabled?: boolean;
   fallbackIcon?: ReactNode;
   clearLabel?: string;
-  onFileChange: (file: File | null) => void;
+  onFileChange: (file: File | null) => void | boolean | Promise<void | boolean>;
   className?: string;
 };
 
@@ -42,8 +42,11 @@ export function GameImageUploadCard({
   const previewSrc = useMemo(() => objectUrl ?? src, [objectUrl, src]);
   const hasPreview = Boolean(previewSrc);
 
-  function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    onFileChange(event.currentTarget.files?.[0] ?? null);
+  async function handleChange(event: ChangeEvent<HTMLInputElement>) {
+    const result = await onFileChange(event.currentTarget.files?.[0] ?? null);
+    if (result === false && inputRef.current) {
+      inputRef.current.value = "";
+    }
   }
 
   function handleClear() {

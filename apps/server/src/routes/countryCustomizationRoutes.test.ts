@@ -157,8 +157,8 @@ function makeDeps(options?: {
         next();
       },
     },
-    flagImageRule: { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 },
-    crestImageRule: { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 },
+    flagImageRule: { maxWidth: 192, maxHeight: 128 },
+    crestImageRule: { maxWidth: 128, maxHeight: 146 },
     getWorldBase: () => world,
     getCustomizationSettings: () => ({
       renameDucats: 10,

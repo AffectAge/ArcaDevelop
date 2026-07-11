@@ -1454,6 +1454,12 @@ select,
   box-shadow: var(--arc-shadow-panel);
 }
 
+.arc-kit-plot-tooltip-positioner {
+  position: fixed;
+  z-index: 2200;
+  pointer-events: none;
+}
+
 .arc-kit-plot-tooltip::before {
   content: "";
   position: absolute;
@@ -1464,6 +1470,18 @@ select,
     linear-gradient(180deg, color-mix(in srgb, var(--arc-kit-control) 90%, transparent), color-mix(in srgb, var(--arc-kit-bg) 88%, transparent)),
     linear-gradient(115deg, transparent 0 42%, color-mix(in srgb, var(--arc-kit-surface-soft) 26%, transparent) 42% 52%, transparent 52%);
   clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.arc-kit-plot-tooltip--compact {
+  width: min(100%, 300px);
+  gap: 5px;
+  padding: 14px 16px;
+}
+
+.arc-kit-plot-tooltip--detailed,
+.arc-kit-plot-tooltip--pinned {
+  width: min(100%, 420px);
+  gap: 9px;
 }
 
 .arc-kit-plot-tooltip > * {
@@ -1519,6 +1537,24 @@ select,
   line-height: 1;
 }
 
+.arc-kit-plot-tooltip__empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 120px;
+  place-content: center;
+}
+
+.arc-kit-plot-tooltip__empty-icon {
+  display: grid;
+  height: 42px;
+  width: 42px;
+  place-items: center;
+  color: var(--arc-kit-gold-strong);
+  background: color-mix(in srgb, var(--arc-kit-control) 88%, transparent);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
 .arc-kit-plot-tooltip__resource {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1560,6 +1596,43 @@ select,
   margin-top: 4px;
 }
 
+.arc-kit-plot-tooltip__movement {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--arc-kit-control) 62%, transparent);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  text-align: left;
+}
+
+.arc-kit-plot-tooltip__movement-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--arc-kit-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.arc-kit-plot-tooltip__movement-main strong {
+  color: var(--arc-kit-gold-strong);
+}
+
+.arc-kit-plot-tooltip__movement-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--arc-kit-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.arc-kit-plot-tooltip__movement-meta [data-tone="warning"] {
+  color: var(--arc-modal-tooltip-warning);
+}
+
 .arc-kit-plot-tooltip__section {
   display: grid;
   gap: 6px;
@@ -1578,11 +1651,135 @@ select,
   letter-spacing: 0.16em;
 }
 
+.arc-kit-plot-tooltip__section-title-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arc-kit-plot-tooltip__section-icon {
+  display: grid;
+  place-items: center;
+  color: var(--arc-kit-gold-strong);
+}
+
 .arc-kit-plot-tooltip__section-title::before,
 .arc-kit-plot-tooltip__section-title::after {
   content: "";
   height: 1px;
   background: var(--arc-kit-divider);
+}
+
+.arc-kit-plot-tooltip__section--geography .arc-kit-plot-tooltip__section-rows,
+.arc-kit-plot-tooltip__section--ownership .arc-kit-plot-tooltip__section-rows {
+  gap: 4px;
+}
+
+.arc-kit-plot-tooltip__rows,
+.arc-kit-plot-tooltip__section-rows {
+  display: grid;
+  gap: 5px;
+}
+
+.arc-kit-plot-tooltip__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 24px;
+  padding: 5px 7px;
+  background: color-mix(in srgb, var(--arc-kit-bg) 54%, transparent);
+  color: var(--arc-kit-text-muted);
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  text-align: left;
+}
+
+.arc-kit-plot-tooltip__row-icon {
+  display: grid;
+  place-items: center;
+  color: currentColor;
+}
+
+.arc-kit-plot-tooltip__row-label,
+.arc-kit-plot-tooltip__row small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arc-kit-plot-tooltip__row strong {
+  color: var(--arc-kit-text);
+  font-size: 11px;
+  text-align: right;
+}
+
+.arc-kit-plot-tooltip__row small {
+  grid-column: 2 / -1;
+  color: var(--arc-kit-text-muted);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.arc-kit-plot-tooltip__row[data-tone="positive"] {
+  color: var(--arc-modal-tooltip-positive);
+}
+
+.arc-kit-plot-tooltip__row[data-tone="negative"] {
+  color: var(--arc-modal-tooltip-negative);
+}
+
+.arc-kit-plot-tooltip__row[data-tone="warning"] {
+  color: var(--arc-modal-tooltip-warning);
+}
+
+.arc-kit-plot-tooltip__row[data-tone="info"] {
+  color: var(--arc-modal-tooltip-info);
+}
+
+.arc-kit-plot-tooltip__row[data-tone="muted"] {
+  color: var(--arc-kit-text-muted);
+}
+
+.arc-kit-plot-tooltip__tag-groups {
+  display: grid;
+  gap: 7px;
+  text-align: left;
+}
+
+.arc-kit-plot-tooltip__tag-group {
+  display: grid;
+  gap: 4px;
+}
+
+.arc-kit-plot-tooltip__tag-group > span {
+  color: var(--arc-kit-gold-strong);
+  font-family: var(--arc-font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.arc-kit-plot-tooltip__tag-group > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.arc-kit-plot-tooltip__tag-group em {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 22px;
+  align-items: center;
+  padding: 4px 7px;
+  background: color-mix(in srgb, var(--arc-kit-control) 72%, transparent);
+  color: var(--arc-kit-text-muted);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
 }
 
 .arc-kit-tech {

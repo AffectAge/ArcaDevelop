@@ -253,20 +253,29 @@ export type UiTextKey =
   | "templates.tech.supply"
   | "templates.techTitle"
   | "templates.plotTooltip.bonus"
+  | "templates.plotTooltip.baseMovement"
+  | "templates.plotTooltip.cityTitle"
   | "templates.plotTooltip.food"
   | "templates.plotTooltip.improvement"
   | "templates.plotTooltip.location"
+  | "templates.plotTooltip.movement"
+  | "templates.plotTooltip.movementForest"
+  | "templates.plotTooltip.movementRough"
   | "templates.plotTooltip.owner"
   | "templates.plotTooltip.production"
   | "templates.plotTooltip.resource"
   | "templates.plotTooltip.resourceDescription"
   | "templates.plotTooltip.route"
   | "templates.plotTooltip.section.rural"
+  | "templates.plotTooltip.section.systems"
   | "templates.plotTooltip.section.units"
   | "templates.plotTooltip.settlement"
+  | "templates.plotTooltip.stopOnEnter"
   | "templates.plotTooltip.subtitle"
   | "templates.plotTooltip.title"
   | "templates.plotTooltip.unit"
+  | "templates.plotTooltip.unknownDescription"
+  | "templates.plotTooltip.unknownTitle"
   | "templates.plotTooltip.water"
   | "templates.tooltip.description"
   | "templates.tooltip.eyebrow"
@@ -1843,6 +1852,15 @@ export type UiTextKey =
   | "hexMap.biome"
   | "hexMap.feature"
   | "hexMap.surfaceSummary"
+  | "hexMap.surfaceType"
+  | "hexMap.surface.continent"
+  | "hexMap.surface.island"
+  | "hexMap.surface.ocean"
+  | "hexMap.surface.sea"
+  | "hexMap.surface.lake"
+  | "hexMap.position"
+  | "hexMap.position.coastal"
+  | "hexMap.position.inland"
   | "hexMap.siteFeature"
   | "hexMap.resourceDeposit"
   | "hexMap.water"
@@ -1850,7 +1868,12 @@ export type UiTextKey =
   | "hexMap.ownerCountry"
   | "hexMap.ownerNone"
   | "hexMap.movementCost"
+  | "hexMap.movementBase"
+  | "hexMap.movementStopOnEnter"
+  | "hexMap.tooltipSystems"
+  | "hexMap.tooltipNoSystems"
   | "hexMap.mapTags"
+  | "hexMap.tagGroupBiome"
   | "hexMap.tagGroupClimate"
   | "hexMap.tagGroupRelief"
   | "hexMap.tagGroupWater"
@@ -3941,20 +3964,29 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.tech.supply": "Army Supply",
     "templates.techTitle": "Technology Tree Example",
     "templates.plotTooltip.bonus": "+5% production toward river buildings.",
+    "templates.plotTooltip.baseMovement": "Base {value}",
+    "templates.plotTooltip.cityTitle": "City Center",
     "templates.plotTooltip.food": "Food",
     "templates.plotTooltip.improvement": "Irrigated farm",
     "templates.plotTooltip.location": "Atlantica - Arno River",
+    "templates.plotTooltip.movement": "Movement",
+    "templates.plotTooltip.movementForest": "Vegetation",
+    "templates.plotTooltip.movementRough": "Rough ground",
     "templates.plotTooltip.owner": "Augustus (You)",
     "templates.plotTooltip.production": "Production",
     "templates.plotTooltip.resource": "Citrus",
     "templates.plotTooltip.resourceDescription": "Factory resource. Improves city growth.",
     "templates.plotTooltip.route": "Road",
     "templates.plotTooltip.section.rural": "Rural",
+    "templates.plotTooltip.section.systems": "Systems",
     "templates.plotTooltip.section.units": "Units",
     "templates.plotTooltip.settlement": "Mughal Empire - Patavium (Town)",
+    "templates.plotTooltip.stopOnEnter": "Stops on enter",
     "templates.plotTooltip.subtitle": "Wet floodplain",
     "templates.plotTooltip.title": "Flat Plains",
     "templates.plotTooltip.unit": "Scout - Yours",
+    "templates.plotTooltip.unknownDescription": "Scout or select this area to reveal terrain, owner, movement, and resources.",
+    "templates.plotTooltip.unknownTitle": "Unexplored Plot",
     "templates.plotTooltip.water": "Water",
     "templates.tooltip.description": "Created in a matching district and grants permanent state effects.",
     "templates.tooltip.eyebrow": "Tooltip",
@@ -5531,6 +5563,15 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.biome": "Biome",
     "hexMap.feature": "Feature",
     "hexMap.surfaceSummary": "Summary",
+    "hexMap.surfaceType": "Surface type",
+    "hexMap.surface.continent": "Continent",
+    "hexMap.surface.island": "Island",
+    "hexMap.surface.ocean": "Ocean",
+    "hexMap.surface.sea": "Coastal water",
+    "hexMap.surface.lake": "Lake",
+    "hexMap.position": "Position",
+    "hexMap.position.coastal": "Coastal",
+    "hexMap.position.inland": "Inland",
     "hexMap.siteFeature": "Special feature",
     "hexMap.resourceDeposit": "Deposit",
     "hexMap.water": "Water",
@@ -5538,7 +5579,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.ownerCountry": "Country {country}",
     "hexMap.ownerNone": "Unowned",
     "hexMap.movementCost": "Move cost",
+    "hexMap.movementBase": "Base {value}",
+    "hexMap.movementStopOnEnter": "Stops on enter",
+    "hexMap.tooltipSystems": "Systems",
+    "hexMap.tooltipNoSystems": "No visible systems",
     "hexMap.mapTags": "Map tags",
+    "hexMap.tagGroupBiome": "Biome",
     "hexMap.tagGroupClimate": "Climate",
     "hexMap.tagGroupRelief": "Relief",
     "hexMap.tagGroupWater": "Water and rivers",
@@ -7628,20 +7674,29 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.tech.supply": "Снабжение армии",
     "templates.techTitle": "Пример дерева технологий",
     "templates.plotTooltip.bonus": "+5% производства для речных зданий.",
+    "templates.plotTooltip.baseMovement": "База {value}",
+    "templates.plotTooltip.cityTitle": "Городской центр",
     "templates.plotTooltip.food": "Пища",
     "templates.plotTooltip.improvement": "Орошаемая ферма",
     "templates.plotTooltip.location": "Атлантика - река Арно",
+    "templates.plotTooltip.movement": "Передвижение",
+    "templates.plotTooltip.movementForest": "Растительность",
+    "templates.plotTooltip.movementRough": "Сложный рельеф",
     "templates.plotTooltip.owner": "Август (вы)",
     "templates.plotTooltip.production": "Производство",
     "templates.plotTooltip.resource": "Цитрус",
     "templates.plotTooltip.resourceDescription": "Фабричный ресурс. Улучшает рост города.",
     "templates.plotTooltip.route": "Дорога",
     "templates.plotTooltip.section.rural": "Сельская местность",
+    "templates.plotTooltip.section.systems": "Системы",
     "templates.plotTooltip.section.units": "Юниты",
     "templates.plotTooltip.settlement": "Империя Моголов - Патавий (городок)",
+    "templates.plotTooltip.stopOnEnter": "Остановка при входе",
     "templates.plotTooltip.subtitle": "Влажная пойма",
     "templates.plotTooltip.title": "Равнинная местность",
     "templates.plotTooltip.unit": "Разведчик - ваш",
+    "templates.plotTooltip.unknownDescription": "Разведайте или выберите область, чтобы увидеть местность, владельца, движение и ресурсы.",
+    "templates.plotTooltip.unknownTitle": "Неизведанный участок",
     "templates.plotTooltip.water": "Вода",
     "templates.tooltip.description": "Создается в подходящем районе и дает постоянные эффекты государству.",
     "templates.tooltip.eyebrow": "Подсказка",
@@ -9218,6 +9273,15 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.biome": "Биом",
     "hexMap.feature": "Особенность",
     "hexMap.surfaceSummary": "Сводка",
+    "hexMap.surfaceType": "Тип поверхности",
+    "hexMap.surface.continent": "Континент",
+    "hexMap.surface.island": "Остров",
+    "hexMap.surface.ocean": "Океан",
+    "hexMap.surface.sea": "Прибрежные воды",
+    "hexMap.surface.lake": "Озеро",
+    "hexMap.position": "Положение",
+    "hexMap.position.coastal": "Побережье",
+    "hexMap.position.inland": "Внутренняя земля",
     "hexMap.siteFeature": "Особый объект",
     "hexMap.resourceDeposit": "Залежь",
     "hexMap.water": "Вода",
@@ -9225,7 +9289,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.ownerCountry": "Страна {country}",
     "hexMap.ownerNone": "Нет владельца",
     "hexMap.movementCost": "Стоимость хода",
+    "hexMap.movementBase": "База {value}",
+    "hexMap.movementStopOnEnter": "Остановка при входе",
+    "hexMap.tooltipSystems": "Системы",
+    "hexMap.tooltipNoSystems": "Нет видимых систем",
     "hexMap.mapTags": "Теги карты",
+    "hexMap.tagGroupBiome": "Биом",
     "hexMap.tagGroupClimate": "Климат",
     "hexMap.tagGroupRelief": "Рельеф",
     "hexMap.tagGroupWater": "Вода и реки",

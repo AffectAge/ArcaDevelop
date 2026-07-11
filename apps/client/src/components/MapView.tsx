@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Application, Container, Graphics, Sprite } from "pixi.js";
 import Flatbush from "flatbush";
-import { Building2, Flag, Gem, Grid3X3, HandCoins, Landmark, Layers, Leaf, Mountain, Shield, Tags, Users } from "lucide-react";
+import { Building2, Flag, Gem, Grid3X3, HandCoins, Landmark, Layers, Leaf, Mountain, Shield, Tags, Users, Waves } from "lucide-react";
 import { toast } from "sonner";
 import {
   buildCityHexIdSet,
@@ -69,7 +69,7 @@ import { useUiText } from "../i18n/useUiText";
 import type { UiTextKey } from "../i18n/uiText";
 import { Tooltip, type TooltipStructuredContent } from "./Tooltip";
 import type { StrategyShellSelectedHexDetails } from "./strategy-shell/StrategyShell";
-import { HexHoverTooltip } from "./ProvinceHoverTooltip";
+import { GamePlotTooltipCard, GamePlotTooltipPositioner, type GamePlotTooltipData, type GamePlotTooltipRow } from "./templates";
 import {
   BuildingOverviewCard,
   DangerConfirmDialog,
@@ -1025,14 +1025,6 @@ export function MapView({
     [t, worldBase?.hexNameById],
   );
 
-  const resolveOwnerName = useCallback(
-    (tile: HexTile) => {
-      const ownerId = worldBase?.regionOwner[tile.regionId] ?? worldBase?.hexOwner[tile.id];
-      return ownerId ? t("hexMap.ownerCountry", { country: ownerId }) : t("hexMap.ownerNone");
-    },
-    [t, worldBase?.hexOwner, worldBase?.regionOwner],
-  );
-
   const setCameraTarget = useCallback(
     (next: HexCamera | ((current: HexCamera) => HexCamera)) => {
       const current = cameraTargetRef.current;
@@ -1193,6 +1185,154 @@ export function MapView({
       resourceDepositsByHexId,
       t,
       worldBase?.hexNameById,
+      worldBase?.hexOwner,
+      worldBase?.regionController,
+      worldBase?.regionOwner,
+    ],
+  );
+
+  const buildHexPlotTooltipData = useCallback(
+    (tile: HexTile): GamePlotTooltipData => {
+      const hasCity = cityHexIds.has(tile.id);
+      const ownerId = worldBase?.regionOwner[tile.regionId] ?? worldBase?.hexOwner[tile.id] ?? null;
+      const controllerId = worldBase?.regionController[tile.regionId] ?? ownerId;
+      const siteFeatures = mapFeaturesByHexId.get(tile.id) ?? [];
+      const deposit = resourceDepositsByHexId.get(tile.id) ?? null;
+      const building = hexBuildingTooltipByHexId.get(tile.id) ?? null;
+      const divisions = divisionsByHexId.get(tile.id) ?? [];
+      const mapUnits = mapUnitsByHexId.get(tile.id) ?? [];
+      const movementTags = hasCity ? [...tile.mapTags, "city"] : tile.mapTags;
+      const movementCost = resolveClientHexMovementCost(tile.movementCost, movementTags, activeCountryModifiers);
+      const systemRows: GamePlotTooltipRow[] = [
+        ...siteFeatures.map<GamePlotTooltipRow>((feature, index) => ({
+          id: `feature:${index}`,
+          icon: <Landmark size={13} aria-hidden="true" />,
+          label: t("hexMap.siteFeature"),
+          value: resolveMapFeatureLabel(feature, t),
+          tone: "info",
+        })),
+      ];
+
+      if (building) {
+        systemRows.push({
+          id: "building",
+          icon: <Building2 size={13} aria-hidden="true" />,
+          label: t("hexMap.building"),
+          value: building.name,
+          detail: t(building.statusKey),
+          tone: resolvePlotTooltipTone(building.tone),
+        });
+      }
+
+      const unitRows: GamePlotTooltipRow[] = [];
+      const unitCount = divisions.length + mapUnits.length;
+      if (unitCount > 0) {
+        unitRows.push({
+          id: "units",
+          icon: <Shield size={13} aria-hidden="true" />,
+          label: t("hexMap.divisionStack"),
+          value: unitCount,
+          tone: "warning",
+        });
+      }
+
+      return {
+        title: resolveHexName(tile),
+        subtitle: resolveHexTagSummary(tile, t, hasCity),
+        geography: {
+          title: t("hexMap.tagGroupBiome"),
+          icon: <Mountain size={13} aria-hidden="true" />,
+          rows: resolveHexGeographyRows(tile, t, hasCity),
+        },
+        ownership: {
+          title: t("hexMap.owner"),
+          icon: <Flag size={13} aria-hidden="true" />,
+          rows: [
+            {
+              id: "owner",
+              icon: <Flag size={13} aria-hidden="true" />,
+              label: t("hexMap.owner"),
+              value: ownerId ? t("hexMap.ownerCountry", { country: ownerId }) : t("hexMap.ownerNone"),
+              tone: ownerId ? "info" : "muted",
+            },
+            ...(controllerId && controllerId !== ownerId
+              ? [
+                  {
+                    id: "controller",
+                    icon: <Shield size={13} aria-hidden="true" />,
+                    label: t("shell.hex.controller"),
+                    value: t("hexMap.ownerCountry", { country: controllerId }),
+                    tone: "warning" as const,
+                  },
+                ]
+              : []),
+            {
+              id: "region",
+              icon: <Grid3X3 size={13} aria-hidden="true" />,
+              label: t("hexMap.region"),
+              value: tile.regionId,
+              tone: "muted",
+            },
+          ],
+        },
+        resource: deposit
+          ? {
+              icon: <Gem size={18} aria-hidden="true" />,
+              name: t("hexMap.resourceDeposit"),
+              description: formatResourceDepositLabel(deposit),
+            }
+          : undefined,
+        movement: {
+          title: t("hexMap.movementCost"),
+          cost: movementCost.toFixed(1),
+          baseCost: t("hexMap.movementBase", { value: tile.movementCost.toFixed(1) }),
+          stopOnEnter: tile.mapTags.includes("movement:stop_on_enter"),
+          stopLabel: t("hexMap.movementStopOnEnter"),
+          rows: resolveHexMovementRows(tile, t),
+        },
+        sections: [
+          {
+            title: t("hexMap.tooltipSystems"),
+            icon: <Grid3X3 size={13} aria-hidden="true" />,
+            rows: systemRows,
+            empty: t("hexMap.tooltipNoSystems"),
+          },
+          ...(unitRows.length > 0
+            ? [
+                {
+                  title: t("templates.plotTooltip.section.units"),
+                  icon: <Users size={13} aria-hidden="true" />,
+                  rows: unitRows,
+                },
+              ]
+            : []),
+          {
+            title: t("map.lens.hoverMode"),
+            icon: <Tags size={13} aria-hidden="true" />,
+            rows: [
+              {
+                id: "lens",
+                icon: <Layers size={13} aria-hidden="true" />,
+                label: t("map.lens.activeLens"),
+                value: t(activeLensDescriptor.labelKey),
+                tone: "muted",
+              },
+            ],
+          },
+        ],
+      };
+    },
+    [
+      activeCountryModifiers,
+      activeLensDescriptor.labelKey,
+      cityHexIds,
+      divisionsByHexId,
+      hexBuildingTooltipByHexId,
+      mapFeaturesByHexId,
+      mapUnitsByHexId,
+      resolveHexName,
+      resourceDepositsByHexId,
+      t,
       worldBase?.hexOwner,
       worldBase?.regionController,
       worldBase?.regionOwner,
@@ -3127,50 +3267,12 @@ export function MapView({
         </section>
       ) : null}
       {hoverState && !selectedMapBuildingItem ? (
-        <HexHoverTooltip
+        <GamePlotTooltipPositioner
           open
-          x={hoverState.x}
-          y={hoverState.y}
-          hexName={resolveHexName(hoverState.tile)}
-          areaKm2={null}
-          ownerName={resolveOwnerName(hoverState.tile)}
-          colonizers={[]}
-          modeLabel={t("map.lens.hoverMode")}
-          modeRows={[
-            { label: t("map.lens.activeLens"), value: t(activeLensDescriptor.labelKey) },
-            { label: t("hexMap.region"), value: hoverState.tile.regionId },
-            {
-              label: t("hexMap.surfaceSummary"),
-              value: resolveHexTagSummary(hoverState.tile, t, cityHexIds.has(hoverState.tile.id)),
-            },
-            ...resolveHexTagGroupRows(hoverState.tile, t).slice(0, 3),
-            ...(mapFeaturesByHexId.get(hoverState.tile.id)?.length
-              ? [
-                  {
-                    label: t("hexMap.siteFeature"),
-                    value: (mapFeaturesByHexId.get(hoverState.tile.id) ?? []).map((feature) => resolveMapFeatureLabel(feature, t)).join(", "),
-                  },
-                ]
-              : []),
-            ...(resourceDepositsByHexId.get(hoverState.tile.id)
-              ? [
-                  {
-                    label: t("hexMap.resourceDeposit"),
-                    value: formatResourceDepositLabel(resourceDepositsByHexId.get(hoverState.tile.id)!),
-                  },
-                ]
-              : []),
-            ...(hexBuildingTooltipByHexId.get(hoverState.tile.id)
-              ? [
-                  {
-                    label: t("hexMap.building"),
-                    value: `${hexBuildingTooltipByHexId.get(hoverState.tile.id)?.name ?? ""} · ${t(hexBuildingTooltipByHexId.get(hoverState.tile.id)?.statusKey ?? "hexMap.buildingStatusWorking")}`,
-                    tone: hexBuildingTooltipByHexId.get(hoverState.tile.id)?.tone,
-                  },
-                ]
-              : []),
-          ]}
-        />
+          anchor={{ x: hoverState.x, y: hoverState.y }}
+        >
+          <GamePlotTooltipCard data={buildHexPlotTooltipData(hoverState.tile)} density="compact" />
+        </GamePlotTooltipPositioner>
       ) : null}
       <FoundCityConfirmDialog
         target={foundCityConfirmTarget}
@@ -3822,11 +3924,105 @@ function resolveHexTagSummary(tile: HexTile, t: ReturnType<typeof useUiText>["t"
   return labels.length > 0 ? labels.join(" · ") : t("mapTag.unknown");
 }
 
+function resolveHexGeographyRows(tile: HexTile, t: ReturnType<typeof useUiText>["t"], hasCity = false): GamePlotTooltipRow[] {
+  const rows: GamePlotTooltipRow[] = [
+    {
+      id: "surface",
+      icon: tile.waterKind ? <Waves size={13} aria-hidden="true" /> : <Mountain size={13} aria-hidden="true" />,
+      label: t("hexMap.surfaceType"),
+      value: resolveHexSurfaceTypeLabel(tile, t),
+      tone: tile.waterKind ? "info" : "default",
+    },
+  ];
+  const biome = firstTagLabel(tile, t, ["biome:"]);
+  if (biome) {
+    rows.push({
+      id: "biome",
+      icon: <Leaf size={13} aria-hidden="true" />,
+      label: t("hexMap.tagGroupBiome"),
+      value: biome,
+    });
+  }
+  const relief = firstTagLabel(tile, t, ["morphology:", "slope:", "elevation:"]);
+  if (relief) {
+    rows.push({
+      id: "relief",
+      icon: <Mountain size={13} aria-hidden="true" />,
+      label: t("hexMap.tagGroupRelief"),
+      value: relief,
+    });
+  }
+  const water = resolveHexWaterAndRiverLabel(tile, t);
+  if (water) {
+    rows.push({
+      id: "water",
+      icon: <Waves size={13} aria-hidden="true" />,
+      label: t("hexMap.tagGroupWater"),
+      value: water,
+      tone: "info",
+    });
+  }
+  const position = resolveHexPositionLabel(tile, t);
+  if (position) {
+    rows.push({
+      id: "position",
+      icon: <Grid3X3 size={13} aria-hidden="true" />,
+      label: t("hexMap.position"),
+      value: position,
+      tone: "muted",
+    });
+  }
+  if (hasCity) {
+    rows.push({
+      id: "city",
+      icon: <Landmark size={13} aria-hidden="true" />,
+      label: t("hexMap.tagGroupFeatures"),
+      value: t("hexMap.feature.city"),
+      tone: "positive",
+    });
+  }
+  return rows;
+}
+
+function resolveHexSurfaceTypeLabel(tile: HexTile, t: ReturnType<typeof useUiText>["t"]): string {
+  if (tile.waterKind === "ocean") return t("hexMap.surface.ocean");
+  if (tile.waterKind === "sea") return t("hexMap.surface.sea");
+  if (tile.waterKind === "lake") return t("hexMap.surface.lake");
+  if (tile.mapTags.includes("landmass:island")) return t("hexMap.surface.island");
+  if (tile.mapTags.includes("landmass:continent")) return t("hexMap.surface.continent");
+  return t("mapTag.unknown");
+}
+
+function resolveHexPositionLabel(tile: HexTile, t: ReturnType<typeof useUiText>["t"]): string | null {
+  if (tile.mapTags.includes("coast:coastal")) return t("hexMap.position.coastal");
+  if (tile.mapTags.includes("coast:inland")) return t("hexMap.position.inland");
+  return null;
+}
+
+function resolveHexWaterAndRiverLabel(tile: HexTile, t: ReturnType<typeof useUiText>["t"]): string | null {
+  const waterTags = tagsByPrefixes(tile, ["water:", "river:", "basin:"]);
+  const labels = uniqueDefined(waterTags.map((tag) => t(resolveMapTagLabelKey(tag))));
+  if (labels.length > 0) return labels.join(", ");
+  if (tile.waterKind === "ocean") return t("hexMap.surface.ocean");
+  if (tile.waterKind === "sea") return t("hexMap.surface.sea");
+  if (tile.waterKind === "lake") return t("hexMap.surface.lake");
+  return null;
+}
+
+function firstTagLabel(tile: HexTile, t: ReturnType<typeof useUiText>["t"], prefixes: string[]): string | null {
+  const tag = tagsByPrefixes(tile, prefixes)[0];
+  return tag ? t(resolveMapTagLabelKey(tag)) : null;
+}
+
 function resolveHexTagGroupRows(tile: HexTile, t: ReturnType<typeof useUiText>["t"]): Array<{ label: string; value: string }> {
   return [
     {
+      label: t("hexMap.tagGroupBiome"),
+      tags: tagsByPrefixes(tile, ["biome:"]),
+    },
+    {
       label: t("hexMap.tagGroupClimate"),
-      tags: tagsByPrefixes(tile, ["biome:", "latitude:", "rainfall:"]),
+      tags: tagsByPrefixes(tile, ["latitude:", "rainfall:"]),
     },
     {
       label: t("hexMap.tagGroupRelief"),
@@ -3854,6 +4050,64 @@ function resolveHexTagGroupRows(tile: HexTile, t: ReturnType<typeof useUiText>["
       value: group.tags.map((tag) => t(resolveMapTagLabelKey(tag))).join(", "),
     }))
     .filter((group) => group.value.length > 0);
+}
+
+function resolveHexMovementRows(tile: HexTile, t: ReturnType<typeof useUiText>["t"]): GamePlotTooltipRow[] {
+  const rows: GamePlotTooltipRow[] = [];
+  const tags = tile.mapTags ?? [];
+  if (tags.includes("morphology:rough")) {
+    rows.push({
+      id: "rough",
+      icon: <Mountain size={13} aria-hidden="true" />,
+      label: t("mapTag.morphology.rough"),
+      value: "+1",
+      tone: "warning",
+    });
+  }
+  if (tags.includes("morphology:mountainous")) {
+    rows.push({
+      id: "mountainous",
+      icon: <Mountain size={13} aria-hidden="true" />,
+      label: t("mapTag.morphology.mountainous"),
+      value: "+3",
+      tone: "warning",
+    });
+  }
+  if (tags.includes("feature:vegetated")) {
+    rows.push({
+      id: "vegetated",
+      icon: <Leaf size={13} aria-hidden="true" />,
+      label: t("mapTag.feature.vegetated"),
+      value: "+1",
+      tone: "muted",
+    });
+  }
+  if (tags.includes("feature:wet")) {
+    rows.push({
+      id: "wet",
+      icon: <Leaf size={13} aria-hidden="true" />,
+      label: t("mapTag.feature.wet"),
+      value: "+1",
+      tone: "muted",
+    });
+  }
+  if (tags.includes("feature:snow")) {
+    rows.push({
+      id: "snow",
+      icon: <Mountain size={13} aria-hidden="true" />,
+      label: t("mapTag.feature.snow"),
+      value: "+1",
+      tone: "muted",
+    });
+  }
+  return rows;
+}
+
+function resolvePlotTooltipTone(tone: HexBuildingTooltipInfo["tone"]): GamePlotTooltipRow["tone"] {
+  if (tone === "good") return "positive";
+  if (tone === "warn") return "warning";
+  if (tone === "bad") return "negative";
+  return "default";
 }
 
 function tagsByPrefixes(tile: HexTile, prefixes: string[]): string[] {

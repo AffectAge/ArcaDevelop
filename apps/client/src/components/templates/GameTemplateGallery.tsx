@@ -8,6 +8,7 @@ import {
   Coins,
   Crown,
   Droplets,
+  EyeOff,
   Flag,
   Gavel,
   Hammer,
@@ -37,7 +38,7 @@ import { GameDropdownField } from "./GameDropdownField";
 import { GameFramePanel } from "./GameFramePanel";
 import { GameImageUploadCard } from "./GameImageUploadCard";
 import { GameNotificationList } from "./GameNotificationList";
-import { GamePlotTooltipCard } from "./GamePlotTooltipCard";
+import { GamePlotTooltipCard, type GamePlotTooltipData } from "./GamePlotTooltipCard";
 import { GamePreviewChip, GamePreviewChipGroup } from "./GamePreviewChip";
 import { GameResourcePanel } from "./GameResourcePanel";
 import { GameScrollList } from "./GameScrollList";
@@ -159,6 +160,115 @@ export function GameTemplateGallery() {
         { id: "fortification", label: t("templates.effect.fortification"), value: "+18%", icon: <Shield size={13} aria-hidden="true" />, labelColor: "var(--arc-color-danger-text)", valueColor: "var(--arc-color-danger-text)" },
         { id: "war-weariness", label: t("templates.effect.warWeariness"), value: "-6%", icon: <Swords size={13} aria-hidden="true" />, labelColor: "var(--arc-kit-text-muted)", valueColor: "var(--arc-color-success-text)" },
       ],
+    },
+  ];
+
+  const plotTooltipSamples: GamePlotTooltipData[] = [
+    {
+      title: t("templates.plotTooltip.title"),
+      subtitle: t("templates.plotTooltip.subtitle"),
+      geography: {
+        title: t("hexMap.tagGroupBiome"),
+        icon: <Landmark size={13} aria-hidden="true" />,
+        rows: [
+          { id: "surface", label: t("hexMap.surfaceType"), value: t("hexMap.surface.continent"), icon: <Landmark size={13} aria-hidden="true" /> },
+          { id: "biome", label: t("hexMap.tagGroupBiome"), value: t("mapTag.biome.grassland"), icon: <Leaf size={13} aria-hidden="true" /> },
+          { id: "relief", label: t("hexMap.tagGroupRelief"), value: t("mapTag.morphology.rough"), icon: <Shield size={13} aria-hidden="true" /> },
+          { id: "water", label: t("hexMap.tagGroupWater"), value: t("mapTag.rainfall.wet"), icon: <Droplets size={13} aria-hidden="true" />, tone: "info" },
+          { id: "position", label: t("hexMap.position"), value: t("hexMap.position.coastal"), icon: <Flag size={13} aria-hidden="true" />, tone: "muted" },
+        ],
+      },
+      ownership: {
+        title: t("hexMap.owner"),
+        icon: <Flag size={13} aria-hidden="true" />,
+        rows: [
+          { id: "owner", label: t("hexMap.owner"), value: t("templates.plotTooltip.owner"), icon: <Flag size={13} aria-hidden="true" />, tone: "info" },
+          { id: "settlement", label: t("templates.plotTooltip.section.rural"), value: t("templates.plotTooltip.settlement"), icon: <Landmark size={13} aria-hidden="true" /> },
+        ],
+      },
+      yields: [
+        { id: "food", label: t("templates.plotTooltip.food"), value: "11", icon: <Leaf size={16} aria-hidden="true" />, color: "var(--arc-modal-tooltip-positive)" },
+        { id: "production", label: t("templates.plotTooltip.production"), value: "4", icon: <Hammer size={16} aria-hidden="true" />, color: "var(--arc-color-gold)" },
+        { id: "water", label: t("templates.plotTooltip.water"), value: "2", icon: <Droplets size={16} aria-hidden="true" />, color: "var(--arc-modal-tooltip-info)" },
+        { id: "gold", label: t("templates.resource.gold"), value: "3", icon: <Coins size={16} aria-hidden="true" />, color: "var(--arc-kit-gold-strong)" },
+      ],
+      resource: {
+        icon: <Pickaxe size={22} aria-hidden="true" />,
+        name: t("templates.plotTooltip.resource"),
+        description: t("templates.plotTooltip.resourceDescription"),
+        color: "var(--arc-color-gold)",
+      },
+      movement: {
+        title: t("templates.plotTooltip.movement"),
+        cost: "4",
+        baseCost: t("templates.plotTooltip.baseMovement", { value: 2 }),
+        stopOnEnter: true,
+        stopLabel: t("templates.plotTooltip.stopOnEnter"),
+        rows: [
+          { label: t("templates.plotTooltip.movementRough"), value: "+1", icon: <Shield size={13} aria-hidden="true" />, tone: "warning" },
+          { label: t("templates.plotTooltip.movementForest"), value: "+1", icon: <Leaf size={13} aria-hidden="true" />, tone: "positive" },
+        ],
+      },
+      sections: [
+        {
+          title: t("templates.plotTooltip.section.rural"),
+          rows: [
+            { label: t("templates.plotTooltip.improvement"), value: t("templates.plotTooltip.bonus"), icon: <Hammer size={13} aria-hidden="true" />, tone: "positive" },
+          ],
+        },
+        {
+          title: t("templates.plotTooltip.section.units"),
+          rows: [
+            { label: t("templates.plotTooltip.unit"), value: "1", icon: <Swords size={13} aria-hidden="true" />, tone: "info" },
+          ],
+        },
+      ],
+    },
+    {
+      title: t("templates.plotTooltip.cityTitle"),
+      subtitle: t("hexMap.feature.city"),
+      geography: {
+        title: t("hexMap.tagGroupBiome"),
+        icon: <Landmark size={13} aria-hidden="true" />,
+        rows: [
+          { id: "surface", label: t("hexMap.surfaceType"), value: t("hexMap.surface.island"), icon: <Landmark size={13} aria-hidden="true" /> },
+          { id: "position", label: t("hexMap.position"), value: t("hexMap.position.coastal"), icon: <Flag size={13} aria-hidden="true" />, tone: "muted" },
+        ],
+      },
+      ownership: {
+        title: t("hexMap.owner"),
+        icon: <Flag size={13} aria-hidden="true" />,
+        rows: [
+          { id: "owner", label: t("hexMap.owner"), value: t("templates.sample.country"), icon: <Flag size={13} aria-hidden="true" />, tone: "info" },
+        ],
+      },
+      yields: [
+        { id: "gold", label: t("templates.resource.gold"), value: "9", icon: <Coins size={16} aria-hidden="true" />, color: "var(--arc-kit-gold-strong)" },
+        { id: "science", label: t("templates.resource.science"), value: "3", icon: <Beaker size={16} aria-hidden="true" />, color: "var(--arc-modal-tooltip-info)" },
+        { id: "culture", label: t("templates.resource.culture"), value: "5", icon: <BookOpen size={16} aria-hidden="true" />, color: "var(--arc-modal-tooltip-warning)" },
+      ],
+      movement: {
+        title: t("templates.plotTooltip.movement"),
+        cost: "1",
+        baseCost: t("templates.plotTooltip.baseMovement", { value: 1 }),
+      },
+      sections: [
+        {
+          title: t("templates.plotTooltip.section.systems"),
+          rows: [
+            { label: t("hexMap.owner"), value: t("templates.sample.country"), icon: <Flag size={13} aria-hidden="true" />, tone: "info" },
+            { label: t("hexMap.divisionStack"), value: "2/6", icon: <Shield size={13} aria-hidden="true" />, tone: "muted" },
+          ],
+        },
+      ],
+    },
+    {
+      title: t("templates.plotTooltip.unknownTitle"),
+      emptyState: {
+        icon: <EyeOff size={22} aria-hidden="true" />,
+        title: t("templates.plotTooltip.unknownTitle"),
+        description: t("templates.plotTooltip.unknownDescription"),
+      },
     },
   ];
 
@@ -478,37 +588,14 @@ export function GameTemplateGallery() {
             pinHint={t("templates.detail.pinHint")}
           />
 
-          <GamePlotTooltipCard
-            title={t("templates.plotTooltip.title")}
-            subtitle={t("templates.plotTooltip.subtitle")}
-            location={t("templates.plotTooltip.location")}
-            route={t("templates.plotTooltip.route")}
-            yields={[
-              { id: "food", label: t("templates.plotTooltip.food"), value: "11", icon: <Leaf size={16} aria-hidden="true" /> },
-              { id: "production", label: t("templates.plotTooltip.production"), value: "4", icon: <Hammer size={16} aria-hidden="true" /> },
-              { id: "water", label: t("templates.plotTooltip.water"), value: "2", icon: <Droplets size={16} aria-hidden="true" /> },
-              { id: "gold", label: t("templates.resource.gold"), value: "3", icon: <Coins size={16} aria-hidden="true" /> },
-            ]}
-            resource={{
-              icon: <Pickaxe size={22} aria-hidden="true" />,
-              name: t("templates.plotTooltip.resource"),
-              description: t("templates.plotTooltip.resourceDescription"),
-            }}
-            ownerLines={[
-              t("templates.plotTooltip.owner"),
-              t("templates.plotTooltip.settlement"),
-            ]}
-            sections={[
-              {
-                title: t("templates.plotTooltip.section.rural"),
-                rows: [t("templates.plotTooltip.improvement"), t("templates.plotTooltip.bonus")],
-              },
-              {
-                title: t("templates.plotTooltip.section.units"),
-                rows: [t("templates.plotTooltip.unit")],
-              },
-            ]}
-          />
+          {plotTooltipSamples.map((sample, index) => (
+            <GamePlotTooltipCard
+              key={index}
+              data={sample}
+              density={index === 2 ? "compact" : "detailed"}
+              pinned={index === 1}
+            />
+          ))}
         </aside>
       </main>
     </div>

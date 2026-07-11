@@ -59,6 +59,7 @@ export type AuthRegistrationRoutesDependencies = {
   upload: AuthRegistrationUploadMiddleware;
   flagImageRule: ImageDimensionRule;
   crestImageRule: ImageDimensionRule;
+  identityLogoImageRule: ImageDimensionRule;
   masks: {
     resourcesByCountry: number;
     hexOwner: number;
@@ -180,28 +181,28 @@ export function registerAuthRegistrationRoutes(
         uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
         return res
           .status(400)
-          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "flag", max: "192x128", ratio: "3:2" });
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "flag", max: "192x128" });
       }
 
       if (crestFile && !deps.validateImageRule(crestFile, deps.crestImageRule)) {
         uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
         return res
           .status(400)
-          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "crest", max: "128x192", ratio: "2:3" });
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "crest", max: "128x146" });
       }
 
-      if (cultureLogoFile && !deps.validateImageRule(cultureLogoFile, deps.crestImageRule)) {
+      if (cultureLogoFile && !deps.validateImageRule(cultureLogoFile, deps.identityLogoImageRule)) {
         uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
         return res
           .status(400)
-          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "cultureLogo", max: "128x192", ratio: "2:3" });
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "cultureLogo", max: "64x64" });
       }
 
-      if (religionLogoFile && !deps.validateImageRule(religionLogoFile, deps.crestImageRule)) {
+      if (religionLogoFile && !deps.validateImageRule(religionLogoFile, deps.identityLogoImageRule)) {
         uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
         return res
           .status(400)
-          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "religionLogo", max: "128x192", ratio: "2:3" });
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "religionLogo", max: "64x64" });
       }
 
       const {

@@ -1,6 +1,11 @@
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  COUNTRY_CREST_UPLOAD_RULE,
+  COUNTRY_FLAG_UPLOAD_RULE,
+  COUNTRY_IDENTITY_LOGO_UPLOAD_RULE,
+} from "@arcanorum/shared";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -65,8 +70,9 @@ const contentUploadKinds = [
   "aircraftTypes",
 ] as const;
 
-export const FLAG_IMAGE_RULE = { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 } as const;
-export const CREST_IMAGE_RULE = { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 } as const;
+export const FLAG_IMAGE_RULE = COUNTRY_FLAG_UPLOAD_RULE;
+export const CREST_IMAGE_RULE = COUNTRY_CREST_UPLOAD_RULE;
+export const IDENTITY_LOGO_IMAGE_RULE = COUNTRY_IDENTITY_LOGO_UPLOAD_RULE;
 
 export function ensureUploadDirectories(): void {
   const dirs = [

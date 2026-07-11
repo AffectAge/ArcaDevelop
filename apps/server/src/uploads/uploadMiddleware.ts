@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { extname } from "node:path";
 import multer from "multer";
+import { IMAGE_UPLOAD_MIME_TYPES } from "@arcanorum/shared";
 import {
   resolveContentUploadDir,
   resolveUploadDir,
@@ -42,7 +43,7 @@ export const upload = multer({
     fileSize: UPLOAD_FILE_SIZE_LIMIT_BYTES,
   },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
+    if ((IMAGE_UPLOAD_MIME_TYPES as readonly string[]).includes(file.mimetype)) {
       cb(null, true);
       return;
     }

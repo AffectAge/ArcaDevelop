@@ -19,3 +19,4 @@ export * from "./hexGeometry";
 export * from "./hexMapGenerator";
 export * from "./hexMapMovement";
 export * from "./mapTags";
+export * from "./uploadRules";

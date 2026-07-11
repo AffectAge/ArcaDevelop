@@ -71,7 +71,8 @@ Use these exact component names when asking an AI agent to build Arcanorum modal
 - `GameNotificationList` - notification list with dismiss buttons and optional show-all action.
 - `GameTooltip` - simple hover/focus tooltip wrapper for buttons, icons, fields, and other interface elements.
 - `GameTooltipCard` - tooltip-style explanation card with eyebrow, title, description, rows, and pin hint.
-- `GamePlotTooltipCard` - Civ-style map/plot tooltip with centered terrain title, yield icons, resource preview, owner lines, and divided sections.
+- `GamePlotTooltipCard` - Civ-style map/plot tooltip with a unified `data` API for geography-first terrain/surface rows, ownership, movement explanation, resources, systems, units, optional map tag groups, and empty states.
+- `GamePlotTooltipPositioner` - fixed-position wrapper for hover/pinned plot tooltips that keeps the card inside the viewport around a cursor or map anchor point.
 
 ## Data And Progress Views
 

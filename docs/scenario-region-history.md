@@ -39,8 +39,7 @@ Hex map settings are required after the hex map hard cutover. They define determ
     },
     "regions": {
       "targetLandRegionSize": 74,
-      "targetWaterRegionSize": 140,
-      "respectLandmassBoundaries": true
+      "targetWaterRegionSize": 140
     },
     "tags": {
       "enabled": true
@@ -52,6 +51,8 @@ Hex map settings are required after the hex map hard cutover. They define determ
 Supported `generation.mapScript` values are `continents`, `pangaea`, and `archipelago`. Generated maps remain rectangular pointy-top hex maps and `wrapX` must be `false`.
 
 Generator internals may use landmass/plate-like data, but scenario rules should use `mapTags`, not private generator fields. The closed tag vocabulary uses `namespace:value` ids such as `fertility:rich`, `rainfall:wet`, `slope:hilly`, `latitude:temperate`, `elevation:highland`, `landmass:continent`, `continent:homeland`, `basin:delta`, `river:navigable`, and `coast:coastal`. Every supported tag requires `mapTag.<namespace>.<value>` localization in English and Russian.
+
+Generated landmass seeds use deterministic spacing attempts to reduce clustering. The generator also applies an internal plate-like uplift layer for mountain and highland structure plus a bounded erosion-like smoothing pass for extreme local slopes; these layers have no public shape parameters. Generated islands are separated from generated continents by a two-hex water buffer on the island side. Generated region growth uses seeded anchors and hard land/water and landmass boundaries only; it does not make region borders follow elevation, moisture, rivers, mountains, or biome changes. River classes use edge width, downstream connection, distance to mouth, and local slope to expose `river:major` and `river:navigable` tags.
 
 Scenario rule filters may use object-style tag queries:
 

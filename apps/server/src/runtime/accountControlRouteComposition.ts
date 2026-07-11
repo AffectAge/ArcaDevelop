@@ -20,6 +20,7 @@ type AccountControlRouteCompositionParams = {
   jwtSecret: string;
   flagImageRule: AccountDeps["flagImageRule"];
   crestImageRule: AccountDeps["crestImageRule"];
+  identityLogoImageRule: AccountDeps["identityLogoImageRule"];
   masks: AccountDeps["masks"] & CountryManagementDeps["masks"];
   getTurnId: () => number;
   getWorldBase: AccountDeps["getWorldBase"];
@@ -137,6 +138,7 @@ export function registerAccountControlRouteComposition(params: AccountControlRou
     jwtSecret: params.jwtSecret,
     flagImageRule: params.flagImageRule,
     crestImageRule: params.crestImageRule,
+    identityLogoImageRule: params.identityLogoImageRule,
     masks: params.masks,
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,

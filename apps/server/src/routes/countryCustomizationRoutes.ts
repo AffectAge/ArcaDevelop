@@ -94,14 +94,14 @@ export function registerCountryCustomizationRoutes(
         deps.removeUploadedFiles([flagFile, crestFile]);
         return res
           .status(400)
-          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "flag", max: "192x128", ratio: "3:2" });
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "flag", max: "192x128" });
       }
 
       if (crestFile && !deps.validateImageRule(crestFile, deps.crestImageRule)) {
         deps.removeUploadedFiles([flagFile, crestFile]);
         return res
           .status(400)
-          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "crest", max: "128x192", ratio: "2:3" });
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "crest", max: "128x146" });
       }
 
       const normalizedName = parsed.data.countryName?.trim();

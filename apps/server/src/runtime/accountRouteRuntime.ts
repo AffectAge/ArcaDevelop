@@ -25,6 +25,7 @@ type AccountRouteRuntimeParams = {
   jwtSecret: string;
   flagImageRule: ImageDimensionRule;
   crestImageRule: ImageDimensionRule;
+  identityLogoImageRule: ImageDimensionRule;
   masks: {
     resourcesByCountry: number;
     hexOwner: number;
@@ -88,6 +89,7 @@ export function registerAccountRouteRuntime(params: AccountRouteRuntimeParams): 
     upload: params.upload,
     flagImageRule: params.flagImageRule,
     crestImageRule: params.crestImageRule,
+    identityLogoImageRule: params.identityLogoImageRule,
     masks: params.masks,
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,

@@ -12,8 +12,8 @@ import {
 export type ImageDimensionRule = {
   maxWidth: number;
   maxHeight: number;
-  ratioWidth: number;
-  ratioHeight: number;
+  ratioWidth?: number;
+  ratioHeight?: number;
 };
 
 export function validateImageDimensions(file: Express.Multer.File, maxSize = 256): boolean {
@@ -29,6 +29,7 @@ export function validateImageRule(file: Express.Multer.File, rule: ImageDimensio
   const height = Number(dimensions.height ?? 0);
   if (width <= 0 || height <= 0) return false;
   if (width > rule.maxWidth || height > rule.maxHeight) return false;
+  if (rule.ratioWidth == null || rule.ratioHeight == null) return true;
   const expected = rule.ratioWidth / rule.ratioHeight;
   const actual = width / height;
   return Math.abs(actual - expected) <= 0.01;

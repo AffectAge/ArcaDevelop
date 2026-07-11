@@ -5,7 +5,7 @@ import type { WsOutMessage, WorldBase } from "@arcanorum/shared";
 import { WORLD_DELTA_MASK } from "@arcanorum/shared";
 import type { RouteAuth } from "../security/routeAuth";
 import type { upload } from "../uploads/uploadMiddleware";
-import { CREST_IMAGE_RULE, FLAG_IMAGE_RULE } from "../uploads/uploadPaths";
+import { CREST_IMAGE_RULE, FLAG_IMAGE_RULE, IDENTITY_LOGO_IMAGE_RULE } from "../uploads/uploadPaths";
 import type { createBuildingSystemsRuntime } from "./buildingSystemsRuntime";
 import type { createColonizationRuntimeFacade } from "./colonizationRuntimeFacade";
 import type { createCountryRuntimeHelpers } from "./countryRuntimeHelpers";
@@ -84,6 +84,7 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
     jwtSecret: params.jwtSecret,
     flagImageRule: FLAG_IMAGE_RULE,
     crestImageRule: CREST_IMAGE_RULE,
+    identityLogoImageRule: IDENTITY_LOGO_IMAGE_RULE,
     masks: {
       resourcesByCountry: WORLD_DELTA_MASK.resourcesByCountry,
       hexOwner: WORLD_DELTA_MASK.hexOwner,

@@ -47,6 +47,17 @@ type LandmassSeed = {
   island: boolean;
 };
 
+type LandmassSeedDraft = Omit<LandmassSeed, "id">;
+
+type TectonicPlateSeed = {
+  id: number;
+  x: number;
+  y: number;
+  driftX: number;
+  driftY: number;
+  weight: number;
+};
+
 export const DEFAULT_HEX_MAP_SETTINGS: HexMapSettings = {
   seed: "arcanorum-main-world-v2",
   width: 360,
@@ -92,6 +103,7 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
   const temperatureNoise = createNoise2D(random);
   const featureNoise = createNoise2D(random);
   const seeds = buildLandmassSeeds(normalizedSettings, random);
+  const tectonicPlates = buildTectonicPlateSeeds(normalizedSettings, random);
   const seedPoints = seeds.map((seed) => [seed.x, seed.y] as [number, number]);
   const delaunay = seedPoints.length > 0 ? Delaunay.from(seedPoints) : null;
   const homelandSeedId = selectHomelandSeedId(seeds);
@@ -106,11 +118,13 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
       const latitude = Math.abs(normalizedY - 0.5) * 2;
       const dominantSeed = resolveDominantLandmassSeed(normalizedX, normalizedY, seeds, delaunay);
       const landScore = resolveLandScore(normalizedX, normalizedY, seeds, elevationNoise, normalizedSettings, edgeOceanMargin);
+      const tectonicUplift = resolveTectonicUplift(normalizedX, normalizedY, tectonicPlates);
       const elevation = clamp01(
         landScore * 0.72 +
           normalizedNoise(elevationNoise(q / 31, r / 31)) * 0.18 +
           normalizedNoise(elevationNoise(q / 11 - 7, r / 11 + 3)) * 0.1 -
-          latitude * 0.07,
+          latitude * 0.07 +
+          tectonicUplift * 0.14,
       );
       const waterKind = resolveWaterKind(landScore, elevation);
       const moisture = resolveMoisture(q, r, moistureNoise, normalizedSettings, waterKind);
@@ -156,6 +170,8 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
     }
   }
 
+  applyTerrainErosionSmoothing(tiles, tileById, normalizedSettings);
+  separateIslandsFromContinents(tiles, tileById, normalizedSettings);
   addInlandLakes(tiles, tileById, normalizedSettings);
   promoteNearLandSeasToCoastalWater(tiles, tileById, normalizedSettings);
   const coastOverlays = buildCoastOverlays(tiles, tileById, normalizedSettings);
@@ -163,7 +179,7 @@ export function generateHexMap(settings: HexMapSettings = DEFAULT_HEX_MAP_SETTIN
   applyHydrologyMetadata(tiles, tileById, riverEdges, normalizedSettings);
   riverEdges = classifyRiverEdges(riverEdges, tiles, tileById, normalizedSettings);
   applyHydrologyMetadata(tiles, tileById, riverEdges, normalizedSettings);
-  applyMapTags(tiles);
+  applyMapTags(tiles, riverEdges, normalizedSettings);
   assignRegions(tiles, tileById, normalizedSettings);
   assignCoastalWaterToLandRegions(tiles, tileById, normalizedSettings);
   refreshMovementMetadata(tiles);
@@ -199,7 +215,7 @@ export function enrichHexMapVisualMetadata(artifact: HexMapArtifact): HexMapArti
   }));
   const tileById = new Map<string, TileDraft>(tiles.map((tile) => [tile.id, tile]));
   applyHydrologyMetadata(tiles, tileById, artifact.riverEdges, settings);
-  applyMapTags(tiles);
+  applyMapTags(tiles, artifact.riverEdges, settings);
   refreshMovementMetadata(tiles);
   return {
     ...artifact,
@@ -274,15 +290,15 @@ function buildLandmassSeeds(settings: HexMapSettings, random: () => number): Lan
         radiusY: script === "archipelago" ? 0.1 + random() * 0.07 : 0.2 + random() * 0.1,
       };
       const radius = resolveSeedRadiusFromHexSize(settings.generation.landmasses.majorContinentSize, totalTiles, random, script === "archipelago" ? 0.86 : 1, script === "archipelago" ? 0.14 : 0.24, fallbackRadius, script);
-      seeds.push({
-        id: index,
+      const seed = placeLandmassSeedWithSpacing(seeds, script, false, () => ({
         x: clamp01(0.12 + band * 0.76 + (random() - 0.5) * 0.12),
         y: clamp01(0.26 + random() * 0.46),
         radiusX: radius.radiusX,
         radiusY: radius.radiusY,
         weight: script === "archipelago" ? 0.76 : 1,
         island: false,
-      });
+      }));
+      seeds.push({ id: index, ...seed });
     }
   }
   const islandCount = resolveIslandCount(script, settings.generation.landmasses.islandDensity);
@@ -292,17 +308,62 @@ function buildLandmassSeeds(settings: HexMapSettings, random: () => number): Lan
       radiusY: 0.022 + random() * (script === "archipelago" ? 0.053 : 0.026),
     };
     const radius = resolveSeedRadiusFromHexSize(settings.generation.landmasses.islandSize, totalTiles, random, script === "archipelago" ? 0.78 : 0.64, script === "archipelago" ? 0.055 : 0.032, fallbackRadius, script);
-    seeds.push({
-      id: seeds.length,
+    const seed = placeLandmassSeedWithSpacing(seeds, script, true, () => ({
       x: 0.08 + random() * 0.84,
       y: 0.1 + random() * 0.8,
       radiusX: radius.radiusX,
       radiusY: radius.radiusY,
       weight: script === "archipelago" ? 0.84 : 0.6,
       island: true,
-    });
+    }));
+    seeds.push({ id: seeds.length, ...seed });
   }
   return seeds;
+}
+
+function placeLandmassSeedWithSpacing(
+  existingSeeds: readonly LandmassSeed[],
+  script: HexMapScript,
+  island: boolean,
+  createCandidate: () => LandmassSeedDraft,
+): LandmassSeedDraft {
+  let best: { seed: LandmassSeedDraft; spacing: number } | null = null;
+  const attempts = island ? 36 : 24;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const candidate = createCandidate();
+    const spacing = minimumLandmassSeedSpacing(candidate, existingSeeds, script);
+    if (!best || spacing > best.spacing) best = { seed: candidate, spacing };
+    if (spacing >= targetLandmassSeedSpacing(candidate, existingSeeds, script)) return candidate;
+  }
+  return best?.seed ?? createCandidate();
+}
+
+function minimumLandmassSeedSpacing(candidate: LandmassSeedDraft, existingSeeds: readonly LandmassSeed[], script: HexMapScript): number {
+  if (existingSeeds.length === 0) return Number.POSITIVE_INFINITY;
+  return Math.min(...existingSeeds.map((seed) => landmassSeedClearance(candidate, seed, script)));
+}
+
+function targetLandmassSeedSpacing(candidate: LandmassSeedDraft, existingSeeds: readonly LandmassSeed[], script: HexMapScript): number {
+  if (existingSeeds.length === 0) return 0;
+  return Math.min(...existingSeeds.map((seed) => requiredLandmassSeedClearance(candidate, seed, script)));
+}
+
+function landmassSeedClearance(candidate: LandmassSeedDraft, seed: LandmassSeed, script: HexMapScript): number {
+  return seedCenterDistance(candidate, seed) - requiredLandmassSeedClearance(candidate, seed, script);
+}
+
+function requiredLandmassSeedClearance(candidate: LandmassSeedDraft, seed: LandmassSeed, script: HexMapScript): number {
+  const candidateRadius = Math.max(candidate.radiusX, candidate.radiusY);
+  const seedRadius = Math.max(seed.radiusX, seed.radiusY);
+  const radiusSum = candidateRadius + seedRadius;
+  if (candidate.island && !seed.island) return radiusSum * (script === "archipelago" ? 1.02 : 1.18) + 0.028;
+  if (!candidate.island && seed.island) return radiusSum * (script === "archipelago" ? 1.02 : 1.18) + 0.028;
+  if (candidate.island && seed.island) return radiusSum * 0.72 + 0.016;
+  return radiusSum * (script === "archipelago" ? 0.76 : 0.88) + 0.025;
+}
+
+function seedCenterDistance(left: Pick<LandmassSeed, "x" | "y">, right: Pick<LandmassSeed, "x" | "y">): number {
+  return Math.hypot(left.x - right.x, left.y - right.y);
 }
 
 function resolveSeedRadiusFromHexSize(
@@ -347,6 +408,71 @@ function resolveIslandCount(script: HexMapScript, density: "low" | "medium" | "h
   if (script === "archipelago") return base * 2;
   if (script === "pangaea") return Math.round(base * 0.75);
   return base;
+}
+
+function buildTectonicPlateSeeds(settings: HexMapSettings, random: () => number): TectonicPlateSeed[] {
+  const totalTiles = Math.max(1, settings.width * settings.height);
+  const baseCount = Math.round(clamp(totalTiles / 2600, 8, 30));
+  const scriptBonus = settings.generation.mapScript === "archipelago" ? 5 : settings.generation.mapScript === "continents" ? 2 : 0;
+  const count = Math.max(6, baseCount + scriptBonus);
+  const seeds: TectonicPlateSeed[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const candidate = placeTectonicPlateSeed(seeds, random);
+    const angle = random() * Math.PI * 2;
+    seeds.push({
+      id: index,
+      x: candidate.x,
+      y: candidate.y,
+      driftX: Math.cos(angle),
+      driftY: Math.sin(angle),
+      weight: 0.72 + random() * 0.56,
+    });
+  }
+  return seeds;
+}
+
+function placeTectonicPlateSeed(existingSeeds: readonly TectonicPlateSeed[], random: () => number): Pick<TectonicPlateSeed, "x" | "y"> {
+  let best: { x: number; y: number; spacing: number } | null = null;
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    const candidate = {
+      x: 0.04 + random() * 0.92,
+      y: 0.04 + random() * 0.92,
+    };
+    const spacing = existingSeeds.length
+      ? Math.min(...existingSeeds.map((seed) => seedCenterDistance(candidate, seed)))
+      : Number.POSITIVE_INFINITY;
+    if (!best || spacing > best.spacing) best = { ...candidate, spacing };
+    if (spacing >= 0.18) return candidate;
+  }
+  return best ?? { x: 0.5, y: 0.5 };
+}
+
+function resolveTectonicUplift(x: number, y: number, plates: readonly TectonicPlateSeed[]): number {
+  if (plates.length < 2) return 0;
+  let first: { plate: TectonicPlateSeed; distance: number } | null = null;
+  let second: { plate: TectonicPlateSeed; distance: number } | null = null;
+  for (const plate of plates) {
+    const distance = seedCenterDistance({ x, y }, plate) / plate.weight;
+    if (!first || distance < first.distance) {
+      second = first;
+      first = { plate, distance };
+    } else if (!second || distance < second.distance) {
+      second = { plate, distance };
+    }
+  }
+  if (!first || !second) return 0;
+  const boundaryStrength = clamp01(1 - Math.abs(first.distance - second.distance) / 0.075);
+  if (boundaryStrength <= 0) return 0;
+  const boundaryVector = normalizeVector({
+    x: second.plate.x - first.plate.x,
+    y: second.plate.y - first.plate.y,
+  });
+  const relativeDrift = {
+    x: first.plate.driftX - second.plate.driftX,
+    y: first.plate.driftY - second.plate.driftY,
+  };
+  const convergence = clamp01(-dot(relativeDrift, boundaryVector) * 0.5 + 0.5);
+  return boundaryStrength * (0.35 + convergence * 0.65);
 }
 
 function resolveLandScore(
@@ -556,6 +682,113 @@ function resolveMorphology(terrain: InternalTerrain, elevation: number): Morphol
   return "flat";
 }
 
+function applyTerrainErosionSmoothing(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): void {
+  const nextElevationById = new Map<HexId, number>();
+  for (const tile of tiles) {
+    if (tile.waterKind) continue;
+    const lowerNeighbors = getNeighborTiles(tile, tileById, settings).filter((neighbor) => !neighbor.waterKind && neighbor.elevation < tile.elevation);
+    if (lowerNeighbors.length === 0) continue;
+    const lowestNeighbor = lowerNeighbors.reduce((lowest, neighbor) => neighbor.elevation < lowest.elevation ? neighbor : lowest, lowerNeighbors[0]);
+    const steepDrop = tile.elevation - lowestNeighbor.elevation;
+    if (steepDrop <= 0.16) continue;
+    const erosion = Math.min(0.055, (steepDrop - 0.16) * 0.22);
+    nextElevationById.set(tile.id, roundMetric(tile.elevation - erosion));
+  }
+  for (const tile of tiles) {
+    const nextElevation = nextElevationById.get(tile.id);
+    if (nextElevation == null) continue;
+    tile.elevation = nextElevation;
+    tile.internalTerrain = resolveInternalTerrain(tile.elevation, tile.moisture, tile.temperature, tile.waterKind);
+    tile.internalFeature = normalizeFeatureForTerrain(tile.internalFeature, tile.internalTerrain);
+    tile.civBiome = resolveCivBiome(tile.internalTerrain, tile.internalFeature, tile.moisture, tile.temperature);
+    tile.morphology = resolveMorphology(tile.internalTerrain, tile.elevation);
+  }
+}
+
+function getNeighborTiles(tile: TileDraft, tileById: Map<string, TileDraft>, settings: HexMapSettings): TileDraft[] {
+  const neighbors: TileDraft[] = [];
+  for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
+    const neighborAxial = getNeighborAxial(tile, direction as HexDirection, settings);
+    const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+    if (neighbor) neighbors.push(neighbor);
+  }
+  return neighbors;
+}
+
+function normalizeFeatureForTerrain(feature: InternalFeature, terrain: InternalTerrain): InternalFeature {
+  if (terrain === "ocean" || terrain === "sea" || terrain === "lake" || terrain === "desert") return "none";
+  if (terrain === "snow" || terrain === "mountains") return feature === "snowcap" ? "snowcap" : "none";
+  if (terrain === "wetland") return feature === "none" ? "marsh" : feature;
+  return feature === "snowcap" || feature === "marsh" ? "none" : feature;
+}
+
+function separateIslandsFromContinents(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): void {
+  const islandTilesInsideContinentBuffer = new Set<HexId>();
+  const continentLandIds = new Set(tiles.filter(isContinentLand).map((tile) => tile.id));
+  for (const tile of tiles) {
+    if (!isIslandLand(tile)) continue;
+    if (distanceToContinentLand(tile, tileById, settings, continentLandIds, 2) <= 2) {
+      islandTilesInsideContinentBuffer.add(tile.id);
+    }
+  }
+  for (const hexId of islandTilesInsideContinentBuffer) {
+    const tile = tileById.get(hexId);
+    if (tile) convertIslandLandToCoastalWater(tile);
+  }
+}
+
+function distanceToContinentLand(
+  tile: TileDraft,
+  tileById: Map<string, TileDraft>,
+  settings: HexMapSettings,
+  continentLandIds: ReadonlySet<string>,
+  maxDistance: number,
+): number {
+  let frontier: TileDraft[] = [tile];
+  const visited = new Set<string>([tile.id]);
+  for (let distance = 1; distance <= maxDistance; distance += 1) {
+    const next: TileDraft[] = [];
+    for (const current of frontier) {
+      for (let direction = 0; direction < HEX_DIRECTIONS.length; direction += 1) {
+        const neighborAxial = getNeighborAxial(current, direction as HexDirection, settings);
+        const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+        if (!neighbor || visited.has(neighbor.id)) continue;
+        if (continentLandIds.has(neighbor.id)) return distance;
+        visited.add(neighbor.id);
+        next.push(neighbor);
+      }
+    }
+    frontier = next;
+  }
+  return maxDistance + 1;
+}
+
+function isIslandLand(tile: TileDraft): boolean {
+  return !tile.waterKind && tile.isIsland;
+}
+
+function isContinentLand(tile: TileDraft): boolean {
+  return !tile.waterKind && !tile.isIsland;
+}
+
+function convertIslandLandToCoastalWater(tile: TileDraft): void {
+  tile.waterKind = "sea";
+  tile.elevation = Math.min(tile.elevation, 0.29);
+  tile.moisture = Math.max(tile.moisture, 0.62);
+  tile.distanceToWater = 0;
+  tile.isCoastal = false;
+  tile.riverMask = 0;
+  tile.riverWidth = 0;
+  tile.landmassId = null;
+  tile.isHomeland = false;
+  tile.isIsland = false;
+  tile.internalTerrain = "sea";
+  tile.internalFeature = "none";
+  tile.civBiome = resolveCivBiome(tile.internalTerrain, tile.internalFeature, tile.moisture, tile.temperature);
+  tile.morphology = "flat";
+  tile.passable = true;
+}
+
 function internalTerrainFromTags(tile: HexTile): InternalTerrain {
   const tags = new Set(tile.mapTags ?? []);
   if (tags.has("water:ocean")) return "ocean";
@@ -755,13 +988,20 @@ function buildRiverEdges(tiles: TileDraft[], tileById: Map<string, TileDraft>, s
 function classifyRiverEdges(riverEdges: HexEdgeRecord[], tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): HexEdgeRecord[] {
   if (!settings.generation.rivers.navigable) return riverEdges.map((edge) => ({ ...edge, riverClass: edge.width >= 3 ? "major" : "minor", navigable: false, crossingCost: edge.width >= 3 ? settings.generation.rivers.crossingPenalty : 0 }));
   const coastalIds = new Set(tiles.filter((tile) => tile.isCoastal || tile.waterKind).map((tile) => tile.id));
+  const mouthDistanceByEdgeKey = buildRiverMouthDistanceByEdgeKey(riverEdges, tileById, settings);
   return riverEdges.map((edge) => {
     const source = tileById.get(edge.hexId);
-    const targetAxial = source ? getNeighborAxial(source, edge.direction, settings) : null;
-    const targetId = targetAxial ? makeHexId(targetAxial.q, targetAxial.r) : null;
+    const target = source ? getRiverTargetTile(source, edge.direction, tileById, settings) : null;
+    const targetId = target?.id ?? null;
     const nearMouth = coastalIds.has(edge.hexId) || (targetId ? coastalIds.has(targetId) : false);
-    const navigable = edge.width >= 3.2 || (edge.width >= 2.4 && nearMouth);
-    const riverClass = navigable ? "navigable" : edge.width >= 2.2 ? "major" : "minor";
+    const mouthDistance = mouthDistanceByEdgeKey.get(riverEdgeKey(edge)) ?? 99;
+    const slope = source && target && !target.waterKind ? Math.max(0, source.elevation - target.elevation) : 0;
+    const navigable =
+      edge.width >= 3.35 ||
+      (edge.width >= 2.75 && (nearMouth || mouthDistance <= 5)) ||
+      (edge.width >= 3 && mouthDistance <= 10 && slope <= 0.04);
+    const major = navigable || edge.width >= 2.45 || (edge.width >= 2.25 && mouthDistance <= 8);
+    const riverClass = navigable ? "navigable" : major ? "major" : "minor";
     return {
       ...edge,
       riverClass,
@@ -769,6 +1009,59 @@ function classifyRiverEdges(riverEdges: HexEdgeRecord[], tiles: TileDraft[], til
       crossingCost: riverClass === "major" || riverClass === "navigable" ? settings.generation.rivers.crossingPenalty : 0,
     };
   });
+}
+
+function buildRiverMouthDistanceByEdgeKey(
+  riverEdges: readonly HexEdgeRecord[],
+  tileById: Map<string, TileDraft>,
+  settings: HexMapSettings,
+): Map<string, number> {
+  const outgoingByHexId = new Map<HexId, HexEdgeRecord[]>();
+  for (const edge of riverEdges) {
+    const entries = outgoingByHexId.get(edge.hexId) ?? [];
+    entries.push(edge);
+    outgoingByHexId.set(edge.hexId, entries);
+  }
+  for (const entries of outgoingByHexId.values()) {
+    entries.sort((left, right) => right.width - left.width || left.direction - right.direction);
+  }
+  const memo = new Map<string, number>();
+  const visiting = new Set<string>();
+  const resolveDistance = (edge: HexEdgeRecord): number => {
+    const key = riverEdgeKey(edge);
+    const cached = memo.get(key);
+    if (cached != null) return cached;
+    if (visiting.has(key)) return 99;
+    visiting.add(key);
+    const source = tileById.get(edge.hexId);
+    const target = source ? getRiverTargetTile(source, edge.direction, tileById, settings) : null;
+    let distance = 99;
+    if (!target || target.waterKind) {
+      distance = 0;
+    } else {
+      const next = outgoingByHexId.get(target.id)?.[0] ?? null;
+      distance = next ? Math.min(99, 1 + resolveDistance(next)) : 99;
+    }
+    visiting.delete(key);
+    memo.set(key, distance);
+    return distance;
+  };
+  for (const edge of riverEdges) resolveDistance(edge);
+  return memo;
+}
+
+function getRiverTargetTile(
+  source: TileDraft,
+  direction: HexDirection,
+  tileById: Map<string, TileDraft>,
+  settings: HexMapSettings,
+): TileDraft | null {
+  const targetAxial = getNeighborAxial(source, direction, settings);
+  return targetAxial ? tileById.get(makeHexId(targetAxial.q, targetAxial.r)) ?? null : null;
+}
+
+function riverEdgeKey(edge: Pick<HexEdgeRecord, "hexId" | "direction">): string {
+  return `${edge.hexId}:${edge.direction}`;
 }
 
 function riverSourceScore(tile: TileDraft, tileById: Map<string, TileDraft>, settings: HexMapSettings): number {
@@ -825,11 +1118,7 @@ function assignRegionGroup(groupTiles: TileDraft[], tileById: Map<string, TileDr
 }
 
 function regionNeighborScore(tile: TileDraft, neighbor: TileDraft, direction: HexDirection): number {
-  let score = Math.abs(tile.elevation - neighbor.elevation) + Math.abs(tile.moisture - neighbor.moisture) * 0.5;
-  if (tile.morphology === "mountainous" || neighbor.morphology === "mountainous") score += 0.7;
-  if (tile.riverMask & (1 << direction)) score += 0.5;
-  if (tile.civBiome !== neighbor.civBiome) score += 0.25;
-  return score;
+  return 1 + direction * 0.001 + stableUnit(`${tile.id}:${neighbor.id}:region-growth`) * 0.0001;
 }
 
 function assignCoastalWaterToLandRegions(tiles: TileDraft[], tileById: Map<string, TileDraft>, settings: HexMapSettings): void {
@@ -859,8 +1148,9 @@ function assignCoastalWaterToLandRegions(tiles: TileDraft[], tileById: Map<strin
   }
 }
 
-function applyMapTags(tiles: TileDraft[]): void {
+function applyMapTags(tiles: TileDraft[], riverEdges: readonly HexEdgeRecord[] = [], settings?: HexMapSettings): void {
   const maxR = Math.max(1, Math.max(...tiles.map((tile) => tile.r)));
+  const riverClassByTileId = collectRiverClassByTile(riverEdges, tiles, settings);
   for (const tile of tiles) {
     const tags = new Set<HexMapTag>();
     if (tile.waterKind === "ocean") tags.add("water:ocean");
@@ -883,16 +1173,57 @@ function applyMapTags(tiles: TileDraft[]): void {
     tags.add(latitudeTag(tile.r, maxR));
     tags.add(elevationTag(tile.elevation));
     tags.add(tile.isCoastal || tile.waterKind === "sea" ? "coast:coastal" : "coast:inland");
-    if (tile.riverMask > 0) {
-      tags.add(tile.riverWidth >= 3 ? "river:navigable" : tile.riverWidth >= 2 ? "river:major" : "river:minor");
-      tags.add(tile.riverWidth >= 3 ? "morphology:navigable_river" : "feature:minor_river");
-      if (tile.riverWidth >= 3 && tile.distanceToWater <= 1) tags.add("feature:floodplain");
+    const riverClass = riverClassByTileId.get(tile.id) ?? riverClassFromWidth(tile.riverWidth);
+    if (tile.riverMask > 0 && riverClass) {
+      tags.add(`river:${riverClass}`);
+      tags.add(riverClass === "navigable" ? "morphology:navigable_river" : "feature:minor_river");
+      if (riverClass === "navigable" && tile.distanceToWater <= 1) tags.add("feature:floodplain");
       if (tile.riverMask > 0 && tile.elevation > 0.68) tags.add("basin:headwater");
-      if (tile.riverWidth >= 3) tags.add(tile.distanceToWater <= 1 ? "basin:delta" : "basin:mainstem");
+      if (riverClass === "major" || riverClass === "navigable") tags.add(tile.distanceToWater <= 1 ? "basin:delta" : "basin:mainstem");
     }
     if (tile.morphology !== "flat" || tags.has("feature:vegetated") || tags.has("feature:wet") || tile.waterKind === "ocean") tags.add("movement:stop_on_enter");
     tile.mapTags = [...tags].sort();
   }
+}
+
+function collectRiverClassByTile(
+  riverEdges: readonly HexEdgeRecord[],
+  tiles: readonly TileDraft[],
+  settings: HexMapSettings | undefined,
+): Map<HexId, HexEdgeRecord["riverClass"]> {
+  const byId = new Map<string, TileDraft>(tiles.map((tile) => [tile.id, tile]));
+  const classByTileId = new Map<HexId, HexEdgeRecord["riverClass"]>();
+  for (const edge of riverEdges) {
+    const riverClass = edge.riverClass ?? riverClassFromWidth(edge.width);
+    if (!riverClass) continue;
+    mergeRiverClass(classByTileId, edge.hexId, riverClass);
+    if (!settings) continue;
+    const source = byId.get(edge.hexId);
+    const neighborAxial = source ? getNeighborAxial(source, edge.direction, settings) : null;
+    const neighborId = neighborAxial ? makeHexId(neighborAxial.q, neighborAxial.r) : null;
+    if (neighborId && byId.has(neighborId)) mergeRiverClass(classByTileId, neighborId, riverClass);
+  }
+  return classByTileId;
+}
+
+function mergeRiverClass(target: Map<HexId, HexEdgeRecord["riverClass"]>, hexId: HexId, riverClass: HexEdgeRecord["riverClass"]): void {
+  const current = target.get(hexId);
+  if (riverClassRank(riverClass) > riverClassRank(current)) target.set(hexId, riverClass);
+}
+
+function riverClassFromWidth(width: number | undefined): HexEdgeRecord["riverClass"] | null {
+  const value = Number(width) || 0;
+  if (value >= 3) return "navigable";
+  if (value >= 2) return "major";
+  if (value > 0) return "minor";
+  return null;
+}
+
+function riverClassRank(riverClass: HexEdgeRecord["riverClass"] | null | undefined): number {
+  if (riverClass === "navigable") return 3;
+  if (riverClass === "major") return 2;
+  if (riverClass === "minor") return 1;
+  return 0;
 }
 
 function refreshMovementMetadata(tiles: TileDraft[]): void {
@@ -973,6 +1304,16 @@ function clamp01(value: number): number {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+function normalizeVector(vector: { x: number; y: number }): { x: number; y: number } {
+  const length = Math.hypot(vector.x, vector.y);
+  if (length <= 0.000001) return { x: 0, y: 0 };
+  return { x: vector.x / length, y: vector.y / length };
+}
+
+function dot(left: { x: number; y: number }, right: { x: number; y: number }): number {
+  return left.x * right.x + left.y * right.y;
 }
 
 function seededRandom(seed: string): () => number {

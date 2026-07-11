@@ -86,7 +86,13 @@ Supported scripts are `continents`, `pangaea`, and `archipelago`. Applying a sce
 }
 ```
 
-`majorContinentSize` and `islandSize` are target seed sizes in generated hexes. Coast noise, ocean barriers, and neighboring landmasses can shift the final connected-component size, but the ranges keep islands and continents in distinct size bands. On very small maps, generator caps requested sizes to a bounded share of map area.
+`majorContinentSize` and `islandSize` are target seed sizes in generated hexes. Coast noise, ocean barriers, an internal plate-like uplift layer, and neighboring landmasses can shift the final connected-component size, but the ranges keep islands and continents in distinct size bands. Landmass seed placement uses deterministic spacing attempts so continents and islands are less clustered. Generated islands are separated from generated continents by a visible water buffer; island-side land within two hexes of a continent becomes coastal water. On very small maps, generator caps requested sizes to a bounded share of map area.
+
+Generated regions use seeded anchor growth with only land/water and landmass boundaries as hard constraints. Region growth intentionally does not weight height, moisture, mountains, rivers, or biome differences; those remain map tags for gameplay rules and tooltip explanation, not generated region borders.
+
+River classes are derived from edge width, downstream connection, distance to mouth, and local slope. This gives `river:major` and `river:navigable` tags without running a full erosion simulation.
+
+The generator applies a small deterministic erosion-like smoothing pass to reduce extreme local elevation drops before final terrain, biome, morphology, and movement tags are resolved. It is intentionally bounded and does not replace the scenario-owned map settings or public `mapTags`.
 
 Map generation exposes closed, localized `mapTags` on hexes. Scenario rules should use `tagQuery` for geography-sensitive deposits, features, building placement, adjacency, and visual rules. Do not author rules against private generator plate or landmass internals.
 

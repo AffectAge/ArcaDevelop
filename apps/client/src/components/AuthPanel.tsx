@@ -23,7 +23,14 @@ import {
 } from "lucide-react";
 import { fetchContentEntries, fetchCountries, fetchServerStatus, login, register } from "../lib/api";
 import type { ContentEntry } from "../lib/api";
-import type { Country, ServerStatus } from "@arcanorum/shared";
+import {
+  COUNTRY_CREST_UPLOAD_RULE,
+  COUNTRY_FLAG_UPLOAD_RULE,
+  COUNTRY_IDENTITY_LOGO_UPLOAD_RULE,
+  type Country,
+  type ImageUploadRule,
+  type ServerStatus,
+} from "@arcanorum/shared";
 import { toast } from "sonner";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { AppButton } from "./templates/AppButton";
@@ -127,6 +134,7 @@ function ImageUploadFrame({
   file,
   previewUrl,
   hint,
+  error,
   onChange,
   t,
 }: {
@@ -134,7 +142,8 @@ function ImageUploadFrame({
   file: File | null;
   previewUrl: string | null;
   hint: string;
-  onChange: (file: File | null) => void;
+  error?: string;
+  onChange: (file: File | null) => void | boolean | Promise<void | boolean>;
   t: AuthTranslator;
 }) {
   return (
@@ -146,11 +155,13 @@ function ImageUploadFrame({
         <GameImageUploadCard
           label={label}
           clearLabel={t("auth.clearImage")}
+          accept="image/png,image/jpeg,image/webp"
           file={file}
           src={previewUrl}
           onFileChange={onChange}
         />
       </GameTooltip>
+      <FieldError text={error} />
     </div>
   );
 }
@@ -467,6 +478,23 @@ async function isImageWithinRule(
   });
 }
 
+async function getImageUploadErrorKey(
+  file: File,
+  rule: ImageUploadRule,
+  dimensionsErrorKey: UiTextKey,
+): Promise<UiTextKey | null> {
+  if (!(rule.mimeTypes as readonly string[]).includes(file.type)) {
+    return "auth.onlyImages";
+  }
+  if (file.size > rule.maxBytes) {
+    return "auth.fileTooLarge";
+  }
+  if (!(await isImageWithinRule(file, rule))) {
+    return dimensionsErrorKey;
+  }
+  return null;
+}
+
 export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props) {
   const { t } = useUiText();
   const loginSchema = useMemo(
@@ -528,6 +556,10 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
   const [crestFile, setCrestFile] = useState<File | null>(null);
   const [cultureLogoFile, setCultureLogoFile] = useState<File | null>(null);
   const [religionLogoFile, setReligionLogoFile] = useState<File | null>(null);
+  const [flagUploadError, setFlagUploadError] = useState<string | undefined>();
+  const [crestUploadError, setCrestUploadError] = useState<string | undefined>();
+  const [cultureLogoUploadError, setCultureLogoUploadError] = useState<string | undefined>();
+  const [religionLogoUploadError, setReligionLogoUploadError] = useState<string | undefined>();
   const [flagPreviewUrl, setFlagPreviewUrl] = useState<string | null>(null);
   const [crestPreviewUrl, setCrestPreviewUrl] = useState<string | null>(null);
   const [cultureLogoPreviewUrl, setCultureLogoPreviewUrl] = useState<string | null>(null);
@@ -661,6 +693,69 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
     setReligionLogoPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [religionLogoFile]);
+
+  const validateImageUpload = useCallback(
+    async (
+      file: File | null,
+      rule: ImageUploadRule,
+      dimensionsErrorKey: UiTextKey,
+      setFile: (file: File | null) => void,
+      setError: (message?: string) => void,
+    ) => {
+      if (!file) {
+        setFile(null);
+        setError(undefined);
+        return true;
+      }
+
+      const errorKey = await getImageUploadErrorKey(file, rule, dimensionsErrorKey);
+      if (errorKey) {
+        const message = t(errorKey);
+        setFile(null);
+        setError(message);
+        toast.error(message);
+        return false;
+      }
+
+      setFile(file);
+      setError(undefined);
+      return true;
+    },
+    [t],
+  );
+
+  const handleFlagFileChange = useCallback(
+    (file: File | null) =>
+      validateImageUpload(file, COUNTRY_FLAG_UPLOAD_RULE, "auth.flagInvalid", setFlagFile, setFlagUploadError),
+    [validateImageUpload],
+  );
+  const handleCrestFileChange = useCallback(
+    (file: File | null) =>
+      validateImageUpload(file, COUNTRY_CREST_UPLOAD_RULE, "auth.crestInvalid", setCrestFile, setCrestUploadError),
+    [validateImageUpload],
+  );
+  const handleCultureLogoFileChange = useCallback(
+    (file: File | null) =>
+      validateImageUpload(
+        file,
+        COUNTRY_IDENTITY_LOGO_UPLOAD_RULE,
+        "auth.identityLogoInvalid",
+        setCultureLogoFile,
+        setCultureLogoUploadError,
+      ),
+    [validateImageUpload],
+  );
+  const handleReligionLogoFileChange = useCallback(
+    (file: File | null) =>
+      validateImageUpload(
+        file,
+        COUNTRY_IDENTITY_LOGO_UPLOAD_RULE,
+        "auth.identityLogoInvalid",
+        setReligionLogoFile,
+        setReligionLogoUploadError,
+      ),
+    [validateImageUpload],
+  );
 
   useEffect(() => {
     if (!loading) {
@@ -817,21 +912,41 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
       return;
     }
 
-    if (flagFile && !(await isImageWithinRule(flagFile, { maxWidth: 192, maxHeight: 128 }))) {
-      toast.error(t("auth.flagInvalid"));
+    if (
+      flagFile &&
+      (await getImageUploadErrorKey(flagFile, COUNTRY_FLAG_UPLOAD_RULE, "auth.flagInvalid"))
+    ) {
+      const message = t("auth.flagInvalid");
+      setFlagUploadError(message);
+      toast.error(message);
       return;
     }
 
-    if (crestFile && !(await isImageWithinRule(crestFile, { maxWidth: 128, maxHeight: 146 }))) {
-      toast.error(t("auth.crestInvalid"));
+    if (
+      crestFile &&
+      (await getImageUploadErrorKey(crestFile, COUNTRY_CREST_UPLOAD_RULE, "auth.crestInvalid"))
+    ) {
+      const message = t("auth.crestInvalid");
+      setCrestUploadError(message);
+      toast.error(message);
       return;
     }
-    if (cultureLogoFile && !(await isImageWithinRule(cultureLogoFile, { maxWidth: 64, maxHeight: 64 }))) {
-      toast.error(t("auth.identityLogoInvalid"));
+    if (
+      cultureLogoFile &&
+      (await getImageUploadErrorKey(cultureLogoFile, COUNTRY_IDENTITY_LOGO_UPLOAD_RULE, "auth.identityLogoInvalid"))
+    ) {
+      const message = t("auth.identityLogoInvalid");
+      setCultureLogoUploadError(message);
+      toast.error(message);
       return;
     }
-    if (religionLogoFile && !(await isImageWithinRule(religionLogoFile, { maxWidth: 64, maxHeight: 64 }))) {
-      toast.error(t("auth.identityLogoInvalid"));
+    if (
+      religionLogoFile &&
+      (await getImageUploadErrorKey(religionLogoFile, COUNTRY_IDENTITY_LOGO_UPLOAD_RULE, "auth.identityLogoInvalid"))
+    ) {
+      const message = t("auth.identityLogoInvalid");
+      setReligionLogoUploadError(message);
+      toast.error(message);
       return;
     }
 
@@ -859,6 +974,10 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
       setCrestFile(null);
       setCultureLogoFile(null);
       setReligionLogoFile(null);
+      setFlagUploadError(undefined);
+      setCrestUploadError(undefined);
+      setCultureLogoUploadError(undefined);
+      setReligionLogoUploadError(undefined);
       registerForm.reset({
         countryName: "",
         countryColor: "#4ade80",
@@ -1092,7 +1211,8 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                           file={flagFile}
                           previewUrl={flagPreviewUrl}
                           hint={t("auth.flagHint")}
-                          onChange={setFlagFile}
+                          error={flagUploadError}
+                          onChange={handleFlagFileChange}
                           t={t}
                         />
                         <ImageUploadFrame
@@ -1100,7 +1220,8 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                           file={crestFile}
                           previewUrl={crestPreviewUrl}
                           hint={t("auth.crestHint")}
-                          onChange={setCrestFile}
+                          error={crestUploadError}
+                          onChange={handleCrestFileChange}
                           t={t}
                         />
                       </div>
@@ -1127,7 +1248,8 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                           file={cultureLogoFile}
                           previewUrl={cultureLogoPreviewUrl}
                           hint={t("auth.identityLogoHint")}
-                          onChange={setCultureLogoFile}
+                          error={cultureLogoUploadError}
+                          onChange={handleCultureLogoFileChange}
                           t={t}
                         />
                       </div>
@@ -1154,7 +1276,8 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                           file={religionLogoFile}
                           previewUrl={religionLogoPreviewUrl}
                           hint={t("auth.identityLogoHint")}
-                          onChange={setReligionLogoFile}
+                          error={religionLogoUploadError}
+                          onChange={handleReligionLogoFileChange}
                           t={t}
                         />
                       </div>
