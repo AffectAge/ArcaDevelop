@@ -1,7 +1,7 @@
 import { Bell, Handshake, Landmark, ScrollText, ShieldAlert, Trash2 } from "lucide-react";
 import type { InAppUiNotification } from "./InAppNotificationTray";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppEmptyState } from "./ui/AppSurface";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppEmptyState } from "./templates/AppSurface";
 import { useUiText } from "../i18n/useUiText";
 import type { UiTextKey } from "../i18n/uiText";
 

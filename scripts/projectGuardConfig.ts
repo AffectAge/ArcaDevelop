@@ -17,11 +17,11 @@ export const CODE_GUARD_SCANNED_ROOTS = [
 export const SCENARIO_DATA_GUARD_ROOT = "apps/server/data/scenarios";
 
 export const CLIENT_THEME_TOKEN_GUARD_PATHS = [
-  "apps/client/src/components/ui",
+  "apps/client/src/components/templates",
 ] as const;
 
 export const CLIENT_LOCALIZED_TEXT_GUARD_PATHS = [
-  "apps/client/src/components/ui",
+  "apps/client/src/components/templates",
   "apps/client/src/components/map-hud",
   "apps/client/src/components/ClientSettingsModal.tsx",
   "apps/client/src/components/ColonizationModal.tsx",

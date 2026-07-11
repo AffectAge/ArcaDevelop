@@ -21,9 +21,9 @@ import { MarketAlertsModal } from "./MarketAlertsModal";
 import { MarketManagementModal } from "./MarketManagementModal";
 import { MarketSanctionsModal } from "./MarketSanctionsModal";
 import { Tooltip } from "./Tooltip";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppEmptyState, AppSection, AppToolbar } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppEmptyState, AppSection, AppToolbar } from "./templates/AppSurface";
 import { tUi } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 

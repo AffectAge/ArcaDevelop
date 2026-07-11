@@ -1,6 +1,6 @@
 import { forwardRef, type SelectHTMLAttributes } from "react";
 import { ChevronDown } from "lucide-react";
-import { cn } from "../ui/classNames";
+import { cn } from "./classNames";
 
 export type GameSelectOption = {
   value: string;

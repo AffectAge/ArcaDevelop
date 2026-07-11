@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "../ui/classNames";
+import { cn } from "./classNames";
 
 export type GameTechNode = {
   id: string;

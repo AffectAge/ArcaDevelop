@@ -18,9 +18,9 @@ import {
   type AdminHexItem,
   type AdminRegionItem,
 } from "../lib/api";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppSection } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppSection } from "./templates/AppSurface";
 
 type Props = {
   open: boolean;

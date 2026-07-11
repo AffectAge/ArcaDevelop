@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { BASE_RESOURCE_ICON_URLS } from "../assets/baseResourceIcons";
 import { fetchTurnActions, fetchTurnStatus, type TurnStatusItem } from "../lib/api";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
 import { useUiText } from "../i18n/useUiText";
 import type { UiTextKey } from "../i18n/uiText";
 

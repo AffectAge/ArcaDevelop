@@ -5,8 +5,8 @@ import { Check, Handshake, History, RefreshCw, ScrollText, X } from "lucide-reac
 import { toast } from "sonner";
 import type { Country, DiplomacyProposal, TreatyClause, TreatyTransportMode, WorldBase } from "@arcanorum/shared";
 import { acceptDiplomacyProposal, fetchCountries, fetchDiplomacyProposals, rejectDiplomacyProposal } from "../lib/api";
-import { AppButton } from "./ui/AppButton";
-import { AppEmptyState } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppEmptyState } from "./templates/AppSurface";
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 

@@ -1,5 +1,5 @@
 import type { HTMLAttributes, ReactNode } from "react";
-import { cn } from "../ui/classNames";
+import { cn } from "./classNames";
 
 type GameFramePanelProps = HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;

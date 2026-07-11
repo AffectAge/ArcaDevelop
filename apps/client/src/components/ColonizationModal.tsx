@@ -2,9 +2,9 @@ import { Listbox } from "@headlessui/react";
 import { Check, ChevronDown, Coins, Flag, Lock, Settings, Trophy } from "lucide-react";
 import type { Country } from "@arcanorum/shared";
 import { Tooltip } from "./Tooltip";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppEmptyState, AppSection, AppToolbar } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppEmptyState, AppSection, AppToolbar } from "./templates/AppSurface";
 import { useUiText } from "../i18n/useUiText";
 
 type Props = {

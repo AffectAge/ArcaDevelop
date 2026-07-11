@@ -4,10 +4,10 @@ import type { EChartsType } from "echarts";
 import { Landmark, ListFilter, ReceiptText, Wallet } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchContentEntries } from "../lib/api";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppEmptyState, AppSection, AppSectionHeader, AppToolbar } from "./ui/AppSurface";
-import { AppCell, AppHeadCell, AppTable, AppTableShell } from "./ui/AppTable";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppEmptyState, AppSection, AppSectionHeader, AppToolbar } from "./templates/AppSurface";
+import { AppCell, AppHeadCell, AppTable, AppTableShell } from "./templates/AppTable";
 import { useUiText } from "../i18n/useUiText";
 import type { UiLocale, UiTextKey } from "../i18n/uiText";
 

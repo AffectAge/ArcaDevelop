@@ -17,9 +17,9 @@ import { toast } from "sonner";
 import type { WorldBase } from "@arcanorum/shared";
 import { fetchContentEntries, setActiveTechnology, type ContentEntry } from "../lib/api";
 import { useGameStore } from "../store/gameStore";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppEmptyState, AppSection } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppEmptyState, AppSection } from "./templates/AppSurface";
 import { useUiText } from "../i18n/useUiText";
 import type { UiTextKey } from "../i18n/uiText";
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Pin } from "lucide-react";
-import { cn } from "../ui/classNames";
+import { cn } from "./classNames";
 
 type GameTooltipCardProps = {
   title: ReactNode;

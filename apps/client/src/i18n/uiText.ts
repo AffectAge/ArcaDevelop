@@ -123,9 +123,27 @@ export type UiTextKey =
   | "templates.asset.flagTitle"
   | "templates.asset.flagUpload"
   | "templates.button.danger"
+  | "templates.button.dangerDisabled"
   | "templates.button.ghost"
+  | "templates.button.dangerIcon"
+  | "templates.button.dangerIconOnly"
+  | "templates.button.dangerLarge"
+  | "templates.button.dangerSmall"
+  | "templates.button.dangerWide"
   | "templates.button.primary"
+  | "templates.button.primaryDisabled"
+  | "templates.button.primaryIcon"
+  | "templates.button.primaryIconOnly"
+  | "templates.button.primaryLarge"
+  | "templates.button.primarySmall"
+  | "templates.button.primaryWide"
   | "templates.button.secondary"
+  | "templates.button.secondaryDisabled"
+  | "templates.button.secondaryIcon"
+  | "templates.button.secondaryIconOnly"
+  | "templates.button.secondaryLarge"
+  | "templates.button.secondarySmall"
+  | "templates.button.secondaryWide"
   | "templates.chart.area"
   | "templates.chart.bar"
   | "templates.chart.donut"
@@ -176,8 +194,12 @@ export type UiTextKey =
   | "templates.effect.treatyCost"
   | "templates.effect.unrest"
   | "templates.effect.warWeariness"
+  | "templates.dropdown.coastal"
+  | "templates.dropdown.mountain"
+  | "templates.dropdown.river"
   | "templates.field.culture"
   | "templates.field.description"
+  | "templates.field.dropdown"
   | "templates.field.name"
   | "templates.galleryTitle"
   | "templates.icon.add"
@@ -204,6 +226,9 @@ export type UiTextKey =
   | "templates.scrollbarRow"
   | "templates.scrollbarTitle"
   | "templates.section.buttons"
+  | "templates.section.dangerButtons"
+  | "templates.section.primaryButtons"
+  | "templates.section.secondaryButtons"
   | "templates.section.fields"
   | "templates.section.panel"
   | "templates.section.switches"
@@ -227,10 +252,27 @@ export type UiTextKey =
   | "templates.tech.planning"
   | "templates.tech.supply"
   | "templates.techTitle"
+  | "templates.plotTooltip.bonus"
+  | "templates.plotTooltip.food"
+  | "templates.plotTooltip.improvement"
+  | "templates.plotTooltip.location"
+  | "templates.plotTooltip.owner"
+  | "templates.plotTooltip.production"
+  | "templates.plotTooltip.resource"
+  | "templates.plotTooltip.resourceDescription"
+  | "templates.plotTooltip.route"
+  | "templates.plotTooltip.section.rural"
+  | "templates.plotTooltip.section.units"
+  | "templates.plotTooltip.settlement"
+  | "templates.plotTooltip.subtitle"
+  | "templates.plotTooltip.title"
+  | "templates.plotTooltip.unit"
+  | "templates.plotTooltip.water"
   | "templates.tooltip.description"
   | "templates.tooltip.eyebrow"
   | "templates.tooltip.maintenance"
   | "templates.tooltip.requirement"
+  | "templates.tooltip.simple"
   | "templates.tooltip.title"
   | "templates.toggle.description"
   | "templates.toggle.locked"
@@ -1233,6 +1275,7 @@ export type UiTextKey =
   | "auth.accountLockedTime"
   | "auth.accountLockedTurn"
   | "auth.access"
+  | "auth.brandName"
   | "auth.chooseCountry"
   | "auth.chooseCultureGroup"
   | "auth.chooseReligionGroup"
@@ -1288,11 +1331,6 @@ export type UiTextKey =
   | "auth.noStartingPopChanges"
   | "auth.onlyImages"
   | "auth.password"
-  | "auth.passwordComplexityAria"
-  | "auth.passwordComplexityLoginNeed"
-  | "auth.passwordComplexityNeed"
-  | "auth.passwordComplexityOk"
-  | "auth.passwordLengthAria"
   | "auth.passwordLengthNeed"
   | "auth.passwordLengthOk"
   | "auth.passwordMismatch"
@@ -1335,6 +1373,8 @@ export type UiTextKey =
   | "auth.step.race"
   | "auth.step.religion"
   | "auth.waitButton"
+  | "auth.welcomeDescription"
+  | "auth.welcomeTitle"
   | "clientSettings.description"
   | "clientSettings.descriptionTitle"
   | "clientSettings.interface"
@@ -3771,9 +3811,27 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.asset.flagTitle": "Flag preview",
     "templates.asset.flagUpload": "Choose flag image",
     "templates.button.danger": "Danger",
+    "templates.button.dangerDisabled": "Disabled danger",
+    "templates.button.dangerIcon": "With icon",
+    "templates.button.dangerIconOnly": "Danger icon action",
+    "templates.button.dangerLarge": "Large danger",
+    "templates.button.dangerSmall": "Small danger",
+    "templates.button.dangerWide": "Full width danger",
     "templates.button.ghost": "Ghost",
     "templates.button.primary": "Primary",
+    "templates.button.primaryDisabled": "Disabled",
+    "templates.button.primaryIcon": "With icon",
+    "templates.button.primaryIconOnly": "Primary icon action",
+    "templates.button.primaryLarge": "Large action",
+    "templates.button.primarySmall": "Small",
+    "templates.button.primaryWide": "Full width action",
     "templates.button.secondary": "Secondary",
+    "templates.button.secondaryDisabled": "Disabled secondary",
+    "templates.button.secondaryIcon": "With icon",
+    "templates.button.secondaryIconOnly": "Secondary icon action",
+    "templates.button.secondaryLarge": "Large secondary",
+    "templates.button.secondarySmall": "Small secondary",
+    "templates.button.secondaryWide": "Full width secondary",
     "templates.chart.area": "Area chart",
     "templates.chart.bar": "Bar chart",
     "templates.chart.donut": "Donut chart",
@@ -3824,8 +3882,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.effect.treatyCost": "Treaty cost",
     "templates.effect.unrest": "Unrest",
     "templates.effect.warWeariness": "War weariness",
+    "templates.dropdown.coastal": "Coastal league",
+    "templates.dropdown.mountain": "Mountain clans",
+    "templates.dropdown.river": "River states",
     "templates.field.culture": "Culture",
     "templates.field.description": "Description",
+    "templates.field.dropdown": "Dropdown",
     "templates.field.name": "Name",
     "templates.galleryTitle": "Imperial Command UI Kit",
     "templates.icon.add": "Add",
@@ -3852,6 +3914,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.scrollbarRow": "Scrollable row {index}",
     "templates.scrollbarTitle": "Scrollbar example",
     "templates.section.buttons": "Buttons",
+    "templates.section.dangerButtons": "Danger buttons",
+    "templates.section.primaryButtons": "Primary buttons",
+    "templates.section.secondaryButtons": "Secondary buttons",
     "templates.section.fields": "Fields",
     "templates.section.panel": "Frame panel",
     "templates.section.switches": "Switches",
@@ -3875,10 +3940,27 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.tech.planning": "Urban Planning",
     "templates.tech.supply": "Army Supply",
     "templates.techTitle": "Technology Tree Example",
+    "templates.plotTooltip.bonus": "+5% production toward river buildings.",
+    "templates.plotTooltip.food": "Food",
+    "templates.plotTooltip.improvement": "Irrigated farm",
+    "templates.plotTooltip.location": "Atlantica - Arno River",
+    "templates.plotTooltip.owner": "Augustus (You)",
+    "templates.plotTooltip.production": "Production",
+    "templates.plotTooltip.resource": "Citrus",
+    "templates.plotTooltip.resourceDescription": "Factory resource. Improves city growth.",
+    "templates.plotTooltip.route": "Road",
+    "templates.plotTooltip.section.rural": "Rural",
+    "templates.plotTooltip.section.units": "Units",
+    "templates.plotTooltip.settlement": "Mughal Empire - Patavium (Town)",
+    "templates.plotTooltip.subtitle": "Wet floodplain",
+    "templates.plotTooltip.title": "Flat Plains",
+    "templates.plotTooltip.unit": "Scout - Yours",
+    "templates.plotTooltip.water": "Water",
     "templates.tooltip.description": "Created in a matching district and grants permanent state effects.",
     "templates.tooltip.eyebrow": "Tooltip",
     "templates.tooltip.maintenance": "Maintenance",
     "templates.tooltip.requirement": "Requirement",
+    "templates.tooltip.simple": "Simple hover tooltip",
     "templates.tooltip.title": "Unique Quarter",
     "templates.toggle.description": "Used by modal and HUD templates.",
     "templates.toggle.locked": "Locked",
@@ -4881,6 +4963,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.accountLockedTime": "Account is locked until {time}",
     "auth.accountLockedTurn": "Account is locked until turn #{turn}",
     "auth.access": "Access",
+    "auth.brandName": "Arcanorum",
     "auth.chooseCountry": "Choose a country",
     "auth.chooseCultureGroup": "Choose culture group",
     "auth.chooseReligionGroup": "Choose religion group",
@@ -4895,14 +4978,14 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.creating": "Creating...",
     "auth.crest": "Crest",
     "auth.crestHint": "PNG/JPG/WEBP up to 4MB, maximum 128x146",
-    "auth.crestInvalid": "Crest: maximum 128x146",
+    "auth.crestInvalid": "Crest: PNG/JPG/WEBP up to 4MB, maximum 128x146",
     "auth.crestPreview": "Crest preview",
     "auth.enterGame": "Sign in",
     "auth.enterPassword": "Enter password",
     "auth.fileTooLarge": "File is too large (up to 4MB)",
     "auth.flag": "Flag",
-    "auth.flagHint": "PNG/JPG/WEBP up to 4MB, maximum 192x128, ratio 3:2",
-    "auth.flagInvalid": "Flag: maximum 192x128, ratio 3:2",
+    "auth.flagHint": "PNG/JPG/WEBP up to 4MB, maximum 192x128",
+    "auth.flagInvalid": "Flag: PNG/JPG/WEBP up to 4MB, maximum 192x128",
     "auth.flagPreview": "Flag preview",
     "auth.cultureColor": "Culture color",
     "auth.cultureGroup": "Culture group",
@@ -4911,11 +4994,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.backToLogin": "Back to login",
     "auth.confirmCultureReligion": "Culture and religion",
     "auth.confirmPreviewTitle": "Founding preview",
-    "auth.imageFormatInvalid": "Check format: flag 192x128 (3:2), crest 128x146, logos 64x64",
+    "auth.imageFormatInvalid": "Check format: PNG/JPG/WEBP up to 4MB. Maximum sizes: flag 192x128, crest 128x146, logos 64x64",
     "auth.identity": "Country identity",
     "auth.identityBonuses": "Bonuses",
     "auth.identityLogoHint": "PNG/JPG/WEBP up to 4MB, maximum 64x64",
-    "auth.identityLogoInvalid": "Identity logo: maximum 64x64",
+    "auth.identityLogoInvalid": "Identity logo: PNG/JPG/WEBP up to 4MB, maximum 64x64",
     "auth.identityNoDescription": "No description authored.",
     "auth.identityOptions": "Identity options",
     "auth.identitySelectPrompt": "Select an option to inspect its bonuses and starting population.",
@@ -4936,11 +5019,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.noStartingPopChanges": "No starting population changes.",
     "auth.onlyImages": "Only images are allowed",
     "auth.password": "Password",
-    "auth.passwordComplexityAria": "Password complexity check",
-    "auth.passwordComplexityLoginNeed": "Add letters and digits for complexity",
-    "auth.passwordComplexityNeed": "Add an uppercase letter, digit, and special character",
-    "auth.passwordComplexityOk": "Password complexity is good",
-    "auth.passwordLengthAria": "Password length check",
     "auth.passwordLengthNeed": "Needs at least 8 characters",
     "auth.passwordLengthOk": "Password length is good",
     "auth.passwordMismatch": "Passwords do not match",
@@ -4983,6 +5061,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.step.race": "Race",
     "auth.step.religion": "Religious group",
     "auth.waitButton": "I will wait",
+    "auth.welcomeDescription": "Choose your country, enter the world, or found a new realm from the same command window.",
+    "auth.welcomeTitle": "Welcome.",
     "clientSettings.description": "These settings do not affect the server game and apply only in your browser.",
     "clientSettings.descriptionTitle": "Description",
     "clientSettings.interface": "Interface",
@@ -7418,9 +7498,27 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.asset.flagTitle": "Превью флага",
     "templates.asset.flagUpload": "Выбрать изображение флага",
     "templates.button.danger": "Опасность",
+    "templates.button.dangerDisabled": "Опасность недоступна",
+    "templates.button.dangerIcon": "С иконкой",
+    "templates.button.dangerIconOnly": "Опасное действие",
+    "templates.button.dangerLarge": "Крупная опасность",
+    "templates.button.dangerSmall": "Малая опасность",
+    "templates.button.dangerWide": "Опасность на всю ширину",
     "templates.button.ghost": "Призрачная",
     "templates.button.primary": "Первичная",
+    "templates.button.primaryDisabled": "Недоступна",
+    "templates.button.primaryIcon": "С иконкой",
+    "templates.button.primaryIconOnly": "Первичное действие",
+    "templates.button.primaryLarge": "Крупное действие",
+    "templates.button.primarySmall": "Малая",
+    "templates.button.primaryWide": "На всю ширину",
     "templates.button.secondary": "Вторичная",
+    "templates.button.secondaryDisabled": "Вторичная недоступна",
+    "templates.button.secondaryIcon": "С иконкой",
+    "templates.button.secondaryIconOnly": "Вторичное действие",
+    "templates.button.secondaryLarge": "Крупная вторичная",
+    "templates.button.secondarySmall": "Малая вторичная",
+    "templates.button.secondaryWide": "Вторичная на всю ширину",
     "templates.chart.area": "График области",
     "templates.chart.bar": "Столбчатый график",
     "templates.chart.donut": "Кольцевая диаграмма",
@@ -7471,8 +7569,12 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.effect.treatyCost": "Стоимость договоров",
     "templates.effect.unrest": "Недовольство",
     "templates.effect.warWeariness": "Военная усталость",
+    "templates.dropdown.coastal": "Прибрежная лига",
+    "templates.dropdown.mountain": "Горные кланы",
+    "templates.dropdown.river": "Речные города",
     "templates.field.culture": "Культура",
     "templates.field.description": "Описание",
+    "templates.field.dropdown": "Выпадающий список",
     "templates.field.name": "Название",
     "templates.galleryTitle": "Imperial Command UI Kit",
     "templates.icon.add": "Добавить",
@@ -7499,6 +7601,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.scrollbarRow": "Строка прокрутки {index}",
     "templates.scrollbarTitle": "Пример скроллбара",
     "templates.section.buttons": "Кнопки",
+    "templates.section.dangerButtons": "Кнопки опасности",
+    "templates.section.primaryButtons": "Первичные кнопки",
+    "templates.section.secondaryButtons": "Вторичные кнопки",
     "templates.section.fields": "Поля ввода",
     "templates.section.panel": "Панель-рамка",
     "templates.section.switches": "Переключатели",
@@ -7522,10 +7627,27 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "templates.tech.planning": "Городское планирование",
     "templates.tech.supply": "Снабжение армии",
     "templates.techTitle": "Пример дерева технологий",
+    "templates.plotTooltip.bonus": "+5% производства для речных зданий.",
+    "templates.plotTooltip.food": "Пища",
+    "templates.plotTooltip.improvement": "Орошаемая ферма",
+    "templates.plotTooltip.location": "Атлантика - река Арно",
+    "templates.plotTooltip.owner": "Август (вы)",
+    "templates.plotTooltip.production": "Производство",
+    "templates.plotTooltip.resource": "Цитрус",
+    "templates.plotTooltip.resourceDescription": "Фабричный ресурс. Улучшает рост города.",
+    "templates.plotTooltip.route": "Дорога",
+    "templates.plotTooltip.section.rural": "Сельская местность",
+    "templates.plotTooltip.section.units": "Юниты",
+    "templates.plotTooltip.settlement": "Империя Моголов - Патавий (городок)",
+    "templates.plotTooltip.subtitle": "Влажная пойма",
+    "templates.plotTooltip.title": "Равнинная местность",
+    "templates.plotTooltip.unit": "Разведчик - ваш",
+    "templates.plotTooltip.water": "Вода",
     "templates.tooltip.description": "Создается в подходящем районе и дает постоянные эффекты государству.",
     "templates.tooltip.eyebrow": "Подсказка",
     "templates.tooltip.maintenance": "Обслуживание",
     "templates.tooltip.requirement": "Требование",
+    "templates.tooltip.simple": "Простая подсказка при наведении",
     "templates.tooltip.title": "Уникальный квартал",
     "templates.toggle.description": "Используется шаблонами модалок и HUD.",
     "templates.toggle.locked": "Заблокировано",
@@ -8528,6 +8650,7 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.accountLockedTime": "Аккаунт заблокирован до {time}",
     "auth.accountLockedTurn": "Аккаунт заблокирован до хода #{turn}",
     "auth.access": "Доступ",
+    "auth.brandName": "Arcanorum",
     "auth.chooseCountry": "Выберите страну",
     "auth.chooseCultureGroup": "Выберите культурную группу",
     "auth.chooseReligionGroup": "Выберите религиозную группу",
@@ -8542,14 +8665,14 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.creating": "Создание...",
     "auth.crest": "Герб",
     "auth.crestHint": "PNG/JPG/WEBP до 4MB, максимум 128x146",
-    "auth.crestInvalid": "Герб: максимум 128x146",
+    "auth.crestInvalid": "Герб: PNG/JPG/WEBP до 4MB, максимум 128x146",
     "auth.crestPreview": "Предпросмотр герба",
     "auth.enterGame": "Войти",
     "auth.enterPassword": "Введите пароль",
     "auth.fileTooLarge": "Файл слишком большой (до 4MB)",
     "auth.flag": "Флаг",
-    "auth.flagHint": "PNG/JPG/WEBP до 4MB, максимум 192x128, соотношение 3:2",
-    "auth.flagInvalid": "Флаг: максимум 192x128, соотношение 3:2",
+    "auth.flagHint": "PNG/JPG/WEBP до 4MB, максимум 192x128",
+    "auth.flagInvalid": "Флаг: PNG/JPG/WEBP до 4MB, максимум 192x128",
     "auth.flagPreview": "Предпросмотр флага",
     "auth.cultureColor": "Цвет культуры",
     "auth.cultureGroup": "Культурная группа",
@@ -8558,11 +8681,11 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.backToLogin": "Назад ко входу",
     "auth.confirmCultureReligion": "Культура и религия",
     "auth.confirmPreviewTitle": "Предпросмотр основания",
-    "auth.imageFormatInvalid": "Проверьте формат: флаг 192x128 (3:2), герб 128x146, логотипы 64x64",
+    "auth.imageFormatInvalid": "Проверьте формат: PNG/JPG/WEBP до 4MB. Максимальные размеры: флаг 192x128, герб 128x146, логотипы 64x64",
     "auth.identity": "Идентичность страны",
     "auth.identityBonuses": "Бонусы",
     "auth.identityLogoHint": "PNG/JPG/WEBP до 4MB, максимум 64x64",
-    "auth.identityLogoInvalid": "Логотип идентичности: максимум 64x64",
+    "auth.identityLogoInvalid": "Логотип идентичности: PNG/JPG/WEBP до 4MB, максимум 64x64",
     "auth.identityNoDescription": "Описание не задано.",
     "auth.identityOptions": "Варианты идентичности",
     "auth.identitySelectPrompt": "Выберите вариант, чтобы увидеть бонусы и стартовое население.",
@@ -8583,11 +8706,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.noStartingPopChanges": "Изменений стартового населения нет.",
     "auth.onlyImages": "Разрешены только изображения",
     "auth.password": "Пароль",
-    "auth.passwordComplexityAria": "Проверка сложности пароля",
-    "auth.passwordComplexityLoginNeed": "Добавьте буквы и цифры для сложности",
-    "auth.passwordComplexityNeed": "Добавьте заглавную букву, цифру и спецсимвол",
-    "auth.passwordComplexityOk": "Сложность пароля подходит",
-    "auth.passwordLengthAria": "Проверка длины пароля",
     "auth.passwordLengthNeed": "Нужно минимум 8 символов",
     "auth.passwordLengthOk": "Длина пароля подходит",
     "auth.passwordMismatch": "Пароли не совпадают",
@@ -8630,6 +8748,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.step.race": "Раса",
     "auth.step.religion": "Религиозная группа",
     "auth.waitButton": "Буду ждать",
+    "auth.welcomeDescription": "Выберите страну, войдите в мир или создайте новую державу из одного командного окна.",
+    "auth.welcomeTitle": "Добро пожаловать.",
     "clientSettings.description": "Эти параметры не влияют на серверную игру и применяются только в вашем браузере.",
     "clientSettings.descriptionTitle": "Описание",
     "clientSettings.interface": "Интерфейс",

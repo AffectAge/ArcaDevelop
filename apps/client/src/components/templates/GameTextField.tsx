@@ -1,5 +1,5 @@
 import { forwardRef, type ForwardedRef, type InputHTMLAttributes, type TextareaHTMLAttributes } from "react";
-import { cn } from "../ui/classNames";
+import { cn } from "./classNames";
 
 type BaseGameTextFieldProps = {
   label: string;

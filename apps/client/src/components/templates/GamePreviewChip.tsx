@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { cn } from "../ui/classNames";
+import { cn } from "./classNames";
 
 type GamePreviewChipProps = {
   src?: string | null;

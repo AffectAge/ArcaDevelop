@@ -1,17 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart3,
   Beaker,
   BookOpen,
   Check,
+  ChevronsRight,
   Coins,
   Crown,
+  Droplets,
   Flag,
   Gavel,
+  Hammer,
   Info,
   Landmark,
   Leaf,
   LineChart,
+  Pickaxe,
   PieChart,
   Plus,
   Scale,
@@ -21,23 +25,27 @@ import {
   Users,
 } from "lucide-react";
 import { useUiText } from "../../i18n/useUiText";
-import { AppButton } from "../ui/AppButton";
-import { AppToggle } from "../ui/AppForm";
-import { AppStatusChip } from "../ui/AppSurface";
+import { AppButton } from "./AppButton";
+import { AppToggle } from "./AppForm";
+import { AppStatusChip } from "./AppSurface";
 import { GameActionBar } from "./GameActionBar";
 import { GameChartPreview, type GameChartPreviewType } from "./GameChartPreview";
 import { GameChoiceModal, type GameChoiceItem } from "./GameChoiceModal";
 import { GameColorPickerButton } from "./GameColorPickerButton";
 import { GameDetailPanel } from "./GameDetailPanel";
+import { GameDropdownField } from "./GameDropdownField";
 import { GameFramePanel } from "./GameFramePanel";
 import { GameImageUploadCard } from "./GameImageUploadCard";
 import { GameNotificationList } from "./GameNotificationList";
+import { GamePlotTooltipCard } from "./GamePlotTooltipCard";
 import { GamePreviewChip, GamePreviewChipGroup } from "./GamePreviewChip";
 import { GameResourcePanel } from "./GameResourcePanel";
 import { GameScrollList } from "./GameScrollList";
+import { GameSwitch } from "./GameSwitch";
 import { GameTabs } from "./GameTabs";
 import { GameTechTreePreview } from "./GameTechTreePreview";
 import { GameTextField } from "./GameTextField";
+import { GameTooltip } from "./GameTooltip";
 import { GameTooltipCard } from "./GameTooltipCard";
 
 const chartPreviews = [
@@ -47,13 +55,21 @@ const chartPreviews = [
   { id: "donut", titleKey: "templates.chart.donut", type: "donut" },
 ] satisfies Array<{ id: string; titleKey: string; type: GameChartPreviewType }>;
 
+const COLOR_INPUT_FALLBACK = "black";
+
 export function GameTemplateGallery() {
   const { t } = useUiText();
   const [selectedChoice, setSelectedChoice] = useState("knowledge");
-  const [selectedColor, setSelectedColor] = useState("#d6b36a");
+  const [selectedColor, setSelectedColor] = useState(COLOR_INPUT_FALLBACK);
+  const [dropdownValue, setDropdownValue] = useState("river");
   const [uploadedFlag, setUploadedFlag] = useState<File | null>(null);
   const [tab, setTab] = useState("info");
   const [enabled, setEnabled] = useState(true);
+
+  useEffect(() => {
+    const themeColor = getComputedStyle(document.documentElement).getPropertyValue("--arc-color-gold").trim();
+    if (isColorInputValue(themeColor)) setSelectedColor(themeColor);
+  }, []);
 
   const choices: GameChoiceItem[] = [
     {
@@ -196,6 +212,84 @@ export function GameTemplateGallery() {
             <div className="grid gap-3">
               <h3 className="arc-kit-section-title">{t("templates.section.buttons")}</h3>
               <div className="grid gap-2">
+                <h4 className="arc-kit-button-group-title">{t("templates.section.primaryButtons")}</h4>
+                <div className="arc-kit-button-variant-grid">
+                  <AppButton type="button" variant="primary" size="xs">
+                    {t("templates.button.primarySmall")}
+                  </AppButton>
+                  <AppButton type="button" variant="primary" size="sm" icon={<Check size={14} aria-hidden="true" />}>
+                    {t("templates.button.primaryIcon")}
+                  </AppButton>
+                  <AppButton type="button" variant="primary" size="md">
+                    {t("templates.button.primary")}
+                  </AppButton>
+                  <AppButton type="button" variant="primary" size="lg" icon={<ChevronsRight size={16} aria-hidden="true" />}>
+                    {t("templates.button.primaryLarge")}
+                  </AppButton>
+                  <AppButton type="button" variant="primary" className="arc-kit-button-wide" icon={<Check size={15} aria-hidden="true" />}>
+                    {t("templates.button.primaryWide")}
+                  </AppButton>
+                  <AppButton type="button" variant="primary" disabled>
+                    {t("templates.button.primaryDisabled")}
+                  </AppButton>
+                  <AppButton type="button" variant="primary" size="icon" aria-label={t("templates.button.primaryIconOnly")}>
+                    <Plus size={15} aria-hidden="true" />
+                  </AppButton>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <h4 className="arc-kit-button-group-title">{t("templates.section.secondaryButtons")}</h4>
+                <div className="arc-kit-button-variant-grid">
+                  <AppButton type="button" variant="secondary" size="xs">
+                    {t("templates.button.secondarySmall")}
+                  </AppButton>
+                  <AppButton type="button" variant="secondary" size="sm" icon={<Gavel size={14} aria-hidden="true" />}>
+                    {t("templates.button.secondaryIcon")}
+                  </AppButton>
+                  <AppButton type="button" variant="secondary" size="md">
+                    {t("templates.button.secondary")}
+                  </AppButton>
+                  <AppButton type="button" variant="secondary" size="lg" icon={<ChevronsRight size={16} aria-hidden="true" />}>
+                    {t("templates.button.secondaryLarge")}
+                  </AppButton>
+                  <AppButton type="button" variant="secondary" className="arc-kit-button-wide" icon={<ScrollText size={15} aria-hidden="true" />}>
+                    {t("templates.button.secondaryWide")}
+                  </AppButton>
+                  <AppButton type="button" variant="secondary" disabled>
+                    {t("templates.button.secondaryDisabled")}
+                  </AppButton>
+                  <AppButton type="button" variant="secondary" size="icon" aria-label={t("templates.button.secondaryIconOnly")}>
+                    <Gavel size={15} aria-hidden="true" />
+                  </AppButton>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <h4 className="arc-kit-button-group-title">{t("templates.section.dangerButtons")}</h4>
+                <div className="arc-kit-button-variant-grid">
+                  <AppButton type="button" variant="danger" size="xs" sound="button.danger">
+                    {t("templates.button.dangerSmall")}
+                  </AppButton>
+                  <AppButton type="button" variant="danger" size="sm" icon={<Swords size={14} aria-hidden="true" />} sound="button.danger">
+                    {t("templates.button.dangerIcon")}
+                  </AppButton>
+                  <AppButton type="button" variant="danger" size="md" sound="button.danger">
+                    {t("templates.button.danger")}
+                  </AppButton>
+                  <AppButton type="button" variant="danger" size="lg" icon={<Shield size={16} aria-hidden="true" />} sound="button.danger">
+                    {t("templates.button.dangerLarge")}
+                  </AppButton>
+                  <AppButton type="button" variant="danger" className="arc-kit-button-wide" icon={<Swords size={15} aria-hidden="true" />} sound="button.danger">
+                    {t("templates.button.dangerWide")}
+                  </AppButton>
+                  <AppButton type="button" variant="danger" disabled sound="button.danger">
+                    {t("templates.button.dangerDisabled")}
+                  </AppButton>
+                  <AppButton type="button" variant="danger" size="icon" aria-label={t("templates.button.dangerIconOnly")} sound="button.danger">
+                    <Swords size={15} aria-hidden="true" />
+                  </AppButton>
+                </div>
+              </div>
+              <div className="grid gap-2">
                 <AppButton type="button" variant="primary">{t("templates.button.primary")}</AppButton>
                 <AppButton type="button" variant="secondary">{t("templates.button.secondary")}</AppButton>
                 <AppButton type="button" variant="danger" sound="button.danger">{t("templates.button.danger")}</AppButton>
@@ -204,13 +298,19 @@ export function GameTemplateGallery() {
               <div className="flex flex-wrap gap-2">
                 <AppButton type="button" size="icon" aria-label={t("templates.icon.add")}><Plus size={15} aria-hidden="true" /></AppButton>
                 <AppButton type="button" size="icon" aria-label={t("templates.icon.edit")}><Gavel size={15} aria-hidden="true" /></AppButton>
-                <AppButton type="button" size="icon" aria-label={t("templates.icon.view")}><Landmark size={15} aria-hidden="true" /></AppButton>
+                <GameTooltip content={t("templates.tooltip.simple")} placement="top">
+                  <AppButton type="button" size="icon" aria-label={t("templates.icon.view")}><Landmark size={15} aria-hidden="true" /></AppButton>
+                </GameTooltip>
               </div>
             </div>
 
             <div className="grid gap-3">
               <h3 className="arc-kit-section-title">{t("templates.section.switches")}</h3>
               <AppToggle checked={enabled} onChange={setEnabled} label={t("templates.toggle.on")} description={t("templates.toggle.description")} />
+              <div className="flex items-center justify-between gap-3">
+                <span className="arc-kit-asset-sample__hint">{t("templates.toggle.on")}</span>
+                <GameSwitch checked={enabled} onChange={setEnabled} ariaLabel={t("templates.toggle.on")} />
+              </div>
               <AppToggle checked={false} onChange={() => undefined} disabled label={t("templates.toggle.locked")} />
               <div className="flex flex-wrap gap-2">
                 <AppStatusChip tone="active">{t("templates.status.active")}</AppStatusChip>
@@ -231,6 +331,16 @@ export function GameTemplateGallery() {
                 <GameTextField label={t("templates.field.name")} defaultValue={t("templates.sample.country")} />
                 <GameTextField label={t("templates.field.culture")} placeholder={t("templates.placeholder.culture")} />
               </div>
+              <GameDropdownField
+                label={t("templates.field.dropdown")}
+                value={dropdownValue}
+                onChange={setDropdownValue}
+                options={[
+                  { value: "river", label: t("templates.dropdown.river") },
+                  { value: "mountain", label: t("templates.dropdown.mountain") },
+                  { value: "coastal", label: t("templates.dropdown.coastal") },
+                ]}
+              />
               <GameTextField multiline rows={2} label={t("templates.field.description")} placeholder={t("templates.placeholder.description")} />
               <GameColorPickerButton value={selectedColor} label={t("templates.colorPicker")} onChange={setSelectedColor} />
               <div className="arc-kit-preview-chip-sample">
@@ -367,8 +477,44 @@ export function GameTemplateGallery() {
             ]}
             pinHint={t("templates.detail.pinHint")}
           />
+
+          <GamePlotTooltipCard
+            title={t("templates.plotTooltip.title")}
+            subtitle={t("templates.plotTooltip.subtitle")}
+            location={t("templates.plotTooltip.location")}
+            route={t("templates.plotTooltip.route")}
+            yields={[
+              { id: "food", label: t("templates.plotTooltip.food"), value: "11", icon: <Leaf size={16} aria-hidden="true" /> },
+              { id: "production", label: t("templates.plotTooltip.production"), value: "4", icon: <Hammer size={16} aria-hidden="true" /> },
+              { id: "water", label: t("templates.plotTooltip.water"), value: "2", icon: <Droplets size={16} aria-hidden="true" /> },
+              { id: "gold", label: t("templates.resource.gold"), value: "3", icon: <Coins size={16} aria-hidden="true" /> },
+            ]}
+            resource={{
+              icon: <Pickaxe size={22} aria-hidden="true" />,
+              name: t("templates.plotTooltip.resource"),
+              description: t("templates.plotTooltip.resourceDescription"),
+            }}
+            ownerLines={[
+              t("templates.plotTooltip.owner"),
+              t("templates.plotTooltip.settlement"),
+            ]}
+            sections={[
+              {
+                title: t("templates.plotTooltip.section.rural"),
+                rows: [t("templates.plotTooltip.improvement"), t("templates.plotTooltip.bonus")],
+              },
+              {
+                title: t("templates.plotTooltip.section.units"),
+                rows: [t("templates.plotTooltip.unit")],
+              },
+            ]}
+          />
         </aside>
       </main>
     </div>
   );
+}
+
+function isColorInputValue(value: string): boolean {
+  return /^#[\da-f]{6}$/i.test(value);
 }

@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Landmark, Trophy } from "lucide-react";
 import type { InAppUiNotification } from "./InAppNotificationTray";
 import { fetchContentEntries, type ContentEntry } from "../lib/api";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppEmptyState } from "./ui/AppSurface";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppEmptyState } from "./templates/AppSurface";
 import { useUiText } from "../i18n/useUiText";
 
 type ElectionResultsAction = Extract<InAppUiNotification["action"], { type: "election-results" }>;

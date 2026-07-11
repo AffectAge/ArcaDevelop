@@ -54,7 +54,7 @@ Read relevant handbook docs before changing a system:
 - `docs/permissions.md`, `docs/audit-log.md`, and `docs/rate-limits.md` for privileged or abuse-prone actions.
 - `docs/concurrency.md`, `docs/observability.md`, and `docs/performance-budgets.md` for mutating or hot-path systems.
 - `docs/data-deletion-lifecycle.md` and `docs/entity-ownership.md` for entity deletion, cleanup, and orphan prevention.
-- `docs/localization.md` and `docs/theme-system.md` for UI text and visual design.
+- `docs/localization.md`, `docs/theme-system.md`, and `apps/client/src/components/templates/DEMO_ELEMENTS.md` for UI text, visual design, and reusable modal/interface components.
 - `docs/modding-authoring.md` and `docs/libraries.md` for scenario authoring and dependencies.
 - `docs/review-checklist.md` when reviewing or auditing changes.
 - `docs/adr/README.md` for major architecture decisions.
@@ -90,7 +90,7 @@ Use this routing before work. `docs/task-routing.md` is the standalone source fo
 
 | Task type | Required guides |
 | --- | --- |
-| UI, modals, HUD, Arcawiki | `apps/client/AGENTS.md`, `docs/programming-standards.md`, `docs/accessibility.md`, `docs/engineering-standards.md` |
+| UI, modals, HUD, Arcawiki | `apps/client/AGENTS.md`, `apps/client/src/components/templates/DEMO_ELEMENTS.md`, `docs/programming-standards.md`, `docs/accessibility.md`, `docs/engineering-standards.md` |
 | Map or movement | `apps/client/AGENTS.md`, `apps/server/AGENTS.md`, `docs/regions-and-provinces.md`, `docs/performance-budgets.md` |
 | Game mechanic | `apps/server/AGENTS.md`, `apps/server/src/mechanics/AGENTS.md`, `packages/shared/AGENTS.md`, `docs/world-model.md`, `docs/testing-strategy.md`, `docs/definition-of-done.md` |
 | Region/scenario data | `apps/server/data/AGENTS.md`, `docs/scenario-region-history.md`, `docs/modding-authoring.md`, `docs/data-deletion-lifecycle.md` |

@@ -4,10 +4,10 @@ import { toast } from "sonner";
 import type { CountryEventRecord, EventEffectSummary, GameEffect, ResourceTotals } from "@arcanorum/shared";
 import { chooseCountryEventOption, fetchCountryEvents, type CountryEventView } from "../lib/api";
 import { formatGameEffectPreview } from "../lib/gameEffectPreview";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppEmptyState } from "./ui/AppSurface";
-import { EventStoryModal } from "./ui/EventStoryModal";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppEmptyState } from "./templates/AppSurface";
+import { EventStoryModal } from "./templates/EventStoryModal";
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 

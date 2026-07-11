@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
-import { AppButton } from "../ui/AppButton";
-import { cn } from "../ui/classNames";
+import { AppButton } from "./AppButton";
+import { cn } from "./classNames";
 import { GameChoiceGrid, type GameChoiceItem } from "./GameChoiceGrid";
 export type { GameChoiceEffect, GameChoiceItem } from "./GameChoiceGrid";
 

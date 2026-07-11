@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
-import { cn } from "../ui/classNames";
+import { cn } from "./classNames";
 
 export type GameNotificationItem = {
   id: string;

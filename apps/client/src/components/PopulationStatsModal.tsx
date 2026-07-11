@@ -6,8 +6,8 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { fetchContentEntries } from "../lib/api";
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
 
 type Props = {
   open: boolean;

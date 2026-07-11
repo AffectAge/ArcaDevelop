@@ -12,9 +12,7 @@ import {
   Hammer,
   Heart,
   LoaderCircle,
-  LogIn,
   Ruler,
-  Server,
   ShieldCheck,
   Sparkles,
   Star,
@@ -28,19 +26,20 @@ import type { ContentEntry } from "../lib/api";
 import type { Country, ServerStatus } from "@arcanorum/shared";
 import { toast } from "sonner";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
-import { Tooltip } from "./Tooltip";
-import { AppButton } from "./ui/AppButton";
+import { AppButton } from "./templates/AppButton";
 import {
   GameChoiceGrid,
   GameColorPickerButton,
   GameDetailPanel,
+  GameDropdownField,
   GameFramePanel,
   GameImageUploadCard,
   GamePreviewChip,
   GamePreviewChipGroup,
-  GameSelectField,
+  GameSwitch,
   GameTabs,
   GameTextField,
+  GameTooltip,
   type GameChoiceItem,
 } from "./templates";
 import { useUiText } from "../i18n/useUiText";
@@ -94,15 +93,13 @@ type Props = {
   onModeChange?: (mode: AuthMode) => void;
 };
 
-const statusMeta: Record<ServerStatus, { labelKey: UiTextKey; cls: string }> = {
-  online: { labelKey: "auth.serverStatus.online", cls: "bg-[var(--arc-color-success-text)]" },
-  offline: { labelKey: "auth.serverStatus.offline", cls: "bg-[var(--arc-color-danger-text)]" },
-  maintenance: { labelKey: "auth.serverStatus.maintenance", cls: "bg-[var(--arc-color-warning-top)]" },
+const statusMeta: Record<ServerStatus, { labelKey: UiTextKey }> = {
+  online: { labelKey: "auth.serverStatus.online" },
+  offline: { labelKey: "auth.serverStatus.offline" },
+  maintenance: { labelKey: "auth.serverStatus.maintenance" },
 };
 
 const AUTH_LABEL_CLASS = "arc-auth-label";
-const AUTH_STATUS_OK_CLASS = "arc-auth-check arc-auth-check--ok";
-const AUTH_STATUS_IDLE_CLASS = "arc-auth-check";
 const REGISTER_STEPS: Array<{ id: RegisterStep; labelKey: UiTextKey }> = [
   { id: "info", labelKey: "auth.step.info" },
   { id: "culture", labelKey: "auth.step.culture" },
@@ -145,7 +142,7 @@ function ImageUploadFrame({
       <div className="arc-auth-upload-heading">
         <label className={AUTH_LABEL_CLASS}>{label}</label>
       </div>
-      <Tooltip content={file ? t("auth.replaceImage") : t("auth.selectImage")}>
+      <GameTooltip content={hint} placement="top">
         <GameImageUploadCard
           label={label}
           clearLabel={t("auth.clearImage")}
@@ -153,7 +150,18 @@ function ImageUploadFrame({
           src={previewUrl}
           onFileChange={onChange}
         />
-      </Tooltip>
+      </GameTooltip>
+    </div>
+  );
+}
+
+function PasswordLengthRule({ valid, label }: { valid: boolean; label: string }) {
+  return (
+    <div className="arc-auth-password-rule" data-state={valid ? "valid" : "idle"}>
+      <span className="arc-auth-password-rule__icon">
+        <Ruler size={14} aria-hidden="true" />
+      </span>
+      <span>{label}</span>
     </div>
   );
 }
@@ -441,18 +449,13 @@ function getFirstMissingRegistrationStep(values: RegisterFormValues): RegisterSt
 
 async function isImageWithinRule(
   file: File,
-  rule: { maxWidth: number; maxHeight: number; ratioWidth: number; ratioHeight: number },
+  rule: { maxWidth: number; maxHeight: number },
 ): Promise<boolean> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
-      const ratio = img.width / Math.max(1, img.height);
-      const targetRatio = rule.ratioWidth / rule.ratioHeight;
-      const ok =
-        img.width <= rule.maxWidth &&
-        img.height <= rule.maxHeight &&
-        Math.abs(ratio - targetRatio) <= 0.01;
+      const ok = img.width <= rule.maxWidth && img.height <= rule.maxHeight;
       URL.revokeObjectURL(url);
       resolve(ok);
     };
@@ -470,7 +473,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
     () =>
       z.object({
         countryId: z.string().min(1, t("auth.chooseCountry")),
-        password: z.string().min(1, t("auth.enterPassword")),
+        password: z.string().min(8, t("auth.min8")),
         rememberMe: z.boolean(),
       }),
     [t],
@@ -679,7 +682,9 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
     ],
     [countries, t],
   );
+  const loginCountryId = loginForm.watch("countryId");
   const loginPassword = loginForm.watch("password");
+  const rememberLogin = loginForm.watch("rememberMe");
   const registerValues = registerForm.watch();
   const registerPassword = registerForm.watch("password");
   const registerColor = registerForm.watch("countryColor");
@@ -737,14 +742,12 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
   const passwordChecks = useMemo(() => {
     return {
       length: loginPassword.length >= 8,
-      complexity: /[A-Z]/.test(loginPassword) && /\d/.test(loginPassword) && /[^A-Za-z0-9]/.test(loginPassword),
     };
   }, [loginPassword]);
 
   const registerPasswordChecks = useMemo(() => {
     return {
       length: registerPassword.length >= 8,
-      complexity: /[A-Z]/.test(registerPassword) && /\d/.test(registerPassword) && /[^A-Za-z0-9]/.test(registerPassword),
     };
   }, [registerPassword]);
 
@@ -814,20 +817,20 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
       return;
     }
 
-    if (flagFile && !(await isImageWithinRule(flagFile, { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 }))) {
+    if (flagFile && !(await isImageWithinRule(flagFile, { maxWidth: 192, maxHeight: 128 }))) {
       toast.error(t("auth.flagInvalid"));
       return;
     }
 
-    if (crestFile && !(await isImageWithinRule(crestFile, { maxWidth: 128, maxHeight: 146, ratioWidth: 64, ratioHeight: 73 }))) {
+    if (crestFile && !(await isImageWithinRule(crestFile, { maxWidth: 128, maxHeight: 146 }))) {
       toast.error(t("auth.crestInvalid"));
       return;
     }
-    if (cultureLogoFile && !(await isImageWithinRule(cultureLogoFile, { maxWidth: 64, maxHeight: 64, ratioWidth: 1, ratioHeight: 1 }))) {
+    if (cultureLogoFile && !(await isImageWithinRule(cultureLogoFile, { maxWidth: 64, maxHeight: 64 }))) {
       toast.error(t("auth.identityLogoInvalid"));
       return;
     }
-    if (religionLogoFile && !(await isImageWithinRule(religionLogoFile, { maxWidth: 64, maxHeight: 64, ratioWidth: 1, ratioHeight: 1 }))) {
+    if (religionLogoFile && !(await isImageWithinRule(religionLogoFile, { maxWidth: 64, maxHeight: 64 }))) {
       toast.error(t("auth.identityLogoInvalid"));
       return;
     }
@@ -899,6 +902,8 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
       transition={{ layout: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } }}
       className={`arc-building-overview-modal arc-auth-modal ${
         authMode === "register" ? "arc-auth-modal--wizard" : ""
+      } ${
+        authMode === "login" ? "arc-auth-modal--login" : ""
       }`}
     >
       <AnimatePresence>
@@ -939,22 +944,6 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
           </motion.div>
         )}
       </AnimatePresence>
-      {authMode === "login" ? (
-        <header className="arc-building-overview-header">
-          <div>
-            <div className="arc-building-overview-title arc-auth-title">ARCANORUM</div>
-            <p>{t("auth.clientVersion")}</p>
-          </div>
-          <div className="arc-auth-server-status" data-status={serverStatus}>
-            <span className="arc-auth-server-status__icon">
-              <Server size={14} aria-hidden="true" />
-            </span>
-            <span className={`arc-auth-status-dot ${statusMeta[serverStatus].cls} ${serverStatus === "online" ? "pulse-status" : ""}`} />
-            {t(statusMeta[serverStatus].labelKey)}
-          </div>
-        </header>
-      ) : null}
-
       {loading ? (
         <div className="arc-building-overview-body">
           <div className="arc-auth-loading-card">
@@ -969,99 +958,90 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
           </div>
         </div>
       ) : authMode === "login" ? (
-        <motion.div layout transition={{ layout: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } }} className="arc-building-overview-body arc-auth-body arc-scrollbar">
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: "easeOut" }}>
-            <GameFramePanel className="arc-auth-login-panel">
-              <form onSubmit={submitLogin} className="arc-auth-login-form">
-                <GameSelectField
-                  label={t("auth.country")}
-                  options={countryOptions}
-                  error={loginForm.formState.errors.countryId?.message}
-                  invalid={Boolean(loginForm.formState.errors.countryId)}
-                  {...loginForm.register("countryId")}
-                />
+        <motion.div layout transition={{ layout: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } }} className="arc-auth-login-shell">
+          <motion.div className="arc-auth-login-card arc-auth-login-panel arc-auth-login-panel--combined" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+              <section className="arc-auth-login-form-pane">
+                <div className="arc-auth-login-brand">
+                  <span className="arc-auth-login-brand__mark">
+                    <ShieldCheck size={19} aria-hidden="true" />
+                  </span>
+                  <span>
+                    <span className="arc-auth-login-brand__name">{t("auth.brandName")}</span>
+                    <span className="arc-auth-login-brand__meta">{t("auth.clientVersion")}</span>
+                  </span>
+                </div>
 
-                <div>
-                  <GameTextField
-                    type="password"
-                    label={t("auth.password")}
-                    error={loginForm.formState.errors.password?.message}
-                    invalid={Boolean(loginForm.formState.errors.password)}
-                    {...loginForm.register("password")}
+                <form onSubmit={submitLogin} className="arc-auth-login-form">
+                  <GameDropdownField
+                    label={t("auth.country")}
+                    options={countryOptions}
+                    value={loginCountryId}
+                    onChange={(nextCountryId) => {
+                      loginForm.setValue("countryId", nextCountryId, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+                    }}
+                    error={loginForm.formState.errors.countryId?.message}
+                    invalid={Boolean(loginForm.formState.errors.countryId)}
                   />
-                  <div className="mt-2 flex gap-2">
-                    <Tooltip
-                      content={
-                        passwordChecks.length
-                          ? t("auth.passwordLengthOk")
-                          : t("auth.passwordLengthNeed")
-                      }
+
+                  <div>
+                    <GameTextField
+                      type="password"
+                      label={t("auth.password")}
+                      error={loginForm.formState.errors.password?.message}
+                      invalid={Boolean(loginForm.formState.errors.password)}
+                      {...loginForm.register("password")}
+                    />
+                    <PasswordLengthRule valid={passwordChecks.length} label={t(passwordChecks.length ? "auth.passwordLengthOk" : "auth.passwordLengthNeed")} />
+                  </div>
+
+                  <div className="arc-auth-remember-row">
+                    <span>{t("auth.rememberMe")}</span>
+                    <GameSwitch
+                      checked={rememberLogin}
+                      onChange={(checked) => {
+                        loginForm.setValue("rememberMe", checked, { shouldDirty: true, shouldTouch: true });
+                      }}
+                      ariaLabel={t("auth.rememberMe")}
+                    />
+                  </div>
+
+                  <AppButton type="submit" disabled={submitting} variant="primary" size="lg" icon={<ShieldCheck size={15} aria-hidden="true" />} className="w-full" sound="action.confirm">
+                    {submitting ? t("auth.loginPending") : t("auth.enterGame")}
+                  </AppButton>
+                  <div className="arc-auth-login-secondary-actions">
+                    <AppButton
+                      type="button"
+                      onClick={() => {
+                        setAuthMode("register");
+                        setRegisterStepWithDirection("info");
+                      }}
+                      variant="primary"
+                      size="lg"
+                      icon={<UserPlus size={15} aria-hidden="true" />}
+                      className="arc-auth-create-country-button w-full"
                     >
-                      <span
-                        className={`${
-                          passwordChecks.length
-                            ? AUTH_STATUS_OK_CLASS
-                            : AUTH_STATUS_IDLE_CLASS
-                        }`}
-                        aria-label={t("auth.passwordLengthAria")}
-                      >
-                        <Ruler size={14} />
-                      </span>
-                    </Tooltip>
-                    <Tooltip
-                      content={
-                        passwordChecks.complexity
-                          ? t("auth.passwordComplexityOk")
-                          : t("auth.passwordComplexityLoginNeed")
-                      }
-                    >
-                      <span
-                        className={`${
-                          passwordChecks.complexity
-                            ? AUTH_STATUS_OK_CLASS
-                            : AUTH_STATUS_IDLE_CLASS
-                        }`}
-                        aria-label={t("auth.passwordComplexityAria")}
-                      >
-                        <Sparkles size={14} />
-                      </span>
-                    </Tooltip>
+                      {t("auth.createCountry")}
+                    </AppButton>
+                    <AppButton type="button" onClick={onOpenCivilopedia} variant="ghost" size="lg" icon={<BookOpen size={15} aria-hidden="true" />} className="w-full">
+                      {t("auth.knowledge")}
+                    </AppButton>
+                  </div>
+                </form>
+              </section>
+
+              <section className="arc-auth-login-welcome-pane">
+                <div className="arc-auth-login-nav">
+                  <div className="arc-auth-server-status" data-status={serverStatus}>
+                    <span className={`arc-auth-status-dot ${serverStatus === "online" ? "pulse-status" : ""}`} aria-label={t(statusMeta[serverStatus].labelKey)} />
                   </div>
                 </div>
 
-                <label className="arc-auth-checkbox arc-auth-kit-checkbox">
-                  <input type="checkbox" {...loginForm.register("rememberMe")} />
-                  <span>{t("auth.rememberMe")}</span>
-                </label>
-
-                <AppButton type="submit" disabled={submitting} variant="primary" size="lg" icon={<ShieldCheck size={15} aria-hidden="true" />} className="w-full" sound="action.confirm">
-                  {submitting ? t("auth.loginPending") : t("auth.enterGame")}
-                </AppButton>
-                <AppButton
-                  type="button"
-                  onClick={() => {
-                    setAuthMode("register");
-                    setRegisterStepWithDirection("info");
-                  }}
-                  variant="secondary"
-                  size="lg"
-                  icon={<UserPlus size={15} aria-hidden="true" />}
-                  className="w-full"
-                >
-                  {t("auth.createCountry")}
-                </AppButton>
-                <AppButton
-                  type="button"
-                  onClick={onOpenCivilopedia}
-                  variant="ghost"
-                  size="lg"
-                  icon={<BookOpen size={15} aria-hidden="true" />}
-                  className="w-full"
-                >
-                  {t("auth.knowledge")}
-                </AppButton>
-              </form>
-            </GameFramePanel>
+                <div className="arc-auth-welcome-copy">
+                  <div className="arc-auth-welcome-kicker">{t("auth.login")}</div>
+                  <h1>{t("auth.welcomeTitle")}</h1>
+                  <p>{t("auth.welcomeDescription")}</p>
+                </div>
+              </section>
           </motion.div>
         </motion.div>
       ) : (
@@ -1199,18 +1179,7 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                             className="mt-3"
                             {...registerForm.register("confirmPassword")}
                           />
-                          <div className="mt-2 flex gap-2">
-                            <Tooltip content={registerPasswordChecks.length ? t("auth.passwordLengthOk") : t("auth.passwordLengthNeed")}>
-                              <span className={`${registerPasswordChecks.length ? AUTH_STATUS_OK_CLASS : AUTH_STATUS_IDLE_CLASS}`} aria-label={t("auth.passwordLengthAria")}>
-                                <Ruler size={14} />
-                              </span>
-                            </Tooltip>
-                            <Tooltip content={registerPasswordChecks.complexity ? t("auth.passwordComplexityOk") : t("auth.passwordComplexityNeed")}>
-                              <span className={`${registerPasswordChecks.complexity ? AUTH_STATUS_OK_CLASS : AUTH_STATUS_IDLE_CLASS}`} aria-label={t("auth.passwordComplexityAria")}>
-                                <Sparkles size={14} />
-                              </span>
-                            </Tooltip>
-                          </div>
+                          <PasswordLengthRule valid={registerPasswordChecks.length} label={t(registerPasswordChecks.length ? "auth.passwordLengthOk" : "auth.passwordLengthNeed")} />
                         </div>
                       </div>
                     </section>

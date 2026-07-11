@@ -1,9 +1,9 @@
 import { Monitor, Save, Sliders } from "lucide-react";
 import { useEffect, useState } from "react";
-import { AppButton } from "./ui/AppButton";
-import { AppToggle } from "./ui/AppForm";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppSection } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppToggle } from "./templates/AppForm";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppSection } from "./templates/AppSurface";
 import { useUiText } from "../i18n/useUiText";
 import type { UiLocale } from "../i18n/uiText";
 

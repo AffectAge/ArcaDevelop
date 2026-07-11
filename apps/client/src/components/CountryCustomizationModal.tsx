@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Coins, Palette, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { fetchPublicCustomizationPrices, type CustomizationPrices, updateOwnCountryCustomization } from "../lib/api";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppSection } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppSection } from "./templates/AppSurface";
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 

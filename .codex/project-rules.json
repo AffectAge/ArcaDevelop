@@ -32,6 +32,7 @@
   "taskRouting": {
     "ui": [
       "apps/client/AGENTS.md",
+      "apps/client/src/components/templates/DEMO_ELEMENTS.md",
       "docs/programming-standards.md",
       "docs/accessibility.md",
       "docs/localization.md",
@@ -220,10 +221,10 @@
     ],
     "scenarioDataRoot": "apps/server/data/scenarios",
     "clientThemeTokenPaths": [
-      "apps/client/src/components/ui"
+      "apps/client/src/components/templates"
     ],
     "clientLocalizedTextPaths": [
-      "apps/client/src/components/ui",
+      "apps/client/src/components/templates",
       "apps/client/src/components/map-hud",
       "apps/client/src/components/ClientSettingsModal.tsx",
       "apps/client/src/components/ColonizationModal.tsx"
@@ -250,8 +251,10 @@
       "laws": "scenarios/<scenarioId>/common/laws/*.json",
       "lawGroups": "scenarios/<scenarioId>/common/lawGroups/*.json",
       "cultures": "scenarios/<scenarioId>/common/cultures/*.json",
+      "cultureGroups": "scenarios/<scenarioId>/common/culture_groups/*.json",
       "resourceCategories": "scenarios/<scenarioId>/common/resourceCategories/*.json",
       "religions": "scenarios/<scenarioId>/common/religions/*.json",
+      "religionGroups": "scenarios/<scenarioId>/common/religion_groups/*.json",
       "ideologies": "scenarios/<scenarioId>/common/ideologies/*.json",
       "professions": "scenarios/<scenarioId>/common/professions/*.json",
       "races": "scenarios/<scenarioId>/common/races/*.json",
@@ -271,6 +274,8 @@
       "shipTypes": "scenarios/<scenarioId>/common/shipTypes/*.json",
       "aircraftTypes": "scenarios/<scenarioId>/common/aircraftTypes/*.json",
       "unitTypes": "scenarios/<scenarioId>/common/unit_types/*.json",
+      "unitSkills": "scenarios/<scenarioId>/common/unit_skills/*.json",
+      "unitSkillTrees": "scenarios/<scenarioId>/common/unit_skill_trees/*.json",
       "aiArchetypes": "scenarios/<scenarioId>/common/ai/archetypes/*.json",
       "aiPersonalities": "scenarios/<scenarioId>/common/ai/personalities/*.json",
       "aiStrategies": "scenarios/<scenarioId>/common/ai/strategies/*.json",

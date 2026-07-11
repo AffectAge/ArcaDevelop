@@ -1,4 +1,4 @@
-import { AppButton } from "../ui/AppButton";
+import { AppButton } from "../templates/AppButton";
 import { useUiText } from "../../i18n/useUiText";
 
 type Props = {

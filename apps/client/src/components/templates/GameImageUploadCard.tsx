@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { ImagePlus, X } from "lucide-react";
-import { cn } from "../ui/classNames";
+import { cn } from "./classNames";
 
 type GameImageUploadCardProps = {
   label: string;

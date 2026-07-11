@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { CheckCircle2 } from "lucide-react";
-import { cn } from "../ui/classNames";
+import { cn } from "./classNames";
 
 export type GameChoiceEffect = {
   id: string;

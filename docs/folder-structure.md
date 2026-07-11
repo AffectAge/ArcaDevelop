@@ -81,7 +81,6 @@ Current migration note: `apps/server/src/runtime` has started with small runtime
 apps/client/src/
   app/
   components/
-    ui/
     templates/
     map-hud/
     feature/
@@ -105,8 +104,7 @@ apps/client/src/
 Folder responsibilities:
 
 - `app`: app shell, providers, high-level orchestration.
-- `components/ui`: reusable generic UI primitives.
-- `components/templates`: reusable game-interface compositions built from `components/ui`, such as choice modals, detail panels, tooltip cards, resource panels, notification lists, tabs, action bars, and demo galleries. Templates must not own gameplay state or server API calls.
+- `components/templates`: reusable game-interface primitives and compositions, such as buttons, fields, modal shells, choice modals, detail panels, tooltip cards, resource panels, notification lists, tabs, action bars, charts, preview chips, and demo galleries. Templates must not own gameplay state or server API calls. `components/templates/DEMO_ELEMENTS.md` is the component catalog agents must use and update when adding reusable UI elements.
 - `components/map-hud`: map overlay controls and HUD components.
 - `components/feature`: temporary bridge for obsolete feature components during migration.
 - `features`: domain-oriented UI modules.

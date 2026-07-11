@@ -2,9 +2,9 @@ import { Globe2, LogOut, ShieldAlert } from "lucide-react";
 import { useUiText } from "../i18n/useUiText";
 import type { MarketCatalogItem, MarketInvite } from "../lib/api";
 import { CustomSelect } from "./CustomSelect";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppEmptyState, AppSection } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppEmptyState, AppSection } from "./templates/AppSurface";
 
 type Props = {
   open: boolean;

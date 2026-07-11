@@ -1,6 +1,6 @@
 import { useRef, type CSSProperties, type ChangeEvent } from "react";
 import { Palette } from "lucide-react";
-import { cn } from "../ui/classNames";
+import { cn } from "./classNames";
 
 type GameColorPickerButtonProps = {
   value: string;
@@ -13,6 +13,7 @@ type GameColorPickerButtonProps = {
 
 export function GameColorPickerButton({ value, label, disabled = false, showValue = true, onChange, className = "" }: GameColorPickerButtonProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const colorInputValue = isColorInputValue(value) ? value : undefined;
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
     onChange(event.currentTarget.value);
@@ -20,7 +21,7 @@ export function GameColorPickerButton({ value, label, disabled = false, showValu
 
   return (
     <span className={cn("arc-kit-color-picker", className)} style={{ "--arc-kit-picker-color": value } as CSSProperties}>
-      <input ref={inputRef} type="color" className="sr-only" value={value} disabled={disabled} aria-label={label} onChange={handleInputChange} />
+      <input ref={inputRef} type="color" className="sr-only" value={colorInputValue} disabled={disabled} aria-label={label} onChange={handleInputChange} />
       <button type="button" className="arc-kit-color-picker__button" disabled={disabled} aria-label={label} onClick={() => inputRef.current?.click()}>
         <span className="arc-kit-color-picker__paint" aria-hidden="true" />
         <Palette size={14} aria-hidden="true" />
@@ -28,4 +29,8 @@ export function GameColorPickerButton({ value, label, disabled = false, showValu
       </button>
     </span>
   );
+}
+
+function isColorInputValue(value: string): boolean {
+  return /^#[\da-f]{6}$/i.test(value);
 }
