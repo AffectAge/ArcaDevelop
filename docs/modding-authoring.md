@@ -312,7 +312,7 @@ Currently supported runtime defines:
   },
   "military": {
     "militaryFormationSpeed": 10,
-    "landDivisionStackLimitPerHex": 4
+    "landUnitStackLimitPerHex": 4
   },
   "registration": {
     "requireAdminApproval": false

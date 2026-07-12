@@ -88,8 +88,8 @@ export type StrategyShellSelectedHexDetails = {
   controller: string;
   movementCost: string;
   tagGroups: Array<{ label: string; value: string }>;
-  divisionStack: string;
-  divisionStackTooltip?: TooltipStructuredContent;
+  unitStack: string;
+  unitStackTooltip?: TooltipStructuredContent;
 };
 
 type BuildingListEntry = {
@@ -1002,7 +1002,7 @@ function HexDetailsPanel({ details }: { details: StrategyShellSelectedHexDetails
         {details.tagGroups.map((group) => (
           <HexDetailsRow key={group.label} label={group.label} value={group.value} />
         ))}
-        <HexDetailsRow label={t("hexMap.divisionStack")} value={details.divisionStack} tooltip={details.divisionStackTooltip} />
+        <HexDetailsRow label={t("hexMap.unitStack")} value={details.unitStack} tooltip={details.unitStackTooltip} />
       </div>
     </section>
   );

@@ -189,5 +189,5 @@ function getAiCandidateIdentity(candidate: AiCandidate): string {
   if (candidate.kind === "diplomacy-contact") {
     return `${candidate.kind}:${candidate.countryId}:${candidate.targetCountryId}`;
   }
-  return `${candidate.kind}:${candidate.countryId}:${candidate.divisionId}:${candidate.targetHexId}`;
+  return "unknown";
 }

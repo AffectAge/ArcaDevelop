@@ -23,7 +23,6 @@ import {
   normalizeStringList,
 } from "./contentNormalizers";
 import type {
-  BattalionContentEntry,
   BuildingContentEntry,
   GameContentEntry,
   GoodContentEntry,
@@ -594,17 +593,6 @@ export const culturePayloadSchema = z.object({
     capacity: z.number().int().min(1).nullable().optional(),
     requiresActive: z.boolean().optional(),
   }).nullable().optional(),
-  manpower: z.number().finite().min(0).optional(),
-  attack: z.number().finite().min(0).optional(),
-  defense: z.number().finite().min(0).optional(),
-  breakthrough: z.number().finite().min(0).optional(),
-  organization: z.number().finite().min(1).optional(),
-  hp: z.number().finite().min(1).optional(),
-  speed: z.number().finite().min(0.1).optional(),
-  supplyUse: z.number().finite().min(0).optional(),
-  trainingCostDucats: z.number().finite().min(0).optional(),
-  trainingCostManpower: z.number().finite().min(0).optional(),
-  equipmentNeeds: z.array(z.object({ goodId: z.string().trim().min(1).max(120), amount: z.number().finite().min(0), affectedByFertility: z.boolean().optional() })).optional(),
   ideologyWeights: z.record(z.string().trim().min(1).max(120), z.number().finite().min(0).max(100)).optional(),
   interestGroupWeights: z.record(z.string().trim().min(1).max(120), z.number().finite().min(0).max(100)).optional(),
   professionWeights: z.record(z.string().trim().min(1).max(120), z.number().finite().min(0).max(100)).optional(),
@@ -662,22 +650,15 @@ export const contentEntryKindSchema = z.enum([
   "decisions",
   "events",
   "journalEntries",
-  "battalions",
-  "shipTypes",
-  "aircraftTypes",
 ]);
 
 export type ContentEntryKind = z.infer<typeof contentEntryKindSchema>;
 export type CulturePayload = z.infer<typeof culturePayloadSchema>;
 
-export function isMilitaryContentKind(kind: ContentEntryKind): kind is "battalions" | "shipTypes" | "aircraftTypes" {
-  return kind === "battalions" || kind === "shipTypes" || kind === "aircraftTypes";
-}
-
 export function sanitizeContentEntryByKind(
   kind: ContentEntryKind,
   payload: CulturePayload,
-): Partial<GameContentEntry & GoodContentEntry & BuildingContentEntry & BattalionContentEntry> {
+): Partial<GameContentEntry & GoodContentEntry & BuildingContentEntry> {
   if (kind === "goods") {
     const basePrice = Number((payload.basePrice ?? DEFAULT_RESOURCE_BASE_PRICE).toFixed(3));
     const minPrice = Number(Math.max(0, payload.minPrice ?? basePrice * 0.1).toFixed(3));
@@ -752,21 +733,6 @@ export function sanitizeContentEntryByKind(
       needsProfile: normalizeCultureNeedsProfile(payload.needsProfile),
       qualificationRequirements: normalizeNumberRecord(payload.qualificationRequirements, 0, 1_000_000),
       qualificationGrowthRules: normalizeNumberRecord(payload.qualificationGrowthRules, -1_000_000, 1_000_000),
-    };
-  }
-  if (isMilitaryContentKind(kind)) {
-    return {
-      manpower: Math.max(0, Math.floor(payload.manpower ?? 1000)),
-      attack: Number(Math.max(0, payload.attack ?? 6).toFixed(3)),
-      defense: Number(Math.max(0, payload.defense ?? 6).toFixed(3)),
-      breakthrough: Number(Math.max(0, payload.breakthrough ?? 2).toFixed(3)),
-      organization: Number(Math.max(1, payload.organization ?? 8).toFixed(3)),
-      hp: Number(Math.max(1, payload.hp ?? 20).toFixed(3)),
-      speed: Number(Math.max(0.1, payload.speed ?? 1).toFixed(3)),
-      supplyUse: Number(Math.max(0, payload.supplyUse ?? 1).toFixed(3)),
-      trainingCostDucats: Number(Math.max(0, payload.trainingCostDucats ?? 10).toFixed(3)),
-      trainingCostManpower: Number(Math.max(0, payload.trainingCostManpower ?? payload.manpower ?? 1000).toFixed(3)),
-      equipmentNeeds: normalizeGoodFlows(payload.equipmentNeeds),
     };
   }
   if (kind === "decisions") {

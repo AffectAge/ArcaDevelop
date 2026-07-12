@@ -4,7 +4,6 @@ import type { UnitSkillId } from "./units";
 export type OrderType =
   | "BUILD"
   | "BUDGET"
-  | "ARMY_MOVE"
   | "COLONIZE"
   | "UNIT_MOVE"
   | "UNIT_ATTACK"
@@ -12,9 +11,8 @@ export type OrderType =
   | "UNIT_SKIP_TURN"
   | "UNIT_SLEEP"
   | "UNIT_WAKE"
-  | "FOUND_CITY"
-  | "EQUIPMENT_VARIANT"
-  | "EQUIPMENT_PRODUCTION_LINE";
+  | "UNIT_FORTIFY"
+  | "FOUND_CITY";
 
 export type OrderBase = {
   id: string;
@@ -36,11 +34,6 @@ export type BudgetOrder = OrderBase & {
   regionId?: string;
 };
 
-export type ArmyMoveOrder = OrderBase & {
-  type: "ARMY_MOVE";
-  targetHexId: HexId;
-};
-
 export type ColonizeOrder = OrderBase & {
   type: "COLONIZE";
   regionId: string;
@@ -49,7 +42,6 @@ export type ColonizeOrder = OrderBase & {
 export type UnitMoveOrder = OrderBase & {
   type: "UNIT_MOVE";
   unitId: string;
-  unitKind: "map" | "civilian" | "division" | "fleet";
   targetHexId: HexId;
   path: HexId[];
 };
@@ -71,19 +63,21 @@ export type UnitPromoteOrder = OrderBase & {
 export type UnitSkipTurnOrder = OrderBase & {
   type: "UNIT_SKIP_TURN";
   unitId: string;
-  unitKind: "map";
 };
 
 export type UnitSleepOrder = OrderBase & {
   type: "UNIT_SLEEP";
   unitId: string;
-  unitKind: "map";
 };
 
 export type UnitWakeOrder = OrderBase & {
   type: "UNIT_WAKE";
   unitId: string;
-  unitKind: "map";
+};
+
+export type UnitFortifyOrder = OrderBase & {
+  type: "UNIT_FORTIFY";
+  unitId: string;
 };
 
 export type FoundCityOrder = OrderBase & {
@@ -94,18 +88,9 @@ export type FoundCityOrder = OrderBase & {
   targetHexId: HexId;
 };
 
-export type EquipmentVariantOrder = OrderBase & {
-  type: "EQUIPMENT_VARIANT";
-};
-
-export type EquipmentProductionLineOrder = OrderBase & {
-  type: "EQUIPMENT_PRODUCTION_LINE";
-};
-
 export type Order =
   | BuildOrder
   | BudgetOrder
-  | ArmyMoveOrder
   | ColonizeOrder
   | UnitMoveOrder
   | UnitAttackOrder
@@ -113,9 +98,8 @@ export type Order =
   | UnitSkipTurnOrder
   | UnitSleepOrder
   | UnitWakeOrder
-  | FoundCityOrder
-  | EquipmentVariantOrder
-  | EquipmentProductionLineOrder;
+  | UnitFortifyOrder
+  | FoundCityOrder;
 export type OrderInput = Order extends infer T ? T extends Order ? Omit<T, "id" | "createdAt"> : never : never;
 
 export type OrderDelta = {

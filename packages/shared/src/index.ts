@@ -3,7 +3,6 @@ export * from "./contracts/resource-ledger";
 export * from "./contracts/diplomacy";
 export * from "./contracts/content";
 export * from "./contracts/orders";
-export * from "./contracts/military";
 export * from "./contracts/unit-equipment";
 export * from "./contracts/units";
 export * from "./contracts/turn-actions";

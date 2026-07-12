@@ -59,6 +59,7 @@ export function resolveMapUnitMoveOrder(params: {
   getNeighborHexIds?: (hexId: HexId) => HexId[];
   getHexMovementCost?: (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number;
   getHex?: (hexId: HexId) => { id: string; passable?: boolean; waterKind?: string | null } | null | undefined;
+  getEnemyZoneOfControlHexIds?: (countryId: string) => ReadonlySet<HexId>;
   news?: EventLogEntry[];
 }): MapUnitMoveOrderResolution {
   const reject = (reason: string): MapUnitMoveOrderResolution => ({
@@ -66,7 +67,6 @@ export function resolveMapUnitMoveOrder(params: {
     rejectedOrder: { playerId: params.playerId, reason, tempOrderId: params.order.id },
   });
   if (params.order.type !== "UNIT_MOVE") return reject("INVALID_ORDER_TYPE");
-  if (params.order.unitKind !== "map") return reject("UNIT_MOVE_KIND_UNSUPPORTED");
   params.worldBase.unitsById ??= {};
   const unit = params.worldBase.unitsById[params.order.unitId];
   if (!unit || unit.countryId !== params.order.countryId) return reject("MAP_UNIT_NOT_FOUND");
@@ -102,6 +102,7 @@ export function resolveMapUnitMoveOrder(params: {
     turnId: params.turnId,
     news: params.news,
     getHexMovementCost: params.getHexMovementCost,
+    getEnemyZoneOfControlHexIds: params.getEnemyZoneOfControlHexIds,
   });
   if (moved) params.movedUnitIds.add(unit.id);
   return { moved, rejectedOrder: null };
@@ -185,20 +186,28 @@ export function resolveMapUnitWaitOrder(params: {
     accepted: false,
     rejectedOrder: { playerId: params.playerId, reason, tempOrderId: params.order.id },
   });
-  if (params.order.type !== "UNIT_SKIP_TURN" && params.order.type !== "UNIT_SLEEP" && params.order.type !== "UNIT_WAKE") return reject("INVALID_ORDER_TYPE");
-  if (params.order.unitKind !== "map") return reject("UNIT_WAIT_KIND_UNSUPPORTED");
+  if (
+    params.order.type !== "UNIT_SKIP_TURN" &&
+    params.order.type !== "UNIT_SLEEP" &&
+    params.order.type !== "UNIT_WAKE" &&
+    params.order.type !== "UNIT_FORTIFY"
+  ) return reject("INVALID_ORDER_TYPE");
   params.worldBase.unitsById ??= {};
   const unit = params.worldBase.unitsById[params.order.unitId];
   if (!unit || unit.countryId !== params.order.countryId) return reject("MAP_UNIT_NOT_FOUND");
   if (unit.status === "captured" || unit.status === "destroyed") return reject("MAP_UNIT_UNAVAILABLE");
-  if (params.order.type === "UNIT_WAKE" && unit.status !== "sleeping") return reject("MAP_UNIT_NOT_SLEEPING");
+  if (params.order.type === "UNIT_WAKE" && unit.status !== "sleeping" && unit.status !== "fortified") return reject("MAP_UNIT_NOT_SLEEPING");
   unit.path = [];
   unit.targetHexId = null;
   if (params.order.type !== "UNIT_WAKE") {
     unit.movementPoints = 0;
   }
   unit.lastActionTurnId = params.turnId;
-  unit.status = params.order.type === "UNIT_SLEEP" ? "sleeping" : "idle";
+  unit.status = params.order.type === "UNIT_SLEEP"
+    ? "sleeping"
+    : params.order.type === "UNIT_FORTIFY"
+      ? "fortified"
+      : "idle";
   params.worldBase.unitsById[unit.id] = unit;
   params.movedUnitIds.add(unit.id);
   return { accepted: true, rejectedOrder: null };
@@ -210,6 +219,8 @@ export function resolveMapUnitPromoteOrder(params: {
   worldBase: MapUnitWorldState;
   unitTypes: readonly UnitTypeDefinition[];
   unitSkillTrees: readonly UnitSkillTreeDefinition[];
+  turnId: number;
+  movedUnitIds: Set<string>;
 }): MapUnitPromoteOrderResolution {
   const reject = (reason: string): MapUnitPromoteOrderResolution => ({
     accepted: false,
@@ -221,6 +232,7 @@ export function resolveMapUnitPromoteOrder(params: {
   const unit = params.worldBase.unitsById[order.unitId];
   if (!unit || unit.countryId !== order.countryId) return reject("MAP_UNIT_NOT_FOUND");
   if (unit.status === "captured" || unit.status === "destroyed") return reject("MAP_UNIT_UNAVAILABLE");
+  if (params.movedUnitIds.has(unit.id) || unit.lastActionTurnId === params.turnId) return reject("MAP_UNIT_ALREADY_ACTED");
   const unitType = getUnitType(params.unitTypes, unit.unitTypeId);
   if (!unitType?.unitSkillTreeId) return reject("UNIT_PROMOTE_TREE_NOT_FOUND");
   const tree = params.unitSkillTrees.find((candidate) => candidate.id === unitType.unitSkillTreeId);
@@ -243,7 +255,12 @@ export function resolveMapUnitPromoteOrder(params: {
   }
   unit.skillIds = [...currentSkills, ...order.skillIds];
   unit.completedChoiceGroupIds = [...completedGroups, group.id];
+  unit.movementPoints = 0;
+  unit.lastActionTurnId = params.turnId;
+  unit.path = [];
+  unit.targetHexId = null;
   params.worldBase.unitsById[unit.id] = unit;
+  params.movedUnitIds.add(unit.id);
   return { accepted: true, rejectedOrder: null };
 }
 
@@ -254,9 +271,17 @@ export function advanceStoredMapUnitRoutesTurn(params: {
   movedUnitIds: Set<string>;
   news?: EventLogEntry[];
   getHexMovementCost?: (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number;
+  getEnemyZoneOfControlHexIds?: (countryId: string) => ReadonlySet<HexId>;
 }): void {
   for (const unit of Object.values(params.worldBase.unitsById ?? {})) {
-    if (params.movedUnitIds.has(unit.id) || unit.status === "sleeping" || unit.status === "captured" || unit.status === "destroyed" || unit.path.length === 0) continue;
+    if (
+      params.movedUnitIds.has(unit.id) ||
+      unit.status === "sleeping" ||
+      unit.status === "fortified" ||
+      unit.status === "captured" ||
+      unit.status === "destroyed" ||
+      unit.path.length === 0
+    ) continue;
     const unitType = getUnitType(params.unitTypes, unit.unitTypeId);
     if (!unitType) continue;
     advanceMapUnitAlongRoute({
@@ -267,6 +292,7 @@ export function advanceStoredMapUnitRoutesTurn(params: {
       turnId: params.turnId,
       news: params.news,
       getHexMovementCost: params.getHexMovementCost,
+      getEnemyZoneOfControlHexIds: params.getEnemyZoneOfControlHexIds,
     });
   }
 }
@@ -379,10 +405,12 @@ function advanceMapUnitAlongRoute(params: {
   turnId: number;
   news?: EventLogEntry[];
   getHexMovementCost?: (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number;
+  getEnemyZoneOfControlHexIds?: (countryId: string) => ReadonlySet<HexId>;
 }): boolean {
-  const movementBudget = Math.max(1, Math.floor(params.unitType.stats.movement || params.unit.movementPoints || 1));
-  let budget = movementBudget;
+  let budget = Math.max(0, Math.floor(params.unit.movementPoints));
+  if (budget <= 0) return false;
   const remainingRoute = [...params.unit.path];
+  const enemyZoneOfControl = params.getEnemyZoneOfControlHexIds?.(params.unit.countryId) ?? new Set<HexId>();
   let moved = false;
   while (remainingRoute.length > 0) {
     const nextHexId = remainingRoute[0]!;
@@ -393,6 +421,7 @@ function advanceMapUnitAlongRoute(params: {
     params.unit.hexId = nextHexId;
     remainingRoute.shift();
     moved = true;
+    if (enemyZoneOfControl.has(nextHexId) && remainingRoute.length > 0) break;
   }
   params.unit.path = remainingRoute;
   params.unit.targetHexId = remainingRoute.length > 0 ? remainingRoute[remainingRoute.length - 1]! : null;

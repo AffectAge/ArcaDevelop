@@ -121,9 +121,11 @@ type Props = {
   apiBase: string;
   scenarioId?: string | null;
   focusHexRequest?: { hexId: HexId; nonce: number } | null;
-  onQueueArmyMoveOrder?: (divisionId: string, hexId: string, path?: string[]) => void;
-  onQueueFleetMoveOrder?: (fleetId: string, hexId: string, path?: string[]) => void;
-  onQueueUnitAttackOrder?: (divisionId: string, targetHexId: HexId, targetUnitId?: string | null) => void;
+  unitCommandRequest?: { unitId: string; mode: "move" | "attack" | "foundCity"; nonce: number } | null;
+  selectedCommandUnitId?: string | null;
+  onSelectedCommandUnitChange?: (unitId: string | null) => void;
+  onQueueArmyMoveOrder?: (unitId: string, hexId: string, path?: string[]) => void;
+  onQueueUnitAttackOrder?: (unitId: string, targetHexId: HexId, targetUnitId?: string | null) => void;
   onQueueCivilianUnitMoveOrder?: (unitId: string, fromHexId: HexId, targetHexId: HexId, path?: HexId[]) => void;
   onFoundCityOrder?: (civilianUnitId: string, hexId: HexId, regionId: string, cityName: string, cultureId?: string | null) => void;
   onHexSelectionChange?: (details: StrategyShellSelectedHexDetails | null) => void;
@@ -138,7 +140,6 @@ type Props = {
   colonizationIconUrl?: string | null;
   ducatsIconUrl?: string | null;
   maxActiveColonizations?: number;
-  landDivisionStackLimitPerHex?: number;
   hexRenameDucatsCost?: number;
   countryColorById?: Record<string, string>;
   countryNameById?: Record<string, string>;
@@ -214,9 +215,7 @@ type FoundCityConfirmTarget = {
 
 type SelectedMapUnit =
   | { kind: "map"; unitId: string; fromHexId: HexId }
-  | { kind: "civilian"; unitId: string; fromHexId: HexId }
-  | { kind: "division"; divisionId: string; fromHexId: HexId }
-  | { kind: "fleet"; fleetId: string; fromHexId: HexId };
+  | { kind: "civilian"; unitId: string; fromHexId: HexId };
 
 type PointerGesture = {
   startX: number;
@@ -350,8 +349,10 @@ export function MapView({
   apiBase,
   scenarioId,
   focusHexRequest = null,
+  unitCommandRequest = null,
+  selectedCommandUnitId = null,
+  onSelectedCommandUnitChange,
   onQueueArmyMoveOrder,
-  onQueueFleetMoveOrder,
   onQueueUnitAttackOrder,
   onQueueCivilianUnitMoveOrder,
   onFoundCityOrder,
@@ -367,7 +368,6 @@ export function MapView({
   colonizationIconUrl: _colonizationIconUrl,
   ducatsIconUrl: _ducatsIconUrl,
   maxActiveColonizations: _maxActiveColonizations,
-  landDivisionStackLimitPerHex = 4,
   hexRenameDucatsCost: _hexRenameDucatsCost,
   countryColorById,
   countryNameById,
@@ -492,9 +492,8 @@ export function MapView({
   const [selectedMapUnit, setSelectedMapUnit] = useState<SelectedMapUnit | null>(null);
   const [expandedMapBuildingId, setExpandedMapBuildingId] = useState<string | null>(null);
   const [civilianMoveSelection, setCivilianMoveSelection] = useState<{ unitId: string; fromHexId: HexId } | null>(null);
-  const [divisionMoveSelection, setDivisionMoveSelection] = useState<{ divisionId: string; fromHexId: HexId } | null>(null);
-  const [fleetMoveSelection, setFleetMoveSelection] = useState<{ fleetId: string; fromHexId: HexId } | null>(null);
-  const [divisionAttackSelection, setDivisionAttackSelection] = useState<{ divisionId: string; fromHexId: HexId } | null>(null);
+  const [divisionMoveSelection, setDivisionMoveSelection] = useState<{ unitId: string; fromHexId: HexId } | null>(null);
+  const [divisionAttackSelection, setDivisionAttackSelection] = useState<{ unitId: string; fromHexId: HexId } | null>(null);
   const [foundCityConfirmTarget, setFoundCityConfirmTarget] = useState<FoundCityConfirmTarget | null>(null);
   const [foundCityNameDraft, setFoundCityNameDraft] = useState("");
   const [mapBuildingBusyAction, setMapBuildingBusyAction] = useState<string | null>(null);
@@ -654,10 +653,6 @@ export function MapView({
     if (!divisionMoveSelection || !hoverState?.tile || divisionMoveSelection.fromHexId === hoverState.tile.id) return [];
     return getCachedPreviewPath("land", divisionMoveSelection.fromHexId, hoverState.tile.id);
   }, [divisionMoveSelection, getCachedPreviewPath, hoverState?.tile]);
-  const fleetMoveHoverPath = useMemo(() => {
-    if (!fleetMoveSelection || !hoverState?.tile || fleetMoveSelection.fromHexId === hoverState.tile.id) return [];
-    return getCachedPreviewPath("water", fleetMoveSelection.fromHexId, hoverState.tile.id);
-  }, [fleetMoveSelection, getCachedPreviewPath, hoverState?.tile]);
   const corridorFixedPreviewPath = useMemo(() => {
     if (!corridorPlacement || corridorPlacement.points.length < 2) return [];
     const result: HexId[] = [];
@@ -689,41 +684,24 @@ export function MapView({
     () => new Map(Object.values(worldBase?.unitsById ?? {}).map((unit) => [unit.id, unit] as const)),
     [worldBase?.unitsById],
   );
-  const divisionById = useMemo(
-    () => new Map(Object.values(worldBase?.divisionsById ?? {}).map((division) => [division.id, division] as const)),
-    [worldBase?.divisionsById],
-  );
-  const fleetById = useMemo(
-    () => new Map(Object.values(worldBase?.fleetsById ?? {}).map((fleet) => [fleet.id, fleet] as const)),
-    [worldBase?.fleetsById],
-  );
-  const pendingDivisionActionIds = useMemo(() => {
-    const byPlayer = ordersByTurn.get(turnId);
-    const ids = new Set<string>();
-    if (!byPlayer) return ids;
-    for (const orders of byPlayer.values()) {
-      for (const order of orders) {
-        if (order.type === "UNIT_MOVE" && order.unitKind === "division") ids.add(order.unitId);
-        if (order.type === "UNIT_ATTACK") ids.add(order.attackerUnitId);
-        if (order.type === "ARMY_MOVE" && typeof order.payload?.divisionId === "string") ids.add(order.payload.divisionId);
-      }
-    }
-    return ids;
-  }, [ordersByTurn, turnId]);
-  const pendingFleetActionIds = useMemo(() => {
-    const byPlayer = ordersByTurn.get(turnId);
-    const ids = new Set<string>();
-    if (!byPlayer) return ids;
-    for (const orders of byPlayer.values()) {
-      for (const order of orders) {
-        if (order.type === "UNIT_MOVE" && order.unitKind === "fleet") ids.add(order.unitId);
-      }
-    }
-    return ids;
-  }, [ordersByTurn, turnId]);
   const cityHexIds = useMemo(() => {
     return buildCityHexIdSet(worldBase);
   }, [worldBase]);
+  const selectedReachableHexIds = useMemo(() => {
+    if (selectedMapUnit?.kind !== "map") return new Set<HexId>();
+    const unit = mapUnitById.get(selectedMapUnit.unitId) ?? null;
+    if (!unit || unit.status === "destroyed" || unit.status === "captured") return new Set<HexId>();
+    const budget = Math.max(0, Number(unit.movementPoints) || 0);
+    if (budget <= 0) return new Set<HexId>();
+    return calculateReachableHexIds({
+      mapArtifact,
+      fromHexId: selectedMapUnit.fromHexId,
+      budget,
+      tileById,
+      cityHexIds,
+      modifiers: activeCountryModifiers,
+    });
+  }, [activeCountryModifiers, cityHexIds, mapArtifact, mapUnitById, selectedMapUnit, tileById]);
   const civilianMovePreviewCost = useMemo(
     () => calculateHexPathMovementCost(civilianMoveHoverPath, tileById, cityHexIds, activeCountryModifiers),
     [activeCountryModifiers, cityHexIds, civilianMoveHoverPath, tileById],
@@ -891,16 +869,6 @@ export function MapView({
     }
     return map;
   }, [pendingFoundCityUnitIds, worldBase?.civilianUnitsById]);
-  const divisionsByHexId = useMemo(() => {
-    const map = new Map<HexId, NonNullable<WorldBase["divisionsById"][string]>[]>();
-    for (const division of Object.values(worldBase?.divisionsById ?? {})) {
-      if ((division.kind ?? "land") !== "land") continue;
-      const list = map.get(division.hexId) ?? [];
-      list.push(division);
-      map.set(division.hexId, list);
-    }
-    return map;
-  }, [worldBase?.divisionsById]);
   const mapUnitsByHexId = useMemo(() => {
     const map = new Map<HexId, NonNullable<NonNullable<WorldBase["unitsById"]>[string]>[]>();
     for (const unit of Object.values(worldBase?.unitsById ?? {})) {
@@ -911,15 +879,6 @@ export function MapView({
     }
     return map;
   }, [worldBase?.unitsById]);
-  const fleetsByHexId = useMemo(() => {
-    const map = new Map<HexId, NonNullable<WorldBase["fleetsById"][string]>[]>();
-    for (const fleet of Object.values(worldBase?.fleetsById ?? {})) {
-      const list = map.get(fleet.hexId) ?? [];
-      list.push(fleet);
-      map.set(fleet.hexId, list);
-    }
-    return map;
-  }, [worldBase?.fleetsById]);
 
   useEffect(() => {
     terrainMeshRendererRef.current?.setCityHexIds(cityHexIds);
@@ -1151,11 +1110,7 @@ export function MapView({
       const controllerId = worldBase?.regionController[tile.regionId] ?? ownerId;
       const siteFeatures = mapFeaturesByHexId.get(tile.id) ?? [];
       const deposit = resourceDepositsByHexId.get(tile.id) ?? null;
-      const divisions = divisionsByHexId.get(tile.id) ?? [];
-      const stackLimit = Math.max(1, Math.floor(Number(landDivisionStackLimitPerHex) || 4));
-      const stackCount = authCountryId
-        ? divisions.filter((division) => division.countryId === authCountryId && (division.kind ?? "land") === "land").length
-        : divisions.filter((division) => (division.kind ?? "land") === "land").length;
+      const stackCount = (mapUnitsByHexId.get(tile.id) ?? []).filter((unit) => !authCountryId || unit.countryId === authCountryId).length;
       return {
         id: tile.id,
         name: worldBase?.hexNameById[tile.id] ?? t("hexMap.hexTitle", { id: tile.id.replace("hex:", "") }),
@@ -1168,19 +1123,18 @@ export function MapView({
         controller: controllerId ? t("hexMap.ownerCountry", { country: controllerId }) : t("hexMap.ownerNone"),
         movementCost: tile.movementCost.toFixed(1),
         tagGroups: resolveHexTagGroupRows(tile, t),
-        divisionStack: t("hexMap.divisionStackValue", { current: stackCount, max: stackLimit }),
-        divisionStackTooltip: {
-          title: t("hexMap.divisionStack"),
-          description: t("hexMap.divisionStackTooltip", { current: stackCount, max: stackLimit }),
-          tone: stackCount >= stackLimit ? "warning" : "info",
+        unitStack: t("hexMap.unitStackValue", { current: stackCount, max: 2 }),
+        unitStackTooltip: {
+          title: t("hexMap.unitStack"),
+          description: t("hexMap.unitStackTooltip", { current: stackCount, max: 2 }),
+          tone: stackCount >= 2 ? "warning" : "info",
         },
       };
     },
     [
       authCountryId,
       cityHexIds,
-      divisionsByHexId,
-      landDivisionStackLimitPerHex,
+      mapUnitsByHexId,
       mapFeaturesByHexId,
       resourceDepositsByHexId,
       t,
@@ -1199,7 +1153,6 @@ export function MapView({
       const siteFeatures = mapFeaturesByHexId.get(tile.id) ?? [];
       const deposit = resourceDepositsByHexId.get(tile.id) ?? null;
       const building = hexBuildingTooltipByHexId.get(tile.id) ?? null;
-      const divisions = divisionsByHexId.get(tile.id) ?? [];
       const mapUnits = mapUnitsByHexId.get(tile.id) ?? [];
       const movementTags = hasCity ? [...tile.mapTags, "city"] : tile.mapTags;
       const movementCost = resolveClientHexMovementCost(tile.movementCost, movementTags, activeCountryModifiers);
@@ -1225,12 +1178,12 @@ export function MapView({
       }
 
       const unitRows: GamePlotTooltipRow[] = [];
-      const unitCount = divisions.length + mapUnits.length;
+      const unitCount = mapUnits.length;
       if (unitCount > 0) {
         unitRows.push({
           id: "units",
           icon: <Shield size={13} aria-hidden="true" />,
-          label: t("hexMap.divisionStack"),
+          label: t("hexMap.unitStack"),
           value: unitCount,
           tone: "warning",
         });
@@ -1326,7 +1279,6 @@ export function MapView({
       activeCountryModifiers,
       activeLensDescriptor.labelKey,
       cityHexIds,
-      divisionsByHexId,
       hexBuildingTooltipByHexId,
       mapFeaturesByHexId,
       mapUnitsByHexId,
@@ -1352,7 +1304,6 @@ export function MapView({
         setSelectedMapUnit(null);
         setCivilianMoveSelection(null);
         setDivisionMoveSelection(null);
-        setFleetMoveSelection(null);
         setDivisionAttackSelection(null);
         return;
       }
@@ -1408,56 +1359,38 @@ export function MapView({
       }
       if (divisionMoveSelection) {
         if (tile.id === divisionMoveSelection.fromHexId) {
-          setMapActionNotice(t("hexMap.divisionMoveSelectTarget"));
+          setMapActionNotice(t("hexMap.unitMoveSelectTarget"));
           return;
         }
         const path = getCachedPreviewPath("land", divisionMoveSelection.fromHexId, tile.id);
         if (path.length < 2) {
-          setMapActionNotice(t("hexMap.divisionMoveNoPath"));
+          setMapActionNotice(t("hexMap.unitMoveNoPath"));
           return;
         }
-        onQueueArmyMoveOrder?.(divisionMoveSelection.divisionId, tile.id, path);
+        onQueueArmyMoveOrder?.(divisionMoveSelection.unitId, tile.id, path);
         setDivisionMoveSelection(null);
         setSelectedMapUnit(null);
-        setMapActionNotice(t("hexMap.divisionMoveOrderSent"));
-        return;
-      }
-      if (fleetMoveSelection) {
-        if (tile.id === fleetMoveSelection.fromHexId) {
-          setMapActionNotice(t("hexMap.fleetMoveSelectTarget"));
-          return;
-        }
-        const path = getCachedPreviewPath("water", fleetMoveSelection.fromHexId, tile.id);
-        if (path.length < 2) {
-          setMapActionNotice(t("hexMap.fleetMoveNoPath"));
-          return;
-        }
-        onQueueFleetMoveOrder?.(fleetMoveSelection.fleetId, tile.id, path);
-        setFleetMoveSelection(null);
-        setSelectedMapUnit(null);
-        setMapActionNotice(t("hexMap.fleetMoveOrderSent"));
+        setMapActionNotice(t("hexMap.unitMoveOrderSent"));
         return;
       }
       if (divisionAttackSelection) {
         if (tile.id === divisionAttackSelection.fromHexId) {
-          setMapActionNotice(t("hexMap.divisionAttackSelectTarget"));
+          setMapActionNotice(t("hexMap.unitAttackSelectTarget"));
           return;
         }
         const path = findHexPath(mapArtifact, divisionAttackSelection.fromHexId, tile.id, 2, tileById);
-        const attacker = divisionById.get(divisionAttackSelection.divisionId) ?? mapUnitById.get(divisionAttackSelection.divisionId) ?? null;
-        const targetDivisions = divisionsByHexId.get(tile.id) ?? [];
+        const attacker = mapUnitById.get(divisionAttackSelection.unitId) ?? null;
         const targetMapUnits = mapUnitsByHexId.get(tile.id) ?? [];
-        const enemyDivision = targetDivisions.find((division) => attacker && division.countryId !== attacker.countryId) ?? null;
         const enemyMapUnit = targetMapUnits.find((unit) => attacker && unit.countryId !== attacker.countryId) ?? null;
         const targetController = worldBase?.hexOwner?.[tile.id] ?? worldBase?.regionController?.[tile.regionId] ?? worldBase?.regionOwner?.[tile.regionId] ?? null;
         const attackableByControl = Boolean(attacker && targetController && targetController !== attacker.countryId);
-        if (path.length !== 2 || !attacker || (!enemyDivision && !enemyMapUnit && !attackableByControl)) {
-          setMapActionNotice(t("hexMap.divisionAttackNoTarget"));
+        if (path.length !== 2 || !attacker || (!enemyMapUnit && !attackableByControl)) {
+          setMapActionNotice(t("hexMap.unitAttackNoTarget"));
           return;
         }
-        onQueueUnitAttackOrder?.(divisionAttackSelection.divisionId, tile.id, enemyMapUnit?.id ?? enemyDivision?.id ?? null);
+        onQueueUnitAttackOrder?.(divisionAttackSelection.unitId, tile.id, enemyMapUnit?.id ?? null);
         setDivisionAttackSelection(null);
-        setMapActionNotice(t("hexMap.divisionAttackOrderSent"));
+        setMapActionNotice(t("hexMap.unitAttackOrderSent"));
         return;
       }
       if (mapBuildingItemByHexId.has(tile.id)) {
@@ -1479,10 +1412,7 @@ export function MapView({
       colonizerPlacement?.active,
       corridorPlacement,
       divisionAttackSelection,
-      divisionById,
       divisionMoveSelection,
-      divisionsByHexId,
-      fleetMoveSelection,
       hexBuildPlacement,
       mapBuildingItemByHexId,
       mapArtifact,
@@ -1490,7 +1420,6 @@ export function MapView({
       mapUnitsByHexId,
       onQueueArmyMoveOrder,
       onQueueCivilianUnitMoveOrder,
-      onQueueFleetMoveOrder,
       onQueueUnitAttackOrder,
       onSelectCorridorPlacementPoint,
       onOpenSelectedHexWorkspace,
@@ -1538,25 +1467,10 @@ export function MapView({
         const center = axialToPixel(tile, size);
         addCandidate({ kind: "civilian", unitId: unit.id, fromHexId: tile.id }, center.x + size * 0.22, center.y - size * 0.28, Math.max(size * 0.18, Math.min(size * 0.34, 12 / camera.scale)), 0);
       }
-      for (const division of Object.values(worldBase?.divisionsById ?? {})) {
-        if (division.countryId !== authCountryId || (division.kind ?? "land") !== "land") continue;
-        const tile = tileById.get(division.hexId);
-        if (!tile) continue;
-        const center = axialToPixel(tile, size);
-        addCandidate({ kind: "division", divisionId: division.id, fromHexId: tile.id }, center.x, center.y + size * 0.1, Math.max(size * 0.24, Math.min(size * 0.46, 18 / camera.scale)), 1);
-      }
-      for (const fleet of Object.values(worldBase?.fleetsById ?? {})) {
-        if (fleet.countryId !== authCountryId) continue;
-        const tile = tileById.get(fleet.hexId);
-        if (!tile) continue;
-        const center = axialToPixel(tile, size);
-        addCandidate({ kind: "fleet", fleetId: fleet.id, fromHexId: tile.id }, center.x, center.y + size * 0.12, Math.max(size * 0.24, Math.min(size * 0.46, 18 / camera.scale)), 2);
-      }
-
       candidates.sort((left, right) => left.distance - right.distance || left.priority - right.priority);
       return candidates[0]?.unit ?? null;
     },
-    [authCountryId, camera, mapArtifact.settings.hexSize, tileById, worldBase?.civilianUnitsById, worldBase?.divisionsById, worldBase?.fleetsById, worldBase?.unitsById],
+    [authCountryId, camera, mapArtifact.settings.hexSize, tileById, worldBase?.civilianUnitsById, worldBase?.unitsById],
   );
 
   const selectMapUnitForMovement = useCallback(
@@ -1564,20 +1478,99 @@ export function MapView({
       setSelectedMapUnit(unit);
       setSelectedBuildingPopoverHexId(null);
       setExpandedMapBuildingId(null);
-      setCivilianMoveSelection(unit.kind === "civilian" ? { unitId: unit.unitId, fromHexId: unit.fromHexId } : null);
-      setDivisionMoveSelection(unit.kind === "division" ? { divisionId: unit.divisionId, fromHexId: unit.fromHexId } : unit.kind === "map" ? { divisionId: unit.unitId, fromHexId: unit.fromHexId } : null);
-      setFleetMoveSelection(unit.kind === "fleet" ? { fleetId: unit.fleetId, fromHexId: unit.fromHexId } : null);
+      setCivilianMoveSelection(null);
+      setDivisionMoveSelection(null);
       setDivisionAttackSelection(null);
-      setMapActionNotice(
-        unit.kind === "civilian"
-          ? t("hexMap.civilianMoveSelectTarget")
-          : unit.kind === "division" || unit.kind === "map"
-            ? t("hexMap.divisionMoveSelectTarget")
-            : t("hexMap.fleetMoveSelectTarget"),
-      );
+      onSelectedCommandUnitChange?.(unit.unitId);
+      setMapActionNotice(t("hexMap.unitSelected"));
     },
-    [t],
+    [onSelectedCommandUnitChange, t],
   );
+
+  const startUnitCommandMode = useCallback(
+    (unitId: string, mode: "move" | "attack" | "foundCity") => {
+      const mapUnit = mapUnitById.get(unitId) ?? null;
+      const civilianUnit = civilianUnitById.get(unitId) ?? null;
+      const hexId = mapUnit?.hexId ?? civilianUnit?.hexId ?? null;
+      const tile = hexId ? tileById.get(hexId) ?? null : null;
+      if (!tile) return;
+      const selection: SelectedMapUnit = mapUnit ? { kind: "map", unitId, fromHexId: tile.id } : { kind: "civilian", unitId, fromHexId: tile.id };
+      setSelectedMapUnit(selection);
+      onSelectedCommandUnitChange?.(unitId);
+      setSelectedBuildingPopoverHexId(null);
+      setExpandedMapBuildingId(null);
+      setCivilianMoveSelection(null);
+      setDivisionMoveSelection(null);
+      setDivisionAttackSelection(null);
+      if (mode === "move") {
+        if (selection.kind === "civilian") setCivilianMoveSelection({ unitId, fromHexId: tile.id });
+        else setDivisionMoveSelection({ unitId, fromHexId: tile.id });
+        setMapActionNotice(selection.kind === "civilian" ? t("hexMap.civilianMoveSelectTarget") : t("hexMap.unitMoveSelectTarget"));
+        return;
+      }
+      if (mode === "attack" && selection.kind === "map") {
+        setDivisionAttackSelection({ unitId, fromHexId: tile.id });
+        setMapActionNotice(t("hexMap.unitAttackSelectTarget"));
+        return;
+      }
+      if (mode === "foundCity") {
+        const foundingUnit = civilianUnit ?? mapUnit;
+        const isColonizer = civilianUnit?.type === "colonizer" || mapUnit?.unitTypeId === "unit:colonizer";
+        const neutral = !worldBase?.regionOwner[tile.regionId] && !worldBase?.regionController[tile.regionId];
+        if (!foundingUnit || !isColonizer || !neutral) {
+          setMapActionNotice(t("hexMap.foundCityNeutralRequired"));
+          return;
+        }
+        const ownerCountry = buildingOverviewCountries.find((country) => country.id === foundingUnit.countryId) ?? null;
+        setFoundCityNameDraft("");
+        setFoundCityConfirmTarget({
+          civilianUnitId: foundingUnit.id,
+          hexId: tile.id,
+          regionId: tile.regionId,
+          countryId: foundingUnit.countryId,
+          ownerName: ownerCountry?.name ?? countryNameById?.[foundingUnit.countryId] ?? foundingUnit.countryId,
+          ownerFlagUrl: ownerCountry?.flagUrl ?? null,
+          costColonization: worldBase?.regionColonizationByRegion?.[tile.regionId]?.cost ?? null,
+        });
+      }
+    },
+    [
+      buildingOverviewCountries,
+      civilianUnitById,
+      countryNameById,
+      mapUnitById,
+      onSelectedCommandUnitChange,
+      t,
+      tileById,
+      worldBase?.regionColonizationByRegion,
+      worldBase?.regionController,
+      worldBase?.regionOwner,
+    ],
+  );
+
+  useEffect(() => {
+    if (!unitCommandRequest) return;
+    startUnitCommandMode(unitCommandRequest.unitId, unitCommandRequest.mode);
+  }, [startUnitCommandMode, unitCommandRequest]);
+
+  useEffect(() => {
+    if (!selectedCommandUnitId) {
+      setSelectedMapUnit(null);
+      return;
+    }
+    const mapUnit = mapUnitById.get(selectedCommandUnitId) ?? null;
+    const civilianUnit = civilianUnitById.get(selectedCommandUnitId) ?? null;
+    const hexId = mapUnit?.hexId ?? civilianUnit?.hexId ?? null;
+    if (!hexId || !tileById.has(hexId)) return;
+    const existing = selectedMapUnit?.unitId === selectedCommandUnitId ? selectedMapUnit : null;
+    if (existing?.fromHexId === hexId) return;
+    setSelectedMapUnit(mapUnit ? { kind: "map", unitId: selectedCommandUnitId, fromHexId: hexId } : { kind: "civilian", unitId: selectedCommandUnitId, fromHexId: hexId });
+  }, [civilianUnitById, mapUnitById, selectedCommandUnitId, selectedMapUnit, tileById]);
+
+  useEffect(() => {
+    if (selectedMapUnit) return;
+    onSelectedCommandUnitChange?.(null);
+  }, [onSelectedCommandUnitChange, selectedMapUnit]);
 
   useEffect(() => {
     const next = readMapNavigationSettings(authCountryId).edgeScrollEnabled;
@@ -1835,12 +1828,6 @@ export function MapView({
         setDivisionAttackSelection(null);
         return;
       }
-      if (fleetMoveSelection && event.button === 2) {
-        if (blocked) return;
-        event.preventDefault();
-        setFleetMoveSelection(null);
-        return;
-      }
       if (event.pointerType === "mouse" && event.button !== 0) return;
       if (interactionLocked || blocked) return;
       activePointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -1933,7 +1920,6 @@ export function MapView({
           !unitTrainingPlacement &&
           !civilianMoveSelection &&
           !divisionMoveSelection &&
-          !fleetMoveSelection &&
           !divisionAttackSelection;
         const unitHit = shouldHitTestUnits ? hitTestMapUnitAtClientPoint(event.clientX, event.clientY) : null;
         if (unitHit) {
@@ -1970,6 +1956,42 @@ export function MapView({
     };
     const handleContextMenu = (event: MouseEvent) => {
       event.preventDefault();
+      const tile = readTileFromClientPoint(event.clientX, event.clientY);
+      const selected = selectedMapUnit;
+      const hasPlacementMode = Boolean(hexBuildPlacement || corridorPlacement || colonizerPlacement?.active || unitTrainingPlacement);
+      if (tile && selected && !hasPlacementMode && !divisionMoveSelection && !divisionAttackSelection && !civilianMoveSelection) {
+        if (selected.kind === "map") {
+          const unit = mapUnitById.get(selected.unitId) ?? null;
+          const targetMapUnits = mapUnitsByHexId.get(tile.id) ?? [];
+          const enemyMapUnit = targetMapUnits.find((candidate) => unit && candidate.countryId !== unit.countryId) ?? null;
+          const path = getCachedPreviewPath("land", selected.fromHexId, tile.id);
+          const adjacentPath = findHexPath(mapArtifact, selected.fromHexId, tile.id, 2, tileById);
+          const controller = worldBase?.hexOwner?.[tile.id] ?? worldBase?.regionController?.[tile.regionId] ?? worldBase?.regionOwner?.[tile.regionId] ?? null;
+          const attackableByControl = Boolean(unit && controller && controller !== unit.countryId);
+          if (unit && (enemyMapUnit || attackableByControl) && adjacentPath.length === 2) {
+            onQueueUnitAttackOrder?.(selected.unitId, tile.id, enemyMapUnit?.id ?? null);
+            setMapActionNotice(t("hexMap.unitAttackOrderSent"));
+            return;
+          }
+          if (path.length > 1) {
+            onQueueArmyMoveOrder?.(selected.unitId, tile.id, path);
+            setMapActionNotice(t("hexMap.unitMoveOrderSent"));
+            return;
+          }
+          setMapActionNotice(t("hexMap.unitMoveNoPath"));
+          return;
+        }
+        if (selected.kind === "civilian") {
+          const path = getCachedPreviewPath("land", selected.fromHexId, tile.id);
+          if (path.length > 1) {
+            onQueueCivilianUnitMoveOrder?.(selected.unitId, selected.fromHexId, tile.id, path);
+            setMapActionNotice(t("hexMap.civilianMoveOrderSent"));
+            return;
+          }
+          setMapActionNotice(t("hexMap.civilianMoveNoPath"));
+          return;
+        }
+      }
       setSelectedBuildingPopoverHexId(null);
       setExpandedMapBuildingId(null);
       if (hexBuildPlacement) {
@@ -1987,7 +2009,6 @@ export function MapView({
       setDivisionMoveSelection(null);
       setDivisionAttackSelection(null);
       setCivilianMoveSelection(null);
-      setFleetMoveSelection(null);
       setSelectedMapUnit(null);
     };
     const handleWindowPointerMove = (event: PointerEvent) => updatePointerTracking(event);
@@ -2027,7 +2048,7 @@ export function MapView({
       pointerGestureRef.current = null;
       activePointersRef.current.clear();
     };
-  }, [applyTileInteraction, cameraBounds, centerOnTile, civilianMoveSelection, colonizerPlacement?.active, corridorPlacement, divisionAttackSelection, divisionMoveSelection, fleetMoveSelection, getCachedPreviewPath, hexBuildPlacement, hitTestMapUnitAtClientPoint, interactionLocked, mapArtifact, onCancelColonizerPlacement, onCancelCorridorPlacement, onCancelHexBuildPlacement, onCancelUnitTrainingPlacement, selectMapUnitForMovement, serverMapArtifact, setCameraTarget, tileById, unitTrainingPlacement]);
+  }, [applyTileInteraction, cameraBounds, centerOnTile, civilianMoveSelection, colonizerPlacement?.active, corridorPlacement, divisionAttackSelection, divisionMoveSelection, getCachedPreviewPath, hexBuildPlacement, hitTestMapUnitAtClientPoint, interactionLocked, mapArtifact, mapUnitById, mapUnitsByHexId, onCancelColonizerPlacement, onCancelCorridorPlacement, onCancelHexBuildPlacement, onCancelUnitTrainingPlacement, onQueueArmyMoveOrder, onQueueCivilianUnitMoveOrder, onQueueUnitAttackOrder, selectMapUnitForMovement, selectedMapUnit, serverMapArtifact, setCameraTarget, t, tileById, unitTrainingPlacement, worldBase?.hexOwner, worldBase?.regionController, worldBase?.regionOwner]);
 
   useEffect(() => {
     if (!hexBuildPlacement) return;
@@ -2071,17 +2092,16 @@ export function MapView({
   }, [civilianMoveSelection]);
 
   useEffect(() => {
-    if (!divisionMoveSelection && !divisionAttackSelection && !fleetMoveSelection) return;
+    if (!divisionMoveSelection && !divisionAttackSelection) return;
     const handleCancel = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       setDivisionMoveSelection(null);
       setDivisionAttackSelection(null);
-      setFleetMoveSelection(null);
       setSelectedMapUnit(null);
     };
     window.addEventListener("keydown", handleCancel);
     return () => window.removeEventListener("keydown", handleCancel);
-  }, [divisionAttackSelection, divisionMoveSelection, fleetMoveSelection]);
+  }, [divisionAttackSelection, divisionMoveSelection]);
 
   useEffect(() => {
     if (!selectedBuildingPopoverHexId) return;
@@ -2290,9 +2310,15 @@ export function MapView({
     if (selectedTile) {
       drawHexOutline(overlayLayer, selectedTile, mapArtifact.settings.hexSize, 0xf5d56b, 2.6);
     }
-    const activePath = fleetMoveSelection
-      ? fleetMoveHoverPath
-      : divisionMoveSelection
+    if (selectedReachableHexIds.size > 0 && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      for (const hexId of selectedReachableHexIds) {
+        const tile = tileById.get(hexId);
+        if (!tile || !isTileInViewport(tile, camera, rect, mapArtifact.settings.hexSize)) continue;
+        drawHexFillAndOutline(overlayLayer, tile, mapArtifact.settings.hexSize, 0x1a8aa0, 0x6ce6ff, 0.16, 1.2);
+      }
+    }
+    const activePath = divisionMoveSelection
         ? divisionMoveHoverPath
         : civilianMoveSelection
           ? civilianMoveHoverPath
@@ -2301,7 +2327,7 @@ export function MapView({
       drawPathOverlay(overlayLayer, activePath, tileById, mapArtifact.settings.hexSize);
     }
     safeRenderPixiApp(app);
-  }, [camera, civilianMoveHoverPath, civilianMoveSelection, colonizerPlacement?.active, colonizerPlacementValidHexIds, divisionMoveHoverPath, divisionMoveSelection, fleetMoveHoverPath, fleetMoveSelection, hexBuildPlacement, hoverPath, hoverState, mapArtifact.settings.hexSize,  pixiReady, placementEvaluations, selectedTile, tileById, unitTrainingPlacement, unitTrainingPlacementValidHexIds]);
+  }, [camera, civilianMoveHoverPath, civilianMoveSelection, colonizerPlacement?.active, colonizerPlacementValidHexIds, divisionMoveHoverPath, divisionMoveSelection, hexBuildPlacement, hoverPath, hoverState, mapArtifact.settings.hexSize, pixiReady, placementEvaluations, selectedReachableHexIds, selectedTile, tileById, unitTrainingPlacement, unitTrainingPlacementValidHexIds]);
 
   useEffect(() => {
     const layer = naturalFeatureLayerRef.current;
@@ -2644,62 +2670,6 @@ export function MapView({
         onReady: () => setUnitTextureVersion((value) => value + 1),
       });
     }
-    for (const division of Object.values(worldBase.divisionsById ?? {})) {
-      if ((division.kind ?? "land") !== "land") continue;
-      const key = `division:${division.id}`;
-      activeGraphicsKeys.add(key);
-      const tile = tileById.get(division.hexId);
-      if (!tile || !viewportCulling.visibleTileIds.has(tile.id)) continue;
-      const center = axialToPixel(tile, size);
-      const fillColor = cssColorToHexNumber(countryColorById?.[division.countryId] ?? "", 0x9a3f39);
-      const marker = getPooledGraphics(layer, graphicsPool, key);
-      const markerSize = Math.max(size * 0.24, Math.min(size * 0.46, 18 / Math.max(0.35, camera.scale)));
-      marker
-        .moveTo(center.x - markerSize * 0.55, center.y + size * 0.1)
-        .lineTo(center.x + markerSize * 0.55, center.y + size * 0.1)
-        .lineTo(center.x, center.y - markerSize * 0.75)
-        .closePath()
-        .fill({ color: fillColor, alpha: 0.95 });
-      marker
-        .moveTo(center.x - markerSize * 0.55, center.y + size * 0.1)
-        .lineTo(center.x + markerSize * 0.55, center.y + size * 0.1)
-        .lineTo(center.x, center.y - markerSize * 0.75)
-        .closePath()
-        .stroke({ color: strokeColor, width: 1.5, alpha: 0.95 });
-      marker.visible = true;
-    }
-    for (const fleet of Object.values(worldBase.fleetsById ?? {})) {
-      const key = `fleet:${fleet.id}`;
-      activeGraphicsKeys.add(key);
-      const tile = tileById.get(fleet.hexId);
-      if (!tile || !viewportCulling.visibleTileIds.has(tile.id)) continue;
-      const center = axialToPixel(tile, size);
-      const fillColor = cssColorToHexNumber(countryColorById?.[fleet.countryId] ?? "", 0x3d7fa6);
-      const marker = getPooledGraphics(layer, graphicsPool, key);
-      const markerSize = Math.max(size * 0.26, Math.min(size * 0.5, 20 / Math.max(0.35, camera.scale)));
-      marker
-        .moveTo(center.x - markerSize * 0.7, center.y + size * 0.12)
-        .lineTo(center.x + markerSize * 0.7, center.y + size * 0.12)
-        .lineTo(center.x + markerSize * 0.42, center.y + size * 0.28)
-        .lineTo(center.x - markerSize * 0.42, center.y + size * 0.28)
-        .closePath()
-        .fill({ color: fillColor, alpha: 0.95 });
-      marker
-        .moveTo(center.x - markerSize * 0.7, center.y + size * 0.12)
-        .lineTo(center.x + markerSize * 0.7, center.y + size * 0.12)
-        .lineTo(center.x + markerSize * 0.42, center.y + size * 0.28)
-        .lineTo(center.x - markerSize * 0.42, center.y + size * 0.28)
-        .closePath()
-        .stroke({ color: strokeColor, width: 1.4, alpha: 0.95 });
-      marker
-        .moveTo(center.x - markerSize * 0.08, center.y + size * 0.1)
-        .lineTo(center.x - markerSize * 0.08, center.y - markerSize * 0.65)
-        .lineTo(center.x + markerSize * 0.38, center.y - markerSize * 0.14)
-        .lineTo(center.x - markerSize * 0.08, center.y - markerSize * 0.14)
-        .closePath()
-        .fill({ color: 0xf3ead2, alpha: 0.92 });
-      marker.visible = true;
-    }
     for (const unit of Object.values(worldBase.civilianUnitsById ?? {})) {
       if (unit.status === "captured" || pendingFoundCityUnitIds.has(unit.id)) continue;
       const key = `civilian:${unit.id}`;
@@ -2744,50 +2714,6 @@ export function MapView({
       top: Math.min(Math.max(92, y - 24), Math.max(92, rect.height - 520)),
     };
   }, [camera, mapArtifact.settings.hexSize, selectedBuildingPopoverTile]);
-  const selectedMapUnitTile = selectedMapUnit ? tileById.get(selectedMapUnit.fromHexId) ?? null : null;
-  const selectedMapUnitPopoverStyle = useMemo<CSSProperties | null>(() => {
-    if (!selectedMapUnitTile || !containerRef.current) return null;
-    const rect = containerRef.current.getBoundingClientRect();
-    const center = axialToPixel(selectedMapUnitTile, mapArtifact.settings.hexSize);
-    const x = rect.width / 2 + (center.x - camera.x) * camera.scale;
-    const y = rect.height / 2 + (center.y - camera.y) * camera.scale;
-    return {
-      left: Math.min(Math.max(12, x + 18), Math.max(12, rect.width - 360)),
-      top: Math.min(Math.max(92, y - 24), Math.max(92, rect.height - 360)),
-    };
-  }, [camera, mapArtifact.settings.hexSize, selectedMapUnitTile]);
-  const selectedNewMapUnit = selectedMapUnit?.kind === "map" ? mapUnitById.get(selectedMapUnit.unitId) ?? null : null;
-  const selectedCivilianUnit = selectedMapUnit?.kind === "civilian" ? civilianUnitById.get(selectedMapUnit.unitId) ?? null : null;
-  const selectedDivisionUnit = selectedMapUnit?.kind === "division" ? divisionById.get(selectedMapUnit.divisionId) ?? null : null;
-  const selectedFleetUnit = selectedMapUnit?.kind === "fleet" ? (worldBase?.fleetsById?.[selectedMapUnit.fleetId] ?? null) : null;
-  const selectedMapUnitRegionIsNeutral = selectedMapUnitTile
-    ? !worldBase?.regionOwner[selectedMapUnitTile.regionId] && !worldBase?.regionController[selectedMapUnitTile.regionId]
-    : false;
-  const selectedColonizerCanFoundCity = Boolean(
-    ((selectedCivilianUnit &&
-      selectedCivilianUnit.countryId === authCountryId &&
-      selectedCivilianUnit.type === "colonizer" &&
-      selectedCivilianUnit.status !== "captured") ||
-      (selectedNewMapUnit &&
-        selectedNewMapUnit.countryId === authCountryId &&
-        selectedNewMapUnit.unitTypeId === "unit:colonizer" &&
-        selectedNewMapUnit.status !== "captured" &&
-        selectedNewMapUnit.status !== "destroyed")) &&
-      selectedMapUnitRegionIsNeutral,
-  );
-  const selectedDivisionCanAttack = Boolean(
-    (selectedDivisionUnit || (selectedNewMapUnit && selectedNewMapUnit.unitTypeId !== "unit:colonizer")) &&
-      selectedMapUnitTile &&
-      (selectedDivisionUnit?.countryId ?? selectedNewMapUnit?.countryId) === authCountryId &&
-      !pendingDivisionActionIds.has(selectedDivisionUnit?.id ?? selectedNewMapUnit?.id ?? "") &&
-      getNeighborTiles(selectedMapUnitTile, tileById, mapArtifact.settings).some((neighbor) => {
-        const attackerCountryId = selectedDivisionUnit?.countryId ?? selectedNewMapUnit?.countryId ?? "";
-        const enemyDivision = (divisionsByHexId.get(neighbor.id) ?? []).some((candidate) => candidate.countryId !== attackerCountryId);
-        const enemyMapUnit = (mapUnitsByHexId.get(neighbor.id) ?? []).some((candidate) => candidate.countryId !== attackerCountryId);
-        const controller = worldBase?.hexOwner?.[neighbor.id] ?? worldBase?.regionController?.[neighbor.regionId] ?? worldBase?.regionOwner?.[neighbor.regionId] ?? null;
-        return enemyDivision || enemyMapUnit || Boolean(controller && controller !== attackerCountryId);
-      }),
-  );
   const countryById = useMemo(() => new Map(buildingOverviewCountries.map((country) => [country.id, country] as const)), [buildingOverviewCountries]);
   const cityLabels = useMemo(() => {
     if (!containerRef.current || !mapLayers.buildings || zoomBucket !== "near") return [];
@@ -3107,119 +3033,6 @@ export function MapView({
             </button>
           </div>
         </div>
-      ) : null}
-      {selectedMapUnit && selectedMapUnitPopoverStyle ? (
-        <section
-          className="arc-map-unit-popover"
-          style={selectedMapUnitPopoverStyle}
-          onPointerDown={(event) => event.stopPropagation()}
-          onPointerUp={(event) => event.stopPropagation()}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <div className="arc-map-unit-popover__header">
-            <div>
-              <p>{t("hexMap.unitPopoverTitle")}</p>
-              <h3>
-                {selectedNewMapUnit
-                  ? selectedNewMapUnit.unitTypeId
-                  : selectedCivilianUnit
-                  ? selectedCivilianUnit.type === "colonizer"
-                    ? t("hexMap.civilianColonizer")
-                    : selectedCivilianUnit.id
-                  : selectedDivisionUnit?.name || selectedFleetUnit?.name || selectedMapUnit.fromHexId}
-              </h3>
-            </div>
-            <button type="button" className="map-btn" onClick={() => {
-              setSelectedMapUnit(null);
-              setCivilianMoveSelection(null);
-              setDivisionMoveSelection(null);
-              setFleetMoveSelection(null);
-              setDivisionAttackSelection(null);
-            }}>
-              {t("common.cancel")}
-            </button>
-          </div>
-          <div className="arc-map-unit-popover__body">
-            <span>{t("hexMap.unitPopoverHex", { hex: selectedMapUnit.fromHexId })}</span>
-            {selectedCivilianUnit ? (
-              <span>
-                {selectedCivilianUnit.status === "captured"
-                  ? t("hexMap.civilianCaptured")
-                  : t("hexMap.civilianMovement", {
-                      current: Math.max(0, Math.floor(selectedCivilianUnit.movementPoints)),
-                      max: Math.max(0, Math.floor(selectedCivilianUnit.maxMovementPoints)),
-                    })}
-              </span>
-            ) : null}
-            {selectedDivisionUnit ? (
-              <span>{t("hexMap.divisionStatus", { strength: Math.round(Number(selectedDivisionUnit.strength ?? 0) * 100), organization: Math.round(Number(selectedDivisionUnit.organization ?? 0)) })}</span>
-            ) : null}
-            {selectedFleetUnit ? (
-              <span>{t("hexMap.fleetStatus", { strength: Math.round(Number(selectedFleetUnit.strength ?? 0) * 100), organization: Math.round(Number(selectedFleetUnit.organization ?? 0)) })}</span>
-            ) : null}
-            {selectedNewMapUnit ? (
-              <span>{`${selectedNewMapUnit.status} · ${Math.max(0, Math.round(selectedNewMapUnit.hp))} HP · ${Math.max(0, Math.floor(selectedNewMapUnit.movementPoints))} MP`}</span>
-            ) : null}
-          </div>
-          {selectedCivilianUnit?.type === "colonizer" || selectedNewMapUnit?.unitTypeId === "unit:colonizer" ? (
-            <div className="arc-map-unit-popover__actions">
-              <Tooltip content={t(selectedColonizerCanFoundCity ? "hexMap.foundCityTooltipCan" : "hexMap.foundCityTooltipCannot")}>
-                <button
-                  type="button"
-                  className="map-btn"
-                  disabled={!selectedColonizerCanFoundCity || !selectedMapUnitTile}
-                  onClick={() => {
-                    const foundingUnit = selectedCivilianUnit ?? selectedNewMapUnit;
-                    if (!selectedColonizerCanFoundCity || !selectedMapUnitTile || !foundingUnit) {
-                      setMapActionNotice(t("hexMap.foundCityNeutralRequired"));
-                      return;
-                    }
-                    const ownerCountry = buildingOverviewCountries.find((country) => country.id === foundingUnit.countryId) ?? null;
-                    setFoundCityNameDraft("");
-                    setFoundCityConfirmTarget({
-                      civilianUnitId: foundingUnit.id,
-                      hexId: selectedMapUnitTile.id,
-                      regionId: selectedMapUnitTile.regionId,
-                      countryId: foundingUnit.countryId,
-                      ownerName: ownerCountry?.name ?? countryNameById?.[foundingUnit.countryId] ?? foundingUnit.countryId,
-                      ownerFlagUrl: ownerCountry?.flagUrl ?? null,
-                      costColonization: worldBase?.regionColonizationByRegion?.[selectedMapUnitTile.regionId]?.cost ?? null,
-                    });
-                  }}
-                >
-                  <Flag size={15} />
-                  <span>{t("hexMap.foundCity")}</span>
-                </button>
-              </Tooltip>
-            </div>
-          ) : null}
-          {selectedDivisionUnit || selectedNewMapUnit ? (
-            <div className="arc-map-unit-popover__actions">
-              <Tooltip content={t(selectedDivisionCanAttack ? "hexMap.divisionAttackTooltipCan" : "hexMap.divisionAttackTooltipCannot")}>
-                <button
-                  type="button"
-                  className="map-btn"
-                  disabled={!selectedDivisionCanAttack || !selectedMapUnitTile}
-                  onClick={() => {
-                    const attackingUnitId = selectedDivisionUnit?.id ?? selectedNewMapUnit?.id ?? null;
-                    if (!selectedDivisionCanAttack || !selectedMapUnitTile || !attackingUnitId) {
-                      setMapActionNotice(t("hexMap.divisionAttackUnavailable"));
-                      return;
-                    }
-                    setDivisionMoveSelection(null);
-                    setFleetMoveSelection(null);
-                    setCivilianMoveSelection(null);
-                    setDivisionAttackSelection({ divisionId: attackingUnitId, fromHexId: selectedMapUnitTile.id });
-                    setMapActionNotice(t("hexMap.divisionAttackSelectTarget"));
-                  }}
-                >
-                  <Shield size={15} />
-                  <span>{t("hexMap.divisionAttack")}</span>
-                </button>
-              </Tooltip>
-            </div>
-          ) : null}
-        </section>
       ) : null}
       {selectedMapBuildingItem && selectedBuildingPopoverStyle ? (
         <section
@@ -3633,10 +3446,10 @@ function drawHexOutline(graphics: Graphics, tile: HexTile, size: number, color: 
   graphics.poly(points, true).stroke({ color, width, alpha: 0.95 });
 }
 
-function drawHexFillAndOutline(graphics: Graphics, tile: HexTile, size: number, fillColor: number, borderColor: number): void {
+function drawHexFillAndOutline(graphics: Graphics, tile: HexTile, size: number, fillColor: number, borderColor: number, fillAlpha = 0.45, borderWidth = 2.2): void {
   const center = axialToPixel(tile, size);
   const points = Array.from({ length: 6 }, (_, index) => hexCorner(center, size - 0.7, index)).flatMap((point) => [point.x, point.y]);
-  graphics.poly(points, true).fill({ color: fillColor, alpha: 0.45 }).stroke({ color: borderColor, width: 2.2, alpha: 0.9 });
+  graphics.poly(points, true).fill({ color: fillColor, alpha: fillAlpha }).stroke({ color: borderColor, width: borderWidth, alpha: 0.9 });
 }
 
 function drawPathOverlay(
@@ -4217,6 +4030,42 @@ function calculateHexPathMovementCost(
     const baseCost = Math.max(0, Number(tile?.movementCost ?? 1) || 0);
     return sum + resolveClientHexMovementCost(baseCost, cityHexIds.has(hexId) ? ["city"] : [], modifiers);
   }, 0);
+}
+
+function calculateReachableHexIds(params: {
+  mapArtifact: HexMapArtifact;
+  fromHexId: HexId;
+  budget: number;
+  tileById: Map<HexId, HexTile>;
+  cityHexIds: ReadonlySet<HexId>;
+  modifiers: readonly ActiveModifierRow[];
+}): Set<HexId> {
+  const start = params.tileById.get(params.fromHexId);
+  if (!start || !start.passable || params.budget <= 0) return new Set<HexId>();
+  const reachable = new Set<HexId>();
+  const bestCost = new Map<HexId, number>([[params.fromHexId, 0]]);
+  const frontier: Array<{ tile: HexTile; cost: number }> = [{ tile: start, cost: 0 }];
+
+  while (frontier.length > 0) {
+    const current = frontier.shift();
+    if (!current) break;
+    for (const neighbor of getNeighborTiles(current.tile, params.tileById, params.mapArtifact.settings)) {
+      if (!neighbor.passable) continue;
+      const stepCost = resolveClientHexMovementCost(
+        Math.max(0.001, Number(neighbor.movementCost) || 1),
+        params.cityHexIds.has(neighbor.id) ? ["city"] : [],
+        params.modifiers,
+      );
+      const nextCost = current.cost + stepCost;
+      if (nextCost > params.budget + 0.001) continue;
+      if (nextCost >= (bestCost.get(neighbor.id) ?? Number.POSITIVE_INFINITY)) continue;
+      bestCost.set(neighbor.id, nextCost);
+      reachable.add(neighbor.id);
+      frontier.push({ tile: neighbor, cost: nextCost });
+    }
+  }
+
+  return reachable;
 }
 
 function resolveClientHexMovementCost(baseCost: number, hexTags: readonly string[], modifiers: readonly ActiveModifierRow[]): number {

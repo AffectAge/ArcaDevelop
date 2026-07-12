@@ -94,7 +94,7 @@ function findWaterHexPath(
   if (fromHexId === targetHexId) return [fromHexId];
   const start = tileById.get(fromHexId);
   const target = tileById.get(targetHexId);
-  if (!start || !target || !isFleetPassableTile(target)) return [];
+  if (!start || !target || !isNavalPassableTile(target)) return [];
   const frontier: HexId[] = [fromHexId];
   const cameFrom = new Map<HexId, HexId | null>([[fromHexId, null]]);
   let visited = 0;
@@ -106,7 +106,7 @@ function findWaterHexPath(
     const current = tileById.get(currentId);
     if (!current) continue;
     for (const neighbor of getNeighborTiles(current, tileById, map.settings)) {
-      if (!isFleetPassableTile(neighbor) && findRiverEdgeBetween(map, current.id, neighbor.id, tileById)?.navigable !== true) continue;
+      if (!isNavalPassableTile(neighbor) && findRiverEdgeBetween(map, current.id, neighbor.id, tileById)?.navigable !== true) continue;
       if (cameFrom.has(neighbor.id)) continue;
       cameFrom.set(neighbor.id, currentId);
       frontier.push(neighbor.id);
@@ -133,6 +133,6 @@ export function getNeighborTiles(tile: HexTile, tileById: ReadonlyMap<HexId, Hex
   return tiles;
 }
 
-function isFleetPassableTile(tile: HexTile): boolean {
+function isNavalPassableTile(tile: HexTile): boolean {
   return Boolean(tile.waterKind);
 }

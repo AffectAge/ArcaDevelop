@@ -421,18 +421,10 @@ export function createWorldPopulationRuntime(params: WorldPopulationRuntimeParam
       countryIdentityByCountryId: {},
       unitsById: {},
       unitTrainingQueueByCountry: {},
-      divisionTemplatesByCountry: {},
-      divisionsById: {},
-      fleetsById: {},
-      airWingsById: {},
-      militaryFormationQueueByCountry: {},
       civilianUnitsById: {},
       civilianUnitQueueByCountry: {},
       settlementProjectsById: {},
       cityMarkersById: {},
-      equipmentVariantsById: {},
-      equipmentProductionLinesByCountry: {},
-      equipmentStockpileByCountry: {},
       diplomacyProposals: [],
     };
   }

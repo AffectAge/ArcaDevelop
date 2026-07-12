@@ -95,9 +95,6 @@ export type AdminCountryRoutesDependencies = {
     countryEventFlagsByCountryId: number;
     journalEntriesByCountryId: number;
     countryModifiersByCountryId: number;
-    divisionTemplatesByCountry: number;
-    divisionsById: number;
-    militaryFormationQueueByCountry: number;
     diplomacyProposals: number;
   };
   getTurnId: () => number;
@@ -285,9 +282,6 @@ export function registerAdminCountryRoutes(app: express.Express, deps: AdminCoun
         deps.masks.countryEventFlagsByCountryId |
         deps.masks.journalEntriesByCountryId |
         deps.masks.countryModifiersByCountryId |
-        deps.masks.divisionTemplatesByCountry |
-        deps.masks.divisionsById |
-        deps.masks.militaryFormationQueueByCountry |
         deps.masks.diplomacyProposals,
     );
     await deps.deleteCountry(countryIdParam);

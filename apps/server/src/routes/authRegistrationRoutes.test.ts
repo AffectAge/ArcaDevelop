@@ -217,7 +217,7 @@ function makeDeps(options?: {
     flagImageRule: { maxWidth: 192, maxHeight: 128 },
     crestImageRule: { maxWidth: 128, maxHeight: 146 },
     identityLogoImageRule: { maxWidth: 64, maxHeight: 64 },
-    masks: { resourcesByCountry: 1, hexOwner: 2, colonyProgressByRegion: 4, unitEquipmentState: 8 },
+    masks: { resourcesByCountry: 1, hexOwner: 2, colonyProgressByRegion: 4, unitState: 8 },
     getTurnId: () => 4,
     getWorldBase: () => world as WorldBase & AuthRegistrationWorldState,
     getGameSettings: () => ({

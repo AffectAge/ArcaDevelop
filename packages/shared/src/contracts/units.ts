@@ -88,7 +88,7 @@ export type UnitTypeDefinition = {
   canFoundCity?: boolean;
 };
 
-export type MapUnitStatus = "idle" | "moving" | "fighting" | "sleeping" | "captured" | "destroyed" | "based";
+export type MapUnitStatus = "idle" | "moving" | "fighting" | "sleeping" | "fortified" | "captured" | "destroyed" | "based";
 
 export type MapUnit = {
   id: string;

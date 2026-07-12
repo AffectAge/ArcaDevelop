@@ -304,8 +304,6 @@ export type UiTextKey =
   | "contentPanel.listTooltip"
   | "contentPanel.loading"
   | "contentPanel.title"
-  | "contentPanel.category.aircraftTypes"
-  | "contentPanel.category.battalions"
   | "contentPanel.category.buildings"
   | "contentPanel.category.companies"
   | "contentPanel.category.cultures"
@@ -330,7 +328,6 @@ export type UiTextKey =
   | "contentPanel.category.religions"
   | "contentPanel.category.resourceCategories"
   | "contentPanel.category.sectors"
-  | "contentPanel.category.shipTypes"
   | "contentPanel.category.technologies"
   | "contentPanel.contentFallback"
   | "contentPanel.listLabel"
@@ -774,24 +771,6 @@ export type UiTextKey =
   | "contentPanel.meta.professions.namePlaceholder"
   | "contentPanel.meta.professions.descriptionPlaceholder"
   | "contentPanel.meta.professions.sectionTitle"
-  | "contentPanel.meta.battalions.singular"
-  | "contentPanel.meta.battalions.createBaseName"
-  | "contentPanel.meta.battalions.createLabel"
-  | "contentPanel.meta.battalions.namePlaceholder"
-  | "contentPanel.meta.battalions.descriptionPlaceholder"
-  | "contentPanel.meta.battalions.sectionTitle"
-  | "contentPanel.meta.shipTypes.singular"
-  | "contentPanel.meta.shipTypes.createBaseName"
-  | "contentPanel.meta.shipTypes.createLabel"
-  | "contentPanel.meta.shipTypes.namePlaceholder"
-  | "contentPanel.meta.shipTypes.descriptionPlaceholder"
-  | "contentPanel.meta.shipTypes.sectionTitle"
-  | "contentPanel.meta.aircraftTypes.singular"
-  | "contentPanel.meta.aircraftTypes.createBaseName"
-  | "contentPanel.meta.aircraftTypes.createLabel"
-  | "contentPanel.meta.aircraftTypes.namePlaceholder"
-  | "contentPanel.meta.aircraftTypes.descriptionPlaceholder"
-  | "contentPanel.meta.aircraftTypes.sectionTitle"
   | "contentPanel.meta.ideologies.singular"
   | "contentPanel.meta.ideologies.createBaseName"
   | "contentPanel.meta.ideologies.createLabel"
@@ -1546,15 +1525,6 @@ export type UiTextKey =
   | "elections.tooltipVotes"
   | "elections.voteShare"
   | "army.air"
-  | "army.airWingMission"
-  | "army.airWingMission.air_superiority"
-  | "army.airWingMission.ground_support"
-  | "army.airWingMission.interception"
-  | "army.airWingMission.naval_patrol"
-  | "army.airWingMission.none"
-  | "army.airWingMissionRegion"
-  | "army.airWingMissionRegionTooltip"
-  | "army.airWingMissionTooltip"
   | "army.attack"
   | "army.baseHex"
   | "army.battleSlots"
@@ -1564,8 +1534,6 @@ export type UiTextKey =
   | "army.createEquipmentVariant"
   | "army.createFormation"
   | "army.createProductionLine"
-  | "army.defaultAir"
-  | "army.defaultLand"
   | "army.defaultNaval"
   | "army.delete"
   | "army.deleteProductionLine"
@@ -1573,7 +1541,6 @@ export type UiTextKey =
   | "army.description"
   | "army.disbandConfirmDescription"
   | "army.disbandConfirmTitle"
-  | "army.disbandDivision"
   | "army.disbandEquipmentReturn"
   | "army.emptyQueue"
   | "army.emptyQueueDescription"
@@ -1584,19 +1551,10 @@ export type UiTextKey =
   | "army.equipmentCoverage"
   | "army.equipmentCoverageTooltip"
   | "army.equipmentCoverageTooltipTitle"
-  | "army.divisionEquipmentLoadout"
-  | "army.divisionEquipmentLoadoutTooltip"
-  | "army.noDivisionEquipmentLoadout"
   | "army.equipmentCost"
   | "army.equipmentLines"
-  | "army.equipmentProduction"
   | "army.equipmentRequirements"
   | "army.equipmentStats"
-  | "army.equipmentVariant"
-  | "army.equipmentVariantName"
-  | "army.designerDivision"
-  | "army.designerAirWing"
-  | "army.designerFleet"
   | "army.createLandEquipment"
   | "army.createPlane"
   | "army.createShip"
@@ -1653,9 +1611,6 @@ export type UiTextKey =
   | "army.formationSelectHexTooltip"
   | "army.formationSpeed"
   | "army.branch"
-  | "army.branch.air"
-  | "army.branch.land"
-  | "army.branch.naval"
   | "army.icon64"
   | "army.iconInvalid64"
   | "army.iconUploadFailed"
@@ -1679,7 +1634,6 @@ export type UiTextKey =
   | "army.noEquipmentLines"
   | "army.noEquipmentLinesDescription"
   | "army.noEquipmentRequirements"
-  | "army.noEquipmentStats"
   | "army.noAssignedEquipment"
   | "army.noMissionRegions"
   | "army.organizationShort"
@@ -1716,7 +1670,6 @@ export type UiTextKey =
   | "army.supplySummaryTitle"
   | "army.supplySummaryValue"
   | "army.supplyShort"
-  | "army.totalBattalions"
   | "army.totalSoldiers"
   | "army.templateDeleted"
   | "army.templateName"
@@ -1945,27 +1898,16 @@ export type UiTextKey =
   | "hexMap.buildingStatusInactive"
   | "hexMap.buildingStatusRuins"
   | "hexMap.buildingStatusWorking"
-  | "hexMap.divisions"
-  | "hexMap.divisionStack"
-  | "hexMap.divisionStackValue"
-  | "hexMap.divisionStackTooltip"
-  | "hexMap.divisionEquipmentCoverage"
-  | "hexMap.divisionStatus"
-  | "hexMap.divisionMove"
-  | "hexMap.divisionMoveTooltipCan"
-  | "hexMap.divisionMoveTooltipCannot"
-  | "hexMap.divisionMoveUnavailable"
-  | "hexMap.divisionMoveSelectTarget"
-  | "hexMap.divisionMoveNoPath"
-  | "hexMap.divisionMoveOrderSent"
-  | "hexMap.divisionAttack"
-  | "hexMap.divisionAttackTooltipCan"
-  | "hexMap.divisionAttackTooltipCannot"
-  | "hexMap.divisionAttackUnavailable"
-  | "hexMap.divisionAttackSelectTarget"
-  | "hexMap.divisionAttackNoTarget"
-  | "hexMap.divisionAttackOrderSent"
-  | "hexMap.fleets"
+  | "hexMap.unitStack"
+  | "hexMap.unitStackValue"
+  | "hexMap.unitStackTooltip"
+  | "hexMap.unitSelected"
+  | "hexMap.unitMoveSelectTarget"
+  | "hexMap.unitMoveNoPath"
+  | "hexMap.unitMoveOrderSent"
+  | "hexMap.unitAttackSelectTarget"
+  | "hexMap.unitAttackNoTarget"
+  | "hexMap.unitAttackOrderSent"
   | "hexMap.fleetStatus"
   | "hexMap.fleetMove"
   | "hexMap.fleetMoveTooltipCan"
@@ -1973,7 +1915,6 @@ export type UiTextKey =
   | "hexMap.fleetMoveUnavailable"
   | "hexMap.fleetMoveSelectTarget"
   | "hexMap.fleetMoveNoPath"
-  | "hexMap.fleetMoveOrderSent"
   | "hexMap.civilianUnits"
   | "hexMap.civilianQueue"
   | "hexMap.civilianColonizer"
@@ -3384,7 +3325,7 @@ export type UiTextKey =
   | "shell.modeDock"
   | "shell.notifications"
   | "shell.orderColonizationTitle"
-  | "shell.orderArmyMoveMessage"
+  | "shell.orderUnitMoveMessage"
   | "shell.orderSent"
   | "shell.orderTitle"
   | "shell.preview.activeResearchDetail"
@@ -3396,7 +3337,6 @@ export type UiTextKey =
   | "shell.preview.colonizationLedger"
   | "shell.preview.constructionQueue"
   | "shell.preview.diplomacyLedger"
-  | "shell.preview.divisions"
   | "shell.preview.formationQueue"
   | "shell.preview.formationQueueDetail"
   | "shell.preview.governanceLedger"
@@ -3473,11 +3413,19 @@ export type UiTextKey =
   | "turnActions.commandHubAria"
   | "turnActions.focusUnit"
   | "turnActions.focusUnitTooltip"
+  | "turnActions.attackUnit"
+  | "turnActions.attackUnitTooltip"
   | "turnActions.forceEndTurn"
   | "turnActions.forceEndTurnConfirm"
   | "turnActions.forceEndTurnTooltip"
   | "turnActions.foundCity"
   | "turnActions.foundCityTooltip"
+  | "turnActions.fortifyQueued"
+  | "turnActions.fortifyUnit"
+  | "turnActions.fortifyUnitTooltip"
+  | "turnActions.moveUnit"
+  | "turnActions.moveUnitTooltip"
+  | "turnActions.promoteNeedsChoice"
   | "turnActions.needsOrders"
   | "turnActions.nextTurnBlockedTooltip"
   | "turnActions.queueAria"
@@ -4015,8 +3963,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.listTooltip": "Choose an entry from the list to edit its data and presentation.",
     "contentPanel.loading": "Loading...",
     "contentPanel.title": "Content panel",
-    "contentPanel.category.aircraftTypes": "Aircraft",
-    "contentPanel.category.battalions": "Battalions",
     "contentPanel.category.buildings": "Buildings",
     "contentPanel.category.companies": "Companies",
     "contentPanel.category.cultures": "Cultures",
@@ -4041,7 +3987,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.category.religions": "Religions",
     "contentPanel.category.resourceCategories": "Infrastructure categories",
     "contentPanel.category.sectors": "Sectors",
-    "contentPanel.category.shipTypes": "Ships",
     "contentPanel.category.technologies": "Technologies",
     "contentPanel.contentFallback": "Content",
     "contentPanel.listLabel": "List: {category}",
@@ -4485,24 +4430,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.meta.professions.namePlaceholder": "Profession name",
     "contentPanel.meta.professions.descriptionPlaceholder": "Brief profession description",
     "contentPanel.meta.professions.sectionTitle": "Profession creation and editing section",
-    "contentPanel.meta.battalions.singular": "battalion",
-    "contentPanel.meta.battalions.createBaseName": "New battalion",
-    "contentPanel.meta.battalions.createLabel": "Create battalion",
-    "contentPanel.meta.battalions.namePlaceholder": "Battalion name",
-    "contentPanel.meta.battalions.descriptionPlaceholder": "Battalion role in the division",
-    "contentPanel.meta.battalions.sectionTitle": "Battalion creation and editing section",
-    "contentPanel.meta.shipTypes.singular": "ship type",
-    "contentPanel.meta.shipTypes.createBaseName": "New ship",
-    "contentPanel.meta.shipTypes.createLabel": "Create ship",
-    "contentPanel.meta.shipTypes.namePlaceholder": "Ship type name",
-    "contentPanel.meta.shipTypes.descriptionPlaceholder": "Ship role in the fleet",
-    "contentPanel.meta.shipTypes.sectionTitle": "Ship creation and editing section",
-    "contentPanel.meta.aircraftTypes.singular": "aircraft type",
-    "contentPanel.meta.aircraftTypes.createBaseName": "New aircraft",
-    "contentPanel.meta.aircraftTypes.createLabel": "Create aircraft",
-    "contentPanel.meta.aircraftTypes.namePlaceholder": "Aircraft type name",
-    "contentPanel.meta.aircraftTypes.descriptionPlaceholder": "Aircraft role in the air wing",
-    "contentPanel.meta.aircraftTypes.sectionTitle": "Aircraft creation and editing section",
     "contentPanel.meta.ideologies.singular": "ideology",
     "contentPanel.meta.ideologies.createBaseName": "New ideology",
     "contentPanel.meta.ideologies.createLabel": "Create ideology",
@@ -5257,15 +5184,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "elections.tooltipVotes": "Votes: {value}",
     "elections.voteShare": "Votes: {value}",
     "army.air": "Air wings",
-    "army.airWingMission": "Air mission",
-    "army.airWingMission.air_superiority": "Air superiority",
-    "army.airWingMission.ground_support": "Ground support",
-    "army.airWingMission.interception": "Interception",
-    "army.airWingMission.naval_patrol": "Naval patrol",
-    "army.airWingMission.none": "No mission",
-    "army.airWingMissionRegion": "Mission region",
-    "army.airWingMissionRegionTooltip": "Sets the region where this air wing is assigned to operate. Range and base validation will be enforced by later air-system slices.",
-    "army.airWingMissionTooltip": "Sets the current mission for this air wing. Mission effects are applied by future air-combat and modifier systems.",
     "army.attack": "Attack",
     "army.baseHex": "Base hex",
     "army.battleSlots": "Combat slots",
@@ -5275,8 +5193,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.createEquipmentVariant": "Create variant",
     "army.createFormation": "Form unit",
     "army.createProductionLine": "Start line",
-    "army.defaultAir": "New air wing",
-    "army.defaultLand": "New division",
     "army.defaultNaval": "New fleet",
     "army.delete": "Delete",
     "army.deleteProductionLine": "Delete production line",
@@ -5284,7 +5200,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.description": "Templates, formation, and basing for divisions, fleets, and air wings",
     "army.disbandConfirmDescription": "Disband {name}? The division will be removed from the map.",
     "army.disbandConfirmTitle": "Disband division",
-    "army.disbandDivision": "Disband division",
     "army.disbandEquipmentReturn": "Assigned equipment will return to the country stockpile.",
     "army.emptyQueue": "Queue is empty",
     "army.emptyQueueDescription": "New units appear here after a formation command.",
@@ -5294,16 +5209,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.equipmentCoverage": "Coverage {value}%",
     "army.equipmentCoverageTooltip": "Required: {required}. Available in stockpile: {available}. Assigned by current best-variant scoring: {assigned}. Coverage {coverage}% scales the division's effective combat stats.",
     "army.equipmentCoverageTooltipTitle": "Equipment coverage",
-    "army.divisionEquipmentLoadout": "Division equipment",
-    "army.divisionEquipmentLoadoutTooltip": "This division has {assigned} of {required} required equipment assigned. Coverage {coverage}% affects its effective combat stats.",
-    "army.noDivisionEquipmentLoadout": "No equipment requirements",
     "army.equipmentCost": "Goods cost",
     "army.equipmentLines": "Production lines",
-    "army.equipmentProduction": "Equipment production",
     "army.equipmentRequirements": "Equipment needs",
     "army.equipmentStats": "Stats",
-    "army.equipmentVariant": "Variant",
-    "army.equipmentVariantName": "Variant name",
     "army.assignedEquipment": "Assigned equipment",
     "army.equipmentRequired": "Required",
     "army.equipmentAvailable": "Available",
@@ -5346,9 +5255,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.formationSelectHexTooltip": "Choose deployment hex on map",
     "army.formationSpeed": "Formation speed: {speed}",
     "army.branch": "Branch",
-    "army.branch.air": "Air wings",
-    "army.branch.land": "Divisions",
-    "army.branch.naval": "Fleets",
     "army.icon64": "Logo 64x64",
     "army.iconInvalid64": "Logo must be exactly 64x64.",
     "army.iconUploadFailed": "Failed to upload logo.",
@@ -5369,7 +5275,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.noEquipmentLines": "No production lines",
     "army.noEquipmentLinesDescription": "Create a variant, then start a production line.",
     "army.noEquipmentRequirements": "This template does not require equipment yet.",
-    "army.noEquipmentStats": "No stats.",
     "army.noAssignedEquipment": "No suitable equipment in stockpile",
     "army.noMissionRegions": "No known regions",
     "army.noFrames": "No frames are available for this branch.",
@@ -5395,9 +5300,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.inactive": "Inactive",
     "army.saveTemplate": "Save template",
     "army.saveVariant": "Save variant",
-    "army.designerDivision": "Division designer",
-    "army.designerAirWing": "Air wing designer",
-    "army.designerFleet": "Fleet designer",
     "army.createLandEquipment": "Create equipment",
     "army.createPlane": "Create aircraft",
     "army.createShip": "Create ship",
@@ -5427,7 +5329,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.supplySummaryTitle": "Army supply summary",
     "army.supplySummaryValue": "+{received} / -{returned} · {divisions} divisions",
     "army.supplyShort": "Supply",
-    "army.totalBattalions": "{count} battalions",
     "army.totalSoldiers": "{count} soldiers",
     "army.templateDeleted": "Template deleted",
     "army.templateEquipmentCoverage": "Template equipment coverage: {value}%",
@@ -5656,27 +5557,16 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.buildingStatusInactive": "Inactive",
     "hexMap.buildingStatusRuins": "Ruins",
     "hexMap.buildingStatusWorking": "Working",
-    "hexMap.divisions": "Divisions",
-    "hexMap.divisionStack": "Division stack",
-    "hexMap.divisionStackValue": "{current}/{max}",
-    "hexMap.divisionStackTooltip": "Your land divisions on this hex: {current}/{max}. The scenario stack limit blocks peaceful movement into a full hex, pauses stored routes at the next full hex, and keeps completed formations in the queue until space is available.",
-    "hexMap.divisionEquipmentCoverage": "equipment {value}%",
-    "hexMap.divisionStatus": "Strength {strength}% · organization {organization}",
-    "hexMap.divisionMove": "Move",
-    "hexMap.divisionMoveTooltipCan": "Choose a target hex for this division.",
-    "hexMap.divisionMoveTooltipCannot": "This division cannot receive a movement order now.",
-    "hexMap.divisionMoveUnavailable": "This division cannot move now.",
-    "hexMap.divisionMoveSelectTarget": "Select a target hex for the division.",
-    "hexMap.divisionMoveNoPath": "No valid route for this division.",
-    "hexMap.divisionMoveOrderSent": "Division movement order sent",
-    "hexMap.divisionAttack": "Attack",
-    "hexMap.divisionAttackTooltipCan": "Choose an adjacent enemy or enemy-controlled hex to attack.",
-    "hexMap.divisionAttackTooltipCannot": "This division has no adjacent attack target or already has an order.",
-    "hexMap.divisionAttackUnavailable": "This division cannot attack now.",
-    "hexMap.divisionAttackSelectTarget": "Select an adjacent enemy hex to attack.",
-    "hexMap.divisionAttackNoTarget": "No adjacent attackable target on that hex.",
-    "hexMap.divisionAttackOrderSent": "Division attack order sent",
-    "hexMap.fleets": "Fleets",
+    "hexMap.unitStack": "Unit stack",
+    "hexMap.unitStackValue": "{current}/{max}",
+    "hexMap.unitStackTooltip": "Your units on this hex: {current}/{max}. Civ-like stacking currently allows one combat unit plus one civilian unit for the same country.",
+    "hexMap.unitSelected": "Unit selected",
+    "hexMap.unitMoveSelectTarget": "Select a target hex for the unit.",
+    "hexMap.unitMoveNoPath": "No valid route for this unit.",
+    "hexMap.unitMoveOrderSent": "Unit movement order sent",
+    "hexMap.unitAttackSelectTarget": "Select an adjacent enemy hex to attack.",
+    "hexMap.unitAttackNoTarget": "No adjacent attackable target on that hex.",
+    "hexMap.unitAttackOrderSent": "Unit attack order sent",
     "hexMap.fleetStatus": "Strength {strength}% · organization {organization}",
     "hexMap.fleetMove": "Move",
     "hexMap.fleetMoveTooltipCan": "Choose a water target hex for this fleet.",
@@ -5684,7 +5574,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.fleetMoveUnavailable": "This fleet cannot move now.",
     "hexMap.fleetMoveSelectTarget": "Select a water target hex for the fleet.",
     "hexMap.fleetMoveNoPath": "No valid water route for this fleet.",
-    "hexMap.fleetMoveOrderSent": "Fleet movement order sent",
     "hexMap.civilianUnits": "Civilian units",
     "hexMap.civilianQueue": "Civilian queue",
     "hexMap.civilianColonizer": "Colonizer",
@@ -7095,24 +6984,23 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.modeDock": "Map modes",
     "shell.notifications": "Notifications",
     "shell.orderColonizationTitle": "New colonization order",
-    "shell.orderArmyMoveMessage": "Division {division} redeployed to {province}",
+    "shell.orderUnitMoveMessage": "Unit {unit} moved to {hex}",
     "shell.orderSent": "Order sent",
     "shell.orderTitle": "New order",
     "shell.preview.activeResearchDetail": "Current technology tracks",
     "shell.preview.armyLedger": "Army board",
     "shell.preview.averageOrganization": "Average organization",
-    "shell.preview.averageOrganizationDetail": "Across field divisions",
+    "shell.preview.averageOrganizationDetail": "Across field units",
     "shell.preview.bills": "Bills",
     "shell.preview.billsDetail": "Parliament agenda",
     "shell.preview.colonizationLedger": "Colonization board",
     "shell.preview.constructionQueue": "Construction queue",
     "shell.preview.diplomacyLedger": "Diplomatic desk",
-    "shell.preview.divisions": "Divisions",
     "shell.preview.formationQueue": "Formation queue",
     "shell.preview.formationQueueDetail": "Units being formed",
     "shell.preview.governanceLedger": "Office ledger",
     "shell.preview.marketLedger": "Market ledger",
-    "shell.preview.noArmy": "No field divisions or formations yet.",
+    "shell.preview.noArmy": "No field units or training queue yet.",
     "shell.preview.noColonization": "No ready colonizers, colonizer queue, or settlement projects yet. Select a controlled hex and prepare a colonizer.",
     "shell.preview.noConstruction": "No active construction projects for your controlled regions.",
     "shell.preview.noDiplomacy": "No visible diplomatic proposals involving your country.",
@@ -7215,11 +7103,19 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "turnActions.commandHubAria": "Turn advancer and unit command hub",
     "turnActions.focusUnit": "Focus",
     "turnActions.focusUnitTooltip": "Center the map on this required action.",
+    "turnActions.attackUnit": "Attack",
+    "turnActions.attackUnitTooltip": "Choose an adjacent enemy or enemy-controlled hex.",
     "turnActions.forceEndTurn": "Force end turn",
     "turnActions.forceEndTurnConfirm": "End the turn with {count} unresolved action(s)?",
     "turnActions.forceEndTurnTooltip": "End the turn anyway after confirmation. No hidden unit orders are created.",
     "turnActions.foundCity": "Found city",
     "turnActions.foundCityTooltip": "Focus the colonizer so the map founding action can be confirmed.",
+    "turnActions.fortifyQueued": "Unit will fortify",
+    "turnActions.fortifyUnit": "Fortify",
+    "turnActions.fortifyUnitTooltip": "Spend this unit's action and keep it fortified until it receives a wake order.",
+    "turnActions.moveUnit": "Move",
+    "turnActions.moveUnitTooltip": "Choose a destination hex. Right-click on the map also gives a quick move or attack order.",
+    "turnActions.promoteNeedsChoice": "Promotion requires a skill choice panel.",
     "turnActions.needsOrders": "Needs orders: {count}",
     "turnActions.nextTurnBlockedTooltip": "Some units can still act. Click to review them, or Shift-click to force end turn.",
     "turnActions.queueAria": "Required action queue",
@@ -7725,8 +7621,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.listTooltip": "Выберите запись из списка, чтобы редактировать её данные и оформление.",
     "contentPanel.loading": "Загрузка...",
     "contentPanel.title": "Панель контента",
-    "contentPanel.category.aircraftTypes": "Самолёты",
-    "contentPanel.category.battalions": "Батальоны",
     "contentPanel.category.buildings": "Здания",
     "contentPanel.category.companies": "Компании",
     "contentPanel.category.cultures": "Культуры",
@@ -7751,7 +7645,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.category.religions": "Религии",
     "contentPanel.category.resourceCategories": "Категории инфраструктуры",
     "contentPanel.category.sectors": "Сектора",
-    "contentPanel.category.shipTypes": "Корабли",
     "contentPanel.category.technologies": "Технологии",
     "contentPanel.contentFallback": "Контент",
     "contentPanel.listLabel": "Список: {category}",
@@ -8195,24 +8088,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.meta.professions.namePlaceholder": "Название профессии",
     "contentPanel.meta.professions.descriptionPlaceholder": "Краткое описание профессии",
     "contentPanel.meta.professions.sectionTitle": "Раздел создания и редактирования профессий",
-    "contentPanel.meta.battalions.singular": "батальон",
-    "contentPanel.meta.battalions.createBaseName": "Новый батальон",
-    "contentPanel.meta.battalions.createLabel": "Создать батальон",
-    "contentPanel.meta.battalions.namePlaceholder": "Название батальона",
-    "contentPanel.meta.battalions.descriptionPlaceholder": "Описание роли батальона в дивизии",
-    "contentPanel.meta.battalions.sectionTitle": "Раздел создания и редактирования батальонов",
-    "contentPanel.meta.shipTypes.singular": "тип корабля",
-    "contentPanel.meta.shipTypes.createBaseName": "Новый корабль",
-    "contentPanel.meta.shipTypes.createLabel": "Создать корабль",
-    "contentPanel.meta.shipTypes.namePlaceholder": "Название типа корабля",
-    "contentPanel.meta.shipTypes.descriptionPlaceholder": "Описание роли корабля во флоте",
-    "contentPanel.meta.shipTypes.sectionTitle": "Раздел создания и редактирования кораблей",
-    "contentPanel.meta.aircraftTypes.singular": "тип самолёта",
-    "contentPanel.meta.aircraftTypes.createBaseName": "Новый самолёт",
-    "contentPanel.meta.aircraftTypes.createLabel": "Создать самолёт",
-    "contentPanel.meta.aircraftTypes.namePlaceholder": "Название типа самолёта",
-    "contentPanel.meta.aircraftTypes.descriptionPlaceholder": "Описание роли самолёта в авиакрыле",
-    "contentPanel.meta.aircraftTypes.sectionTitle": "Раздел создания и редактирования самолётов",
     "contentPanel.meta.ideologies.singular": "идеология",
     "contentPanel.meta.ideologies.createBaseName": "Новая идеология",
     "contentPanel.meta.ideologies.createLabel": "Создать идеологию",
@@ -8967,15 +8842,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "elections.tooltipVotes": "Голоса: {value}",
     "elections.voteShare": "Голоса: {value}",
     "army.air": "Авиакрылья",
-    "army.airWingMission": "Миссия авиакрыла",
-    "army.airWingMission.air_superiority": "Превосходство в воздухе",
-    "army.airWingMission.ground_support": "Поддержка войск",
-    "army.airWingMission.interception": "Перехват",
-    "army.airWingMission.naval_patrol": "Морское патрулирование",
-    "army.airWingMission.none": "Без миссии",
-    "army.airWingMissionRegion": "Регион миссии",
-    "army.airWingMissionRegionTooltip": "Задаёт регион, где авиакрыло должно действовать. Проверка дальности и базирования будет добавлена в следующих срезах авиационной системы.",
-    "army.airWingMissionTooltip": "Задаёт текущую миссию авиакрыла. Эффекты миссий применят будущие системы воздушного боя и модификаторов.",
     "army.attack": "Атака",
     "army.baseHex": "Гекс базирования",
     "army.battleSlots": "Боевые слоты",
@@ -8985,8 +8851,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.createEquipmentVariant": "Создать вариант",
     "army.createFormation": "Сформировать",
     "army.createProductionLine": "Запустить линию",
-    "army.defaultAir": "Новое авиакрыло",
-    "army.defaultLand": "Новая дивизия",
     "army.defaultNaval": "Новый флот",
     "army.delete": "Удалить",
     "army.deleteProductionLine": "Удалить производственную линию",
@@ -8994,7 +8858,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.description": "Шаблоны, формирование и базирование дивизий, флотов и авиакрыльев",
     "army.disbandConfirmDescription": "Расформировать {name}? Дивизия будет удалена с карты.",
     "army.disbandConfirmTitle": "Расформировать дивизию",
-    "army.disbandDivision": "Расформировать дивизию",
     "army.disbandEquipmentReturn": "Назначенная техника вернётся на склад страны.",
     "army.emptyQueue": "Очередь пуста",
     "army.emptyQueueDescription": "Новые части появляются здесь после команды сформировать.",
@@ -9004,16 +8867,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.equipmentCoverage": "Покрытие {value}%",
     "army.equipmentCoverageTooltip": "Требуется: {required}. Доступно на складе: {available}. Назначено по текущей оценке лучшего варианта: {assigned}. Покрытие {coverage}% масштабирует эффективные боевые показатели дивизии.",
     "army.equipmentCoverageTooltipTitle": "Покрытие техникой",
-    "army.divisionEquipmentLoadout": "Техника дивизии",
-    "army.divisionEquipmentLoadoutTooltip": "Этой дивизии назначено {assigned} из {required} требуемой техники. Покрытие {coverage}% влияет на её эффективные боевые показатели.",
-    "army.noDivisionEquipmentLoadout": "Нет требований к технике",
     "army.equipmentCost": "Стоимость товарами",
     "army.equipmentLines": "Производственные линии",
-    "army.equipmentProduction": "Производство техники",
     "army.equipmentRequirements": "Потребность в технике",
     "army.equipmentStats": "Показатели",
-    "army.equipmentVariant": "Вариант",
-    "army.equipmentVariantName": "Название варианта",
     "army.assignedEquipment": "Назначенная техника",
     "army.equipmentRequired": "Требуется",
     "army.equipmentAvailable": "Доступно",
@@ -9056,9 +8913,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.formationSelectHexTooltip": "Выбрать гекс развёртывания на карте",
     "army.formationSpeed": "Скорость формирования: {speed}",
     "army.branch": "Ветка",
-    "army.branch.air": "Авиакрылья",
-    "army.branch.land": "Дивизии",
-    "army.branch.naval": "Флоты",
     "army.icon64": "Логотип 64x64",
     "army.iconInvalid64": "Логотип должен быть строго 64x64.",
     "army.iconUploadFailed": "Не удалось загрузить логотип.",
@@ -9079,7 +8933,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.noEquipmentLines": "Нет производственных линий",
     "army.noEquipmentLinesDescription": "Создайте вариант техники, затем запустите линию.",
     "army.noEquipmentRequirements": "Этот шаблон пока не требует технику.",
-    "army.noEquipmentStats": "Нет показателей.",
     "army.noAssignedEquipment": "Нет подходящей техники на складе",
     "army.noMissionRegions": "Нет известных регионов",
     "army.noFrames": "Для этой ветки нет доступных основ техники.",
@@ -9105,9 +8958,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.inactive": "Неактивна",
     "army.saveTemplate": "Сохранить шаблон",
     "army.saveVariant": "Сохранить вариант",
-    "army.designerDivision": "Конструктор дивизий",
-    "army.designerAirWing": "Конструктор авиакрыльев",
-    "army.designerFleet": "Конструктор флотов",
     "army.createLandEquipment": "Создать технику",
     "army.createPlane": "Создать самолёт",
     "army.createShip": "Создать корабль",
@@ -9137,7 +8987,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.supplySummaryTitle": "Сводка снабжения армии",
     "army.supplySummaryValue": "+{received} / -{returned} · {divisions} дивиз.",
     "army.supplyShort": "Снабж.",
-    "army.totalBattalions": "{count} батальонов",
     "army.totalSoldiers": "{count} солдат",
     "army.templateDeleted": "Шаблон удалён",
     "army.templateEquipmentCoverage": "Покрытие шаблона техникой: {value}%",
@@ -9366,27 +9215,16 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.buildingStatusInactive": "Неактивно",
     "hexMap.buildingStatusRuins": "Руины",
     "hexMap.buildingStatusWorking": "Работает",
-    "hexMap.divisions": "Дивизии",
-    "hexMap.divisionStack": "Стак дивизий",
-    "hexMap.divisionStackValue": "{current}/{max}",
-    "hexMap.divisionStackTooltip": "Ваши сухопутные дивизии на этом гексе: {current}/{max}. Сценарный лимит стака блокирует мирный вход в полный гекс, останавливает сохранённый маршрут перед заполненным гексом и оставляет завершённое формирование в очереди, пока не появится место.",
-    "hexMap.divisionEquipmentCoverage": "техника {value}%",
-    "hexMap.divisionStatus": "Сила {strength}% · организация {organization}",
-    "hexMap.divisionMove": "Переместить",
-    "hexMap.divisionMoveTooltipCan": "Выбрать целевой гекс для этой дивизии.",
-    "hexMap.divisionMoveTooltipCannot": "Эта дивизия сейчас не может получить приказ движения.",
-    "hexMap.divisionMoveUnavailable": "Эта дивизия сейчас не может двигаться.",
-    "hexMap.divisionMoveSelectTarget": "Выберите целевой гекс для дивизии.",
-    "hexMap.divisionMoveNoPath": "Нет допустимого маршрута для этой дивизии.",
-    "hexMap.divisionMoveOrderSent": "Приказ движения дивизии отправлен",
-    "hexMap.divisionAttack": "Атаковать",
-    "hexMap.divisionAttackTooltipCan": "Выбрать соседний вражеский или контролируемый врагом гекс для атаки.",
-    "hexMap.divisionAttackTooltipCannot": "У этой дивизии нет соседней цели для атаки или уже есть приказ.",
-    "hexMap.divisionAttackUnavailable": "Эта дивизия сейчас не может атаковать.",
-    "hexMap.divisionAttackSelectTarget": "Выберите соседний вражеский гекс для атаки.",
-    "hexMap.divisionAttackNoTarget": "На этом гексе нет соседней цели для атаки.",
-    "hexMap.divisionAttackOrderSent": "Приказ атаки дивизии отправлен",
-    "hexMap.fleets": "Флоты",
+    "hexMap.unitStack": "Стак юнитов",
+    "hexMap.unitStackValue": "{current}/{max}",
+    "hexMap.unitStackTooltip": "Ваши юниты на этом гексе: {current}/{max}. Сейчас Civ-подобный стак допускает один боевой и один гражданский юнит одной страны.",
+    "hexMap.unitSelected": "Юнит выбран",
+    "hexMap.unitMoveSelectTarget": "Выберите целевой гекс для юнита.",
+    "hexMap.unitMoveNoPath": "Нет допустимого маршрута для этого юнита.",
+    "hexMap.unitMoveOrderSent": "Приказ движения юнита отправлен",
+    "hexMap.unitAttackSelectTarget": "Выберите соседний вражеский гекс для атаки.",
+    "hexMap.unitAttackNoTarget": "На этом гексе нет соседней цели для атаки.",
+    "hexMap.unitAttackOrderSent": "Приказ атаки юнита отправлен",
     "hexMap.fleetStatus": "Сила {strength}% · организация {organization}",
     "hexMap.fleetMove": "Переместить",
     "hexMap.fleetMoveTooltipCan": "Выбрать водный целевой гекс для этого флота.",
@@ -9394,7 +9232,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.fleetMoveUnavailable": "Этот флот сейчас не может двигаться.",
     "hexMap.fleetMoveSelectTarget": "Выберите водный целевой гекс для флота.",
     "hexMap.fleetMoveNoPath": "Нет допустимого водного маршрута для этого флота.",
-    "hexMap.fleetMoveOrderSent": "Приказ движения флота отправлен",
     "hexMap.civilianUnits": "Гражданские юниты",
     "hexMap.civilianQueue": "Очередь гражданских юнитов",
     "hexMap.civilianColonizer": "Колонизатор",
@@ -10805,24 +10642,23 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.modeDock": "Режимы карты",
     "shell.notifications": "Уведомления",
     "shell.orderColonizationTitle": "Новый приказ колонизации",
-    "shell.orderArmyMoveMessage": "Передислокация дивизии {division} в {province}",
+    "shell.orderUnitMoveMessage": "Юнит {unit} перемещается в {hex}",
     "shell.orderSent": "Приказ отправлен",
     "shell.orderTitle": "Новый приказ",
     "shell.preview.activeResearchDetail": "Текущие направления технологий",
     "shell.preview.armyLedger": "Армейская сводка",
     "shell.preview.averageOrganization": "Средняя организация",
-    "shell.preview.averageOrganizationDetail": "По полевым дивизиям",
+    "shell.preview.averageOrganizationDetail": "По полевым юнитам",
     "shell.preview.bills": "Законопроекты",
     "shell.preview.billsDetail": "Повестка парламента",
     "shell.preview.colonizationLedger": "Сводка колонизации",
     "shell.preview.constructionQueue": "Очередь строительства",
     "shell.preview.diplomacyLedger": "Дипломатический стол",
-    "shell.preview.divisions": "Дивизии",
     "shell.preview.formationQueue": "Очередь формирования",
     "shell.preview.formationQueueDetail": "Формируемые части",
     "shell.preview.governanceLedger": "Реестр канцелярии",
     "shell.preview.marketLedger": "Реестр рынка",
-    "shell.preview.noArmy": "Полевых дивизий и формирований пока нет.",
+    "shell.preview.noArmy": "Полевых юнитов и очереди подготовки пока нет.",
     "shell.preview.noColonization": "Пока нет готовых колонизаторов, очереди подготовки или проектов поселений. Выберите контролируемый гекс и подготовьте колонизатора.",
     "shell.preview.noConstruction": "Нет активных строительных проектов в контролируемых регионах.",
     "shell.preview.noDiplomacy": "Нет видимых дипломатических предложений с участием вашей страны.",
@@ -10925,11 +10761,19 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "turnActions.commandHubAria": "Кнопка хода и командный узел юнита",
     "turnActions.focusUnit": "Фокус",
     "turnActions.focusUnitTooltip": "Центрировать карту на действии, которое требует внимания.",
+    "turnActions.attackUnit": "Атака",
+    "turnActions.attackUnitTooltip": "Выбрать соседний вражеский или контролируемый врагом гекс.",
     "turnActions.forceEndTurn": "Завершить принудительно",
     "turnActions.forceEndTurnConfirm": "Завершить ход с незавершенными действиями: {count}?",
     "turnActions.forceEndTurnTooltip": "Все равно завершить ход после подтверждения. Скрытые приказы юнитам не создаются.",
     "turnActions.foundCity": "Основать город",
     "turnActions.foundCityTooltip": "Сфокусировать колониста, чтобы подтвердить основание города на карте.",
+    "turnActions.fortifyQueued": "Юнит укрепится",
+    "turnActions.fortifyUnit": "Укрепиться",
+    "turnActions.fortifyUnitTooltip": "Потратить действие юнита и оставить его укрепленным до приказа пробуждения.",
+    "turnActions.moveUnit": "Движение",
+    "turnActions.moveUnitTooltip": "Выбрать целевой гекс. ПКМ по карте также отдает быстрый приказ движения или атаки.",
+    "turnActions.promoteNeedsChoice": "Для повышения нужна панель выбора навыка.",
     "turnActions.needsOrders": "Нужны приказы: {count}",
     "turnActions.nextTurnBlockedTooltip": "Некоторые юниты еще могут действовать. Нажмите, чтобы посмотреть, или Shift+Click для принудительного завершения.",
     "turnActions.queueAria": "Очередь обязательных действий",

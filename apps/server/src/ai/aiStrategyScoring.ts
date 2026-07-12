@@ -174,9 +174,6 @@ function getCandidateSortKey(candidate: AiCandidate): string {
   if (candidate.kind === "diplomacy-contact") {
     return `${candidate.kind}:${candidate.countryId}:${candidate.targetCountryId}`;
   }
-  if (candidate.kind === "army-move") {
-    return `${candidate.kind}:${candidate.countryId}:${candidate.divisionId}:${candidate.targetHexId}`;
-  }
   return `${candidate.kind}:${candidate.regionId}:${candidate.buildingId}:${candidate.kind === "upgrade" ? candidate.instanceId : ""}`;
 }
 

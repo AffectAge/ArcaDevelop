@@ -634,6 +634,9 @@ const turnRuntime = createTurnRuntime({
         getLastLoginAt: (countryId) => sessionStateRuntime.lastLoginAtByCountryId.get(countryId) ?? null,
         setLastLoginAt: (countryId, timestamp) => sessionStateRuntime.lastLoginAtByCountryId.set(countryId, timestamp),
         getReplayDeltasFromVersion: worldDeltaBroadcastRuntime.getReplayDeltasFromVersion,
+        cloneWorldBaseSectionSnapshot: worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot,
+        broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase, rejectedOrders) =>
+          worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase as WorldBaseSectionSnapshot, rejectedOrders),
         sendPendingRegistrationNotificationsToAdminSocket:
           countryRuntimeHelpers.sendPendingRegistrationNotificationsToAdminSocket,
         broadcast: (message) => broadcast(wss, message),

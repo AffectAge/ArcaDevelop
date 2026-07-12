@@ -1,5 +1,5 @@
 import { useMemo, useState, type MouseEvent, type ReactNode } from "react";
-import { AlertTriangle, Bed, Crosshair, FastForward, Flag, Footprints, Moon, Shield, SkipForward, Sun, Swords } from "lucide-react";
+import { AlertTriangle, Bed, Crosshair, FastForward, Flag, Footprints, MapPinned, Moon, Shield, ShieldCheck, SkipForward, Sun, Swords } from "lucide-react";
 import type { MapUnit, TurnActionItem, UnitTypeDefinition } from "@arcanorum/shared";
 import { getUnitAtlasFrameIndex, getUnitAtlasUrl } from "../assets/unitAtlas";
 import type { UiTextKey } from "../i18n/uiText";
@@ -12,10 +12,18 @@ type Props = {
   turnActions: TurnActionItem[];
   unitsById: Record<string, MapUnit>;
   unitTypes: UnitTypeDefinition[];
+  selectedUnitId?: string | null;
   onNextTurn: () => void;
   onForceNextTurn: () => void;
   onFocusAction: (item: TurnActionItem) => void;
+  onStartMoveUnit?: (unit: MapUnit) => void;
+  onStartAttackUnit?: (unit: MapUnit) => void;
+  onFoundCityUnit?: (unit: MapUnit) => void;
+  onSkipSelectedUnit?: (unit: MapUnit) => void;
+  onFortifySelectedUnit?: (unit: MapUnit) => void;
+  onSleepSelectedUnit?: (unit: MapUnit) => void;
   onSkipUnit: (item: TurnActionItem) => void;
+  onFortifyUnit: (item: TurnActionItem) => void;
   onSleepUnit: (item: TurnActionItem) => void;
   onWakeUnit: (unit: MapUnit) => void;
 };
@@ -25,10 +33,12 @@ export function TurnAdvancerHub(props: Props) {
   const blockingActions = useMemo(() => props.turnActions.filter((item) => item.severity === "blocking"), [props.turnActions]);
   const [activeIndex, setActiveIndex] = useState(0);
   const activeAction = blockingActions.length > 0 ? blockingActions[Math.min(activeIndex, blockingActions.length - 1)] : null;
-  const activeUnit = activeAction?.target.type === "unit" ? props.unitsById[activeAction.target.unitId] ?? null : null;
-  const sleepingUnit = Object.values(props.unitsById).find((unit) => unit.status === "sleeping") ?? null;
+  const selectedUnit = props.selectedUnitId ? props.unitsById[props.selectedUnitId] ?? null : null;
+  const actionUnit = activeAction?.target.type === "unit" ? props.unitsById[activeAction.target.unitId] ?? null : null;
+  const activeUnit = selectedUnit ?? actionUnit;
+  const restingUnit = Object.values(props.unitsById).find((unit) => unit.status === "sleeping" || unit.status === "fortified") ?? null;
   const activeUnitType = activeUnit ? props.unitTypes.find((unitType) => unitType.id === activeUnit.unitTypeId) ?? null : null;
-  const wakeUnit = activeUnit?.status === "sleeping" ? activeUnit : sleepingUnit;
+  const wakeUnit = activeUnit?.status === "sleeping" || activeUnit?.status === "fortified" ? activeUnit : restingUnit;
   const hasBlockingActions = blockingActions.length > 0;
   const orbLabel = hasBlockingActions ? t("turnActions.needsOrders", { count: blockingActions.length }) : t("topBar.nextTurn", { turn: props.turnId });
   const unitName = activeUnitType ? t(activeUnitType.nameKey as UiTextKey) : activeAction ? t(activeAction.labelKey as UiTextKey) : t("turnActions.readyDescription");
@@ -64,14 +74,32 @@ export function TurnAdvancerHub(props: Props) {
             ) : (
               <HubIconButton label={t("turnActions.readyTitle")} tooltip={t("turnActions.readyTooltip")} onClick={props.onNextTurn} icon={<FastForward size={15} />} />
             )}
-            {activeAction && activeAction.target.type === "unit" ? (
+            {activeUnit ? (
               <>
-                <HubIconButton label={t("turnActions.skipUnit")} tooltip={t("turnActions.skipUnitTooltip")} onClick={() => props.onSkipUnit(activeAction)} icon={<SkipForward size={15} />} />
-                <HubIconButton label={t("turnActions.sleepUnit")} tooltip={t("turnActions.sleepUnitTooltip")} onClick={() => props.onSleepUnit(activeAction)} icon={<Moon size={15} />} />
+                <HubIconButton label={t("turnActions.moveUnit")} tooltip={t("turnActions.moveUnitTooltip")} onClick={() => props.onStartMoveUnit?.(activeUnit)} icon={<MapPinned size={15} />} />
+                <HubIconButton label={t("turnActions.attackUnit")} tooltip={t("turnActions.attackUnitTooltip")} onClick={() => props.onStartAttackUnit?.(activeUnit)} icon={<Swords size={15} />} />
+                <HubIconButton
+                  label={t("turnActions.skipUnit")}
+                  tooltip={t("turnActions.skipUnitTooltip")}
+                  onClick={() => (selectedUnit ? props.onSkipSelectedUnit?.(selectedUnit) : activeAction ? props.onSkipUnit(activeAction) : undefined)}
+                  icon={<SkipForward size={15} />}
+                />
+                <HubIconButton
+                  label={t("turnActions.fortifyUnit")}
+                  tooltip={t("turnActions.fortifyUnitTooltip")}
+                  onClick={() => (selectedUnit ? props.onFortifySelectedUnit?.(selectedUnit) : activeAction ? props.onFortifyUnit(activeAction) : undefined)}
+                  icon={<ShieldCheck size={15} />}
+                />
+                <HubIconButton
+                  label={t("turnActions.sleepUnit")}
+                  tooltip={t("turnActions.sleepUnitTooltip")}
+                  onClick={() => (selectedUnit ? props.onSleepSelectedUnit?.(selectedUnit) : activeAction ? props.onSleepUnit(activeAction) : undefined)}
+                  icon={<Moon size={15} />}
+                />
               </>
             ) : null}
-            {activeUnitType?.canFoundCity && activeAction ? (
-              <HubIconButton label={t("turnActions.foundCity")} tooltip={t("turnActions.foundCityTooltip")} onClick={() => focusAction(activeAction)} icon={<Flag size={15} />} />
+            {activeUnitType?.canFoundCity && activeUnit ? (
+              <HubIconButton label={t("turnActions.foundCity")} tooltip={t("turnActions.foundCityTooltip")} onClick={() => props.onFoundCityUnit?.(activeUnit)} icon={<Flag size={15} />} />
             ) : null}
             {wakeUnit ? (
               <HubIconButton label={t("turnActions.wakeUnit")} tooltip={t("turnActions.wakeUnitTooltip")} onClick={() => props.onWakeUnit(wakeUnit)} icon={<Sun size={15} />} />

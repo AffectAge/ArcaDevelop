@@ -4,7 +4,7 @@
 
 Accepted.
 
-Supersedes the unit/equipment-constructor parts of ADR-0006.
+Supersedes the unit/equipment-constructor parts of ADR-0006 and removes the old division/fleet/air-wing runtime contour.
 
 ## Context
 
@@ -23,22 +23,27 @@ Replace the player-facing division/equipment constructor path with scenario-auth
 - Scenario-owned unit textures live under `assets/units/<sanitizedUnitTypeId>.png`.
 - Unit rendering uses Pixi sprites loaded through scenario atlases, with a static PNG fallback atlas only for missing textures.
 
-The first slice supports individual civilian, land, naval, and based air unit records. Full air combat, promotions, upgrades, and advanced ranged rules are follow-up decisions.
+The first tactical slice supports individual civilian, land, naval, and air-domain `MapUnit` records. It includes movement points, stored multi-turn routes, one combat plus one civilian unit per hex for a country, melee/ranged attack validation, `skip`, `sleep`, `wake`, `fortify`, and promotions that consume the unit action for the turn.
 
 ## Consequences
 
-Old local dev saves with division/equipment state are not migrated. Development reset is expected.
+Old local dev saves with division/equipment/fleet/air-wing state are not migrated. Development reset is expected.
 
-The old public constructor state is no longer the target surface:
+The old public constructor/runtime state is removed from `WorldBase`, `WorldDelta`, and order contracts:
 
 - `divisionTemplatesByCountry`
 - `divisionsById`
+- `fleetsById`
+- `airWingsById`
+- `militaryFormationQueueByCountry`
 - `equipmentVariantsById`
 - `equipmentProductionLinesByCountry`
 - `equipmentStockpileByCountry`
-- `militaryFormationQueueByCountry`
+- `ARMY_MOVE`
+- `EQUIPMENT_VARIANT`
+- `EQUIPMENT_PRODUCTION_LINE`
 
-These fields may remain temporarily in code during transition, but new mechanics and UI should use `unitsById` and `unitTrainingQueueByCountry`.
+New mechanics and UI use `unitsById` and `unitTrainingQueueByCountry`. Naval and future air units are normal `MapUnit` records distinguished by `UnitTypeDefinition.domain`; the old `Fleet` and `AirWing` containers are not persisted.
 
 ## Validation
 

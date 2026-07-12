@@ -257,7 +257,7 @@ export function GameTemplateGallery() {
           title: t("templates.plotTooltip.section.systems"),
           rows: [
             { label: t("hexMap.owner"), value: t("templates.sample.country"), icon: <Flag size={13} aria-hidden="true" />, tone: "info" },
-            { label: t("hexMap.divisionStack"), value: "2/6", icon: <Shield size={13} aria-hidden="true" />, tone: "muted" },
+            { label: t("hexMap.unitStack"), value: "1/1", icon: <Shield size={13} aria-hidden="true" />, tone: "muted" },
           ],
         },
       ],

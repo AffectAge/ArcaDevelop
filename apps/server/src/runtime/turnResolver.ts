@@ -31,6 +31,7 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
   resolveUnitPromoteOrder: (params: {
     order: Order;
     playerId: string;
+    movedMapUnitIds: Set<string>;
     rejectedOrders: WorldDelta["rejectedOrders"];
   }) => void;
   resolveUnitWaitOrder: (params: {
@@ -60,6 +61,7 @@ export type TurnResolverDependencies<TSnapshot, TUiNotification> = {
     movedMapUnitIds: Set<string>;
     news: EventLogEntry[];
   }) => void;
+  refreshMapUnitsForTurn: (turnId: number) => void;
   advanceUnitTrainingQueue: (news: EventLogEntry[]) => void;
   resolveColonizationSupportTurn: (params: {
     colonizeTargetsByCountry: Map<string, Set<string>>;
@@ -123,9 +125,9 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
         deps.resolveUnitAttackOrder({ order, playerId, movedMapUnitIds, rejectedOrders, news });
       }
       if (order.type === "UNIT_PROMOTE") {
-        deps.resolveUnitPromoteOrder({ order, playerId, rejectedOrders });
+        deps.resolveUnitPromoteOrder({ order, playerId, movedMapUnitIds, rejectedOrders });
       }
-      if (order.type === "UNIT_SKIP_TURN" || order.type === "UNIT_SLEEP" || order.type === "UNIT_WAKE") {
+      if (order.type === "UNIT_SKIP_TURN" || order.type === "UNIT_SLEEP" || order.type === "UNIT_WAKE" || order.type === "UNIT_FORTIFY") {
         deps.resolveUnitWaitOrder({ order, playerId, movedMapUnitIds, rejectedOrders });
       }
       if (order.type === "BUILD") {
@@ -140,7 +142,6 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
     }
   });
 
-  deps.advanceStoredUnitRoutesTurn({ movedMapUnitIds, news });
   deps.advanceUnitTrainingQueue(news);
   deps.resolveColonizationSupportTurn({ colonizeTargetsByCountry, touchedRegionIds });
   deps.resolveSettlementProjectsTurn(news);
@@ -174,6 +175,8 @@ export function resolveTurnWithPipeline<TSnapshot, TUiNotification>(
   const nextTurnId = turnId + 1;
   deps.setTurnId(nextTurnId);
   deps.setWorldBaseTurnId(nextTurnId);
+  deps.refreshMapUnitsForTurn(nextTurnId);
+  deps.advanceStoredUnitRoutesTurn({ movedMapUnitIds: new Set<string>(), news });
   deps.resetTurnTimerAnchor();
   deps.cleanupResolvedTurn(turnId);
   void deps.flushPersistentStateNow();

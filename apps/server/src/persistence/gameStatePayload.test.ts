@@ -57,18 +57,10 @@ function createWorldBase(): WorldBase {
     countryEventFlagsByCountryId: {},
     journalEntriesByCountryId: {},
     countryModifiersByCountryId: {},
-    divisionTemplatesByCountry: {},
-    divisionsById: {},
-    fleetsById: {},
-    airWingsById: {},
-    militaryFormationQueueByCountry: {},
     civilianUnitsById: {},
     civilianUnitQueueByCountry: {},
     settlementProjectsById: {},
     cityMarkersById: {},
-    equipmentVariantsById: {},
-    equipmentProductionLinesByCountry: {},
-    equipmentStockpileByCountry: {},
     diplomacyProposals: [],
   };
 }

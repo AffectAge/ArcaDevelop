@@ -133,15 +133,6 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     unitTrainingQueueByCountry: normalizeRecord(
       (candidate as Partial<WorldBase> & { unitTrainingQueueByCountry?: unknown }).unitTrainingQueueByCountry,
     ) as WorldBase["unitTrainingQueueByCountry"],
-    divisionTemplatesByCountry: {},
-    divisionsById: {},
-    fleetsById: normalizeRecord(
-      (candidate as Partial<WorldBase> & { fleetsById?: unknown }).fleetsById,
-    ) as WorldBase["fleetsById"],
-    airWingsById: normalizeRecord(
-      (candidate as Partial<WorldBase> & { airWingsById?: unknown }).airWingsById,
-    ) as WorldBase["airWingsById"],
-    militaryFormationQueueByCountry: {},
     civilianUnitsById: normalizeRecord(
       (candidate as Partial<WorldBase> & { civilianUnitsById?: unknown }).civilianUnitsById,
     ) as WorldBase["civilianUnitsById"],
@@ -154,15 +145,6 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     cityMarkersById: normalizeRecord(
       (candidate as Partial<WorldBase> & { cityMarkersById?: unknown }).cityMarkersById,
     ) as WorldBase["cityMarkersById"],
-    equipmentVariantsById: normalizeRecord(
-      (candidate as Partial<WorldBase> & { equipmentVariantsById?: unknown }).equipmentVariantsById,
-    ) as WorldBase["equipmentVariantsById"],
-    equipmentProductionLinesByCountry: normalizeRecord(
-      (candidate as Partial<WorldBase> & { equipmentProductionLinesByCountry?: unknown }).equipmentProductionLinesByCountry,
-    ) as WorldBase["equipmentProductionLinesByCountry"],
-    equipmentStockpileByCountry: normalizeRecord(
-      (candidate as Partial<WorldBase> & { equipmentStockpileByCountry?: unknown }).equipmentStockpileByCountry,
-    ) as WorldBase["equipmentStockpileByCountry"],
     diplomacyProposals: params.normalizeDiplomacyProposals(
       (candidate as Partial<WorldBase> & { diplomacyProposals?: unknown }).diplomacyProposals,
     ),

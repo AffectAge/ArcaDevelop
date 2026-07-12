@@ -16,8 +16,7 @@ afterEach(() => {
 describe("uploadPaths", () => {
   it("resolves known content upload kinds to their directories", () => {
     expect(resolveContentUploadDir("resourceCategories")).toBe(join(getActiveScenarioUploadsRoot(), "resource-categories"));
-    expect(resolveContentUploadDir("shipTypes")).toBe(join(getActiveScenarioUploadsRoot(), "ship-types"));
-    expect(resolveContentUploadDir("aircraftTypes")).toBe(join(getActiveScenarioUploadsRoot(), "aircraft-types"));
+    expect(resolveContentUploadDir("unitTypes")).toBe(join(getActiveScenarioUploadsRoot(), "unitTypes"));
   });
 
   it("falls back to cultures for missing content upload kinds", () => {
@@ -29,7 +28,6 @@ describe("uploadPaths", () => {
     expect(resolveContentUploadUrlSegment()).toBe("cultures");
     expect(resolveContentUploadUrlSegment("resourceCategories")).toBe("resource-categories");
     expect(resolveContentUploadUrlSegment("hexStrategicRegions")).toBe("province-strategic-regions");
-    expect(resolveContentUploadUrlSegment("shipTypes")).toBe("ship-types");
   });
 
   it("keeps simple public URL segments unchanged", () => {

@@ -6,7 +6,7 @@ import type { ResourceLedgerEntryInput } from "../runtime/resourceLedgerRuntime"
 import { findSpawnableTrainingHex } from "../mechanics/mapUnitMechanics";
 
 export type UnitRouteMasks = {
-  unitEquipmentState: number;
+  unitState: number;
   resourcesByCountry: number;
   resourceLedgerByTurn: number;
 };
@@ -78,7 +78,7 @@ export function registerUnitRoutes(app: express.Express, deps: UnitRoutesDepende
     if (!costCheck.ok) return res.status(400).json({ error: costCheck.error });
 
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
-      deps.masks.unitEquipmentState | deps.masks.resourcesByCountry | deps.masks.resourceLedgerByTurn,
+      deps.masks.unitState | deps.masks.resourcesByCountry | deps.masks.resourceLedgerByTurn,
     );
     const queue = worldBase.unitTrainingQueueByCountry[auth.countryId] ?? [];
     const turnsTotal = Math.max(1, Math.ceil((unitType.productionCost.construction ?? 0) / 25) || 1);
@@ -109,7 +109,7 @@ export function registerUnitRoutes(app: express.Express, deps: UnitRoutesDepende
     const queue = worldBase.unitTrainingQueueByCountry[auth.countryId] ?? [];
     const next = queue.filter((item) => item.id !== req.params.queueId);
     if (next.length === queue.length) return res.status(404).json({ error: "UNIT_TRAINING_QUEUE_ITEM_NOT_FOUND" });
-    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.unitEquipmentState);
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.unitState);
     worldBase.unitTrainingQueueByCountry[auth.countryId] = next;
     deps.savePersistentState();
     deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
@@ -123,7 +123,7 @@ export function registerUnitRoutes(app: express.Express, deps: UnitRoutesDepende
     worldBase.unitsById ??= {};
     const unit = worldBase.unitsById[req.params.unitId];
     if (!unit || unit.countryId !== auth.countryId) return res.status(404).json({ error: "UNIT_NOT_FOUND" });
-    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.unitEquipmentState);
+    const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(deps.masks.unitState);
     delete worldBase.unitsById[unit.id];
     deps.savePersistentState();
     deps.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);

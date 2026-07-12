@@ -27,11 +27,14 @@ describe("mapUnitMechanics wait orders", () => {
       worldBase,
       unitTypes: [makeUnitType("unit:warrior", "land", { unitSkillTreeId: "unit_skill_tree:warrior" })],
       unitSkillTrees: [makeSkillTree()],
+      turnId: 7,
+      movedUnitIds: new Set<string>(),
     });
 
     expect(result.rejectedOrder).toBeNull();
     expect(worldBase.unitsById["unit:a"]?.skillIds).toEqual(["unit_skill:river_fighter"]);
     expect(worldBase.unitsById["unit:a"]?.completedChoiceGroupIds).toEqual(["group:level_2"]);
+    expect(worldBase.unitsById["unit:a"]).toMatchObject({ movementPoints: 0, lastActionTurnId: 7 });
   });
 
   it("rejects unit skill choices with the wrong choice count", () => {
@@ -41,6 +44,8 @@ describe("mapUnitMechanics wait orders", () => {
       worldBase: { unitsById: { "unit:a": makeUnit("unit:a", { experience: 10 }) } },
       unitTypes: [makeUnitType("unit:warrior", "land", { unitSkillTreeId: "unit_skill_tree:warrior" })],
       unitSkillTrees: [makeSkillTree()],
+      turnId: 7,
+      movedUnitIds: new Set<string>(),
     });
 
     expect(result.rejectedOrder).toMatchObject({ reason: "UNIT_PROMOTE_CHOICE_COUNT_INVALID" });
@@ -59,6 +64,22 @@ describe("mapUnitMechanics wait orders", () => {
 
     expect(result.rejectedOrder).toBeNull();
     expect(worldBase.unitsById["unit:a"]).toMatchObject({ status: "sleeping", movementPoints: 0, lastActionTurnId: 7 });
+  });
+
+  it("fortifies a map unit until a manual order wakes it", () => {
+    const movedUnitIds = new Set<string>();
+    const worldBase = { unitsById: { "unit:a": makeUnit("unit:a") } };
+    const result = resolveMapUnitWaitOrder({
+      order: makeWaitOrder("UNIT_FORTIFY"),
+      playerId: "player:a",
+      worldBase,
+      turnId: 7,
+      movedUnitIds,
+    });
+
+    expect(result.rejectedOrder).toBeNull();
+    expect(worldBase.unitsById["unit:a"]).toMatchObject({ status: "fortified", movementPoints: 0, lastActionTurnId: 7 });
+    expect(movedUnitIds.has("unit:a")).toBe(true);
   });
 
   it("wakes a sleeping map unit without granting extra movement", () => {
@@ -99,7 +120,6 @@ describe("mapUnitMechanics wait orders", () => {
         playerId: "player:a",
         countryId: "country:a",
         unitId: "unit:a",
-        unitKind: "map",
         targetHexId: "hex:1:0",
         path: ["hex:1:0"],
         payload: { path: ["hex:1:0"] },
@@ -181,7 +201,7 @@ function makePromoteOrder(skillIds: Array<`unit_skill:${string}`>): Order {
   };
 }
 
-function makeWaitOrder(type: "UNIT_SKIP_TURN" | "UNIT_SLEEP" | "UNIT_WAKE"): Order {
+function makeWaitOrder(type: "UNIT_SKIP_TURN" | "UNIT_SLEEP" | "UNIT_WAKE" | "UNIT_FORTIFY"): Order {
   return {
     id: `order:${type}`,
     type,
@@ -189,7 +209,6 @@ function makeWaitOrder(type: "UNIT_SKIP_TURN" | "UNIT_SLEEP" | "UNIT_WAKE"): Ord
     playerId: "player:a",
     countryId: "country:a",
     unitId: "unit:a",
-    unitKind: "map",
     payload: {},
     createdAt: "2026-01-01T00:00:00.000Z",
   };

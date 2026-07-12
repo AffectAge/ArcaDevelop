@@ -42,11 +42,12 @@ export function collectQueuedMapUnitIds(
   for (const orders of currentTurnOrders?.values() ?? []) {
     for (const order of orders) {
       if (order.countryId !== countryId) continue;
-      if (order.type === "UNIT_MOVE" && order.unitKind === "map") queued.add(order.unitId);
+      if (order.type === "UNIT_MOVE") queued.add(order.unitId);
       if (order.type === "UNIT_ATTACK") queued.add(order.attackerUnitId);
-      if (order.type === "UNIT_SKIP_TURN" && order.unitKind === "map") queued.add(order.unitId);
-      if (order.type === "UNIT_SLEEP" && order.unitKind === "map") queued.add(order.unitId);
-      if (order.type === "UNIT_WAKE" && order.unitKind === "map") queued.add(order.unitId);
+      if (order.type === "UNIT_SKIP_TURN") queued.add(order.unitId);
+      if (order.type === "UNIT_SLEEP") queued.add(order.unitId);
+      if (order.type === "UNIT_WAKE") queued.add(order.unitId);
+      if (order.type === "UNIT_FORTIFY") queued.add(order.unitId);
       if (order.type === "FOUND_CITY") queued.add(order.civilianUnitId);
     }
   }

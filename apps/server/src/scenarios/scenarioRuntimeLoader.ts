@@ -8,16 +8,10 @@ import {
   ensureDefaultReligion,
   ensureDefaultUnemployedProfession,
   normalizeContentAssets,
-  normalizeContentAircraftTypes,
-  normalizeContentBattalions,
   normalizeContentBuildings,
   normalizeContentCultures,
   normalizeContentGoods,
-  normalizeContentEquipmentClasses,
-  normalizeContentEquipmentFrames,
-  normalizeContentEquipmentModules,
   normalizeContentRaces,
-  normalizeContentShipTypes,
   normalizeContentUnitSkills,
   normalizeContentUnitSkillTrees,
   normalizeContentUnitTypes,
@@ -57,7 +51,6 @@ export type BuildWorldBaseFromScenarioRuntimeDeps = {
 
 export function normalizeScenarioContentForRuntime(source: unknown): GameSettings["content"] {
   const contentSource = source && typeof source === "object" ? (source as Record<string, unknown>) : {};
-  const equipmentClasses = normalizeContentEquipmentClasses(contentSource.equipmentClasses ?? contentSource.equipment_classes);
   return {
     assets: normalizeContentAssets(contentSource.assets),
     races: ensureDefaultRace(normalizeContentRaces(contentSource.races)),
@@ -93,12 +86,6 @@ export function normalizeScenarioContentForRuntime(source: unknown): GameSetting
     unitSkills: normalizeContentUnitSkills(contentSource.unitSkills ?? contentSource.unit_skills),
     unitSkillTrees: normalizeContentUnitSkillTrees(contentSource.unitSkillTrees ?? contentSource.unit_skill_trees),
     unitTypes: normalizeContentUnitTypes(contentSource.unitTypes ?? contentSource.unit_types),
-    battalions: normalizeContentBattalions(contentSource.battalions),
-    shipTypes: normalizeContentShipTypes(contentSource.shipTypes ?? contentSource.ship_types),
-    aircraftTypes: normalizeContentAircraftTypes(contentSource.aircraftTypes ?? contentSource.aircraft_types),
-    equipmentClasses,
-    equipmentFrames: normalizeContentEquipmentFrames(contentSource.equipmentFrames ?? contentSource.equipment_frames, equipmentClasses),
-    equipmentModules: normalizeContentEquipmentModules(contentSource.equipmentModules ?? contentSource.equipment_modules),
   };
 }
 

@@ -210,11 +210,6 @@ function makeWorldBase(overrides: Partial<WorldBase> = {}): WorldBase {
     countryEventFlagsByCountryId: {},
     journalEntriesByCountryId: {},
     countryModifiersByCountryId: {},
-    divisionTemplatesByCountry: {},
-    divisionsById: {},
-    fleetsById: {},
-    airWingsById: {},
-    militaryFormationQueueByCountry: {},
     civilianUnitsById: {
       "unit:colonizer": {
         id: "unit:colonizer",
@@ -231,9 +226,6 @@ function makeWorldBase(overrides: Partial<WorldBase> = {}): WorldBase {
     civilianUnitQueueByCountry: {},
     settlementProjectsById: {},
     cityMarkersById: {},
-    equipmentVariantsById: {},
-    equipmentProductionLinesByCountry: {},
-    equipmentStockpileByCountry: {},
     diplomacyProposals: [],
     ...overrides,
   };

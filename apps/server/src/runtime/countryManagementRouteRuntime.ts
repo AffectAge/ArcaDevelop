@@ -30,9 +30,6 @@ type CountryManagementMasks = {
   countryEventFlagsByCountryId: number;
   journalEntriesByCountryId: number;
   countryModifiersByCountryId: number;
-  divisionTemplatesByCountry: number;
-  divisionsById: number;
-  militaryFormationQueueByCountry: number;
   diplomacyProposals: number;
 };
 

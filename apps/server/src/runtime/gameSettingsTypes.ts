@@ -3,15 +3,10 @@ import type {
   BuildingPlacementRules,
   GoodDepositDefinition,
   DecisionDefinition,
-  DivisionStats,
-  EquipmentClass,
-  EquipmentFrame,
-  EquipmentModule,
   GameEventDefinition,
   JournalEntryDefinition,
   IdeologyAttractionRule,
   LawParliamentPowerEffect,
-  MilitaryBranch,
   ModifierDefinition,
   TreatyConstructionExpirationPolicy,
   UnitSkillDefinition,
@@ -22,6 +17,8 @@ import type { BuildingCountryLimit, PollutionProductivityMode } from "../mechani
 import type { GoodDistributionType, GoodTransportMode } from "../mechanics/marketTurnMechanics";
 import type { CultureNeedsProfile } from "../mechanics/populationMechanics";
 import type { BuildingExtractionFlow, GoodFlow, WorkforceRequirement } from "../mechanics/contentFieldNormalizers";
+
+export type ContentMilitaryBranch = "land" | "naval" | "air";
 
 export type GameContentEntry = {
   id: string;
@@ -174,21 +171,11 @@ export type BuildingContentEntry = GameContentEntry & {
   placement?: BuildingPlacementRules | null;
   adjacencyEffects?: BuildingAdjacencyEffect[] | null;
   deployment?: {
-    branches: MilitaryBranch[];
+    branches: ContentMilitaryBranch[];
     capacity?: number | null;
     requiresActive?: boolean | null;
   } | null;
 };
-
-export type BattalionContentEntry = GameContentEntry & DivisionStats & {
-  trainingCostDucats?: number | null;
-  trainingCostManpower?: number | null;
-  equipmentNeeds?: GoodFlow[];
-};
-
-export type MilitaryContentEntry = BattalionContentEntry;
-
-export type DefaultBattalionKind = "infantry" | "archers" | "cavalry" | "artillery" | "mages" | "constructs" | "support";
 
 export type MarketTradePolicyEntry = {
   allowImportFromWorld?: boolean;
@@ -334,12 +321,6 @@ export type GameSettings = {
     unitSkills: UnitSkillDefinition[];
     unitSkillTrees: UnitSkillTreeDefinition[];
     unitTypes: UnitTypeDefinition[];
-    battalions: BattalionContentEntry[];
-    shipTypes: MilitaryContentEntry[];
-    aircraftTypes: MilitaryContentEntry[];
-    equipmentClasses: EquipmentClass[];
-    equipmentFrames: EquipmentFrame[];
-    equipmentModules: EquipmentModule[];
   };
   ai: {
     enabled: boolean;
@@ -442,7 +423,7 @@ export type GameSettings = {
   };
   military: {
     militaryFormationSpeed: number;
-    landDivisionStackLimitPerHex: number;
+    landUnitStackLimitPerHex: number;
   };
   registration: {
     requireAdminApproval: boolean;

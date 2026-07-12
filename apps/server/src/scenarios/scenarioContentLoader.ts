@@ -34,12 +34,6 @@ export const scenarioContentFileNames = [
   ["unitSkills", ["unit_skills.json", "unitSkills.json"]],
   ["unitSkillTrees", ["unit_skill_trees.json", "unitSkillTrees.json"]],
   ["unitTypes", ["unit_types.json", "unitTypes.json"]],
-  ["battalions", ["battalions.json"]],
-  ["shipTypes", ["ship_types.json", "shipTypes.json"]],
-  ["aircraftTypes", ["aircraft_types.json", "aircraftTypes.json"]],
-  ["equipmentClasses", ["equipment_classes.json", "equipmentClasses.json"]],
-  ["equipmentFrames", ["equipment_frames.json", "equipmentFrames.json"]],
-  ["equipmentModules", ["equipment_modules.json", "equipmentModules.json"]],
 ] as const;
 
 export type ScenarioContentKey = (typeof scenarioContentFileNames)[number][0];

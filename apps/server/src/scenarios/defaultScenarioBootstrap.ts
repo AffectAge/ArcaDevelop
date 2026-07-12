@@ -196,7 +196,7 @@ export const DEFAULT_SCENARIO_DEFINES: Required<ScenarioDefines> = {
   },
   military: {
     militaryFormationSpeed: 10,
-    landDivisionStackLimitPerHex: 4,
+    landUnitStackLimitPerHex: 4,
   },
   registration: {
     requireAdminApproval: false,

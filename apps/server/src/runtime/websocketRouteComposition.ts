@@ -33,6 +33,8 @@ type WebSocketRouteCompositionParams = {
   lastLoginAtByCountryId: Map<string, string>;
   worldDeltaBroadcastRuntime: {
     getReplayDeltasFromVersion: WebSocketDeps["getReplayDeltasFromVersion"];
+    cloneWorldBaseSectionSnapshot: WebSocketDeps["cloneWorldBaseSectionSnapshot"];
+    broadcastWorldDeltaFromSectionSnapshot: WebSocketDeps["broadcastWorldDeltaFromSectionSnapshot"];
   };
   turnOrderRuntime: {
     addOrderToTurnIndexes: (order: Order) => void;
@@ -99,6 +101,8 @@ export function registerWebSocketRouteComposition(params: WebSocketRouteComposit
     getLastLoginAt: (countryId) => params.lastLoginAtByCountryId.get(countryId) ?? null,
     setLastLoginAt: (countryId, timestamp) => params.lastLoginAtByCountryId.set(countryId, timestamp),
     getReplayDeltasFromVersion: params.worldDeltaBroadcastRuntime.getReplayDeltasFromVersion,
+    cloneWorldBaseSectionSnapshot: params.worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot,
+    broadcastWorldDeltaFromSectionSnapshot: params.worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot,
     sendPendingRegistrationNotificationsToAdminSocket:
       params.countryRuntimeHelpers.sendPendingRegistrationNotificationsToAdminSocket,
     broadcast: params.broadcast,

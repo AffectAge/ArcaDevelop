@@ -8,6 +8,7 @@ import {
   type Order,
   type RegionPopulation,
   type UnitDomain,
+  type UnitTypeDefinition,
   type WorldBase,
   type WorldDelta,
   type WsOutMessage,
@@ -68,7 +69,7 @@ export const TURN_RESOLVE_WORLD_DELTA_MASK =
   WORLD_DELTA_MASK.journalEntriesByCountryId |
   WORLD_DELTA_MASK.countryModifiersByCountryId |
   WORLD_DELTA_MASK.explanationRecordsByTurn |
-  WORLD_DELTA_MASK.unitEquipmentState;
+  WORLD_DELTA_MASK.unitState;
 
 export type AiTurnBeforeResolveHookParams = {
   turnId: number;
@@ -170,12 +171,12 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
     }
     return neighborHexIdsByHexId.get(hexId) ?? [];
   };
-  let hexByIdForFleetMovement: Map<string, HexMapIndexEntry> | null = null;
+  let hexByIdForUnitMovement: Map<string, HexMapIndexEntry> | null = null;
   const getHexForUnitMovement = (hexId: HexId): HexMapIndexEntry | null => {
-    if (!hexByIdForFleetMovement) {
-      hexByIdForFleetMovement = new Map(params.getHexIndex().map((hex) => [hex.id, hex] as const));
+    if (!hexByIdForUnitMovement) {
+      hexByIdForUnitMovement = new Map(params.getHexIndex().map((hex) => [hex.id, hex] as const));
     }
-    return hexByIdForFleetMovement.get(hexId) ?? null;
+    return hexByIdForUnitMovement.get(hexId) ?? null;
   };
 
   const resolveTurn = async (): Promise<TurnRuntimeResult> => {
@@ -197,7 +198,7 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
       getCurrentOrders: (currentTurnId) => params.getOrdersByTurn().get(currentTurnId),
       getActiveColonizeRegionsByCountry: params.getActiveColonizeRegionsByCountry,
       resolveUnitMoveOrder: ({ order, playerId, movedMapUnitIds, rejectedOrders, news }) => {
-        if (order.type === "UNIT_MOVE" && order.unitKind === "map") {
+        if (order.type === "UNIT_MOVE") {
           const result = resolveMapUnitMoveOrder({
             order,
             playerId,
@@ -210,11 +211,18 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
             getNeighborHexIds,
             getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number,
             getHex: getHexForUnitMovement,
+            getEnemyZoneOfControlHexIds: (countryId) =>
+              getEnemyZoneOfControlHexIds({
+                worldBase: params.getWorldBase(),
+                unitTypes: params.getGameSettings().content.unitTypes,
+                countryId,
+                getNeighborHexIds,
+              }),
           });
           if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
           return;
         }
-        rejectedOrders.push({ playerId, reason: "UNIT_MOVE_KIND_UNSUPPORTED", tempOrderId: order.id });
+        rejectedOrders.push({ playerId, reason: "INVALID_ORDER_TYPE", tempOrderId: order.id });
       },
       resolveUnitAttackOrder: ({ order, playerId, movedMapUnitIds, rejectedOrders, news }) => {
         if (order.type === "UNIT_ATTACK" && params.getWorldBase().unitsById?.[order.attackerUnitId]) {
@@ -233,13 +241,15 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
         }
         rejectedOrders.push({ playerId, reason: "UNIT_ATTACK_ATTACKER_NOT_FOUND", tempOrderId: order.id });
       },
-      resolveUnitPromoteOrder: ({ order, playerId, rejectedOrders }) => {
+      resolveUnitPromoteOrder: ({ order, playerId, movedMapUnitIds, rejectedOrders }) => {
         const result = resolveMapUnitPromoteOrder({
           order,
           playerId,
           worldBase: params.getWorldBase(),
           unitTypes: params.getGameSettings().content.unitTypes,
           unitSkillTrees: params.getGameSettings().content.unitSkillTrees,
+          turnId: params.getTurnId(),
+          movedUnitIds: movedMapUnitIds,
         });
         if (result.rejectedOrder) rejectedOrders.push(result.rejectedOrder);
       },
@@ -311,6 +321,19 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           movedUnitIds: movedMapUnitIds,
           news,
           getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number,
+          getEnemyZoneOfControlHexIds: (countryId) =>
+            getEnemyZoneOfControlHexIds({
+              worldBase: params.getWorldBase(),
+              unitTypes: params.getGameSettings().content.unitTypes,
+              countryId,
+              getNeighborHexIds,
+          }),
+        });
+      },
+      refreshMapUnitsForTurn: () => {
+        refreshMapUnitsForTurn({
+          worldBase: params.getWorldBase(),
+          unitTypes: params.getGameSettings().content.unitTypes,
         });
       },
       advanceUnitTrainingQueue: (news) => {
@@ -441,6 +464,38 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
     resolveTurn,
     resolveAndBroadcastCurrentTurn,
   };
+}
+
+function getEnemyZoneOfControlHexIds(params: {
+  worldBase: WorldBase;
+  unitTypes: readonly UnitTypeDefinition[];
+  countryId: string;
+  getNeighborHexIds: (hexId: HexId) => HexId[];
+}): ReadonlySet<HexId> {
+  const zones = new Set<HexId>();
+  for (const unit of Object.values(params.worldBase.unitsById ?? {})) {
+    if (unit.countryId === params.countryId || unit.status === "destroyed" || unit.status === "captured") continue;
+    const unitType = params.unitTypes.find((candidate) => candidate.id === unit.unitTypeId);
+    if (!unitType || (unitType.domain !== "land" && unitType.domain !== "naval")) continue;
+    for (const neighborId of params.getNeighborHexIds(unit.hexId)) {
+      zones.add(neighborId);
+    }
+  }
+  return zones;
+}
+
+function refreshMapUnitsForTurn(params: {
+  worldBase: WorldBase;
+  unitTypes: readonly UnitTypeDefinition[];
+}): void {
+  for (const unit of Object.values(params.worldBase.unitsById ?? {})) {
+    if (unit.status === "destroyed" || unit.status === "captured" || unit.status === "sleeping" || unit.status === "fortified") continue;
+    const unitType = params.unitTypes.find((candidate) => candidate.id === unit.unitTypeId);
+    if (!unitType) continue;
+    unit.movementPoints = Math.max(0, Math.floor(unitType.stats.movement));
+    unit.lastActionTurnId = null;
+    if (unit.status === "fighting") unit.status = "idle";
+  }
 }
 
 export function runAiTurnBeforeResolveIfEnabled(params: {

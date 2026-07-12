@@ -123,7 +123,7 @@ export function registerServerMainRouteRuntime(params: ServerMainRouteRegistrati
   registerUnitRoutes(params.app, {
     routeAuth: params.routeAuth,
     masks: {
-      unitEquipmentState: WORLD_DELTA_MASK.unitEquipmentState,
+      unitState: WORLD_DELTA_MASK.unitState,
       resourcesByCountry: WORLD_DELTA_MASK.resourcesByCountry,
       resourceLedgerByTurn: WORLD_DELTA_MASK.resourceLedgerByTurn,
     },

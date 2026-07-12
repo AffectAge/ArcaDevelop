@@ -76,7 +76,7 @@ const baseCustomization: CustomizationSettings = {
 };
 const baseMilitary: MilitarySettings = {
   militaryFormationSpeed: 10,
-  landDivisionStackLimitPerHex: 4,
+  landUnitStackLimitPerHex: 4,
 };
 const baseRegistration: RegistrationSettings = {
   requireAdminApproval: false,
@@ -317,11 +317,11 @@ describe("scenarioDefinesLoader", () => {
   it("normalizes military, registration, event log, and turn timer defines", () => {
     expect(
       normalizeScenarioMilitaryDefines(
-        { militaryFormationSpeed: 12.5, landDivisionStackLimitPerHex: 6 },
+        { militaryFormationSpeed: 12.5, landUnitStackLimitPerHex: 6 },
         baseMilitary,
         options,
       ),
-    ).toEqual({ militaryFormationSpeed: 12.5, landDivisionStackLimitPerHex: 6 });
+    ).toEqual({ militaryFormationSpeed: 12.5, landUnitStackLimitPerHex: 6 });
 
     expect(
       normalizeScenarioRegistrationDefines(
@@ -356,7 +356,7 @@ describe("scenarioDefinesLoader", () => {
 
     expect(() =>
       normalizeScenarioMilitaryDefines(
-        { landDivisionStackLimitPerHex: 0 },
+        { landUnitStackLimitPerHex: 0 },
         baseMilitary,
         options,
       ),
@@ -408,7 +408,7 @@ describe("scenarioDefinesLoader", () => {
           auditLog: { maxEntries: 25, retentionTurns: 4 },
           colonization: { pointsPerTurn: 60 },
           customization: { flagDucats: 0 },
-          military: { militaryFormationSpeed: 15, landDivisionStackLimitPerHex: 5 },
+          military: { militaryFormationSpeed: 15, landUnitStackLimitPerHex: 5 },
           registration: { requireAdminApproval: true },
           eventLog: { retentionTurns: 9 },
           turnTimer: { secondsPerTurn: 30 },
@@ -421,7 +421,7 @@ describe("scenarioDefinesLoader", () => {
       auditLog: { maxEntries: 25, retentionTurns: 4 },
       colonization: { pointsPerTurn: 60, maxActiveColonizations: 3 },
       customization: { flagDucats: 0, renameDucats: 20 },
-      military: { militaryFormationSpeed: 15, landDivisionStackLimitPerHex: 5 },
+      military: { militaryFormationSpeed: 15, landUnitStackLimitPerHex: 5 },
       registration: { requireAdminApproval: true },
       eventLog: { retentionTurns: 9 },
       turnTimer: { secondsPerTurn: 30, enabled: true },

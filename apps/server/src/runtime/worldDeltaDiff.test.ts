@@ -115,9 +115,41 @@ describe("worldDeltaDiff", () => {
     expect(compact.f).toEqual({ "region:a": "country:a" });
   });
 
-  it("groups civilian, settlement, city, and equipment changes under unit equipment delta mask", () => {
+  it("groups map unit, civilian, settlement, city, and training changes under unit state delta mask", () => {
     const prev = makeWorldBase();
     const next = makeWorldBase({
+      unitsById: {
+        "unit:a": {
+          id: "unit:a",
+          unitTypeId: "unit:warrior",
+          countryId: "country:a",
+          hexId: "hex:0:0",
+          hp: 100,
+          movementPoints: 2,
+          experience: 0,
+          status: "idle",
+          path: [],
+          targetHexId: null,
+          createdTurnId: 1,
+          lastActionTurnId: null,
+        },
+      },
+      unitTrainingQueueByCountry: {
+        "country:a": [
+          {
+            id: "unit-training:a",
+            countryId: "country:a",
+            unitTypeId: "unit:warrior",
+            regionId: "region:a",
+            hexId: "hex:0:0",
+            progress: 0,
+            turnsTotal: 2,
+            turnsRemaining: 2,
+            cost: { construction: 10 },
+            createdTurnId: 1,
+          },
+        ],
+      },
       civilianUnitsById: {
         "civilian:a": {
           id: "civilian:a",
@@ -160,64 +192,6 @@ describe("worldDeltaDiff", () => {
           createdTurnId: 1,
         },
       },
-      equipmentVariantsById: {
-        "equipment:a": {
-          id: "equipment:a",
-          countryId: "country:a",
-          classId: "equipment-class:infantry",
-          name: "Infantry Kit",
-          moduleIdsBySlotId: { weapon: "module:rifle" },
-          stats: { attack: 1 },
-          goodsCost: [{ goodId: "good:iron", amount: 1 }],
-          createdTurnId: 1,
-        },
-      },
-      equipmentProductionLinesByCountry: {
-        "country:a": [
-          {
-            id: "line:a",
-            countryId: "country:a",
-            equipmentVariantId: "equipment:a",
-            assignedCapacity: 1,
-            progress: 0,
-            active: true,
-            createdTurnId: 1,
-          },
-        ],
-      },
-      equipmentStockpileByCountry: { "country:a": { "equipment:a": 3 } },
-      fleetsById: {
-        "fleet:a": {
-          id: "fleet:a",
-          countryId: "country:a",
-          templateId: "template:navy",
-          name: "First Fleet",
-          hexId: "hex:0:0",
-          strength: 1,
-          organization: 10,
-          stats: { manpower: 100, attack: 1, defense: 1, breakthrough: 0, organization: 10, hp: 10, speed: 3, supplyUse: 1 },
-          status: "idle",
-          path: [],
-          targetHexId: null,
-          createdTurnId: 1,
-        },
-      },
-      airWingsById: {
-        "air-wing:a": {
-          id: "air-wing:a",
-          countryId: "country:a",
-          templateId: "template:air",
-          name: "First Air Wing",
-          baseHexId: "hex:0:0",
-          strength: 1,
-          organization: 10,
-          stats: { manpower: 100, attack: 1, defense: 1, breakthrough: 0, organization: 10, hp: 10, speed: 3, supplyUse: 1 },
-          status: "idle",
-          mission: "none",
-          targetRegionId: null,
-          createdTurnId: 1,
-        },
-      },
     });
 
     const compact = buildCompactWorldDelta({
@@ -226,15 +200,12 @@ describe("worldDeltaDiff", () => {
       isEqualRegionPopulation: (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b),
     });
 
-    expect(compact.mask).toBe(WORLD_DELTA_MASK.unitEquipmentState);
+    expect(compact.mask).toBe(WORLD_DELTA_MASK.unitState);
+    expect(compact.mu?.["unit:a"]?.unitTypeId).toBe("unit:warrior");
+    expect(compact.uq?.["country:a"]?.[0]?.unitTypeId).toBe("unit:warrior");
     expect(compact.cu?.["civilian:a"]?.type).toBe("colonizer");
     expect(compact.sp?.["settlement:a"]?.visualState).toBe("underConstruction");
     expect(compact.ci?.["city:a"]?.visualState).toBe("working");
-    expect(compact.ev?.["equipment:a"]?.stats.attack).toBe(1);
-    expect(compact.el?.["country:a"]?.[0]?.equipmentVariantId).toBe("equipment:a");
-    expect(compact.es?.["country:a"]).toEqual({ "equipment:a": 3 });
-    expect(compact.fl?.["fleet:a"]?.name).toBe("First Fleet");
-    expect(compact.aw?.["air-wing:a"]?.baseHexId).toBe("hex:0:0");
   });
 
   it("diffs explanation records by turn with compact xr payload", () => {
@@ -692,18 +663,10 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     countryScheduledEventsByCountryId: {},
     countryEventFlagsByCountryId: {},
     journalEntriesByCountryId: {},
-    divisionTemplatesByCountry: {},
-    divisionsById: {},
-    fleetsById: {},
-    airWingsById: {},
-    militaryFormationQueueByCountry: {},
     civilianUnitsById: {},
     civilianUnitQueueByCountry: {},
     settlementProjectsById: {},
     cityMarkersById: {},
-    equipmentVariantsById: {},
-    equipmentProductionLinesByCountry: {},
-    equipmentStockpileByCountry: {},
     diplomacyProposals: [],
     ...overrides,
     countryModifiersByCountryId: overrides?.countryModifiersByCountryId ?? {},

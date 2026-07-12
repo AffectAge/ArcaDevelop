@@ -65,9 +65,6 @@ const contentUploadKinds = [
   "technologies",
   "decisions",
   "events",
-  "battalions",
-  "shipTypes",
-  "aircraftTypes",
 ] as const;
 
 export const FLAG_IMAGE_RULE = COUNTRY_FLAG_UPLOAD_RULE;
@@ -83,7 +80,6 @@ export function ensureUploadDirectories(): void {
     resolveUploadDir("religion-logos"),
     resolveUploadDir("ui-backgrounds"),
     resolveUploadDir("civilopedia"),
-    resolveUploadDir("division-icons"),
     ...contentUploadKinds.map((kind) => resolveContentUploadDir(kind)),
   ];
   for (const dir of dirs) {
@@ -107,8 +103,6 @@ export function resolveContentUploadUrlSegment(kind?: string): string {
   if (kind === "interestGroups") return "interest-groups";
   if (kind === "religionGroups") return "religion-groups";
   if (kind === "lawGroups") return "law-groups";
-  if (kind === "shipTypes") return "ship-types";
-  if (kind === "aircraftTypes") return "aircraft-types";
   return kind;
 }
 

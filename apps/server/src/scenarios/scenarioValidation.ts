@@ -136,9 +136,6 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "decision", path: "common/decisions" },
   { kind: "event", path: "common/events" },
   { kind: "journalEntry", path: "common/journal_entries" },
-  { kind: "battalion", path: "common/battalions" },
-  { kind: "shipType", path: "common/shipTypes" },
-  { kind: "aircraftType", path: "common/aircraftTypes" },
   { kind: "aiArchetype", path: "common/ai/archetypes" },
   { kind: "aiPersonality", path: "common/ai/personalities" },
   { kind: "aiStrategy", path: "common/ai/strategies" },
@@ -224,7 +221,7 @@ const VALIDATION_CUSTOMIZATION_DEFAULTS = {
 };
 const VALIDATION_MILITARY_DEFAULTS = {
   militaryFormationSpeed: 10,
-  landDivisionStackLimitPerHex: 4,
+  landUnitStackLimitPerHex: 4,
 };
 const VALIDATION_REGISTRATION_DEFAULTS = {
   requireAdminApproval: false,

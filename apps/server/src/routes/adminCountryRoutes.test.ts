@@ -110,7 +110,22 @@ describe("adminCountryRoutes", () => {
         targetId: "country:b",
       }),
     );
-    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({ mask: 65535 });
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({
+      mask:
+        deps.masks.resourcesByCountry |
+        deps.masks.hexOwner |
+        deps.masks.colonyProgressByRegion |
+        deps.masks.regionConstructionQueueByRegion |
+        deps.masks.parliamentByCountry |
+        deps.masks.technologyByCountry |
+        deps.masks.countryDecisionsByCountryId |
+        deps.masks.countryEventsByCountryId |
+        deps.masks.countryScheduledEventsByCountryId |
+        deps.masks.countryEventFlagsByCountryId |
+        deps.masks.journalEntriesByCountryId |
+        deps.masks.countryModifiersByCountryId |
+        deps.masks.diplomacyProposals,
+    });
     expect(deps.broadcast).toHaveBeenCalledWith(expect.objectContaining({ type: "NEWS_EVENT" }));
   });
 
@@ -160,9 +175,6 @@ function makeDeps(options?: {
       countryEventFlagsByCountryId: 512,
       journalEntriesByCountryId: 1024,
       countryModifiersByCountryId: 2048,
-      divisionTemplatesByCountry: 4096,
-      divisionsById: 8192,
-      militaryFormationQueueByCountry: 16_384,
       diplomacyProposals: 32_768,
     },
     getTurnId: () => 8,
@@ -238,12 +250,6 @@ function makeDeletionPlan(): CountryDeletionPlan {
     constructionQueueHexIds: [],
     constructionProjectIds: [],
     diplomacyProposalIds: [],
-    divisionIds: [],
-    fleetIds: [],
-    airWingIds: [],
-    divisionTemplateCountryEntry: false,
-    militaryFormationQueueEntry: false,
-    militaryFormationQueueItemIds: [],
     technologyEntry: false,
     parliamentEntry: false,
     decisionEntry: false,

@@ -64,7 +64,7 @@ export type AuthRegistrationRoutesDependencies = {
     resourcesByCountry: number;
     hexOwner: number;
     colonyProgressByRegion: number;
-    unitEquipmentState: number;
+    unitState: number;
   };
   getTurnId: () => number;
   getWorldBase: () => WorldBase & AuthRegistrationWorldState;
@@ -270,7 +270,7 @@ export function registerAuthRegistrationRoutes(
         deps.invalidateCountryQueryCache();
 
         const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
-          deps.masks.resourcesByCountry | deps.masks.unitEquipmentState,
+          deps.masks.resourcesByCountry | deps.masks.unitState,
         );
         const worldBase = deps.getWorldBase();
         worldBase.countryPopulationAcceptanceByCountryId ??= {};
@@ -447,7 +447,7 @@ export function registerAuthRegistrationRoutes(
     deps.removeUploadedByUrl(fullTarget.flagUrl);
     deps.removeUploadedByUrl(fullTarget.crestUrl);
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
-      deps.masks.resourcesByCountry | deps.masks.hexOwner | deps.masks.colonyProgressByRegion | deps.masks.unitEquipmentState,
+      deps.masks.resourcesByCountry | deps.masks.hexOwner | deps.masks.colonyProgressByRegion | deps.masks.unitState,
     );
     await deps.deleteCountry(targetId);
     deps.invalidateCountryQueryCache();

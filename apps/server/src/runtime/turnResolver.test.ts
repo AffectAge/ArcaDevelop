@@ -18,7 +18,7 @@ describe("turnResolver", () => {
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.regionResourceDepositsByRegion).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.countryDecisionsByCountryId).toBeTruthy();
     expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.journalEntriesByCountryId).toBeTruthy();
-    expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.unitEquipmentState).toBeTruthy();
+    expect(TURN_RESOLVE_WORLD_DELTA_MASK & WORLD_DELTA_MASK.unitState).toBeTruthy();
   });
 
 
@@ -123,10 +123,11 @@ describe("turnResolver", () => {
         calls.push("order:found-city");
       },
       advanceStoredUnitRoutesTurn: ({ movedMapUnitIds, news }) => {
-        expect([...movedMapUnitIds].sort()).toEqual(["unit:a", "unit:b"]);
+        expect([...movedMapUnitIds].sort()).toEqual([]);
         news.push(makeNews("stored-unit-routes"));
         calls.push("stored-unit-routes");
       },
+      refreshMapUnitsForTurn: () => calls.push("refresh-map-units"),
       advanceUnitTrainingQueue: () => calls.push("unit-training-queue"),
       resolveColonizationSupportTurn: ({ touchedRegionIds }) => {
         colonizeTouchedAtSupport = [...touchedRegionIds].sort();
@@ -180,7 +181,7 @@ describe("turnResolver", () => {
 
     expect(result.previousWorldBase).toEqual({ id: "snapshot" });
     expect(result.rejectedOrders.map((order) => order.reason)).toEqual(["MOVE_REJECTED", "BUILD_REJECTED"]);
-    expect(result.news.map((event) => event.title)).toEqual(["unit-move", "stored-unit-routes", "capture", "tech", "journal"]);
+    expect(result.news.map((event) => event.title)).toEqual(["unit-move", "capture", "tech", "journal", "stored-unit-routes"]);
     expect(result.uiNotifications.map((item) => item.notification)).toEqual(["event", "election"]);
     expect(colonizeTouchedAtSupport).toEqual(["region:active", "region:c"]);
     expect(turnId).toBe(4);
@@ -193,7 +194,6 @@ describe("turnResolver", () => {
       "order:unit-attack",
       "order:build",
       "order:colonize",
-      "stored-unit-routes",
       "unit-training-queue",
       "colonization-support",
       "settlement-projects",
@@ -222,6 +222,8 @@ describe("turnResolver", () => {
       "parliament",
       "set-turn:4",
       "set-world:4",
+      "refresh-map-units",
+      "stored-unit-routes",
       "timer",
       "cleanup:3",
       "flush",
@@ -252,7 +254,6 @@ function makeUnitMoveOrder(unitId: string, targetHexId: string): Order {
     countryId: "country:a",
     type: "UNIT_MOVE",
     unitId,
-    unitKind: "map",
     targetHexId: targetHexId as `hex:${number}:${number}`,
     path: [],
     payload: {},
@@ -288,11 +289,13 @@ function makeNoopTurnResolverDeps(input: { currentOrders: Map<string, Order[]>; 
     getActiveColonizeRegionsByCountry: () => new Map(),
     resolveUnitMoveOrder: () => undefined,
     resolveUnitAttackOrder: () => undefined,
+    resolveUnitPromoteOrder: () => undefined,
     resolveUnitWaitOrder: () => undefined,
     resolveBuildOrder: () => undefined,
     resolveColonizeOrder: () => undefined,
     resolveFoundCityOrder: () => undefined,
     advanceStoredUnitRoutesTurn: () => input.calls.push("stored-unit-routes"),
+    refreshMapUnitsForTurn: () => input.calls.push("refresh-map-units"),
     advanceUnitTrainingQueue: () => undefined,
     resolveColonizationSupportTurn: () => undefined,
     resolveSettlementProjectsTurn: () => undefined,

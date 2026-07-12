@@ -30,7 +30,7 @@ type AccountRouteRuntimeParams = {
     resourcesByCountry: number;
     hexOwner: number;
     colonyProgressByRegion: number;
-    unitEquipmentState: number;
+    unitState: number;
   };
   getTurnId: () => number;
   getWorldBase: () => WorldBase;
