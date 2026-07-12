@@ -26,10 +26,10 @@ import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 import { CustomSelect } from "./CustomSelect";
 import { Tooltip } from "./Tooltip";
-import { AppButton } from "./ui/AppButton";
-import { AppInput } from "./ui/AppForm";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppEmptyState, AppSection, AppSectionHeader } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppInput } from "./templates/AppForm";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppEmptyState, AppSection, AppSectionHeader } from "./templates/AppSurface";
 
 type Props = {
   open: boolean;

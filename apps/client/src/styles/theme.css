@@ -121,6 +121,27 @@
   --arc-color-atlas-good: #246b48;
   --arc-color-atlas-bad: #9a342d;
   --arc-shadow-atlas-panel: 0 18px 50px rgb(34 24 14 / 0.22), 0 1px 0 rgb(255 255 255 / 0.65) inset;
+
+  /* Imperial Command UI-kit: dark strategic templates and reusable game chrome. */
+  --arc-kit-bg: color-mix(in srgb, var(--arc-color-bg) 94%, #16212a);
+  --arc-kit-surface: color-mix(in srgb, var(--arc-color-panel) 88%, #1b2830);
+  --arc-kit-surface-soft: color-mix(in srgb, var(--arc-color-panel-soft) 86%, #22313a);
+  --arc-kit-surface-muted: color-mix(in srgb, var(--arc-color-panel-soft) 68%, transparent);
+  --arc-kit-control: color-mix(in srgb, var(--arc-color-panel-soft) 78%, #101417);
+  --arc-kit-control-hover: color-mix(in srgb, var(--arc-color-panel-soft) 74%, var(--arc-color-gold) 8%);
+  --arc-kit-border: color-mix(in srgb, var(--arc-color-gold) 52%, transparent);
+  --arc-kit-border-muted: color-mix(in srgb, var(--arc-color-gold-soft) 34%, transparent);
+  --arc-kit-divider: color-mix(in srgb, var(--arc-color-gold-soft) 24%, transparent);
+  --arc-kit-text: rgb(255 255 255 / 0.94);
+  --arc-kit-text-muted: rgb(255 255 255 / 0.72);
+  --arc-kit-text-faint: rgb(255 255 255 / 0.46);
+  --arc-kit-gold-strong: rgb(255 255 255 / 0.96);
+  --arc-kit-success-soft: color-mix(in srgb, var(--arc-color-success-bottom) 68%, transparent);
+  --arc-kit-warning-soft: color-mix(in srgb, var(--arc-color-warning-bottom) 58%, transparent);
+  --arc-kit-danger-soft: color-mix(in srgb, var(--arc-color-danger-bottom) 62%, transparent);
+  --arc-kit-info-soft: color-mix(in srgb, var(--arc-color-primary-bottom) 68%, transparent);
+  --arc-kit-selected-glow: 0 0 0 1px color-mix(in srgb, var(--arc-color-gold) 52%, transparent), 0 0 28px color-mix(in srgb, var(--arc-color-gold) 18%, transparent), var(--arc-shadow-inset-button);
+  --arc-color-focus-ring: color-mix(in srgb, var(--arc-color-gold) 78%, white);
 }
 
 /*

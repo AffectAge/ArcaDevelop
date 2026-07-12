@@ -2,17 +2,19 @@ import type {
   BuildingAdjacencyEffect,
   BuildingPlacementRules,
   DepositDepletionMode,
-  DivisionStats,
-  EquipmentBranch,
-  EquipmentClass,
-  EquipmentClassRole,
-  EquipmentFrame,
-  EquipmentModule,
-  EquipmentStats,
-  EquipmentStatKey,
   GoodDepositCountRule,
   GoodDepositDefinition,
+  MapTagQuery,
   MapResourceDepositVisibility,
+  UnitCombatClass,
+  UnitDomain,
+  UnitSkillDefinition,
+  UnitSkillId,
+  UnitSkillModifierEffect,
+  UnitSkillModifierTarget,
+  UnitSkillTreeDefinition,
+  UnitSkillTreeId,
+  UnitTypeDefinition,
 } from "@arcanorum/shared";
 import {
   POPULATION_FALLBACK_KEY_BY_DIMENSION,
@@ -43,15 +45,66 @@ import {
 } from "../mechanics/marketTurnMechanics";
 import type {
   AssetContentEntry,
-  BattalionContentEntry,
   BuildingContentEntry,
-  DefaultBattalionKind,
   GameContentEntry,
   GameSettings,
-  MilitaryContentEntry,
 } from "../runtime/gameSettingsTypes";
 
 const ASSET_TYPES = new Set<AssetContentEntry["type"]>(["icon", "atlas", "image"]);
+const UNIT_DOMAINS = new Set<UnitDomain>(["civilian", "land", "naval", "air"]);
+const UNIT_CLASSES = new Set<UnitCombatClass>(["civilian", "melee", "ranged", "cavalry", "siege", "naval_melee", "naval_ranged", "air"]);
+const UNIT_SKILL_MODIFIER_TARGETS = new Set<UnitSkillModifierTarget>([
+  "unit.attack",
+  "unit.defense",
+  "unit.ranged_attack",
+  "unit.movement",
+  "unit.vision",
+  "unit.max_hp",
+]);
+
+export const DEFAULT_UNIT_TYPES: UnitTypeDefinition[] = [
+  {
+    id: "unit:colonizer",
+    domain: "civilian",
+    class: "civilian",
+    nameKey: "unit.colonizer.name",
+    descriptionKey: "unit.colonizer.description",
+    stats: { maxHp: 50, attack: 0, defense: 0, movement: 2, vision: 2 },
+    productionCost: { colonization: 20, ducats: 10 },
+    visual: { atlasAssetId: "asset:unit.colonizer", frameWidth: 64, frameHeight: 64, states: { idle: { frame: 0 }, move: { frame: 1 }, damaged: { frame: 3 } } },
+    canFoundCity: true,
+  },
+  {
+    id: "unit:warrior",
+    domain: "land",
+    class: "melee",
+    nameKey: "unit.warrior.name",
+    descriptionKey: "unit.warrior.description",
+    stats: { maxHp: 100, attack: 20, defense: 18, movement: 2, vision: 2 },
+    productionCost: { ducats: 25 },
+    visual: { atlasAssetId: "asset:unit.warrior", frameWidth: 64, frameHeight: 64, states: { idle: { frame: 0 }, move: { frame: 1 }, attack: { frame: 2 }, damaged: { frame: 3 } } },
+  },
+  {
+    id: "unit:archer",
+    domain: "land",
+    class: "ranged",
+    nameKey: "unit.archer.name",
+    descriptionKey: "unit.archer.description",
+    stats: { maxHp: 100, attack: 12, defense: 12, rangedAttack: 24, range: 2, movement: 2, vision: 2 },
+    productionCost: { ducats: 30 },
+    visual: { atlasAssetId: "asset:unit.archer", frameWidth: 64, frameHeight: 64, states: { idle: { frame: 0 }, move: { frame: 1 }, attack: { frame: 2 }, damaged: { frame: 3 } } },
+  },
+  {
+    id: "unit:galley",
+    domain: "naval",
+    class: "naval_melee",
+    nameKey: "unit.galley.name",
+    descriptionKey: "unit.galley.description",
+    stats: { maxHp: 100, attack: 18, defense: 16, movement: 3, vision: 2 },
+    productionCost: { ducats: 35 },
+    visual: { atlasAssetId: "asset:unit.galley", frameWidth: 64, frameHeight: 64, states: { idle: { frame: 0 }, move: { frame: 1 }, attack: { frame: 2 }, damaged: { frame: 3 } } },
+  },
+];
 
 export const DEFAULT_UNEMPLOYED_PROFESSION: GameContentEntry = {
   id: POPULATION_FALLBACK_KEY_BY_DIMENSION.professionPct,
@@ -171,6 +224,46 @@ export function normalizeNumberRecord(input: unknown, min: number, max: number, 
   return normalized;
 }
 
+function normalizeDiscriminationEffects(input: unknown): GameContentEntry["discrimination"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const row = input as Record<string, unknown>;
+  const normalizePct = (value: unknown): number | undefined =>
+    typeof value === "number" && Number.isFinite(value) ? Number(Math.max(0, Math.min(1, value)).toFixed(3)) : undefined;
+  const normalizeRate = (value: unknown): number | undefined =>
+    typeof value === "number" && Number.isFinite(value) ? Number(Math.max(0, Math.min(1_000_000, value)).toFixed(3)) : undefined;
+  const result: NonNullable<GameContentEntry["discrimination"]> = {
+    wagePenaltyPct: normalizePct(row.wagePenaltyPct),
+    hiringPenaltyPct: normalizePct(row.hiringPenaltyPct),
+    qualificationGrowthPenaltyPct: normalizePct(row.qualificationGrowthPenaltyPct),
+    politicalStrengthPenaltyPct: normalizePct(row.politicalStrengthPenaltyPct),
+    radicalizationPerTurn: normalizeRate(row.radicalizationPerTurn),
+  };
+  return Object.values(result).some((value) => value != null) ? result : null;
+}
+
+function normalizeIdentityStartingPop(input: unknown): GameContentEntry["startingPop"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const row = input as Record<string, unknown>;
+  const normalizeFinite = (value: unknown, min: number, max: number): number | undefined =>
+    typeof value === "number" && Number.isFinite(value) ? Number(Math.max(min, Math.min(max, value)).toFixed(3)) : undefined;
+  const normalizeCount = (value: unknown): number | undefined =>
+    typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : undefined;
+  const result: NonNullable<GameContentEntry["startingPop"]> = {
+    literacy: normalizeFinite(row.literacy, 0, 1),
+    ducats: normalizeFinite(row.ducats, 0, 1_000_000),
+    standardOfLiving: normalizeFinite(row.standardOfLiving, 0, 99),
+    radicals: normalizeCount(row.radicals),
+    loyalists: normalizeCount(row.loyalists),
+    qualificationsByCategory: normalizeNumberRecord(row.qualificationsByCategory, 0, 1_000_000),
+    ideologies: normalizeNumberRecord(row.ideologies, 0, 1_000_000),
+  };
+  return Object.values(result).some((value) => value != null && (!isRecord(value) || Object.keys(value).length > 0)) ? result : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
 export function normalizeContentCultures(input: unknown): GameSettings["content"]["cultures"] {
   if (!Array.isArray(input)) return [];
   const seen = new Set<string>();
@@ -179,7 +272,9 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
     if (!raw || typeof raw !== "object") continue;
     const row = raw as Partial<{
       id: unknown;
+      nameKey: unknown;
       name: unknown;
+      descriptionKey: unknown;
       description: unknown;
       color: unknown;
       logoUrl: unknown;
@@ -195,6 +290,13 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       femalePortraitAssetId: unknown;
       baseWage: unknown;
       needsProfile: unknown;
+      qualificationRequirements: unknown;
+      qualificationGrowthRules: unknown;
+      acceptedCultureIds: unknown;
+      acceptedReligionIds: unknown;
+      acceptedRaceIds: unknown;
+      acceptanceMode: unknown;
+      discrimination: unknown;
       ideologyWeights: unknown;
       interestGroupWeights: unknown;
       professionWeights: unknown;
@@ -222,9 +324,13 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       event: unknown;
       journalEntry: unknown;
       ideologyAttractionRules: unknown;
+      startingPop: unknown;
     }>;
     const id = typeof row.id === "string" ? row.id.trim() : "";
+    const nameKey = typeof row.nameKey === "string" && row.nameKey.trim() ? row.nameKey.trim().slice(0, 180) : null;
     const name = typeof row.name === "string" ? row.name.trim() : "";
+    const descriptionKey =
+      typeof row.descriptionKey === "string" && row.descriptionKey.trim() ? row.descriptionKey.trim().slice(0, 180) : null;
     const description = typeof row.description === "string" ? row.description.trim() : "";
     const color = typeof row.color === "string" && /^#[0-9A-Fa-f]{6}$/.test(row.color.trim()) ? row.color.trim() : "#4ade80";
     const logoUrl = typeof row.logoUrl === "string" || row.logoUrl === null ? (row.logoUrl ?? null) : null;
@@ -242,6 +348,7 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
     const femalePortraitAssetId = normalizeAssetId(row.femalePortraitAssetId);
     const baseWage =
       typeof row.baseWage === "number" && Number.isFinite(row.baseWage) ? Math.max(0, Number(row.baseWage)) : undefined;
+    const acceptanceMode = row.acceptanceMode === "replace" ? "replace" : row.acceptanceMode === "add" ? "add" : undefined;
     const discipline =
       typeof row.discipline === "number" && Number.isFinite(row.discipline) ? Math.min(1, Math.max(0, row.discipline)) : undefined;
     const basePoliticalStrength =
@@ -277,7 +384,9 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
     seen.add(id);
     items.push({
       id,
+      nameKey,
       name: name.slice(0, 80),
+      descriptionKey,
       description: description.slice(0, 5000),
       color,
       logoUrl,
@@ -293,6 +402,13 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       femalePortraitAssetId,
       baseWage: baseWage == null ? undefined : Number(baseWage.toFixed(3)),
       needsProfile: normalizeCultureNeedsProfile(row.needsProfile),
+      qualificationRequirements: normalizeNumberRecord(row.qualificationRequirements, 0, 1_000_000),
+      qualificationGrowthRules: normalizeNumberRecord(row.qualificationGrowthRules, -1_000_000, 1_000_000),
+      acceptedCultureIds: normalizeCountryIdList(row.acceptedCultureIds),
+      acceptedReligionIds: normalizeCountryIdList(row.acceptedReligionIds),
+      acceptedRaceIds: normalizeCountryIdList(row.acceptedRaceIds),
+      acceptanceMode,
+      discrimination: normalizeDiscriminationEffects(row.discrimination),
       ideologyWeights: normalizeNumberRecord(row.ideologyWeights, 0, 100),
       interestGroupWeights: normalizeNumberRecord(row.interestGroupWeights, 0, 100),
       professionWeights: normalizeNumberRecord(row.professionWeights, 0, 100),
@@ -320,6 +436,7 @@ export function normalizeContentCultures(input: unknown): GameSettings["content"
       event: normalizeGameEvent(row.event),
       journalEntry: normalizeJournalEntry(row.journalEntry),
       ideologyAttractionRules: normalizeIdeologyAttractionRules(row.ideologyAttractionRules),
+      startingPop: normalizeIdentityStartingPop(row.startingPop),
     });
   }
   return items;
@@ -358,203 +475,6 @@ export function ensureDefaultRace(races: GameSettings["content"]["races"]): Game
 
 export function ensureDefaultUnemployedProfession(professions: GameSettings["content"]["professions"]): GameSettings["content"]["professions"] {
   return ensureDefaultContentEntry(professions, DEFAULT_UNEMPLOYED_PROFESSION);
-}
-
-const DEFAULT_BATTALION_STATS: Record<DefaultBattalionKind, DivisionStats> = {
-  infantry: { manpower: 1000, attack: 6, defense: 10, breakthrough: 3, organization: 8, hp: 25, speed: 1, supplyUse: 1 },
-  archers: { manpower: 800, attack: 9, defense: 5, breakthrough: 2, organization: 6, hp: 18, speed: 1, supplyUse: 0.8 },
-  cavalry: { manpower: 900, attack: 8, defense: 6, breakthrough: 8, organization: 7, hp: 20, speed: 2, supplyUse: 1.3 },
-  artillery: { manpower: 500, attack: 18, defense: 2, breakthrough: 5, organization: 3, hp: 12, speed: 0.7, supplyUse: 1.7 },
-  mages: { manpower: 250, attack: 22, defense: 4, breakthrough: 7, organization: 5, hp: 10, speed: 1, supplyUse: 2 },
-  constructs: { manpower: 120, attack: 14, defense: 16, breakthrough: 9, organization: 4, hp: 35, speed: 0.8, supplyUse: 2.4 },
-  support: { manpower: 300, attack: 2, defense: 3, breakthrough: 2, organization: 10, hp: 8, speed: 1, supplyUse: 0.5 },
-};
-
-export const DEFAULT_BATTALIONS: BattalionContentEntry[] = [
-  ["infantry", "Пехотный батальон", "Линейная пехота для удержания фронта.", "#4ade80"],
-  ["archers", "Стрелковый батальон", "Дистанционная атака с умеренной стойкостью.", "#38bdf8"],
-  ["cavalry", "Кавалерийский батальон", "Быстрое соединение для прорыва и маневра.", "#f59e0b"],
-  ["artillery", "Артиллерийская батарея", "Сильная атака при слабой обороне.", "#f97316"],
-  ["mages", "Магический батальон", "Редкие специалисты с высокой атакой.", "#a78bfa"],
-  ["constructs", "Батальон конструктов", "Тяжелые стойкие войска с высоким снабжением.", "#94a3b8"],
-  ["support", "Батальон поддержки", "Организация, снабжение и вспомогательные службы.", "#22c55e"],
-].map(([kind, name, description, color]) => ({
-  id: `battalion:${kind}`,
-  name,
-  description,
-  color,
-  logoUrl: null,
-  malePortraitUrl: null,
-  femalePortraitUrl: null,
-  ...DEFAULT_BATTALION_STATS[kind as DefaultBattalionKind],
-  trainingCostDucats: 10,
-  trainingCostManpower: DEFAULT_BATTALION_STATS[kind as DefaultBattalionKind].manpower,
-  equipmentNeeds: [],
-}));
-
-export function ensureDefaultBattalions(battalions: GameSettings["content"]["battalions"]): GameSettings["content"]["battalions"] {
-  let next = battalions;
-  for (const fallback of DEFAULT_BATTALIONS) {
-    next = ensureDefaultContentEntry(next, fallback);
-  }
-  return next;
-}
-
-export const DEFAULT_EQUIPMENT_CLASSES: EquipmentClass[] = [
-  {
-    id: "equipment_class:infantry_kit",
-    branch: "land",
-    slotIds: ["weapon", "armor", "support"],
-    roles: ["attack", "defense", "support"],
-    baseStats: { attack: 1, defense: 1, reliability: 1, supplyUse: 0.2 },
-  },
-  {
-    id: "equipment_class:field_vehicle",
-    branch: "land",
-    slotIds: ["chassis", "weapon", "engine"],
-    roles: ["breakthrough", "speed", "attack"],
-    baseStats: { breakthrough: 1, armor: 1, speed: 1, reliability: 0.8, supplyUse: 0.6, fuelUse: 0.4 },
-  },
-  {
-    id: "equipment_class:aircraft",
-    branch: "air",
-    slotIds: ["airframe", "engine", "payload"],
-    roles: ["range", "attack", "support"],
-    baseStats: { speed: 2, range: 2, reliability: 0.75, fuelUse: 0.8 },
-  },
-  {
-    id: "equipment_class:warship",
-    branch: "naval",
-    slotIds: ["hull", "battery", "engine"],
-    roles: ["attack", "defense", "range"],
-    baseStats: { attack: 2, defense: 2, range: 1, reliability: 0.75, supplyUse: 1.2, fuelUse: 0.5 },
-  },
-];
-
-export const DEFAULT_EQUIPMENT_FRAMES: EquipmentFrame[] = DEFAULT_EQUIPMENT_CLASSES.map((equipmentClass) => ({
-  id: `equipment_frame:${equipmentClass.id.replace(/[^a-zA-Z0-9_-]/g, "_")}:basic`,
-  classId: equipmentClass.id,
-  branch: equipmentClass.branch,
-  slotIds: equipmentClass.slotIds,
-  baseStats: equipmentClass.baseStats,
-  goodsCost: [],
-  manpowerCrew: equipmentClass.branch === "air" ? 1 : equipmentClass.branch === "naval" ? 50 : 0,
-  productionCost: 0,
-  era: "ageless",
-  unlockTechnologyId: null,
-}));
-
-export const DEFAULT_EQUIPMENT_MODULES: EquipmentModule[] = [
-  { id: "equipment_module:spears", classId: "equipment_class:infantry_kit", slotId: "weapon", stats: { attack: 2, piercing: 1 }, goodsCost: [{ goodId: "good:wood", amount: 1 }] },
-  { id: "equipment_module:crossbows", classId: "equipment_class:infantry_kit", slotId: "weapon", stats: { attack: 4, piercing: 2, range: 1 }, goodsCost: [{ goodId: "good:wood", amount: 1 }, { goodId: "good:iron", amount: 1 }] },
-  { id: "equipment_module:padded_armor", classId: "equipment_class:infantry_kit", slotId: "armor", stats: { defense: 2, reliability: 0.1 }, goodsCost: [{ goodId: "good:textiles", amount: 1 }] },
-  { id: "equipment_module:plate_armor", classId: "equipment_class:infantry_kit", slotId: "armor", stats: { defense: 4, armor: 2, speed: -0.15 }, goodsCost: [{ goodId: "good:iron", amount: 2 }] },
-  { id: "equipment_module:field_tools", classId: "equipment_class:infantry_kit", slotId: "support", stats: { defense: 1, supplyUse: -0.05 }, goodsCost: [{ goodId: "good:wood", amount: 1 }] },
-  { id: "equipment_module:light_chassis", classId: "equipment_class:field_vehicle", slotId: "chassis", stats: { speed: 1.5, armor: 1 }, goodsCost: [{ goodId: "good:iron", amount: 2 }] },
-  { id: "equipment_module:heavy_chassis", classId: "equipment_class:field_vehicle", slotId: "chassis", stats: { armor: 4, defense: 2, speed: -0.5 }, goodsCost: [{ goodId: "good:iron", amount: 4 }] },
-  { id: "equipment_module:cannon", classId: "equipment_class:field_vehicle", slotId: "weapon", stats: { attack: 5, breakthrough: 2, piercing: 3 }, goodsCost: [{ goodId: "good:iron", amount: 3 }] },
-  { id: "equipment_module:steam_engine", classId: "equipment_class:field_vehicle", slotId: "engine", stats: { speed: 1, fuelUse: 0.4 }, goodsCost: [{ goodId: "good:coal", amount: 2 }] },
-  { id: "equipment_module:wood_airframe", classId: "equipment_class:aircraft", slotId: "airframe", stats: { speed: 1, reliability: 0.15 }, goodsCost: [{ goodId: "good:wood", amount: 2 }] },
-  { id: "equipment_module:arcane_engine", classId: "equipment_class:aircraft", slotId: "engine", stats: { speed: 2, range: 2, fuelUse: 0.2 }, goodsCost: [{ goodId: "good:crystal", amount: 2 }] },
-  { id: "equipment_module:bomb_rack", classId: "equipment_class:aircraft", slotId: "payload", stats: { attack: 5, breakthrough: 2, range: -0.25 }, goodsCost: [{ goodId: "good:iron", amount: 2 }] },
-  { id: "equipment_module:wooden_hull", classId: "equipment_class:warship", slotId: "hull", stats: { defense: 3, supplyUse: 0.2 }, goodsCost: [{ goodId: "good:wood", amount: 5 }] },
-  { id: "equipment_module:ironclad_hull", classId: "equipment_class:warship", slotId: "hull", stats: { defense: 6, armor: 4, speed: -0.4 }, goodsCost: [{ goodId: "good:iron", amount: 6 }] },
-  { id: "equipment_module:broadside_battery", classId: "equipment_class:warship", slotId: "battery", stats: { attack: 6, range: 1 }, goodsCost: [{ goodId: "good:iron", amount: 4 }] },
-  { id: "equipment_module:sail_rig", classId: "equipment_class:warship", slotId: "engine", stats: { speed: 1, fuelUse: -0.2 }, goodsCost: [{ goodId: "good:textiles", amount: 2 }] },
-];
-
-export const DEFAULT_SHIP_TYPES: MilitaryContentEntry[] = [
-  {
-    id: "ship:frigate",
-    name: "Фрегат",
-    description: "Быстрый корабль сопровождения и патруля.",
-    color: "#38bdf8",
-    logoUrl: null,
-    malePortraitUrl: null,
-    femalePortraitUrl: null,
-    manpower: 250,
-    attack: 8,
-    defense: 6,
-    breakthrough: 3,
-    organization: 12,
-    hp: 40,
-    speed: 3,
-    supplyUse: 2,
-    trainingCostDucats: 35,
-    trainingCostManpower: 250,
-    equipmentNeeds: [],
-  },
-  {
-    id: "ship:ship_of_the_line",
-    name: "Линейный корабль",
-    description: "Тяжелый боевой корабль для главной линии флота.",
-    color: "#60a5fa",
-    logoUrl: null,
-    malePortraitUrl: null,
-    femalePortraitUrl: null,
-    manpower: 700,
-    attack: 22,
-    defense: 18,
-    breakthrough: 8,
-    organization: 10,
-    hp: 95,
-    speed: 1.8,
-    supplyUse: 5,
-    trainingCostDucats: 90,
-    trainingCostManpower: 700,
-    equipmentNeeds: [],
-  },
-];
-
-export const DEFAULT_AIRCRAFT_TYPES: MilitaryContentEntry[] = [
-  {
-    id: "aircraft:fighter",
-    name: "Истребитель",
-    description: "Самолет для завоевания превосходства в воздухе.",
-    color: "#a78bfa",
-    logoUrl: null,
-    malePortraitUrl: null,
-    femalePortraitUrl: null,
-    manpower: 20,
-    attack: 7,
-    defense: 4,
-    breakthrough: 5,
-    organization: 8,
-    hp: 8,
-    speed: 6,
-    supplyUse: 0.6,
-    trainingCostDucats: 8,
-    trainingCostManpower: 20,
-    equipmentNeeds: [],
-  },
-  {
-    id: "aircraft:bomber",
-    name: "Бомбардировщик",
-    description: "Тяжелая авиация для удара по наземным целям.",
-    color: "#f59e0b",
-    logoUrl: null,
-    malePortraitUrl: null,
-    femalePortraitUrl: null,
-    manpower: 35,
-    attack: 14,
-    defense: 2,
-    breakthrough: 9,
-    organization: 6,
-    hp: 12,
-    speed: 4,
-    supplyUse: 1.2,
-    trainingCostDucats: 14,
-    trainingCostManpower: 35,
-    equipmentNeeds: [],
-  },
-];
-
-export function ensureDefaultMilitaryContent<T extends MilitaryContentEntry>(entries: T[], fallbacks: T[]): T[] {
-  let next = entries;
-  for (const fallback of fallbacks) {
-    next = ensureDefaultContentEntry(next, fallback);
-  }
-  return next;
 }
 
 export function normalizeCountryIdList(input: unknown): string[] {
@@ -604,6 +524,7 @@ function normalizeBuildingPlacement(input: unknown): BuildingPlacementRules | nu
     deniedWaterKinds: normalizeStringList(source.deniedWaterKinds) as BuildingPlacementRules["deniedWaterKinds"],
     allowedTags: normalizeStringList(source.allowedTags) as BuildingPlacementRules["allowedTags"],
     deniedTags: normalizeStringList(source.deniedTags) as BuildingPlacementRules["deniedTags"],
+    tagQuery: normalizeMapTagQuery(source.tagQuery),
   };
   return placement;
 }
@@ -626,6 +547,7 @@ function normalizeBuildingAdjacencyEffects(input: unknown): BuildingAdjacencyEff
         neighborTerrains: normalizeStringList(when.neighborTerrains) as BuildingAdjacencyEffect["when"]["neighborTerrains"],
         neighborFeatures: normalizeStringList(when.neighborFeatures) as BuildingAdjacencyEffect["when"]["neighborFeatures"],
         neighborTags: normalizeStringList(when.neighborTags) as BuildingAdjacencyEffect["when"]["neighborTags"],
+        neighborTagQuery: normalizeMapTagQuery(when.neighborTagQuery),
         neighborBuildingIds: normalizeStringList(when.neighborBuildingIds),
         adjacentToRiver: when.adjacentToRiver === true,
       },
@@ -818,8 +740,25 @@ function normalizeGoodDepositGenerationRules(input: unknown): GoodDepositDefinit
     deniedFeatures: normalizeStringList(source.deniedFeatures),
     elevationMin: normalizeOptionalUnitNumber(source.elevationMin),
     elevationMax: normalizeOptionalUnitNumber(source.elevationMax),
+    tagQuery: normalizeMapTagQuery(source.tagQuery),
     global: normalizeGoodDepositCountRule(source.global),
     perRegion: normalizeGoodDepositCountRule(source.perRegion),
+  };
+}
+
+function normalizeMapTagQuery(input: unknown): MapTagQuery | null {
+  if (typeof input === "string" && input.trim()) return input.trim();
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const source = input as Record<string, unknown>;
+  const all = Array.isArray(source.all) ? source.all.map(normalizeMapTagQuery).filter((item): item is MapTagQuery => item != null) : undefined;
+  const any = Array.isArray(source.any) ? source.any.map(normalizeMapTagQuery).filter((item): item is MapTagQuery => item != null) : undefined;
+  const not = Array.isArray(source.not)
+    ? source.not.map(normalizeMapTagQuery).filter((item): item is MapTagQuery => item != null)
+    : normalizeMapTagQuery(source.not);
+  return {
+    ...(all && all.length > 0 ? { all } : {}),
+    ...(any && any.length > 0 ? { any } : {}),
+    ...(not && (!Array.isArray(not) || not.length > 0) ? { not } : {}),
   };
 }
 
@@ -991,6 +930,198 @@ export function normalizeContentBuildings(input: unknown): GameSettings["content
   });
 }
 
+export function normalizeContentUnitTypes(input: unknown): GameSettings["content"]["unitTypes"] {
+  const rows = Array.isArray(input) ? input : [];
+  const byId = new Map<string, UnitTypeDefinition>();
+  for (const raw of rows) {
+    if (!raw || typeof raw !== "object") continue;
+    const entry = raw as Record<string, unknown>;
+    const id = typeof entry.id === "string" ? entry.id.trim().slice(0, 160) : "";
+    const domain = typeof entry.domain === "string" && UNIT_DOMAINS.has(entry.domain as UnitDomain) ? (entry.domain as UnitDomain) : null;
+    const unitClass = typeof entry.class === "string" && UNIT_CLASSES.has(entry.class as UnitCombatClass) ? (entry.class as UnitCombatClass) : null;
+    const nameKey = typeof entry.nameKey === "string" && entry.nameKey.trim() ? entry.nameKey.trim().slice(0, 180) : "";
+    if (!id.startsWith("unit:") || !domain || !unitClass || !nameKey || byId.has(id)) continue;
+    const statsSource = entry.stats && typeof entry.stats === "object" && !Array.isArray(entry.stats) ? (entry.stats as Record<string, unknown>) : {};
+    const visualSource = entry.visual && typeof entry.visual === "object" && !Array.isArray(entry.visual) ? (entry.visual as Record<string, unknown>) : {};
+    byId.set(id, {
+      id,
+      domain,
+      class: unitClass,
+      nameKey,
+      descriptionKey: typeof entry.descriptionKey === "string" && entry.descriptionKey.trim() ? entry.descriptionKey.trim().slice(0, 180) : null,
+      stats: {
+        maxHp: normalizeUnitNumber(statsSource.maxHp, 1, 10_000, 100),
+        attack: normalizeUnitNumber(statsSource.attack, 0, 10_000, 0),
+        defense: normalizeUnitNumber(statsSource.defense, 0, 10_000, 0),
+        rangedAttack: normalizeOptionalUnitStat(statsSource.rangedAttack, 0, 10_000),
+        range: normalizeOptionalUnitStat(statsSource.range, 0, 12),
+        movement: normalizeUnitNumber(statsSource.movement, 0.1, 64, 1),
+        vision: normalizeOptionalUnitStat(statsSource.vision, 0, 64),
+      },
+      productionCost: normalizeUnitProductionCost(entry.productionCost),
+      unlockTechnologyId:
+        typeof entry.unlockTechnologyId === "string" && entry.unlockTechnologyId.trim()
+          ? entry.unlockTechnologyId.trim().slice(0, 160)
+          : null,
+      unitSkillTreeId:
+        typeof entry.unitSkillTreeId === "string" && /^unit_skill_tree:[a-zA-Z0-9_.:-]+$/.test(entry.unitSkillTreeId)
+          ? (entry.unitSkillTreeId as UnitSkillTreeId)
+          : null,
+      startingSkillIds: normalizeUnitSkillIds(entry.startingSkillIds),
+      visual: {
+        atlasAssetId: normalizeAssetId(visualSource.atlasAssetId),
+        atlasPath: typeof visualSource.atlasPath === "string" && visualSource.atlasPath.trim() ? visualSource.atlasPath.trim().slice(0, 240) : null,
+        frameWidth: normalizeUnitInteger(visualSource.frameWidth, 1, 512, 64),
+        frameHeight: normalizeUnitInteger(visualSource.frameHeight, 1, 512, 64),
+        states: normalizeUnitVisualStates(visualSource.states),
+      },
+      canFoundCity: typeof entry.canFoundCity === "boolean" ? entry.canFoundCity : domain === "civilian" && unitClass === "civilian",
+    });
+  }
+  for (const fallback of DEFAULT_UNIT_TYPES) {
+    if (!byId.has(fallback.id)) byId.set(fallback.id, fallback);
+  }
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id, "en"));
+}
+
+export function normalizeContentUnitSkills(input: unknown): GameSettings["content"]["unitSkills"] {
+  const rows = Array.isArray(input) ? input : [];
+  const byId = new Map<UnitSkillDefinition["id"], UnitSkillDefinition>();
+  for (const raw of rows) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+    const entry = raw as Record<string, unknown>;
+    const id = typeof entry.id === "string" && /^unit_skill:[a-zA-Z0-9_.:-]+$/.test(entry.id) ? (entry.id as UnitSkillId) : null;
+    const nameKey = typeof entry.nameKey === "string" && entry.nameKey.trim() ? entry.nameKey.trim().slice(0, 180) : "";
+    if (!id || !nameKey || byId.has(id)) continue;
+    byId.set(id, {
+      id,
+      nameKey,
+      descriptionKey: typeof entry.descriptionKey === "string" && entry.descriptionKey.trim() ? entry.descriptionKey.trim().slice(0, 180) : null,
+      effects: normalizeUnitSkillEffects(entry.effects),
+    });
+  }
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id, "en"));
+}
+
+export function normalizeContentUnitSkillTrees(input: unknown): GameSettings["content"]["unitSkillTrees"] {
+  const rows = Array.isArray(input) ? input : [];
+  const byId = new Map<UnitSkillTreeDefinition["id"], UnitSkillTreeDefinition>();
+  for (const raw of rows) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+    const entry = raw as Record<string, unknown>;
+    const id =
+      typeof entry.id === "string" && /^unit_skill_tree:[a-zA-Z0-9_.:-]+$/.test(entry.id)
+        ? (entry.id as UnitSkillTreeDefinition["id"])
+        : null;
+    if (!id || byId.has(id)) continue;
+    byId.set(id, {
+      id,
+      nameKey: typeof entry.nameKey === "string" && entry.nameKey.trim() ? entry.nameKey.trim().slice(0, 180) : null,
+      levelThresholds: normalizeUnitSkillLevelThresholds(entry.levelThresholds),
+      choiceGroups: normalizeUnitSkillChoiceGroups(entry.choiceGroups),
+    });
+  }
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id, "en"));
+}
+
+function normalizeUnitSkillIds(input: unknown): UnitSkillId[] {
+  return normalizeStringList(input).filter((id): id is UnitSkillId => /^unit_skill:[a-zA-Z0-9_.:-]+$/.test(id));
+}
+
+function normalizeUnitSkillEffects(input: unknown): UnitSkillModifierEffect[] {
+  const rows = Array.isArray(input) ? input : [];
+  return rows.flatMap((raw): UnitSkillModifierEffect[] => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+    const entry = raw as Record<string, unknown>;
+    if (entry.type !== "modifier") return [];
+    const target = typeof entry.target === "string" && UNIT_SKILL_MODIFIER_TARGETS.has(entry.target as UnitSkillModifierTarget)
+      ? (entry.target as UnitSkillModifierTarget)
+      : null;
+    const operation = entry.operation === "add" || entry.operation === "multiply" ? entry.operation : null;
+    const value = typeof entry.value === "number" && Number.isFinite(entry.value) ? Number(entry.value.toFixed(3)) : null;
+    if (!target || !operation || value == null) return [];
+    const when = entry.when && typeof entry.when === "object" && !Array.isArray(entry.when) ? (entry.when as Record<string, unknown>) : null;
+    return [{
+      type: "modifier",
+      target,
+      operation,
+      value,
+      when: when
+        ? {
+            selfTagQuery: normalizeMapTagQuery(when.selfTagQuery),
+            targetTagQuery: normalizeMapTagQuery(when.targetTagQuery),
+          }
+        : null,
+    }];
+  });
+}
+
+function normalizeUnitSkillLevelThresholds(input: unknown): Record<string, number> {
+  const thresholds: Record<string, number> = { "1": 0 };
+  if (!input || typeof input !== "object" || Array.isArray(input)) return thresholds;
+  for (const [rawLevel, rawValue] of Object.entries(input as Record<string, unknown>)) {
+    const level = Number(rawLevel);
+    if (!Number.isInteger(level) || level < 1 || level > 100 || typeof rawValue !== "number" || !Number.isFinite(rawValue)) continue;
+    thresholds[String(level)] = Math.max(0, Math.floor(rawValue));
+  }
+  return thresholds;
+}
+
+function normalizeUnitSkillChoiceGroups(input: unknown): UnitSkillTreeDefinition["choiceGroups"] {
+  const rows = Array.isArray(input) ? input : [];
+  return rows.flatMap((raw): UnitSkillTreeDefinition["choiceGroups"] => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+    const entry = raw as Record<string, unknown>;
+    const id = typeof entry.id === "string" && /^[a-zA-Z0-9_.:-]+$/.test(entry.id) ? entry.id.slice(0, 120) : "";
+    const options = normalizeUnitSkillIds(entry.options);
+    if (!id || options.length === 0) return [];
+    return [{
+      id,
+      unlockLevel: normalizeUnitInteger(entry.unlockLevel, 1, 100, 1),
+      choicesRequired: normalizeUnitInteger(entry.choicesRequired, 1, Math.max(1, options.length), 1),
+      options,
+      prerequisiteSkillIds: normalizeUnitSkillIds(entry.prerequisiteSkillIds),
+    }];
+  });
+}
+
+function normalizeUnitNumber(input: unknown, min: number, max: number, fallback: number): number {
+  return typeof input === "number" && Number.isFinite(input) ? Number(Math.max(min, Math.min(max, input)).toFixed(3)) : fallback;
+}
+
+function normalizeOptionalUnitStat(input: unknown, min: number, max: number): number | undefined {
+  return typeof input === "number" && Number.isFinite(input) ? Number(Math.max(min, Math.min(max, input)).toFixed(3)) : undefined;
+}
+
+function normalizeUnitInteger(input: unknown, min: number, max: number, fallback: number): number {
+  return typeof input === "number" && Number.isFinite(input) ? Math.max(min, Math.min(max, Math.floor(input))) : fallback;
+}
+
+function normalizeUnitProductionCost(input: unknown): UnitTypeDefinition["productionCost"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
+  const source = input as Record<string, unknown>;
+  return {
+    ducats: normalizeOptionalUnitStat(source.ducats, 0, 1_000_000),
+    construction: normalizeOptionalUnitStat(source.construction, 0, 1_000_000),
+    colonization: normalizeOptionalUnitStat(source.colonization, 0, 1_000_000),
+    goods: normalizeGoodFlows(source.goods),
+  };
+}
+
+function normalizeUnitVisualStates(input: unknown): UnitTypeDefinition["visual"]["states"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return { idle: { frame: 0 } };
+  const states: UnitTypeDefinition["visual"]["states"] = {};
+  for (const key of ["idle", "move", "attack", "damaged"] as const) {
+    const row = (input as Record<string, unknown>)[key];
+    if (!row || typeof row !== "object" || Array.isArray(row)) continue;
+    const raw = row as Record<string, unknown>;
+    states[key] = {
+      frame: normalizeUnitInteger(raw.frame, 0, 256, 0),
+    };
+  }
+  return Object.keys(states).length > 0 ? states : { idle: { frame: 0 } };
+}
+
 function normalizeBuildingDeployment(input: unknown): BuildingContentEntry["deployment"] {
   if (!input || typeof input !== "object" || Array.isArray(input)) return null;
   const raw = input as { branches?: unknown; capacity?: unknown; requiresActive?: unknown };
@@ -1007,235 +1138,4 @@ function normalizeBuildingDeployment(input: unknown): BuildingContentEntry["depl
     capacity,
     requiresActive: typeof raw.requiresActive === "boolean" ? raw.requiresActive : true,
   };
-}
-
-export function normalizeContentMilitaryEntries<T extends MilitaryContentEntry>(input: unknown, fallbacks: T[]): T[] {
-  const base = normalizeContentCultures(input);
-  const sourceRows = Array.isArray(input) ? input : [];
-  const rows = base.map((entry, index) => {
-    const raw = sourceRows[index] as Partial<{
-      manpower?: unknown;
-      attack?: unknown;
-      defense?: unknown;
-      breakthrough?: unknown;
-      armor?: unknown;
-      piercing?: unknown;
-      organization?: unknown;
-      hp?: unknown;
-      speed?: unknown;
-      range?: unknown;
-      reliability?: unknown;
-      supplyUse?: unknown;
-      fuelUse?: unknown;
-      trainingCostDucats?: unknown;
-      trainingCostManpower?: unknown;
-      equipmentNeeds?: unknown;
-    }> | undefined;
-    const fallback = fallbacks.find((row) => row.id === entry.id);
-    const stat = (key: keyof DivisionStats, fallbackValue: number, min = 0) =>
-      typeof raw?.[key] === "number" && Number.isFinite(raw[key] as number)
-        ? Number(Math.max(min, raw[key] as number).toFixed(3))
-        : fallbackValue;
-    return {
-      ...entry,
-      manpower: Math.max(0, Math.floor(stat("manpower", fallback?.manpower ?? 1000))),
-      attack: stat("attack", fallback?.attack ?? 6),
-      defense: stat("defense", fallback?.defense ?? 6),
-      breakthrough: stat("breakthrough", fallback?.breakthrough ?? 2),
-      armor: stat("armor", fallback?.armor ?? 0),
-      piercing: stat("piercing", fallback?.piercing ?? 0),
-      organization: stat("organization", fallback?.organization ?? 8, 1),
-      hp: stat("hp", fallback?.hp ?? 20, 1),
-      speed: stat("speed", fallback?.speed ?? 1, 0.1),
-      range: stat("range", fallback?.range ?? 0),
-      reliability: stat("reliability", fallback?.reliability ?? 0),
-      supplyUse: stat("supplyUse", fallback?.supplyUse ?? 1),
-      fuelUse: stat("fuelUse", fallback?.fuelUse ?? 0),
-      trainingCostDucats:
-        typeof raw?.trainingCostDucats === "number" && Number.isFinite(raw.trainingCostDucats)
-          ? Number(Math.max(0, raw.trainingCostDucats).toFixed(3))
-          : fallback?.trainingCostDucats ?? 10,
-      trainingCostManpower:
-        typeof raw?.trainingCostManpower === "number" && Number.isFinite(raw.trainingCostManpower)
-          ? Number(Math.max(0, raw.trainingCostManpower).toFixed(3))
-          : fallback?.trainingCostManpower ?? Math.max(0, Math.floor(stat("manpower", fallback?.manpower ?? 1000))),
-      equipmentNeeds: normalizeGoodFlows(raw?.equipmentNeeds),
-    };
-  });
-  return ensureDefaultMilitaryContent(rows as T[], fallbacks);
-}
-
-export function normalizeContentBattalions(input: unknown): GameSettings["content"]["battalions"] {
-  return normalizeContentMilitaryEntries(input, DEFAULT_BATTALIONS);
-}
-
-export function normalizeContentShipTypes(input: unknown): GameSettings["content"]["shipTypes"] {
-  return normalizeContentMilitaryEntries(input, DEFAULT_SHIP_TYPES);
-}
-
-export function normalizeContentAircraftTypes(input: unknown): GameSettings["content"]["aircraftTypes"] {
-  return normalizeContentMilitaryEntries(input, DEFAULT_AIRCRAFT_TYPES);
-}
-
-const EQUIPMENT_BRANCHES = new Set<EquipmentBranch>(["land", "air", "naval"]);
-const EQUIPMENT_ROLES = new Set<EquipmentClassRole>(["attack", "defense", "breakthrough", "speed", "range", "support"]);
-const EQUIPMENT_STAT_KEYS = new Set<EquipmentStatKey>([
-  "attack",
-  "defense",
-  "breakthrough",
-  "armor",
-  "piercing",
-  "speed",
-  "range",
-  "reliability",
-  "supplyUse",
-  "fuelUse",
-]);
-
-export function normalizeContentEquipmentClasses(input: unknown): GameSettings["content"]["equipmentClasses"] {
-  const rows = Array.isArray(input) ? input : [];
-  const normalized: EquipmentClass[] = [];
-  for (const raw of rows) {
-    if (!raw || typeof raw !== "object") continue;
-    const entry = raw as Record<string, unknown>;
-    const id = typeof entry.id === "string" ? entry.id.trim() : "";
-    const branch = typeof entry.branch === "string" && EQUIPMENT_BRANCHES.has(entry.branch as EquipmentBranch)
-      ? (entry.branch as EquipmentBranch)
-      : null;
-    const slotIds = Array.isArray(entry.slotIds)
-      ? entry.slotIds.map((slotId) => (typeof slotId === "string" ? slotId.trim() : "")).filter(Boolean)
-      : [];
-    if (!id || !branch || slotIds.length === 0) continue;
-    const roles = Array.isArray(entry.roles)
-      ? entry.roles.filter((role): role is EquipmentClassRole => typeof role === "string" && EQUIPMENT_ROLES.has(role as EquipmentClassRole))
-      : [];
-    normalized.push({
-      id,
-      branch,
-      slotIds: [...new Set(slotIds)].slice(0, 12),
-      roles: roles.length > 0 ? [...new Set(roles)].slice(0, 8) : ["support"],
-      baseStats: normalizeEquipmentStats(entry.baseStats),
-    });
-  }
-  return ensureDefaultEquipmentClasses(normalized);
-}
-
-export function normalizeContentEquipmentModules(input: unknown): GameSettings["content"]["equipmentModules"] {
-  const rows = Array.isArray(input) ? input : [];
-  const normalized: EquipmentModule[] = [];
-  for (const raw of rows) {
-    if (!raw || typeof raw !== "object") continue;
-    const entry = raw as Record<string, unknown>;
-    const id = typeof entry.id === "string" ? entry.id.trim() : "";
-    const classId = typeof entry.classId === "string" && entry.classId.trim() ? entry.classId.trim() : null;
-    const slotId = typeof entry.slotId === "string" ? entry.slotId.trim() : "";
-    if (!id || !slotId) continue;
-    normalized.push({
-      id,
-      classId,
-      slotId,
-      stats: normalizeEquipmentStats(entry.stats),
-      goodsCost: normalizeGoodFlows(entry.goodsCost),
-      manpowerCrew: normalizeOptionalNonNegativeNumber(entry.manpowerCrew),
-      productionCost: normalizeOptionalNonNegativeNumber(entry.productionCost),
-    });
-  }
-  return ensureDefaultEquipmentModules(normalized);
-}
-
-export function normalizeContentEquipmentFrames(
-  input: unknown,
-  equipmentClasses: EquipmentClass[],
-): GameSettings["content"]["equipmentFrames"] {
-  const rows = Array.isArray(input) ? input : [];
-  const classesById = new Map(equipmentClasses.map((entry) => [entry.id, entry]));
-  const normalized: EquipmentFrame[] = [];
-  for (const raw of rows) {
-    if (!raw || typeof raw !== "object") continue;
-    const entry = raw as Record<string, unknown>;
-    const id = typeof entry.id === "string" ? entry.id.trim() : "";
-    const classId = typeof entry.classId === "string" ? entry.classId.trim() : "";
-    const equipmentClass = classesById.get(classId);
-    if (!id || !equipmentClass) continue;
-    const branch =
-      typeof entry.branch === "string" && EQUIPMENT_BRANCHES.has(entry.branch as EquipmentBranch)
-        ? (entry.branch as EquipmentBranch)
-        : equipmentClass.branch;
-    const slotIds = Array.isArray(entry.slotIds)
-      ? entry.slotIds.map((slotId) => (typeof slotId === "string" ? slotId.trim() : "")).filter(Boolean)
-      : equipmentClass.slotIds;
-    normalized.push({
-      id,
-      classId,
-      branch,
-      slotIds: [...new Set(slotIds)].filter((slotId) => equipmentClass.slotIds.includes(slotId)).slice(0, 12),
-      baseStats: normalizeEquipmentStats(entry.baseStats),
-      goodsCost: normalizeGoodFlows(entry.goodsCost),
-      manpowerCrew: normalizeOptionalNonNegativeNumber(entry.manpowerCrew),
-      productionCost: normalizeOptionalNonNegativeNumber(entry.productionCost),
-      era: typeof entry.era === "string" && entry.era.trim() ? entry.era.trim().slice(0, 80) : null,
-      unlockTechnologyId:
-        typeof entry.unlockTechnologyId === "string" && entry.unlockTechnologyId.trim()
-          ? entry.unlockTechnologyId.trim().slice(0, 120)
-          : null,
-    });
-  }
-  return ensureDefaultEquipmentFrames(normalized, equipmentClasses);
-}
-
-export function ensureDefaultEquipmentClasses(classes: EquipmentClass[]): EquipmentClass[] {
-  const byId = new Map(classes.map((entry) => [entry.id, entry]));
-  for (const fallback of DEFAULT_EQUIPMENT_CLASSES) {
-    if (!byId.has(fallback.id)) byId.set(fallback.id, fallback);
-  }
-  return [...byId.values()];
-}
-
-export function ensureDefaultEquipmentFrames(frames: EquipmentFrame[], equipmentClasses: EquipmentClass[]): EquipmentFrame[] {
-  const byId = new Map(frames.map((entry) => [entry.id, entry]));
-  const authoredClassIds = new Set(frames.map((entry) => entry.classId));
-  for (const fallback of DEFAULT_EQUIPMENT_FRAMES) {
-    if (!byId.has(fallback.id)) byId.set(fallback.id, fallback);
-    authoredClassIds.add(fallback.classId);
-  }
-  for (const equipmentClass of equipmentClasses) {
-    if (authoredClassIds.has(equipmentClass.id)) continue;
-    const frame: EquipmentFrame = {
-      id: `equipment_frame:${equipmentClass.id.replace(/[^a-zA-Z0-9_-]/g, "_")}:basic`,
-      classId: equipmentClass.id,
-      branch: equipmentClass.branch,
-      slotIds: equipmentClass.slotIds,
-      baseStats: equipmentClass.baseStats,
-      goodsCost: [],
-      manpowerCrew: 0,
-      productionCost: 0,
-      era: "ageless",
-      unlockTechnologyId: null,
-    };
-    byId.set(frame.id, frame);
-  }
-  return [...byId.values()];
-}
-
-export function ensureDefaultEquipmentModules(modules: EquipmentModule[]): EquipmentModule[] {
-  const byId = new Map(modules.map((entry) => [entry.id, entry]));
-  for (const fallback of DEFAULT_EQUIPMENT_MODULES) {
-    if (!byId.has(fallback.id)) byId.set(fallback.id, fallback);
-  }
-  return [...byId.values()];
-}
-
-function normalizeOptionalNonNegativeNumber(input: unknown): number | undefined {
-  return typeof input === "number" && Number.isFinite(input) ? Number(Math.max(0, input).toFixed(3)) : undefined;
-}
-
-function normalizeEquipmentStats(input: unknown): EquipmentStats {
-  const normalized: EquipmentStats = {};
-  if (!input || typeof input !== "object") return normalized;
-  for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
-    if (!EQUIPMENT_STAT_KEYS.has(key as EquipmentStatKey)) continue;
-    if (typeof value !== "number" || !Number.isFinite(value)) continue;
-    normalized[key as EquipmentStatKey] = Number(Math.max(-10_000, Math.min(10_000, value)).toFixed(3));
-  }
-  return normalized;
 }

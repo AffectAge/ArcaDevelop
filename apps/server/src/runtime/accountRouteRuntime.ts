@@ -10,6 +10,7 @@ import { registerAuthRegistrationRoutes } from "../routes/authRegistrationRoutes
 import type { AdminCountryDbRecord } from "../routes/adminCountryRoutes";
 import type { ImageDimensionRule } from "../uploads/uploadValidation";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
+import type { GameSettings } from "./gameSettingsTypes";
 
 type AccountUploadMiddleware = {
   fields: (fields: Array<{ name: string; maxCount?: number }>) => express.RequestHandler;
@@ -24,14 +25,16 @@ type AccountRouteRuntimeParams = {
   jwtSecret: string;
   flagImageRule: ImageDimensionRule;
   crestImageRule: ImageDimensionRule;
+  identityLogoImageRule: ImageDimensionRule;
   masks: {
     resourcesByCountry: number;
     hexOwner: number;
     colonyProgressByRegion: number;
-    unitEquipmentState: number;
+    unitState: number;
   };
   getTurnId: () => number;
   getWorldBase: () => WorldBase;
+  getGameSettings: () => GameSettings;
   getRegistrationRequiresAdminApproval: () => boolean;
   getInitialColonizationPoints: () => number;
   getInitialConstructionPoints: () => number;
@@ -86,12 +89,19 @@ export function registerAccountRouteRuntime(params: AccountRouteRuntimeParams): 
     upload: params.upload,
     flagImageRule: params.flagImageRule,
     crestImageRule: params.crestImageRule,
+    identityLogoImageRule: params.identityLogoImageRule,
     masks: params.masks,
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,
+    getGameSettings: params.getGameSettings,
     getRegistrationRequiresAdminApproval: params.getRegistrationRequiresAdminApproval,
     getInitialColonizationPoints: params.getInitialColonizationPoints,
     getInitialConstructionPoints: params.getInitialConstructionPoints,
+    countryIdentityNameExists: async (kind, name) => {
+      const where = kind === "culture" ? { cultureName: name } : { religionName: name };
+      const existing = await params.prisma.country.findFirst({ where, select: { id: true } });
+      return Boolean(existing);
+    },
     countAdminCountries: () => params.prisma.country.count({ where: { isAdmin: true } }),
     createCountry: async (data) =>
       params.prisma.country.create({ data, select: params.countrySelect }) as Promise<AdminCountryDbRecord>,

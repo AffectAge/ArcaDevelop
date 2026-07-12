@@ -2,10 +2,25 @@ import type { ResourceTotals } from "./core";
 import type { ResourceFlow } from "./resource-ledger";
 import type { DiplomacyProposal } from "./diplomacy";
 import type { CountryAppliedModifier, CountryDecisionRecord, CountryEventRecord, CountryJournalState, ExplanationRecord, ScheduledCountryEvent } from "./content";
-import type { AirWing, Division, DivisionTemplate, Fleet, MilitaryFormationQueueItem } from "./military";
-import type { CivilianUnit, CivilianUnitQueueItem, CityMarker, EquipmentProductionLine, EquipmentStockpileByCountry, EquipmentVariant, SettlementProject } from "./unit-equipment";
+import type { CivilianUnit, CivilianUnitQueueItem, CityMarker, SettlementProject } from "./unit-equipment";
+import type { MapUnit, UnitTrainingQueueItem } from "./units";
 import type { BuildingInstance, RegionConstructionProject, RegionPopulation, RegionResourceDeposit, RegionResourceExplorationProject } from "./region-state";
 import type { CountryParliament, CountryTechnologyState } from "./politics";
+
+export type CountryPopulationAcceptance = {
+  acceptedCultureIds: string[];
+  acceptedReligionIds: string[];
+  acceptedRaceIds: string[];
+};
+
+export type CountryIdentityState = {
+  cultureId: string;
+  religionId: string;
+  raceId: string;
+  cultureGroupId: string;
+  religionGroupId: string;
+};
+
 export type WorldBase = {
   turnId: number;
   resourcesByCountry: Record<string, ResourceTotals>;
@@ -33,18 +48,14 @@ export type WorldBase = {
   countryEventFlagsByCountryId: Record<string, Record<string, string | number | boolean>>;
   journalEntriesByCountryId: Record<string, CountryJournalState>;
   countryModifiersByCountryId: Record<string, CountryAppliedModifier[]>;
-  divisionTemplatesByCountry: Record<string, DivisionTemplate[]>;
-  divisionsById: Record<string, Division>;
-  fleetsById: Record<string, Fleet>;
-  airWingsById: Record<string, AirWing>;
-  militaryFormationQueueByCountry: Record<string, MilitaryFormationQueueItem[]>;
+  countryPopulationAcceptanceByCountryId?: Record<string, CountryPopulationAcceptance>;
+  countryIdentityByCountryId?: Record<string, CountryIdentityState>;
+  unitsById?: Record<string, MapUnit>;
+  unitTrainingQueueByCountry?: Record<string, UnitTrainingQueueItem[]>;
   civilianUnitsById: Record<string, CivilianUnit>;
   civilianUnitQueueByCountry: Record<string, CivilianUnitQueueItem[]>;
   settlementProjectsById: Record<string, SettlementProject>;
   cityMarkersById: Record<string, CityMarker>;
-  equipmentVariantsById: Record<string, EquipmentVariant>;
-  equipmentProductionLinesByCountry: Record<string, EquipmentProductionLine[]>;
-  equipmentStockpileByCountry: EquipmentStockpileByCountry;
   diplomacyProposals: DiplomacyProposal[];
 };
 
@@ -66,9 +77,6 @@ export const WORLD_DELTA_MASK = {
   technologyByCountry: 1 << 15,
   countryDecisionsByCountryId: 1 << 16,
   countryEventsByCountryId: 1 << 17,
-  divisionTemplatesByCountry: 1 << 18,
-  divisionsById: 1 << 19,
-  militaryFormationQueueByCountry: 1 << 20,
   diplomacyProposals: 1 << 21,
   regionOwner: 1 << 22,
   regionController: 1 << 23,
@@ -78,7 +86,7 @@ export const WORLD_DELTA_MASK = {
   journalEntriesByCountryId: 1 << 27,
   explanationRecordsByTurn: 1 << 28,
   countryModifiersByCountryId: 1 << 29,
-  unitEquipmentState: 1 << 30,
+  unitState: 1 << 30,
 } as const;
 
 export type WorldDelta = {
@@ -111,18 +119,12 @@ export type WorldDelta = {
   xg?: Record<string, Record<string, string | number | boolean> | null>;
   jo?: Record<string, CountryJournalState | null>;
   cm?: Record<string, CountryAppliedModifier[] | null>;
-  g?: Record<string, DivisionTemplate[] | null>;
-  x?: Record<string, Division | null>;
-  fl?: Record<string, Fleet | null>;
-  aw?: Record<string, AirWing | null>;
-  w?: Record<string, MilitaryFormationQueueItem[] | null>;
+  mu?: Record<string, MapUnit | null>;
+  uq?: Record<string, UnitTrainingQueueItem[] | null>;
   cu?: Record<string, CivilianUnit | null>;
   cq?: Record<string, CivilianUnitQueueItem[] | null>;
   sp?: Record<string, SettlementProject | null>;
   ci?: Record<string, CityMarker | null>;
-  ev?: Record<string, EquipmentVariant | null>;
-  el?: Record<string, EquipmentProductionLine[] | null>;
-  es?: Record<string, Record<string, number> | null>;
   j?: DiplomacyProposal[];
   rejectedOrders: Array<{ playerId: string; reason: string; tempOrderId?: string }>;
 };

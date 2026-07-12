@@ -52,7 +52,7 @@ export type ScenarioDefines = {
   };
   military?: {
     militaryFormationSpeed?: unknown;
-    landDivisionStackLimitPerHex?: unknown;
+    landUnitStackLimitPerHex?: unknown;
   };
   registration?: {
     requireAdminApproval?: unknown;
@@ -63,6 +63,9 @@ export type ScenarioDefines = {
   resourceLedger?: {
     retentionTurns?: unknown;
     maxEntriesPerTurn?: unknown;
+  };
+  population?: {
+    qualificationCategories?: unknown;
   };
   turnTimer?: {
     enabled?: unknown;
@@ -134,7 +137,7 @@ export const SCENARIO_DEFINES_SUPPORTED_SECTIONS = {
   },
   military: {
     militaryFormationSpeed: { type: "number", min: 1, max: 1_000_000_000_000 },
-    landDivisionStackLimitPerHex: { type: "integer", min: 1, max: 100 },
+    landUnitStackLimitPerHex: { type: "integer", min: 1, max: 100 },
   },
   registration: {
     requireAdminApproval: { type: "boolean" },
@@ -220,7 +223,7 @@ export type CustomizationSettings = {
 
 export type MilitarySettings = {
   militaryFormationSpeed: number;
-  landDivisionStackLimitPerHex: number;
+  landUnitStackLimitPerHex: number;
 };
 
 export type RegistrationSettings = {
@@ -309,7 +312,7 @@ const scenarioDefinesShapeSchema = z
     military: z
       .object({
         militaryFormationSpeed: z.unknown().optional(),
-        landDivisionStackLimitPerHex: z.unknown().optional(),
+        landUnitStackLimitPerHex: z.unknown().optional(),
       })
       .strict()
       .optional(),
@@ -329,6 +332,12 @@ const scenarioDefinesShapeSchema = z
       .object({
         retentionTurns: z.unknown().optional(),
         maxEntriesPerTurn: z.unknown().optional(),
+      })
+      .strict()
+      .optional(),
+    population: z
+      .object({
+        qualificationCategories: z.unknown().optional(),
       })
       .strict()
       .optional(),
@@ -744,9 +753,9 @@ export function normalizeScenarioMilitaryDefines(
       options.maxSettingNumber,
       "INVALID_SCENARIO_MILITARY_FORMATION_SPEED",
     ),
-    landDivisionStackLimitPerHex: normalizeIntegerInRange(
-      militaryDefines.landDivisionStackLimitPerHex,
-      defaults.landDivisionStackLimitPerHex,
+    landUnitStackLimitPerHex: normalizeIntegerInRange(
+      militaryDefines.landUnitStackLimitPerHex,
+      defaults.landUnitStackLimitPerHex,
       1,
       100,
       "INVALID_SCENARIO_MILITARY_LAND_DIVISION_STACK_LIMIT",

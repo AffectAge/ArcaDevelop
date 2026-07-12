@@ -1,0 +1,32 @@
+{
+  "id": "unit:archer",
+  "domain": "land",
+  "class": "ranged",
+  "nameKey": "unit.archer.name",
+  "descriptionKey": "unit.archer.description",
+  "stats": {
+    "maxHp": 80,
+    "attack": 12,
+    "defense": 12,
+    "rangedAttack": 24,
+    "range": 2,
+    "movement": 2,
+    "vision": 2
+  },
+  "productionCost": {
+    "ducats": 55,
+    "construction": 65
+  },
+  "visual": {
+    "atlasAssetId": "asset:unit.archer",
+    "atlasPath": "assets/units/archer.png",
+    "frameWidth": 64,
+    "frameHeight": 64,
+    "states": {
+      "idle": { "frame": 0 },
+      "move": { "frame": 1 },
+      "attack": { "frame": 2 },
+      "damaged": { "frame": 3 }
+    }
+  }
+}

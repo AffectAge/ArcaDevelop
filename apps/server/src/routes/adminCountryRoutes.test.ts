@@ -110,7 +110,22 @@ describe("adminCountryRoutes", () => {
         targetId: "country:b",
       }),
     );
-    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({ mask: 65535 });
+    expect(deps.broadcastWorldDeltaFromSectionSnapshot).toHaveBeenCalledWith({
+      mask:
+        deps.masks.resourcesByCountry |
+        deps.masks.hexOwner |
+        deps.masks.colonyProgressByRegion |
+        deps.masks.regionConstructionQueueByRegion |
+        deps.masks.parliamentByCountry |
+        deps.masks.technologyByCountry |
+        deps.masks.countryDecisionsByCountryId |
+        deps.masks.countryEventsByCountryId |
+        deps.masks.countryScheduledEventsByCountryId |
+        deps.masks.countryEventFlagsByCountryId |
+        deps.masks.journalEntriesByCountryId |
+        deps.masks.countryModifiersByCountryId |
+        deps.masks.diplomacyProposals,
+    });
     expect(deps.broadcast).toHaveBeenCalledWith(expect.objectContaining({ type: "NEWS_EVENT" }));
   });
 
@@ -145,8 +160,8 @@ function makeDeps(options?: {
         next();
       },
     },
-    flagImageRule: { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 },
-    crestImageRule: { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 },
+    flagImageRule: { maxWidth: 192, maxHeight: 128 },
+    crestImageRule: { maxWidth: 128, maxHeight: 146 },
     masks: {
       resourcesByCountry: 1,
       hexOwner: 2,
@@ -160,9 +175,6 @@ function makeDeps(options?: {
       countryEventFlagsByCountryId: 512,
       journalEntriesByCountryId: 1024,
       countryModifiersByCountryId: 2048,
-      divisionTemplatesByCountry: 4096,
-      divisionsById: 8192,
-      militaryFormationQueueByCountry: 16_384,
       diplomacyProposals: 32_768,
     },
     getTurnId: () => 8,
@@ -197,6 +209,17 @@ function makeCountryRecord(overrides?: Partial<AdminCountryDbRecord>): AdminCoun
     color: "#112233",
     flagUrl: "/scenario-assets/demo/assets/uploads/old-flag.png?v=1",
     crestUrl: "/scenario-assets/demo/assets/uploads/old-crest.png?v=1",
+    cultureId: "culture:country:b",
+    cultureName: "Culture B",
+    cultureColor: "#4ade80",
+    cultureLogoUrl: null,
+    religionId: "religion:country:b",
+    religionName: "Religion B",
+    religionColor: "#a78bfa",
+    religionLogoUrl: null,
+    cultureGroupId: "culture_group:frontier",
+    religionGroupId: "religion_group:shrines",
+    raceId: "race:default",
     isAdmin: false,
     isLocked: false,
     blockedUntilTurn: null,
@@ -227,12 +250,6 @@ function makeDeletionPlan(): CountryDeletionPlan {
     constructionQueueHexIds: [],
     constructionProjectIds: [],
     diplomacyProposalIds: [],
-    divisionIds: [],
-    fleetIds: [],
-    airWingIds: [],
-    divisionTemplateCountryEntry: false,
-    militaryFormationQueueEntry: false,
-    militaryFormationQueueItemIds: [],
     technologyEntry: false,
     parliamentEntry: false,
     decisionEntry: false,

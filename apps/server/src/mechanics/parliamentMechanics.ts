@@ -260,27 +260,27 @@ export function calculateCountryInterestGroups(params: {
     if (ownerId !== params.countryId) continue;
     const population = params.regionPopulationByRegion[regionId];
     for (const pop of population?.pops ?? []) {
-      for (const [professionId, professionState] of Object.entries(pop.professions ?? {})) {
-        const size = Math.max(0, professionState.size);
-        if (size <= 0) continue;
-        for (const group of params.groups) {
-          const professionWeight = group.professionWeights?.[professionId] ?? 0;
-          if (professionWeight <= 0) continue;
-          const sol = Math.max(0, professionState.standardOfLiving ?? 0);
-          const radicalShare = size > 0 ? Math.max(0, professionState.radicals ?? 0) / size : 0;
-          const loyalistShare = size > 0 ? Math.max(0, professionState.loyalists ?? 0) / size : 0;
-          const modifier = Math.max(
-            0.05,
-            1 +
-              sol * (group.solMultiplier ?? 0.03) +
-              radicalShare * (group.radicalMultiplier ?? 0.5) +
-              loyalistShare * (group.loyalistMultiplier ?? 0.25),
-          );
-          const power = size * (professionWeight / 100) * modifier;
-          rawPowerByGroupId.set(group.id, (rawPowerByGroupId.get(group.id) ?? 0) + power);
-          radicalsByGroupId.set(group.id, (radicalsByGroupId.get(group.id) ?? 0) + Math.max(0, professionState.radicals ?? 0) * (professionWeight / 100));
-          loyalistsByGroupId.set(group.id, (loyalistsByGroupId.get(group.id) ?? 0) + Math.max(0, professionState.loyalists ?? 0) * (professionWeight / 100));
-        }
+      const size = Math.max(0, pop.size);
+      if (size <= 0) continue;
+      for (const group of params.groups) {
+        const professionWeight = group.professionWeights?.[pop.professionId] ?? 0;
+        if (professionWeight <= 0) continue;
+        const sol = Math.max(0, pop.standardOfLiving ?? 0);
+        const radicalShare = size > 0 ? Math.max(0, pop.radicals ?? 0) / size : 0;
+        const loyalistShare = size > 0 ? Math.max(0, pop.loyalists ?? 0) / size : 0;
+        const modifier = Math.max(
+          0.05,
+          1 +
+            sol * (group.solMultiplier ?? 0.03) +
+            radicalShare * (group.radicalMultiplier ?? 0.5) +
+            loyalistShare * (group.loyalistMultiplier ?? 0.25),
+        );
+        const authoredPoliticalStrength = Number(pop.politicalStrength ?? 0);
+        const politicalBase = authoredPoliticalStrength > 0 ? authoredPoliticalStrength : size;
+        const power = politicalBase * (professionWeight / 100) * modifier;
+        rawPowerByGroupId.set(group.id, (rawPowerByGroupId.get(group.id) ?? 0) + power);
+        radicalsByGroupId.set(group.id, (radicalsByGroupId.get(group.id) ?? 0) + Math.max(0, pop.radicals ?? 0) * (professionWeight / 100));
+        loyalistsByGroupId.set(group.id, (loyalistsByGroupId.get(group.id) ?? 0) + Math.max(0, pop.loyalists ?? 0) * (professionWeight / 100));
       }
     }
 

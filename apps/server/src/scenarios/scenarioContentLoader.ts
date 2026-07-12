@@ -5,6 +5,8 @@ import { readFlatScenarioLocalizationFile } from "./scenarioLocalization";
 export const scenarioContentFileNames = [
   ["assets", ["assets.json"]],
   ["races", ["races.json"]],
+  ["cultureGroups", ["culture_groups.json", "cultureGroups.json"]],
+  ["religionGroups", ["religion_groups.json", "religionGroups.json"]],
   ["resourceCategories", ["resource_categories.json", "resourceCategories.json"]],
   ["hexTypes", ["hex_types.json", "hexTypes.json"]],
   ["hexClimates", ["hex_climates.json", "hexClimates.json"]],
@@ -29,18 +31,20 @@ export const scenarioContentFileNames = [
   ["decisions", ["decisions.json"]],
   ["events", ["events.json"]],
   ["journalEntries", ["journal_entries.json", "journalEntries.json"]],
-  ["battalions", ["battalions.json"]],
-  ["shipTypes", ["ship_types.json", "shipTypes.json"]],
-  ["aircraftTypes", ["aircraft_types.json", "aircraftTypes.json"]],
-  ["equipmentClasses", ["equipment_classes.json", "equipmentClasses.json"]],
-  ["equipmentFrames", ["equipment_frames.json", "equipmentFrames.json"]],
-  ["equipmentModules", ["equipment_modules.json", "equipmentModules.json"]],
+  ["unitSkills", ["unit_skills.json", "unitSkills.json"]],
+  ["unitSkillTrees", ["unit_skill_trees.json", "unitSkillTrees.json"]],
+  ["unitTypes", ["unit_types.json", "unitTypes.json"]],
 ] as const;
 
 export type ScenarioContentKey = (typeof scenarioContentFileNames)[number][0];
 
 const perEntityDirectoryAliases: Partial<Record<ScenarioContentKey, string[]>> = {
+  cultureGroups: ["culture_groups", "cultureGroups"],
+  religionGroups: ["religion_groups", "religionGroups"],
   journalEntries: ["journal_entries"],
+  unitSkills: ["unit_skills"],
+  unitSkillTrees: ["unit_skill_trees"],
+  unitTypes: ["unit_types"],
 };
 
 export function loadRawScenarioContent(scenarioDir: string): Record<string, unknown> | null {
@@ -63,10 +67,14 @@ function loadPerEntityScenarioContent(scenarioDir: string): Record<string, unkno
     const directories = perEntityDirectoryAliases[key] ?? [key];
     const entries = directories.flatMap((directory) => listJsonObjectsRecursively(resolve(commonDir, directory))).map((entry) => {
       const nameKey = typeof entry.nameKey === "string" ? entry.nameKey : null;
-      if (!nameKey || typeof entry.name === "string") return entry;
+      const descriptionKey = typeof entry.descriptionKey === "string" ? entry.descriptionKey : null;
+      if (!nameKey && !descriptionKey) return entry;
       return {
         ...entry,
-        name: ru[nameKey] ?? en[nameKey] ?? nameKey,
+        ...(nameKey && typeof entry.name !== "string" ? { name: ru[nameKey] ?? en[nameKey] ?? nameKey } : {}),
+        ...(descriptionKey && typeof entry.description !== "string"
+          ? { description: ru[descriptionKey] ?? en[descriptionKey] ?? descriptionKey }
+          : {}),
       };
     });
     if (entries.length > 0) {

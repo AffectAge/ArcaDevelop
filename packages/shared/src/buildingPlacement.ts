@@ -1,6 +1,7 @@
-import type { HexId, HexTile } from "./contracts/hex-map";
+import type { HexId, HexTile, MapTagQuery } from "./contracts/hex-map";
 import type { WorldBase } from "./contracts/world";
 import { hexHasTag } from "./effectiveHex";
+import { matchesMapTagQuery } from "./mapTags";
 
 export type BuildingPlacementRules = {
   allowedTerrains?: string[];
@@ -11,6 +12,7 @@ export type BuildingPlacementRules = {
   deniedWaterKinds?: string[];
   allowedTags?: string[];
   deniedTags?: string[];
+  tagQuery?: MapTagQuery | null;
 };
 
 export type BuildingAdjacencyEffect = {
@@ -19,6 +21,7 @@ export type BuildingAdjacencyEffect = {
     neighborTerrains?: string[];
     neighborFeatures?: string[];
     neighborTags?: string[];
+    neighborTagQuery?: MapTagQuery | null;
     neighborBuildingIds?: string[];
     adjacentToRiver?: boolean;
   };
@@ -108,18 +111,6 @@ export function evaluateBuildingPlacement(params: {
     return blocked({ code: "BUILD_PLACEMENT_OCCUPIED", params: { hexId: hex.id } });
   }
   const placement = params.building.placement ?? {};
-  if (matchesList(hex.terrain, placement.deniedTerrains)) {
-    return blocked({ code: "BUILD_PLACEMENT_TERRAIN_DENIED", params: { terrain: hex.terrain } });
-  }
-  if (!allowsList(hex.terrain, placement.allowedTerrains)) {
-    return blocked({ code: "BUILD_PLACEMENT_TERRAIN_NOT_ALLOWED", params: { terrain: hex.terrain } });
-  }
-  if (matchesList(hex.feature, placement.deniedFeatures)) {
-    return blocked({ code: "BUILD_PLACEMENT_FEATURE_DENIED", params: { feature: hex.feature } });
-  }
-  if (!allowsList(hex.feature, placement.allowedFeatures)) {
-    return blocked({ code: "BUILD_PLACEMENT_FEATURE_NOT_ALLOWED", params: { feature: hex.feature } });
-  }
   const waterKind = hex.waterKind ?? "none";
   if (matchesList(waterKind, placement.deniedWaterKinds)) {
     return blocked({ code: "BUILD_PLACEMENT_WATER_DENIED", params: { waterKind } });
@@ -133,6 +124,9 @@ export function evaluateBuildingPlacement(params: {
   }
   if (placement.allowedTags?.length && !placement.allowedTags.some((tag) => hexHasTag(hex, tag))) {
     return blocked({ code: "BUILD_PLACEMENT_TAG_NOT_ALLOWED", params: { tags: placement.allowedTags.join(",") } });
+  }
+  if (!matchesMapTagQuery(hex.mapTags ?? hex.tags, placement.tagQuery)) {
+    return blocked({ code: "BUILD_PLACEMENT_TAG_NOT_ALLOWED", params: { tags: "tagQuery" } });
   }
   const requiredDepositGoodIds = getRequiredDepositGoodIds(params.building);
   if (requiredDepositGoodIds.length > 0) {
@@ -214,9 +208,8 @@ function countMatchingNeighbors(
 ): number {
   let count = 0;
   for (const neighbor of params.neighborHexes ?? []) {
-    if (effect.when.neighborTerrains?.length && !matchesList(neighbor.terrain, effect.when.neighborTerrains)) continue;
-    if (effect.when.neighborFeatures?.length && !matchesList(neighbor.feature, effect.when.neighborFeatures)) continue;
     if (effect.when.neighborTags?.length && !effect.when.neighborTags.some((tag) => hexHasTag(neighbor, tag))) continue;
+    if (!matchesMapTagQuery(neighbor.mapTags ?? neighbor.tags, effect.when.neighborTagQuery)) continue;
     if (effect.when.neighborBuildingIds?.length) {
       const instances = params.world.regionBuildingsByRegion[neighbor.regionId] ?? [];
       if (!instances.some((instance) => instance.targetHexId === neighbor.id && matchesList(instance.buildingId, effect.when.neighborBuildingIds))) {

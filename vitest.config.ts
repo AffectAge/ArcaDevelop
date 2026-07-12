@@ -5,5 +5,6 @@ export default defineConfig({
     include: ["apps/**/*.test.ts", "packages/**/*.test.ts", "scripts/**/*.test.ts"],
     exclude: ["**/node_modules/**", "**/dist/**", "apps/server/data/scenarios/**/map/tiles/**"],
     restoreMocks: true,
+    setupFiles: ["./vitest.setup.ts"],
   },
 });

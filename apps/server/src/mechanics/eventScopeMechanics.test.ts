@@ -52,6 +52,33 @@ function makeResources() {
 
 function makeRegionPopulation(size: number) {
   return {
-    pops: [{ id: `pop:${size}`, size, cultureId: "culture:a", religionId: "religion:a", raceId: "race:a", ideologies: {}, professions: {} }],
+    pops: [{
+      id: `pop:${size}`,
+      size,
+      cultureId: "culture:a",
+      religionId: "religion:a",
+      raceId: "race:a",
+      professionId: "profession:unemployed",
+      literacy: 0,
+      ducats: 0,
+      standardOfLiving: 8,
+      radicals: 0,
+      loyalists: 0,
+      qualificationsByCategory: {},
+      ideologies: {},
+      lastIncomeDucats: 0,
+      lastNeedsSpendDucats: 0,
+      lastNeedsSatisfaction: 1,
+      lastNeedsByCategory: {},
+      lastNeedsDeficitByGood: {},
+      lastNeedsBudgetShortageByGood: {},
+      lastBirths: 0,
+      lastDeaths: 0,
+      lastEmployed: 0,
+      lastOpenJobs: 0,
+      lastQualificationLimit: 0,
+      lastDiscriminationPenalty: 0,
+      politicalStrength: 0,
+    }],
   };
 }

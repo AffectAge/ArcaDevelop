@@ -6,7 +6,6 @@ import {
   type AiOrderDeltaSubmitter,
   type AiOrderDraftSubmitResult,
   type AiOrderSubmissionDraft,
-  type AiOrderDraftSubmitOutcome,
 } from "../ai/aiOrderSubmissionAdapter";
 import { planAiRuntimeTick, type AiRuntimeCandidateProvider, type AiRuntimePlan } from "../ai/aiRuntimePlanner";
 import type { AiStrategyProfile } from "../ai/aiStrategyScoring";
@@ -19,7 +18,6 @@ export type RunAiBuildOrderRuntimeCycleParams = {
   countryIds: string[];
   candidateProviders: AiRuntimeCandidateProvider[];
   submitOrderDelta: AiOrderDeltaSubmitter;
-  submitAiAction?: (draft: Extract<AiOrderSubmissionDraft, { kind: "validated-ai-action-draft" }>) => Promise<AiOrderDraftSubmitOutcome>;
   aiPlayerIdPrefix?: string;
   strategyProfilesByCountryId?: Record<string, AiStrategyProfile[]>;
 };
@@ -54,14 +52,7 @@ export async function runAiOrderRuntimeCycle(
   });
   const submissions = await submitAiOrderDrafts({
     drafts,
-    submitDraft: async (draft) => {
-      if (draft.kind === "validated-ai-action-draft") {
-        return params.submitAiAction
-          ? params.submitAiAction(draft)
-          : { ok: false, reason: "AI_ACTION_SUBMITTER_REQUIRED" };
-      }
-      return createAiOrderDeltaSubmitter(params.submitOrderDelta)(draft);
-    },
+    submitDraft: createAiOrderDeltaSubmitter(params.submitOrderDelta),
   });
 
   return { plan, drafts, submissions };

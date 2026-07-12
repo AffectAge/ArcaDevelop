@@ -33,6 +33,8 @@ type WebSocketRouteCompositionParams = {
   lastLoginAtByCountryId: Map<string, string>;
   worldDeltaBroadcastRuntime: {
     getReplayDeltasFromVersion: WebSocketDeps["getReplayDeltasFromVersion"];
+    cloneWorldBaseSectionSnapshot: WebSocketDeps["cloneWorldBaseSectionSnapshot"];
+    broadcastWorldDeltaFromSectionSnapshot: WebSocketDeps["broadcastWorldDeltaFromSectionSnapshot"];
   };
   turnOrderRuntime: {
     addOrderToTurnIndexes: (order: Order) => void;
@@ -53,8 +55,7 @@ type WebSocketRouteCompositionParams = {
     isBuildingUnlockedForCountry: WebSocketDeps["isBuildingUnlockedForCountry"];
   };
   getGlobalBuildLimit: WebSocketDeps["getGlobalBuildLimit"];
-  normalizeArmyMoveRoute: WebSocketDeps["normalizeArmyMoveRoute"];
-  isContiguousArmyRoute: WebSocketDeps["isContiguousArmyRoute"];
+  areHexIdsAdjacentOrSame: WebSocketDeps["areHexIdsAdjacentOrSame"];
   getHexMovementCost: WebSocketDeps["getHexMovementCost"];
   broadcast: (message: WsOutMessage) => void;
   broadcastTurnResolveStarted: WebSocketDeps["broadcastTurnResolveStarted"];
@@ -100,6 +101,8 @@ export function registerWebSocketRouteComposition(params: WebSocketRouteComposit
     getLastLoginAt: (countryId) => params.lastLoginAtByCountryId.get(countryId) ?? null,
     setLastLoginAt: (countryId, timestamp) => params.lastLoginAtByCountryId.set(countryId, timestamp),
     getReplayDeltasFromVersion: params.worldDeltaBroadcastRuntime.getReplayDeltasFromVersion,
+    cloneWorldBaseSectionSnapshot: params.worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot,
+    broadcastWorldDeltaFromSectionSnapshot: params.worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot,
     sendPendingRegistrationNotificationsToAdminSocket:
       params.countryRuntimeHelpers.sendPendingRegistrationNotificationsToAdminSocket,
     broadcast: params.broadcast,
@@ -120,8 +123,7 @@ export function registerWebSocketRouteComposition(params: WebSocketRouteComposit
     countBuildingOccurrences: params.buildingRuntime.countBuildingOccurrences,
     getCountryBuildLimit: params.buildingRuntime.getCountryBuildLimit,
     getGlobalBuildLimit: params.getGlobalBuildLimit,
-    normalizeArmyMoveRoute: params.normalizeArmyMoveRoute,
-    isContiguousArmyRoute: params.isContiguousArmyRoute,
+    areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
     getHexMovementCost: params.getHexMovementCost,
   });
 }

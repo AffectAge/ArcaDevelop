@@ -1,0 +1,23 @@
+{
+  "id": "religion_group:river_oracles",
+  "nameKey": "religionGroup.riverOracles.name",
+  "descriptionKey": "religionGroup.riverOracles.description",
+  "color": "#38bdf8",
+  "modifiers": [
+    {
+      "id": "flood_omens",
+      "label": "Flood omens",
+      "scope": "country",
+      "effects": [
+        { "stat": "ducats_gain", "mode": "add", "value": 1 },
+        { "stat": "hex_movement_cost", "mode": "add", "value": -0.1 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.13,
+    "standardOfLiving": 8,
+    "ducats": 40,
+    "ideologies": { "ideology:default": 1 }
+  }
+}

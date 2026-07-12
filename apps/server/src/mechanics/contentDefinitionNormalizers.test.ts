@@ -47,7 +47,7 @@ describe("contentDefinitionNormalizers", () => {
             stat: "building_output",
             mode: "mult",
             value: 1.235,
-            target: { buildingId: null, goodId: "good:grain", professionId: null, resourceCategoryId: null },
+            target: { buildingId: null, goodId: "good:grain", hexTag: null, professionId: null, resourceCategoryId: null },
           },
         ],
       },

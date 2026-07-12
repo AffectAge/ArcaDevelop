@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
-import type { ResourceId, ServerStatus, WsOutMessage } from "@arcanorum/shared";
+import type { Order, ResourceId, ServerStatus, WorldBase, WsOutMessage } from "@arcanorum/shared";
 import { WORLD_DELTA_MASK } from "@arcanorum/shared";
 import type { RouteAuth } from "../security/routeAuth";
 import {
@@ -20,7 +20,6 @@ import type {
 import type { createContentCatalogRuntime } from "./contentCatalogRuntime";
 import type { createCountryRuntimeHelpers } from "./countryRuntimeHelpers";
 import type { createMapRuntimeState } from "./mapRuntimeState";
-import type { createMilitaryRuntimeFacade } from "./militaryRuntimeFacade";
 import type { makeOfficialNews } from "./officialNewsRuntime";
 import type { createServerSessionStateRuntime } from "./serverSessionStateRuntime";
 import type { createTurnSessionRuntime } from "./turnSessionRuntime";
@@ -49,11 +48,12 @@ type ServerCoreRouteRegistrationRuntimeParams = {
   countryRuntimeHelpers: ReturnType<typeof createCountryRuntimeHelpers>;
   sessionStateRuntime: ReturnType<typeof createServerSessionStateRuntime>;
   uiNotificationRuntime: ReturnType<typeof createUiNotificationRuntime>;
-  militaryRuntimeFacade: ReturnType<typeof createMilitaryRuntimeFacade>;
   turnSessionRuntime: ReturnType<typeof createTurnSessionRuntime>;
   contentCatalogRuntime: ReturnType<typeof createContentCatalogRuntime>;
   getServerStatus: () => ServerStatus;
   getTurnId: () => number;
+  getWorldBase: () => WorldBase;
+  getOrdersByTurn: () => Map<number, Map<string, Order[]>>;
   getWorldStateVersion: () => number;
   getWsDeltaSizeMetrics: () => WsDeltaSizeMetrics;
   getWorldDeltaHistory: () => Parameters<typeof getWorldDeltaMemoryStatus>[0];
@@ -83,10 +83,11 @@ export function registerServerCoreRouteRuntime(params: ServerCoreRouteRegistrati
     countryRuntimeHelpers: params.countryRuntimeHelpers,
     uiNotificationQueue: params.sessionStateRuntime.uiNotificationQueue,
     uiNotificationRuntime: params.uiNotificationRuntime,
-    militaryRuntimeFacade: params.militaryRuntimeFacade,
     contentEntryKindSchema,
     getServerStatus: params.getServerStatus,
     getTurnId: params.getTurnId,
+    getWorldBase: params.getWorldBase,
+    getOrdersByTurn: params.getOrdersByTurn,
     getHexTileRoot: params.mapRuntime.getHexTileRoot,
     getRasterTileRoot: params.mapRuntime.getRasterTileRoot,
     getWsDeltaSizeMetrics: params.getWsDeltaSizeMetrics,

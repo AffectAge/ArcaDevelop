@@ -1,0 +1,24 @@
+{
+  "id": "religion_group:celestial_orders",
+  "nameKey": "religionGroup.celestialOrders.name",
+  "descriptionKey": "religionGroup.celestialOrders.description",
+  "color": "#a78bfa",
+  "iconAssetId": "asset:identity.celestial_orders",
+  "modifiers": [
+    {
+      "id": "astral_tables",
+      "label": "Astral tables",
+      "scope": "country",
+      "effects": [
+        { "stat": "science_gain", "mode": "add", "value": 1 },
+        { "stat": "technology_cost", "mode": "add", "value": -5 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.16,
+    "standardOfLiving": 8,
+    "ideologies": { "ideology:default": 1 },
+    "qualificationsByCategory": { "academic": 0.1 }
+  }
+}

@@ -2,7 +2,6 @@ import type {
   BuildingInstance,
   ExplanationRecord,
   ModifierStat,
-  PopulationProfessionState,
   RegionPopulation,
   WorldBase,
 } from "@arcanorum/shared";
@@ -67,8 +66,11 @@ import {
   calculateWageMultipliers,
   calculateWorkforceDemand,
   getPopulationTotal,
+  allocatePopulationJobs,
   resolveRegionPopulationNeedsTurn,
   type CultureNeed,
+  type PopulationAcceptanceContentEntry,
+  type PopulationAcceptanceContext,
   type PopulationDimensionKey,
   type PopulationDomainKeys,
 } from "../mechanics/populationMechanics";
@@ -116,7 +118,7 @@ export type ResolveBuildingsTurnRuntimeDeps = {
 
 export type ResolveBuildingsTurnRuntimeResult = {
   latestMarketOverview: MarketOverviewState;
-  nextProfessionsByPopIdByHex: Record<string, Record<string, Record<string, PopulationProfessionState>>>;
+  nextPopulationByRegion: Record<string, RegionPopulation>;
 };
 
 type RegionTurnContext = {
@@ -124,6 +126,7 @@ type RegionTurnContext = {
   ownerCountryId: string;
   primaryHexId: string;
   hexIds: string[];
+  buildingInstances: BuildingInstance[];
 };
 
 export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntimeDeps): ResolveBuildingsTurnRuntimeResult {
@@ -167,9 +170,12 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   const fallbackByDimension = resolvePopulationFallbackKeys(domains);
   const buildingById = new Map(gameSettings.content.buildings.map((entry) => [entry.id, entry] as const));
   const cityHexIds = buildCityHexIdSet(worldBase);
+  const hexIndexById = new Map(hexHexIndex.map((hex) => [hex.id, hex] as const));
+  const neighborHexesById = new Map<string, HexMapIndexEntry[]>();
   const goodById = new Map(gameSettings.content.goods.map((entry) => [entry.id, entry] as const));
   const professionById = new Map(gameSettings.content.professions.map((entry) => [entry.id, entry] as const));
-  const nextProfessionsByPopIdByHex: Record<string, Record<string, Record<string, PopulationProfessionState>>> = {};
+  const lawById = new Map(gameSettings.content.laws.map((entry) => [entry.id, entry] as const));
+  const nextPopulationByRegion: Record<string, RegionPopulation> = {};
   const smoothing = Number(
     Math.max(0, Math.min(1, gameSettings.economy.marketPriceSmoothing ?? defaultMarketPriceSmoothing)).toFixed(3),
   );
@@ -364,11 +370,8 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   // This lets buildings buy from the full market scope (province/country/market/global)
   // instead of only regions that were processed earlier in the same turn.
   for (const context of regionTurnContexts) {
-    const { regionId, ownerCountryId, primaryHexId } = context;
+    const { regionId, ownerCountryId, primaryHexId, buildingInstances } = context;
     const marketId = getMarketIdByCountry(ownerCountryId);
-    const buildingInstances = [...(worldBase.regionBuildingsByRegion[regionId] ?? [])].sort((a, b) =>
-      a.instanceId.localeCompare(b.instanceId),
-    );
     for (const instance of buildingInstances) {
       const building = buildingById.get(instance.buildingId);
       if (!building) continue;
@@ -397,13 +400,11 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
   }
 
   for (const context of regionTurnContexts) {
-    const { regionId, ownerCountryId, primaryHexId } = context;
+    const { regionId, ownerCountryId, primaryHexId, buildingInstances } = context;
     if (!alertsByCountry[ownerCountryId]) alertsByCountry[ownerCountryId] = [];
 
     const population = normalizeRegionPopulation(worldBase.regionPopulationByRegion[regionId], regionId, domains);
     const marketId = getMarketIdByCountry(ownerCountryId);
-    const buildingInstances = [...(worldBase.regionBuildingsByRegion[regionId] ?? [])]
-      .sort((a, b) => a.instanceId.localeCompare(b.instanceId));
     const regionResourceDeposits = [...(worldBase.regionResourceDepositsByRegion[regionId] ?? [])].map((deposit) => ({
       ...deposit,
     }));
@@ -446,6 +447,18 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
 
     const getEffectivePopulationGoodPrice = (goodId: string): number =>
       Math.max(0.001, Math.min(getCountryGoodPrice(ownerCountryId, goodId), getGlobalGoodPrice(goodId)));
+    const activeLaws = getActivePopulationLaws(worldBase.parliamentByCountry[ownerCountryId]?.activeLawByGroupId, lawById);
+    const acceptanceContext = buildPopulationAcceptanceContext({
+      countryId: ownerCountryId,
+      baseAcceptance: worldBase.countryPopulationAcceptanceByCountryId?.[ownerCountryId],
+      activeLaws,
+    });
+    const getNeedsForPop = (pop: RegionPopulation["pops"][number]): CultureNeed[] => sortCultureNeedsByPriority([
+      ...getActiveCultureNeeds(pop.professionId, pop.standardOfLiving),
+      ...getActiveCultureNeeds(pop.cultureId, pop.standardOfLiving),
+      ...getActiveCultureNeeds(pop.raceId, pop.standardOfLiving),
+      ...getActiveCultureNeeds(pop.religionId, pop.standardOfLiving),
+    ]);
 
     const purchasePopulationGood = (
       goodId: string,
@@ -486,7 +499,8 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
         building,
         instance,
         regionBuildingsByRegion: worldBase.regionBuildingsByRegion,
-        hexHexIndex,
+        hexIndexById,
+        neighborHexesById,
         cityHexIds,
       }));
       const warehouse = instance.warehouseByGoodId ?? {};
@@ -723,18 +737,28 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     const activeBuildingInstances = finalizedRegionBuildings.activeBuildingInstances;
 
     if (populationTotal > 0) {
-      const provinceNeeds = resolveRegionPopulationNeedsTurn({
+      const hiredPopulation = allocatePopulationJobs({
         population,
-        employedByProfession,
-        professionIds: domains.professionPct,
+        demandByProfession: employedByProfession,
         fallbackProfessionId: fallbackByDimension.professionPct,
+        professionsById: professionById,
+        acceptanceContext,
+        activeLaws,
+      }).nextPopulation;
+      const provinceNeeds = resolveRegionPopulationNeedsTurn({
+        population: hiredPopulation,
+        demandByProfession: employedByProfession,
+        fallbackProfessionId: fallbackByDimension.professionPct,
+        professionsById: professionById,
+        acceptanceContext,
+        activeLaws,
         wagesByProfession,
-        getNeedsForPop: (pop, state) => sortCultureNeedsByPriority(getActiveCultureNeeds(pop.cultureId, state.standardOfLiving)),
+        getNeedsForPop,
         getGoodPrice: getEffectivePopulationGoodPrice,
         getAvailableGoodAmount,
         purchaseGood: purchasePopulationGood,
       });
-      nextProfessionsByPopIdByHex[regionId] = provinceNeeds.nextProfessionsByPopId;
+      nextPopulationByRegion[regionId] = provinceNeeds.nextPopulation;
       for (const [goodId, amount] of Object.entries(provinceNeeds.demandRequestedByGood)) {
         addCountryGood(demandRequestedByCountry, marketId, goodId, amount);
         addGlobalGood(demandRequestedGlobal, goodId, amount);
@@ -816,7 +840,7 @@ export function resolveBuildingsTurnForRuntime(deps: ResolveBuildingsTurnRuntime
     getTransportCorridorCapacity: (corridor) => getTransportCorridorCapacity(corridor),
     pushCountryAlert,
   });
-  return { latestMarketOverview, nextProfessionsByPopIdByHex };
+  return { latestMarketOverview, nextPopulationByRegion };
 }
 
 function buildRegionTurnContexts(params: {
@@ -852,24 +876,65 @@ function buildRegionTurnContexts(params: {
         ownerCountryId,
         primaryHexId: hexIds[0] ?? regionId,
         hexIds,
+        buildingInstances: [...(params.worldBase.regionBuildingsByRegion[regionId] ?? [])]
+          .sort((left, right) => left.instanceId.localeCompare(right.instanceId)),
       }];
     });
+}
+
+function getActivePopulationLaws(
+  activeLawByGroupId: Record<string, string> | undefined,
+  lawById: ReadonlyMap<string, PopulationAcceptanceContentEntry>,
+): PopulationAcceptanceContentEntry[] {
+  return Object.values(activeLawByGroupId ?? {})
+    .map((lawId) => lawById.get(lawId))
+    .filter((law): law is PopulationAcceptanceContentEntry => Boolean(law));
+}
+
+function buildPopulationAcceptanceContext(params: {
+  countryId: string;
+  baseAcceptance?: {
+    acceptedCultureIds?: string[];
+    acceptedReligionIds?: string[];
+    acceptedRaceIds?: string[];
+  };
+  activeLaws: PopulationAcceptanceContentEntry[];
+}): PopulationAcceptanceContext {
+  const acceptedCultureIds = new Set<string>(params.baseAcceptance?.acceptedCultureIds ?? []);
+  const acceptedReligionIds = new Set<string>(params.baseAcceptance?.acceptedReligionIds ?? []);
+  const acceptedRaceIds = new Set<string>(params.baseAcceptance?.acceptedRaceIds ?? []);
+  for (const law of params.activeLaws) {
+    if (law.acceptanceMode === "replace") {
+      acceptedCultureIds.clear();
+      acceptedReligionIds.clear();
+      acceptedRaceIds.clear();
+    }
+    for (const id of law.acceptedCultureIds ?? []) acceptedCultureIds.add(id);
+    for (const id of law.acceptedReligionIds ?? []) acceptedReligionIds.add(id);
+    for (const id of law.acceptedRaceIds ?? []) acceptedRaceIds.add(id);
+  }
+  return {
+    countryId: params.countryId,
+    acceptedCultureIds,
+    acceptedReligionIds,
+    acceptedRaceIds,
+    activeLawIds: new Set(params.activeLaws.map((law) => law.id)),
+  };
 }
 
 function resolveAdjacencyThroughputFactor(params: {
   building: BuildingContentEntry;
   instance: BuildingInstance;
   regionBuildingsByRegion: WorldBase["regionBuildingsByRegion"];
-  hexHexIndex: HexMapIndexEntry[];
+  hexIndexById: ReadonlyMap<string, HexMapIndexEntry>;
+  neighborHexesById: Map<string, HexMapIndexEntry[]>;
   cityHexIds?: ReadonlySet<string>;
 }): number {
   const effects = params.building.adjacencyEffects ?? [];
   const targetHexId = params.instance.targetHexId;
   if (!targetHexId || effects.length === 0) return 1;
-  const hexById = new Map(params.hexHexIndex.map((hex) => [hex.id, hex] as const));
-  const target = hexById.get(targetHexId);
-  if (!target) return 1;
-  const neighborHexes = target.neighbors.map((id) => hexById.get(id)).filter((hex): hex is HexMapIndexEntry => Boolean(hex));
+  const neighborHexes = getCachedNeighborHexes(targetHexId, params.hexIndexById, params.neighborHexesById);
+  if (neighborHexes.length === 0) return 1;
   let factor = 1;
   for (const effect of effects) {
     const modifier = effect.modifier;
@@ -897,4 +962,19 @@ function resolveAdjacencyThroughputFactor(params: {
     }
   }
   return Math.max(0, Number(factor.toFixed(3)));
+}
+
+function getCachedNeighborHexes(
+  targetHexId: string,
+  hexIndexById: ReadonlyMap<string, HexMapIndexEntry>,
+  neighborHexesById: Map<string, HexMapIndexEntry[]>,
+): HexMapIndexEntry[] {
+  const cached = neighborHexesById.get(targetHexId);
+  if (cached) return cached;
+  const target = hexIndexById.get(targetHexId);
+  const neighborHexes = target
+    ? target.neighbors.map((id) => hexIndexById.get(id)).filter((hex): hex is HexMapIndexEntry => Boolean(hex))
+    : [];
+  neighborHexesById.set(targetHexId, neighborHexes);
+  return neighborHexes;
 }

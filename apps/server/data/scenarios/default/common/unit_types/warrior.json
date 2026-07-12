@@ -1,0 +1,30 @@
+{
+  "id": "unit:warrior",
+  "domain": "land",
+  "class": "melee",
+  "nameKey": "unit.warrior.name",
+  "descriptionKey": "unit.warrior.description",
+  "stats": {
+    "maxHp": 100,
+    "attack": 20,
+    "defense": 18,
+    "movement": 2,
+    "vision": 2
+  },
+  "productionCost": {
+    "ducats": 40,
+    "construction": 50
+  },
+  "visual": {
+    "atlasAssetId": "asset:unit.warrior",
+    "atlasPath": "assets/units/warrior.png",
+    "frameWidth": 64,
+    "frameHeight": 64,
+    "states": {
+      "idle": { "frame": 0 },
+      "move": { "frame": 1 },
+      "attack": { "frame": 2 },
+      "damaged": { "frame": 3 }
+    }
+  }
+}

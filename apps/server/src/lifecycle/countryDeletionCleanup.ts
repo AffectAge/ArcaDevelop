@@ -49,24 +49,8 @@ export function cleanupWorldBaseAfterCountryRemovalFromState(params: CountryWorl
   delete worldBase.countryEventFlagsByCountryId[countryId];
   delete worldBase.journalEntriesByCountryId[countryId];
   delete worldBase.countryModifiersByCountryId[countryId];
-  delete worldBase.divisionTemplatesByCountry[countryId];
-  delete worldBase.militaryFormationQueueByCountry[countryId];
-
-  for (const [divisionId, division] of Object.entries(worldBase.divisionsById)) {
-    if (division.countryId === countryId) {
-      delete worldBase.divisionsById[divisionId];
-    }
-  }
-  for (const [fleetId, fleet] of Object.entries(worldBase.fleetsById)) {
-    if (fleet.countryId === countryId) {
-      delete worldBase.fleetsById[fleetId];
-    }
-  }
-  for (const [airWingId, airWing] of Object.entries(worldBase.airWingsById)) {
-    if (airWing.countryId === countryId) {
-      delete worldBase.airWingsById[airWingId];
-    }
-  }
+  delete worldBase.countryPopulationAcceptanceByCountryId?.[countryId];
+  delete worldBase.countryIdentityByCountryId?.[countryId];
   worldBase.diplomacyProposals = worldBase.diplomacyProposals.filter(
     (proposal) => proposal.fromCountryId !== countryId && proposal.toCountryId !== countryId,
   );

@@ -1,14 +1,8 @@
 import { defaultCivilopediaCategories, defaultCivilopediaEntries } from "./civilopediaNormalizers";
 import {
-  DEFAULT_AIRCRAFT_TYPES,
-  DEFAULT_EQUIPMENT_CLASSES,
-  DEFAULT_EQUIPMENT_FRAMES,
-  DEFAULT_EQUIPMENT_MODULES,
-  DEFAULT_SHIP_TYPES,
-  ensureDefaultBattalions,
+  DEFAULT_UNIT_TYPES,
   ensureDefaultCulture,
   ensureDefaultIdeology,
-  ensureDefaultMilitaryContent,
   ensureDefaultRace,
   ensureDefaultReligion,
   ensureDefaultUnemployedProfession,
@@ -32,6 +26,8 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
     content: {
       assets: [],
       races: ensureDefaultRace([]),
+      cultureGroups: [],
+      religionGroups: [],
       resourceCategories: [],
       hexTypes: [],
       hexClimates: [],
@@ -56,12 +52,9 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
       decisions: [],
       events: [],
       journalEntries: [],
-      battalions: ensureDefaultBattalions([]),
-      shipTypes: ensureDefaultMilitaryContent([], DEFAULT_SHIP_TYPES),
-      aircraftTypes: ensureDefaultMilitaryContent([], DEFAULT_AIRCRAFT_TYPES),
-      equipmentClasses: DEFAULT_EQUIPMENT_CLASSES,
-      equipmentFrames: DEFAULT_EQUIPMENT_FRAMES,
-      equipmentModules: DEFAULT_EQUIPMENT_MODULES,
+      unitSkills: [],
+      unitSkillTrees: [],
+      unitTypes: DEFAULT_UNIT_TYPES,
     },
     ai: {
       enabled: true,
@@ -121,7 +114,7 @@ export function buildDefaultGameSettings(params: BuildDefaultGameSettingsParams)
     },
     military: {
       militaryFormationSpeed: 10,
-      landDivisionStackLimitPerHex: 4,
+      landUnitStackLimitPerHex: 4,
     },
     registration: {
       requireAdminApproval: false,

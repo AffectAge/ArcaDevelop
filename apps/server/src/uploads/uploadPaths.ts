@@ -1,6 +1,11 @@
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  COUNTRY_CREST_UPLOAD_RULE,
+  COUNTRY_FLAG_UPLOAD_RULE,
+  COUNTRY_IDENTITY_LOGO_UPLOAD_RULE,
+} from "@arcanorum/shared";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -36,6 +41,7 @@ export function resolveScenarioUploadPublicPrefix(scenarioId = activeUploadScena
 
 const contentUploadKinds = [
   "cultures",
+  "cultureGroups",
   "resourceCategories",
   "hexTypes",
   "hexClimates",
@@ -43,6 +49,7 @@ const contentUploadKinds = [
   "hexContinents",
   "hexStrategicRegions",
   "religions",
+  "religionGroups",
   "professions",
   "ideologies",
   "interestGroups",
@@ -58,22 +65,21 @@ const contentUploadKinds = [
   "technologies",
   "decisions",
   "events",
-  "battalions",
-  "shipTypes",
-  "aircraftTypes",
 ] as const;
 
-export const FLAG_IMAGE_RULE = { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 } as const;
-export const CREST_IMAGE_RULE = { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 } as const;
+export const FLAG_IMAGE_RULE = COUNTRY_FLAG_UPLOAD_RULE;
+export const CREST_IMAGE_RULE = COUNTRY_CREST_UPLOAD_RULE;
+export const IDENTITY_LOGO_IMAGE_RULE = COUNTRY_IDENTITY_LOGO_UPLOAD_RULE;
 
 export function ensureUploadDirectories(): void {
   const dirs = [
     resolveUploadDir("flags"),
     resolveUploadDir("crests"),
     resolveUploadDir("markets"),
+    resolveUploadDir("culture-logos"),
+    resolveUploadDir("religion-logos"),
     resolveUploadDir("ui-backgrounds"),
     resolveUploadDir("civilopedia"),
-    resolveUploadDir("division-icons"),
     ...contentUploadKinds.map((kind) => resolveContentUploadDir(kind)),
   ];
   for (const dir of dirs) {
@@ -88,15 +94,15 @@ export function resolveContentUploadDir(kind?: string): string {
 export function resolveContentUploadUrlSegment(kind?: string): string {
   if (!kind) return "cultures";
   if (kind === "resourceCategories") return "resource-categories";
+  if (kind === "cultureGroups") return "culture-groups";
   if (kind === "hexTypes") return "province-types";
   if (kind === "hexClimates") return "province-climates";
   if (kind === "hexLandscapes") return "province-landscapes";
   if (kind === "hexContinents") return "province-continents";
   if (kind === "hexStrategicRegions") return "province-strategic-regions";
   if (kind === "interestGroups") return "interest-groups";
+  if (kind === "religionGroups") return "religion-groups";
   if (kind === "lawGroups") return "law-groups";
-  if (kind === "shipTypes") return "ship-types";
-  if (kind === "aircraftTypes") return "aircraft-types";
   return kind;
 }
 

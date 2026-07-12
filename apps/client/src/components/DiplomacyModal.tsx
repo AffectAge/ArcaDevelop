@@ -15,9 +15,9 @@ import {
 } from "../lib/api";
 import { CustomSelect } from "./CustomSelect";
 import { Tooltip } from "./Tooltip";
-import { AppButton } from "./ui/AppButton";
-import { AppInput, AppTextarea } from "./ui/AppForm";
-import { AppModal } from "./ui/AppModal";
+import { AppButton } from "./templates/AppButton";
+import { AppInput, AppTextarea } from "./templates/AppForm";
+import { AppModal } from "./templates/AppModal";
 import { tUi, type UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 

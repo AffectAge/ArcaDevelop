@@ -23,10 +23,10 @@ import {
   uploadCivilopediaImage,
   uploadCivilopediaInlineImage,
 } from "../lib/api";
-import { AppButton } from "./ui/AppButton";
-import { AppInput } from "./ui/AppForm";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppEmptyState, AppSection, AppSectionHeader } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppInput } from "./templates/AppForm";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppEmptyState, AppSection, AppSectionHeader } from "./templates/AppSurface";
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 

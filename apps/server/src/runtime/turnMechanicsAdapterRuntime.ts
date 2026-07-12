@@ -1,13 +1,9 @@
-import type { HexId, WorldBase } from "@arcanorum/shared";
+import type { WorldBase } from "@arcanorum/shared";
 import type { HexMapIndexEntry } from "../map/hexIndex";
 import {
   resolveResourceExplorationTurn as resolveResourceExplorationTurnInState,
   type ResourceExplorationConfig,
 } from "../mechanics/resourceExplorationMechanics";
-import {
-  isContiguousArmyRoute as isContiguousArmyRouteInState,
-  normalizeArmyMoveRoute as normalizeArmyMoveRouteFromPayload,
-} from "../mechanics/militaryMechanics";
 import { resolveTransportCorridorConstructionTurn as resolveTransportCorridorConstructionTurnInState } from "../mechanics/transportCorridorMechanics";
 import type { GameSettings } from "./gameSettingsTypes";
 import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
@@ -26,12 +22,6 @@ type TurnMechanicsAdapterRuntimeParams = {
 export function createTurnMechanicsAdapterRuntime(params: TurnMechanicsAdapterRuntimeParams): {
   resolveResourceExplorationTurn: () => void;
   resolveTransportCorridorConstructionTurn: () => void;
-  normalizeArmyMoveRoute: (
-    payload: Record<string, unknown> | undefined,
-    fallbackHexId: HexId,
-    currentHexId: HexId,
-  ) => HexId[];
-  isContiguousArmyRoute: (fromHexId: HexId, route: HexId[]) => boolean;
 } {
   function getResourceExplorationConfig(): ResourceExplorationConfig {
     const economy = params.getGameSettings().economy;
@@ -70,26 +60,8 @@ export function createTurnMechanicsAdapterRuntime(params: TurnMechanicsAdapterRu
     });
   }
 
-  function normalizeArmyMoveRoute(
-    payload: Record<string, unknown> | undefined,
-    fallbackHexId: HexId,
-    currentHexId: HexId,
-  ): HexId[] {
-    return normalizeArmyMoveRouteFromPayload(payload, fallbackHexId, currentHexId);
-  }
-
-  function isContiguousArmyRoute(fromHexId: HexId, route: HexId[]): boolean {
-    return isContiguousArmyRouteInState({
-      fromHexId,
-      route,
-      areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
-    });
-  }
-
   return {
     resolveResourceExplorationTurn,
     resolveTransportCorridorConstructionTurn,
-    normalizeArmyMoveRoute,
-    isContiguousArmyRoute,
   };
 }

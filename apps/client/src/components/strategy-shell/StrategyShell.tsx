@@ -18,9 +18,7 @@ import {
   LogOut,
   Menu,
   Network,
-  Package,
   RadioTower,
-  PlusCircle,
   ScrollText,
   Shield,
   Ship,
@@ -36,16 +34,15 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { DivisionTemplate, HexId, MilitaryBranch, MilitaryFormationQueueItem, ResourceFlow } from "@arcanorum/shared";
+import type { HexId, MapUnit, ResourceFlow, TurnActionItem, UnitTrainingQueueItem, UnitTypeDefinition } from "@arcanorum/shared";
 import { BASE_RESOURCE_ICON_URLS } from "../../assets/baseResourceIcons";
 import type { UiTextKey } from "../../i18n/uiText";
 import { useUiText } from "../../i18n/useUiText";
 import { Tooltip, type TooltipStructuredContent } from "../Tooltip";
 import { BuildingAtlasIcon } from "../BuildingAtlasIcon";
-import type { ArmyLogisticsRow } from "./armyLogistics";
 import type { MarketTransportCorridor, TransportMode } from "../../lib/api";
 
-export type StrategyMode = "overview" | "construction" | "colonization" | "population" | "market" | "diplomacy" | "army" | "governance";
+export type StrategyMode = "overview" | "construction" | "colonization" | "population" | "market" | "diplomacy" | "army" | "units" | "governance";
 
 type Resources = {
   culture: number;
@@ -76,22 +73,23 @@ type ActionItem = {
   tone?: "primary" | "danger";
 };
 
-type WorkspaceTabKey = "actions" | "summary" | "hex" | "records" | "trade" | "buildings" | "infrastructure" | "colonizers" | "warehouses" | "formation";
+type WorkspaceTabKey = "actions" | "summary" | "hex" | "records" | "trade" | "buildings" | "infrastructure" | "colonizers" | "unitCatalog" | "trainingQueue" | "readyUnits";
+const STRATEGY_WORKSPACE_TAB_STORAGE_KEY = "arcanorum.strategyShell.workspaceTabs.v1";
 
 export type StrategyShellSelectedHexDetails = {
   id: HexId;
   name: string;
   regionId: string;
-  terrain: string;
-  feature: string;
+  surfaceSummary: string;
   siteFeatures: string[];
   resourceDeposit: string | null;
   water: string;
   owner: string;
   controller: string;
   movementCost: string;
-  divisionStack: string;
-  divisionStackTooltip?: TooltipStructuredContent;
+  tagGroups: Array<{ label: string; value: string }>;
+  unitStack: string;
+  unitStackTooltip?: TooltipStructuredContent;
 };
 
 type BuildingListEntry = {
@@ -161,6 +159,11 @@ type MarketTradePartner = {
   value: number;
 };
 
+type UnitTrainingCatalogItem = UnitTypeDefinition & {
+  displayName: string;
+  description: string;
+};
+
 export type MarketTradeOverviewRow = {
   goodId: string;
   goodName: string;
@@ -219,11 +222,12 @@ type Props = {
   sectorEntries?: BuildingCategoryEntry[];
   diplomacyPreview?: GenericPreviewItem[];
   armyPreview?: GenericPreviewItem[];
-  armyLogisticsRows?: ArmyLogisticsRow[];
-  militaryFormationTemplates?: DivisionTemplate[];
-  militaryFormationQueue?: MilitaryFormationQueueItem[];
-  activeMilitaryFormationTemplateId?: string | null;
-  cancelingMilitaryFormationQueueId?: string | null;
+  unitPreview?: GenericPreviewItem[];
+  unitTypes?: UnitTypeDefinition[];
+  unitTrainingQueue?: UnitTrainingQueueItem[];
+  readyUnits?: MapUnit[];
+  unitTrainingPlacementActive?: boolean;
+  cancelingUnitTrainingQueueId?: string | null;
   governancePreview?: GenericPreviewItem[];
   storyPreview?: Array<{
     id: string;
@@ -247,6 +251,11 @@ type Props = {
   isAdmin?: boolean;
   onOpenTurnStatus: () => void;
   onNextTurn: () => void;
+  turnActions?: TurnActionItem[];
+  onTurnActionFocus?: (item: TurnActionItem) => void;
+  onForceNextTurn?: () => void;
+  onSkipTurnActionUnit?: (item: TurnActionItem) => void;
+  onSleepTurnActionUnit?: (item: TurnActionItem) => void;
   onLogout: () => void;
   onOpenNotifications: () => void;
   onAdminForceResolve?: () => void;
@@ -266,21 +275,13 @@ type Props = {
   onFocusConstructionHex?: (hexId: HexId) => void;
   onFocusHex?: (hexId: HexId) => void;
   onStartColonizerPlacement?: () => void;
-  onStartMilitaryFormationPlacement?: (
-    template: DivisionTemplate,
-    options: { quantity: number; priority: "high" | "normal" | "low"; repeat: boolean },
-  ) => void;
-  onCancelMilitaryFormationQueue?: (queueId: string) => void;
+  onStartUnitTrainingPlacement?: (unitTypeId: string) => void;
+  onCancelUnitTraining?: (queueId: string) => void;
+  onDisbandUnit?: (unitId: string) => void;
   onOpenPopulation: () => void;
   onOpenMarket: () => void;
   onOpenGlobalMarket: () => void;
   onOpenDiplomacy: () => void;
-  onOpenDivisionDesigner: () => void;
-  onOpenAirWingDesigner: () => void;
-  onOpenFleetDesigner: () => void;
-  onOpenLandEquipmentDesigner: () => void;
-  onOpenAirEquipmentDesigner: () => void;
-  onOpenNavalEquipmentDesigner: () => void;
   onOpenPolitics: () => void;
   onOpenTechnology: () => void;
   onOpenModifiers: () => void;
@@ -297,6 +298,7 @@ const modeDescriptors: Array<{ key: StrategyMode; labelKey: UiTextKey; descripti
   { key: "market", labelKey: "shell.mode.market", descriptionKey: "shell.mode.marketDescription", icon: HandCoins },
   { key: "diplomacy", labelKey: "shell.mode.diplomacy", descriptionKey: "shell.mode.diplomacyDescription", icon: Handshake },
   { key: "army", labelKey: "shell.mode.army", descriptionKey: "shell.mode.armyDescription", icon: Shield },
+  { key: "units", labelKey: "shell.mode.units", descriptionKey: "shell.mode.unitsDescription", icon: Shield },
   { key: "governance", labelKey: "shell.mode.governance", descriptionKey: "shell.mode.governanceDescription", icon: Landmark },
 ];
 
@@ -319,8 +321,9 @@ const workspaceTabDescriptors: Array<{ key: WorkspaceTabKey; labelKey: UiTextKey
   { key: "buildings", labelKey: "shell.workspaceTab.buildings", icon: Building2 },
   { key: "infrastructure", labelKey: "shell.workspaceTab.infrastructure", icon: Network },
   { key: "colonizers", labelKey: "shell.workspaceTab.colonizers", icon: Flag },
-  { key: "formation", labelKey: "shell.workspaceTab.formation", icon: PlusCircle },
-  { key: "warehouses", labelKey: "shell.workspaceTab.warehouses", icon: Package },
+  { key: "unitCatalog", labelKey: "shell.workspaceTab.unitCatalog", icon: Shield },
+  { key: "trainingQueue", labelKey: "shell.workspaceTab.trainingQueue", icon: ListChecks },
+  { key: "readyUnits", labelKey: "shell.workspaceTab.readyUnits", icon: Crosshair },
 ];
 
 type ResourceLedgerChipSummary = {
@@ -353,16 +356,48 @@ function getWorkspaceTabLabelKey(tab: WorkspaceTabKey, mode: StrategyMode): UiTe
   return workspaceTabDescriptors.find((item) => item.key === tab)?.labelKey ?? "shell.workspaceTab.actions";
 }
 
+function isWorkspaceTabKey(value: string): value is WorkspaceTabKey {
+  return workspaceTabDescriptors.some((item) => item.key === value);
+}
+
+function getStoredWorkspaceTabs(): Record<string, WorkspaceTabKey> {
+  if (typeof window === "undefined") return {};
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(STRATEGY_WORKSPACE_TAB_STORAGE_KEY) ?? "{}") as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.entries(parsed).filter((entry): entry is [string, WorkspaceTabKey] => typeof entry[1] === "string" && isWorkspaceTabKey(entry[1])),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function getWorkspaceTabStorageKey(countryId: string, mode: StrategyMode): string {
+  return `${countryId}:${mode}`;
+}
+
 export function StrategyShell(props: Props) {
   const { t } = useUiText();
-  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTabKey>("actions");
+  const workspaceCountryId = props.countryId ?? "anonymous";
+  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTabKey>(() => getStoredWorkspaceTabs()[getWorkspaceTabStorageKey(workspaceCountryId, props.activeMode)] ?? "actions");
   const activeMode = modeDescriptors.find((mode) => mode.key === props.activeMode) ?? modeDescriptors[0];
+  const blockingTurnActions = (props.turnActions ?? []).filter((item) => item.severity === "blocking");
+  const hasBlockingTurnActions = blockingTurnActions.length > 0;
+  const nextTurnLabel = hasBlockingTurnActions ? t("turnActions.needsOrders", { count: blockingTurnActions.length }) : t("shell.endTurn");
+  const handleNextTurnClick = () => {
+    if (hasBlockingTurnActions) {
+      props.onTurnActionFocus?.(blockingTurnActions[0]!);
+      return;
+    }
+    props.onNextTurn();
+  };
   const activeActions = getModeActions(
     props.activeMode,
     props,
     () => setWorkspaceTab("buildings"),
     () => setWorkspaceTab("records"),
     () => setWorkspaceTab("colonizers"),
+    () => setWorkspaceTab("unitCatalog"),
   );
   const availableWorkspaceTabs = workspaceTabDescriptors.filter((tab) => {
     if (tab.key === "summary") return props.activeMode === "overview";
@@ -371,8 +406,9 @@ export function StrategyShell(props: Props) {
     if (tab.key === "buildings") return props.activeMode === "construction";
     if (tab.key === "infrastructure") return props.activeMode === "construction";
     if (tab.key === "colonizers") return props.activeMode === "colonization";
-    if (tab.key === "formation") return props.activeMode === "army";
-    if (tab.key === "warehouses") return props.activeMode === "army";
+    if (tab.key === "unitCatalog") return props.activeMode === "units";
+    if (tab.key === "trainingQueue") return props.activeMode === "units";
+    if (tab.key === "readyUnits") return props.activeMode === "units";
     return true;
   });
   const activeWorkspaceTab = availableWorkspaceTabs.find((tab) => tab.key === workspaceTab) ?? availableWorkspaceTabs[0] ?? workspaceTabDescriptors[0];
@@ -383,9 +419,29 @@ export function StrategyShell(props: Props) {
 
   useEffect(() => {
     if (!availableWorkspaceTabs.some((tab) => tab.key === workspaceTab)) {
+      const stored = getStoredWorkspaceTabs()[getWorkspaceTabStorageKey(workspaceCountryId, props.activeMode)];
+      setWorkspaceTab(stored && availableWorkspaceTabs.some((tab) => tab.key === stored) ? stored : "actions");
+    }
+  }, [availableWorkspaceTabs, props.activeMode, workspaceCountryId, workspaceTab]);
+
+  useEffect(() => {
+    const stored = getStoredWorkspaceTabs()[getWorkspaceTabStorageKey(workspaceCountryId, props.activeMode)];
+    if (stored && availableWorkspaceTabs.some((tab) => tab.key === stored)) {
+      setWorkspaceTab(stored);
+    } else if (!availableWorkspaceTabs.some((tab) => tab.key === workspaceTab)) {
       setWorkspaceTab("actions");
     }
-  }, [availableWorkspaceTabs, workspaceTab]);
+  }, [props.activeMode, workspaceCountryId]);
+
+  useEffect(() => {
+    try {
+      const tabs = getStoredWorkspaceTabs();
+      tabs[getWorkspaceTabStorageKey(workspaceCountryId, props.activeMode)] = workspaceTab;
+      window.localStorage.setItem(STRATEGY_WORKSPACE_TAB_STORAGE_KEY, JSON.stringify(tabs));
+    } catch {
+      // Local UI persistence is optional.
+    }
+  }, [props.activeMode, workspaceCountryId, workspaceTab]);
 
   useEffect(() => {
     if (!props.openHexWorkspaceRequestId || !props.selectedHexDetails) return;
@@ -449,12 +505,19 @@ export function StrategyShell(props: Props) {
             <TopActionButton label={t("shell.clientSettings")} icon={Menu} onClick={props.onOpenClientSettings} />
           ) : null}
           <TopActionButton label={t("shell.turnStatus")} icon={ScrollText} onClick={props.onOpenTurnStatus} />
-          <Tooltip content={t("shell.endTurn")} placement="bottom">
-            <button type="button" className="arc-strategy-primary" onClick={props.onNextTurn} aria-label={t("shell.endTurn")}>
-              <SkipForward size={15} />
-              <span>{t("shell.endTurn")}</span>
-            </button>
-          </Tooltip>
+          <div className="relative">
+            <Tooltip content={hasBlockingTurnActions ? t("turnActions.nextTurnBlockedTooltip") : t("shell.endTurn")} placement="bottom">
+              <button
+                type="button"
+                className="arc-strategy-primary"
+                onClick={handleNextTurnClick}
+                aria-label={nextTurnLabel}
+              >
+                <SkipForward size={15} />
+                <span>{nextTurnLabel}</span>
+              </button>
+            </Tooltip>
+          </div>
           <TopActionButton label={t("shell.logout")} icon={LogOut} onClick={props.onLogout} tone="danger" />
         </div>
       </div>
@@ -484,9 +547,9 @@ export function StrategyShell(props: Props) {
         {props.workspaceOpen ? (
           <motion.div
             key={props.activeMode}
-            initial={{ opacity: 0, x: 24 }}
+            initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 28 }}
+            exit={{ opacity: 0, x: -28 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             className="arc-strategy-workspace-frame pointer-events-auto"
           >
@@ -617,25 +680,39 @@ export function StrategyShell(props: Props) {
                   </div>
                 ) : null}
 
-                {workspaceTab === "warehouses" && props.activeMode === "army" ? (
+                {workspaceTab === "unitCatalog" && props.activeMode === "units" ? (
                   <div className="arc-strategy-tab-panel">
-                    <ArmyWarehouseList rows={props.armyLogisticsRows ?? []} />
+                    <UnitCatalogPanel
+                      unitTypes={props.unitTypes ?? []}
+                      placementActive={Boolean(props.unitTrainingPlacementActive)}
+                      onStartTraining={props.onStartUnitTrainingPlacement}
+                    />
                   </div>
                 ) : null}
 
-                {workspaceTab === "formation" && props.activeMode === "army" ? (
+                {workspaceTab === "trainingQueue" && props.activeMode === "units" ? (
                   <div className="arc-strategy-tab-panel">
-                    <MilitaryFormationPanel
-                      templates={props.militaryFormationTemplates ?? []}
-                      queue={props.militaryFormationQueue ?? []}
-                      activeTemplateId={props.activeMilitaryFormationTemplateId ?? null}
-                      cancelingQueueId={props.cancelingMilitaryFormationQueueId ?? null}
-                      onStartPlacement={props.onStartMilitaryFormationPlacement}
-                      onCancelQueue={props.onCancelMilitaryFormationQueue}
+                    <UnitTrainingQueuePanel
+                      unitTypes={props.unitTypes ?? []}
+                      queue={props.unitTrainingQueue ?? []}
+                      cancelingQueueId={props.cancelingUnitTrainingQueueId ?? null}
+                      onCancel={props.onCancelUnitTraining}
                       onFocusHex={props.onFocusHex}
                     />
                   </div>
                 ) : null}
+
+                {workspaceTab === "readyUnits" && props.activeMode === "units" ? (
+                  <div className="arc-strategy-tab-panel">
+                    <ReadyUnitsPanel
+                      unitTypes={props.unitTypes ?? []}
+                      units={props.readyUnits ?? []}
+                      onFocusHex={props.onFocusHex}
+                      onDisband={props.onDisbandUnit}
+                    />
+                  </div>
+                ) : null}
+
               </div>
             </aside>
           </motion.div>
@@ -718,7 +795,7 @@ function ModePreview({ mode, props }: { mode: StrategyMode; props: Props }) {
       <GenericPreview
         title={t("shell.preview.armyLedger")}
         openLabel={t("shell.preview.open")}
-        onOpen={props.onOpenDivisionDesigner}
+        onOpen={undefined}
         emptyText={t("shell.preview.noArmy")}
         rows={props.armyPreview ?? []}
       />
@@ -741,7 +818,7 @@ function ModePreview({ mode, props }: { mode: StrategyMode; props: Props }) {
 function GenericPreview(props: {
   title: string;
   openLabel: string;
-  onOpen: () => void;
+  onOpen?: () => void;
   emptyText: string;
   rows: GenericPreviewItem[];
 }) {
@@ -749,7 +826,7 @@ function GenericPreview(props: {
     <section className="arc-strategy-preview">
       <div className="arc-strategy-preview-header">
         <span>{props.title}</span>
-        <button type="button" onClick={props.onOpen}>{props.openLabel}</button>
+        {props.onOpen ? <button type="button" onClick={props.onOpen}>{props.openLabel}</button> : null}
       </div>
       <div className="mt-2 grid gap-2">
         {props.rows.length > 0 ? (
@@ -915,15 +992,17 @@ function HexDetailsPanel({ details }: { details: StrategyShellSelectedHexDetails
       </div>
       <div className="mt-3 grid gap-2">
         <HexDetailsRow label={t("hexMap.region")} value={details.regionId} />
-        <HexDetailsRow label={t("hexMap.terrain")} value={details.terrain} />
-        <HexDetailsRow label={t("hexMap.feature")} value={details.feature} />
+        <HexDetailsRow label={t("hexMap.surfaceSummary")} value={details.surfaceSummary} />
         <HexDetailsRow label={t("hexMap.siteFeature")} value={details.siteFeatures.length > 0 ? details.siteFeatures.join(", ") : t("map.common.none")} />
         <HexDetailsRow label={t("hexMap.resourceDeposit")} value={details.resourceDeposit ?? t("map.common.none")} />
         <HexDetailsRow label={t("hexMap.water")} value={details.water} />
         <HexDetailsRow label={t("hexMap.owner")} value={details.owner} />
         <HexDetailsRow label={t("shell.hex.controller")} value={details.controller} />
         <HexDetailsRow label={t("hexMap.movementCost")} value={details.movementCost} />
-        <HexDetailsRow label={t("hexMap.divisionStack")} value={details.divisionStack} tooltip={details.divisionStackTooltip} />
+        {details.tagGroups.map((group) => (
+          <HexDetailsRow key={group.label} label={group.label} value={group.value} />
+        ))}
+        <HexDetailsRow label={t("hexMap.unitStack")} value={details.unitStack} tooltip={details.unitStackTooltip} />
       </div>
     </section>
   );
@@ -1026,165 +1105,6 @@ function ColonizationGroup(props: { title: string; count: number; children: Reac
       </AnimatePresence>
     </div>
   );
-}
-
-const INFRASTRUCTURE_TRANSPORT_MODES: Array<{ mode: TransportMode; icon: LucideIcon }> = [
-  { mode: "land", icon: Network },
-  { mode: "sea", icon: Ship },
-  { mode: "air", icon: RadioTower },
-  { mode: "pipeline", icon: Wrench },
-  { mode: "powerGrid", icon: SlidersHorizontal },
-];
-
-function InfrastructureConstructionPanel(props: {
-  corridors: MarketTransportCorridor[];
-  activeTransportMode: TransportMode | null;
-  onStartPlacement?: (mode: TransportMode) => void;
-  onUpgrade?: (corridor: MarketTransportCorridor) => void;
-  onCancel?: (corridor: MarketTransportCorridor) => void;
-  onDemolish?: (corridor: MarketTransportCorridor) => void;
-  onFocusHex?: (hexId: HexId) => void;
-}) {
-  const { t } = useUiText();
-  const sorted = [...props.corridors].sort((left, right) => {
-    const statusRank = (status: MarketTransportCorridor["status"]) => (status === "building" ? 0 : status === "active" ? 1 : 2);
-    return statusRank(left.status) - statusRank(right.status) || left.transportMode.localeCompare(right.transportMode, "en");
-  });
-  return (
-    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.infrastructure.title")}>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {INFRASTRUCTURE_TRANSPORT_MODES.map(({ mode, icon: Icon }) => {
-          const active = props.activeTransportMode === mode;
-          return (
-            <button
-              key={mode}
-              type="button"
-              className={`arc-strategy-workspace-action arc-strategy-workspace-action--primary justify-start ${active ? "ring-2 ring-[var(--arc-color-accent)]" : ""}`}
-              onClick={() => props.onStartPlacement?.(mode)}
-            >
-              <Icon size={16} />
-              <span>{t(getInfrastructureModeLabelKey(mode))}</span>
-            </button>
-          );
-        })}
-      </div>
-      <div className="mt-3 space-y-2">
-        {sorted.length === 0 ? (
-          <EmptyPreview text={t("shell.infrastructure.empty")} />
-        ) : (
-          sorted.map((corridor) => {
-            const routeHexId = normalizeHexId(corridor.computedHexIds?.[0] ?? corridor.hexIds?.[0] ?? null);
-            const progress =
-              corridor.costConstruction > 0
-                ? Math.max(0, Math.min(100, Math.round((corridor.progressConstruction / corridor.costConstruction) * 100)))
-                : 0;
-            return (
-              <div key={corridor.id} className="arc-strategy-construction-row">
-                <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-panel)]">
-                  <Network size={18} />
-                </div>
-                <span className="arc-strategy-building-list-main">
-                  <span className="arc-strategy-building-list-name">
-                    {t(getInfrastructureModeLabelKey(corridor.transportMode))}
-                    {" · "}
-                    {t(getInfrastructureStatusLabelKey(corridor.status))}
-                  </span>
-                  <span className="arc-strategy-building-list-effects">
-                    {t("shell.infrastructure.rowMeta", {
-                      level: corridor.pendingLevel ?? corridor.level,
-                      regions: corridor.connectedRegionIds?.length ?? 0,
-                      hexes: corridor.computedHexIds?.length ?? corridor.hexIds.length,
-                    })}
-                  </span>
-                </span>
-                <div className="arc-strategy-construction-row-progress">
-                  <span className="arc-strategy-construction-row-progress-bar">
-                    <span style={{ width: `${corridor.status === "building" ? progress : 100}%` }} />
-                  </span>
-                  <span>
-                    {corridor.status === "building"
-                      ? `${progress}%`
-                      : formatCompact(corridor.lastCapacityByMode?.[corridor.transportMode] ?? 0)}
-                  </span>
-                </div>
-                <div className="arc-strategy-construction-row-actions">
-                  <Tooltip content={t("shell.infrastructure.upgradeTooltip")} placement="top">
-                    <button
-                      type="button"
-                      className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary"
-                      onClick={() => props.onUpgrade?.(corridor)}
-                      disabled={!props.onUpgrade || corridor.status === "building"}
-                      aria-label={t("shell.infrastructure.upgradeTooltip")}
-                    >
-                      <Wrench size={15} />
-                    </button>
-                  </Tooltip>
-                  {corridor.status === "building" ? (
-                    <Tooltip content={t("shell.infrastructure.cancelTooltip")} placement="top">
-                      <button
-                        type="button"
-                        className="arc-strategy-construction-row-action"
-                        onClick={() => props.onCancel?.(corridor)}
-                        disabled={!props.onCancel}
-                        aria-label={t("shell.infrastructure.cancelTooltip")}
-                      >
-                        <X size={15} />
-                      </button>
-                    </Tooltip>
-                  ) : (
-                    <Tooltip content={t("shell.infrastructure.demolishTooltip")} placement="top">
-                      <button
-                        type="button"
-                        className="arc-strategy-construction-row-action"
-                        onClick={() => props.onDemolish?.(corridor)}
-                        disabled={!props.onDemolish}
-                        aria-label={t("shell.infrastructure.demolishTooltip")}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </Tooltip>
-                  )}
-                  <Tooltip content={t("buildings.focusConstructionHexTooltip")} placement="top">
-                    <button
-                      type="button"
-                      className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary"
-                      onClick={() => routeHexId && props.onFocusHex?.(routeHexId)}
-                      disabled={!routeHexId || !props.onFocusHex}
-                      aria-label={t("buildings.focusConstructionHexTooltip")}
-                    >
-                      <Crosshair size={15} />
-                    </button>
-                  </Tooltip>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </section>
-  );
-}
-
-function getInfrastructureModeLabelKey(mode: TransportMode): UiTextKey {
-  switch (mode) {
-    case "sea":
-      return "shell.infrastructure.mode.sea";
-    case "air":
-      return "shell.infrastructure.mode.air";
-    case "pipeline":
-      return "shell.infrastructure.mode.pipeline";
-    case "powerGrid":
-      return "shell.infrastructure.mode.powerGrid";
-    case "land":
-    default:
-      return "shell.infrastructure.mode.land";
-  }
-}
-
-function getInfrastructureStatusLabelKey(status: MarketTransportCorridor["status"]): UiTextKey {
-  if (status === "active") return "shell.infrastructure.status.active";
-  if (status === "closed") return "shell.infrastructure.status.closed";
-  return "shell.infrastructure.status.building";
 }
 
 function ColonizationUnitRow(props: { item: ColonizationUnitPreviewItem; onFocusHex?: (hexId: HexId) => void }) {
@@ -1578,393 +1498,6 @@ function ConstructionQueueList(props: {
   );
 }
 
-function MilitaryFormationPanel(props: {
-  templates: DivisionTemplate[];
-  queue: MilitaryFormationQueueItem[];
-  activeTemplateId: string | null;
-  cancelingQueueId: string | null;
-  onStartPlacement?: (
-    template: DivisionTemplate,
-    options: { quantity: number; priority: "high" | "normal" | "low"; repeat: boolean },
-  ) => void;
-  onCancelQueue?: (queueId: string) => void;
-  onFocusHex?: (hexId: HexId) => void;
-}) {
-  const { t } = useUiText();
-  const [controlsByTemplateId, setControlsByTemplateId] = useState<Record<string, { quantity: number; priority: "high" | "normal" | "low"; repeat: boolean }>>({});
-  const [cancelTarget, setCancelTarget] = useState<MilitaryFormationQueueItem | null>(null);
-  const groupedTemplates = groupTemplatesByBranch(props.templates);
-  const getControls = (templateId: string) => controlsByTemplateId[templateId] ?? { quantity: 1, priority: "normal", repeat: false };
-  const updateControls = (templateId: string, patch: Partial<{ quantity: number; priority: "high" | "normal" | "low"; repeat: boolean }>) => {
-    setControlsByTemplateId((current) => ({ ...current, [templateId]: { ...getControls(templateId), ...patch } }));
-  };
-  return (
-    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.workspaceTab.formation")}>
-      {groupedTemplates.length === 0 ? <EmptyPreview text={t("army.formationNoTemplates")} /> : null}
-      {groupedTemplates.map((group) => (
-        <div key={group.kind} className="arc-strategy-building-category">
-          <div className="arc-strategy-building-category-header arc-strategy-building-category-header--static">
-            <span className="arc-strategy-building-category-title">
-              <Shield size={15} />
-              <span>{t(getMilitaryBranchLabelKey(group.kind))}</span>
-            </span>
-            <span className="arc-strategy-building-category-count">{group.templates.length}</span>
-          </div>
-          <div className="arc-strategy-building-category-body">
-            <div className="arc-strategy-building-category-rows">
-              {group.templates.map((template, index) => {
-                const controls = getControls(template.id);
-                const active = props.activeTemplateId === template.id;
-                return (
-                  <motion.div
-                    key={template.id}
-                    className={`arc-strategy-construction-row arc-strategy-formation-row ${active ? "arc-strategy-formation-row--active" : ""}`}
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ y: -2 }}
-                    transition={{ duration: 0.14, delay: Math.min(index * 0.025, 0.12) }}
-                  >
-                    <span className="arc-strategy-building-list-icon arc-strategy-formation-icon">
-                      <Shield size={22} />
-                    </span>
-                    <span className="arc-strategy-building-list-main">
-                      <span className="arc-strategy-building-list-name">{template.name}</span>
-                      <span className="arc-strategy-building-list-effects">
-                        {t("army.formationComposition", { count: template.components?.length ?? template.battalions?.length ?? 0 })}
-                      </span>
-                    </span>
-                    <span className="arc-strategy-formation-controls">
-                      <input
-                        type="number"
-                        min={1}
-                        max={99}
-                        value={controls.quantity}
-                        aria-label={t("army.formationQuantity")}
-                        onChange={(event) => updateControls(template.id, { quantity: Math.max(1, Math.min(99, Math.floor(Number(event.target.value) || 1))) })}
-                      />
-                      <select
-                        value={controls.priority}
-                        aria-label={t("army.formationPriority")}
-                        onChange={(event) => updateControls(template.id, { priority: event.target.value as "high" | "normal" | "low" })}
-                      >
-                        <option value="high">{t("army.formationPriority.high")}</option>
-                        <option value="normal">{t("army.formationPriority.normal")}</option>
-                        <option value="low">{t("army.formationPriority.low")}</option>
-                      </select>
-                      <label className="arc-strategy-formation-repeat">
-                        <input
-                          type="checkbox"
-                          checked={controls.repeat}
-                          onChange={(event) => updateControls(template.id, { repeat: event.target.checked })}
-                        />
-                        <span>{t("army.formationRepeatShort")}</span>
-                      </label>
-                    </span>
-                    <div className="arc-strategy-construction-row-actions">
-                      <Tooltip content={t("army.formationSelectHexTooltip")} placement="top">
-                        <button
-                          type="button"
-                          className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary"
-                          onClick={() => props.onStartPlacement?.(template, controls)}
-                          disabled={!props.onStartPlacement}
-                          aria-label={t("army.formationSelectHexTooltip")}
-                        >
-                          <Crosshair size={13} aria-hidden="true" />
-                        </button>
-                      </Tooltip>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      ))}
-      <div className="arc-strategy-building-category">
-        <div className="arc-strategy-building-category-header arc-strategy-building-category-header--static">
-          <span className="arc-strategy-building-category-title">
-            <ClipboardList size={15} />
-            <span>{t("army.formationQueue")}</span>
-          </span>
-          <span className="arc-strategy-building-category-count">{props.queue.length}</span>
-        </div>
-        <div className="arc-strategy-building-category-body">
-          <div className="arc-strategy-building-category-rows">
-            {props.queue.length === 0 ? <EmptyPreview text={t("army.formationQueueEmpty")} /> : null}
-            {props.queue.map((item) => (
-              <MilitaryFormationQueueRow
-                key={item.id}
-                item={item}
-                canceling={props.cancelingQueueId === item.id}
-                onCancel={() => setCancelTarget(item)}
-                onFocusHex={props.onFocusHex}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-      {typeof document !== "undefined"
-        ? createPortal(
-            <AnimatePresence>
-              {cancelTarget ? (
-                <motion.div className="arc-strategy-cancel-confirm-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <motion.div
-                    className="arc-hex-build-confirm"
-                    initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                    role="dialog"
-                    aria-modal="true"
-                  >
-                    <div className="arc-hex-build-confirm__header">
-                      <h2 className="arc-hex-build-confirm__title">{t("army.formationCancelTitle")}</h2>
-                    </div>
-                    <div className="arc-hex-build-confirm__body">
-                      <div className="arc-hex-build-confirm__row">
-                        <span>{t("army.template")}</span>
-                        <strong>{cancelTarget.name}</strong>
-                      </div>
-                      <div className="arc-hex-build-confirm__row">
-                        <span>{t("hexMap.hex")}</span>
-                        <strong>{cancelTarget.hexId}</strong>
-                      </div>
-                    </div>
-                    <div className="arc-hex-build-confirm__actions">
-                      <button type="button" className="arc-strategy-workspace-action arc-strategy-workspace-action--primary arc-hex-build-confirm__action" onClick={() => setCancelTarget(null)}>
-                        <span>{t("common.cancel")}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="arc-strategy-workspace-action arc-hex-build-confirm__action arc-hex-build-confirm__action--cancel"
-                        onClick={() => {
-                          props.onCancelQueue?.(cancelTarget.id);
-                          setCancelTarget(null);
-                        }}
-                        disabled={!props.onCancelQueue || props.cancelingQueueId === cancelTarget.id}
-                      >
-                        <span>{t("common.confirm")}</span>
-                      </button>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>,
-            document.body,
-          )
-        : null}
-    </section>
-  );
-}
-
-function MilitaryFormationQueueRow(props: {
-  item: MilitaryFormationQueueItem;
-  canceling: boolean;
-  onCancel: () => void;
-  onFocusHex?: (hexId: HexId) => void;
-}) {
-  const { t } = useUiText();
-  const pct = Math.round(Math.max(0, Math.min(1, Number(props.item.progress) || 0)) * 100);
-  return (
-    <motion.div className="arc-strategy-construction-row arc-strategy-formation-row" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -2 }} transition={{ duration: 0.14 }}>
-      <span className="arc-strategy-building-list-icon arc-strategy-formation-icon">
-        <Shield size={22} />
-      </span>
-      <span className="arc-strategy-building-list-main">
-        <span className="arc-strategy-building-list-name">{props.item.name}</span>
-        <span className="arc-strategy-building-list-effects">
-          {t(getMilitaryBranchLabelKey(props.item.kind))} · {props.item.hexId}
-        </span>
-        <span className="arc-strategy-building-list-effects">
-          {t("army.formationQueueMeta", {
-            quantity: Math.max(1, props.item.remainingQuantity ?? props.item.quantity ?? 1),
-            priority: t(getFormationPriorityLabelKey(props.item.priority ?? "normal")),
-            repeat: props.item.repeat ? t("army.formationRepeatOn") : t("army.formationRepeatOff"),
-          })}
-        </span>
-      </span>
-      <div className="arc-strategy-construction-row-progress">
-        <div className="flex justify-between text-[10px] text-[var(--arc-color-atlas-muted)]">
-          <span>{pct}%</span>
-          <span>{props.item.turnsRemaining}</span>
-        </div>
-        <div className="mt-1 h-1.5 overflow-hidden bg-[var(--arc-color-atlas-paper-deep)]">
-          <div className="h-full bg-[var(--arc-color-atlas-primary)]" style={{ width: `${pct}%` }} />
-        </div>
-      </div>
-      <div className="arc-strategy-construction-row-actions">
-        <Tooltip content={t("army.formationCancelTooltip")} placement="top">
-          <button type="button" className="arc-strategy-construction-row-action arc-strategy-construction-row-action--danger" onClick={props.onCancel} disabled={props.canceling} aria-label={t("army.formationCancelTooltip")}>
-            <X size={13} aria-hidden="true" />
-          </button>
-        </Tooltip>
-        <Tooltip content={t("army.formationFocusTooltip")} placement="top">
-          <button type="button" className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary" onClick={() => props.onFocusHex?.(props.item.hexId)} disabled={!props.onFocusHex} aria-label={t("army.formationFocusTooltip")}>
-            <Crosshair size={13} aria-hidden="true" />
-          </button>
-        </Tooltip>
-      </div>
-    </motion.div>
-  );
-}
-
-function groupTemplatesByBranch(templates: DivisionTemplate[]): Array<{ kind: MilitaryBranch; templates: DivisionTemplate[] }> {
-  const order: MilitaryBranch[] = ["land", "naval", "air"];
-  return order
-    .map((kind) => ({
-      kind,
-      templates: templates.filter((template) => (template.kind ?? "land") === kind).sort((a, b) => a.name.localeCompare(b.name, "ru") || a.id.localeCompare(b.id)),
-    }))
-    .filter((group) => group.templates.length > 0);
-}
-
-function getMilitaryBranchLabelKey(kind: MilitaryBranch): UiTextKey {
-  if (kind === "naval") return "army.branch.naval";
-  if (kind === "air") return "army.branch.air";
-  return "army.branch.land";
-}
-
-function getFormationPriorityLabelKey(priority: "high" | "normal" | "low"): UiTextKey {
-  if (priority === "high") return "army.formationPriority.high";
-  if (priority === "low") return "army.formationPriority.low";
-  return "army.formationPriority.normal";
-}
-
-function ArmyWarehouseList({ rows }: { rows: ArmyLogisticsRow[] }) {
-  const { t } = useUiText();
-  if (rows.length === 0) {
-    return <EmptyPreview text={t("shell.warehouses.empty")} />;
-  }
-  return (
-    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.workspaceTab.warehouses")}>
-      <div className="arc-strategy-building-category">
-        <div className="arc-strategy-building-category-header arc-strategy-building-category-header--static">
-          <span className="arc-strategy-building-category-title">
-            <Package size={15} />
-            <span>{t("shell.warehouses.militaryStockpiles")}</span>
-          </span>
-          <span className="arc-strategy-building-category-count">{rows.length}</span>
-        </div>
-        <div className="arc-strategy-building-category-body">
-          <div className="arc-strategy-building-category-rows">
-            {rows.map((row, index) => (
-              <ArmyWarehouseRow key={row.variantId} row={row} index={index} />
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ArmyWarehouseRow({ row, index }: { row: ArmyLogisticsRow; index: number }) {
-  const { t } = useUiText();
-  const tooltip: TooltipStructuredContent = {
-    title: row.name,
-    rows: [
-      { id: "stockpile", label: t("shell.warehouses.stockpile"), value: formatCompact(row.stockpile), tone: row.stockpile > 0 ? "positive" : "muted" },
-      { id: "assigned", label: t("shell.warehouses.assigned"), value: formatCompact(row.assigned), tone: "info" },
-      { id: "required", label: t("shell.warehouses.required"), value: formatCompact(row.required), tone: row.missingEquipment > 0 ? "negative" : "muted" },
-      { id: "produced", label: t("shell.warehouses.production"), value: formatCompact(row.produced), tone: row.produced > 0 ? "positive" : "muted" },
-      { id: "balance", label: t("shell.warehouses.balance"), value: formatSignedCompact(row.balance), tone: row.balance < 0 ? "negative" : "positive" },
-      { id: "lines", label: t("shell.warehouses.productionLines"), value: `${formatCompact(row.activeLineCount)}/${formatCompact(row.lineCount)}`, tone: row.activeLineCount > 0 ? "positive" : "muted" },
-    ],
-    sections: [
-      {
-        title: t("shell.warehouses.goodsCost"),
-        rows:
-          row.goodsCost.length > 0
-            ? row.goodsCost.map((good) => ({
-                id: good.goodId,
-                label: formatWarehouseGoodLabel(good.goodId),
-                value: formatCompact(good.amount),
-                tone: "info",
-              }))
-            : [{ id: "none", label: t("shell.warehouses.noGoodsCost"), value: "" }],
-      },
-      {
-        title: t("shell.warehouses.missingGoods"),
-        rows:
-          row.missingGoods.length > 0
-            ? row.missingGoods.map((good) => ({
-                id: good.goodId,
-                label: formatWarehouseGoodLabel(good.goodId),
-                value: t("shell.warehouses.missingGoodsValue", {
-                  required: formatCompact(good.amount),
-                  missing: formatCompact(good.missing),
-                }),
-                tone: good.missing > 0 ? "negative" : "muted",
-              }))
-            : [{ id: "none", label: t("shell.warehouses.noMissingGoods"), value: "" }],
-      },
-    ],
-    tone: row.tone === "negative" ? "negative" : row.tone === "warning" ? "warning" : "positive",
-  };
-  return (
-    <Tooltip content={tooltip} placement="top" variant="rich" referenceClassName="block">
-      <motion.div
-        className={`arc-strategy-warehouse-row arc-strategy-warehouse-row--${row.tone}`}
-        initial={{ opacity: 0, y: -4 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={{ y: -2 }}
-        transition={{ duration: 0.14, delay: Math.min(index * 0.02, 0.1) }}
-      >
-        <span className="arc-strategy-warehouse-icon" aria-hidden="true">
-          <Package size={18} />
-        </span>
-        <span className="arc-strategy-warehouse-main">
-          <span className="arc-strategy-warehouse-name">{row.name}</span>
-          <span className="arc-strategy-warehouse-subtitle">
-            {row.balance < 0
-              ? t("shell.warehouses.statusDeficit")
-              : row.stockpile <= 0 && row.produced <= 0
-                ? t("shell.warehouses.statusNoStock")
-                : t("shell.warehouses.statusSurplus")}
-          </span>
-        </span>
-        <span className="arc-strategy-warehouse-metrics">
-          <WarehouseMetric label={t("shell.warehouses.stockpileShort")} value={formatCompact(row.stockpile)} />
-          <WarehouseMetric label={t("shell.warehouses.requiredShort")} value={formatCompact(row.missingEquipment)} tone={row.missingEquipment > 0 ? "negative" : "muted"} />
-          <WarehouseMetric label={t("shell.warehouses.productionShort")} value={formatCompact(row.produced)} tone={row.produced > 0 ? "positive" : "muted"} />
-          <WarehouseMetric label={t("shell.warehouses.balanceShort")} value={formatSignedCompact(row.balance)} tone={row.balance < 0 ? "negative" : "positive"} />
-        </span>
-        <span className="arc-strategy-warehouse-goods" aria-label={t("shell.warehouses.goodsCost")}>
-          {row.goodsCost.slice(0, 4).map((good) => {
-            const iconUrl = getWarehouseGoodIconUrl(good.goodId);
-            return (
-              <span key={good.goodId} className="arc-strategy-warehouse-good">
-                {iconUrl ? <img src={iconUrl} alt="" /> : <span>{formatWarehouseGoodLabel(good.goodId).slice(0, 1).toUpperCase()}</span>}
-              </span>
-            );
-          })}
-        </span>
-      </motion.div>
-    </Tooltip>
-  );
-}
-
-function WarehouseMetric(props: { label: string; value: string; tone?: "positive" | "negative" | "muted" }) {
-  return (
-    <span className={`arc-strategy-warehouse-metric ${props.tone ? `arc-strategy-warehouse-metric--${props.tone}` : ""}`}>
-      <span>{props.label}</span>
-      <strong>{props.value}</strong>
-    </span>
-  );
-}
-
-function getWarehouseGoodIconUrl(goodId: string): string | null {
-  const key = goodId.includes(":") ? goodId.slice(goodId.indexOf(":") + 1) : goodId;
-  return BASE_RESOURCE_ICON_URLS[key as keyof typeof BASE_RESOURCE_ICON_URLS] ?? null;
-}
-
-function formatWarehouseGoodLabel(goodId: string): string {
-  const withoutPrefix = goodId.includes(":") ? goodId.slice(goodId.indexOf(":") + 1) : goodId;
-  return withoutPrefix
-    .split(/[_-]+/g)
-    .filter(Boolean)
-    .map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
-    .join(" ");
-}
-
 function buildBuildingCategoryGroups<T extends { id: string; name: string; industryId?: string | null; sectorId?: string | null }>(
   buildings: T[],
   industries: BuildingCategoryEntry[],
@@ -2096,6 +1629,368 @@ function MarketTradeOverview({ rows, loading }: { rows: MarketTradeOverviewRow[]
     </section>
   );
 }
+
+const INFRASTRUCTURE_TRANSPORT_MODES: Array<{ mode: TransportMode; icon: LucideIcon }> = [
+  { mode: "land", icon: Network },
+  { mode: "sea", icon: Ship },
+  { mode: "air", icon: RadioTower },
+  { mode: "pipeline", icon: Wrench },
+  { mode: "powerGrid", icon: SlidersHorizontal },
+];
+
+function InfrastructureConstructionPanel(props: {
+  corridors: MarketTransportCorridor[];
+  activeTransportMode: TransportMode | null;
+  onStartPlacement?: (mode: TransportMode) => void;
+  onUpgrade?: (corridor: MarketTransportCorridor) => void;
+  onCancel?: (corridor: MarketTransportCorridor) => void;
+  onDemolish?: (corridor: MarketTransportCorridor) => void;
+  onFocusHex?: (hexId: HexId) => void;
+}) {
+  const { t } = useUiText();
+  const sorted = [...props.corridors].sort((left, right) => {
+    const statusRank = (status: MarketTransportCorridor["status"]) => (status === "building" ? 0 : status === "active" ? 1 : 2);
+    return statusRank(left.status) - statusRank(right.status) || left.transportMode.localeCompare(right.transportMode, "en");
+  });
+  return (
+    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.infrastructure.title")}>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {INFRASTRUCTURE_TRANSPORT_MODES.map(({ mode, icon: Icon }) => {
+          const active = props.activeTransportMode === mode;
+          return (
+            <button
+              key={mode}
+              type="button"
+              className={`arc-strategy-workspace-action arc-strategy-workspace-action--primary justify-start ${active ? "ring-2 ring-[var(--arc-color-accent)]" : ""}`}
+              onClick={() => props.onStartPlacement?.(mode)}
+            >
+              <Icon size={16} />
+              <span>{t(getInfrastructureModeLabelKey(mode))}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 space-y-2">
+        {sorted.length === 0 ? (
+          <EmptyPreview text={t("shell.infrastructure.empty")} />
+        ) : (
+          sorted.map((corridor) => {
+            const routeHexId = normalizeHexId(corridor.computedHexIds?.[0] ?? corridor.hexIds?.[0] ?? null);
+            const progress =
+              corridor.costConstruction > 0
+                ? Math.max(0, Math.min(100, Math.round((corridor.progressConstruction / corridor.costConstruction) * 100)))
+                : 0;
+            return (
+              <div key={corridor.id} className="arc-strategy-construction-row">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--arc-color-atlas-line)] bg-[var(--arc-color-atlas-panel)]">
+                  <Network size={18} />
+                </div>
+                <span className="arc-strategy-building-list-main">
+                  <span className="arc-strategy-building-list-name">
+                    {t(getInfrastructureModeLabelKey(corridor.transportMode))}
+                    {" · "}
+                    {t(getInfrastructureStatusLabelKey(corridor.status))}
+                  </span>
+                  <span className="arc-strategy-building-list-effects">
+                    {t("shell.infrastructure.rowMeta", {
+                      level: corridor.pendingLevel ?? corridor.level,
+                      regions: corridor.connectedRegionIds?.length ?? 0,
+                      hexes: corridor.computedHexIds?.length ?? corridor.hexIds.length,
+                    })}
+                  </span>
+                </span>
+                <div className="arc-strategy-construction-row-progress">
+                  <span className="arc-strategy-construction-row-progress-bar">
+                    <span style={{ width: `${corridor.status === "building" ? progress : 100}%` }} />
+                  </span>
+                  <span>
+                    {corridor.status === "building"
+                      ? `${progress}%`
+                      : formatCompact(corridor.lastCapacityByMode?.[corridor.transportMode] ?? 0)}
+                  </span>
+                </div>
+                <div className="arc-strategy-construction-row-actions">
+                  <Tooltip content={t("shell.infrastructure.upgradeTooltip")} placement="top">
+                    <button
+                      type="button"
+                      className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary"
+                      onClick={() => props.onUpgrade?.(corridor)}
+                      disabled={!props.onUpgrade || corridor.status === "building"}
+                      aria-label={t("shell.infrastructure.upgradeTooltip")}
+                    >
+                      <Wrench size={15} />
+                    </button>
+                  </Tooltip>
+                  {corridor.status === "building" ? (
+                    <Tooltip content={t("shell.infrastructure.cancelTooltip")} placement="top">
+                      <button
+                        type="button"
+                        className="arc-strategy-construction-row-action"
+                        onClick={() => props.onCancel?.(corridor)}
+                        disabled={!props.onCancel}
+                        aria-label={t("shell.infrastructure.cancelTooltip")}
+                      >
+                        <X size={15} />
+                      </button>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip content={t("shell.infrastructure.demolishTooltip")} placement="top">
+                      <button
+                        type="button"
+                        className="arc-strategy-construction-row-action"
+                        onClick={() => props.onDemolish?.(corridor)}
+                        disabled={!props.onDemolish}
+                        aria-label={t("shell.infrastructure.demolishTooltip")}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </Tooltip>
+                  )}
+                  <Tooltip content={t("buildings.focusConstructionHexTooltip")} placement="top">
+                    <button
+                      type="button"
+                      className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary"
+                      onClick={() => routeHexId && props.onFocusHex?.(routeHexId)}
+                      disabled={!routeHexId || !props.onFocusHex}
+                      aria-label={t("buildings.focusConstructionHexTooltip")}
+                    >
+                      <Crosshair size={15} />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </section>
+  );
+}
+
+function getInfrastructureModeLabelKey(mode: TransportMode): UiTextKey {
+  switch (mode) {
+    case "sea":
+      return "shell.infrastructure.mode.sea";
+    case "air":
+      return "shell.infrastructure.mode.air";
+    case "pipeline":
+      return "shell.infrastructure.mode.pipeline";
+    case "powerGrid":
+      return "shell.infrastructure.mode.powerGrid";
+    case "land":
+    default:
+      return "shell.infrastructure.mode.land";
+  }
+}
+
+function getInfrastructureStatusLabelKey(status: MarketTransportCorridor["status"]): UiTextKey {
+  if (status === "active") return "shell.infrastructure.status.active";
+  if (status === "closed") return "shell.infrastructure.status.closed";
+  return "shell.infrastructure.status.building";
+}
+
+function UnitCatalogPanel(props: {
+  unitTypes: UnitTypeDefinition[];
+  placementActive: boolean;
+  onStartTraining?: (unitTypeId: string) => void;
+}) {
+  const { t } = useUiText();
+  const groups = groupUnitTypes(props.unitTypes, t);
+  if (groups.length === 0) return <EmptyPreview text={t("shell.units.emptyCatalog")} />;
+  return (
+    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.workspaceTab.unitCatalog")}>
+      {groups.map((group) => (
+        <div key={group.id} className="arc-strategy-building-category">
+          <div className="arc-strategy-building-category-header arc-strategy-building-category-header--static">
+            <span className="arc-strategy-building-category-title">
+              <Shield size={15} />
+              <span>{group.label}</span>
+            </span>
+            <span className="arc-strategy-building-category-count">{group.items.length}</span>
+          </div>
+          <div className="arc-strategy-building-category-body">
+            <div className="arc-strategy-building-category-rows">
+              {group.items.map((unitType, index) => {
+                const disabled = !props.onStartTraining || props.placementActive;
+                return (
+                  <motion.button
+                    key={unitType.id}
+                    type="button"
+                    className={`arc-strategy-building-list-row ${disabled ? "arc-strategy-building-list-row--disabled" : ""}`}
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={disabled ? undefined : { y: -2 }}
+                    transition={{ duration: 0.14, delay: Math.min(index * 0.025, 0.12) }}
+                    disabled={disabled}
+                    onClick={() => props.onStartTraining?.(unitType.id)}
+                  >
+                    <span className="arc-strategy-building-list-icon arc-strategy-formation-icon">
+                      <Shield size={22} />
+                    </span>
+                    <span className="arc-strategy-building-list-main">
+                      <span className="arc-strategy-building-list-name">{unitType.displayName}</span>
+                      <span className="arc-strategy-building-list-effects">
+                        {t("shell.units.catalogDetail", {
+                          attack: unitType.stats.attack,
+                          defense: unitType.stats.defense,
+                          movement: unitType.stats.movement,
+                          turns: getUnitTrainingTurns(unitType),
+                        })}
+                      </span>
+                    </span>
+                    <UnitCostBadges cost={unitType.productionCost} />
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function UnitTrainingQueuePanel(props: {
+  unitTypes: UnitTypeDefinition[];
+  queue: UnitTrainingQueueItem[];
+  cancelingQueueId: string | null;
+  onCancel?: (queueId: string) => void;
+  onFocusHex?: (hexId: HexId) => void;
+}) {
+  const { t } = useUiText();
+  const unitTypeById = new Map(props.unitTypes.map((unitType) => [unitType.id, unitType]));
+  if (props.queue.length === 0) return <EmptyPreview text={t("shell.units.emptyTrainingQueue")} />;
+  return (
+    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.workspaceTab.trainingQueue")}>
+      <div className="arc-strategy-building-category">
+        <div className="arc-strategy-building-category-body">
+          <div className="arc-strategy-building-category-rows">
+            {props.queue.map((item) => {
+              const unitType = unitTypeById.get(item.unitTypeId);
+              return (
+                <motion.div key={item.id} className="arc-strategy-construction-row" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>
+                  <span className="arc-strategy-building-list-icon arc-strategy-formation-icon">
+                    <Shield size={22} />
+                  </span>
+                  <span className="arc-strategy-building-list-main">
+                    <span className="arc-strategy-building-list-name">{unitType ? resolveUnitName(unitType, t) : item.unitTypeId}</span>
+                    <span className="arc-strategy-building-list-effects">
+                      {t("shell.units.queueDetail", { hex: item.hexId, turns: item.turnsRemaining, total: item.turnsTotal })}
+                    </span>
+                  </span>
+                  <span className="arc-strategy-construction-row-actions">
+                    <Tooltip content={t("shell.units.focusHex")} placement="top">
+                      <button type="button" className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary" onClick={() => props.onFocusHex?.(item.hexId)} disabled={!props.onFocusHex} aria-label={t("shell.units.focusHex")}>
+                        <Crosshair size={13} aria-hidden="true" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content={t("shell.units.cancelTraining")} placement="top">
+                      <button type="button" className="arc-strategy-construction-row-action arc-strategy-construction-row-action--danger" onClick={() => props.onCancel?.(item.id)} disabled={!props.onCancel || props.cancelingQueueId === item.id} aria-label={t("shell.units.cancelTraining")}>
+                        <Trash2 size={13} aria-hidden="true" />
+                      </button>
+                    </Tooltip>
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ReadyUnitsPanel(props: {
+  unitTypes: UnitTypeDefinition[];
+  units: MapUnit[];
+  onFocusHex?: (hexId: HexId) => void;
+  onDisband?: (unitId: string) => void;
+}) {
+  const { t } = useUiText();
+  const unitTypeById = new Map(props.unitTypes.map((unitType) => [unitType.id, unitType]));
+  if (props.units.length === 0) return <EmptyPreview text={t("shell.units.emptyReadyUnits")} />;
+  return (
+    <section className="arc-strategy-building-list arc-scrollbar" aria-label={t("shell.workspaceTab.readyUnits")}>
+      <div className="arc-strategy-building-category">
+        <div className="arc-strategy-building-category-body">
+          <div className="arc-strategy-building-category-rows">
+            {props.units.map((unit) => {
+              const unitType = unitTypeById.get(unit.unitTypeId);
+              return (
+                <motion.div key={unit.id} className="arc-strategy-construction-row" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>
+                  <span className="arc-strategy-building-list-icon arc-strategy-formation-icon">
+                    <Shield size={22} />
+                  </span>
+                  <span className="arc-strategy-building-list-main">
+                    <span className="arc-strategy-building-list-name">{unitType ? resolveUnitName(unitType, t) : unit.unitTypeId}</span>
+                    <span className="arc-strategy-building-list-effects">
+                      {t("shell.units.readyDetail", { hp: unit.hp, movement: unit.movementPoints, hex: unit.hexId, status: unit.status })}
+                    </span>
+                  </span>
+                  <span className="arc-strategy-construction-row-actions">
+                    <Tooltip content={t("shell.units.focusHex")} placement="top">
+                      <button type="button" className="arc-strategy-construction-row-action arc-strategy-construction-row-action--primary" onClick={() => props.onFocusHex?.(unit.hexId)} disabled={!props.onFocusHex} aria-label={t("shell.units.focusHex")}>
+                        <Crosshair size={13} aria-hidden="true" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content={t("shell.units.disband")} placement="top">
+                      <button type="button" className="arc-strategy-construction-row-action arc-strategy-construction-row-action--danger" onClick={() => props.onDisband?.(unit.id)} disabled={!props.onDisband} aria-label={t("shell.units.disband")}>
+                        <Trash2 size={13} aria-hidden="true" />
+                      </button>
+                    </Tooltip>
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function UnitCostBadges({ cost }: { cost: UnitTypeDefinition["productionCost"] }) {
+  const costs: Array<{ key: ResourceKey; value: number }> = [
+    { key: "construction" as ResourceKey, value: Math.max(0, Number(cost.construction ?? 0)) },
+    { key: "ducats" as ResourceKey, value: Math.max(0, Number(cost.ducats ?? 0)) },
+    { key: "colonization" as ResourceKey, value: Math.max(0, Number(cost.colonization ?? 0)) },
+  ].filter((item) => item.value > 0);
+  return (
+    <span className="arc-strategy-building-list-meta">
+      {costs.map((item) => (
+        <span key={item.key} className="arc-strategy-building-list-cost">
+          <img src={BASE_RESOURCE_ICON_URLS[item.key]} alt="" />
+          <span>{formatCompact(item.value)}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function groupUnitTypes(unitTypes: UnitTypeDefinition[], t: ReturnType<typeof useUiText>["t"]) {
+  const groups = new Map<string, { id: string; label: string; items: UnitTrainingCatalogItem[] }>();
+  for (const unitType of unitTypes) {
+    const id = `${unitType.domain}:${unitType.class}`;
+    const label = t("shell.units.groupLabel", { domain: unitType.domain, class: unitType.class });
+    const group = groups.get(id) ?? { id, label, items: [] };
+    group.items.push({
+      ...unitType,
+      displayName: resolveUnitName(unitType, t),
+      description: unitType.descriptionKey ? t(unitType.descriptionKey as UiTextKey) : "",
+    });
+    groups.set(id, group);
+  }
+  return [...groups.values()].sort((left, right) => left.label.localeCompare(right.label));
+}
+
+function resolveUnitName(unitType: UnitTypeDefinition, t: ReturnType<typeof useUiText>["t"]): string {
+  return t(unitType.nameKey as UiTextKey);
+}
+
+function getUnitTrainingTurns(unitType: UnitTypeDefinition): number {
+  return Math.max(1, Math.ceil((unitType.productionCost.construction ?? 0) / 25) || 1);
+}
+
 
 function TradePartnerStack(props: {
   total: number;
@@ -2247,6 +2142,19 @@ function ModeDashboard({ mode, props }: { mode: StrategyMode; props: Props }) {
       />
     );
   }
+  if (mode === "units") {
+    return (
+      <DashboardSection
+        title={t("shell.dashboard.units")}
+        intro={t("shell.dashboard.unitsIntro")}
+        rows={[
+          { label: t("shell.units.ready"), value: formatCompact(props.readyUnits?.length ?? 0) },
+          { label: t("shell.units.training"), value: formatCompact(props.unitTrainingQueue?.length ?? 0) },
+          { label: t("shell.units.catalog"), value: formatCompact(props.unitTypes?.length ?? 0) },
+        ]}
+      />
+    );
+  }
   return (
     <DashboardSection
       title={t("shell.dashboard.governance")}
@@ -2296,6 +2204,7 @@ function getModeActions(
   openBuildingsTab: () => void,
   _openRecordsTab: () => void,
   openColonizersTab: () => void,
+  openUnitCatalogTab: () => void,
 ): ActionItem[] {
   if (mode === "overview") {
     return [
@@ -2334,13 +2243,18 @@ function getModeActions(
     ];
   }
   if (mode === "army") {
+    return [];
+  }
+  if (mode === "units") {
     return [
-      { key: "division-designer", labelKey: "shell.action.divisionDesigner", descriptionKey: "shell.action.divisionDesignerDescription", icon: Shield, onClick: props.onOpenDivisionDesigner, tone: "primary" },
-      { key: "air-wing-designer", labelKey: "shell.action.airWingDesigner", descriptionKey: "shell.action.airWingDesignerDescription", icon: Sparkles, onClick: props.onOpenAirWingDesigner },
-      { key: "fleet-designer", labelKey: "shell.action.fleetDesigner", descriptionKey: "shell.action.fleetDesignerDescription", icon: Flag, onClick: props.onOpenFleetDesigner },
-      { key: "land-equipment-designer", labelKey: "shell.action.landEquipmentDesigner", descriptionKey: "shell.action.landEquipmentDesignerDescription", icon: Wrench, onClick: props.onOpenLandEquipmentDesigner },
-      { key: "air-equipment-designer", labelKey: "shell.action.airEquipmentDesigner", descriptionKey: "shell.action.airEquipmentDesignerDescription", icon: FlaskConical, onClick: props.onOpenAirEquipmentDesigner },
-      { key: "naval-equipment-designer", labelKey: "shell.action.navalEquipmentDesigner", descriptionKey: "shell.action.navalEquipmentDesignerDescription", icon: Package, onClick: props.onOpenNavalEquipmentDesigner },
+      {
+        key: "unit-catalog",
+        labelKey: "shell.action.unitCatalog",
+        descriptionKey: "shell.action.unitCatalogDescription",
+        icon: Shield,
+        onClick: openUnitCatalogTab,
+        tone: "primary",
+      },
     ];
   }
   return [

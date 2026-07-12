@@ -15,7 +15,7 @@ import {
 
 describe("authRegistrationRoutes", () => {
   it("validates auth and registration review payloads", () => {
-    expect(registerSchema.safeParse({ countryName: "Bohemia", countryColor: "#112233", password: "password1" }).success).toBe(true);
+    expect(registerSchema.safeParse(makeRegisterPayload({ countryColor: "#112233" })).success).toBe(true);
     expect(registerSchema.safeParse({ countryName: "B", countryColor: "red", password: "x" }).success).toBe(false);
     expect(loginSchema.safeParse({ countryId: "country:a", password: "x", rememberMe: false }).success).toBe(true);
     expect(registrationReviewSchema.safeParse({ approve: true }).success).toBe(true);
@@ -33,7 +33,7 @@ describe("authRegistrationRoutes", () => {
     const response = await request(app, "/auth/register", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ countryName: "Bohemia", countryColor: "#123456", password: "password1" }),
+      body: JSON.stringify(makeRegisterPayload()),
     });
 
     expect(response.status).toBe(201);
@@ -41,6 +41,9 @@ describe("authRegistrationRoutes", () => {
       expect.objectContaining({
         name: "Bohemia",
         color: "#123456",
+        cultureGroupId: "culture_group:frontier",
+        religionGroupId: "religion_group:shrines",
+        raceId: "race:default",
         flagUrl: "/scenario-assets/demo/assets/uploads/flags/flag.png?v=1",
         isAdmin: false,
         isRegistrationApproved: false,
@@ -71,7 +74,7 @@ describe("authRegistrationRoutes", () => {
     const response = await request(app, "/auth/register", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ countryName: "Bohemia", countryColor: "#123456", password: "password1" }),
+      body: JSON.stringify(makeRegisterPayload()),
     });
 
     expect(response.status).toBe(409);
@@ -182,7 +185,12 @@ function makeApp(deps: AuthRegistrationRoutesDependencies): express.Express {
 function makeDeps(options?: {
   adminCountryCount?: number;
   requireApproval?: boolean;
-  uploadFiles?: { flag?: Express.Multer.File[]; crest?: Express.Multer.File[] };
+  uploadFiles?: {
+    flag?: Express.Multer.File[];
+    crest?: Express.Multer.File[];
+    cultureLogo?: Express.Multer.File[];
+    religionLogo?: Express.Multer.File[];
+  };
   createCountry?: AuthRegistrationRoutesDependencies["createCountry"];
   loginCountry?: AuthRegistrationCountryRecord | null;
   reviewCountry?: AdminCountryDbRecord | null;
@@ -206,11 +214,22 @@ function makeDeps(options?: {
         next();
       },
     },
-    flagImageRule: { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 },
-    crestImageRule: { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 },
-    masks: { resourcesByCountry: 1, hexOwner: 2, colonyProgressByRegion: 4, unitEquipmentState: 8 },
+    flagImageRule: { maxWidth: 192, maxHeight: 128 },
+    crestImageRule: { maxWidth: 128, maxHeight: 146 },
+    identityLogoImageRule: { maxWidth: 64, maxHeight: 64 },
+    masks: { resourcesByCountry: 1, hexOwner: 2, colonyProgressByRegion: 4, unitState: 8 },
     getTurnId: () => 4,
     getWorldBase: () => world as WorldBase & AuthRegistrationWorldState,
+    getGameSettings: () => ({
+      content: {
+        cultureGroups: [makeContentEntry("culture_group:frontier")],
+        religionGroups: [makeContentEntry("religion_group:shrines")],
+        races: [makeContentEntry("race:default")],
+        cultures: [],
+        religions: [],
+      },
+    }) as never,
+    countryIdentityNameExists: vi.fn(async () => false),
     getRegistrationRequiresAdminApproval: () => options?.requireApproval ?? false,
     getInitialColonizationPoints: () => 7,
     getInitialConstructionPoints: () => 9,
@@ -221,6 +240,17 @@ function makeDeps(options?: {
       color: data.color,
       flagUrl: data.flagUrl,
       crestUrl: data.crestUrl,
+      cultureId: data.cultureId,
+      cultureName: data.cultureName,
+      cultureColor: data.cultureColor,
+      cultureLogoUrl: data.cultureLogoUrl,
+      religionId: data.religionId,
+      religionName: data.religionName,
+      religionColor: data.religionColor,
+      religionLogoUrl: data.religionLogoUrl,
+      cultureGroupId: data.cultureGroupId,
+      religionGroupId: data.religionGroupId,
+      raceId: data.raceId,
       isAdmin: data.isAdmin,
       isRegistrationApproved: data.isRegistrationApproved,
     }))),
@@ -271,6 +301,22 @@ function makeResources(): ResourceTotals {
   return { ducats: 20, gold: 80, culture: 5, science: 5, religion: 5, construction: 9, colonization: 7 };
 }
 
+function makeRegisterPayload(overrides?: Record<string, unknown>): Record<string, unknown> {
+  return {
+    countryName: "Bohemia",
+    countryColor: "#123456",
+    cultureGroupId: "culture_group:frontier",
+    cultureName: "Bohemian",
+    cultureColor: "#4ade80",
+    religionGroupId: "religion_group:shrines",
+    religionName: "Bohemian Rites",
+    religionColor: "#a78bfa",
+    raceId: "race:default",
+    password: "password1",
+    ...overrides,
+  };
+}
+
 function makeColonizer(overrides?: Partial<WorldBase["civilianUnitsById"][string]>): WorldBase["civilianUnitsById"][string] {
   return {
     id: "civilian:starter:country_a",
@@ -295,6 +341,17 @@ function makeCountryRecord(overrides?: Partial<AdminCountryDbRecord>): AdminCoun
     color: "#112233",
     flagUrl: "/scenario-assets/demo/assets/uploads/flag.png?v=1",
     crestUrl: "/scenario-assets/demo/assets/uploads/crest.png?v=1",
+    cultureId: "culture:country:a",
+    cultureName: "Culture A",
+    cultureColor: "#4ade80",
+    cultureLogoUrl: null,
+    religionId: "religion:country:a",
+    religionName: "Religion A",
+    religionColor: "#a78bfa",
+    religionLogoUrl: null,
+    cultureGroupId: "culture_group:frontier",
+    religionGroupId: "religion_group:shrines",
+    raceId: "race:default",
     isAdmin: false,
     isLocked: false,
     blockedUntilTurn: null,
@@ -312,6 +369,18 @@ function makeLoginCountry(overrides?: Partial<AuthRegistrationCountryRecord>): A
     ...makeCountryRecord({ isRegistrationApproved: true }),
     passwordHash: "hash:password1",
     ...overrides,
+  };
+}
+
+function makeContentEntry(id: string) {
+  return {
+    id,
+    name: id,
+    description: "",
+    color: "#ffffff",
+    logoUrl: null,
+    malePortraitUrl: null,
+    femalePortraitUrl: null,
   };
 }
 

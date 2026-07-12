@@ -54,7 +54,6 @@ import {
   buildRegionAdjacencyByIdFromHexes,
   selectAiColonizationCandidates,
 } from "./ai/aiColonizationCandidates";
-import { makeCivilianUnitLedgerFlows, queueColonizerUnit } from "./mechanics/civilianUnitMechanics";
 import { selectAiEconomyOrderCandidates } from "./ai/aiEconomyCandidates";
 import { runAiOrderRuntimeCycleWithRuntimeSubmitter } from "./runtime/aiRuntimeCoordinator";
 import type { AiRuntimeCandidateProvider } from "./ai/aiRuntimePlanner";
@@ -83,13 +82,9 @@ import {
   PERSIST_STATE_DEBOUNCE_MS,
   WORLD_DELTA_LOG_PRUNE_INTERVAL_MS,
 } from "./runtime/serverRuntimeConfig";
-import {
-  DEFAULT_BATTALIONS,
-} from "./content/contentNormalizers";
 import type { GameSettings } from "./runtime/gameSettingsTypes";
 import { normalizeHexIdList } from "./runtime/marketSettingsNormalizers";
 import { createMarketSystemsRuntime } from "./runtime/marketSystemsRuntime";
-import { createMilitaryRuntimeFacade } from "./runtime/militaryRuntimeFacade";
 import { createMarketPriceRuntimeState } from "./runtime/marketPriceRuntimeState";
 import { createPopulationSystemsRuntime } from "./runtime/populationSystemsRuntime";
 import { createWorldStateNormalizerRuntime } from "./runtime/worldStateNormalizerRuntime";
@@ -109,7 +104,10 @@ import {
 } from "./uploads/uploadValidation";
 import {
   type ResourceId,
+  resolveHexStepMovementCost,
   buildCityHexIdSet,
+  type HexId,
+  type UnitDomain,
   type WorldBase,
   type WorldDelta,
 } from "@arcanorum/shared";
@@ -141,16 +139,26 @@ const mapRuntime = createMapRuntimeState(
   defaultScenarioBootstrap.mapRoot,
   defaultScenarioBootstrap.hexIndexPath,
 );
-const getHexMovementCost = (hexId: string, countryId?: string): number => {
-  const tile = mapRuntime.getHexMapArtifact()?.tiles.find((entry) => entry.id === hexId);
+const getHexMovementCost = (hexId: string, countryId?: string, fromHexId?: string, unitDomain?: UnitDomain): number => {
+  const tile = mapRuntime.getHexTileById().get(hexId);
   const baseCost = Math.max(0.001, Number(tile?.movementCost ?? 1) || 1);
-  if (!countryId || !tile) return baseCost;
+  if (!tile) return baseCost;
   const cityHexIds = buildCityHexIdSet(worldBase);
   const hexTags = cityHexIds.has(tile.id) ? ["city"] : [];
-  return Math.max(0.001, modifierFacade.resolveModifiedValue("hex_movement_cost", baseCost, {
+  const modifiedCost = countryId ? modifierFacade.resolveModifiedValue("hex_movement_cost", baseCost, {
     countryId,
     hexId,
     hexTags,
+  }) : baseCost;
+  const map = mapRuntime.getHexMapArtifact();
+  if (!map || !fromHexId || !unitDomain) return Math.max(0.001, modifiedCost);
+  return Math.max(0.001, resolveHexStepMovementCost({
+    map,
+    fromHexId: fromHexId as HexId,
+    toTile: tile,
+    domain: unitDomain,
+    baseCost: modifiedCost,
+    tileById: mapRuntime.getHexTileById() as ReadonlyMap<HexId, typeof tile>,
   }));
 };
 
@@ -239,7 +247,6 @@ const { worldPopulationRuntime } = createPopulationSystemsRuntime({
   getWorldBase: () => worldBase,
   getTurnId: () => turnId,
   getHexIndex: mapRuntime.getHexIndex,
-  getHexAreaKm2: colonizationRuntime.getHexAreaKm2,
   getHexOwner: (hexId) => worldBase.hexOwner[hexId] ?? null,
   marketPriceRuntimeState,
   getActiveCountryModifierRows: modifierFacade.getActiveCountryModifierRows,
@@ -269,13 +276,6 @@ const { worldPopulationRuntime } = createPopulationSystemsRuntime({
 
 let aiControlledCountryIds = new Set<string>();
 
-const militaryRuntimeFacade = createMilitaryRuntimeFacade({
-  getGameSettings: () => gameSettings,
-  getWorldBase: () => worldBase,
-  getTurnId: () => turnId,
-  defaultBattalions: DEFAULT_BATTALIONS,
-});
-
 registerServerCoreRouteRuntime({
   app,
   wsServerProvider: () => wss,
@@ -288,9 +288,10 @@ registerServerCoreRouteRuntime({
   countryRuntimeHelpers,
   sessionStateRuntime,
   uiNotificationRuntime,
-  militaryRuntimeFacade,
   getServerStatus: () => env.serverStatus,
   getTurnId: () => turnId,
+  getWorldBase: () => worldBase,
+  getOrdersByTurn: () => turnStateRuntime.ordersByTurn,
   getWsDeltaSizeMetrics: () => wsDeltaSizeMetrics,
   getWorldDeltaHistory: () => worldDeltaHistory,
   getWorldStateVersion: () => worldStateVersion,
@@ -441,9 +442,6 @@ const persistedStateRestoreRuntime = createPersistedStateRestoreRuntime({
   normalizeCountryEventFlagsMap: worldStateNormalizerRuntime.normalizeCountryEventFlagsMap,
   normalizeJournalEntriesMap: worldStateNormalizerRuntime.normalizeJournalEntriesMap,
   normalizeCountryModifiersMap: worldStateNormalizerRuntime.normalizeCountryModifiersMap,
-  normalizeDivisionTemplatesByCountry: militaryRuntimeFacade.normalizeDivisionTemplatesByCountry,
-  normalizeDivisionsById: militaryRuntimeFacade.normalizeDivisionsById,
-  normalizeMilitaryFormationQueueByCountry: militaryRuntimeFacade.normalizeMilitaryFormationQueueByCountry,
   normalizeDiplomacyProposals: worldStateNormalizerRuntime.normalizeDiplomacyProposals,
   rebuildTurnOrderIndexes: turnOrderRuntime.rebuildTurnOrderIndexes,
   rebuildEconomyTickCountryIndexFromWorldBase: () => countryWorldRuntime.rebuildEconomyTickCountryIndexFromWorldBase(),
@@ -580,7 +578,6 @@ const turnRuntime = createTurnRuntime({
   getOrdersByTurn: () => turnStateRuntime.ordersByTurn,
   getResolveReadyByTurn: () => turnStateRuntime.resolveReadyByTurn,
   getActiveColonizeRegionsByCountry: () => turnStateRuntime.activeColonizeRegionsByCountry,
-  refreshDivisionStatsFromTemplates: militaryRuntimeFacade.refreshDivisionStatsFromTemplates,
   getHexIndex: mapRuntime.getHexIndex,
   getEconomyTickCountryIds: () => economyTickCountryIds,
   fullSnapshotMask: TURN_RESOLVE_WORLD_DELTA_MASK,
@@ -601,35 +598,6 @@ const turnRuntime = createTurnRuntime({
       aiSettings,
       countryIds,
       candidateProviders: createAiRuntimeCandidateProviders(),
-      submitAiAction: async (draft) => {
-        if (draft.action.type !== "QUEUE_COLONIZER") {
-          return { ok: false, reason: "AI_ACTION_NOT_SUPPORTED" };
-        }
-        const previousWorldBase = worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot(
-          TURN_RESOLVE_WORLD_DELTA_MASK,
-        );
-        const result = queueColonizerUnit({
-          worldBase,
-          countryId: draft.action.countryId,
-          hexId: draft.action.hexId,
-          getHexRegionId: (hexId) => mapRuntime.getHexIndex().find((hex) => hex.id === hexId)?.regionId ?? null,
-          config: gameSettings.colonization,
-          createId: randomUUID,
-          turnId,
-        });
-        if (!result.ok) return { ok: false, reason: result.error };
-        for (const flow of makeCivilianUnitLedgerFlows({
-          countryId: draft.action.countryId,
-          queueId: result.item.id,
-          cost: result.item.cost,
-        })) {
-          resourceLedgerRuntime.addExpense(flow);
-        }
-        resourceLedgerRuntime.flushTurn();
-        persistenceFacade.savePersistentState();
-        worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase);
-        return { ok: true, submittedOrderId: result.item.id };
-      },
       runtimeParams: {
         wsServer: wss,
         onlinePlayers: sessionStateRuntime.onlinePlayers,
@@ -666,6 +634,9 @@ const turnRuntime = createTurnRuntime({
         getLastLoginAt: (countryId) => sessionStateRuntime.lastLoginAtByCountryId.get(countryId) ?? null,
         setLastLoginAt: (countryId, timestamp) => sessionStateRuntime.lastLoginAtByCountryId.set(countryId, timestamp),
         getReplayDeltasFromVersion: worldDeltaBroadcastRuntime.getReplayDeltasFromVersion,
+        cloneWorldBaseSectionSnapshot: worldDeltaBroadcastRuntime.cloneWorldBaseSectionSnapshot,
+        broadcastWorldDeltaFromSectionSnapshot: (previousWorldBase, rejectedOrders) =>
+          worldDeltaBroadcastRuntime.broadcastWorldDeltaFromSectionSnapshot(previousWorldBase as WorldBaseSectionSnapshot, rejectedOrders),
         sendPendingRegistrationNotificationsToAdminSocket:
           countryRuntimeHelpers.sendPendingRegistrationNotificationsToAdminSocket,
         broadcast: (message) => broadcast(wss, message),
@@ -686,8 +657,7 @@ const turnRuntime = createTurnRuntime({
         countBuildingOccurrences: buildingRuntime.countBuildingOccurrences,
         getCountryBuildLimit: buildingRuntime.getCountryBuildLimit,
         getGlobalBuildLimit,
-        normalizeArmyMoveRoute: turnMechanicsAdapterRuntime.normalizeArmyMoveRoute,
-        isContiguousArmyRoute: turnMechanicsAdapterRuntime.isContiguousArmyRoute,
+        areHexIdsAdjacentOrSame: marketAccessRuntime.areHexIdsAdjacentOrSame,
         getHexMovementCost,
       },
       onSubmissionError: (message) => console.warn("[ai] order rejected", message.code),
@@ -781,10 +751,8 @@ registerServerMainRouteRuntime({
   marketRuntimeFacade,
   marketAccessRuntime,
   marketPriceRuntimeState,
-  militaryRuntimeFacade,
   colonizationRuntime,
   buildingRuntime,
-  worldPopulationRuntime,
   turnOrderRuntime,
   uiNotificationRuntime,
   worldDeltaBroadcastRuntime,
@@ -871,6 +839,7 @@ registerServerInteractiveRouteRuntime({
   getGameSettings: () => gameSettings,
   getHexIndex: mapRuntime.getHexIndex,
   getHexMovementCost,
+  areHexIdsAdjacentOrSame: marketAccessRuntime.areHexIdsAdjacentOrSame,
   getAiControlledCountryIds: () => new Set(aiControlledCountryIds),
   pushAdminAuditLog: (entry) => adminAuditLogStore.push(entry),
   validateImageRule,

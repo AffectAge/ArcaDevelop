@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { HexDirection } from "@arcanorum/shared";
+import type { HexDirection, HexMapSettings, HexTile } from "@arcanorum/shared";
 import { getNeighborAxial, makeHexId } from "./hexGeometry";
 import { DEFAULT_HEX_MAP_SETTINGS, generateHexMap } from "./hexMapGenerator";
 
@@ -7,8 +7,14 @@ const TEST_SETTINGS = {
   ...DEFAULT_HEX_MAP_SETTINGS,
   width: 48,
   height: 30,
-  targetLandRegionSize: 18,
-  targetWaterRegionSize: 30,
+  generation: {
+    ...DEFAULT_HEX_MAP_SETTINGS.generation,
+    regions: {
+      ...DEFAULT_HEX_MAP_SETTINGS.generation.regions,
+      targetLandRegionSize: 18,
+      targetWaterRegionSize: 30,
+    },
+  },
 };
 
 describe("generateHexMap", () => {
@@ -19,22 +25,57 @@ describe("generateHexMap", () => {
     expect(second).toEqual(first);
   });
 
-  it("wraps X neighbors across the world edge", () => {
+  it("does not wrap X neighbors across the world edge", () => {
     const map = generateHexMap(TEST_SETTINGS);
     const neighbor = getNeighborAxial({ q: 0, r: 10 }, 3, map.settings);
 
-    expect(neighbor).toEqual({ q: map.settings.width - 1, r: 10 });
+    expect(neighbor).toBeNull();
   });
 
-  it("does not mix land and water tiles inside generated regions", () => {
+  it("keeps generated land away from rectangular map edges", () => {
     const map = generateHexMap(TEST_SETTINGS);
-    const regionKinds = new Map<string, "land" | "water">();
+    const edgeTiles = map.tiles.filter((tile) => tile.q === 0 || tile.r === 0 || tile.q === map.settings.width - 1 || tile.r === map.settings.height - 1);
 
-    for (const tile of map.tiles) {
-      const kind = tile.waterKind ? "water" : "land";
-      const existing = regionKinds.get(tile.regionId);
-      expect(existing ?? kind).toBe(kind);
-      regionKinds.set(tile.regionId, kind);
+    expect(edgeTiles.length).toBeGreaterThan(0);
+    expect(edgeTiles.every((tile) => tile.waterKind != null)).toBe(true);
+  });
+
+  it("assigns coastal water to land regions while keeping ocean regions separate", () => {
+    const map = generateHexMap(TEST_SETTINGS);
+    const landRegionIds = new Set(map.tiles.filter((tile) => tile.waterKind == null).map((tile) => tile.regionId));
+    const oceanTiles = map.tiles.filter((tile) => tile.mapTags.includes("water:ocean"));
+
+    expect(oceanTiles.length).toBeGreaterThan(0);
+    expect(oceanTiles.every((tile) => !landRegionIds.has(tile.regionId))).toBe(true);
+    expect(map.tiles.some((tile) => tile.mapTags.includes("water:coastal") && landRegionIds.has(tile.regionId))).toBe(true);
+  });
+
+  it("keeps coastal water adjacent to land instead of isolated in deep ocean", () => {
+    const map = generateHexMap(TEST_SETTINGS);
+    const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
+    const coastalWater = map.tiles.filter((tile) => tile.waterKind === "sea");
+
+    expect(coastalWater.length).toBeGreaterThan(0);
+    for (const tile of coastalWater) {
+      expect(distanceToNearestLand(tile, tileById, map.settings, 2)).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it("generates inland lakes inside landmasses", () => {
+    const map = generateHexMap({
+      ...TEST_SETTINGS,
+      seed: "inland-lakes-regression",
+      width: 72,
+      height: 44,
+    });
+    const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
+    const lakes = map.tiles.filter((tile) => tile.waterKind === "lake");
+
+    expect(lakes.length).toBeGreaterThan(0);
+    for (const lake of lakes) {
+      expect(lake.mapTags).toContain("water:lake");
+      expect(hasNeighbor(lake, tileById, map.settings, (neighbor) => neighbor.waterKind == null)).toBe(true);
+      expect(distanceToNearestOcean(lake, tileById, map.settings, 2)).toBeGreaterThan(2);
     }
   });
 
@@ -53,12 +94,48 @@ describe("generateHexMap", () => {
     }
   });
 
-  it("adds visual map metadata for biome, bands, coasts, water distance, and rivers", () => {
+  it("routes rivers downhill toward water with accumulated widths", () => {
+    const map = generateHexMap({
+      ...TEST_SETTINGS,
+      seed: "hydrology-regression",
+      width: 72,
+      height: 44,
+      generation: {
+        ...TEST_SETTINGS.generation,
+        rivers: {
+          ...TEST_SETTINGS.generation.rivers,
+          density: "many",
+        },
+      },
+    });
+    const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
+
+    expect(map.riverEdges.length).toBeGreaterThan(0);
+    expect(Math.max(...map.riverEdges.map((edge) => edge.width))).toBeGreaterThan(2);
+    expect(map.riverEdges.some((edge) => {
+      const source = tileById.get(edge.hexId);
+      const neighborAxial = source ? getNeighborAxial(source, edge.direction as HexDirection, map.settings) : null;
+      const target = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+      return target?.waterKind != null;
+    })).toBe(true);
+    for (const edge of map.riverEdges) {
+      const source = tileById.get(edge.hexId);
+      const neighborAxial = source ? getNeighborAxial(source, edge.direction as HexDirection, map.settings) : null;
+      const target = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+
+      expect(source).toBeTruthy();
+      expect(target).toBeTruthy();
+      expect(source?.waterKind ?? null).toBeNull();
+      if (!target?.waterKind) expect(target?.elevation ?? 1).toBeLessThanOrEqual((source?.elevation ?? 0) + 0.055);
+    }
+  });
+
+  it("adds visual map metadata for tags, bands, coasts, water distance, and rivers", () => {
     const map = generateHexMap(TEST_SETTINGS);
     const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
 
     for (const tile of map.tiles) {
-      expect(tile.biome).toMatch(/^(deep_ocean|coastal_water|freshwater|temperate_grassland|temperate_forest|boreal_forest|tropical_rainforest|dry_scrubland|arid_desert|alpine|tundra|swamp|coastal_wetland)$/);
+      expect(tile.mapTags.length).toBeGreaterThan(0);
       expect(tile.temperatureBand).toMatch(/^(frozen|cold|cool|temperate|warm|hot)$/);
       expect(tile.moistureBand).toMatch(/^(arid|dry|normal|wet|saturated)$/);
       expect(tile.distanceToWater).toBeGreaterThanOrEqual(0);
@@ -78,16 +155,177 @@ describe("generateHexMap", () => {
     }
   });
 
-  it("adds coast overlays around lake neighbors", () => {
+  it("adds closed-vocabulary map tags to generated tiles", () => {
     const map = generateHexMap(TEST_SETTINGS);
-    const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
-    const lakeCoast = map.coastOverlays.find((overlay) => {
-      const tile = tileById.get(overlay.hexId);
-      const neighborAxial = tile ? getNeighborAxial(tile, overlay.direction as HexDirection, map.settings) : null;
-      const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
-      return tile && !tile.waterKind && neighbor?.waterKind === "lake";
-    });
 
-    expect(lakeCoast).toBeTruthy();
+    expect(map.tiles.every((tile) => Array.isArray(tile.mapTags) && tile.mapTags.length > 0)).toBe(true);
+    expect(map.tiles.some((tile) => tile.mapTags?.includes("landmass:continent"))).toBe(true);
+    expect(map.tiles.some((tile) => tile.mapTags?.includes("continent:homeland"))).toBe(true);
+  });
+
+  it("keeps island-tagged landmasses smaller than continent landmasses", () => {
+    const map = generateHexMap({
+      ...TEST_SETTINGS,
+      seed: "island-size-regression",
+      width: 72,
+      height: 44,
+      generation: {
+        ...TEST_SETTINGS.generation,
+        landmasses: {
+          ...TEST_SETTINGS.generation.landmasses,
+          islandDensity: "high",
+          majorContinentSize: { min: 420, max: 760 },
+          islandSize: { min: 8, max: 55 },
+        },
+      },
+    });
+    const components = collectLandComponents(map);
+    const continentComponents = components.filter((component) => component.kind === "continent");
+    const islandComponents = components.filter((component) => component.kind === "island");
+    const largestContinent = Math.max(...continentComponents.map((component) => component.size));
+    const largestIsland = Math.max(0, ...islandComponents.map((component) => component.size));
+
+    expect(continentComponents.length).toBeGreaterThan(0);
+    expect(islandComponents.length).toBeGreaterThan(0);
+    expect(largestIsland).toBeLessThan(largestContinent * 0.45);
+  });
+
+  it("keeps continent seeds separated by ocean barriers on continents maps", () => {
+    const map = generateHexMap({
+      ...TEST_SETTINGS,
+      seed: "three-continents",
+      width: 96,
+      height: 56,
+      generation: {
+        ...TEST_SETTINGS.generation,
+        landmasses: {
+          ...TEST_SETTINGS.generation.landmasses,
+          majorContinents: { min: 3, max: 3 },
+          majorContinentSize: { min: 420, max: 760 },
+          islandSize: { min: 8, max: 55 },
+        },
+      },
+    });
+    const components = collectLandComponents(map);
+    const largeContinents = components.filter((component) => component.kind === "continent" && component.size >= 350);
+    const largestIsland = Math.max(0, ...components.filter((component) => component.kind === "island").map((component) => component.size));
+    const smallestLargeContinent = Math.min(...largeContinents.map((component) => component.size));
+
+    expect(largeContinents.length).toBeGreaterThanOrEqual(2);
+    expect(largestIsland).toBeLessThan(smallestLargeContinent * 0.2);
+  });
+
+  it("honors scenario-authored continent and island size ranges", () => {
+    const map = generateHexMap({
+      ...TEST_SETTINGS,
+      seed: "authored-landmass-size-ranges",
+      width: 96,
+      height: 56,
+      generation: {
+        ...TEST_SETTINGS.generation,
+        landmasses: {
+          ...TEST_SETTINGS.generation.landmasses,
+          majorContinents: { min: 3, max: 3 },
+          majorContinentSize: { min: 420, max: 760 },
+          islandDensity: "high",
+          islandSize: { min: 4, max: 35 },
+        },
+      },
+    });
+    const components = collectLandComponents(map);
+    const continents = components.filter((component) => component.kind === "continent" && component.size >= 120);
+    const islands = components.filter((component) => component.kind === "island");
+
+    expect(continents.length).toBeGreaterThanOrEqual(2);
+    expect(Math.max(...continents.map((component) => component.size))).toBeLessThan(1_200);
+    expect(Math.max(0, ...islands.map((component) => component.size))).toBeLessThan(90);
+  });
+
+  it("smoke-generates all supported map scripts", () => {
+    for (const mapScript of ["continents", "pangaea", "archipelago"] as const) {
+      const map = generateHexMap({
+        ...TEST_SETTINGS,
+        seed: `test-${mapScript}`,
+        generation: {
+          ...TEST_SETTINGS.generation,
+          mapScript,
+        },
+      });
+
+      expect(map.tiles).toHaveLength(TEST_SETTINGS.width * TEST_SETTINGS.height);
+      expect(new Set(map.tiles.map((tile) => tile.regionId)).size).toBeGreaterThan(0);
+      expect(map.tiles.some((tile) => !tile.waterKind)).toBe(true);
+      expect(map.tiles.some((tile) => tile.waterKind === "ocean")).toBe(true);
+    }
   });
 });
+
+function collectLandComponents(map: ReturnType<typeof generateHexMap>): Array<{ kind: "continent" | "island"; size: number }> {
+  const tileById = new Map(map.tiles.map((tile) => [tile.id, tile]));
+  const visited = new Set<string>();
+  const components: Array<{ kind: "continent" | "island"; size: number }> = [];
+
+  for (const start of map.tiles) {
+    if (start.waterKind || visited.has(start.id)) continue;
+    const queue = [start.id];
+    visited.add(start.id);
+    let size = 0;
+    let islandTags = 0;
+    let continentTags = 0;
+    while (queue.length > 0) {
+      const tile = tileById.get(queue.pop()!);
+      if (!tile) continue;
+      size += 1;
+      if (tile.mapTags.includes("landmass:island")) islandTags += 1;
+      if (tile.mapTags.includes("landmass:continent")) continentTags += 1;
+      for (let direction = 0; direction < 6; direction += 1) {
+        const neighborAxial = getNeighborAxial(tile, direction as HexDirection, map.settings);
+        const neighborId = neighborAxial ? makeHexId(neighborAxial.q, neighborAxial.r) : null;
+        const neighbor = neighborId ? tileById.get(neighborId) : null;
+        if (!neighbor || neighbor.waterKind || visited.has(neighbor.id)) continue;
+        visited.add(neighbor.id);
+        queue.push(neighbor.id);
+      }
+    }
+    components.push({ kind: islandTags > continentTags ? "island" : "continent", size });
+  }
+
+  return components;
+}
+
+function distanceToNearestLand(tile: HexTile, tileById: ReadonlyMap<string, HexTile>, settings: HexMapSettings, maxDistance: number): number {
+  return distanceToNearest(tile, tileById, settings, maxDistance, (candidate) => candidate.waterKind == null);
+}
+
+function distanceToNearestOcean(tile: HexTile, tileById: ReadonlyMap<string, HexTile>, settings: HexMapSettings, maxDistance: number): number {
+  return distanceToNearest(tile, tileById, settings, maxDistance, (candidate) => candidate.waterKind === "ocean" || candidate.waterKind === "sea");
+}
+
+function distanceToNearest(tile: HexTile, tileById: ReadonlyMap<string, HexTile>, settings: HexMapSettings, maxDistance: number, predicate: (tile: HexTile) => boolean): number {
+  let frontier: HexTile[] = [tile];
+  const visited = new Set<string>([tile.id]);
+  for (let distance = 1; distance <= maxDistance; distance += 1) {
+    const next: HexTile[] = [];
+    for (const current of frontier) {
+      for (let direction = 0; direction < 6; direction += 1) {
+        const neighborAxial = getNeighborAxial(current, direction as HexDirection, settings);
+        const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+        if (!neighbor || visited.has(neighbor.id)) continue;
+        if (predicate(neighbor)) return distance;
+        visited.add(neighbor.id);
+        next.push(neighbor);
+      }
+    }
+    frontier = next;
+  }
+  return maxDistance + 1;
+}
+
+function hasNeighbor(tile: HexTile, tileById: ReadonlyMap<string, HexTile>, settings: HexMapSettings, predicate: (tile: HexTile) => boolean): boolean {
+  for (let direction = 0; direction < 6; direction += 1) {
+    const neighborAxial = getNeighborAxial(tile, direction as HexDirection, settings);
+    const neighbor = neighborAxial ? tileById.get(makeHexId(neighborAxial.q, neighborAxial.r)) : null;
+    if (neighbor && predicate(neighbor)) return true;
+  }
+  return false;
+}

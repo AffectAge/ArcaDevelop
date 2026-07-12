@@ -1,7 +1,7 @@
 import type { Order, WorldBase } from "@arcanorum/shared";
 
 export type CountryDeletionAssetRef = {
-  kind: "flag" | "crest";
+  kind: "flag" | "crest" | "cultureLogo" | "religionLogo";
   url: string;
 };
 
@@ -14,12 +14,6 @@ export type CountryDeletionPlan = {
   constructionQueueHexIds: string[];
   constructionProjectIds: string[];
   diplomacyProposalIds: string[];
-  divisionIds: string[];
-  fleetIds: string[];
-  airWingIds: string[];
-  divisionTemplateCountryEntry: boolean;
-  militaryFormationQueueEntry: boolean;
-  militaryFormationQueueItemIds: string[];
   technologyEntry: boolean;
   parliamentEntry: boolean;
   decisionEntry: boolean;
@@ -40,6 +34,8 @@ export function planCountryDeletion(params: {
   resolveReadyByTurn?: Map<number, Set<string>>;
   flagUrl?: string | null;
   crestUrl?: string | null;
+  cultureLogoUrl?: string | null;
+  religionLogoUrl?: string | null;
 }): CountryDeletionPlan {
   const { countryId, worldBase } = params;
   const colonizationHexIds: string[] = [];
@@ -77,23 +73,6 @@ export function planCountryDeletion(params: {
       .filter((proposal) => proposal.fromCountryId === countryId || proposal.toCountryId === countryId)
       .map((proposal) => proposal.id)
       .sort((a, b) => a.localeCompare(b, "en")),
-    divisionIds: Object.values(worldBase.divisionsById)
-      .filter((division) => division.countryId === countryId)
-      .map((division) => division.id)
-      .sort((a, b) => a.localeCompare(b, "en")),
-    fleetIds: Object.values(worldBase.fleetsById)
-      .filter((fleet) => fleet.countryId === countryId)
-      .map((fleet) => fleet.id)
-      .sort((a, b) => a.localeCompare(b, "en")),
-    airWingIds: Object.values(worldBase.airWingsById)
-      .filter((airWing) => airWing.countryId === countryId)
-      .map((airWing) => airWing.id)
-      .sort((a, b) => a.localeCompare(b, "en")),
-    divisionTemplateCountryEntry: countryId in worldBase.divisionTemplatesByCountry,
-    militaryFormationQueueEntry: countryId in worldBase.militaryFormationQueueByCountry,
-    militaryFormationQueueItemIds: (worldBase.militaryFormationQueueByCountry[countryId] ?? [])
-      .map((item) => item.id)
-      .sort((a, b) => a.localeCompare(b, "en")),
     technologyEntry: countryId in worldBase.technologyByCountry,
     parliamentEntry: countryId in worldBase.parliamentByCountry,
     decisionEntry: countryId in worldBase.countryDecisionsByCountryId,
@@ -104,7 +83,7 @@ export function planCountryDeletion(params: {
     countryModifiersEntry: countryId in worldBase.countryModifiersByCountryId,
     orderTurns: collectOrderTurns(countryId, params.ordersByTurn),
     resolveReadyTurns: collectResolveReadyTurns(countryId, params.resolveReadyByTurn),
-    assetRefs: collectAssetRefs(params.flagUrl, params.crestUrl),
+    assetRefs: collectAssetRefs(params.flagUrl, params.crestUrl, params.cultureLogoUrl, params.religionLogoUrl),
   };
 }
 
@@ -124,9 +103,16 @@ function collectResolveReadyTurns(countryId: string, resolveReadyByTurn: Map<num
     .sort((a, b) => a - b);
 }
 
-function collectAssetRefs(flagUrl: string | null | undefined, crestUrl: string | null | undefined): CountryDeletionAssetRef[] {
+function collectAssetRefs(
+  flagUrl: string | null | undefined,
+  crestUrl: string | null | undefined,
+  cultureLogoUrl: string | null | undefined,
+  religionLogoUrl: string | null | undefined,
+): CountryDeletionAssetRef[] {
   const refs: CountryDeletionAssetRef[] = [];
   if (flagUrl) refs.push({ kind: "flag", url: flagUrl });
   if (crestUrl) refs.push({ kind: "crest", url: crestUrl });
+  if (cultureLogoUrl) refs.push({ kind: "cultureLogo", url: cultureLogoUrl });
+  if (religionLogoUrl) refs.push({ kind: "religionLogo", url: religionLogoUrl });
   return refs;
 }

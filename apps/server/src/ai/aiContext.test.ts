@@ -49,7 +49,6 @@ describe("AI context builder", () => {
       controlledRegionIds: ["region:alpha-core"],
       constructionProjectCount: 1,
       diplomacyProposalCount: 0,
-      divisionCount: 0,
     });
     expect(context.regions).toEqual([
       {
@@ -80,7 +79,6 @@ describe("AI context builder", () => {
       regions: [],
       constructionProjectCount: 0,
       diplomacyProposalCount: 0,
-      divisionCount: 0,
     });
   });
 });

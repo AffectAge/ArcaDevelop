@@ -34,6 +34,7 @@ describe("map lens settings", () => {
       regionFill: true,
       features: true,
       buildings: true,
+      resources: true,
       armies: true,
       countryLabels: true,
     });

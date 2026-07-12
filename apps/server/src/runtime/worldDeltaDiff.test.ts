@@ -5,6 +5,7 @@ import {
   buildCompactWorldDelta,
   buildBaselineWorldDeltaPayload,
   buildWorldDeltaPayload,
+  cloneDirtyWorldBaseSectionSnapshot,
   cloneWorldBaseSectionSnapshot,
   isEqualBuildingInstances,
   isEqualConstructionQueue,
@@ -114,9 +115,41 @@ describe("worldDeltaDiff", () => {
     expect(compact.f).toEqual({ "region:a": "country:a" });
   });
 
-  it("groups civilian, settlement, city, and equipment changes under unit equipment delta mask", () => {
+  it("groups map unit, civilian, settlement, city, and training changes under unit state delta mask", () => {
     const prev = makeWorldBase();
     const next = makeWorldBase({
+      unitsById: {
+        "unit:a": {
+          id: "unit:a",
+          unitTypeId: "unit:warrior",
+          countryId: "country:a",
+          hexId: "hex:0:0",
+          hp: 100,
+          movementPoints: 2,
+          experience: 0,
+          status: "idle",
+          path: [],
+          targetHexId: null,
+          createdTurnId: 1,
+          lastActionTurnId: null,
+        },
+      },
+      unitTrainingQueueByCountry: {
+        "country:a": [
+          {
+            id: "unit-training:a",
+            countryId: "country:a",
+            unitTypeId: "unit:warrior",
+            regionId: "region:a",
+            hexId: "hex:0:0",
+            progress: 0,
+            turnsTotal: 2,
+            turnsRemaining: 2,
+            cost: { construction: 10 },
+            createdTurnId: 1,
+          },
+        ],
+      },
       civilianUnitsById: {
         "civilian:a": {
           id: "civilian:a",
@@ -159,64 +192,6 @@ describe("worldDeltaDiff", () => {
           createdTurnId: 1,
         },
       },
-      equipmentVariantsById: {
-        "equipment:a": {
-          id: "equipment:a",
-          countryId: "country:a",
-          classId: "equipment-class:infantry",
-          name: "Infantry Kit",
-          moduleIdsBySlotId: { weapon: "module:rifle" },
-          stats: { attack: 1 },
-          goodsCost: [{ goodId: "good:iron", amount: 1 }],
-          createdTurnId: 1,
-        },
-      },
-      equipmentProductionLinesByCountry: {
-        "country:a": [
-          {
-            id: "line:a",
-            countryId: "country:a",
-            equipmentVariantId: "equipment:a",
-            assignedCapacity: 1,
-            progress: 0,
-            active: true,
-            createdTurnId: 1,
-          },
-        ],
-      },
-      equipmentStockpileByCountry: { "country:a": { "equipment:a": 3 } },
-      fleetsById: {
-        "fleet:a": {
-          id: "fleet:a",
-          countryId: "country:a",
-          templateId: "template:navy",
-          name: "First Fleet",
-          hexId: "hex:0:0",
-          strength: 1,
-          organization: 10,
-          stats: { manpower: 100, attack: 1, defense: 1, breakthrough: 0, organization: 10, hp: 10, speed: 3, supplyUse: 1 },
-          status: "idle",
-          path: [],
-          targetHexId: null,
-          createdTurnId: 1,
-        },
-      },
-      airWingsById: {
-        "air-wing:a": {
-          id: "air-wing:a",
-          countryId: "country:a",
-          templateId: "template:air",
-          name: "First Air Wing",
-          baseHexId: "hex:0:0",
-          strength: 1,
-          organization: 10,
-          stats: { manpower: 100, attack: 1, defense: 1, breakthrough: 0, organization: 10, hp: 10, speed: 3, supplyUse: 1 },
-          status: "idle",
-          mission: "none",
-          targetRegionId: null,
-          createdTurnId: 1,
-        },
-      },
     });
 
     const compact = buildCompactWorldDelta({
@@ -225,15 +200,12 @@ describe("worldDeltaDiff", () => {
       isEqualRegionPopulation: (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b),
     });
 
-    expect(compact.mask).toBe(WORLD_DELTA_MASK.unitEquipmentState);
+    expect(compact.mask).toBe(WORLD_DELTA_MASK.unitState);
+    expect(compact.mu?.["unit:a"]?.unitTypeId).toBe("unit:warrior");
+    expect(compact.uq?.["country:a"]?.[0]?.unitTypeId).toBe("unit:warrior");
     expect(compact.cu?.["civilian:a"]?.type).toBe("colonizer");
     expect(compact.sp?.["settlement:a"]?.visualState).toBe("underConstruction");
     expect(compact.ci?.["city:a"]?.visualState).toBe("working");
-    expect(compact.ev?.["equipment:a"]?.stats.attack).toBe(1);
-    expect(compact.el?.["country:a"]?.[0]?.equipmentVariantId).toBe("equipment:a");
-    expect(compact.es?.["country:a"]).toEqual({ "equipment:a": 3 });
-    expect(compact.fl?.["fleet:a"]?.name).toBe("First Fleet");
-    expect(compact.aw?.["air-wing:a"]?.baseHexId).toBe("hex:0:0");
   });
 
   it("diffs explanation records by turn with compact xr payload", () => {
@@ -267,6 +239,47 @@ describe("worldDeltaDiff", () => {
 
     expect(compact.mask).toBe(WORLD_DELTA_MASK.explanationRecordsByTurn);
     expect(compact.xr).toEqual(next.explanationRecordsByTurn);
+  });
+
+  it("does not emit unchanged ledger and explanation records", () => {
+    const flow = makeResourceFlow({ amount: 5 });
+    const explanation = {
+      id: "explanation:test",
+      turnId: 5,
+      sourceSystem: "event" as const,
+      sourceId: "event:test",
+      affectedObject: { kind: "country" as const, id: "country:a" },
+      valueKey: "resource.science",
+      previousValue: 1,
+      newValue: 3,
+      causes: [{ labelKey: "resourceLedger.source.generic", sourceId: "option:test", amount: 2 }],
+      modifierIds: [],
+    };
+    const prev = makeWorldBase({
+      resourceLedgerByTurn: { 5: [flow] },
+      explanationRecordsByTurn: { 5: [explanation] },
+    });
+    const next = makeWorldBase({
+      resourceLedgerByTurn: { 5: [structuredClone(flow)] },
+      explanationRecordsByTurn: { 5: [structuredClone(explanation)] },
+    });
+
+    const unchanged = buildCompactWorldDelta({
+      prev,
+      next,
+      isEqualRegionPopulation: (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b),
+    });
+    expect(unchanged.l).toBeUndefined();
+    expect(unchanged.xr).toBeUndefined();
+
+    next.resourceLedgerByTurn[5] = [makeResourceFlow({ amount: 6 })];
+    const changed = buildCompactWorldDelta({
+      prev,
+      next,
+      isEqualRegionPopulation: (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b),
+    });
+    expect(changed.mask & WORLD_DELTA_MASK.resourceLedgerByTurn).toBeTruthy();
+    expect(changed.l).toEqual({ 5: next.resourceLedgerByTurn[5] });
   });
 
   it("diffs country applied modifiers with compact cm payload", () => {
@@ -424,6 +437,30 @@ describe("worldDeltaDiff", () => {
     expect(snapshot.hexNameById).toBeUndefined();
   });
 
+  it("clones only dirty requested world sections", () => {
+    const worldBase = makeWorldBase({
+      resourcesByCountry: { "country:a": makeResources({ ducats: 3 }) },
+      hexOwner: { "province:a": "country:a" },
+      hexNameById: { "province:a": "Praha" },
+    });
+
+    const snapshot = cloneDirtyWorldBaseSectionSnapshot({
+      worldBase,
+      turnId: 4,
+      requestedMask: WORLD_DELTA_MASK.resourcesByCountry | WORLD_DELTA_MASK.hexOwner | WORLD_DELTA_MASK.hexNameById,
+      dirtyMask: WORLD_DELTA_MASK.hexOwner,
+    });
+
+    worldBase.resourcesByCountry["country:a"]!.ducats = 99;
+    worldBase.hexOwner["province:a"] = "country:b";
+    worldBase.hexNameById["province:a"] = "Praha Updated";
+
+    expect(snapshot.mask).toBe(WORLD_DELTA_MASK.hexOwner);
+    expect(snapshot.hexOwner).toEqual({ "province:a": "country:a" });
+    expect(snapshot.resourcesByCountry).toBeUndefined();
+    expect(snapshot.hexNameById).toBeUndefined();
+  });
+
   it("builds websocket compact and baseline delta payloads from compact diff", () => {
     const compact = {
       mask: WORLD_DELTA_MASK.resourcesByCountry,
@@ -510,7 +547,7 @@ describe("worldDeltaDiff", () => {
       c: { "country:a": makeResources({ ducats: 8 }) },
       rejectedOrders,
     });
-    expect(prepared.baselinePayload.changes.resourcesByCountry).toEqual({
+    expect(prepared.baselinePayload!.changes.resourcesByCountry).toEqual({
       "country:a": makeResources({ ducats: 8 }),
     });
   });
@@ -576,8 +613,27 @@ function makePop(overrides?: Partial<PopulationPop>): PopulationPop {
     cultureId: "culture:a",
     religionId: "religion:a",
     raceId: "race:a",
+    professionId: "profession:unemployed",
+    literacy: 0,
+    ducats: 0,
+    standardOfLiving: 8,
+    radicals: 0,
+    loyalists: 0,
+    qualificationsByCategory: {},
     ideologies: {},
-    professions: {},
+    lastIncomeDucats: 0,
+    lastNeedsSpendDucats: 0,
+    lastNeedsSatisfaction: 1,
+    lastNeedsByCategory: {},
+    lastNeedsDeficitByGood: {},
+    lastNeedsBudgetShortageByGood: {},
+    lastBirths: 0,
+    lastDeaths: 0,
+    lastEmployed: 0,
+    lastOpenJobs: 0,
+    lastQualificationLimit: 0,
+    lastDiscriminationPenalty: 0,
+    politicalStrength: 0,
     ...overrides,
   };
 }
@@ -607,18 +663,10 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     countryScheduledEventsByCountryId: {},
     countryEventFlagsByCountryId: {},
     journalEntriesByCountryId: {},
-    divisionTemplatesByCountry: {},
-    divisionsById: {},
-    fleetsById: {},
-    airWingsById: {},
-    militaryFormationQueueByCountry: {},
     civilianUnitsById: {},
     civilianUnitQueueByCountry: {},
     settlementProjectsById: {},
     cityMarkersById: {},
-    equipmentVariantsById: {},
-    equipmentProductionLinesByCountry: {},
-    equipmentStockpileByCountry: {},
     diplomacyProposals: [],
     ...overrides,
     countryModifiersByCountryId: overrides?.countryModifiersByCountryId ?? {},
@@ -636,6 +684,22 @@ function makeResources(overrides?: Partial<WorldBase["resourcesByCountry"][strin
     construction: 0,
     ducats: 0,
     gold: 0,
+    ...overrides,
+  };
+}
+
+function makeResourceFlow(overrides?: Partial<WorldBase["resourceLedgerByTurn"][number][number]>): WorldBase["resourceLedgerByTurn"][number][number] {
+  return {
+    id: "flow:test",
+    turnId: 5,
+    countryId: "country:a",
+    resourceId: "science",
+    direction: "income",
+    amount: 5,
+    sourceType: "event",
+    sourceId: "event:test",
+    categoryId: "events",
+    labelKey: "resourceLedger.source.event",
     ...overrides,
   };
 }

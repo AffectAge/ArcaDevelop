@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { HexMapArtifact, HexTile, WorldBase } from "@arcanorum/shared";
+import { DEFAULT_HEX_MAP_SETTINGS, type HexMapArtifact, type HexTile, type WorldBase } from "@arcanorum/shared";
 import { axialToPixel } from "./hexGeometry";
 import { resolvePainterlyTerrainZoomDetail } from "./hexTerrainMeshRenderer";
 import { buildCountryLabelSpecs, resolveLensTerrainBaseAlpha, resolveLensTerritoryFillAlpha, resolveLensVeilAlpha } from "./hexMapLensOverlayRenderer";
@@ -15,9 +15,6 @@ const tile: HexTile = {
   r: 0,
   chunkId: "hex-chunk:0:0",
   regionId: "region:land:1",
-  terrain: "grassland",
-  biome: "temperate_grassland",
-  feature: "none",
   elevation: 0.5,
   moisture: 0.5,
   temperature: 0.5,
@@ -30,25 +27,19 @@ const tile: HexTile = {
   movementCost: 1,
   passable: true,
   waterKind: null,
+  mapTags: ["biome:grassland", "morphology:flat"],
 };
 
 const map: HexMapArtifact = {
   version: 1,
   settings: {
+    ...DEFAULT_HEX_MAP_SETTINGS,
     seed: "test",
     width: 1,
     height: 1,
-    wrapX: true,
+    wrapX: false,
     hexSize: 24,
     chunkSize: 16,
-    seaLevel: 0.42,
-    temperature: 0.5,
-    moisture: 0.5,
-    mountains: 0.4,
-    rivers: 0.35,
-    forests: 0.45,
-    targetLandRegionSize: 40,
-    targetWaterRegionSize: 90,
   },
   tiles: [tile],
   riverEdges: [],
@@ -67,9 +58,8 @@ const seaTile: HexTile = {
   id: "hex:0:1",
   r: 1,
   regionId: "region:water:1",
-  terrain: "sea",
-  biome: "coastal_water",
   waterKind: "sea",
+  mapTags: ["water:coastal", "feature:aquatic"],
 };
 
 const adjacentMap: HexMapArtifact = {
@@ -282,18 +272,10 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     countryEventFlagsByCountryId: {},
     journalEntriesByCountryId: {},
     countryModifiersByCountryId: {},
-    divisionTemplatesByCountry: {},
-    divisionsById: {},
-    fleetsById: {},
-    airWingsById: {},
-    militaryFormationQueueByCountry: {},
     civilianUnitsById: {},
     civilianUnitQueueByCountry: {},
     settlementProjectsById: {},
     cityMarkersById: {},
-    equipmentVariantsById: {},
-    equipmentProductionLinesByCountry: {},
-    equipmentStockpileByCountry: {},
     diplomacyProposals: [],
     ...overrides,
   };

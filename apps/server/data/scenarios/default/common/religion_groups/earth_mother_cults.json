@@ -1,0 +1,23 @@
+{
+  "id": "religion_group:earth_mother_cults",
+  "nameKey": "religionGroup.earthMotherCults.name",
+  "descriptionKey": "religionGroup.earthMotherCults.description",
+  "color": "#84cc16",
+  "modifiers": [
+    {
+      "id": "fertility_festivals",
+      "label": "Fertility festivals",
+      "scope": "country",
+      "effects": [
+        { "stat": "gold_gain", "mode": "add", "value": 1 },
+        { "stat": "culture_gain", "mode": "add", "value": 1 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.09,
+    "standardOfLiving": 9,
+    "loyalists": 20,
+    "ideologies": { "ideology:default": 1 }
+  }
+}

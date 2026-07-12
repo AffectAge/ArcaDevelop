@@ -1,10 +1,5 @@
 import type {
   BuildingInstance,
-  AirWing,
-  Division,
-  DivisionTemplate,
-  Fleet,
-  MilitaryFormationQueueItem,
   RegionConstructionProject,
   RegionPopulation,
   RegionResourceDeposit,
@@ -14,6 +9,7 @@ import type {
   WorldDelta,
 } from "@arcanorum/shared";
 import { WORLD_DELTA_MASK } from "@arcanorum/shared";
+import { getDirtySnapshotMask } from "./worldDeltaDirtyTracker";
 
 export type CompactWorldDeltaPayload = Omit<WorldDelta, "type" | "turnId" | "worldStateVersion" | "rejectedOrders">;
 
@@ -47,18 +43,12 @@ export type BaselineWorldDeltaPayload = {
     countryEventFlagsByCountryId?: WorldDelta["xg"];
     journalEntriesByCountryId?: WorldDelta["jo"];
     countryModifiersByCountryId?: WorldDelta["cm"];
-    divisionTemplatesByCountry?: WorldDelta["g"];
-    divisionsById?: WorldDelta["x"];
-    militaryFormationQueueByCountry?: WorldDelta["w"];
-    fleetsById?: WorldDelta["fl"];
-    airWingsById?: WorldDelta["aw"];
+    unitsById?: WorldDelta["mu"];
+    unitTrainingQueueByCountry?: WorldDelta["uq"];
     civilianUnitsById?: WorldDelta["cu"];
     civilianUnitQueueByCountry?: WorldDelta["cq"];
     settlementProjectsById?: WorldDelta["sp"];
     cityMarkersById?: WorldDelta["ci"];
-    equipmentVariantsById?: WorldDelta["ev"];
-    equipmentProductionLinesByCountry?: WorldDelta["el"];
-    equipmentStockpileByCountry?: WorldDelta["es"];
     diplomacyProposals?: WorldDelta["j"];
   };
   rejectedOrders: WorldDelta["rejectedOrders"];
@@ -100,18 +90,12 @@ export function buildWorldDeltaPayload(params: {
     xg: params.compact.xg,
     jo: params.compact.jo,
     cm: params.compact.cm,
-    g: params.compact.g,
-    x: params.compact.x,
-    w: params.compact.w,
-    fl: params.compact.fl,
-    aw: params.compact.aw,
+    mu: params.compact.mu,
+    uq: params.compact.uq,
     cu: params.compact.cu,
     cq: params.compact.cq,
     sp: params.compact.sp,
     ci: params.compact.ci,
-    ev: params.compact.ev,
-    el: params.compact.el,
-    es: params.compact.es,
     j: params.compact.j,
     rejectedOrders: params.rejectedOrders,
   };
@@ -153,18 +137,12 @@ export function buildBaselineWorldDeltaPayload(params: {
       countryEventFlagsByCountryId: params.compact.xg,
       journalEntriesByCountryId: params.compact.jo,
       countryModifiersByCountryId: params.compact.cm,
-      divisionTemplatesByCountry: params.compact.g,
-      divisionsById: params.compact.x,
-      militaryFormationQueueByCountry: params.compact.w,
-      fleetsById: params.compact.fl,
-      airWingsById: params.compact.aw,
+      unitsById: params.compact.mu,
+      unitTrainingQueueByCountry: params.compact.uq,
       civilianUnitsById: params.compact.cu,
       civilianUnitQueueByCountry: params.compact.cq,
       settlementProjectsById: params.compact.sp,
       cityMarkersById: params.compact.ci,
-      equipmentVariantsById: params.compact.ev,
-      equipmentProductionLinesByCountry: params.compact.el,
-      equipmentStockpileByCountry: params.compact.es,
       diplomacyProposals: params.compact.j,
     },
     rejectedOrders: params.rejectedOrders,
@@ -199,20 +177,30 @@ export type WorldBaseSectionSnapshot = {
   countryEventFlagsByCountryId?: WorldBase["countryEventFlagsByCountryId"];
   journalEntriesByCountryId?: WorldBase["journalEntriesByCountryId"];
   countryModifiersByCountryId?: WorldBase["countryModifiersByCountryId"];
-  divisionTemplatesByCountry?: WorldBase["divisionTemplatesByCountry"];
-  divisionsById?: WorldBase["divisionsById"];
-  militaryFormationQueueByCountry?: WorldBase["militaryFormationQueueByCountry"];
-  fleetsById?: WorldBase["fleetsById"];
-  airWingsById?: WorldBase["airWingsById"];
+  unitsById?: WorldBase["unitsById"];
+  unitTrainingQueueByCountry?: WorldBase["unitTrainingQueueByCountry"];
   civilianUnitsById?: WorldBase["civilianUnitsById"];
   civilianUnitQueueByCountry?: WorldBase["civilianUnitQueueByCountry"];
   settlementProjectsById?: WorldBase["settlementProjectsById"];
   cityMarkersById?: WorldBase["cityMarkersById"];
-  equipmentVariantsById?: WorldBase["equipmentVariantsById"];
-  equipmentProductionLinesByCountry?: WorldBase["equipmentProductionLinesByCountry"];
-  equipmentStockpileByCountry?: WorldBase["equipmentStockpileByCountry"];
   diplomacyProposals?: WorldBase["diplomacyProposals"];
 };
+
+export function cloneDirtyWorldBaseSectionSnapshot(params: {
+  worldBase: WorldBase;
+  turnId: number;
+  requestedMask: number;
+  dirtyMask: number;
+}): WorldBaseSectionSnapshot {
+  return cloneWorldBaseSectionSnapshot({
+    worldBase: params.worldBase,
+    turnId: params.turnId,
+    mask: getDirtySnapshotMask({
+      requestedMask: params.requestedMask,
+      dirtyMask: params.dirtyMask,
+    }),
+  });
+}
 
 export function cloneWorldBaseSectionSnapshot(params: {
   worldBase: WorldBase;
@@ -304,25 +292,13 @@ export function cloneWorldBaseSectionSnapshot(params: {
   if ((mask & WORLD_DELTA_MASK.countryModifiersByCountryId) !== 0) {
     snapshot.countryModifiersByCountryId = structuredClone(worldBase.countryModifiersByCountryId);
   }
-  if ((mask & WORLD_DELTA_MASK.divisionTemplatesByCountry) !== 0) {
-    snapshot.divisionTemplatesByCountry = structuredClone(worldBase.divisionTemplatesByCountry);
-  }
-  if ((mask & WORLD_DELTA_MASK.divisionsById) !== 0) {
-    snapshot.divisionsById = structuredClone(worldBase.divisionsById);
-  }
-  if ((mask & WORLD_DELTA_MASK.militaryFormationQueueByCountry) !== 0) {
-    snapshot.militaryFormationQueueByCountry = structuredClone(worldBase.militaryFormationQueueByCountry);
-  }
-  if ((mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0) {
-    snapshot.fleetsById = structuredClone(worldBase.fleetsById);
-    snapshot.airWingsById = structuredClone(worldBase.airWingsById);
+  if ((mask & WORLD_DELTA_MASK.unitState) !== 0) {
+    snapshot.unitsById = structuredClone(worldBase.unitsById ?? {});
+    snapshot.unitTrainingQueueByCountry = structuredClone(worldBase.unitTrainingQueueByCountry ?? {});
     snapshot.civilianUnitsById = structuredClone(worldBase.civilianUnitsById);
     snapshot.civilianUnitQueueByCountry = structuredClone(worldBase.civilianUnitQueueByCountry);
     snapshot.settlementProjectsById = structuredClone(worldBase.settlementProjectsById);
     snapshot.cityMarkersById = structuredClone(worldBase.cityMarkersById);
-    snapshot.equipmentVariantsById = structuredClone(worldBase.equipmentVariantsById);
-    snapshot.equipmentProductionLinesByCountry = structuredClone(worldBase.equipmentProductionLinesByCountry);
-    snapshot.equipmentStockpileByCountry = structuredClone(worldBase.equipmentStockpileByCountry);
   }
   if ((mask & WORLD_DELTA_MASK.diplomacyProposals) !== 0) {
     snapshot.diplomacyProposals = structuredClone(worldBase.diplomacyProposals);
@@ -337,7 +313,8 @@ export type PreparedWorldDeltaBroadcast =
       ok: true;
       nextWorldStateVersion: number;
       payload: WorldDelta;
-      baselinePayload: BaselineWorldDeltaPayload;
+      baselinePayload?: BaselineWorldDeltaPayload;
+      buildBaselinePayload: () => BaselineWorldDeltaPayload;
     };
 
 export function prepareWorldDeltaBroadcast(params: {
@@ -347,6 +324,7 @@ export function prepareWorldDeltaBroadcast(params: {
   currentWorldStateVersion: number;
   rejectedOrders: WorldDelta["rejectedOrders"];
   isEqualRegionPopulation: (prevValue: RegionPopulation | undefined, nextValue: RegionPopulation) => boolean;
+  buildBaselinePayload?: boolean;
 }): PreparedWorldDeltaBroadcast {
   const prevForDiff = toWorldBaseForDeltaDiff(params.previous, params.next);
   const compact = buildCompactWorldDelta({
@@ -359,6 +337,12 @@ export function prepareWorldDeltaBroadcast(params: {
   }
 
   const nextWorldStateVersion = params.currentWorldStateVersion + 1;
+  const buildBaselinePayload = () => buildBaselineWorldDeltaPayload({
+    turnId: params.turnId,
+    worldStateVersion: nextWorldStateVersion,
+    compact,
+    rejectedOrders: params.rejectedOrders,
+  });
   return {
     ok: true,
     nextWorldStateVersion,
@@ -368,12 +352,8 @@ export function prepareWorldDeltaBroadcast(params: {
       compact,
       rejectedOrders: params.rejectedOrders,
     }),
-    baselinePayload: buildBaselineWorldDeltaPayload({
-      turnId: params.turnId,
-      worldStateVersion: nextWorldStateVersion,
-      compact,
-      rejectedOrders: params.rejectedOrders,
-    }),
+    baselinePayload: params.buildBaselinePayload === false ? undefined : buildBaselinePayload(),
+    buildBaselinePayload,
   };
 }
 
@@ -408,19 +388,13 @@ export function buildCompactWorldDelta(params: {
   const countryEventFlagsByCountryId: Record<string, WorldBase["countryEventFlagsByCountryId"][string] | null> = {};
   const journalEntriesByCountryId: Record<string, WorldBase["journalEntriesByCountryId"][string] | null> = {};
   const countryModifiersByCountryId: Record<string, WorldBase["countryModifiersByCountryId"][string] | null> = {};
-  const divisionTemplatesByCountry: Record<string, DivisionTemplate[] | null> = {};
-  const divisionsById: Record<string, Division | null> = {};
-  const militaryFormationQueueByCountry: Record<string, MilitaryFormationQueueItem[] | null> = {};
-  const fleetsById: Record<string, Fleet | null> = {};
-  const airWingsById: Record<string, AirWing | null> = {};
+  const unitsById: WorldDelta["mu"] = {};
+  const unitTrainingQueueByCountry: WorldDelta["uq"] = {};
   const civilianUnitsById: WorldDelta["cu"] = {};
   const civilianUnitQueueByCountry: WorldDelta["cq"] = {};
   const settlementProjectsById: WorldDelta["sp"] = {};
   const cityMarkersById: WorldDelta["ci"] = {};
-  const equipmentVariantsById: WorldDelta["ev"] = {};
-  const equipmentProductionLinesByCountry: WorldDelta["el"] = {};
-  const equipmentStockpileByCountry: WorldDelta["es"] = {};
-  const diplomacyProposalsChanged = JSON.stringify(prev.diplomacyProposals ?? []) !== JSON.stringify(next.diplomacyProposals ?? []);
+  const diplomacyProposalsChanged = !isJsonEquivalent(prev.diplomacyProposals ?? [], next.diplomacyProposals ?? []);
 
   for (const key of new Set([...Object.keys(prev.resourcesByCountry), ...Object.keys(next.resourcesByCountry)])) {
     const prevValue = prev.resourcesByCountry[key];
@@ -451,7 +425,7 @@ export function buildCompactWorldDelta(params: {
       resourceLedgerByTurn[turnId] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       resourceLedgerByTurn[turnId] = nextValue;
     }
   }
@@ -464,7 +438,7 @@ export function buildCompactWorldDelta(params: {
       explanationRecordsByTurn[turnId] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       explanationRecordsByTurn[turnId] = nextValue;
     }
   }
@@ -659,7 +633,7 @@ export function buildCompactWorldDelta(params: {
       parliamentByCountry[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       parliamentByCountry[key] = nextValue;
     }
   }
@@ -670,7 +644,7 @@ export function buildCompactWorldDelta(params: {
       technologyByCountry[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       technologyByCountry[key] = nextValue;
     }
   }
@@ -681,7 +655,7 @@ export function buildCompactWorldDelta(params: {
       countryDecisionsByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       countryDecisionsByCountryId[key] = nextValue;
     }
   }
@@ -692,7 +666,7 @@ export function buildCompactWorldDelta(params: {
       countryEventsByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       countryEventsByCountryId[key] = nextValue;
     }
   }
@@ -708,7 +682,7 @@ export function buildCompactWorldDelta(params: {
       countryScheduledEventsByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       countryScheduledEventsByCountryId[key] = nextValue;
     }
   }
@@ -724,7 +698,7 @@ export function buildCompactWorldDelta(params: {
       countryEventFlagsByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       countryEventFlagsByCountryId[key] = nextValue;
     }
   }
@@ -740,7 +714,7 @@ export function buildCompactWorldDelta(params: {
       journalEntriesByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       journalEntriesByCountryId[key] = nextValue;
     }
   }
@@ -756,56 +730,16 @@ export function buildCompactWorldDelta(params: {
       countryModifiersByCountryId[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       countryModifiersByCountryId[key] = nextValue;
     }
   }
-  for (const key of new Set([...Object.keys(prev.divisionTemplatesByCountry), ...Object.keys(next.divisionTemplatesByCountry)])) {
-    const prevValue = prev.divisionTemplatesByCountry[key];
-    const nextValue = next.divisionTemplatesByCountry[key];
-    if (!nextValue) {
-      divisionTemplatesByCountry[key] = null;
-      continue;
-    }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
-      divisionTemplatesByCountry[key] = nextValue;
-    }
-  }
-  for (const key of new Set([...Object.keys(prev.divisionsById), ...Object.keys(next.divisionsById)])) {
-    const prevValue = prev.divisionsById[key];
-    const nextValue = next.divisionsById[key];
-    if (!nextValue) {
-      divisionsById[key] = null;
-      continue;
-    }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
-      divisionsById[key] = nextValue;
-    }
-  }
-  for (const key of new Set([...Object.keys(prev.militaryFormationQueueByCountry), ...Object.keys(next.militaryFormationQueueByCountry)])) {
-    const prevValue = prev.militaryFormationQueueByCountry[key];
-    const nextValue = next.militaryFormationQueueByCountry[key];
-    if (!nextValue) {
-      militaryFormationQueueByCountry[key] = null;
-      continue;
-    }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
-      militaryFormationQueueByCountry[key] = nextValue;
-    }
-  }
   collectRecordDiff(prev.civilianUnitsById, next.civilianUnitsById, civilianUnitsById);
-  collectRecordDiff(prev.fleetsById, next.fleetsById, fleetsById);
-  collectRecordDiff(prev.airWingsById, next.airWingsById, airWingsById);
+  collectRecordDiff(prev.unitsById ?? {}, next.unitsById ?? {}, unitsById);
+  collectRecordDiff(prev.unitTrainingQueueByCountry ?? {}, next.unitTrainingQueueByCountry ?? {}, unitTrainingQueueByCountry);
   collectRecordDiff(prev.civilianUnitQueueByCountry, next.civilianUnitQueueByCountry, civilianUnitQueueByCountry);
   collectRecordDiff(prev.settlementProjectsById, next.settlementProjectsById, settlementProjectsById);
   collectRecordDiff(prev.cityMarkersById, next.cityMarkersById, cityMarkersById);
-  collectRecordDiff(prev.equipmentVariantsById, next.equipmentVariantsById, equipmentVariantsById);
-  collectRecordDiff(
-    prev.equipmentProductionLinesByCountry,
-    next.equipmentProductionLinesByCountry,
-    equipmentProductionLinesByCountry,
-  );
-  collectRecordDiff(prev.equipmentStockpileByCountry, next.equipmentStockpileByCountry, equipmentStockpileByCountry);
 
   let mask = 0;
   const compact: CompactWorldDeltaPayload = { mask: 0 };
@@ -909,53 +843,29 @@ export function buildCompactWorldDelta(params: {
     mask |= WORLD_DELTA_MASK.countryModifiersByCountryId;
     compact.cm = countryModifiersByCountryId;
   }
-  if (Object.keys(divisionTemplatesByCountry).length > 0) {
-    mask |= WORLD_DELTA_MASK.divisionTemplatesByCountry;
-    compact.g = divisionTemplatesByCountry;
-  }
-  if (Object.keys(divisionsById).length > 0) {
-    mask |= WORLD_DELTA_MASK.divisionsById;
-    compact.x = divisionsById;
-  }
-  if (Object.keys(militaryFormationQueueByCountry).length > 0) {
-    mask |= WORLD_DELTA_MASK.militaryFormationQueueByCountry;
-    compact.w = militaryFormationQueueByCountry;
-  }
   if (Object.keys(civilianUnitsById).length > 0) {
-    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    mask |= WORLD_DELTA_MASK.unitState;
     compact.cu = civilianUnitsById;
   }
-  if (Object.keys(fleetsById).length > 0) {
-    mask |= WORLD_DELTA_MASK.unitEquipmentState;
-    compact.fl = fleetsById;
+  if (Object.keys(unitsById).length > 0) {
+    mask |= WORLD_DELTA_MASK.unitState;
+    compact.mu = unitsById;
   }
-  if (Object.keys(airWingsById).length > 0) {
-    mask |= WORLD_DELTA_MASK.unitEquipmentState;
-    compact.aw = airWingsById;
+  if (Object.keys(unitTrainingQueueByCountry).length > 0) {
+    mask |= WORLD_DELTA_MASK.unitState;
+    compact.uq = unitTrainingQueueByCountry;
   }
   if (Object.keys(civilianUnitQueueByCountry).length > 0) {
-    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    mask |= WORLD_DELTA_MASK.unitState;
     compact.cq = civilianUnitQueueByCountry;
   }
   if (Object.keys(settlementProjectsById).length > 0) {
-    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    mask |= WORLD_DELTA_MASK.unitState;
     compact.sp = settlementProjectsById;
   }
   if (Object.keys(cityMarkersById).length > 0) {
-    mask |= WORLD_DELTA_MASK.unitEquipmentState;
+    mask |= WORLD_DELTA_MASK.unitState;
     compact.ci = cityMarkersById;
-  }
-  if (Object.keys(equipmentVariantsById).length > 0) {
-    mask |= WORLD_DELTA_MASK.unitEquipmentState;
-    compact.ev = equipmentVariantsById;
-  }
-  if (Object.keys(equipmentProductionLinesByCountry).length > 0) {
-    mask |= WORLD_DELTA_MASK.unitEquipmentState;
-    compact.el = equipmentProductionLinesByCountry;
-  }
-  if (Object.keys(equipmentStockpileByCountry).length > 0) {
-    mask |= WORLD_DELTA_MASK.unitEquipmentState;
-    compact.es = equipmentStockpileByCountry;
   }
   if (diplomacyProposalsChanged) {
     mask |= WORLD_DELTA_MASK.diplomacyProposals;
@@ -1071,54 +981,30 @@ export function toWorldBaseForDeltaDiff(previous: WorldBaseSectionSnapshot, next
       (previous.mask & WORLD_DELTA_MASK.countryModifiersByCountryId) !== 0 && previous.countryModifiersByCountryId
         ? previous.countryModifiersByCountryId
         : next.countryModifiersByCountryId,
-    divisionTemplatesByCountry:
-      (previous.mask & WORLD_DELTA_MASK.divisionTemplatesByCountry) !== 0 && previous.divisionTemplatesByCountry
-        ? previous.divisionTemplatesByCountry
-        : next.divisionTemplatesByCountry,
-    divisionsById:
-      (previous.mask & WORLD_DELTA_MASK.divisionsById) !== 0 && previous.divisionsById
-        ? previous.divisionsById
-        : next.divisionsById,
-    militaryFormationQueueByCountry:
-      (previous.mask & WORLD_DELTA_MASK.militaryFormationQueueByCountry) !== 0 && previous.militaryFormationQueueByCountry
-        ? previous.militaryFormationQueueByCountry
-        : next.militaryFormationQueueByCountry,
-    fleetsById:
-      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.fleetsById
-        ? previous.fleetsById
-        : next.fleetsById,
-    airWingsById:
-      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.airWingsById
-        ? previous.airWingsById
-        : next.airWingsById,
+    unitsById:
+      (previous.mask & WORLD_DELTA_MASK.unitState) !== 0 && previous.unitsById
+        ? previous.unitsById
+        : next.unitsById ?? {},
+    unitTrainingQueueByCountry:
+      (previous.mask & WORLD_DELTA_MASK.unitState) !== 0 && previous.unitTrainingQueueByCountry
+        ? previous.unitTrainingQueueByCountry
+        : next.unitTrainingQueueByCountry ?? {},
     civilianUnitsById:
-      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.civilianUnitsById
+      (previous.mask & WORLD_DELTA_MASK.unitState) !== 0 && previous.civilianUnitsById
         ? previous.civilianUnitsById
         : next.civilianUnitsById,
     civilianUnitQueueByCountry:
-      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.civilianUnitQueueByCountry
+      (previous.mask & WORLD_DELTA_MASK.unitState) !== 0 && previous.civilianUnitQueueByCountry
         ? previous.civilianUnitQueueByCountry
         : next.civilianUnitQueueByCountry,
     settlementProjectsById:
-      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.settlementProjectsById
+      (previous.mask & WORLD_DELTA_MASK.unitState) !== 0 && previous.settlementProjectsById
         ? previous.settlementProjectsById
         : next.settlementProjectsById,
     cityMarkersById:
-      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.cityMarkersById
+      (previous.mask & WORLD_DELTA_MASK.unitState) !== 0 && previous.cityMarkersById
         ? previous.cityMarkersById
         : next.cityMarkersById,
-    equipmentVariantsById:
-      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.equipmentVariantsById
-        ? previous.equipmentVariantsById
-        : next.equipmentVariantsById,
-    equipmentProductionLinesByCountry:
-      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.equipmentProductionLinesByCountry
-        ? previous.equipmentProductionLinesByCountry
-        : next.equipmentProductionLinesByCountry,
-    equipmentStockpileByCountry:
-      (previous.mask & WORLD_DELTA_MASK.unitEquipmentState) !== 0 && previous.equipmentStockpileByCountry
-        ? previous.equipmentStockpileByCountry
-        : next.equipmentStockpileByCountry,
     diplomacyProposals:
       (previous.mask & WORLD_DELTA_MASK.diplomacyProposals) !== 0 && previous.diplomacyProposals
         ? previous.diplomacyProposals
@@ -1138,10 +1024,43 @@ function collectRecordDiff<T>(
       output[key] = null;
       continue;
     }
-    if (JSON.stringify(prevValue ?? null) !== JSON.stringify(nextValue)) {
+    if (!isJsonEquivalent(prevValue ?? null, nextValue)) {
       output[key] = nextValue;
     }
   }
+}
+
+function isJsonEquivalent(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (left == null || right == null) return left === right;
+  if (typeof left !== typeof right) return false;
+  if (typeof left !== "object") return Object.is(left, right);
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right)) return false;
+    if (left.length !== right.length) return false;
+    for (let index = 0; index < left.length; index += 1) {
+      if (!isJsonEquivalent(normalizeJsonArrayValue(left[index]), normalizeJsonArrayValue(right[index]))) return false;
+    }
+    return true;
+  }
+
+  const leftRecord = left as Record<string, unknown>;
+  const rightRecord = right as Record<string, unknown>;
+  const leftKeys = Object.keys(leftRecord).filter((key) => leftRecord[key] !== undefined);
+  const rightKeys = Object.keys(rightRecord).filter((key) => rightRecord[key] !== undefined);
+  if (leftKeys.length !== rightKeys.length) return false;
+  for (const key of leftKeys) {
+    if (!Object.prototype.hasOwnProperty.call(rightRecord, key)) return false;
+    if (!isJsonEquivalent(leftRecord[key], rightRecord[key])) return false;
+  }
+  return true;
+}
+
+function normalizeJsonArrayValue(value: unknown): unknown {
+  if (value === undefined) return null;
+  if (typeof value === "number" && !Number.isFinite(value)) return null;
+  return value;
 }
 
 export function isEqualCountryProgressMap(

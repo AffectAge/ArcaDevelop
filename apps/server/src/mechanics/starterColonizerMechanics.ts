@@ -1,8 +1,8 @@
-import type { CivilianUnit, HexTile, WorldBase } from "@arcanorum/shared";
+import type { HexTile, MapUnit, WorldBase } from "@arcanorum/shared";
 
 export type StarterColonizerWorldState = Pick<
   WorldBase,
-  "civilianUnitsById" | "regionController" | "regionOwner" | "hexOwner"
+  "unitsById" | "regionController" | "regionOwner" | "hexOwner"
 >;
 
 export function ensureStarterColonizerForCountry(params: {
@@ -12,15 +12,16 @@ export function ensureStarterColonizerForCountry(params: {
   tiles: readonly HexTile[];
   movementPoints: number;
   seed: string;
-}): CivilianUnit | null {
-  if (Object.values(params.worldBase.civilianUnitsById).some((unit) => unit.countryId === params.countryId)) {
+}): MapUnit | null {
+  params.worldBase.unitsById ??= {};
+  if (Object.values(params.worldBase.unitsById).some((unit) => unit.countryId === params.countryId)) {
     return null;
   }
   const landTiles = params.tiles.filter(isStarterColonizerHex);
   if (landTiles.length === 0) return null;
   const occupiedHexIds = new Set(
-    Object.values(params.worldBase.civilianUnitsById)
-      .filter((unit) => unit.status !== "captured")
+    Object.values(params.worldBase.unitsById)
+      .filter((unit) => unit.status !== "captured" && unit.status !== "destroyed")
       .map((unit) => unit.hexId),
   );
   const controlledTiles = landTiles.filter((tile) => {
@@ -38,20 +39,21 @@ export function ensureStarterColonizerForCountry(params: {
   });
   if (!tile) return null;
   const movementPoints = Math.max(1, Math.floor(params.movementPoints || 2));
-  const unit: CivilianUnit = {
-    id: `civilian:starter:${sanitizeStarterUnitId(params.countryId)}`,
+  const unit: MapUnit = {
+    id: `unit:starter:${sanitizeStarterUnitId(params.countryId)}`,
     countryId: params.countryId,
-    type: "colonizer",
+    unitTypeId: "unit:colonizer",
     hexId: tile.id,
+    hp: 50,
     status: "idle",
     movementPoints,
-    maxMovementPoints: movementPoints,
+    experience: 0,
     path: [],
     targetHexId: null,
     createdTurnId: params.currentTurnId,
-    lastMovedTurnId: null,
+    lastActionTurnId: null,
   };
-  params.worldBase.civilianUnitsById[unit.id] = unit;
+  params.worldBase.unitsById[unit.id] = unit;
   return unit;
 }
 

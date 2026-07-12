@@ -1,5 +1,5 @@
 import TinyQueue from "tinyqueue";
-import type { HexDirection, HexId, HexMapArtifact, HexTile } from "@arcanorum/shared";
+import { resolveHexStepMovementCost, type HexDirection, type HexId, type HexMapArtifact, type HexTile } from "@arcanorum/shared";
 import { axialDistance, getNeighborAxial, makeHexId } from "./hexGeometry";
 
 type PathNode = {
@@ -35,7 +35,14 @@ export function findHexPath(
     for (let direction = 0; direction < 6; direction += 1) {
       const neighbor = getNeighborTile(currentTile, direction as HexDirection, map, tileById);
       if (!neighbor || !neighbor.passable) continue;
-      const nextCost = (costSoFar.get(current.id) ?? 0) + neighbor.movementCost;
+      const nextCost = (costSoFar.get(current.id) ?? 0) + resolveHexStepMovementCost({
+        map,
+        fromHexId: current.id,
+        toTile: neighbor,
+        domain: "land",
+        baseCost: neighbor.movementCost,
+        tileById,
+      });
       if (!costSoFar.has(neighbor.id) || nextCost < (costSoFar.get(neighbor.id) ?? Number.POSITIVE_INFINITY)) {
         costSoFar.set(neighbor.id, nextCost);
         const priority = nextCost + axialDistance(neighbor, goal, map.settings.wrapX ? map.settings.width : undefined);

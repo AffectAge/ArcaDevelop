@@ -27,9 +27,6 @@ type RestorePersistedWorldBaseParams = {
   normalizeCountryEventFlagsMap: (input: unknown) => WorldBase["countryEventFlagsByCountryId"];
   normalizeJournalEntriesMap: (input: unknown) => WorldBase["journalEntriesByCountryId"];
   normalizeCountryModifiersMap: (input: unknown) => WorldBase["countryModifiersByCountryId"];
-  normalizeDivisionTemplatesByCountry: (input: unknown) => WorldBase["divisionTemplatesByCountry"];
-  normalizeDivisionsById: (input: unknown, base: WorldBase) => WorldBase["divisionsById"];
-  normalizeMilitaryFormationQueueByCountry: (input: unknown) => WorldBase["militaryFormationQueueByCountry"];
   normalizeDiplomacyProposals: (input: unknown) => DiplomacyProposal[];
 };
 
@@ -124,19 +121,18 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     countryModifiersByCountryId: params.normalizeCountryModifiersMap(
       (candidate as Partial<WorldBase> & { countryModifiersByCountryId?: unknown }).countryModifiersByCountryId,
     ),
-    divisionTemplatesByCountry: params.normalizeDivisionTemplatesByCountry(
-      (candidate as Partial<WorldBase> & { divisionTemplatesByCountry?: unknown }).divisionTemplatesByCountry,
+    countryPopulationAcceptanceByCountryId: normalizeCountryPopulationAcceptanceMap(
+      (candidate as Partial<WorldBase> & { countryPopulationAcceptanceByCountryId?: unknown }).countryPopulationAcceptanceByCountryId,
     ),
-    divisionsById: {},
-    fleetsById: normalizeRecord(
-      (candidate as Partial<WorldBase> & { fleetsById?: unknown }).fleetsById,
-    ) as WorldBase["fleetsById"],
-    airWingsById: normalizeRecord(
-      (candidate as Partial<WorldBase> & { airWingsById?: unknown }).airWingsById,
-    ) as WorldBase["airWingsById"],
-    militaryFormationQueueByCountry: params.normalizeMilitaryFormationQueueByCountry(
-      (candidate as Partial<WorldBase> & { militaryFormationQueueByCountry?: unknown }).militaryFormationQueueByCountry,
+    countryIdentityByCountryId: normalizeCountryIdentityMap(
+      (candidate as Partial<WorldBase> & { countryIdentityByCountryId?: unknown }).countryIdentityByCountryId,
     ),
+    unitsById: normalizeRecord(
+      (candidate as Partial<WorldBase> & { unitsById?: unknown }).unitsById,
+    ) as WorldBase["unitsById"],
+    unitTrainingQueueByCountry: normalizeRecord(
+      (candidate as Partial<WorldBase> & { unitTrainingQueueByCountry?: unknown }).unitTrainingQueueByCountry,
+    ) as WorldBase["unitTrainingQueueByCountry"],
     civilianUnitsById: normalizeRecord(
       (candidate as Partial<WorldBase> & { civilianUnitsById?: unknown }).civilianUnitsById,
     ) as WorldBase["civilianUnitsById"],
@@ -149,28 +145,52 @@ export function restorePersistedWorldBase(params: RestorePersistedWorldBaseParam
     cityMarkersById: normalizeRecord(
       (candidate as Partial<WorldBase> & { cityMarkersById?: unknown }).cityMarkersById,
     ) as WorldBase["cityMarkersById"],
-    equipmentVariantsById: normalizeRecord(
-      (candidate as Partial<WorldBase> & { equipmentVariantsById?: unknown }).equipmentVariantsById,
-    ) as WorldBase["equipmentVariantsById"],
-    equipmentProductionLinesByCountry: normalizeRecord(
-      (candidate as Partial<WorldBase> & { equipmentProductionLinesByCountry?: unknown }).equipmentProductionLinesByCountry,
-    ) as WorldBase["equipmentProductionLinesByCountry"],
-    equipmentStockpileByCountry: normalizeRecord(
-      (candidate as Partial<WorldBase> & { equipmentStockpileByCountry?: unknown }).equipmentStockpileByCountry,
-    ) as WorldBase["equipmentStockpileByCountry"],
     diplomacyProposals: params.normalizeDiplomacyProposals(
       (candidate as Partial<WorldBase> & { diplomacyProposals?: unknown }).diplomacyProposals,
     ),
   };
-  restored.divisionsById = params.normalizeDivisionsById(
-    (candidate as Partial<WorldBase> & { divisionsById?: unknown }).divisionsById,
-    restored,
-  );
   return restored;
 }
 
 function normalizeRecord(input: unknown): Record<string, unknown> {
   return input && typeof input === "object" && !Array.isArray(input) ? { ...(input as Record<string, unknown>) } : {};
+}
+
+function normalizeCountryPopulationAcceptanceMap(input: unknown): WorldBase["countryPopulationAcceptanceByCountryId"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
+  const result: NonNullable<WorldBase["countryPopulationAcceptanceByCountryId"]> = {};
+  for (const [countryId, raw] of Object.entries(input as Record<string, unknown>)) {
+    if (!countryId || !raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+    const row = raw as { acceptedCultureIds?: unknown; acceptedReligionIds?: unknown; acceptedRaceIds?: unknown };
+    result[countryId] = {
+      acceptedCultureIds: normalizeStringArray(row.acceptedCultureIds),
+      acceptedReligionIds: normalizeStringArray(row.acceptedReligionIds),
+      acceptedRaceIds: normalizeStringArray(row.acceptedRaceIds),
+    };
+  }
+  return result;
+}
+
+function normalizeCountryIdentityMap(input: unknown): WorldBase["countryIdentityByCountryId"] {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
+  const result: NonNullable<WorldBase["countryIdentityByCountryId"]> = {};
+  for (const [countryId, raw] of Object.entries(input as Record<string, unknown>)) {
+    if (!countryId || !raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+    const row = raw as Record<string, unknown>;
+    const cultureId = typeof row.cultureId === "string" ? row.cultureId.trim() : "";
+    const religionId = typeof row.religionId === "string" ? row.religionId.trim() : "";
+    const raceId = typeof row.raceId === "string" ? row.raceId.trim() : "";
+    const cultureGroupId = typeof row.cultureGroupId === "string" ? row.cultureGroupId.trim() : "";
+    const religionGroupId = typeof row.religionGroupId === "string" ? row.religionGroupId.trim() : "";
+    if (!cultureId || !religionId || !raceId || !cultureGroupId || !religionGroupId) continue;
+    result[countryId] = { cultureId, religionId, raceId, cultureGroupId, religionGroupId };
+  }
+  return result;
+}
+
+function normalizeStringArray(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  return [...new Set(input.filter((value): value is string => typeof value === "string" && value.trim().length > 0).map((value) => value.trim()))].sort((a, b) => a.localeCompare(b));
 }
 
 function assertNoRemovedHexHeavyState(candidate: Record<string, unknown>): void {

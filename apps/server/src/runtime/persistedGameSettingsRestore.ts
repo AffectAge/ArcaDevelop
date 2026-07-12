@@ -3,16 +3,13 @@ import { normalizeCivilopediaCategories, normalizeCivilopediaEntries } from "../
 import {
   ensureDefaultReligion,
   normalizeContentAssets,
-  normalizeContentAircraftTypes,
-  normalizeContentBattalions,
   normalizeContentBuildings,
   normalizeContentCultures,
   normalizeContentGoods,
-  normalizeContentEquipmentClasses,
-  normalizeContentEquipmentFrames,
-  normalizeContentEquipmentModules,
   normalizeContentRaces,
-  normalizeContentShipTypes,
+  normalizeContentUnitSkills,
+  normalizeContentUnitSkillTrees,
+  normalizeContentUnitTypes,
 } from "../content/contentNormalizers";
 import { normalizeTransportMode } from "../mechanics/marketTurnMechanics";
 import { getTransportCorridorBuildCost } from "./marketSettingsNormalizers";
@@ -49,14 +46,13 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
   const civilopediaEntries = normalizeCivilopediaEntries(
     (next as Partial<{ civilopedia?: { entries?: unknown } }>).civilopedia?.entries,
   );
-  const equipmentClasses = normalizeContentEquipmentClasses(
-    (next as Partial<{ content?: { equipmentClasses?: unknown } }>).content?.equipmentClasses,
-  );
 
   return {
     content: {
       assets: normalizeContentAssets((next as Partial<{ content?: { assets?: unknown } }>).content?.assets),
       races: normalizeContentRaces((next as Partial<{ content?: { races?: unknown } }>).content?.races),
+      cultureGroups: normalizeContentCultures((next as Partial<{ content?: { cultureGroups?: unknown } }>).content?.cultureGroups),
+      religionGroups: normalizeContentCultures((next as Partial<{ content?: { religionGroups?: unknown } }>).content?.religionGroups),
       resourceCategories: normalizeContentCultures(
         (next as Partial<{ content?: { resourceCategories?: unknown } }>).content?.resourceCategories,
       ).map((entry) => ({
@@ -90,17 +86,9 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
       decisions: normalizeContentCultures((next as Partial<{ content?: { decisions?: unknown } }>).content?.decisions),
       events: normalizeContentCultures((next as Partial<{ content?: { events?: unknown } }>).content?.events),
       journalEntries: normalizeContentCultures((next as Partial<{ content?: { journalEntries?: unknown } }>).content?.journalEntries),
-      battalions: normalizeContentBattalions((next as Partial<{ content?: { battalions?: unknown } }>).content?.battalions),
-      shipTypes: normalizeContentShipTypes((next as Partial<{ content?: { shipTypes?: unknown } }>).content?.shipTypes),
-      aircraftTypes: normalizeContentAircraftTypes((next as Partial<{ content?: { aircraftTypes?: unknown } }>).content?.aircraftTypes),
-      equipmentClasses,
-      equipmentFrames: normalizeContentEquipmentFrames(
-        (next as Partial<{ content?: { equipmentFrames?: unknown } }>).content?.equipmentFrames,
-        equipmentClasses,
-      ),
-      equipmentModules: normalizeContentEquipmentModules(
-        (next as Partial<{ content?: { equipmentModules?: unknown } }>).content?.equipmentModules,
-      ),
+      unitSkills: normalizeContentUnitSkills((next as Partial<{ content?: { unitSkills?: unknown } }>).content?.unitSkills),
+      unitSkillTrees: normalizeContentUnitSkillTrees((next as Partial<{ content?: { unitSkillTrees?: unknown } }>).content?.unitSkillTrees),
+      unitTypes: normalizeContentUnitTypes((next as Partial<{ content?: { unitTypes?: unknown } }>).content?.unitTypes),
     },
     ai: restoreAi(next, defaults),
     civilopedia: {
@@ -170,11 +158,11 @@ export function restorePersistedGameSettings(params: RestorePersistedGameSetting
         Number.isFinite((next as Partial<{ military?: { militaryFormationSpeed?: number } }>).military?.militaryFormationSpeed)
           ? Math.max(1, Number(((next as Partial<{ military?: { militaryFormationSpeed?: number } }>).military?.militaryFormationSpeed ?? 10).toFixed(3)))
           : defaults.military.militaryFormationSpeed,
-      landDivisionStackLimitPerHex:
-        typeof (next as Partial<{ military?: { landDivisionStackLimitPerHex?: unknown } }>).military?.landDivisionStackLimitPerHex === "number" &&
-        Number.isFinite((next as Partial<{ military?: { landDivisionStackLimitPerHex?: number } }>).military?.landDivisionStackLimitPerHex)
-          ? Math.max(1, Math.min(100, Math.floor((next as Partial<{ military?: { landDivisionStackLimitPerHex?: number } }>).military?.landDivisionStackLimitPerHex ?? 4)))
-          : defaults.military.landDivisionStackLimitPerHex,
+      landUnitStackLimitPerHex:
+        typeof (next as Partial<{ military?: { landUnitStackLimitPerHex?: unknown } }>).military?.landUnitStackLimitPerHex === "number" &&
+        Number.isFinite((next as Partial<{ military?: { landUnitStackLimitPerHex?: number } }>).military?.landUnitStackLimitPerHex)
+          ? Math.max(1, Math.min(100, Math.floor((next as Partial<{ military?: { landUnitStackLimitPerHex?: number } }>).military?.landUnitStackLimitPerHex ?? 4)))
+          : defaults.military.landUnitStackLimitPerHex,
     },
     registration: {
       requireAdminApproval:

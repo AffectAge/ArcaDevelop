@@ -1,0 +1,23 @@
+{
+  "id": "race:default",
+  "nameKey": "race.human.name",
+  "descriptionKey": "race.human.description",
+  "color": "#e5c07b",
+  "iconAssetId": "asset:identity.human",
+  "modifiers": [
+    {
+      "id": "adaptable_commons",
+      "label": "Adaptable commons",
+      "scope": "country",
+      "effects": [
+        { "stat": "culture_gain", "mode": "add", "value": 1 },
+        { "stat": "ducats_gain", "mode": "add", "value": 1 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.12,
+    "standardOfLiving": 8,
+    "ideologies": { "ideology:default": 1 }
+  }
+}

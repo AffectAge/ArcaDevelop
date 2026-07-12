@@ -16,6 +16,8 @@ Also read:
 
 All visible UI text must use localization keys with English and Russian values. Do not add inline player-facing text.
 
+Before creating or changing modals, HUD panels, form controls, cards, buttons, preview chips, charts, or other reusable interface elements, read `apps/client/src/components/templates/DEMO_ELEMENTS.md` and use the named template components from `apps/client/src/components/templates`. Do not add new imports from `apps/client/src/components/ui`; that folder is removed. If a new reusable template component is added, update `DEMO_ELEMENTS.md`, export it from `components/templates/index.ts`, and add it to the demo gallery when it should be visually selectable.
+
 When changing UI:
 
 - use design tokens and scenario theme variables,

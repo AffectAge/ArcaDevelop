@@ -33,6 +33,7 @@ Hex data stays lightweight and map-focused:
 - moisture band,
 - distance to water,
 - coastal flag,
+- localized static `mapTags`,
 - compact river mask and river width,
 - movement cost,
 - passability,
@@ -66,19 +67,29 @@ The controller receives the region economy while controlling it. Diplomacy trans
 
 ## Identifier Policy
 
-Use stable authored region IDs for gameplay regions and generated coordinate IDs for hexes:
+Use stable authored region IDs for authored gameplay regions and coordinate IDs for generated geography:
 
 - `HexId`: `hex:<q>:<r>`,
 - `HexChunkId`: `hex-chunk:<q>:<r>`,
-- `RegionId`: `region:<stable_name>`.
+- authored `RegionId`: `region:<stable_name>`,
+- generated `RegionId`: `region:hex_<anchor_q>_<anchor_r>`.
 
-Avoid using generated cluster IDs as gameplay region IDs. Generated clusters can help map generation, but authored regions must remain stable across saves, localization, diplomacy, AI strategy, and scenario diffs.
+Generated region IDs must be based on anchor coordinates, not transient cluster counters. Authored regions should still use stable readable IDs across saves, localization, diplomacy, AI strategy, and scenario diffs.
+
+## Map Tags And River Edges
+
+`HexTile.mapTags` is the public geography vocabulary for scenario rules and player inspection. Tags use a closed `namespace:value` format with localization keys `mapTag.<namespace>.<value>`. Current namespaces cover fertility, rainfall, slope, latitude, elevation, landmass, continent role, river basin, river class, and coast state.
+
+Scenario rules can query tags through the object DSL with `all`, `any`, and `not`. This DSL is valid for deposits, map feature generators, building placement, adjacency checks, and feature visual rules.
+
+Rivers are edge properties, not water hexes. River edges may include `riverClass`, `navigable`, and `crossingCost`; adjacent hexes expose matching public tags such as `river:major` and `river:navigable` for tooltips and scenario tag queries. Naval units may move along navigable river edges even when the destination hex is land; land and civilian units pay the fixed crossing penalty when crossing a major navigable river edge.
 
 ## Selection And UI
 
 Player-facing map UI should make the layers explicit:
 
 - hex hover explains terrain, biome, passability, movement cost, and associated region,
+- hex hover shows the full localized map tag list,
 - movement actions target hexes,
 - economy, diplomacy, colonization, construction, population, and resource actions target regions,
 - region overlays aggregate hex shapes while preserving region-level actions,

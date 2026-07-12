@@ -8,11 +8,11 @@ describe("evaluateBuildingPlacement", () => {
     const result = evaluateBuildingPlacement({
       building: {
         id: "building:watermill",
-        placement: { allowedTerrains: ["plains"], deniedWaterKinds: ["ocean"] },
+        placement: { tagQuery: "biome:plains", deniedWaterKinds: ["ocean"] },
         adjacencyEffects: [
           {
             id: "forest_support",
-            when: { neighborFeatures: ["forest"] },
+            when: { neighborTagQuery: "feature:vegetated" },
             perNeighbor: true,
             maxStacks: 2,
             modifier: { target: "building.throughput", operation: "add", value: 0.05 },
@@ -25,11 +25,11 @@ describe("evaluateBuildingPlacement", () => {
         ],
       },
       countryId: "country:a",
-      hex: makeHex({ id: "hex:0:0", terrain: "plains" }),
+      hex: makeHex({ id: "hex:0:0", mapTags: ["biome:plains"] }),
       neighborHexes: [
-        makeHex({ id: "hex:1:0", feature: "forest" }),
-        makeHex({ id: "hex:0:1", feature: "forest" }),
-        makeHex({ id: "hex:-1:1", feature: "scrub" }),
+        makeHex({ id: "hex:1:0", mapTags: ["feature:vegetated"] }),
+        makeHex({ id: "hex:0:1", mapTags: ["feature:vegetated"] }),
+        makeHex({ id: "hex:-1:1", mapTags: ["biome:plains"] }),
       ],
       riverNeighborHexIds: new Set(["hex:1:0"]),
       world: makeWorld(),
@@ -45,7 +45,7 @@ describe("evaluateBuildingPlacement", () => {
     expect(result.debugScore).toBeCloseTo(1210);
   });
 
-  it("rejects uncontrolled, occupied, terrain-blocked, and water-blocked hexes with stable reasons", () => {
+  it("rejects uncontrolled, occupied, tag-blocked, and water-blocked hexes with stable reasons", () => {
     expect(
       evaluateBuildingPlacement({
         building: { id: "building:farm" },
@@ -81,24 +81,24 @@ describe("evaluateBuildingPlacement", () => {
 
     expect(
       evaluateBuildingPlacement({
-        building: { id: "building:farm", placement: { allowedTerrains: ["hills"] } },
+        building: { id: "building:farm", placement: { tagQuery: "morphology:rough" } },
         countryId: "country:a",
-        hex: makeHex({ terrain: "plains" }),
+        hex: makeHex({ mapTags: ["morphology:flat"] }),
         world: makeWorld(),
       }).reason.code,
-    ).toBe("BUILD_PLACEMENT_TERRAIN_NOT_ALLOWED");
+    ).toBe("BUILD_PLACEMENT_TAG_NOT_ALLOWED");
 
     expect(
       evaluateBuildingPlacement({
         building: { id: "building:port", placement: { deniedWaterKinds: ["lake"] } },
         countryId: "country:a",
-        hex: makeHex({ terrain: "lake", waterKind: "lake" }),
+        hex: makeHex({ waterKind: "lake", mapTags: ["water:lake"] }),
         world: makeWorld(),
       }).reason.code,
     ).toBe("BUILD_PLACEMENT_WATER_DENIED");
   });
 
-  it("uses city tags without replacing base terrain", () => {
+  it("uses city tags without replacing map tags", () => {
     const cityHexIds = buildCityHexIdSet({
       settlementProjectsById: {
         "settlement:a": {
@@ -117,17 +117,16 @@ describe("evaluateBuildingPlacement", () => {
       },
       cityMarkersById: {},
     });
-    const hex = resolveEffectiveHexTile(makeHex({ id: "hex:0:0", terrain: "plains" }), cityHexIds);
+    const hex = resolveEffectiveHexTile(makeHex({ id: "hex:0:0", mapTags: ["biome:plains"] }), cityHexIds);
 
     const result = evaluateBuildingPlacement({
-      building: { id: "building:city-market", placement: { allowedTerrains: ["plains"], allowedTags: ["city"] } },
+      building: { id: "building:city-market", placement: { tagQuery: "biome:plains", allowedTags: ["city"] } },
       countryId: "country:a",
       hex,
       world: makeWorld(),
     });
 
-    expect(hex.terrain).toBe("plains");
-    expect(hex.baseTerrain).toBe("plains");
+    expect(hex.mapTags).toContain("biome:plains");
     expect(hex.tags).toEqual(["city"]);
     expect(result.reason.code).toBe("BUILD_PLACEMENT_OK");
   });
@@ -158,6 +157,33 @@ describe("evaluateBuildingPlacement", () => {
     expect(result.adjacencySources).toEqual([{ effectId: "city_support", operation: "add", stacks: 1, value: 0.1 }]);
     expect(result.throughputFactor).toBe(1.1);
   });
+
+  it("supports object map tag queries for placement and adjacency", () => {
+    const result = evaluateBuildingPlacement({
+      building: {
+        id: "building:orchard",
+        placement: { tagQuery: { all: ["fertility:rich"], not: ["slope:rugged"] } },
+        adjacencyEffects: [
+          {
+            id: "wet_neighbor",
+            when: { neighborTagQuery: { any: ["rainfall:wet", "basin:delta"] } },
+            perNeighbor: true,
+            modifier: { target: "building.throughput", operation: "add", value: 0.2 },
+          },
+        ],
+      },
+      countryId: "country:a",
+      hex: makeHex({ mapTags: ["fertility:rich", "slope:flat"] }),
+      neighborHexes: [
+        makeHex({ id: "hex:1:0", mapTags: ["rainfall:wet"] }),
+        makeHex({ id: "hex:0:1", mapTags: ["rainfall:dry"] }),
+      ],
+      world: makeWorld(),
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.adjacencySources).toEqual([{ effectId: "wet_neighbor", operation: "add", stacks: 1, value: 0.2 }]);
+  });
 });
 
 function makeWorld(overrides?: Partial<Parameters<typeof evaluateBuildingPlacement>[0]["world"]>) {
@@ -177,9 +203,6 @@ function makeHex(overrides?: Partial<HexTile>): HexTile {
     r: 0,
     chunkId: "hex-chunk:0:0",
     regionId: "region:a",
-    terrain: "plains",
-    biome: "temperate_grassland",
-    feature: "none",
     waterKind: null,
     elevation: 0,
     moisture: 0,
@@ -190,6 +213,7 @@ function makeHex(overrides?: Partial<HexTile>): HexTile {
     isCoastal: false,
     riverMask: 0,
     riverWidth: 0,
+    mapTags: ["biome:plains", "morphology:flat"],
     movementCost: 1,
     passable: true,
     ...overrides,

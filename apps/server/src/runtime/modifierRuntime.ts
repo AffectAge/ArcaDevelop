@@ -42,7 +42,7 @@ export type ActiveCountryModifierRow = {
   label: string;
   sourceId: string;
   sourceName: string;
-  sourceKind: "technology" | "law" | "building" | "modifier" | "event";
+  sourceKind: "technology" | "law" | "building" | "modifier" | "event" | "identity";
   scope: ModifierScope;
   effects: ModifierEffect[];
 };
@@ -80,6 +80,39 @@ export function createModifierRuntime(params: ModifierRuntimeParams): ModifierRu
 
   const getActiveCountryModifierRows = (countryId: string): ActiveCountryModifierRow[] => {
     const rows: ActiveCountryModifierRow[] = [];
+    const worldBase = params.getWorldBase();
+    const identity = worldBase.countryIdentityByCountryId?.[countryId];
+    if (identity) {
+      const identitySources = [
+        {
+          sourceId: `identity:${countryId}:culture_group`,
+          entry: params.getGameSettings().content.cultureGroups.find((candidate) => candidate.id === identity.cultureGroupId),
+        },
+        {
+          sourceId: `identity:${countryId}:religion_group`,
+          entry: params.getGameSettings().content.religionGroups.find((candidate) => candidate.id === identity.religionGroupId),
+        },
+        {
+          sourceId: `identity:${countryId}:race`,
+          entry: params.getGameSettings().content.races.find((candidate) => candidate.id === identity.raceId),
+        },
+      ];
+      for (const source of identitySources) {
+        if (!source.entry) continue;
+        for (const modifier of normalizeModifiers(source.entry.modifiers)) {
+          if (!modifierConditionsMatchCountry(modifier.conditions, countryId)) continue;
+          rows.push({
+            id: `${source.sourceId}:${modifier.id}`,
+            label: modifier.label,
+            sourceId: source.sourceId,
+            sourceName: source.entry.name,
+            sourceKind: "identity",
+            scope: modifier.scope,
+            effects: modifier.effects,
+          });
+        }
+      }
+    }
     const modifierEntries = params.getGameSettings().content.modifiers;
     for (const entry of modifierEntries) {
       for (const modifier of normalizeModifiers(entry.modifiers)) {
@@ -95,7 +128,6 @@ export function createModifierRuntime(params: ModifierRuntimeParams): ModifierRu
         });
       }
     }
-    const worldBase = params.getWorldBase();
     const appliedModifiers = (worldBase.countryModifiersByCountryId[countryId] ?? []).filter(
       (entry) => entry.expiresTurnId == null || entry.expiresTurnId > worldBase.turnId,
     );

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import {
@@ -22,6 +23,128 @@ import { getScenarioRuntimePaths } from "./runtimePaths";
 export const DEFAULT_SCENARIO_ID = "default";
 const DEFAULT_COUNTRY_ID = "country:default";
 const DEFAULT_REGION_AREA_KM2 = 1000;
+
+const DEFAULT_MAP_TAG_LOCALIZATION_EN: Record<string, string> = {
+  "mapTag.biome.tundra": "Tundra",
+  "mapTag.biome.grassland": "Grassland",
+  "mapTag.biome.plains": "Plains",
+  "mapTag.biome.desert": "Desert",
+  "mapTag.biome.tropical": "Tropical",
+  "mapTag.morphology.flat": "Flat",
+  "mapTag.morphology.rough": "Rough",
+  "mapTag.morphology.mountainous": "Mountainous",
+  "mapTag.morphology.navigable_river": "Navigable river tile",
+  "mapTag.water.coastal": "Coastal water",
+  "mapTag.water.ocean": "Ocean",
+  "mapTag.water.lake": "Lake",
+  "mapTag.water.fresh": "Fresh water",
+  "mapTag.feature.minor_river": "Minor river",
+  "mapTag.feature.floodplain": "Floodplain",
+  "mapTag.feature.wet": "Wet",
+  "mapTag.feature.vegetated": "Vegetated",
+  "mapTag.feature.aquatic": "Aquatic",
+  "mapTag.feature.snow": "Snow",
+  "mapTag.feature.volcanic": "Volcanic",
+  "mapTag.movement.stop_on_enter": "Stops movement on enter",
+  "mapTag.fertility.barren": "Barren",
+  "mapTag.fertility.poor": "Poor fertility",
+  "mapTag.fertility.modest": "Modest fertility",
+  "mapTag.fertility.fertile": "Fertile",
+  "mapTag.fertility.rich": "Rich fertility",
+  "mapTag.rainfall.arid": "Arid",
+  "mapTag.rainfall.dry": "Dry",
+  "mapTag.rainfall.moderate": "Moderate rainfall",
+  "mapTag.rainfall.wet": "Wet",
+  "mapTag.rainfall.monsoon": "Monsoon rainfall",
+  "mapTag.slope.flat": "Flat",
+  "mapTag.slope.rolling": "Rolling",
+  "mapTag.slope.hilly": "Hilly",
+  "mapTag.slope.steep": "Steep",
+  "mapTag.slope.rugged": "Rugged",
+  "mapTag.latitude.polar": "Polar",
+  "mapTag.latitude.subpolar": "Subpolar",
+  "mapTag.latitude.temperate": "Temperate latitude",
+  "mapTag.latitude.subtropical": "Subtropical",
+  "mapTag.latitude.tropical": "Tropical",
+  "mapTag.elevation.lowland": "Lowland",
+  "mapTag.elevation.upland": "Upland",
+  "mapTag.elevation.highland": "Highland",
+  "mapTag.elevation.mountain": "Mountain elevation",
+  "mapTag.elevation.peak": "Peak",
+  "mapTag.landmass.continent": "Continent",
+  "mapTag.landmass.island": "Island",
+  "mapTag.continent.homeland": "Homeland continent",
+  "mapTag.continent.distant": "Distant continent",
+  "mapTag.basin.headwater": "Headwater basin",
+  "mapTag.basin.mainstem": "Main river basin",
+  "mapTag.basin.delta": "River delta",
+  "mapTag.river.minor": "Minor river",
+  "mapTag.river.major": "Major river",
+  "mapTag.river.navigable": "Navigable river",
+  "mapTag.coast.coastal": "Coastal",
+  "mapTag.coast.inland": "Inland",
+};
+
+const DEFAULT_MAP_TAG_LOCALIZATION_RU: Record<string, string> = {
+  "mapTag.biome.tundra": "Тундра",
+  "mapTag.biome.grassland": "Луга",
+  "mapTag.biome.plains": "Степи",
+  "mapTag.biome.desert": "Пустыня",
+  "mapTag.biome.tropical": "Тропики",
+  "mapTag.morphology.flat": "Ровная местность",
+  "mapTag.morphology.rough": "Сложный рельеф",
+  "mapTag.morphology.mountainous": "Горная местность",
+  "mapTag.morphology.navigable_river": "Судоходная речная клетка",
+  "mapTag.water.coastal": "Прибрежные воды",
+  "mapTag.water.ocean": "Океан",
+  "mapTag.water.lake": "Озеро",
+  "mapTag.water.fresh": "Пресная вода",
+  "mapTag.feature.minor_river": "Малая река",
+  "mapTag.feature.floodplain": "Пойма",
+  "mapTag.feature.wet": "Сырая местность",
+  "mapTag.feature.vegetated": "Растительность",
+  "mapTag.feature.aquatic": "Водная особенность",
+  "mapTag.feature.snow": "Снег",
+  "mapTag.feature.volcanic": "Вулканическая местность",
+  "mapTag.movement.stop_on_enter": "Останавливает движение при входе",
+  "mapTag.fertility.barren": "Бесплодная земля",
+  "mapTag.fertility.poor": "Низкая урожайность",
+  "mapTag.fertility.modest": "Средняя урожайность",
+  "mapTag.fertility.fertile": "Высокая урожайность",
+  "mapTag.fertility.rich": "Богатая урожайность",
+  "mapTag.rainfall.arid": "Засушливо",
+  "mapTag.rainfall.dry": "Сухо",
+  "mapTag.rainfall.moderate": "Умеренные осадки",
+  "mapTag.rainfall.wet": "Влажно",
+  "mapTag.rainfall.monsoon": "Муссонные осадки",
+  "mapTag.slope.flat": "Равнина",
+  "mapTag.slope.rolling": "Волнистый рельеф",
+  "mapTag.slope.hilly": "Холмисто",
+  "mapTag.slope.steep": "Крутые склоны",
+  "mapTag.slope.rugged": "Пересеченный рельеф",
+  "mapTag.latitude.polar": "Полярная широта",
+  "mapTag.latitude.subpolar": "Субполярная широта",
+  "mapTag.latitude.temperate": "Умеренная широта",
+  "mapTag.latitude.subtropical": "Субтропики",
+  "mapTag.latitude.tropical": "Тропики",
+  "mapTag.elevation.lowland": "Низменность",
+  "mapTag.elevation.upland": "Возвышенность",
+  "mapTag.elevation.highland": "Плоскогорье",
+  "mapTag.elevation.mountain": "Горная высота",
+  "mapTag.elevation.peak": "Пик",
+  "mapTag.landmass.continent": "Континент",
+  "mapTag.landmass.island": "Остров",
+  "mapTag.continent.homeland": "Родной материк",
+  "mapTag.continent.distant": "Дальний материк",
+  "mapTag.basin.headwater": "Верховья бассейна",
+  "mapTag.basin.mainstem": "Главное русло",
+  "mapTag.basin.delta": "Речная дельта",
+  "mapTag.river.minor": "Малая река",
+  "mapTag.river.major": "Крупная река",
+  "mapTag.river.navigable": "Судоходная река",
+  "mapTag.coast.coastal": "Побережье",
+  "mapTag.coast.inland": "Внутренняя земля",
+};
 
 export const DEFAULT_SCENARIO_DEFINES: Required<ScenarioDefines> = {
   ai: {
@@ -73,7 +196,7 @@ export const DEFAULT_SCENARIO_DEFINES: Required<ScenarioDefines> = {
   },
   military: {
     militaryFormationSpeed: 10,
-    landDivisionStackLimitPerHex: 4,
+    landUnitStackLimitPerHex: 4,
   },
   registration: {
     requireAdminApproval: false,
@@ -84,6 +207,9 @@ export const DEFAULT_SCENARIO_DEFINES: Required<ScenarioDefines> = {
   resourceLedger: {
     retentionTurns: 20,
     maxEntriesPerTurn: 10_000,
+  },
+  population: {
+    qualificationCategories: ["labor", "artisan", "technical", "academic", "military"],
   },
   turnTimer: {
     enabled: true,
@@ -102,6 +228,15 @@ export type DefaultScenarioBootstrapResult = {
   artifact: HexMapArtifact;
 };
 
+export type ScenarioMapArtifactsResult = {
+  scenarioDir: string;
+  mapRoot: string;
+  hexIndexPath: string;
+  hexMapArtifactPath: string;
+  generatedRegionIndexPath: string;
+  artifact: HexMapArtifact;
+};
+
 type EnsureDefaultScenarioParams = {
   dataRoot: string;
   forceGenerated?: boolean;
@@ -112,7 +247,7 @@ export function ensureDefaultScenario(params: EnsureDefaultScenarioParams): Defa
   const mapRoot = resolve(scenarioDir, "map");
   const generatedRoot = resolve(scenarioDir, ".generated");
   const settingsPath = resolve(mapRoot, "hex-settings.json");
-  const artifactPath = resolve(generatedRoot, "hex-map-artifact.json");
+  const artifactPath = resolve(generatedRoot, "hex-map.json");
   const hexIndexPath = resolve(generatedRoot, "hexes.json");
   const generatedRegionIndexPath = resolve(generatedRoot, "regions.json");
 
@@ -154,25 +289,29 @@ export function ensureDefaultScenario(params: EnsureDefaultScenarioParams): Defa
   writeJsonIfMissing(resolve(scenarioDir, "localisation", "en.json"), {
     "scenario.default.name": "Default",
     "country:default.nameKey": "Default Country",
+    ...DEFAULT_MAP_TAG_LOCALIZATION_EN,
   });
   writeJsonIfMissing(resolve(scenarioDir, "localisation", "ru.json"), {
     "scenario.default.name": "Базовый сценарий",
     "country:default.nameKey": "Базовая страна",
+    ...DEFAULT_MAP_TAG_LOCALIZATION_RU,
   });
 
   const settings = readHexMapSettings(settingsPath);
+  const settingsHash = hashJson(settings);
   const artifactExists = existsSync(artifactPath);
   const rawExistingArtifact = !params.forceGenerated && artifactExists ? readJsonFile<HexMapArtifact>(artifactPath) : null;
-  const artifactMissingVisualMetadata = rawExistingArtifact ? rawExistingArtifact.tiles.some((tile) => tile.temperatureBand == null || tile.moistureBand == null || tile.distanceToWater == null || tile.riverMask == null) : false;
-  const artifact = params.forceGenerated || !rawExistingArtifact
+  const artifactStale = rawExistingArtifact?.settings == null || hashJson(rawExistingArtifact.settings) !== settingsHash;
+  const artifactMissingVisualMetadata = rawExistingArtifact ? rawExistingArtifact.tiles.some((tile) => tile.temperatureBand == null || tile.moistureBand == null || tile.distanceToWater == null || tile.riverMask == null || tile.mapTags == null) : false;
+  const artifact = params.forceGenerated || !rawExistingArtifact || artifactStale
     ? generateHexMap(settings)
     : enrichHexMapVisualMetadata(rawExistingArtifact);
   const generatedRegions = buildGeneratedRegions(artifact);
   const hexIndex = buildHexMapIndex(artifact, generatedRegions.regionColorById);
 
-  if (params.forceGenerated || !artifactExists || artifactMissingVisualMetadata) writeJsonFile(artifactPath, artifact);
-  if (params.forceGenerated || !existsSync(hexIndexPath)) writeJsonFile(hexIndexPath, hexIndex);
-  if (params.forceGenerated || !existsSync(generatedRegionIndexPath)) {
+  if (params.forceGenerated || !artifactExists || artifactMissingVisualMetadata || artifactStale) writeJsonFile(artifactPath, artifact);
+  if (params.forceGenerated || !existsSync(hexIndexPath) || artifactStale) writeJsonFile(hexIndexPath, hexIndex);
+  if (params.forceGenerated || !existsSync(generatedRegionIndexPath) || artifactStale) {
     writeJsonFile(generatedRegionIndexPath, generatedRegions.regions);
   }
   const mapFeatureResult = ensureGeneratedMapFeatures({ scenarioDir, mapArtifact: artifact, forceGenerated: params.forceGenerated });
@@ -223,7 +362,7 @@ function buildGeneratedRegions(artifact: HexMapArtifact): {
     if (!firstTileByRegionId.has(tile.regionId)) firstTileByRegionId.set(tile.regionId, tile);
   }
 
-  const firstLandRegionId = [...hexIdsByRegionId.keys()].find((regionId) => regionId.startsWith("region:land:")) ?? null;
+  const firstLandRegionId = [...firstTileByRegionId.entries()].find(([, tile]) => !tile.waterKind)?.[0] ?? null;
   const regionColorById = new Map<string, string>();
   const regions = [...hexIdsByRegionId.entries()]
     .sort(([left], [right]) => left.localeCompare(right, "en"))
@@ -264,16 +403,16 @@ function buildHexMapIndex(artifact: HexMapArtifact, regionColorById: Map<string,
       hexColor: colorForTerrain(tile),
       regionColor: regionColorById.get(tile.regionId) ?? "#64748b",
       areaKm2: DEFAULT_REGION_AREA_KM2,
-      hexType: tile.terrain,
+      hexType: resolveIndexHexType(tile),
       centerX: Math.round(center.x * 100) / 100,
       centerY: Math.round(center.y * 100) / 100,
       sourceCenterX: Math.round(center.x * 100) / 100,
       sourceCenterY: Math.round(center.y * 100) / 100,
       neighbors: buildNeighborIds(tile, artifact.settings),
-      climate: tile.biome,
+      climate: resolveIndexClimate(tile),
       pollution: 0,
       radiation: 0,
-      landscape: tile.feature === "none" ? tile.terrain : tile.feature,
+      landscape: resolveIndexLandscape(tile),
       continent: tile.waterKind ? "continent:water" : "continent:land",
       strategicRegion: tile.regionId,
       fertileLandKm2: tile.waterKind ? 0 : Math.round(DEFAULT_REGION_AREA_KM2 * fertilityForTile(tile)),
@@ -292,26 +431,64 @@ function buildNeighborIds(tile: HexTile, settings: HexMapSettings): string[] {
 }
 
 function readHexMapSettings(path: string): HexMapSettings {
-  return { ...DEFAULT_HEX_MAP_SETTINGS, ...readJsonFile<Partial<HexMapSettings>>(path) };
+  return readJsonFile<HexMapSettings>(path);
+}
+
+export function ensureScenarioMapArtifacts(params: { scenarioDir: string; forceGenerated?: boolean }): ScenarioMapArtifactsResult {
+  const scenarioDir = resolve(params.scenarioDir);
+  const mapRoot = resolve(scenarioDir, "map");
+  const generatedRoot = resolve(scenarioDir, ".generated");
+  const settingsPath = resolve(mapRoot, "hex-settings.json");
+  const artifactPath = resolve(generatedRoot, "hex-map.json");
+  const hexIndexPath = resolve(generatedRoot, "hexes.json");
+  const generatedRegionIndexPath = resolve(generatedRoot, "regions.json");
+  mkdirSync(generatedRoot, { recursive: true });
+  const settings = readHexMapSettings(settingsPath);
+  const settingsHash = hashJson(settings);
+  const rawExistingArtifact = !params.forceGenerated && existsSync(artifactPath) ? readJsonFile<HexMapArtifact>(artifactPath) : null;
+  const artifactStale = rawExistingArtifact?.settings == null || hashJson(rawExistingArtifact.settings) !== settingsHash;
+  const artifact = params.forceGenerated || !rawExistingArtifact || artifactStale
+    ? generateHexMap(settings)
+    : enrichHexMapVisualMetadata(rawExistingArtifact);
+  const generatedRegions = buildGeneratedRegions(artifact);
+  const hexIndex = buildHexMapIndex(artifact, generatedRegions.regionColorById);
+  if (params.forceGenerated || !existsSync(artifactPath) || artifactStale) writeJsonFile(artifactPath, artifact);
+  if (params.forceGenerated || !existsSync(hexIndexPath) || artifactStale) writeJsonFile(hexIndexPath, hexIndex);
+  if (params.forceGenerated || !existsSync(generatedRegionIndexPath) || artifactStale) writeJsonFile(generatedRegionIndexPath, generatedRegions.regions);
+  const mapFeatureResult = ensureGeneratedMapFeatures({ scenarioDir, mapArtifact: artifact, forceGenerated: params.forceGenerated || artifactStale });
+  if (mapFeatureResult.issues.length > 0) {
+    throw new Error(mapFeatureResult.issues.map((issue) => `${issue.code}: ${issue.path}: ${issue.message}`).join("\n"));
+  }
+  const rawContent = loadRawScenarioContent(scenarioDir) ?? {};
+  ensureGeneratedResourceDeposits({
+    scenarioDir,
+    artifact,
+    goods: normalizeContentGoods((rawContent as { goods?: unknown }).goods),
+    forceGenerated: params.forceGenerated || artifactStale,
+  });
+  return { scenarioDir, mapRoot, hexIndexPath, hexMapArtifactPath: artifactPath, generatedRegionIndexPath, artifact };
+}
+
+function hashJson(value: unknown): string {
+  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
 function fertilityForTile(tile: HexTile): number {
   if (tile.waterKind) return 0;
-  if (tile.terrain === "grassland" || tile.terrain === "plains") return 0.75;
-  if (tile.terrain === "wetland" || tile.feature === "forest" || tile.feature === "dense_forest") return 0.55;
-  if (tile.terrain === "hills") return 0.35;
-  if (tile.terrain === "desert" || tile.terrain === "tundra") return 0.2;
-  if (tile.terrain === "mountains" || tile.terrain === "snow") return 0.08;
+  if (hasTag(tile, "fertility:rich")) return 0.9;
+  if (hasTag(tile, "fertility:fertile")) return 0.75;
+  if (hasTag(tile, "fertility:modest")) return 0.55;
+  if (hasTag(tile, "fertility:poor")) return 0.2;
   return 0.4;
 }
 
 function colorForRegion(tile: HexTile): string {
   if (tile.waterKind) return "#2f7f98";
-  if (tile.biome === "arid_desert" || tile.biome === "dry_scrubland") return "#b8a45f";
-  if (tile.biome === "tropical_rainforest") return "#3d8b52";
-  if (tile.biome === "tundra" || tile.biome === "alpine") return "#8a9aa3";
-  if (tile.biome === "swamp" || tile.biome === "coastal_wetland") return "#5f8e68";
-  if (tile.biome === "boreal_forest" || tile.biome === "temperate_forest") return "#4f7f45";
+  if (hasTag(tile, "biome:desert")) return "#b8a45f";
+  if (hasTag(tile, "biome:tropical")) return "#3d8b52";
+  if (hasTag(tile, "biome:tundra") || hasTag(tile, "morphology:mountainous")) return "#8a9aa3";
+  if (hasTag(tile, "feature:wet")) return "#5f8e68";
+  if (hasTag(tile, "feature:vegetated")) return "#4f7f45";
   return "#5f8f52";
 }
 
@@ -331,7 +508,31 @@ function colorForTerrain(tile: HexTile): string {
     snow: "#d5d9d3",
     wetland: "#5f8e68",
   };
-  return colors[tile.terrain] ?? "#64748b";
+  return colors[resolveIndexHexType(tile)] ?? "#64748b";
+}
+
+function resolveIndexHexType(tile: HexTile): string {
+  if (hasTag(tile, "water:ocean")) return "ocean";
+  if (hasTag(tile, "water:coastal")) return "sea";
+  if (hasTag(tile, "water:lake")) return "lake";
+  if (hasTag(tile, "morphology:mountainous")) return "mountains";
+  if (hasTag(tile, "morphology:rough")) return "hills";
+  if (hasTag(tile, "biome:desert")) return "desert";
+  if (hasTag(tile, "biome:tundra")) return hasTag(tile, "feature:snow") ? "snow" : "tundra";
+  if (hasTag(tile, "biome:grassland")) return "grassland";
+  return "plains";
+}
+
+function resolveIndexClimate(tile: HexTile): string {
+  return tile.mapTags.find((tag) => tag.startsWith("biome:")) ?? tile.mapTags.find((tag) => tag.startsWith("water:")) ?? "biome:plains";
+}
+
+function resolveIndexLandscape(tile: HexTile): string {
+  return tile.mapTags.find((tag) => tag.startsWith("feature:")) ?? tile.mapTags.find((tag) => tag.startsWith("morphology:")) ?? resolveIndexHexType(tile);
+}
+
+function hasTag(tile: HexTile, tag: string): boolean {
+  return tile.mapTags.includes(tag as HexTile["mapTags"][number]);
 }
 
 function sanitizeRegionId(regionId: string): string {

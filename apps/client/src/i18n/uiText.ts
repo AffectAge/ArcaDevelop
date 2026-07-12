@@ -116,6 +116,177 @@ export type UiTextKey =
   | "common.unknown"
   | "common.no"
   | "common.yes"
+  | "templates.action.codex"
+  | "templates.asset.clear"
+  | "templates.asset.flagHint"
+  | "templates.asset.flagReady"
+  | "templates.asset.flagTitle"
+  | "templates.asset.flagUpload"
+  | "templates.button.danger"
+  | "templates.button.dangerDisabled"
+  | "templates.button.ghost"
+  | "templates.button.dangerIcon"
+  | "templates.button.dangerIconOnly"
+  | "templates.button.dangerLarge"
+  | "templates.button.dangerSmall"
+  | "templates.button.dangerWide"
+  | "templates.button.primary"
+  | "templates.button.primaryDisabled"
+  | "templates.button.primaryIcon"
+  | "templates.button.primaryIconOnly"
+  | "templates.button.primaryLarge"
+  | "templates.button.primarySmall"
+  | "templates.button.primaryWide"
+  | "templates.button.secondary"
+  | "templates.button.secondaryDisabled"
+  | "templates.button.secondaryIcon"
+  | "templates.button.secondaryIconOnly"
+  | "templates.button.secondaryLarge"
+  | "templates.button.secondarySmall"
+  | "templates.button.secondaryWide"
+  | "templates.chart.area"
+  | "templates.chart.bar"
+  | "templates.chart.donut"
+  | "templates.chart.line"
+  | "templates.chartsTitle"
+  | "templates.choice.discipline"
+  | "templates.choice.disciplineDescription"
+  | "templates.choice.harmony"
+  | "templates.choice.harmonyDescription"
+  | "templates.choice.knowledge"
+  | "templates.choice.knowledgeDescription"
+  | "templates.choice.envoys"
+  | "templates.choice.envoysDescription"
+  | "templates.choice.omens"
+  | "templates.choice.omensDescription"
+  | "templates.choice.resolve"
+  | "templates.choice.resolveDescription"
+  | "templates.choice.stewardship"
+  | "templates.choice.stewardshipDescription"
+  | "templates.choice.trade"
+  | "templates.choice.tradeDescription"
+  | "templates.choiceModalDescription"
+  | "templates.choiceModalTitle"
+  | "templates.colorPicker"
+  | "templates.detail.cost"
+  | "templates.detail.description"
+  | "templates.detail.effects"
+  | "templates.detail.favorite"
+  | "templates.detail.goldPerTurn"
+  | "templates.detail.pinHint"
+  | "templates.detail.subtitle"
+  | "templates.detail.title"
+  | "templates.detail.turns"
+  | "templates.dismissNotification"
+  | "templates.effect.armyStrength"
+  | "templates.effect.caravan"
+  | "templates.effect.constructionSpeed"
+  | "templates.effect.envoyCount"
+  | "templates.effect.fortification"
+  | "templates.effect.legitimacy"
+  | "templates.effect.maintenance"
+  | "templates.effect.omenRisk"
+  | "templates.effect.populationGrowth"
+  | "templates.effect.researchSpeed"
+  | "templates.effect.ritualPower"
+  | "templates.effect.scholarSlot"
+  | "templates.effect.tradeIncome"
+  | "templates.effect.treatyCost"
+  | "templates.effect.unrest"
+  | "templates.effect.warWeariness"
+  | "templates.dropdown.coastal"
+  | "templates.dropdown.mountain"
+  | "templates.dropdown.river"
+  | "templates.field.culture"
+  | "templates.field.description"
+  | "templates.field.dropdown"
+  | "templates.field.name"
+  | "templates.galleryTitle"
+  | "templates.icon.add"
+  | "templates.icon.edit"
+  | "templates.icon.view"
+  | "templates.notification.build"
+  | "templates.notification.envoy"
+  | "templates.notification.research"
+  | "templates.notificationsTitle"
+  | "templates.placeholder.culture"
+  | "templates.placeholder.description"
+  | "templates.panel.description"
+  | "templates.previewChip.color"
+  | "templates.previewChip.empty"
+  | "templates.previewChip.group"
+  | "templates.previewChip.icon"
+  | "templates.previewChipsTitle"
+  | "templates.resource.culture"
+  | "templates.resource.gold"
+  | "templates.resource.influence"
+  | "templates.resource.science"
+  | "templates.resourcesTitle"
+  | "templates.sample.country"
+  | "templates.scrollbarRow"
+  | "templates.scrollbarTitle"
+  | "templates.section.buttons"
+  | "templates.section.dangerButtons"
+  | "templates.section.primaryButtons"
+  | "templates.section.secondaryButtons"
+  | "templates.section.fields"
+  | "templates.section.panel"
+  | "templates.section.switches"
+  | "templates.selected"
+  | "templates.showAll"
+  | "templates.status.active"
+  | "templates.status.available"
+  | "templates.status.locked"
+  | "templates.status.pending"
+  | "templates.status.unavailable"
+  | "templates.tab.culture"
+  | "templates.tab.info"
+  | "templates.tab.race"
+  | "templates.tab.religion"
+  | "templates.tab.result"
+  | "templates.tabsAria"
+  | "templates.tech.bureaucracy"
+  | "templates.tech.civilService"
+  | "templates.tech.codes"
+  | "templates.tech.education"
+  | "templates.tech.planning"
+  | "templates.tech.supply"
+  | "templates.techTitle"
+  | "templates.plotTooltip.bonus"
+  | "templates.plotTooltip.baseMovement"
+  | "templates.plotTooltip.cityTitle"
+  | "templates.plotTooltip.food"
+  | "templates.plotTooltip.improvement"
+  | "templates.plotTooltip.location"
+  | "templates.plotTooltip.movement"
+  | "templates.plotTooltip.movementForest"
+  | "templates.plotTooltip.movementRough"
+  | "templates.plotTooltip.owner"
+  | "templates.plotTooltip.production"
+  | "templates.plotTooltip.resource"
+  | "templates.plotTooltip.resourceDescription"
+  | "templates.plotTooltip.route"
+  | "templates.plotTooltip.section.rural"
+  | "templates.plotTooltip.section.systems"
+  | "templates.plotTooltip.section.units"
+  | "templates.plotTooltip.settlement"
+  | "templates.plotTooltip.stopOnEnter"
+  | "templates.plotTooltip.subtitle"
+  | "templates.plotTooltip.title"
+  | "templates.plotTooltip.unit"
+  | "templates.plotTooltip.unknownDescription"
+  | "templates.plotTooltip.unknownTitle"
+  | "templates.plotTooltip.water"
+  | "templates.tooltip.description"
+  | "templates.tooltip.eyebrow"
+  | "templates.tooltip.maintenance"
+  | "templates.tooltip.requirement"
+  | "templates.tooltip.simple"
+  | "templates.tooltip.title"
+  | "templates.toggle.description"
+  | "templates.toggle.locked"
+  | "templates.toggle.on"
+  | "templates.turnCost"
   | "commandPalette.action.budget"
   | "commandPalette.action.province"
   | "commandPalette.action.resolve"
@@ -133,8 +304,6 @@ export type UiTextKey =
   | "contentPanel.listTooltip"
   | "contentPanel.loading"
   | "contentPanel.title"
-  | "contentPanel.category.aircraftTypes"
-  | "contentPanel.category.battalions"
   | "contentPanel.category.buildings"
   | "contentPanel.category.companies"
   | "contentPanel.category.cultures"
@@ -159,7 +328,6 @@ export type UiTextKey =
   | "contentPanel.category.religions"
   | "contentPanel.category.resourceCategories"
   | "contentPanel.category.sectors"
-  | "contentPanel.category.shipTypes"
   | "contentPanel.category.technologies"
   | "contentPanel.contentFallback"
   | "contentPanel.listLabel"
@@ -603,24 +771,6 @@ export type UiTextKey =
   | "contentPanel.meta.professions.namePlaceholder"
   | "contentPanel.meta.professions.descriptionPlaceholder"
   | "contentPanel.meta.professions.sectionTitle"
-  | "contentPanel.meta.battalions.singular"
-  | "contentPanel.meta.battalions.createBaseName"
-  | "contentPanel.meta.battalions.createLabel"
-  | "contentPanel.meta.battalions.namePlaceholder"
-  | "contentPanel.meta.battalions.descriptionPlaceholder"
-  | "contentPanel.meta.battalions.sectionTitle"
-  | "contentPanel.meta.shipTypes.singular"
-  | "contentPanel.meta.shipTypes.createBaseName"
-  | "contentPanel.meta.shipTypes.createLabel"
-  | "contentPanel.meta.shipTypes.namePlaceholder"
-  | "contentPanel.meta.shipTypes.descriptionPlaceholder"
-  | "contentPanel.meta.shipTypes.sectionTitle"
-  | "contentPanel.meta.aircraftTypes.singular"
-  | "contentPanel.meta.aircraftTypes.createBaseName"
-  | "contentPanel.meta.aircraftTypes.createLabel"
-  | "contentPanel.meta.aircraftTypes.namePlaceholder"
-  | "contentPanel.meta.aircraftTypes.descriptionPlaceholder"
-  | "contentPanel.meta.aircraftTypes.sectionTitle"
   | "contentPanel.meta.ideologies.singular"
   | "contentPanel.meta.ideologies.createBaseName"
   | "contentPanel.meta.ideologies.createLabel"
@@ -1112,7 +1262,13 @@ export type UiTextKey =
   | "auth.accountLockedPermanent"
   | "auth.accountLockedTime"
   | "auth.accountLockedTurn"
+  | "auth.access"
+  | "auth.brandName"
   | "auth.chooseCountry"
+  | "auth.chooseCultureGroup"
+  | "auth.chooseReligionGroup"
+  | "auth.chooseRace"
+  | "auth.clearImage"
   | "auth.clientVersion"
   | "auth.country"
   | "auth.countryColor"
@@ -1131,7 +1287,21 @@ export type UiTextKey =
   | "auth.flagHint"
   | "auth.flagInvalid"
   | "auth.flagPreview"
+  | "auth.cultureColor"
+  | "auth.cultureGroup"
+  | "auth.cultureLogo"
+  | "auth.cultureName"
+  | "auth.backToLogin"
+  | "auth.confirmCultureReligion"
+  | "auth.confirmPreviewTitle"
   | "auth.imageFormatInvalid"
+  | "auth.identity"
+  | "auth.identityBonuses"
+  | "auth.identityLogoHint"
+  | "auth.identityLogoInvalid"
+  | "auth.identityNoDescription"
+  | "auth.identityOptions"
+  | "auth.identitySelectPrompt"
   | "auth.invalidHex"
   | "auth.invalidPassword"
   | "auth.knowledge"
@@ -1142,33 +1312,57 @@ export type UiTextKey =
   | "auth.loginSuccess"
   | "auth.min2"
   | "auth.min8"
+  | "auth.missingValue"
+  | "auth.nextStep"
   | "auth.noFileSelected"
+  | "auth.noBonuses"
+  | "auth.noStartingPopChanges"
   | "auth.onlyImages"
   | "auth.password"
-  | "auth.passwordComplexityAria"
-  | "auth.passwordComplexityLoginNeed"
-  | "auth.passwordComplexityNeed"
-  | "auth.passwordComplexityOk"
-  | "auth.passwordLengthAria"
   | "auth.passwordLengthNeed"
   | "auth.passwordLengthOk"
   | "auth.passwordMismatch"
-  | "auth.presetColor"
   | "auth.register"
+  | "auth.previousStep"
+  | "auth.replaceImage"
   | "auth.registrationError"
   | "auth.registrationPendingApproval"
   | "auth.registrationPendingDescription"
+  | "auth.registrationSteps"
   | "auth.registrationSent"
   | "auth.registrationSentMessage"
   | "auth.rememberMe"
   | "auth.repeatPassword"
+  | "auth.religionColor"
+  | "auth.religionGroup"
+  | "auth.religionLogo"
+  | "auth.religionName"
+  | "auth.race"
   | "auth.selectCountry"
   | "auth.selectImage"
   | "auth.serverStatus.maintenance"
   | "auth.serverStatus.offline"
   | "auth.serverStatus.online"
   | "auth.serverUnavailable"
+  | "auth.startingPopulation"
+  | "auth.startingPop.ducats"
+  | "auth.startingPop.ducatsLabel"
+  | "auth.startingPop.literacy"
+  | "auth.startingPop.literacyLabel"
+  | "auth.startingPop.loyalists"
+  | "auth.startingPop.loyalistsLabel"
+  | "auth.startingPop.radicals"
+  | "auth.startingPop.radicalsLabel"
+  | "auth.startingPop.sol"
+  | "auth.startingPop.solLabel"
+  | "auth.step.confirm"
+  | "auth.step.culture"
+  | "auth.step.info"
+  | "auth.step.race"
+  | "auth.step.religion"
   | "auth.waitButton"
+  | "auth.welcomeDescription"
+  | "auth.welcomeTitle"
   | "clientSettings.description"
   | "clientSettings.descriptionTitle"
   | "clientSettings.interface"
@@ -1177,6 +1371,8 @@ export type UiTextKey =
   | "clientSettings.localNote"
   | "clientSettings.mapControls"
   | "clientSettings.mapControlsDescription"
+  | "clientSettings.zoomIndicator"
+  | "clientSettings.zoomIndicatorDescription"
   | "clientSettings.edgeScroll"
   | "clientSettings.edgeScrollDescription"
   | "clientSettings.save"
@@ -1329,15 +1525,6 @@ export type UiTextKey =
   | "elections.tooltipVotes"
   | "elections.voteShare"
   | "army.air"
-  | "army.airWingMission"
-  | "army.airWingMission.air_superiority"
-  | "army.airWingMission.ground_support"
-  | "army.airWingMission.interception"
-  | "army.airWingMission.naval_patrol"
-  | "army.airWingMission.none"
-  | "army.airWingMissionRegion"
-  | "army.airWingMissionRegionTooltip"
-  | "army.airWingMissionTooltip"
   | "army.attack"
   | "army.baseHex"
   | "army.battleSlots"
@@ -1347,8 +1534,6 @@ export type UiTextKey =
   | "army.createEquipmentVariant"
   | "army.createFormation"
   | "army.createProductionLine"
-  | "army.defaultAir"
-  | "army.defaultLand"
   | "army.defaultNaval"
   | "army.delete"
   | "army.deleteProductionLine"
@@ -1356,7 +1541,6 @@ export type UiTextKey =
   | "army.description"
   | "army.disbandConfirmDescription"
   | "army.disbandConfirmTitle"
-  | "army.disbandDivision"
   | "army.disbandEquipmentReturn"
   | "army.emptyQueue"
   | "army.emptyQueueDescription"
@@ -1367,19 +1551,10 @@ export type UiTextKey =
   | "army.equipmentCoverage"
   | "army.equipmentCoverageTooltip"
   | "army.equipmentCoverageTooltipTitle"
-  | "army.divisionEquipmentLoadout"
-  | "army.divisionEquipmentLoadoutTooltip"
-  | "army.noDivisionEquipmentLoadout"
   | "army.equipmentCost"
   | "army.equipmentLines"
-  | "army.equipmentProduction"
   | "army.equipmentRequirements"
   | "army.equipmentStats"
-  | "army.equipmentVariant"
-  | "army.equipmentVariantName"
-  | "army.designerDivision"
-  | "army.designerAirWing"
-  | "army.designerFleet"
   | "army.createLandEquipment"
   | "army.createPlane"
   | "army.createShip"
@@ -1436,9 +1611,6 @@ export type UiTextKey =
   | "army.formationSelectHexTooltip"
   | "army.formationSpeed"
   | "army.branch"
-  | "army.branch.air"
-  | "army.branch.land"
-  | "army.branch.naval"
   | "army.icon64"
   | "army.iconInvalid64"
   | "army.iconUploadFailed"
@@ -1462,7 +1634,6 @@ export type UiTextKey =
   | "army.noEquipmentLines"
   | "army.noEquipmentLinesDescription"
   | "army.noEquipmentRequirements"
-  | "army.noEquipmentStats"
   | "army.noAssignedEquipment"
   | "army.noMissionRegions"
   | "army.organizationShort"
@@ -1499,7 +1670,6 @@ export type UiTextKey =
   | "army.supplySummaryTitle"
   | "army.supplySummaryValue"
   | "army.supplyShort"
-  | "army.totalBattalions"
   | "army.totalSoldiers"
   | "army.templateDeleted"
   | "army.templateName"
@@ -1513,8 +1683,39 @@ export type UiTextKey =
   | "army.unitName"
   | "locale.english"
   | "locale.russian"
+  | "cultureGroup.highlandClans.description"
+  | "cultureGroup.highlandClans.name"
+  | "cultureGroup.maritimeLeagues.description"
+  | "cultureGroup.maritimeLeagues.name"
+  | "cultureGroup.riverineCityStates.description"
+  | "cultureGroup.riverineCityStates.name"
+  | "race.dwarf.description"
+  | "race.dwarf.name"
+  | "race.elf.description"
+  | "race.elf.name"
+  | "race.human.description"
+  | "race.human.name"
+  | "religionGroup.ancestorRites.description"
+  | "religionGroup.ancestorRites.name"
+  | "religionGroup.celestialOrders.description"
+  | "religionGroup.celestialOrders.name"
+  | "religionGroup.dawnMysteries.description"
+  | "religionGroup.dawnMysteries.name"
+  | "religionGroup.earthMotherCults.description"
+  | "religionGroup.earthMotherCults.name"
+  | "religionGroup.riverOracles.description"
+  | "religionGroup.riverOracles.name"
+  | "religionGroup.sacredFlame.description"
+  | "religionGroup.sacredFlame.name"
+  | "religionGroup.stormPact.description"
+  | "religionGroup.stormPact.name"
+  | "religionGroup.templeCults.description"
+  | "religionGroup.templeCults.name"
+  | "religionGroup.veilScholars.description"
+  | "religionGroup.veilScholars.name"
   | "map.controls.zoomIn"
   | "map.controls.zoomOut"
+  | "map.zoomIndicator.label"
   | "map.controls.resetView"
   | "map.controls.lockInteraction"
   | "map.controls.unlockInteraction"
@@ -1603,6 +1804,16 @@ export type UiTextKey =
   | "hexMap.terrain"
   | "hexMap.biome"
   | "hexMap.feature"
+  | "hexMap.surfaceSummary"
+  | "hexMap.surfaceType"
+  | "hexMap.surface.continent"
+  | "hexMap.surface.island"
+  | "hexMap.surface.ocean"
+  | "hexMap.surface.sea"
+  | "hexMap.surface.lake"
+  | "hexMap.position"
+  | "hexMap.position.coastal"
+  | "hexMap.position.inland"
   | "hexMap.siteFeature"
   | "hexMap.resourceDeposit"
   | "hexMap.water"
@@ -1610,33 +1821,93 @@ export type UiTextKey =
   | "hexMap.ownerCountry"
   | "hexMap.ownerNone"
   | "hexMap.movementCost"
+  | "hexMap.movementBase"
+  | "hexMap.movementStopOnEnter"
+  | "hexMap.tooltipSystems"
+  | "hexMap.tooltipNoSystems"
+  | "hexMap.mapTags"
+  | "hexMap.tagGroupBiome"
+  | "hexMap.tagGroupClimate"
+  | "hexMap.tagGroupRelief"
+  | "hexMap.tagGroupWater"
+  | "hexMap.tagGroupFeatures"
+  | "hexMap.tagGroupValue"
+  | "hexMap.tagGroupMovement"
+  | "mapTag.unknown"
+  | "mapTag.biome.tundra"
+  | "mapTag.biome.grassland"
+  | "mapTag.biome.plains"
+  | "mapTag.biome.desert"
+  | "mapTag.biome.tropical"
+  | "mapTag.morphology.flat"
+  | "mapTag.morphology.rough"
+  | "mapTag.morphology.mountainous"
+  | "mapTag.morphology.navigable_river"
+  | "mapTag.water.coastal"
+  | "mapTag.water.ocean"
+  | "mapTag.water.lake"
+  | "mapTag.water.fresh"
+  | "mapTag.feature.minor_river"
+  | "mapTag.feature.floodplain"
+  | "mapTag.feature.wet"
+  | "mapTag.feature.vegetated"
+  | "mapTag.feature.aquatic"
+  | "mapTag.feature.snow"
+  | "mapTag.feature.volcanic"
+  | "mapTag.movement.stop_on_enter"
+  | "mapTag.fertility.barren"
+  | "mapTag.fertility.poor"
+  | "mapTag.fertility.modest"
+  | "mapTag.fertility.fertile"
+  | "mapTag.fertility.rich"
+  | "mapTag.rainfall.arid"
+  | "mapTag.rainfall.dry"
+  | "mapTag.rainfall.moderate"
+  | "mapTag.rainfall.wet"
+  | "mapTag.rainfall.monsoon"
+  | "mapTag.slope.flat"
+  | "mapTag.slope.rolling"
+  | "mapTag.slope.hilly"
+  | "mapTag.slope.steep"
+  | "mapTag.slope.rugged"
+  | "mapTag.latitude.polar"
+  | "mapTag.latitude.subpolar"
+  | "mapTag.latitude.temperate"
+  | "mapTag.latitude.subtropical"
+  | "mapTag.latitude.tropical"
+  | "mapTag.elevation.lowland"
+  | "mapTag.elevation.upland"
+  | "mapTag.elevation.highland"
+  | "mapTag.elevation.mountain"
+  | "mapTag.elevation.peak"
+  | "mapTag.landmass.continent"
+  | "mapTag.landmass.island"
+  | "mapTag.continent.homeland"
+  | "mapTag.continent.distant"
+  | "mapTag.basin.headwater"
+  | "mapTag.basin.mainstem"
+  | "mapTag.basin.delta"
+  | "mapTag.river.minor"
+  | "mapTag.river.major"
+  | "mapTag.river.navigable"
+  | "mapTag.coast.coastal"
+  | "mapTag.coast.inland"
   | "hexMap.building"
   | "hexMap.buildingStatusBurning"
   | "hexMap.buildingStatusConstruction"
   | "hexMap.buildingStatusInactive"
   | "hexMap.buildingStatusRuins"
   | "hexMap.buildingStatusWorking"
-  | "hexMap.divisions"
-  | "hexMap.divisionStack"
-  | "hexMap.divisionStackValue"
-  | "hexMap.divisionStackTooltip"
-  | "hexMap.divisionEquipmentCoverage"
-  | "hexMap.divisionStatus"
-  | "hexMap.divisionMove"
-  | "hexMap.divisionMoveTooltipCan"
-  | "hexMap.divisionMoveTooltipCannot"
-  | "hexMap.divisionMoveUnavailable"
-  | "hexMap.divisionMoveSelectTarget"
-  | "hexMap.divisionMoveNoPath"
-  | "hexMap.divisionMoveOrderSent"
-  | "hexMap.divisionAttack"
-  | "hexMap.divisionAttackTooltipCan"
-  | "hexMap.divisionAttackTooltipCannot"
-  | "hexMap.divisionAttackUnavailable"
-  | "hexMap.divisionAttackSelectTarget"
-  | "hexMap.divisionAttackNoTarget"
-  | "hexMap.divisionAttackOrderSent"
-  | "hexMap.fleets"
+  | "hexMap.unitStack"
+  | "hexMap.unitStackValue"
+  | "hexMap.unitStackTooltip"
+  | "hexMap.unitSelected"
+  | "hexMap.unitMoveSelectTarget"
+  | "hexMap.unitMoveNoPath"
+  | "hexMap.unitMoveOrderSent"
+  | "hexMap.unitAttackSelectTarget"
+  | "hexMap.unitAttackNoTarget"
+  | "hexMap.unitAttackOrderSent"
   | "hexMap.fleetStatus"
   | "hexMap.fleetMove"
   | "hexMap.fleetMoveTooltipCan"
@@ -1644,7 +1915,6 @@ export type UiTextKey =
   | "hexMap.fleetMoveUnavailable"
   | "hexMap.fleetMoveSelectTarget"
   | "hexMap.fleetMoveNoPath"
-  | "hexMap.fleetMoveOrderSent"
   | "hexMap.civilianUnits"
   | "hexMap.civilianQueue"
   | "hexMap.civilianColonizer"
@@ -1654,8 +1924,6 @@ export type UiTextKey =
   | "hexMap.civilianMoveTooltipCannot"
   | "hexMap.civilianMoveUnavailable"
   | "hexMap.civilianMoveSelectTarget"
-  | "hexMap.formationPlacementHud"
-  | "hexMap.formationPlacementInvalid"
   | "hexMap.civilianMovePreview"
   | "hexMap.civilianMoveNoPath"
   | "hexMap.civilianMoveTooFar"
@@ -1685,6 +1953,8 @@ export type UiTextKey =
   | "hexMap.foundCityOrderSent"
   | "hexMap.unitPopoverTitle"
   | "hexMap.unitPopoverHex"
+  | "hexMap.unitTrainingPlacementHud"
+  | "hexMap.unitTrainingUnavailable"
   | "hexMap.cityPendingNameFallback"
   | "hexMap.build"
   | "hexMap.colonize"
@@ -2441,6 +2711,39 @@ export type UiTextKey =
   | "population.lowRegionCapitalAlert"
   | "population.aggregatedData"
   | "population.balance"
+  | "population.chart.culture"
+  | "population.chart.politicalStrength"
+  | "population.chart.population"
+  | "population.chart.profession"
+  | "population.chart.region"
+  | "population.chart.religion"
+  | "population.chartsTitle"
+  | "population.discrimination"
+  | "population.detail.finance"
+  | "population.detail.needs"
+  | "population.detail.qualifications"
+  | "population.detail.reasons"
+  | "population.detail.status"
+  | "population.employment"
+  | "population.employment.employed"
+  | "population.employment.noOpenJobs"
+  | "population.employment.partial"
+  | "population.employment.unemployed"
+  | "population.filter.culture"
+  | "population.filter.discrimination"
+  | "population.filter.employment"
+  | "population.filter.profession"
+  | "population.filter.region"
+  | "population.filter.religion"
+  | "population.filter.sol"
+  | "population.filtersTitle"
+  | "population.qualifications"
+  | "population.accepted"
+  | "population.discriminated"
+  | "population.none"
+  | "population.discriminationTooltip"
+  | "population.employmentTooltip"
+  | "population.qualificationTooltip"
   | "population.brandingDescription"
   | "population.brandingTitle"
   | "population.births"
@@ -2524,6 +2827,23 @@ export type UiTextKey =
   | "population.expenseStructure"
   | "population.fulfilled"
   | "population.groupColumn"
+  | "population.groupedPopCount"
+  | "population.mode.atomic"
+  | "population.mode.grouped"
+  | "population.resetFilters"
+  | "population.rowsShown"
+  | "population.sol.low"
+  | "population.sol.prosperous"
+  | "population.sol.stable"
+  | "population.sol.struggling"
+  | "population.table.actions"
+  | "population.table.details"
+  | "population.table.ideologyInterest"
+  | "population.table.politicalStrength"
+  | "population.table.sol"
+  | "population.table.workplace"
+  | "population.tablePoliticalStrength"
+  | "population.tableTitle"
   | "population.wallet"
   | "buildings.regionRequired"
   | "buildings.regionDependency"
@@ -2851,18 +3171,6 @@ export type UiTextKey =
   | "provinceContext.openAdminEditor"
   | "shell.action.army"
   | "shell.action.armyDescription"
-  | "shell.action.divisionDesigner"
-  | "shell.action.divisionDesignerDescription"
-  | "shell.action.airWingDesigner"
-  | "shell.action.airWingDesignerDescription"
-  | "shell.action.fleetDesigner"
-  | "shell.action.fleetDesignerDescription"
-  | "shell.action.landEquipmentDesigner"
-  | "shell.action.landEquipmentDesignerDescription"
-  | "shell.action.airEquipmentDesigner"
-  | "shell.action.airEquipmentDesignerDescription"
-  | "shell.action.navalEquipmentDesigner"
-  | "shell.action.navalEquipmentDesignerDescription"
   | "shell.action.budget"
   | "shell.action.budgetDescription"
   | "shell.action.buildings"
@@ -2899,6 +3207,8 @@ export type UiTextKey =
   | "shell.action.technologyDescription"
   | "shell.action.turnStatus"
   | "shell.action.turnStatusDescription"
+  | "shell.action.unitCatalog"
+  | "shell.action.unitCatalogDescription"
   | "shell.admin"
   | "shell.adminPanel"
   | "shell.availableActions"
@@ -2956,6 +3266,8 @@ export type UiTextKey =
   | "shell.dashboard.scienceSpend"
   | "shell.dashboard.totalPopulation"
   | "shell.dashboard.treasury"
+  | "shell.dashboard.units"
+  | "shell.dashboard.unitsIntro"
   | "shell.endTurn"
   | "shell.entryCountryProfile"
   | "shell.entryEnterGame"
@@ -3008,10 +3320,12 @@ export type UiTextKey =
   | "shell.mode.overviewDescription"
   | "shell.mode.population"
   | "shell.mode.populationDescription"
+  | "shell.mode.units"
+  | "shell.mode.unitsDescription"
   | "shell.modeDock"
   | "shell.notifications"
   | "shell.orderColonizationTitle"
-  | "shell.orderArmyMoveMessage"
+  | "shell.orderUnitMoveMessage"
   | "shell.orderSent"
   | "shell.orderTitle"
   | "shell.preview.activeResearchDetail"
@@ -3023,7 +3337,6 @@ export type UiTextKey =
   | "shell.preview.colonizationLedger"
   | "shell.preview.constructionQueue"
   | "shell.preview.diplomacyLedger"
-  | "shell.preview.divisions"
   | "shell.preview.formationQueue"
   | "shell.preview.formationQueueDetail"
   | "shell.preview.governanceLedger"
@@ -3051,6 +3364,13 @@ export type UiTextKey =
   | "shell.preview.subsidies"
   | "shell.preview.topCulture"
   | "shell.preview.topProfession"
+  | "shell.preview.readyUnits"
+  | "shell.preview.trainingUnits"
+  | "shell.preview.trainingUnitsDetail"
+  | "shell.preview.unitTypes"
+  | "shell.preview.unitTypesDetail"
+  | "shell.preview.units"
+  | "shell.preview.noUnits"
   | "shell.preview.unknownBuilding"
   | "shell.resource.colonization"
   | "shell.resource.construction"
@@ -3088,6 +3408,50 @@ export type UiTextKey =
   | "topBar.netGrowth"
   | "topBar.netPerTurn"
   | "topBar.nextTurn"
+  | "turnActions.description"
+  | "turnActions.actionTrayAria"
+  | "turnActions.commandHubAria"
+  | "turnActions.focusUnit"
+  | "turnActions.focusUnitTooltip"
+  | "turnActions.attackUnit"
+  | "turnActions.attackUnitTooltip"
+  | "turnActions.forceEndTurn"
+  | "turnActions.forceEndTurnConfirm"
+  | "turnActions.forceEndTurnTooltip"
+  | "turnActions.foundCity"
+  | "turnActions.foundCityTooltip"
+  | "turnActions.fortifyQueued"
+  | "turnActions.fortifyUnit"
+  | "turnActions.fortifyUnitTooltip"
+  | "turnActions.moveUnit"
+  | "turnActions.moveUnitTooltip"
+  | "turnActions.promoteNeedsChoice"
+  | "turnActions.needsOrders"
+  | "turnActions.nextTurnBlockedTooltip"
+  | "turnActions.queueAria"
+  | "turnActions.readyDescription"
+  | "turnActions.readyTitle"
+  | "turnActions.readyTooltip"
+  | "turnActions.skipQueued"
+  | "turnActions.skipUnit"
+  | "turnActions.skipUnitTooltip"
+  | "turnActions.sleepQueued"
+  | "turnActions.sleepUnit"
+  | "turnActions.sleepUnitTooltip"
+  | "turnActions.stat.attack"
+  | "turnActions.stat.defense"
+  | "turnActions.stat.hp"
+  | "turnActions.stat.movement"
+  | "turnActions.title"
+  | "turnActions.unitCanAct.description"
+  | "turnActions.unitCanAct.label"
+  | "turnActions.unitCanFoundCity.description"
+  | "turnActions.unitCanFoundCity.label"
+  | "turnActions.unitPortraitAria"
+  | "turnActions.unitStatsAria"
+  | "turnActions.wakeQueued"
+  | "turnActions.wakeUnit"
+  | "turnActions.wakeUnitTooltip"
   | "topBar.openCountryDetails"
   | "topBar.openResourceDetails"
   | "topBar.populationAria"
@@ -3169,10 +3533,38 @@ export type UiTextKey =
   | "shell.workspaceTab.formation"
   | "shell.workspaceTab.hex"
   | "shell.workspaceTab.infrastructure"
+  | "shell.workspaceTab.readyUnits"
   | "shell.workspaceTab.records"
   | "shell.workspaceTab.summary"
+  | "shell.workspaceTab.trainingQueue"
   | "shell.workspaceTab.trade"
+  | "shell.workspaceTab.unitCatalog"
   | "shell.workspaceTab.warehouses"
+  | "shell.units.cancelTraining"
+  | "shell.units.catalog"
+  | "shell.units.catalogDetail"
+  | "shell.units.disband"
+  | "shell.units.disbanded"
+  | "shell.units.disbandFailed"
+  | "shell.units.emptyCatalog"
+  | "shell.units.emptyReadyUnits"
+  | "shell.units.emptyTrainingQueue"
+  | "shell.units.error.insufficientResources"
+  | "shell.units.error.invalidPayload"
+  | "shell.units.error.noValidHex"
+  | "shell.units.error.regionNotControlled"
+  | "shell.units.error.trainFailed"
+  | "shell.units.error.unitTypeNotFound"
+  | "shell.units.focusHex"
+  | "shell.units.groupLabel"
+  | "shell.units.overviewFailed"
+  | "shell.units.ready"
+  | "shell.units.readyDetail"
+  | "shell.units.training"
+  | "shell.units.trainingCancelFailed"
+  | "shell.units.trainingCanceled"
+  | "shell.units.trainingQueued"
+  | "shell.units.queueDetail"
   | "shell.workspaceTabs"
   | "shell.hex.controller"
   | "shell.hex.title"
@@ -3233,6 +3625,8 @@ export type UiTextKey =
   | "turnStatus.blockedPermanent"
   | "turnStatus.blockedUntilTime"
   | "turnStatus.blockedUntilTurn"
+  | "turnStatus.currentCountryNeedsOrders"
+  | "turnStatus.currentCountryReady"
   | "turnStatus.lastLogin"
   | "turnStatus.loading"
   | "turnStatus.noLoginData"
@@ -3381,6 +3775,177 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "common.unknown": "Unknown",
     "common.no": "No",
     "common.yes": "Yes",
+    "templates.action.codex": "Codex",
+    "templates.asset.clear": "Clear image",
+    "templates.asset.flagHint": "Click the card to choose an image.",
+    "templates.asset.flagReady": "Preview uses the selected local image.",
+    "templates.asset.flagTitle": "Flag preview",
+    "templates.asset.flagUpload": "Choose flag image",
+    "templates.button.danger": "Danger",
+    "templates.button.dangerDisabled": "Disabled danger",
+    "templates.button.dangerIcon": "With icon",
+    "templates.button.dangerIconOnly": "Danger icon action",
+    "templates.button.dangerLarge": "Large danger",
+    "templates.button.dangerSmall": "Small danger",
+    "templates.button.dangerWide": "Full width danger",
+    "templates.button.ghost": "Ghost",
+    "templates.button.primary": "Primary",
+    "templates.button.primaryDisabled": "Disabled",
+    "templates.button.primaryIcon": "With icon",
+    "templates.button.primaryIconOnly": "Primary icon action",
+    "templates.button.primaryLarge": "Large action",
+    "templates.button.primarySmall": "Small",
+    "templates.button.primaryWide": "Full width action",
+    "templates.button.secondary": "Secondary",
+    "templates.button.secondaryDisabled": "Disabled secondary",
+    "templates.button.secondaryIcon": "With icon",
+    "templates.button.secondaryIconOnly": "Secondary icon action",
+    "templates.button.secondaryLarge": "Large secondary",
+    "templates.button.secondarySmall": "Small secondary",
+    "templates.button.secondaryWide": "Full width secondary",
+    "templates.chart.area": "Area chart",
+    "templates.chart.bar": "Bar chart",
+    "templates.chart.donut": "Donut chart",
+    "templates.chart.line": "Line chart",
+    "templates.chartsTitle": "Chart examples",
+    "templates.choice.discipline": "Path of Discipline",
+    "templates.choice.disciplineDescription": "A strong army and order inside the state.",
+    "templates.choice.harmony": "Path of Harmony",
+    "templates.choice.harmonyDescription": "Unity with people and land brings stability.",
+    "templates.choice.knowledge": "Path of Knowledge",
+    "templates.choice.knowledgeDescription": "Develop science and education to outpace time.",
+    "templates.choice.envoys": "Path of Envoys",
+    "templates.choice.envoysDescription": "Court messengers turn distance into leverage.",
+    "templates.choice.omens": "Path of Omens",
+    "templates.choice.omensDescription": "Ritual signs guide decisions before rivals can react.",
+    "templates.choice.resolve": "Path of Resolve",
+    "templates.choice.resolveDescription": "Defensive doctrine makes the realm harder to break.",
+    "templates.choice.stewardship": "Path of Stewardship",
+    "templates.choice.stewardshipDescription": "Careful administrators turn orders into lasting works.",
+    "templates.choice.trade": "Path of Trade",
+    "templates.choice.tradeDescription": "Wealth comes to those who rule trade routes.",
+    "templates.choiceModalDescription": "Dedications give permanent bonuses to your state. Choose one.",
+    "templates.choiceModalTitle": "Choose Dedication",
+    "templates.colorPicker": "Choose color",
+    "templates.detail.cost": "Cost",
+    "templates.detail.description": "A Greek unique quarter. Created in a district of the same type as Odeon and Parthenon.",
+    "templates.detail.effects": "Effects",
+    "templates.detail.favorite": "Mark detail as favorite",
+    "templates.detail.goldPerTurn": "{value} gold",
+    "templates.detail.pinHint": "Hold Shift to pin tooltip",
+    "templates.detail.subtitle": "Unique quarter",
+    "templates.detail.title": "Acropolis",
+    "templates.detail.turns": "Turns",
+    "templates.dismissNotification": "Dismiss notification",
+    "templates.effect.armyStrength": "Warrior strength",
+    "templates.effect.caravan": "Trade caravan",
+    "templates.effect.constructionSpeed": "Construction speed",
+    "templates.effect.envoyCount": "Envoys",
+    "templates.effect.fortification": "Fortification",
+    "templates.effect.legitimacy": "Legitimacy",
+    "templates.effect.maintenance": "Maintenance",
+    "templates.effect.omenRisk": "Omen risk",
+    "templates.effect.populationGrowth": "Population growth",
+    "templates.effect.researchSpeed": "Research speed",
+    "templates.effect.ritualPower": "Ritual power",
+    "templates.effect.scholarSlot": "Scholar slot",
+    "templates.effect.tradeIncome": "Trade income",
+    "templates.effect.treatyCost": "Treaty cost",
+    "templates.effect.unrest": "Unrest",
+    "templates.effect.warWeariness": "War weariness",
+    "templates.dropdown.coastal": "Coastal league",
+    "templates.dropdown.mountain": "Mountain clans",
+    "templates.dropdown.river": "River states",
+    "templates.field.culture": "Culture",
+    "templates.field.description": "Description",
+    "templates.field.dropdown": "Dropdown",
+    "templates.field.name": "Name",
+    "templates.galleryTitle": "Imperial Command UI Kit",
+    "templates.icon.add": "Add",
+    "templates.icon.edit": "Edit",
+    "templates.icon.view": "View",
+    "templates.notification.build": "Construction completed",
+    "templates.notification.envoy": "Envoy arrived",
+    "templates.notification.research": "Research completed",
+    "templates.notificationsTitle": "Notifications",
+    "templates.panel.description": "Reusable cut-corner surface for modal groups and status panels.",
+    "templates.placeholder.culture": "Choose culture",
+    "templates.placeholder.description": "Optional description",
+    "templates.previewChip.color": "Color preview",
+    "templates.previewChip.empty": "Empty preview",
+    "templates.previewChip.group": "Grouped preview",
+    "templates.previewChip.icon": "Icon preview",
+    "templates.previewChipsTitle": "Preview chips",
+    "templates.resource.culture": "Culture",
+    "templates.resource.gold": "Gold",
+    "templates.resource.influence": "Influence",
+    "templates.resource.science": "Science",
+    "templates.resourcesTitle": "Resources",
+    "templates.sample.country": "Lantian Federation",
+    "templates.scrollbarRow": "Scrollable row {index}",
+    "templates.scrollbarTitle": "Scrollbar example",
+    "templates.section.buttons": "Buttons",
+    "templates.section.dangerButtons": "Danger buttons",
+    "templates.section.primaryButtons": "Primary buttons",
+    "templates.section.secondaryButtons": "Secondary buttons",
+    "templates.section.fields": "Fields",
+    "templates.section.panel": "Frame panel",
+    "templates.section.switches": "Switches",
+    "templates.selected": "Selected",
+    "templates.showAll": "Show all",
+    "templates.status.active": "Active",
+    "templates.status.available": "Available",
+    "templates.status.locked": "Locked",
+    "templates.status.pending": "Pending",
+    "templates.status.unavailable": "Unavailable",
+    "templates.tab.culture": "Culture",
+    "templates.tab.info": "Info",
+    "templates.tab.race": "Race",
+    "templates.tab.religion": "Religion",
+    "templates.tab.result": "Result",
+    "templates.tabsAria": "Registration steps",
+    "templates.tech.bureaucracy": "Bureaucracy",
+    "templates.tech.civilService": "Civil Service",
+    "templates.tech.codes": "Law Codes",
+    "templates.tech.education": "Education",
+    "templates.tech.planning": "Urban Planning",
+    "templates.tech.supply": "Army Supply",
+    "templates.techTitle": "Technology Tree Example",
+    "templates.plotTooltip.bonus": "+5% production toward river buildings.",
+    "templates.plotTooltip.baseMovement": "Base {value}",
+    "templates.plotTooltip.cityTitle": "City Center",
+    "templates.plotTooltip.food": "Food",
+    "templates.plotTooltip.improvement": "Irrigated farm",
+    "templates.plotTooltip.location": "Atlantica - Arno River",
+    "templates.plotTooltip.movement": "Movement",
+    "templates.plotTooltip.movementForest": "Vegetation",
+    "templates.plotTooltip.movementRough": "Rough ground",
+    "templates.plotTooltip.owner": "Augustus (You)",
+    "templates.plotTooltip.production": "Production",
+    "templates.plotTooltip.resource": "Citrus",
+    "templates.plotTooltip.resourceDescription": "Factory resource. Improves city growth.",
+    "templates.plotTooltip.route": "Road",
+    "templates.plotTooltip.section.rural": "Rural",
+    "templates.plotTooltip.section.systems": "Systems",
+    "templates.plotTooltip.section.units": "Units",
+    "templates.plotTooltip.settlement": "Mughal Empire - Patavium (Town)",
+    "templates.plotTooltip.stopOnEnter": "Stops on enter",
+    "templates.plotTooltip.subtitle": "Wet floodplain",
+    "templates.plotTooltip.title": "Flat Plains",
+    "templates.plotTooltip.unit": "Scout - Yours",
+    "templates.plotTooltip.unknownDescription": "Scout or select this area to reveal terrain, owner, movement, and resources.",
+    "templates.plotTooltip.unknownTitle": "Unexplored Plot",
+    "templates.plotTooltip.water": "Water",
+    "templates.tooltip.description": "Created in a matching district and grants permanent state effects.",
+    "templates.tooltip.eyebrow": "Tooltip",
+    "templates.tooltip.maintenance": "Maintenance",
+    "templates.tooltip.requirement": "Requirement",
+    "templates.tooltip.simple": "Simple hover tooltip",
+    "templates.tooltip.title": "Unique Quarter",
+    "templates.toggle.description": "Used by modal and HUD templates.",
+    "templates.toggle.locked": "Locked",
+    "templates.toggle.on": "On",
+    "templates.turnCost": "{turns} turns",
     "commandPalette.action.budget": "Open budget",
     "commandPalette.action.province": "Go to province selection",
     "commandPalette.action.resolve": "Request resolve",
@@ -3398,8 +3963,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.listTooltip": "Choose an entry from the list to edit its data and presentation.",
     "contentPanel.loading": "Loading...",
     "contentPanel.title": "Content panel",
-    "contentPanel.category.aircraftTypes": "Aircraft",
-    "contentPanel.category.battalions": "Battalions",
     "contentPanel.category.buildings": "Buildings",
     "contentPanel.category.companies": "Companies",
     "contentPanel.category.cultures": "Cultures",
@@ -3424,7 +3987,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.category.religions": "Religions",
     "contentPanel.category.resourceCategories": "Infrastructure categories",
     "contentPanel.category.sectors": "Sectors",
-    "contentPanel.category.shipTypes": "Ships",
     "contentPanel.category.technologies": "Technologies",
     "contentPanel.contentFallback": "Content",
     "contentPanel.listLabel": "List: {category}",
@@ -3868,24 +4430,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.meta.professions.namePlaceholder": "Profession name",
     "contentPanel.meta.professions.descriptionPlaceholder": "Brief profession description",
     "contentPanel.meta.professions.sectionTitle": "Profession creation and editing section",
-    "contentPanel.meta.battalions.singular": "battalion",
-    "contentPanel.meta.battalions.createBaseName": "New battalion",
-    "contentPanel.meta.battalions.createLabel": "Create battalion",
-    "contentPanel.meta.battalions.namePlaceholder": "Battalion name",
-    "contentPanel.meta.battalions.descriptionPlaceholder": "Battalion role in the division",
-    "contentPanel.meta.battalions.sectionTitle": "Battalion creation and editing section",
-    "contentPanel.meta.shipTypes.singular": "ship type",
-    "contentPanel.meta.shipTypes.createBaseName": "New ship",
-    "contentPanel.meta.shipTypes.createLabel": "Create ship",
-    "contentPanel.meta.shipTypes.namePlaceholder": "Ship type name",
-    "contentPanel.meta.shipTypes.descriptionPlaceholder": "Ship role in the fleet",
-    "contentPanel.meta.shipTypes.sectionTitle": "Ship creation and editing section",
-    "contentPanel.meta.aircraftTypes.singular": "aircraft type",
-    "contentPanel.meta.aircraftTypes.createBaseName": "New aircraft",
-    "contentPanel.meta.aircraftTypes.createLabel": "Create aircraft",
-    "contentPanel.meta.aircraftTypes.namePlaceholder": "Aircraft type name",
-    "contentPanel.meta.aircraftTypes.descriptionPlaceholder": "Aircraft role in the air wing",
-    "contentPanel.meta.aircraftTypes.sectionTitle": "Aircraft creation and editing section",
     "contentPanel.meta.ideologies.singular": "ideology",
     "contentPanel.meta.ideologies.createBaseName": "New ideology",
     "contentPanel.meta.ideologies.createLabel": "Create ideology",
@@ -4377,7 +4921,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.accountLockedPermanent": "Account is locked permanently",
     "auth.accountLockedTime": "Account is locked until {time}",
     "auth.accountLockedTurn": "Account is locked until turn #{turn}",
+    "auth.access": "Access",
+    "auth.brandName": "Arcanorum",
     "auth.chooseCountry": "Choose a country",
+    "auth.chooseCultureGroup": "Choose culture group",
+    "auth.chooseReligionGroup": "Choose religion group",
+    "auth.chooseRace": "Choose race",
+    "auth.clearImage": "Clear image",
     "auth.clientVersion": "client v0.1.0",
     "auth.country": "Country",
     "auth.countryColor": "Country color",
@@ -4386,17 +4936,31 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.createCountry": "Create country",
     "auth.creating": "Creating...",
     "auth.crest": "Crest",
-    "auth.crestHint": "PNG/JPG/WEBP up to 4MB, maximum 128x192, ratio 2:3",
-    "auth.crestInvalid": "Crest: maximum 128x192, ratio 2:3",
+    "auth.crestHint": "PNG/JPG/WEBP up to 4MB, maximum 128x146",
+    "auth.crestInvalid": "Crest: PNG/JPG/WEBP up to 4MB, maximum 128x146",
     "auth.crestPreview": "Crest preview",
     "auth.enterGame": "Sign in",
     "auth.enterPassword": "Enter password",
     "auth.fileTooLarge": "File is too large (up to 4MB)",
     "auth.flag": "Flag",
-    "auth.flagHint": "PNG/JPG/WEBP up to 4MB, maximum 192x128, ratio 3:2",
-    "auth.flagInvalid": "Flag: maximum 192x128, ratio 3:2",
+    "auth.flagHint": "PNG/JPG/WEBP up to 4MB, maximum 192x128",
+    "auth.flagInvalid": "Flag: PNG/JPG/WEBP up to 4MB, maximum 192x128",
     "auth.flagPreview": "Flag preview",
-    "auth.imageFormatInvalid": "Check format: flag 192x128 (3:2), crest 128x192 (2:3)",
+    "auth.cultureColor": "Culture color",
+    "auth.cultureGroup": "Culture group",
+    "auth.cultureLogo": "Culture logo",
+    "auth.cultureName": "Culture name",
+    "auth.backToLogin": "Back to login",
+    "auth.confirmCultureReligion": "Culture and religion",
+    "auth.confirmPreviewTitle": "Founding preview",
+    "auth.imageFormatInvalid": "Check format: PNG/JPG/WEBP up to 4MB. Maximum sizes: flag 192x128, crest 128x146, logos 64x64",
+    "auth.identity": "Country identity",
+    "auth.identityBonuses": "Bonuses",
+    "auth.identityLogoHint": "PNG/JPG/WEBP up to 4MB, maximum 64x64",
+    "auth.identityLogoInvalid": "Identity logo: PNG/JPG/WEBP up to 4MB, maximum 64x64",
+    "auth.identityNoDescription": "No description authored.",
+    "auth.identityOptions": "Identity options",
+    "auth.identitySelectPrompt": "Select an option to inspect its bonuses and starting population.",
     "auth.invalidHex": "Enter a valid HEX color",
     "auth.invalidPassword": "Invalid password",
     "auth.knowledge": "Knowledge archive",
@@ -4407,33 +4971,57 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.loginSuccess": "Signed in",
     "auth.min2": "Minimum 2 characters",
     "auth.min8": "Minimum 8 characters",
+    "auth.missingValue": "Missing",
+    "auth.nextStep": "Next",
     "auth.noFileSelected": "Not selected",
+    "auth.noBonuses": "No direct modifier bonuses.",
+    "auth.noStartingPopChanges": "No starting population changes.",
     "auth.onlyImages": "Only images are allowed",
     "auth.password": "Password",
-    "auth.passwordComplexityAria": "Password complexity check",
-    "auth.passwordComplexityLoginNeed": "Add letters and digits for complexity",
-    "auth.passwordComplexityNeed": "Add an uppercase letter, digit, and special character",
-    "auth.passwordComplexityOk": "Password complexity is good",
-    "auth.passwordLengthAria": "Password length check",
     "auth.passwordLengthNeed": "Needs at least 8 characters",
     "auth.passwordLengthOk": "Password length is good",
     "auth.passwordMismatch": "Passwords do not match",
-    "auth.presetColor": "Choose {color}",
+    "auth.previousStep": "Previous",
     "auth.register": "Register",
+    "auth.replaceImage": "Replace image",
     "auth.registrationError": "Registration failed",
     "auth.registrationPendingApproval": "Registration is awaiting administrator approval",
     "auth.registrationPendingDescription": "You can enter the game after the request is approved.",
+    "auth.registrationSteps": "Registration steps",
     "auth.registrationSent": "Registration request sent",
     "auth.registrationSentMessage": "Country {country} has been sent to administrators for approval.",
     "auth.rememberMe": "Remember me",
     "auth.repeatPassword": "Repeat password",
+    "auth.religionColor": "Religion color",
+    "auth.religionGroup": "Religion group",
+    "auth.religionLogo": "Religion logo",
+    "auth.religionName": "Religion name",
+    "auth.race": "Race",
     "auth.selectCountry": "Select country",
     "auth.selectImage": "Choose image",
     "auth.serverStatus.maintenance": "Maintenance",
     "auth.serverStatus.offline": "Offline",
     "auth.serverStatus.online": "Online",
     "auth.serverUnavailable": "Server unavailable",
+    "auth.startingPopulation": "Starting population",
+    "auth.startingPop.ducats": "Starting ducats: {value}",
+    "auth.startingPop.ducatsLabel": "Ducats",
+    "auth.startingPop.literacy": "Literacy: {value}%",
+    "auth.startingPop.literacyLabel": "Literacy",
+    "auth.startingPop.loyalists": "Loyalists: {value}",
+    "auth.startingPop.loyalistsLabel": "Loyalists",
+    "auth.startingPop.radicals": "Radicals: {value}",
+    "auth.startingPop.radicalsLabel": "Radicals",
+    "auth.startingPop.sol": "Standard of living: {value}",
+    "auth.startingPop.solLabel": "SoL",
+    "auth.step.confirm": "Confirm",
+    "auth.step.culture": "Culture group",
+    "auth.step.info": "Information",
+    "auth.step.race": "Race",
+    "auth.step.religion": "Religious group",
     "auth.waitButton": "I will wait",
+    "auth.welcomeDescription": "Choose your country, enter the world, or found a new realm from the same command window.",
+    "auth.welcomeTitle": "Welcome.",
     "clientSettings.description": "These settings do not affect the server game and apply only in your browser.",
     "clientSettings.descriptionTitle": "Description",
     "clientSettings.interface": "Interface",
@@ -4442,6 +5030,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "clientSettings.localNote": "Settings are saved locally for each country.",
     "clientSettings.mapControls": "Map controls panel",
     "clientSettings.mapControlsDescription": "Zoom, reset, and map lock buttons in the lower right corner.",
+    "clientSettings.zoomIndicator": "Zoom indicator",
+    "clientSettings.zoomIndicatorDescription": "Show the current map zoom level in the lower left corner.",
     "clientSettings.edgeScroll": "Edge scrolling",
     "clientSettings.edgeScrollDescription": "Move the map when the pointer reaches the screen edge.",
     "clientSettings.save": "Save",
@@ -4594,15 +5184,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "elections.tooltipVotes": "Votes: {value}",
     "elections.voteShare": "Votes: {value}",
     "army.air": "Air wings",
-    "army.airWingMission": "Air mission",
-    "army.airWingMission.air_superiority": "Air superiority",
-    "army.airWingMission.ground_support": "Ground support",
-    "army.airWingMission.interception": "Interception",
-    "army.airWingMission.naval_patrol": "Naval patrol",
-    "army.airWingMission.none": "No mission",
-    "army.airWingMissionRegion": "Mission region",
-    "army.airWingMissionRegionTooltip": "Sets the region where this air wing is assigned to operate. Range and base validation will be enforced by later air-system slices.",
-    "army.airWingMissionTooltip": "Sets the current mission for this air wing. Mission effects are applied by future air-combat and modifier systems.",
     "army.attack": "Attack",
     "army.baseHex": "Base hex",
     "army.battleSlots": "Combat slots",
@@ -4612,8 +5193,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.createEquipmentVariant": "Create variant",
     "army.createFormation": "Form unit",
     "army.createProductionLine": "Start line",
-    "army.defaultAir": "New air wing",
-    "army.defaultLand": "New division",
     "army.defaultNaval": "New fleet",
     "army.delete": "Delete",
     "army.deleteProductionLine": "Delete production line",
@@ -4621,7 +5200,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.description": "Templates, formation, and basing for divisions, fleets, and air wings",
     "army.disbandConfirmDescription": "Disband {name}? The division will be removed from the map.",
     "army.disbandConfirmTitle": "Disband division",
-    "army.disbandDivision": "Disband division",
     "army.disbandEquipmentReturn": "Assigned equipment will return to the country stockpile.",
     "army.emptyQueue": "Queue is empty",
     "army.emptyQueueDescription": "New units appear here after a formation command.",
@@ -4631,16 +5209,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.equipmentCoverage": "Coverage {value}%",
     "army.equipmentCoverageTooltip": "Required: {required}. Available in stockpile: {available}. Assigned by current best-variant scoring: {assigned}. Coverage {coverage}% scales the division's effective combat stats.",
     "army.equipmentCoverageTooltipTitle": "Equipment coverage",
-    "army.divisionEquipmentLoadout": "Division equipment",
-    "army.divisionEquipmentLoadoutTooltip": "This division has {assigned} of {required} required equipment assigned. Coverage {coverage}% affects its effective combat stats.",
-    "army.noDivisionEquipmentLoadout": "No equipment requirements",
     "army.equipmentCost": "Goods cost",
     "army.equipmentLines": "Production lines",
-    "army.equipmentProduction": "Equipment production",
     "army.equipmentRequirements": "Equipment needs",
     "army.equipmentStats": "Stats",
-    "army.equipmentVariant": "Variant",
-    "army.equipmentVariantName": "Variant name",
     "army.assignedEquipment": "Assigned equipment",
     "army.equipmentRequired": "Required",
     "army.equipmentAvailable": "Available",
@@ -4683,9 +5255,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.formationSelectHexTooltip": "Choose deployment hex on map",
     "army.formationSpeed": "Formation speed: {speed}",
     "army.branch": "Branch",
-    "army.branch.air": "Air wings",
-    "army.branch.land": "Divisions",
-    "army.branch.naval": "Fleets",
     "army.icon64": "Logo 64x64",
     "army.iconInvalid64": "Logo must be exactly 64x64.",
     "army.iconUploadFailed": "Failed to upload logo.",
@@ -4706,7 +5275,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.noEquipmentLines": "No production lines",
     "army.noEquipmentLinesDescription": "Create a variant, then start a production line.",
     "army.noEquipmentRequirements": "This template does not require equipment yet.",
-    "army.noEquipmentStats": "No stats.",
     "army.noAssignedEquipment": "No suitable equipment in stockpile",
     "army.noMissionRegions": "No known regions",
     "army.noFrames": "No frames are available for this branch.",
@@ -4732,9 +5300,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.inactive": "Inactive",
     "army.saveTemplate": "Save template",
     "army.saveVariant": "Save variant",
-    "army.designerDivision": "Division designer",
-    "army.designerAirWing": "Air wing designer",
-    "army.designerFleet": "Fleet designer",
     "army.createLandEquipment": "Create equipment",
     "army.createPlane": "Create aircraft",
     "army.createShip": "Create ship",
@@ -4764,7 +5329,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.supplySummaryTitle": "Army supply summary",
     "army.supplySummaryValue": "+{received} / -{returned} · {divisions} divisions",
     "army.supplyShort": "Supply",
-    "army.totalBattalions": "{count} battalions",
     "army.totalSoldiers": "{count} soldiers",
     "army.templateDeleted": "Template deleted",
     "army.templateEquipmentCoverage": "Template equipment coverage: {value}%",
@@ -4778,8 +5342,39 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.unitName": "Unit name",
     "locale.english": "English",
     "locale.russian": "Russian",
+    "cultureGroup.highlandClans.description": "Fortified upland communities with strong kinship law and stonework traditions. Their settlers are cohesive and build early infrastructure faster.",
+    "cultureGroup.highlandClans.name": "Highland Clans",
+    "cultureGroup.maritimeLeagues.description": "Harbor leagues built around shipyards, pilots, and coastal compacts. Their early state is wealthier and better prepared to expand overseas.",
+    "cultureGroup.maritimeLeagues.name": "Maritime Leagues",
+    "cultureGroup.riverineCityStates.description": "Cities raised on river crossings, granaries, docks, and toll roads. Their settlers begin with practical literacy and better early revenues.",
+    "cultureGroup.riverineCityStates.name": "Riverine City-States",
+    "race.dwarf.description": "Compact craft societies with strong guild discipline and deep construction traditions.",
+    "race.dwarf.name": "Dwarf",
+    "race.elf.description": "Long-lived communities with strong written traditions and refined civic memory.",
+    "race.elf.name": "Elf",
+    "race.human.description": "Adaptable, politically flexible settlers with balanced early institutions.",
+    "race.human.name": "Human",
+    "religionGroup.ancestorRites.description": "Lineage shrines and household rites bind new settlements to remembered founders. Their first settlers are more loyal.",
+    "religionGroup.ancestorRites.name": "Ancestor Rites",
+    "religionGroup.celestialOrders.description": "Astral schools that read legitimacy in calendars, omens, and precise records. Their settlements begin with stronger scholarship.",
+    "religionGroup.celestialOrders.name": "Celestial Orders",
+    "religionGroup.dawnMysteries.description": "Initiates greet each day with public vows, processions, and rites of renewal. Their first settlements build trust around shared ceremonies.",
+    "religionGroup.dawnMysteries.name": "Dawn Mysteries",
+    "religionGroup.earthMotherCults.description": "Seasonal shrines, field blessings, and kinship feasts bind worship to land and harvest. Their communities begin with steadier material reserves.",
+    "religionGroup.earthMotherCults.name": "Earth Mother Cults",
+    "religionGroup.riverOracles.description": "Diviners read currents, floods, and ferry ledgers as signs of fortune. Their early states are better prepared for tolls and trade.",
+    "religionGroup.riverOracles.name": "River Oracles",
+    "religionGroup.sacredFlame.description": "Hearth temples keep oath-fires burning through war, winter, and founding rites. Their followers organize labor with disciplined zeal.",
+    "religionGroup.sacredFlame.name": "Sacred Flame",
+    "religionGroup.stormPact.description": "Worshippers swear before thunder, sea wind, and open sky. Their first expeditions are bold and suited to frontier expansion.",
+    "religionGroup.stormPact.name": "Storm Pact",
+    "religionGroup.templeCults.description": "Organized priesthoods centered on civic temples, calendars, and offerings. They give the state a stronger early religious base.",
+    "religionGroup.templeCults.name": "Temple Cults",
+    "religionGroup.veilScholars.description": "Quiet orders preserve forbidden commentaries, star charts, and coded doctrine. Their settlements begin with stronger learned circles.",
+    "religionGroup.veilScholars.name": "Veil Scholars",
     "map.controls.zoomIn": "Zoom in",
     "map.controls.zoomOut": "Zoom out",
+    "map.zoomIndicator.label": "Zoom",
     "map.controls.resetView": "Reset center and zoom",
     "map.controls.lockInteraction": "Lock pan/zoom",
     "map.controls.unlockInteraction": "Unlock pan/zoom",
@@ -4868,6 +5463,16 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.terrain": "Terrain",
     "hexMap.biome": "Biome",
     "hexMap.feature": "Feature",
+    "hexMap.surfaceSummary": "Summary",
+    "hexMap.surfaceType": "Surface type",
+    "hexMap.surface.continent": "Continent",
+    "hexMap.surface.island": "Island",
+    "hexMap.surface.ocean": "Ocean",
+    "hexMap.surface.sea": "Coastal water",
+    "hexMap.surface.lake": "Lake",
+    "hexMap.position": "Position",
+    "hexMap.position.coastal": "Coastal",
+    "hexMap.position.inland": "Inland",
     "hexMap.siteFeature": "Special feature",
     "hexMap.resourceDeposit": "Deposit",
     "hexMap.water": "Water",
@@ -4875,33 +5480,93 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.ownerCountry": "Country {country}",
     "hexMap.ownerNone": "Unowned",
     "hexMap.movementCost": "Move cost",
+    "hexMap.movementBase": "Base {value}",
+    "hexMap.movementStopOnEnter": "Stops on enter",
+    "hexMap.tooltipSystems": "Systems",
+    "hexMap.tooltipNoSystems": "No visible systems",
+    "hexMap.mapTags": "Map tags",
+    "hexMap.tagGroupBiome": "Biome",
+    "hexMap.tagGroupClimate": "Climate",
+    "hexMap.tagGroupRelief": "Relief",
+    "hexMap.tagGroupWater": "Water and rivers",
+    "hexMap.tagGroupFeatures": "Features",
+    "hexMap.tagGroupValue": "Land value",
+    "hexMap.tagGroupMovement": "Movement",
+    "mapTag.unknown": "Unknown tag",
+    "mapTag.biome.tundra": "Tundra",
+    "mapTag.biome.grassland": "Grassland",
+    "mapTag.biome.plains": "Plains",
+    "mapTag.biome.desert": "Desert",
+    "mapTag.biome.tropical": "Tropical",
+    "mapTag.morphology.flat": "Flat",
+    "mapTag.morphology.rough": "Rough",
+    "mapTag.morphology.mountainous": "Mountainous",
+    "mapTag.morphology.navigable_river": "Navigable river tile",
+    "mapTag.water.coastal": "Coastal water",
+    "mapTag.water.ocean": "Ocean",
+    "mapTag.water.lake": "Lake",
+    "mapTag.water.fresh": "Fresh water",
+    "mapTag.feature.minor_river": "Minor river",
+    "mapTag.feature.floodplain": "Floodplain",
+    "mapTag.feature.wet": "Wet",
+    "mapTag.feature.vegetated": "Vegetated",
+    "mapTag.feature.aquatic": "Aquatic",
+    "mapTag.feature.snow": "Snow",
+    "mapTag.feature.volcanic": "Volcanic",
+    "mapTag.movement.stop_on_enter": "Stops movement on enter",
+    "mapTag.fertility.barren": "Barren",
+    "mapTag.fertility.poor": "Poor fertility",
+    "mapTag.fertility.modest": "Modest fertility",
+    "mapTag.fertility.fertile": "Fertile",
+    "mapTag.fertility.rich": "Rich fertility",
+    "mapTag.rainfall.arid": "Arid",
+    "mapTag.rainfall.dry": "Dry",
+    "mapTag.rainfall.moderate": "Moderate rainfall",
+    "mapTag.rainfall.wet": "Wet",
+    "mapTag.rainfall.monsoon": "Monsoon rainfall",
+    "mapTag.slope.flat": "Flat",
+    "mapTag.slope.rolling": "Rolling",
+    "mapTag.slope.hilly": "Hilly",
+    "mapTag.slope.steep": "Steep",
+    "mapTag.slope.rugged": "Rugged",
+    "mapTag.latitude.polar": "Polar",
+    "mapTag.latitude.subpolar": "Subpolar",
+    "mapTag.latitude.temperate": "Temperate latitude",
+    "mapTag.latitude.subtropical": "Subtropical",
+    "mapTag.latitude.tropical": "Tropical",
+    "mapTag.elevation.lowland": "Lowland",
+    "mapTag.elevation.upland": "Upland",
+    "mapTag.elevation.highland": "Highland",
+    "mapTag.elevation.mountain": "Mountain elevation",
+    "mapTag.elevation.peak": "Peak",
+    "mapTag.landmass.continent": "Continent",
+    "mapTag.landmass.island": "Island",
+    "mapTag.continent.homeland": "Homeland continent",
+    "mapTag.continent.distant": "Distant continent",
+    "mapTag.basin.headwater": "Headwater basin",
+    "mapTag.basin.mainstem": "Main river basin",
+    "mapTag.basin.delta": "River delta",
+    "mapTag.river.minor": "Minor river",
+    "mapTag.river.major": "Major river",
+    "mapTag.river.navigable": "Navigable river",
+    "mapTag.coast.coastal": "Coastal",
+    "mapTag.coast.inland": "Inland",
     "hexMap.building": "Building",
     "hexMap.buildingStatusBurning": "Burning",
     "hexMap.buildingStatusConstruction": "Under construction",
     "hexMap.buildingStatusInactive": "Inactive",
     "hexMap.buildingStatusRuins": "Ruins",
     "hexMap.buildingStatusWorking": "Working",
-    "hexMap.divisions": "Divisions",
-    "hexMap.divisionStack": "Division stack",
-    "hexMap.divisionStackValue": "{current}/{max}",
-    "hexMap.divisionStackTooltip": "Your land divisions on this hex: {current}/{max}. The scenario stack limit blocks peaceful movement into a full hex, pauses stored routes at the next full hex, and keeps completed formations in the queue until space is available.",
-    "hexMap.divisionEquipmentCoverage": "equipment {value}%",
-    "hexMap.divisionStatus": "Strength {strength}% · organization {organization}",
-    "hexMap.divisionMove": "Move",
-    "hexMap.divisionMoveTooltipCan": "Choose a target hex for this division.",
-    "hexMap.divisionMoveTooltipCannot": "This division cannot receive a movement order now.",
-    "hexMap.divisionMoveUnavailable": "This division cannot move now.",
-    "hexMap.divisionMoveSelectTarget": "Select a target hex for the division.",
-    "hexMap.divisionMoveNoPath": "No valid route for this division.",
-    "hexMap.divisionMoveOrderSent": "Division movement order sent",
-    "hexMap.divisionAttack": "Attack",
-    "hexMap.divisionAttackTooltipCan": "Choose an adjacent enemy or enemy-controlled hex to attack.",
-    "hexMap.divisionAttackTooltipCannot": "This division has no adjacent attack target or already has an order.",
-    "hexMap.divisionAttackUnavailable": "This division cannot attack now.",
-    "hexMap.divisionAttackSelectTarget": "Select an adjacent enemy hex to attack.",
-    "hexMap.divisionAttackNoTarget": "No adjacent attackable target on that hex.",
-    "hexMap.divisionAttackOrderSent": "Division attack order sent",
-    "hexMap.fleets": "Fleets",
+    "hexMap.unitStack": "Unit stack",
+    "hexMap.unitStackValue": "{current}/{max}",
+    "hexMap.unitStackTooltip": "Your units on this hex: {current}/{max}. Civ-like stacking currently allows one combat unit plus one civilian unit for the same country.",
+    "hexMap.unitSelected": "Unit selected",
+    "hexMap.unitMoveSelectTarget": "Select a target hex for the unit.",
+    "hexMap.unitMoveNoPath": "No valid route for this unit.",
+    "hexMap.unitMoveOrderSent": "Unit movement order sent",
+    "hexMap.unitAttackSelectTarget": "Select an adjacent enemy hex to attack.",
+    "hexMap.unitAttackNoTarget": "No adjacent attackable target on that hex.",
+    "hexMap.unitAttackOrderSent": "Unit attack order sent",
     "hexMap.fleetStatus": "Strength {strength}% · organization {organization}",
     "hexMap.fleetMove": "Move",
     "hexMap.fleetMoveTooltipCan": "Choose a water target hex for this fleet.",
@@ -4909,7 +5574,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.fleetMoveUnavailable": "This fleet cannot move now.",
     "hexMap.fleetMoveSelectTarget": "Select a water target hex for the fleet.",
     "hexMap.fleetMoveNoPath": "No valid water route for this fleet.",
-    "hexMap.fleetMoveOrderSent": "Fleet movement order sent",
     "hexMap.civilianUnits": "Civilian units",
     "hexMap.civilianQueue": "Civilian queue",
     "hexMap.civilianColonizer": "Colonizer",
@@ -4919,8 +5583,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.civilianMoveTooltipCannot": "This civilian unit cannot move now.",
     "hexMap.civilianMoveUnavailable": "This civilian unit cannot move now.",
     "hexMap.civilianMoveSelectTarget": "Select a target hex for the colonizer.",
-    "hexMap.formationPlacementHud": "Select a deployment hex.",
-    "hexMap.formationPlacementInvalid": "The selected formation cannot deploy on this hex.",
     "hexMap.civilianMovePreview": "Route cost {cost}; this turn {points}",
     "hexMap.civilianMoveNoPath": "No valid route to that hex.",
     "hexMap.civilianMoveTooFar": "Route is too long: {cost}/{points} movement points.",
@@ -4950,6 +5612,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.foundCityOrderSent": "City foundation order sent",
     "hexMap.unitPopoverTitle": "Selected unit",
     "hexMap.unitPopoverHex": "Hex {hex}",
+    "hexMap.unitTrainingPlacementHud": "Select a controlled deployment hex for this unit.",
+    "hexMap.unitTrainingUnavailable": "This hex cannot train the selected unit.",
     "hexMap.cityPendingNameFallback": "New city",
     "hexMap.build": "Build",
     "hexMap.colonize": "Colonize",
@@ -5706,6 +6370,39 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "population.lowRegionCapitalAlert": "{region}: low capital per capita ({capital} ducats/person)",
     "population.aggregatedData": "Aggregated population data",
     "population.balance": "Balance",
+    "population.chart.culture": "Culture",
+    "population.chart.politicalStrength": "Political Strength",
+    "population.chart.population": "Population",
+    "population.chart.profession": "Profession",
+    "population.chart.region": "State",
+    "population.chart.religion": "Religion",
+    "population.chartsTitle": "Charts",
+    "population.discrimination": "Acceptance",
+    "population.detail.finance": "Finance",
+    "population.detail.needs": "Needs",
+    "population.detail.qualifications": "Qualifications",
+    "population.detail.reasons": "Reasons",
+    "population.detail.status": "Status",
+    "population.employment": "Jobs",
+    "population.employment.employed": "Employed",
+    "population.employment.noOpenJobs": "No open jobs",
+    "population.employment.partial": "Partially employed",
+    "population.employment.unemployed": "Unemployed",
+    "population.filter.culture": "Culture",
+    "population.filter.discrimination": "Discrimination",
+    "population.filter.employment": "Employment",
+    "population.filter.profession": "Profession",
+    "population.filter.region": "State",
+    "population.filter.religion": "Religion",
+    "population.filter.sol": "Standard of Living",
+    "population.filtersTitle": "Filters",
+    "population.qualifications": "Qualifications",
+    "population.accepted": "Accepted",
+    "population.discriminated": "Discriminated",
+    "population.none": "none",
+    "population.discriminationTooltip": "Status: {status}. Reasons: {reasons}. Penalty: {penalty}%.",
+    "population.employmentTooltip": "Status: {status}. Employed: {employed}. Open jobs: {openJobs}.",
+    "population.qualificationTooltip": "Qualification limit: {limit}. Shortages: {shortages}.",
     "population.brandingDescription": "Preparation for population panel visual settings",
     "population.brandingTitle": "Logo and style",
     "population.births": "Births",
@@ -5789,6 +6486,23 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "population.expenseStructure": "Expense structure",
     "population.fulfilled": "Fulfilled",
     "population.groupColumn": "Group",
+    "population.groupedPopCount": "{count} groups",
+    "population.mode.atomic": "Atomic",
+    "population.mode.grouped": "Grouped",
+    "population.resetFilters": "Reset",
+    "population.rowsShown": "{shown} / {total} rows",
+    "population.sol.low": "Impoverished (0-7)",
+    "population.sol.prosperous": "Prosperous (15+)",
+    "population.sol.stable": "Stable (11-14)",
+    "population.sol.struggling": "Struggling (8-10)",
+    "population.table.actions": "Actions",
+    "population.table.details": "Details",
+    "population.table.ideologyInterest": "Ideology",
+    "population.table.politicalStrength": "Political Strength",
+    "population.table.sol": "Standard of Living",
+    "population.table.workplace": "Workplace",
+    "population.tablePoliticalStrength": "Political Strength: {value}",
+    "population.tableTitle": "Pop groups",
     "population.wallet": "Wallet",
     "buildings.regionRequired": "No region selected",
     "buildings.regionDependency": "Requires building in region: {building}",
@@ -6116,18 +6830,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "provinceContext.openAdminEditor": "Hex management",
     "shell.action.army": "Command army",
     "shell.action.armyDescription": "Open formations, routes, and military orders.",
-    "shell.action.divisionDesigner": "Division designer",
-    "shell.action.divisionDesignerDescription": "Create and edit land division templates from combat and support components.",
-    "shell.action.airWingDesigner": "Air wing designer",
-    "shell.action.airWingDesignerDescription": "Create air wing templates and their equipment requirements.",
-    "shell.action.fleetDesigner": "Fleet designer",
-    "shell.action.fleetDesignerDescription": "Create fleet templates and their ship requirements.",
-    "shell.action.landEquipmentDesigner": "Create equipment",
-    "shell.action.landEquipmentDesignerDescription": "Design land equipment variants from frames and modules.",
-    "shell.action.airEquipmentDesigner": "Create aircraft",
-    "shell.action.airEquipmentDesignerDescription": "Design aircraft variants from airframes and modules.",
-    "shell.action.navalEquipmentDesigner": "Create ship",
-    "shell.action.navalEquipmentDesignerDescription": "Design ship variants from hulls and modules.",
     "shell.action.budget": "State budget",
     "shell.action.budgetDescription": "Review treasury pressure, subsidies, and current-turn expenses.",
     "shell.action.buildings": "Regional construction",
@@ -6164,6 +6866,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.technologyDescription": "Open research, progress, and prerequisites.",
     "shell.action.turnStatus": "Country readiness",
     "shell.action.turnStatusDescription": "Review who is ready to resolve the current turn.",
+    "shell.action.unitCatalog": "Train units",
+    "shell.action.unitCatalogDescription": "Open unit types and choose a deployment hex for training.",
     "shell.admin": "Admin",
     "shell.adminPanel": "Admin panel",
     "shell.availableActions": "Available actions",
@@ -6221,6 +6925,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.dashboard.scienceSpend": "Science committed",
     "shell.dashboard.totalPopulation": "Total population",
     "shell.dashboard.treasury": "Treasury",
+    "shell.dashboard.units": "Units",
+    "shell.dashboard.unitsIntro": "Train individual map units, inspect deployment queues, and manage ready units.",
     "shell.endTurn": "End turn",
     "shell.entryCountryProfile": "Country profile",
     "shell.entryEnterGame": "Enter game",
@@ -6273,27 +6979,28 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.mode.overviewDescription": "Country dashboard over the map: resources, issues, readiness, and priorities.",
     "shell.mode.population": "Population",
     "shell.mode.populationDescription": "Society dashboard for pops, professions, cultures, religions, and needs.",
+    "shell.mode.units": "Units",
+    "shell.mode.unitsDescription": "Train individual map units from scenario unit types.",
     "shell.modeDock": "Map modes",
     "shell.notifications": "Notifications",
     "shell.orderColonizationTitle": "New colonization order",
-    "shell.orderArmyMoveMessage": "Division {division} redeployed to {province}",
+    "shell.orderUnitMoveMessage": "Unit {unit} moved to {hex}",
     "shell.orderSent": "Order sent",
     "shell.orderTitle": "New order",
     "shell.preview.activeResearchDetail": "Current technology tracks",
     "shell.preview.armyLedger": "Army board",
     "shell.preview.averageOrganization": "Average organization",
-    "shell.preview.averageOrganizationDetail": "Across field divisions",
+    "shell.preview.averageOrganizationDetail": "Across field units",
     "shell.preview.bills": "Bills",
     "shell.preview.billsDetail": "Parliament agenda",
     "shell.preview.colonizationLedger": "Colonization board",
     "shell.preview.constructionQueue": "Construction queue",
     "shell.preview.diplomacyLedger": "Diplomatic desk",
-    "shell.preview.divisions": "Divisions",
     "shell.preview.formationQueue": "Formation queue",
     "shell.preview.formationQueueDetail": "Units being formed",
     "shell.preview.governanceLedger": "Office ledger",
     "shell.preview.marketLedger": "Market ledger",
-    "shell.preview.noArmy": "No field divisions or formations yet.",
+    "shell.preview.noArmy": "No field units or training queue yet.",
     "shell.preview.noColonization": "No ready colonizers, colonizer queue, or settlement projects yet. Select a controlled hex and prepare a colonizer.",
     "shell.preview.noConstruction": "No active construction projects for your controlled regions.",
     "shell.preview.noDiplomacy": "No visible diplomatic proposals involving your country.",
@@ -6316,6 +7023,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.subsidies": "Subsidies",
     "shell.preview.topCulture": "Top culture",
     "shell.preview.topProfession": "Top profession",
+    "shell.preview.readyUnits": "Ready units",
+    "shell.preview.trainingUnits": "Training queue",
+    "shell.preview.trainingUnitsDetail": "Units in training",
+    "shell.preview.unitTypes": "Unit types",
+    "shell.preview.unitTypesDetail": "Scenario unit catalog",
+    "shell.preview.units": "Units",
+    "shell.preview.noUnits": "No units",
     "shell.preview.unknownBuilding": "Building {id}",
     "shell.resource.colonization": "Colonization",
     "shell.resource.construction": "Construction",
@@ -6384,6 +7098,50 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "topBar.netGrowth": "Net growth",
     "topBar.netPerTurn": "Net per turn",
     "topBar.nextTurn": "Next turn #{turn}",
+    "turnActions.description": "Resolve is available, but these units can still act this turn.",
+    "turnActions.actionTrayAria": "Unit action tray",
+    "turnActions.commandHubAria": "Turn advancer and unit command hub",
+    "turnActions.focusUnit": "Focus",
+    "turnActions.focusUnitTooltip": "Center the map on this required action.",
+    "turnActions.attackUnit": "Attack",
+    "turnActions.attackUnitTooltip": "Choose an adjacent enemy or enemy-controlled hex.",
+    "turnActions.forceEndTurn": "Force end turn",
+    "turnActions.forceEndTurnConfirm": "End the turn with {count} unresolved action(s)?",
+    "turnActions.forceEndTurnTooltip": "End the turn anyway after confirmation. No hidden unit orders are created.",
+    "turnActions.foundCity": "Found city",
+    "turnActions.foundCityTooltip": "Focus the colonizer so the map founding action can be confirmed.",
+    "turnActions.fortifyQueued": "Unit will fortify",
+    "turnActions.fortifyUnit": "Fortify",
+    "turnActions.fortifyUnitTooltip": "Spend this unit's action and keep it fortified until it receives a wake order.",
+    "turnActions.moveUnit": "Move",
+    "turnActions.moveUnitTooltip": "Choose a destination hex. Right-click on the map also gives a quick move or attack order.",
+    "turnActions.promoteNeedsChoice": "Promotion requires a skill choice panel.",
+    "turnActions.needsOrders": "Needs orders: {count}",
+    "turnActions.nextTurnBlockedTooltip": "Some units can still act. Click to review them, or Shift-click to force end turn.",
+    "turnActions.queueAria": "Required action queue",
+    "turnActions.readyDescription": "No required actions remain",
+    "turnActions.readyTitle": "Ready",
+    "turnActions.readyTooltip": "All required actions are resolved. Click to mark your country ready.",
+    "turnActions.skipQueued": "Unit will wait this turn",
+    "turnActions.skipUnit": "Skip",
+    "turnActions.skipUnitTooltip": "Spend this unit's remaining action for the current turn only.",
+    "turnActions.sleepQueued": "Unit will sleep",
+    "turnActions.sleepUnit": "Sleep",
+    "turnActions.sleepUnitTooltip": "Put this unit on standby so it stops blocking future turns until woken.",
+    "turnActions.stat.attack": "Attack",
+    "turnActions.stat.defense": "Defense",
+    "turnActions.stat.hp": "Hit points",
+    "turnActions.stat.movement": "Movement points",
+    "turnActions.title": "Actions required",
+    "turnActions.unitCanAct.description": "This unit has movement or combat actions available.",
+    "turnActions.unitCanAct.label": "Unit can act",
+    "turnActions.unitCanFoundCity.description": "This civilian unit can move or found a city.",
+    "turnActions.unitCanFoundCity.label": "Civilian unit can act",
+    "turnActions.unitPortraitAria": "Unit portrait",
+    "turnActions.unitStatsAria": "Current unit stats",
+    "turnActions.wakeQueued": "Unit will wake",
+    "turnActions.wakeUnit": "Wake",
+    "turnActions.wakeUnitTooltip": "Wake a sleeping unit so it can receive normal orders again.",
     "topBar.openCountryDetails": "Open country details",
     "topBar.openResourceDetails": "{resource}: open details",
     "topBar.populationAria": "Population: {population}, net growth {growth}",
@@ -6465,10 +7223,38 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.workspaceTab.formation": "Formation",
     "shell.workspaceTab.hex": "Hex",
     "shell.workspaceTab.infrastructure": "Infrastructure",
+    "shell.workspaceTab.readyUnits": "Ready units",
     "shell.workspaceTab.records": "Records",
     "shell.workspaceTab.summary": "Country summary",
+    "shell.workspaceTab.trainingQueue": "Training queue",
     "shell.workspaceTab.trade": "Trade",
+    "shell.workspaceTab.unitCatalog": "Unit catalog",
     "shell.workspaceTab.warehouses": "Warehouses",
+    "shell.units.cancelTraining": "Cancel training",
+    "shell.units.catalog": "Unit catalog",
+    "shell.units.catalogDetail": "ATK {attack} · DEF {defense} · MOV {movement} · {turns} turns",
+    "shell.units.disband": "Disband unit",
+    "shell.units.disbanded": "Unit disbanded",
+    "shell.units.disbandFailed": "Failed to disband unit",
+    "shell.units.emptyCatalog": "No unit types are available.",
+    "shell.units.emptyReadyUnits": "No ready units.",
+    "shell.units.emptyTrainingQueue": "No units are training.",
+    "shell.units.error.insufficientResources": "Not enough resources to train this unit.",
+    "shell.units.error.invalidPayload": "Invalid unit training request.",
+    "shell.units.error.noValidHex": "No valid deployment hex for this unit.",
+    "shell.units.error.regionNotControlled": "You do not control this deployment region.",
+    "shell.units.error.trainFailed": "Unit training failed.",
+    "shell.units.error.unitTypeNotFound": "Unit type was not found.",
+    "shell.units.focusHex": "Focus hex",
+    "shell.units.groupLabel": "{domain} · {class}",
+    "shell.units.overviewFailed": "Failed to load unit catalog",
+    "shell.units.ready": "Ready",
+    "shell.units.readyDetail": "HP {hp} · MOV {movement} · {status} · {hex}",
+    "shell.units.training": "Training",
+    "shell.units.trainingCancelFailed": "Failed to cancel training",
+    "shell.units.trainingCanceled": "Training canceled",
+    "shell.units.trainingQueued": "Unit training queued",
+    "shell.units.queueDetail": "{hex} · {turns}/{total} turns",
     "shell.workspaceTabs": "Workspace tabs",
     "shell.hex.controller": "Controller",
     "shell.hex.title": "Hex information",
@@ -6498,6 +7284,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "turnStatus.blockedPermanent": "Blocked permanently",
     "turnStatus.blockedUntilTime": "Blocked until {time}",
     "turnStatus.blockedUntilTurn": "Blocked until turn {turn}",
+    "turnStatus.currentCountryNeedsOrders": "Your country needs {count} order(s) before a clean end turn.",
+    "turnStatus.currentCountryReady": "Your country has no required actions.",
     "turnStatus.lastLogin": "Last login: {value}",
     "turnStatus.loading": "Loading country readiness...",
     "turnStatus.noLoginData": "no data",
@@ -6645,6 +7433,177 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "common.unknown": "Неизвестно",
     "common.no": "Нет",
     "common.yes": "Да",
+    "templates.action.codex": "Кодекс",
+    "templates.asset.clear": "Очистить изображение",
+    "templates.asset.flagHint": "Нажмите на карточку, чтобы выбрать изображение.",
+    "templates.asset.flagReady": "Превью использует выбранное локальное изображение.",
+    "templates.asset.flagTitle": "Превью флага",
+    "templates.asset.flagUpload": "Выбрать изображение флага",
+    "templates.button.danger": "Опасность",
+    "templates.button.dangerDisabled": "Опасность недоступна",
+    "templates.button.dangerIcon": "С иконкой",
+    "templates.button.dangerIconOnly": "Опасное действие",
+    "templates.button.dangerLarge": "Крупная опасность",
+    "templates.button.dangerSmall": "Малая опасность",
+    "templates.button.dangerWide": "Опасность на всю ширину",
+    "templates.button.ghost": "Призрачная",
+    "templates.button.primary": "Первичная",
+    "templates.button.primaryDisabled": "Недоступна",
+    "templates.button.primaryIcon": "С иконкой",
+    "templates.button.primaryIconOnly": "Первичное действие",
+    "templates.button.primaryLarge": "Крупное действие",
+    "templates.button.primarySmall": "Малая",
+    "templates.button.primaryWide": "На всю ширину",
+    "templates.button.secondary": "Вторичная",
+    "templates.button.secondaryDisabled": "Вторичная недоступна",
+    "templates.button.secondaryIcon": "С иконкой",
+    "templates.button.secondaryIconOnly": "Вторичное действие",
+    "templates.button.secondaryLarge": "Крупная вторичная",
+    "templates.button.secondarySmall": "Малая вторичная",
+    "templates.button.secondaryWide": "Вторичная на всю ширину",
+    "templates.chart.area": "График области",
+    "templates.chart.bar": "Столбчатый график",
+    "templates.chart.donut": "Кольцевая диаграмма",
+    "templates.chart.line": "Линейный график",
+    "templates.chartsTitle": "Примеры графиков",
+    "templates.choice.discipline": "Путь дисциплины",
+    "templates.choice.disciplineDescription": "Сильная армия и порядок внутри государства.",
+    "templates.choice.harmony": "Путь гармонии",
+    "templates.choice.harmonyDescription": "Единство с народом и землей приносит стабильность.",
+    "templates.choice.knowledge": "Путь знаний",
+    "templates.choice.knowledgeDescription": "Развивайте науку и образование, чтобы опережать время.",
+    "templates.choice.envoys": "Путь послов",
+    "templates.choice.envoysDescription": "Придворные гонцы превращают расстояние в рычаг влияния.",
+    "templates.choice.omens": "Путь знамений",
+    "templates.choice.omensDescription": "Ритуальные знаки направляют решения быстрее соперников.",
+    "templates.choice.resolve": "Путь стойкости",
+    "templates.choice.resolveDescription": "Оборонная доктрина делает державу труднее сломить.",
+    "templates.choice.stewardship": "Путь управления",
+    "templates.choice.stewardshipDescription": "Внимательные управители превращают приказы в прочные дела.",
+    "templates.choice.trade": "Путь торговли",
+    "templates.choice.tradeDescription": "Богатство приходит к тем, кто правит торговыми путями.",
+    "templates.choiceModalDescription": "Посвящения дают постоянные бонусы вашему государству. Выберите одно.",
+    "templates.choiceModalTitle": "Выберите посвящение",
+    "templates.colorPicker": "Выбрать цвет",
+    "templates.detail.cost": "Стоимость",
+    "templates.detail.description": "Греческий уникальный квартал. Создается в районе такого же типа, что и Одеон с Парфеноном.",
+    "templates.detail.effects": "Эффекты",
+    "templates.detail.favorite": "Отметить деталь избранной",
+    "templates.detail.goldPerTurn": "{value} золота",
+    "templates.detail.pinHint": "Зажмите Shift для закрепления подсказки",
+    "templates.detail.subtitle": "Уникальный квартал",
+    "templates.detail.title": "Акрополь",
+    "templates.detail.turns": "Ходы",
+    "templates.dismissNotification": "Скрыть уведомление",
+    "templates.effect.armyStrength": "Сила воинов",
+    "templates.effect.caravan": "Торговый караван",
+    "templates.effect.constructionSpeed": "Скорость строительства",
+    "templates.effect.envoyCount": "Послы",
+    "templates.effect.fortification": "Укрепления",
+    "templates.effect.legitimacy": "Легитимность",
+    "templates.effect.maintenance": "Содержание",
+    "templates.effect.omenRisk": "Риск знамений",
+    "templates.effect.populationGrowth": "Рост населения",
+    "templates.effect.researchSpeed": "Скорость исследований",
+    "templates.effect.ritualPower": "Сила ритуалов",
+    "templates.effect.scholarSlot": "Ячейка ученых",
+    "templates.effect.tradeIncome": "Доход от торговли",
+    "templates.effect.treatyCost": "Стоимость договоров",
+    "templates.effect.unrest": "Недовольство",
+    "templates.effect.warWeariness": "Военная усталость",
+    "templates.dropdown.coastal": "Прибрежная лига",
+    "templates.dropdown.mountain": "Горные кланы",
+    "templates.dropdown.river": "Речные города",
+    "templates.field.culture": "Культура",
+    "templates.field.description": "Описание",
+    "templates.field.dropdown": "Выпадающий список",
+    "templates.field.name": "Название",
+    "templates.galleryTitle": "Imperial Command UI Kit",
+    "templates.icon.add": "Добавить",
+    "templates.icon.edit": "Изменить",
+    "templates.icon.view": "Посмотреть",
+    "templates.notification.build": "Строительство завершено",
+    "templates.notification.envoy": "Посол прибыл",
+    "templates.notification.research": "Исследование завершено",
+    "templates.notificationsTitle": "Уведомления",
+    "templates.panel.description": "Переиспользуемая cut-corner поверхность для групп в модалках и статусных панелей.",
+    "templates.placeholder.culture": "Выберите культуру",
+    "templates.placeholder.description": "Описание необязательно",
+    "templates.previewChip.color": "Превью цвета",
+    "templates.previewChip.empty": "Пустое превью",
+    "templates.previewChip.group": "Сгруппированное превью",
+    "templates.previewChip.icon": "Превью иконки",
+    "templates.previewChipsTitle": "Preview-чипы",
+    "templates.resource.culture": "Культура",
+    "templates.resource.gold": "Золото",
+    "templates.resource.influence": "Влияние",
+    "templates.resource.science": "Наука",
+    "templates.resourcesTitle": "Ресурсы",
+    "templates.sample.country": "Лантийская Федерация",
+    "templates.scrollbarRow": "Строка прокрутки {index}",
+    "templates.scrollbarTitle": "Пример скроллбара",
+    "templates.section.buttons": "Кнопки",
+    "templates.section.dangerButtons": "Кнопки опасности",
+    "templates.section.primaryButtons": "Первичные кнопки",
+    "templates.section.secondaryButtons": "Вторичные кнопки",
+    "templates.section.fields": "Поля ввода",
+    "templates.section.panel": "Панель-рамка",
+    "templates.section.switches": "Переключатели",
+    "templates.selected": "Выбрано",
+    "templates.showAll": "Показать все",
+    "templates.status.active": "Активно",
+    "templates.status.available": "Доступно",
+    "templates.status.locked": "Заблокировано",
+    "templates.status.pending": "В ожидании",
+    "templates.status.unavailable": "Недоступно",
+    "templates.tab.culture": "Культура",
+    "templates.tab.info": "Инфо",
+    "templates.tab.race": "Раса",
+    "templates.tab.religion": "Религия",
+    "templates.tab.result": "Итог",
+    "templates.tabsAria": "Шаги регистрации",
+    "templates.tech.bureaucracy": "Бюрократия",
+    "templates.tech.civilService": "Государственная служба",
+    "templates.tech.codes": "Кодексы законов",
+    "templates.tech.education": "Образование",
+    "templates.tech.planning": "Городское планирование",
+    "templates.tech.supply": "Снабжение армии",
+    "templates.techTitle": "Пример дерева технологий",
+    "templates.plotTooltip.bonus": "+5% производства для речных зданий.",
+    "templates.plotTooltip.baseMovement": "База {value}",
+    "templates.plotTooltip.cityTitle": "Городской центр",
+    "templates.plotTooltip.food": "Пища",
+    "templates.plotTooltip.improvement": "Орошаемая ферма",
+    "templates.plotTooltip.location": "Атлантика - река Арно",
+    "templates.plotTooltip.movement": "Передвижение",
+    "templates.plotTooltip.movementForest": "Растительность",
+    "templates.plotTooltip.movementRough": "Сложный рельеф",
+    "templates.plotTooltip.owner": "Август (вы)",
+    "templates.plotTooltip.production": "Производство",
+    "templates.plotTooltip.resource": "Цитрус",
+    "templates.plotTooltip.resourceDescription": "Фабричный ресурс. Улучшает рост города.",
+    "templates.plotTooltip.route": "Дорога",
+    "templates.plotTooltip.section.rural": "Сельская местность",
+    "templates.plotTooltip.section.systems": "Системы",
+    "templates.plotTooltip.section.units": "Юниты",
+    "templates.plotTooltip.settlement": "Империя Моголов - Патавий (городок)",
+    "templates.plotTooltip.stopOnEnter": "Остановка при входе",
+    "templates.plotTooltip.subtitle": "Влажная пойма",
+    "templates.plotTooltip.title": "Равнинная местность",
+    "templates.plotTooltip.unit": "Разведчик - ваш",
+    "templates.plotTooltip.unknownDescription": "Разведайте или выберите область, чтобы увидеть местность, владельца, движение и ресурсы.",
+    "templates.plotTooltip.unknownTitle": "Неизведанный участок",
+    "templates.plotTooltip.water": "Вода",
+    "templates.tooltip.description": "Создается в подходящем районе и дает постоянные эффекты государству.",
+    "templates.tooltip.eyebrow": "Подсказка",
+    "templates.tooltip.maintenance": "Обслуживание",
+    "templates.tooltip.requirement": "Требование",
+    "templates.tooltip.simple": "Простая подсказка при наведении",
+    "templates.tooltip.title": "Уникальный квартал",
+    "templates.toggle.description": "Используется шаблонами модалок и HUD.",
+    "templates.toggle.locked": "Заблокировано",
+    "templates.toggle.on": "Вкл.",
+    "templates.turnCost": "{turns} ход.",
     "commandPalette.action.budget": "Открыть бюджет",
     "commandPalette.action.province": "К выбору гекса",
     "commandPalette.action.resolve": "Запросить резолв",
@@ -6662,8 +7621,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.listTooltip": "Выберите запись из списка, чтобы редактировать её данные и оформление.",
     "contentPanel.loading": "Загрузка...",
     "contentPanel.title": "Панель контента",
-    "contentPanel.category.aircraftTypes": "Самолёты",
-    "contentPanel.category.battalions": "Батальоны",
     "contentPanel.category.buildings": "Здания",
     "contentPanel.category.companies": "Компании",
     "contentPanel.category.cultures": "Культуры",
@@ -6688,7 +7645,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.category.religions": "Религии",
     "contentPanel.category.resourceCategories": "Категории инфраструктуры",
     "contentPanel.category.sectors": "Сектора",
-    "contentPanel.category.shipTypes": "Корабли",
     "contentPanel.category.technologies": "Технологии",
     "contentPanel.contentFallback": "Контент",
     "contentPanel.listLabel": "Список: {category}",
@@ -7132,24 +8088,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "contentPanel.meta.professions.namePlaceholder": "Название профессии",
     "contentPanel.meta.professions.descriptionPlaceholder": "Краткое описание профессии",
     "contentPanel.meta.professions.sectionTitle": "Раздел создания и редактирования профессий",
-    "contentPanel.meta.battalions.singular": "батальон",
-    "contentPanel.meta.battalions.createBaseName": "Новый батальон",
-    "contentPanel.meta.battalions.createLabel": "Создать батальон",
-    "contentPanel.meta.battalions.namePlaceholder": "Название батальона",
-    "contentPanel.meta.battalions.descriptionPlaceholder": "Описание роли батальона в дивизии",
-    "contentPanel.meta.battalions.sectionTitle": "Раздел создания и редактирования батальонов",
-    "contentPanel.meta.shipTypes.singular": "тип корабля",
-    "contentPanel.meta.shipTypes.createBaseName": "Новый корабль",
-    "contentPanel.meta.shipTypes.createLabel": "Создать корабль",
-    "contentPanel.meta.shipTypes.namePlaceholder": "Название типа корабля",
-    "contentPanel.meta.shipTypes.descriptionPlaceholder": "Описание роли корабля во флоте",
-    "contentPanel.meta.shipTypes.sectionTitle": "Раздел создания и редактирования кораблей",
-    "contentPanel.meta.aircraftTypes.singular": "тип самолёта",
-    "contentPanel.meta.aircraftTypes.createBaseName": "Новый самолёт",
-    "contentPanel.meta.aircraftTypes.createLabel": "Создать самолёт",
-    "contentPanel.meta.aircraftTypes.namePlaceholder": "Название типа самолёта",
-    "contentPanel.meta.aircraftTypes.descriptionPlaceholder": "Описание роли самолёта в авиакрыле",
-    "contentPanel.meta.aircraftTypes.sectionTitle": "Раздел создания и редактирования самолётов",
     "contentPanel.meta.ideologies.singular": "идеология",
     "contentPanel.meta.ideologies.createBaseName": "Новая идеология",
     "contentPanel.meta.ideologies.createLabel": "Создать идеологию",
@@ -7641,7 +8579,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.accountLockedPermanent": "Аккаунт заблокирован бессрочно",
     "auth.accountLockedTime": "Аккаунт заблокирован до {time}",
     "auth.accountLockedTurn": "Аккаунт заблокирован до хода #{turn}",
+    "auth.access": "Доступ",
+    "auth.brandName": "Arcanorum",
     "auth.chooseCountry": "Выберите страну",
+    "auth.chooseCultureGroup": "Выберите культурную группу",
+    "auth.chooseReligionGroup": "Выберите религиозную группу",
+    "auth.chooseRace": "Выберите расу",
+    "auth.clearImage": "Очистить изображение",
     "auth.clientVersion": "client v0.1.0",
     "auth.country": "Страна",
     "auth.countryColor": "Цвет страны",
@@ -7650,17 +8594,31 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.createCountry": "Создать страну",
     "auth.creating": "Создание...",
     "auth.crest": "Герб",
-    "auth.crestHint": "PNG/JPG/WEBP до 4MB, максимум 128x192, соотношение 2:3",
-    "auth.crestInvalid": "Герб: максимум 128x192, соотношение 2:3",
+    "auth.crestHint": "PNG/JPG/WEBP до 4MB, максимум 128x146",
+    "auth.crestInvalid": "Герб: PNG/JPG/WEBP до 4MB, максимум 128x146",
     "auth.crestPreview": "Предпросмотр герба",
     "auth.enterGame": "Войти",
     "auth.enterPassword": "Введите пароль",
     "auth.fileTooLarge": "Файл слишком большой (до 4MB)",
     "auth.flag": "Флаг",
-    "auth.flagHint": "PNG/JPG/WEBP до 4MB, максимум 192x128, соотношение 3:2",
-    "auth.flagInvalid": "Флаг: максимум 192x128, соотношение 3:2",
+    "auth.flagHint": "PNG/JPG/WEBP до 4MB, максимум 192x128",
+    "auth.flagInvalid": "Флаг: PNG/JPG/WEBP до 4MB, максимум 192x128",
     "auth.flagPreview": "Предпросмотр флага",
-    "auth.imageFormatInvalid": "Проверьте формат: флаг 192x128 (3:2), герб 128x192 (2:3)",
+    "auth.cultureColor": "Цвет культуры",
+    "auth.cultureGroup": "Культурная группа",
+    "auth.cultureLogo": "Логотип культуры",
+    "auth.cultureName": "Название культуры",
+    "auth.backToLogin": "Назад ко входу",
+    "auth.confirmCultureReligion": "Культура и религия",
+    "auth.confirmPreviewTitle": "Предпросмотр основания",
+    "auth.imageFormatInvalid": "Проверьте формат: PNG/JPG/WEBP до 4MB. Максимальные размеры: флаг 192x128, герб 128x146, логотипы 64x64",
+    "auth.identity": "Идентичность страны",
+    "auth.identityBonuses": "Бонусы",
+    "auth.identityLogoHint": "PNG/JPG/WEBP до 4MB, максимум 64x64",
+    "auth.identityLogoInvalid": "Логотип идентичности: PNG/JPG/WEBP до 4MB, максимум 64x64",
+    "auth.identityNoDescription": "Описание не задано.",
+    "auth.identityOptions": "Варианты идентичности",
+    "auth.identitySelectPrompt": "Выберите вариант, чтобы увидеть бонусы и стартовое население.",
     "auth.invalidHex": "Введите валидный HEX-цвет",
     "auth.invalidPassword": "Неверный пароль",
     "auth.knowledge": "Хранилище знаний",
@@ -7671,33 +8629,57 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "auth.loginSuccess": "Успешный вход",
     "auth.min2": "Минимум 2 символа",
     "auth.min8": "Минимум 8 символов",
+    "auth.missingValue": "Не заполнено",
+    "auth.nextStep": "Далее",
     "auth.noFileSelected": "Не выбран",
+    "auth.noBonuses": "Прямых бонусов модификаторов нет.",
+    "auth.noStartingPopChanges": "Изменений стартового населения нет.",
     "auth.onlyImages": "Разрешены только изображения",
     "auth.password": "Пароль",
-    "auth.passwordComplexityAria": "Проверка сложности пароля",
-    "auth.passwordComplexityLoginNeed": "Добавьте буквы и цифры для сложности",
-    "auth.passwordComplexityNeed": "Добавьте заглавную букву, цифру и спецсимвол",
-    "auth.passwordComplexityOk": "Сложность пароля подходит",
-    "auth.passwordLengthAria": "Проверка длины пароля",
     "auth.passwordLengthNeed": "Нужно минимум 8 символов",
     "auth.passwordLengthOk": "Длина пароля подходит",
     "auth.passwordMismatch": "Пароли не совпадают",
-    "auth.presetColor": "Выбрать {color}",
+    "auth.previousStep": "Назад",
     "auth.register": "Регистрация",
+    "auth.replaceImage": "Заменить изображение",
     "auth.registrationError": "Ошибка регистрации",
     "auth.registrationPendingApproval": "Регистрация ожидает подтверждения администратора",
     "auth.registrationPendingDescription": "Вы сможете войти в игру после одобрения заявки.",
+    "auth.registrationSteps": "Шаги регистрации",
     "auth.registrationSent": "Заявка на регистрацию отправлена",
     "auth.registrationSentMessage": "Страна {country} отправлена на подтверждение администраторам.",
     "auth.rememberMe": "Запомнить меня",
     "auth.repeatPassword": "Повтор пароля",
+    "auth.religionColor": "Цвет религии",
+    "auth.religionGroup": "Религиозная группа",
+    "auth.religionLogo": "Логотип религии",
+    "auth.religionName": "Название религии",
+    "auth.race": "Раса",
     "auth.selectCountry": "Выберите страну",
     "auth.selectImage": "Выбрать изображение",
     "auth.serverStatus.maintenance": "Технические работы",
     "auth.serverStatus.offline": "Оффлайн",
     "auth.serverStatus.online": "Онлайн",
     "auth.serverUnavailable": "Сервер недоступен",
+    "auth.startingPopulation": "Стартовое население",
+    "auth.startingPop.ducats": "Стартовые дукаты: {value}",
+    "auth.startingPop.ducatsLabel": "Дукаты",
+    "auth.startingPop.literacy": "Грамотность: {value}%",
+    "auth.startingPop.literacyLabel": "Грамотность",
+    "auth.startingPop.loyalists": "Лоялисты: {value}",
+    "auth.startingPop.loyalistsLabel": "Лоялисты",
+    "auth.startingPop.radicals": "Радикалы: {value}",
+    "auth.startingPop.radicalsLabel": "Радикалы",
+    "auth.startingPop.sol": "Уровень жизни: {value}",
+    "auth.startingPop.solLabel": "УЖ",
+    "auth.step.confirm": "Итог",
+    "auth.step.culture": "Культурная группа",
+    "auth.step.info": "Информация",
+    "auth.step.race": "Раса",
+    "auth.step.religion": "Религиозная группа",
     "auth.waitButton": "Буду ждать",
+    "auth.welcomeDescription": "Выберите страну, войдите в мир или создайте новую державу из одного командного окна.",
+    "auth.welcomeTitle": "Добро пожаловать.",
     "clientSettings.description": "Эти параметры не влияют на серверную игру и применяются только в вашем браузере.",
     "clientSettings.descriptionTitle": "Описание",
     "clientSettings.interface": "Интерфейс",
@@ -7706,6 +8688,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "clientSettings.localNote": "Настройки сохраняются локально отдельно для каждой страны.",
     "clientSettings.mapControls": "Панель управления картой",
     "clientSettings.mapControlsDescription": "Кнопки зума, сброса и блокировки карты в правом нижнем углу.",
+    "clientSettings.zoomIndicator": "Индикатор масштаба",
+    "clientSettings.zoomIndicatorDescription": "Показывает текущий масштаб карты в левом нижнем углу.",
     "clientSettings.edgeScroll": "Прокрутка у края",
     "clientSettings.edgeScrollDescription": "Перемещает карту, когда курсор подходит к краю экрана.",
     "clientSettings.save": "Сохранить",
@@ -7858,15 +8842,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "elections.tooltipVotes": "Голоса: {value}",
     "elections.voteShare": "Голоса: {value}",
     "army.air": "Авиакрылья",
-    "army.airWingMission": "Миссия авиакрыла",
-    "army.airWingMission.air_superiority": "Превосходство в воздухе",
-    "army.airWingMission.ground_support": "Поддержка войск",
-    "army.airWingMission.interception": "Перехват",
-    "army.airWingMission.naval_patrol": "Морское патрулирование",
-    "army.airWingMission.none": "Без миссии",
-    "army.airWingMissionRegion": "Регион миссии",
-    "army.airWingMissionRegionTooltip": "Задаёт регион, где авиакрыло должно действовать. Проверка дальности и базирования будет добавлена в следующих срезах авиационной системы.",
-    "army.airWingMissionTooltip": "Задаёт текущую миссию авиакрыла. Эффекты миссий применят будущие системы воздушного боя и модификаторов.",
     "army.attack": "Атака",
     "army.baseHex": "Гекс базирования",
     "army.battleSlots": "Боевые слоты",
@@ -7876,8 +8851,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.createEquipmentVariant": "Создать вариант",
     "army.createFormation": "Сформировать",
     "army.createProductionLine": "Запустить линию",
-    "army.defaultAir": "Новое авиакрыло",
-    "army.defaultLand": "Новая дивизия",
     "army.defaultNaval": "Новый флот",
     "army.delete": "Удалить",
     "army.deleteProductionLine": "Удалить производственную линию",
@@ -7885,7 +8858,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.description": "Шаблоны, формирование и базирование дивизий, флотов и авиакрыльев",
     "army.disbandConfirmDescription": "Расформировать {name}? Дивизия будет удалена с карты.",
     "army.disbandConfirmTitle": "Расформировать дивизию",
-    "army.disbandDivision": "Расформировать дивизию",
     "army.disbandEquipmentReturn": "Назначенная техника вернётся на склад страны.",
     "army.emptyQueue": "Очередь пуста",
     "army.emptyQueueDescription": "Новые части появляются здесь после команды сформировать.",
@@ -7895,16 +8867,10 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.equipmentCoverage": "Покрытие {value}%",
     "army.equipmentCoverageTooltip": "Требуется: {required}. Доступно на складе: {available}. Назначено по текущей оценке лучшего варианта: {assigned}. Покрытие {coverage}% масштабирует эффективные боевые показатели дивизии.",
     "army.equipmentCoverageTooltipTitle": "Покрытие техникой",
-    "army.divisionEquipmentLoadout": "Техника дивизии",
-    "army.divisionEquipmentLoadoutTooltip": "Этой дивизии назначено {assigned} из {required} требуемой техники. Покрытие {coverage}% влияет на её эффективные боевые показатели.",
-    "army.noDivisionEquipmentLoadout": "Нет требований к технике",
     "army.equipmentCost": "Стоимость товарами",
     "army.equipmentLines": "Производственные линии",
-    "army.equipmentProduction": "Производство техники",
     "army.equipmentRequirements": "Потребность в технике",
     "army.equipmentStats": "Показатели",
-    "army.equipmentVariant": "Вариант",
-    "army.equipmentVariantName": "Название варианта",
     "army.assignedEquipment": "Назначенная техника",
     "army.equipmentRequired": "Требуется",
     "army.equipmentAvailable": "Доступно",
@@ -7947,9 +8913,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.formationSelectHexTooltip": "Выбрать гекс развёртывания на карте",
     "army.formationSpeed": "Скорость формирования: {speed}",
     "army.branch": "Ветка",
-    "army.branch.air": "Авиакрылья",
-    "army.branch.land": "Дивизии",
-    "army.branch.naval": "Флоты",
     "army.icon64": "Логотип 64x64",
     "army.iconInvalid64": "Логотип должен быть строго 64x64.",
     "army.iconUploadFailed": "Не удалось загрузить логотип.",
@@ -7970,7 +8933,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.noEquipmentLines": "Нет производственных линий",
     "army.noEquipmentLinesDescription": "Создайте вариант техники, затем запустите линию.",
     "army.noEquipmentRequirements": "Этот шаблон пока не требует технику.",
-    "army.noEquipmentStats": "Нет показателей.",
     "army.noAssignedEquipment": "Нет подходящей техники на складе",
     "army.noMissionRegions": "Нет известных регионов",
     "army.noFrames": "Для этой ветки нет доступных основ техники.",
@@ -7996,9 +8958,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.inactive": "Неактивна",
     "army.saveTemplate": "Сохранить шаблон",
     "army.saveVariant": "Сохранить вариант",
-    "army.designerDivision": "Конструктор дивизий",
-    "army.designerAirWing": "Конструктор авиакрыльев",
-    "army.designerFleet": "Конструктор флотов",
     "army.createLandEquipment": "Создать технику",
     "army.createPlane": "Создать самолёт",
     "army.createShip": "Создать корабль",
@@ -8028,7 +8987,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.supplySummaryTitle": "Сводка снабжения армии",
     "army.supplySummaryValue": "+{received} / -{returned} · {divisions} дивиз.",
     "army.supplyShort": "Снабж.",
-    "army.totalBattalions": "{count} батальонов",
     "army.totalSoldiers": "{count} солдат",
     "army.templateDeleted": "Шаблон удалён",
     "army.templateEquipmentCoverage": "Покрытие шаблона техникой: {value}%",
@@ -8042,8 +9000,39 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "army.unitName": "Название части",
     "locale.english": "Английский",
     "locale.russian": "Русский",
+    "cultureGroup.highlandClans.description": "Укрепленные горные общины с сильным родовым правом и традициями каменного строительства. Их поселенцы сплоченнее и быстрее строят раннюю инфраструктуру.",
+    "cultureGroup.highlandClans.name": "Горные кланы",
+    "cultureGroup.maritimeLeagues.description": "Портовые союзы вокруг верфей, лоцманов и прибрежных договоров. Их раннее государство богаче и лучше готово к заморскому расширению.",
+    "cultureGroup.maritimeLeagues.name": "Морские лиги",
+    "cultureGroup.riverineCityStates.description": "Города на речных переправах, зернохранилищах, причалах и пошлинных дорогах. Их поселенцы начинают с практической грамотностью и лучшими ранними доходами.",
+    "cultureGroup.riverineCityStates.name": "Речные города-государства",
+    "race.dwarf.description": "Компактные ремесленные общества с сильной цеховой дисциплиной и глубокими строительными традициями.",
+    "race.dwarf.name": "Дварф",
+    "race.elf.description": "Долгоживущие общины с сильными письменными традициями и утонченной гражданской памятью.",
+    "race.elf.name": "Эльф",
+    "race.human.description": "Гибкие и политически адаптивные поселенцы со сбалансированными ранними институтами.",
+    "race.human.name": "Человек",
+    "religionGroup.ancestorRites.description": "Родовые святилища и домашние обряды связывают новые поселения с памятью основателей. Первые поселенцы дают больше лоялистов.",
+    "religionGroup.ancestorRites.name": "Культы предков",
+    "religionGroup.celestialOrders.description": "Астральные школы, читающие легитимность в календарях, знамениях и точных записях. Их поселения начинают с более сильной ученостью.",
+    "religionGroup.celestialOrders.name": "Небесные ордены",
+    "religionGroup.dawnMysteries.description": "Посвященные встречают каждый день публичными обетами, шествиями и обрядами обновления. Их первые поселения быстрее строят доверие вокруг общих церемоний.",
+    "religionGroup.dawnMysteries.name": "Мистерии рассвета",
+    "religionGroup.earthMotherCults.description": "Сезонные святилища, благословения полей и родовые пиры связывают веру с землей и урожаем. Их общины начинают с более устойчивыми материальными запасами.",
+    "religionGroup.earthMotherCults.name": "Культы Матери-земли",
+    "religionGroup.riverOracles.description": "Прорицатели читают течения, паводки и записи перевозчиков как знаки судьбы. Их ранние государства лучше готовы к пошлинам и торговле.",
+    "religionGroup.riverOracles.name": "Речные оракулы",
+    "religionGroup.sacredFlame.description": "Храмовые очаги хранят огни клятв во время войн, зим и обрядов основания. Их последователи организуют труд с дисциплинированным рвением.",
+    "religionGroup.sacredFlame.name": "Священное пламя",
+    "religionGroup.stormPact.description": "Верующие клянутся перед громом, морским ветром и открытым небом. Их первые экспедиции смелы и лучше подходят для пограничного расширения.",
+    "religionGroup.stormPact.name": "Грозовой пакт",
+    "religionGroup.templeCults.description": "Организованные жречества вокруг городских храмов, календарей и подношений. Они дают государству более сильную раннюю религиозную основу.",
+    "religionGroup.templeCults.name": "Храмовые культы",
+    "religionGroup.veilScholars.description": "Тихие ордены хранят запретные комментарии, звездные карты и шифрованное учение. Их поселения начинают с более сильными учеными кругами.",
+    "religionGroup.veilScholars.name": "Ученые Завесы",
     "map.controls.zoomIn": "Приблизить карту",
     "map.controls.zoomOut": "Отдалить карту",
+    "map.zoomIndicator.label": "Масштаб",
     "map.controls.resetView": "Сбросить центр и масштаб",
     "map.controls.lockInteraction": "Заблокировать pan/zoom",
     "map.controls.unlockInteraction": "Разблокировать pan/zoom",
@@ -8132,6 +9121,16 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.terrain": "Местность",
     "hexMap.biome": "Биом",
     "hexMap.feature": "Особенность",
+    "hexMap.surfaceSummary": "Сводка",
+    "hexMap.surfaceType": "Тип поверхности",
+    "hexMap.surface.continent": "Континент",
+    "hexMap.surface.island": "Остров",
+    "hexMap.surface.ocean": "Океан",
+    "hexMap.surface.sea": "Прибрежные воды",
+    "hexMap.surface.lake": "Озеро",
+    "hexMap.position": "Положение",
+    "hexMap.position.coastal": "Побережье",
+    "hexMap.position.inland": "Внутренняя земля",
     "hexMap.siteFeature": "Особый объект",
     "hexMap.resourceDeposit": "Залежь",
     "hexMap.water": "Вода",
@@ -8139,33 +9138,93 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.ownerCountry": "Страна {country}",
     "hexMap.ownerNone": "Нет владельца",
     "hexMap.movementCost": "Стоимость хода",
+    "hexMap.movementBase": "База {value}",
+    "hexMap.movementStopOnEnter": "Остановка при входе",
+    "hexMap.tooltipSystems": "Системы",
+    "hexMap.tooltipNoSystems": "Нет видимых систем",
+    "hexMap.mapTags": "Теги карты",
+    "hexMap.tagGroupBiome": "Биом",
+    "hexMap.tagGroupClimate": "Климат",
+    "hexMap.tagGroupRelief": "Рельеф",
+    "hexMap.tagGroupWater": "Вода и реки",
+    "hexMap.tagGroupFeatures": "Особенности",
+    "hexMap.tagGroupValue": "Качество земли",
+    "hexMap.tagGroupMovement": "Передвижение",
+    "mapTag.unknown": "Неизвестный тег",
+    "mapTag.biome.tundra": "Тундра",
+    "mapTag.biome.grassland": "Луга",
+    "mapTag.biome.plains": "Степи",
+    "mapTag.biome.desert": "Пустыня",
+    "mapTag.biome.tropical": "Тропики",
+    "mapTag.morphology.flat": "Ровная местность",
+    "mapTag.morphology.rough": "Сложный рельеф",
+    "mapTag.morphology.mountainous": "Горная местность",
+    "mapTag.morphology.navigable_river": "Судоходная речная клетка",
+    "mapTag.water.coastal": "Прибрежные воды",
+    "mapTag.water.ocean": "Океан",
+    "mapTag.water.lake": "Озеро",
+    "mapTag.water.fresh": "Пресная вода",
+    "mapTag.feature.minor_river": "Малая река",
+    "mapTag.feature.floodplain": "Пойма",
+    "mapTag.feature.wet": "Сырая местность",
+    "mapTag.feature.vegetated": "Растительность",
+    "mapTag.feature.aquatic": "Водная особенность",
+    "mapTag.feature.snow": "Снег",
+    "mapTag.feature.volcanic": "Вулканическая местность",
+    "mapTag.movement.stop_on_enter": "Останавливает движение при входе",
+    "mapTag.fertility.barren": "Бесплодная земля",
+    "mapTag.fertility.poor": "Низкая урожайность",
+    "mapTag.fertility.modest": "Средняя урожайность",
+    "mapTag.fertility.fertile": "Высокая урожайность",
+    "mapTag.fertility.rich": "Богатая урожайность",
+    "mapTag.rainfall.arid": "Засушливо",
+    "mapTag.rainfall.dry": "Сухо",
+    "mapTag.rainfall.moderate": "Умеренные осадки",
+    "mapTag.rainfall.wet": "Влажно",
+    "mapTag.rainfall.monsoon": "Муссонные осадки",
+    "mapTag.slope.flat": "Равнина",
+    "mapTag.slope.rolling": "Волнистый рельеф",
+    "mapTag.slope.hilly": "Холмисто",
+    "mapTag.slope.steep": "Крутые склоны",
+    "mapTag.slope.rugged": "Пересеченный рельеф",
+    "mapTag.latitude.polar": "Полярная широта",
+    "mapTag.latitude.subpolar": "Субполярная широта",
+    "mapTag.latitude.temperate": "Умеренная широта",
+    "mapTag.latitude.subtropical": "Субтропики",
+    "mapTag.latitude.tropical": "Тропики",
+    "mapTag.elevation.lowland": "Низменность",
+    "mapTag.elevation.upland": "Возвышенность",
+    "mapTag.elevation.highland": "Плоскогорье",
+    "mapTag.elevation.mountain": "Горная высота",
+    "mapTag.elevation.peak": "Пик",
+    "mapTag.landmass.continent": "Континент",
+    "mapTag.landmass.island": "Остров",
+    "mapTag.continent.homeland": "Родной материк",
+    "mapTag.continent.distant": "Дальний материк",
+    "mapTag.basin.headwater": "Верховья бассейна",
+    "mapTag.basin.mainstem": "Главное русло",
+    "mapTag.basin.delta": "Речная дельта",
+    "mapTag.river.minor": "Малая река",
+    "mapTag.river.major": "Крупная река",
+    "mapTag.river.navigable": "Судоходная река",
+    "mapTag.coast.coastal": "Побережье",
+    "mapTag.coast.inland": "Внутренняя земля",
     "hexMap.building": "Здание",
     "hexMap.buildingStatusBurning": "Горит",
     "hexMap.buildingStatusConstruction": "Строится",
     "hexMap.buildingStatusInactive": "Неактивно",
     "hexMap.buildingStatusRuins": "Руины",
     "hexMap.buildingStatusWorking": "Работает",
-    "hexMap.divisions": "Дивизии",
-    "hexMap.divisionStack": "Стак дивизий",
-    "hexMap.divisionStackValue": "{current}/{max}",
-    "hexMap.divisionStackTooltip": "Ваши сухопутные дивизии на этом гексе: {current}/{max}. Сценарный лимит стака блокирует мирный вход в полный гекс, останавливает сохранённый маршрут перед заполненным гексом и оставляет завершённое формирование в очереди, пока не появится место.",
-    "hexMap.divisionEquipmentCoverage": "техника {value}%",
-    "hexMap.divisionStatus": "Сила {strength}% · организация {organization}",
-    "hexMap.divisionMove": "Переместить",
-    "hexMap.divisionMoveTooltipCan": "Выбрать целевой гекс для этой дивизии.",
-    "hexMap.divisionMoveTooltipCannot": "Эта дивизия сейчас не может получить приказ движения.",
-    "hexMap.divisionMoveUnavailable": "Эта дивизия сейчас не может двигаться.",
-    "hexMap.divisionMoveSelectTarget": "Выберите целевой гекс для дивизии.",
-    "hexMap.divisionMoveNoPath": "Нет допустимого маршрута для этой дивизии.",
-    "hexMap.divisionMoveOrderSent": "Приказ движения дивизии отправлен",
-    "hexMap.divisionAttack": "Атаковать",
-    "hexMap.divisionAttackTooltipCan": "Выбрать соседний вражеский или контролируемый врагом гекс для атаки.",
-    "hexMap.divisionAttackTooltipCannot": "У этой дивизии нет соседней цели для атаки или уже есть приказ.",
-    "hexMap.divisionAttackUnavailable": "Эта дивизия сейчас не может атаковать.",
-    "hexMap.divisionAttackSelectTarget": "Выберите соседний вражеский гекс для атаки.",
-    "hexMap.divisionAttackNoTarget": "На этом гексе нет соседней цели для атаки.",
-    "hexMap.divisionAttackOrderSent": "Приказ атаки дивизии отправлен",
-    "hexMap.fleets": "Флоты",
+    "hexMap.unitStack": "Стак юнитов",
+    "hexMap.unitStackValue": "{current}/{max}",
+    "hexMap.unitStackTooltip": "Ваши юниты на этом гексе: {current}/{max}. Сейчас Civ-подобный стак допускает один боевой и один гражданский юнит одной страны.",
+    "hexMap.unitSelected": "Юнит выбран",
+    "hexMap.unitMoveSelectTarget": "Выберите целевой гекс для юнита.",
+    "hexMap.unitMoveNoPath": "Нет допустимого маршрута для этого юнита.",
+    "hexMap.unitMoveOrderSent": "Приказ движения юнита отправлен",
+    "hexMap.unitAttackSelectTarget": "Выберите соседний вражеский гекс для атаки.",
+    "hexMap.unitAttackNoTarget": "На этом гексе нет соседней цели для атаки.",
+    "hexMap.unitAttackOrderSent": "Приказ атаки юнита отправлен",
     "hexMap.fleetStatus": "Сила {strength}% · организация {organization}",
     "hexMap.fleetMove": "Переместить",
     "hexMap.fleetMoveTooltipCan": "Выбрать водный целевой гекс для этого флота.",
@@ -8173,7 +9232,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.fleetMoveUnavailable": "Этот флот сейчас не может двигаться.",
     "hexMap.fleetMoveSelectTarget": "Выберите водный целевой гекс для флота.",
     "hexMap.fleetMoveNoPath": "Нет допустимого водного маршрута для этого флота.",
-    "hexMap.fleetMoveOrderSent": "Приказ движения флота отправлен",
     "hexMap.civilianUnits": "Гражданские юниты",
     "hexMap.civilianQueue": "Очередь гражданских юнитов",
     "hexMap.civilianColonizer": "Колонизатор",
@@ -8183,8 +9241,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.civilianMoveTooltipCannot": "Этот гражданский юнит сейчас не может двигаться.",
     "hexMap.civilianMoveUnavailable": "Этот гражданский юнит сейчас не может двигаться.",
     "hexMap.civilianMoveSelectTarget": "Выберите целевой гекс для колонизатора.",
-    "hexMap.formationPlacementHud": "Выберите гекс развёртывания.",
-    "hexMap.formationPlacementInvalid": "Выбранное формирование нельзя разместить на этом гексе.",
     "hexMap.civilianMovePreview": "Стоимость пути {cost}; на этот ход {points}",
     "hexMap.civilianMoveNoPath": "Нет допустимого маршрута до этого гекса.",
     "hexMap.civilianMoveTooFar": "Маршрут слишком длинный: {cost}/{points} очков хода.",
@@ -8214,6 +9270,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.foundCityOrderSent": "Приказ основания города отправлен",
     "hexMap.unitPopoverTitle": "Выбранный юнит",
     "hexMap.unitPopoverHex": "Гекс {hex}",
+    "hexMap.unitTrainingPlacementHud": "Выберите контролируемый гекс размещения для этого юнита.",
+    "hexMap.unitTrainingUnavailable": "На этом гексе нельзя тренировать выбранный юнит.",
     "hexMap.cityPendingNameFallback": "Новый город",
     "hexMap.build": "Строить",
     "hexMap.colonize": "Колонизировать",
@@ -8970,6 +10028,39 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "population.lowRegionCapitalAlert": "{region}: низкий капитал на душу ({capital} дукат/чел.)",
     "population.aggregatedData": "Агрегированные данные по населению",
     "population.balance": "Баланс",
+    "population.chart.culture": "Культура",
+    "population.chart.politicalStrength": "Политическая сила",
+    "population.chart.population": "Население",
+    "population.chart.profession": "Профессия",
+    "population.chart.region": "Регион",
+    "population.chart.religion": "Религия",
+    "population.chartsTitle": "Графики",
+    "population.discrimination": "Принятие",
+    "population.detail.finance": "Финансы",
+    "population.detail.needs": "Потребности",
+    "population.detail.qualifications": "Квалификации",
+    "population.detail.reasons": "Причины",
+    "population.detail.status": "Статус",
+    "population.employment": "Работа",
+    "population.employment.employed": "Заняты",
+    "population.employment.noOpenJobs": "Нет открытых мест",
+    "population.employment.partial": "Частично заняты",
+    "population.employment.unemployed": "Безработные",
+    "population.filter.culture": "Культура",
+    "population.filter.discrimination": "Дискриминация",
+    "population.filter.employment": "Занятость",
+    "population.filter.profession": "Профессия",
+    "population.filter.region": "Регион",
+    "population.filter.religion": "Религия",
+    "population.filter.sol": "Уровень жизни",
+    "population.filtersTitle": "Фильтры",
+    "population.qualifications": "Квалификации",
+    "population.accepted": "Приняты",
+    "population.discriminated": "Дискриминированы",
+    "population.none": "нет",
+    "population.discriminationTooltip": "Статус: {status}. Причины: {reasons}. Штраф: {penalty}%.",
+    "population.employmentTooltip": "Статус: {status}. Занято: {employed}. Открытых рабочих мест: {openJobs}.",
+    "population.qualificationTooltip": "Лимит квалификаций: {limit}. Дефицит: {shortages}.",
     "population.brandingDescription": "Подготовка визуальных настроек панели населения",
     "population.brandingTitle": "Логотип и стиль",
     "population.births": "Рождения",
@@ -9053,6 +10144,23 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "population.expenseStructure": "Структура расходов",
     "population.fulfilled": "Куплено",
     "population.groupColumn": "Группа",
+    "population.groupedPopCount": "{count} групп",
+    "population.mode.atomic": "Атомарно",
+    "population.mode.grouped": "Группами",
+    "population.resetFilters": "Сбросить",
+    "population.rowsShown": "{shown} / {total} строк",
+    "population.sol.low": "Бедствуют (0-7)",
+    "population.sol.prosperous": "Процветают (15+)",
+    "population.sol.stable": "Стабильно (11-14)",
+    "population.sol.struggling": "Нуждаются (8-10)",
+    "population.table.actions": "Действия",
+    "population.table.details": "Детали",
+    "population.table.ideologyInterest": "Идеология",
+    "population.table.politicalStrength": "Политическая сила",
+    "population.table.sol": "Уровень жизни",
+    "population.table.workplace": "Работа",
+    "population.tablePoliticalStrength": "Политическая сила: {value}",
+    "population.tableTitle": "Pop-группы",
     "population.wallet": "Кошелек",
     "buildings.regionRequired": "Не выбран регион",
     "buildings.regionDependency": "Нужно здание в регионе: {building}",
@@ -9380,18 +10488,6 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "provinceContext.openAdminEditor": "Управление провинцией",
     "shell.action.army": "Командовать армией",
     "shell.action.armyDescription": "Открыть соединения, маршруты и военные приказы.",
-    "shell.action.divisionDesigner": "Конструктор дивизий",
-    "shell.action.divisionDesignerDescription": "Создать и изменить шаблоны сухопутных дивизий из боевых и поддерживающих компонентов.",
-    "shell.action.airWingDesigner": "Конструктор авиакрыльев",
-    "shell.action.airWingDesignerDescription": "Создать шаблоны авиакрыльев и их требования техники.",
-    "shell.action.fleetDesigner": "Конструктор флотов",
-    "shell.action.fleetDesignerDescription": "Создать шаблоны флотов и их требования кораблей.",
-    "shell.action.landEquipmentDesigner": "Создать технику",
-    "shell.action.landEquipmentDesignerDescription": "Собрать вариант сухопутной техники из основы и модулей.",
-    "shell.action.airEquipmentDesigner": "Создать самолёт",
-    "shell.action.airEquipmentDesignerDescription": "Собрать вариант самолёта из планера и модулей.",
-    "shell.action.navalEquipmentDesigner": "Создать корабль",
-    "shell.action.navalEquipmentDesignerDescription": "Собрать вариант корабля из корпуса и модулей.",
     "shell.action.budget": "Бюджет страны",
     "shell.action.budgetDescription": "Проверить казну, субсидии и расходы текущего хода.",
     "shell.action.buildings": "Строительство региона",
@@ -9428,6 +10524,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.action.technologyDescription": "Открыть исследования, прогресс и требования.",
     "shell.action.turnStatus": "Готовность стран",
     "shell.action.turnStatusDescription": "Проверить, кто готов к завершению текущего хода.",
+    "shell.action.unitCatalog": "Тренировать юниты",
+    "shell.action.unitCatalogDescription": "Открыть типы юнитов и выбрать гекс размещения для тренировки.",
     "shell.admin": "Админ",
     "shell.adminPanel": "Админ-панель",
     "shell.availableActions": "Доступные действия",
@@ -9485,6 +10583,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.dashboard.scienceSpend": "Наука вложена",
     "shell.dashboard.totalPopulation": "Всего населения",
     "shell.dashboard.treasury": "Казна",
+    "shell.dashboard.units": "Юниты",
+    "shell.dashboard.unitsIntro": "Тренируйте отдельные юниты на карте, проверяйте очередь размещения и управляйте готовыми юнитами.",
     "shell.endTurn": "Завершить ход",
     "shell.entryCountryProfile": "Профиль страны",
     "shell.entryEnterGame": "Войти в игру",
@@ -9537,27 +10637,28 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.mode.overviewDescription": "Сводка страны поверх карты: ресурсы, проблемы, готовность и приоритеты.",
     "shell.mode.population": "Население",
     "shell.mode.populationDescription": "Общество страны: pops, профессии, культуры, религии и потребности.",
+    "shell.mode.units": "Юниты",
+    "shell.mode.unitsDescription": "Тренировка отдельных юнитов из сценарных типов.",
     "shell.modeDock": "Режимы карты",
     "shell.notifications": "Уведомления",
     "shell.orderColonizationTitle": "Новый приказ колонизации",
-    "shell.orderArmyMoveMessage": "Передислокация дивизии {division} в {province}",
+    "shell.orderUnitMoveMessage": "Юнит {unit} перемещается в {hex}",
     "shell.orderSent": "Приказ отправлен",
     "shell.orderTitle": "Новый приказ",
     "shell.preview.activeResearchDetail": "Текущие направления технологий",
     "shell.preview.armyLedger": "Армейская сводка",
     "shell.preview.averageOrganization": "Средняя организация",
-    "shell.preview.averageOrganizationDetail": "По полевым дивизиям",
+    "shell.preview.averageOrganizationDetail": "По полевым юнитам",
     "shell.preview.bills": "Законопроекты",
     "shell.preview.billsDetail": "Повестка парламента",
     "shell.preview.colonizationLedger": "Сводка колонизации",
     "shell.preview.constructionQueue": "Очередь строительства",
     "shell.preview.diplomacyLedger": "Дипломатический стол",
-    "shell.preview.divisions": "Дивизии",
     "shell.preview.formationQueue": "Очередь формирования",
     "shell.preview.formationQueueDetail": "Формируемые части",
     "shell.preview.governanceLedger": "Реестр канцелярии",
     "shell.preview.marketLedger": "Реестр рынка",
-    "shell.preview.noArmy": "Полевых дивизий и формирований пока нет.",
+    "shell.preview.noArmy": "Полевых юнитов и очереди подготовки пока нет.",
     "shell.preview.noColonization": "Пока нет готовых колонизаторов, очереди подготовки или проектов поселений. Выберите контролируемый гекс и подготовьте колонизатора.",
     "shell.preview.noConstruction": "Нет активных строительных проектов в контролируемых регионах.",
     "shell.preview.noDiplomacy": "Нет видимых дипломатических предложений с участием вашей страны.",
@@ -9580,6 +10681,13 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.preview.subsidies": "Субсидии",
     "shell.preview.topCulture": "Крупнейшая культура",
     "shell.preview.topProfession": "Крупнейшая профессия",
+    "shell.preview.readyUnits": "Готовые юниты",
+    "shell.preview.trainingUnits": "Очередь тренировки",
+    "shell.preview.trainingUnitsDetail": "Юниты в подготовке",
+    "shell.preview.unitTypes": "Типы юнитов",
+    "shell.preview.unitTypesDetail": "Сценарный каталог юнитов",
+    "shell.preview.units": "Юниты",
+    "shell.preview.noUnits": "Юнитов нет",
     "shell.preview.unknownBuilding": "Здание {id}",
     "shell.resource.colonization": "Колонизация",
     "shell.resource.construction": "Строительство",
@@ -9648,6 +10756,50 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "topBar.netGrowth": "Чистый прирост",
     "topBar.netPerTurn": "Итог за ход",
     "topBar.nextTurn": "Следующий ход #{turn}",
+    "turnActions.description": "Ход можно завершить, но эти юниты еще могут действовать.",
+    "turnActions.actionTrayAria": "Панель действий юнита",
+    "turnActions.commandHubAria": "Кнопка хода и командный узел юнита",
+    "turnActions.focusUnit": "Фокус",
+    "turnActions.focusUnitTooltip": "Центрировать карту на действии, которое требует внимания.",
+    "turnActions.attackUnit": "Атака",
+    "turnActions.attackUnitTooltip": "Выбрать соседний вражеский или контролируемый врагом гекс.",
+    "turnActions.forceEndTurn": "Завершить принудительно",
+    "turnActions.forceEndTurnConfirm": "Завершить ход с незавершенными действиями: {count}?",
+    "turnActions.forceEndTurnTooltip": "Все равно завершить ход после подтверждения. Скрытые приказы юнитам не создаются.",
+    "turnActions.foundCity": "Основать город",
+    "turnActions.foundCityTooltip": "Сфокусировать колониста, чтобы подтвердить основание города на карте.",
+    "turnActions.fortifyQueued": "Юнит укрепится",
+    "turnActions.fortifyUnit": "Укрепиться",
+    "turnActions.fortifyUnitTooltip": "Потратить действие юнита и оставить его укрепленным до приказа пробуждения.",
+    "turnActions.moveUnit": "Движение",
+    "turnActions.moveUnitTooltip": "Выбрать целевой гекс. ПКМ по карте также отдает быстрый приказ движения или атаки.",
+    "turnActions.promoteNeedsChoice": "Для повышения нужна панель выбора навыка.",
+    "turnActions.needsOrders": "Нужны приказы: {count}",
+    "turnActions.nextTurnBlockedTooltip": "Некоторые юниты еще могут действовать. Нажмите, чтобы посмотреть, или Shift+Click для принудительного завершения.",
+    "turnActions.queueAria": "Очередь обязательных действий",
+    "turnActions.readyDescription": "Обязательных действий больше нет",
+    "turnActions.readyTitle": "Готово",
+    "turnActions.readyTooltip": "Все обязательные действия закрыты. Нажмите, чтобы отметить страну готовой.",
+    "turnActions.skipQueued": "Юнит пропустит этот ход",
+    "turnActions.skipUnit": "Пропуск",
+    "turnActions.skipUnitTooltip": "Потратить оставшееся действие юнита только на текущий ход.",
+    "turnActions.sleepQueued": "Юнит уснет",
+    "turnActions.sleepUnit": "Сон",
+    "turnActions.sleepUnitTooltip": "Перевести юнит в режим ожидания, чтобы он не блокировал будущие ходы до пробуждения.",
+    "turnActions.stat.attack": "Атака",
+    "turnActions.stat.defense": "Защита",
+    "turnActions.stat.hp": "Здоровье",
+    "turnActions.stat.movement": "Очки хода",
+    "turnActions.title": "Требуются действия",
+    "turnActions.unitCanAct.description": "У этого юнита доступны движение или боевые действия.",
+    "turnActions.unitCanAct.label": "Юнит может действовать",
+    "turnActions.unitCanFoundCity.description": "Этот гражданский юнит может двигаться или основать город.",
+    "turnActions.unitCanFoundCity.label": "Гражданский юнит может действовать",
+    "turnActions.unitPortraitAria": "Портрет юнита",
+    "turnActions.unitStatsAria": "Текущие характеристики юнита",
+    "turnActions.wakeQueued": "Юнит проснется",
+    "turnActions.wakeUnit": "Пробудить",
+    "turnActions.wakeUnitTooltip": "Пробудить спящий юнит, чтобы он снова мог получать обычные приказы.",
     "topBar.openCountryDetails": "Открыть детали страны",
     "topBar.openResourceDetails": "{resource}: открыть детали",
     "topBar.populationAria": "Население: {population}, прирост {growth}",
@@ -9729,10 +10881,38 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "shell.workspaceTab.formation": "Формирование",
     "shell.workspaceTab.hex": "Гекс",
     "shell.workspaceTab.infrastructure": "Инфраструктура",
+    "shell.workspaceTab.readyUnits": "Готовые юниты",
     "shell.workspaceTab.records": "Записи",
     "shell.workspaceTab.summary": "Сводка страны",
+    "shell.workspaceTab.trainingQueue": "Очередь тренировки",
     "shell.workspaceTab.trade": "Торговля",
+    "shell.workspaceTab.unitCatalog": "Каталог юнитов",
     "shell.workspaceTab.warehouses": "Склады",
+    "shell.units.cancelTraining": "Отменить тренировку",
+    "shell.units.catalog": "Каталог юнитов",
+    "shell.units.catalogDetail": "АТК {attack} · ЗАЩ {defense} · ХОД {movement} · {turns} ход.",
+    "shell.units.disband": "Расформировать юнит",
+    "shell.units.disbanded": "Юнит расформирован",
+    "shell.units.disbandFailed": "Не удалось расформировать юнит",
+    "shell.units.emptyCatalog": "Нет доступных типов юнитов.",
+    "shell.units.emptyReadyUnits": "Нет готовых юнитов.",
+    "shell.units.emptyTrainingQueue": "Нет юнитов в тренировке.",
+    "shell.units.error.insufficientResources": "Не хватает ресурсов для тренировки этого юнита.",
+    "shell.units.error.invalidPayload": "Некорректный запрос тренировки юнита.",
+    "shell.units.error.noValidHex": "Нет допустимого гекса размещения для этого юнита.",
+    "shell.units.error.regionNotControlled": "Вы не контролируете регион размещения.",
+    "shell.units.error.trainFailed": "Не удалось поставить юнит в тренировку.",
+    "shell.units.error.unitTypeNotFound": "Тип юнита не найден.",
+    "shell.units.focusHex": "Показать гекс",
+    "shell.units.groupLabel": "{domain} · {class}",
+    "shell.units.overviewFailed": "Не удалось загрузить каталог юнитов",
+    "shell.units.ready": "Готово",
+    "shell.units.readyDetail": "HP {hp} · ХОД {movement} · {status} · {hex}",
+    "shell.units.training": "Тренировка",
+    "shell.units.trainingCancelFailed": "Не удалось отменить тренировку",
+    "shell.units.trainingCanceled": "Тренировка отменена",
+    "shell.units.trainingQueued": "Юнит поставлен в тренировку",
+    "shell.units.queueDetail": "{hex} · {turns}/{total} ход.",
     "shell.workspaceTabs": "Вкладки рабочей области",
     "shell.hex.controller": "Контролирует",
     "shell.hex.title": "Информация о гексе",
@@ -9762,6 +10942,8 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "turnStatus.blockedPermanent": "Заблокирована бессрочно",
     "turnStatus.blockedUntilTime": "Заблокирована до {time}",
     "turnStatus.blockedUntilTurn": "Заблокирована до хода {turn}",
+    "turnStatus.currentCountryNeedsOrders": "Вашей стране нужны приказы: {count}, чтобы чисто завершить ход.",
+    "turnStatus.currentCountryReady": "У вашей страны нет обязательных действий.",
     "turnStatus.lastLogin": "Последний вход: {value}",
     "turnStatus.loading": "Загрузка готовности стран...",
     "turnStatus.noLoginData": "нет данных",

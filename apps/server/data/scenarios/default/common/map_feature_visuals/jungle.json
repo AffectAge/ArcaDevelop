@@ -6,7 +6,7 @@
       "frame": 0,
       "weight": 2,
       "conditions": {
-        "biomes": ["tropical_rainforest"]
+        "tagQuery": { "all": ["biome:tropical", "feature:vegetated"] }
       }
     },
     {

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { extname } from "node:path";
 import multer from "multer";
+import { IMAGE_UPLOAD_MIME_TYPES } from "@arcanorum/shared";
 import {
   resolveContentUploadDir,
   resolveUploadDir,
@@ -13,8 +14,8 @@ export function resolveUploadDestination(fieldname: string, kindParam?: string):
   if (fieldname === "civilopediaImage") return resolveUploadDir("civilopedia");
   if (fieldname === "uiBackground") return resolveUploadDir("ui-backgrounds");
   if (fieldname === "marketLogo") return resolveUploadDir("markets");
-  if (fieldname === "cultureLogo") return resolveContentUploadDir(kindParam);
-  if (fieldname === "divisionIcon") return resolveUploadDir("division-icons");
+  if (fieldname === "cultureLogo") return kindParam ? resolveContentUploadDir(kindParam) : resolveUploadDir("culture-logos");
+  if (fieldname === "religionLogo") return resolveUploadDir("religion-logos");
   if (fieldname === "racePortrait") return resolveContentUploadDir("races");
   if (fieldname === "flag") return resolveUploadDir("flags");
   return resolveUploadDir("crests");
@@ -41,7 +42,7 @@ export const upload = multer({
     fileSize: UPLOAD_FILE_SIZE_LIMIT_BYTES,
   },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
+    if ((IMAGE_UPLOAD_MIME_TYPES as readonly string[]).includes(file.mimetype)) {
       cb(null, true);
       return;
     }

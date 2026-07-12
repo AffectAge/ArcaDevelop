@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { imageSize } from "image-size";
+import { HEX_MAP_TAGS, HEX_MAP_TAG_SET } from "@arcanorum/shared";
 import {
   assertScenarioDefinesShape,
   normalizeScenarioAiDefines,
@@ -37,6 +38,9 @@ export type ScenarioValidationIssueCode =
   | "INVALID_EVENT_DEFINITION"
   | "INVALID_JOURNAL_DEFINITION"
   | "INVALID_BUILDING_ATLAS"
+  | "INVALID_UNIT_ATLAS"
+  | "INVALID_UNIT_SKILL"
+  | "INVALID_POPULATION_DEFINITION"
   | "INVALID_CITY_ATLAS"
   | "INVALID_FEATURE_ATLAS"
   | "INVALID_MAP_FEATURE_GENERATOR"
@@ -106,12 +110,17 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "asset", path: "common/assets" },
   { kind: "good", path: "common/goods" },
   { kind: "building", path: "common/buildings" },
+  { kind: "unitSkill", path: "common/unit_skills" },
+  { kind: "unitSkillTree", path: "common/unit_skill_trees" },
+  { kind: "unitType", path: "common/unit_types" },
   { kind: "technology", path: "common/technologies" },
   { kind: "law", path: "common/laws" },
   { kind: "lawGroup", path: "common/lawGroups" },
   { kind: "culture", path: "common/cultures" },
+  { kind: "cultureGroup", path: "common/culture_groups" },
   { kind: "resourceCategory", path: "common/resourceCategories" },
   { kind: "religion", path: "common/religions" },
+  { kind: "religionGroup", path: "common/religion_groups" },
   { kind: "ideology", path: "common/ideologies" },
   { kind: "profession", path: "common/professions" },
   { kind: "race", path: "common/races" },
@@ -127,9 +136,6 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "decision", path: "common/decisions" },
   { kind: "event", path: "common/events" },
   { kind: "journalEntry", path: "common/journal_entries" },
-  { kind: "battalion", path: "common/battalions" },
-  { kind: "shipType", path: "common/shipTypes" },
-  { kind: "aircraftType", path: "common/aircraftTypes" },
   { kind: "aiArchetype", path: "common/ai/archetypes" },
   { kind: "aiPersonality", path: "common/ai/personalities" },
   { kind: "aiStrategy", path: "common/ai/strategies" },
@@ -215,7 +221,7 @@ const VALIDATION_CUSTOMIZATION_DEFAULTS = {
 };
 const VALIDATION_MILITARY_DEFAULTS = {
   militaryFormationSpeed: 10,
-  landDivisionStackLimitPerHex: 4,
+  landUnitStackLimitPerHex: 4,
 };
 const VALIDATION_REGISTRATION_DEFAULTS = {
   requireAdminApproval: false,
@@ -354,20 +360,24 @@ export async function validateScenarioDirectory(
   validateForbiddenLegacyContentFields(root, loadedEntities, issues);
   validateMapEntityColors(root, loadedEntities, issues);
   await validateDefines(root, issues);
-  await validateHexMapSettings(root, issues);
+  await validateHexMapSettings(root, localizationKeys, issues);
   validateHexHeavyFields(root, loadedEntities, issues);
   validateRegionMembership(root, loadedEntities, issues);
+  await validatePopulationDefinitions(root, loadedEntities, issues);
   validateEntityReferences(root, loadedEntities, issues);
   validateDecisionDefinitions(root, loadedEntities, issues);
   validateEventDefinitions(root, loadedEntities, localizationKeys, issues);
   validateJournalDefinitions(root, loadedEntities, localizationKeys, issues);
   validateMapFeatureGenerators(root, loadedEntities, issues);
   validateMapFeatureVisuals(root, loadedEntities, issues);
+  validateUnitSkills(root, loadedEntities, issues);
   validateEntityLocalization(root, loadedEntities, localizationKeys, issues);
   await validateBuildingAtlases(root, loadedEntities, issues);
+  await validateUnitAtlases(root, loadedEntities, issues);
   await validateCityAtlases(root, loadedEntities, issues);
   await validateFeatureAtlases(root, loadedEntities, issues);
   await validateGeneratedManifest(root, summary, issues, options.requireGeneratedIndexes === true);
+  await validateGeneratedMapArtifacts(root, issues);
 
   return {
     ok: issues.length === 0,
@@ -601,6 +611,63 @@ function sanitizeBuildingAtlasId(buildingId: string): string {
   return buildingId.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
+async function validateGeneratedMapArtifacts(root: string, issues: ScenarioValidationIssue[]): Promise<void> {
+  for (const fileName of ["hexes.json", "hex-map.json"]) {
+    const artifactPath = join(root, GENERATED_DIR, fileName);
+    if (!existsSync(artifactPath)) continue;
+    const loaded = await readJsonIfExists(artifactPath, root, issues);
+    if (!loaded) continue;
+    const tiles = Array.isArray(loaded.data)
+      ? loaded.data
+      : isObject(loaded.data) && Array.isArray(loaded.data.tiles)
+        ? loaded.data.tiles
+        : [];
+    for (const [index, tile] of tiles.entries()) {
+      if (!isObject(tile)) continue;
+      const legacyField = ["terrain", "biome", "feature"].find((field) => field in tile);
+      if (!legacyField) continue;
+      issues.push({
+        code: "INVALID_GENERATED_INDEX",
+        path: normalizePath(relative(root, artifactPath)),
+        message: `Generated map tile ${index} uses removed ${legacyField}; generated artifacts must be tag-only.`,
+      });
+      break;
+    }
+  }
+}
+
+async function validateUnitAtlases(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
+  for (const unitType of entities.filter((entity) => entity.kind === "unitType")) {
+    const relativePath = `assets/units/${sanitizeUnitAtlasId(unitType.id)}.png`;
+    const atlasPath = join(root, relativePath);
+    if (!existsSync(atlasPath)) {
+      continue;
+    }
+    try {
+      const dimensions = imageSize(await readFile(atlasPath));
+      const width = dimensions.width ?? 0;
+      const height = dimensions.height ?? 0;
+      if (dimensions.type !== "png" || width !== 256 || height !== 64) {
+        issues.push({
+          code: "INVALID_UNIT_ATLAS",
+          path: relativePath,
+          message: `Unit atlas must be a PNG sized 256x64; received ${dimensions.type ?? "unknown"} ${width}x${height}.`,
+        });
+      }
+    } catch {
+      issues.push({
+        code: "INVALID_UNIT_ATLAS",
+        path: relativePath,
+        message: "Unit atlas must be a readable PNG sized 256x64.",
+      });
+    }
+  }
+}
+
+function sanitizeUnitAtlasId(unitTypeId: string): string {
+  return unitTypeId.replace(/^unit:/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
 async function validateCityAtlases(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
   for (const culture of entities.filter((entity) => entity.kind === "culture")) {
     const relativePath = `assets/cities/${sanitizeCityAtlasId(culture.id)}.png`;
@@ -636,7 +703,8 @@ function sanitizeCityAtlasId(cultureId: string): string {
 function validateMapFeatureGenerators(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
   const seenHexConstrainedIds = new Set<string>();
   for (const generator of entities.filter((entity) => entity.kind === "mapFeatureGenerator")) {
-    const result = normalizeMapFeatureGenerator(generator.data, normalizePath(relative(root, generator.path)));
+    const path = normalizePath(relative(root, generator.path));
+    const result = normalizeMapFeatureGenerator(generator.data, path);
     for (const issue of result.issues) {
       issues.push({
         code: issue.code,
@@ -648,10 +716,11 @@ function validateMapFeatureGenerators(root: string, entities: LoadedEntity[], is
     if (seenHexConstrainedIds.has(result.definition.id)) {
       issues.push({
         code: "DUPLICATE_ID",
-        path: normalizePath(relative(root, generator.path)),
+        path,
         message: `Duplicate map feature generator id ${result.definition.id}.`,
       });
     }
+    validateMapTagQuery(generator.data.tagQuery, `${generator.id}.tagQuery`, path, "INVALID_MAP_FEATURE_GENERATOR", issues);
     seenHexConstrainedIds.add(result.definition.id);
   }
 }
@@ -729,9 +798,6 @@ function validateMapFeatureVisualConditions(value: unknown, label: string, path:
     return;
   }
   const allowedKeys = new Set([
-    "terrains",
-    "features",
-    "biomes",
     "waterKinds",
     "temperatureBands",
     "moistureBands",
@@ -745,6 +811,7 @@ function validateMapFeatureVisualConditions(value: unknown, label: string, path:
     "isCoastal",
     "hasRiver",
     "riverMasks",
+    "tagQuery",
   ]);
   for (const key of Object.keys(value)) {
     if (allowedKeys.has(key)) continue;
@@ -754,9 +821,6 @@ function validateMapFeatureVisualConditions(value: unknown, label: string, path:
       message: `${label}.${key} is not a supported condition.`,
     });
   }
-  validateStringArrayCondition(value.terrains, label, "terrains", VALID_HEX_TERRAINS, path, issues);
-  validateStringArrayCondition(value.features, label, "features", VALID_HEX_FEATURES, path, issues);
-  validateStringArrayCondition(value.biomes, label, "biomes", VALID_HEX_BIOMES, path, issues);
   validateStringArrayCondition(value.waterKinds, label, "waterKinds", VALID_HEX_WATER_KINDS, path, issues);
   validateStringArrayCondition(value.temperatureBands, label, "temperatureBands", VALID_HEX_TEMPERATURE_BANDS, path, issues);
   validateStringArrayCondition(value.moistureBands, label, "moistureBands", VALID_HEX_MOISTURE_BANDS, path, issues);
@@ -770,6 +834,88 @@ function validateMapFeatureVisualConditions(value: unknown, label: string, path:
   validateIntegerArrayCondition(value.riverMasks, label, "riverMasks", 0, 63, path, issues);
   validateOptionalBooleanCondition(value.isCoastal, label, "isCoastal", path, issues);
   validateOptionalBooleanCondition(value.hasRiver, label, "hasRiver", path, issues);
+  validateMapTagQuery(value.tagQuery, label, path, "INVALID_MAP_FEATURE_VISUAL", issues);
+}
+
+function validateUnitSkills(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
+  const skillIds = new Set(entities.filter((entity) => entity.kind === "unitSkill").map((entity) => entity.id));
+  const treeIds = new Set(entities.filter((entity) => entity.kind === "unitSkillTree").map((entity) => entity.id));
+  const validTargets = new Set(["unit.attack", "unit.defense", "unit.ranged_attack", "unit.movement", "unit.vision", "unit.max_hp"]);
+
+  for (const skill of entities.filter((entity) => entity.kind === "unitSkill")) {
+    const path = normalizePath(relative(root, skill.path));
+    if (!skill.id.startsWith("unit_skill:")) {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.id must start with unit_skill:.` });
+    }
+    if (typeof skill.data.nameKey !== "string" || skill.data.nameKey.trim() === "") {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.nameKey is required.` });
+    }
+    const effects = skill.data.effects;
+    if (effects != null && !Array.isArray(effects)) {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.effects must be an array.` });
+      continue;
+    }
+    for (const [index, effect] of (Array.isArray(effects) ? effects : []).entries()) {
+      if (!isObject(effect)) {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.effects[${index}] must be an object.` });
+        continue;
+      }
+      if (effect.type !== "modifier" || typeof effect.target !== "string" || !validTargets.has(effect.target)) {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.effects[${index}] must be a unit-safe modifier effect.` });
+      }
+      if (effect.operation !== "add" && effect.operation !== "multiply") {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.effects[${index}].operation must be add or multiply.` });
+      }
+      if (typeof effect.value !== "number" || !Number.isFinite(effect.value)) {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${skill.id}.effects[${index}].value must be a finite number.` });
+      }
+      if (isObject(effect.when)) {
+        validateMapTagQuery(effect.when.selfTagQuery, `${skill.id}.effects[${index}].when.selfTagQuery`, path, "INVALID_UNIT_SKILL", issues);
+        validateMapTagQuery(effect.when.targetTagQuery, `${skill.id}.effects[${index}].when.targetTagQuery`, path, "INVALID_UNIT_SKILL", issues);
+      }
+    }
+  }
+
+  for (const tree of entities.filter((entity) => entity.kind === "unitSkillTree")) {
+    const path = normalizePath(relative(root, tree.path));
+    if (!tree.id.startsWith("unit_skill_tree:")) {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${tree.id}.id must start with unit_skill_tree:.` });
+    }
+    if (!isObject(tree.data.levelThresholds)) {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${tree.id}.levelThresholds must be an object.` });
+    }
+    const groups = tree.data.choiceGroups;
+    if (!Array.isArray(groups)) {
+      issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${tree.id}.choiceGroups must be an array.` });
+      continue;
+    }
+    for (const [index, group] of groups.entries()) {
+      if (!isObject(group)) {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${tree.id}.choiceGroups[${index}] must be an object.` });
+        continue;
+      }
+      const options = Array.isArray(group.options) ? group.options : [];
+      if (typeof group.id !== "string" || group.id.trim() === "" || !Number.isInteger(group.unlockLevel) || !Number.isInteger(group.choicesRequired)) {
+        issues.push({ code: "INVALID_UNIT_SKILL", path, message: `${tree.id}.choiceGroups[${index}] has an invalid shape.` });
+      }
+      for (const skillId of [...options, ...(Array.isArray(group.prerequisiteSkillIds) ? group.prerequisiteSkillIds : [])]) {
+        if (typeof skillId === "string" && skillIds.has(skillId)) continue;
+        issues.push({ code: "BROKEN_REFERENCE", path, message: `${tree.id}.choiceGroups[${index}] references missing skill ${String(skillId)}.` });
+      }
+    }
+  }
+
+  for (const unitType of entities.filter((entity) => entity.kind === "unitType")) {
+    const path = normalizePath(relative(root, unitType.path));
+    const treeId = unitType.data.unitSkillTreeId;
+    if (treeId != null && (typeof treeId !== "string" || !treeIds.has(treeId))) {
+      issues.push({ code: "BROKEN_REFERENCE", path, message: `${unitType.id}.unitSkillTreeId references missing tree ${String(treeId)}.` });
+    }
+    for (const skillId of Array.isArray(unitType.data.startingSkillIds) ? unitType.data.startingSkillIds : []) {
+      if (typeof skillId === "string" && skillIds.has(skillId)) continue;
+      issues.push({ code: "BROKEN_REFERENCE", path, message: `${unitType.id}.startingSkillIds references missing skill ${String(skillId)}.` });
+    }
+  }
 }
 
 function validateOptionalNumberField(
@@ -787,6 +933,52 @@ function validateOptionalNumberField(
       message: `${label} must be ${options.integer === true ? "an integer" : "a number"}${options.min !== undefined ? ` >= ${options.min}` : ""}.`,
     });
   }
+}
+
+function validateMapTagQuery(
+  query: unknown,
+  label: string,
+  path: string,
+  code: ScenarioValidationIssueCode,
+  issues: ScenarioValidationIssue[],
+  depth = 0,
+): void {
+  if (query == null) return;
+  if (typeof query === "string") {
+    if (HEX_MAP_TAG_SET.has(query)) return;
+    issues.push({ code, path, message: `${label} references unsupported map tag ${query}.` });
+    return;
+  }
+  if (!isObject(query) || depth > 6) {
+    issues.push({ code, path, message: `${label} must be a map tag string or all/any/not object.` });
+    return;
+  }
+  const allowedKeys = new Set(["all", "any", "not"]);
+  for (const key of Object.keys(query)) {
+    if (allowedKeys.has(key)) continue;
+    issues.push({ code, path, message: `${label}.${key} is not supported in map tag queries.` });
+  }
+  if (query.all != null) validateMapTagQueryList(query.all, `${label}.all`, path, code, issues, depth + 1);
+  if (query.any != null) validateMapTagQueryList(query.any, `${label}.any`, path, code, issues, depth + 1);
+  if (query.not != null) {
+    if (Array.isArray(query.not)) validateMapTagQueryList(query.not, `${label}.not`, path, code, issues, depth + 1);
+    else validateMapTagQuery(query.not, `${label}.not`, path, code, issues, depth + 1);
+  }
+}
+
+function validateMapTagQueryList(
+  value: unknown,
+  label: string,
+  path: string,
+  code: ScenarioValidationIssueCode,
+  issues: ScenarioValidationIssue[],
+  depth: number,
+): void {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 32) {
+    issues.push({ code, path, message: `${label} must contain 1-32 map tag query entries.` });
+    return;
+  }
+  value.forEach((child, index) => validateMapTagQuery(child, `${label}[${index}]`, path, code, issues, depth));
 }
 
 function validateStringArrayCondition(
@@ -1089,7 +1281,7 @@ async function loadHexMapSettings(root: string): Promise<JsonObject> {
   return loaded.data;
 }
 
-async function validateHexMapSettings(root: string, issues: ScenarioValidationIssue[]): Promise<void> {
+async function validateHexMapSettings(root: string, localizationKeys: Set<string>, issues: ScenarioValidationIssue[]): Promise<void> {
   const loaded = await readJsonIfExists(join(root, "map/hex-settings.json"), root, issues);
   if (!loaded) {
     issues.push({
@@ -1108,17 +1300,25 @@ async function validateHexMapSettings(root: string, issues: ScenarioValidationIs
     return;
   }
 
-  const requiredStringFields = ["seed"] as const;
-  for (const field of requiredStringFields) {
-    if (typeof loaded.data[field] === "string" && loaded.data[field].trim() !== "") continue;
+  const legacyFields = ["seaLevel", "temperature", "moisture", "mountains", "rivers", "forests", "targetLandRegionSize", "targetWaterRegionSize"];
+  for (const field of legacyFields) {
+    if (!(field in loaded.data)) continue;
     issues.push({
       code: "INVALID_HEX_MAP_SETTINGS",
       path: "map/hex-settings.json",
-      message: `Hex map setting ${field} must be a non-empty string.`,
+      message: `Legacy flat hex map setting ${field} is no longer supported; use generation sections.`,
     });
   }
 
-  const requiredPositiveIntegerFields = ["width", "height", "hexSize", "targetLandRegionSize", "targetWaterRegionSize", "chunkSize"] as const;
+  if (typeof loaded.data.seed !== "string" || loaded.data.seed.trim() === "") {
+    issues.push({
+      code: "INVALID_HEX_MAP_SETTINGS",
+      path: "map/hex-settings.json",
+      message: "Hex map setting seed must be a non-empty string.",
+    });
+  }
+
+  const requiredPositiveIntegerFields = ["width", "height", "hexSize", "chunkSize"] as const;
   for (const field of requiredPositiveIntegerFields) {
     const value = loaded.data[field];
     if (Number.isInteger(value) && Number(value) > 0) continue;
@@ -1129,24 +1329,86 @@ async function validateHexMapSettings(root: string, issues: ScenarioValidationIs
     });
   }
 
-  const requiredUnitNumberFields = ["seaLevel", "temperature", "moisture", "mountains", "rivers", "forests"] as const;
-  for (const field of requiredUnitNumberFields) {
-    const value = loaded.data[field];
-    if (typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1) continue;
+  if (loaded.data.wrapX !== false) {
     issues.push({
       code: "INVALID_HEX_MAP_SETTINGS",
       path: "map/hex-settings.json",
-      message: `Hex map setting ${field} must be a finite number between 0 and 1.`,
+      message: "Hex map setting wrapX must be false for the current rectangular scenario map format.",
     });
   }
 
-  if (typeof loaded.data.wrapX !== "boolean") {
+  const generation = loaded.data.generation;
+  if (!isObject(generation)) {
     issues.push({
       code: "INVALID_HEX_MAP_SETTINGS",
       path: "map/hex-settings.json",
-      message: "Hex map setting wrapX must be a boolean.",
+      message: "Hex map settings must define generation sections.",
+    });
+    return;
+  }
+  validateGenerationSection(generation, issues);
+  for (const tag of HEX_MAP_TAGS) {
+    const key = `mapTag.${tag.replace(":", ".")}`;
+    if (localizationKeys.has(key)) continue;
+    issues.push({
+      code: "MISSING_LOCALIZATION_KEY",
+      path: "map/hex-settings.json",
+      message: `Map tag ${tag} requires localization key ${key} in en/ru.`,
     });
   }
+}
+
+function validateGenerationSection(generation: JsonObject, issues: ScenarioValidationIssue[]): void {
+  const mapScript = generation.mapScript;
+  if (mapScript !== "continents" && mapScript !== "pangaea" && mapScript !== "archipelago") {
+    issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.mapScript must be continents, pangaea, or archipelago." });
+  }
+  const landmasses = isObject(generation.landmasses) ? generation.landmasses : null;
+  const climate = isObject(generation.climate) ? generation.climate : null;
+  const rivers = isObject(generation.rivers) ? generation.rivers : null;
+  const regions = isObject(generation.regions) ? generation.regions : null;
+  const tags = isObject(generation.tags) ? generation.tags : null;
+  if (!landmasses || !climate || !rivers || !regions || !tags) {
+    issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation must include landmasses, climate, rivers, regions, and tags sections." });
+    return;
+  }
+  validateIntegerRange(landmasses.majorContinents, "generation.landmasses.majorContinents", issues, 1, 12);
+  validateNumberOrIntegerRange(landmasses.majorContinentSize, "generation.landmasses.majorContinentSize", issues, 1, 2_000_000);
+  validateNumberOrIntegerRange(landmasses.edgeOceanMargin, "generation.landmasses.edgeOceanMargin", issues, 0, 64);
+  validateUnitNumberField(landmasses.landRatio, "generation.landmasses.landRatio", issues);
+  if (landmasses.islandDensity !== "low" && landmasses.islandDensity !== "medium" && landmasses.islandDensity !== "high") {
+    issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.landmasses.islandDensity must be low, medium, or high." });
+  }
+  validateNumberOrIntegerRange(landmasses.islandSize, "generation.landmasses.islandSize", issues, 1, 200_000);
+  if (climate.preset !== "earthlike" && climate.preset !== "scenario") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.climate.preset must be earthlike or scenario." });
+  if (climate.temperature !== "cold" && climate.temperature !== "temperate" && climate.temperature !== "hot") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.climate.temperature must be cold, temperate, or hot." });
+  if (climate.rainfall !== "dry" && climate.rainfall !== "balanced" && climate.rainfall !== "wet") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.climate.rainfall must be dry, balanced, or wet." });
+  if (rivers.density !== "rare" && rivers.density !== "normal" && rivers.density !== "many") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.rivers.density must be rare, normal, or many." });
+  if (typeof rivers.navigable !== "boolean") issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.rivers.navigable must be boolean." });
+  if (!Number.isInteger(rivers.crossingPenalty) || Number(rivers.crossingPenalty) < 0) issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.rivers.crossingPenalty must be a non-negative integer." });
+  if (!Number.isInteger(regions.targetLandRegionSize) || Number(regions.targetLandRegionSize) <= 0) issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.regions.targetLandRegionSize must be a positive integer." });
+  if (!Number.isInteger(regions.targetWaterRegionSize) || Number(regions.targetWaterRegionSize) <= 0) issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.regions.targetWaterRegionSize must be a positive integer." });
+  if (tags.enabled !== true) issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: "generation.tags.enabled must be true." });
+}
+
+function validateIntegerRange(value: unknown, label: string, issues: ScenarioValidationIssue[], minAllowed: number, maxAllowed: number): void {
+  if (!isObject(value) || !Number.isInteger(value.min) || !Number.isInteger(value.max) || Number(value.min) < minAllowed || Number(value.max) > maxAllowed || Number(value.max) < Number(value.min)) {
+    issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: `${label} must define integer min/max within ${minAllowed}-${maxAllowed}.` });
+  }
+}
+
+function validateNumberOrIntegerRange(value: unknown, label: string, issues: ScenarioValidationIssue[], minAllowed: number, maxAllowed: number): void {
+  if (value == null) return;
+  if (Number.isInteger(value) && Number(value) >= minAllowed && Number(value) <= maxAllowed) return;
+  if (isObject(value) && Number.isInteger(value.min) && Number.isInteger(value.max) && Number(value.min) >= minAllowed && Number(value.max) <= maxAllowed && Number(value.max) >= Number(value.min)) {
+    return;
+  }
+  issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: `${label} must be an integer or integer min/max within ${minAllowed}-${maxAllowed}.` });
+}
+
+function validateUnitNumberField(value: unknown, label: string, issues: ScenarioValidationIssue[]): void {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1) return;
+  issues.push({ code: "INVALID_HEX_MAP_SETTINGS", path: "map/hex-settings.json", message: `${label} must be a finite number between 0 and 1.` });
 }
 
 async function validateDefines(root: string, issues: ScenarioValidationIssue[]): Promise<void> {
@@ -1201,6 +1463,7 @@ async function validateDefines(root: string, issues: ScenarioValidationIssue[]):
       defines.resourceLedger,
       VALIDATION_RESOURCE_LEDGER_DEFAULTS,
     );
+    validatePopulationDefines(defines.population, issues);
     normalizeScenarioTurnTimerDefines(
       defines.turnTimer,
       VALIDATION_TURN_TIMER_DEFAULTS,
@@ -1211,6 +1474,150 @@ async function validateDefines(root: string, issues: ScenarioValidationIssue[]):
       path: "common/defines.json",
       message: error instanceof Error ? error.message : "Invalid scenario defines.",
     });
+  }
+}
+
+function validatePopulationDefines(population: { qualificationCategories?: unknown } | undefined, issues: ScenarioValidationIssue[]): void {
+  if (population == null || population.qualificationCategories == null) return;
+  if (!Array.isArray(population.qualificationCategories)) {
+    issues.push({
+      code: "INVALID_DEFINES",
+      path: "common/defines.json",
+      message: "population.qualificationCategories must be an array of non-empty string ids.",
+    });
+    return;
+  }
+  for (const [index, category] of population.qualificationCategories.entries()) {
+    if (typeof category === "string" && category.trim()) continue;
+    issues.push({
+      code: "INVALID_DEFINES",
+      path: "common/defines.json",
+      message: `population.qualificationCategories[${index}] must be a non-empty string id.`,
+    });
+  }
+}
+
+async function validatePopulationDefinitions(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<void> {
+  const populationDir = join(root, "common/populations");
+  if (!existsSync(populationDir)) return;
+
+  const regionIds = new Set(entities.filter((entity) => entity.kind === "region").map((entity) => entity.id));
+  const cultureIds = new Set(entities.filter((entity) => entity.kind === "culture").map((entity) => entity.id));
+  const religionIds = new Set(entities.filter((entity) => entity.kind === "religion").map((entity) => entity.id));
+  const raceIds = new Set(entities.filter((entity) => entity.kind === "race").map((entity) => entity.id));
+  const professionIds = new Set(entities.filter((entity) => entity.kind === "profession").map((entity) => entity.id));
+  const qualificationCategories = await loadPopulationQualificationCategories(root, entities, issues);
+
+  for (const file of await listJsonFiles(populationDir)) {
+    const loaded = await readJsonIfExists(file, root, issues);
+    if (!loaded) continue;
+    const path = normalizePath(relative(root, file));
+    const rows = isObject(loaded.data) && Array.isArray(loaded.data.regions) ? loaded.data.regions : [loaded.data];
+    for (const [rowIndex, row] of rows.entries()) {
+      const label = `${path}${rows.length > 1 ? `.regions[${rowIndex}]` : ""}`;
+      if (!isObject(row)) {
+        issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${label} must be a population object.` });
+        continue;
+      }
+      if ("populationTotal" in row) {
+        issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${label}.populationTotal is removed; author atomic pops explicitly.` });
+      }
+      if (typeof row.regionId !== "string" || !regionIds.has(row.regionId)) {
+        issues.push({ code: "BROKEN_REFERENCE", path, message: `${label}.regionId references missing region ${String(row.regionId)}.` });
+      }
+      if (row.pops != null && !Array.isArray(row.pops)) {
+        issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${label}.pops must be an array.` });
+        continue;
+      }
+      for (const [popIndex, pop] of (Array.isArray(row.pops) ? row.pops : []).entries()) {
+        validatePopulationPopDefinition(label, popIndex, pop, { cultureIds, religionIds, raceIds, professionIds, qualificationCategories }, issues, path);
+      }
+    }
+  }
+}
+
+function validatePopulationPopDefinition(
+  label: string,
+  popIndex: number,
+  pop: unknown,
+  refs: {
+    cultureIds: Set<string>;
+    religionIds: Set<string>;
+    raceIds: Set<string>;
+    professionIds: Set<string>;
+    qualificationCategories: Set<string>;
+  },
+  issues: ScenarioValidationIssue[],
+  path: string,
+): void {
+  const popLabel = `${label}.pops[${popIndex}]`;
+  if (!isObject(pop)) {
+    issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${popLabel} must be an object.` });
+    return;
+  }
+  if ("professions" in pop) {
+    issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${popLabel}.professions is removed; professionId is the atomic pop identity.` });
+  }
+  validatePopulationReference(pop, "cultureId", refs.cultureIds, popLabel, issues, path);
+  validatePopulationReference(pop, "religionId", refs.religionIds, popLabel, issues, path);
+  validatePopulationReference(pop, "raceId", refs.raceIds, popLabel, issues, path);
+  validatePopulationReference(pop, "professionId", refs.professionIds, popLabel, issues, path);
+  if (typeof pop.size !== "number" || !Number.isFinite(pop.size) || pop.size < 0) {
+    issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${popLabel}.size must be a non-negative finite number.` });
+  }
+  validateQualificationRecord(pop.qualificationsByCategory, `${popLabel}.qualificationsByCategory`, refs.qualificationCategories, issues, path);
+}
+
+function validatePopulationReference(
+  pop: JsonObject,
+  field: string,
+  ids: Set<string>,
+  label: string,
+  issues: ScenarioValidationIssue[],
+  path: string,
+): void {
+  const value = pop[field];
+  if (typeof value === "string" && ids.has(value)) return;
+  issues.push({ code: "BROKEN_REFERENCE", path, message: `${label}.${field} references missing id ${String(value)}.` });
+}
+
+async function loadPopulationQualificationCategories(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): Promise<Set<string>> {
+  const categories = new Set<string>();
+  const loaded = await readJsonIfExists(join(root, "common/defines.json"), root, issues);
+  const rawCategories = isObject(loaded?.data) && isObject(loaded.data.population) ? loaded.data.population.qualificationCategories : undefined;
+  if (Array.isArray(rawCategories)) {
+    for (const category of rawCategories) {
+      if (typeof category === "string" && category.trim()) categories.add(category.trim());
+      else issues.push({ code: "INVALID_DEFINES", path: "common/defines.json", message: "population.qualificationCategories must contain non-empty string ids." });
+    }
+  }
+
+  for (const profession of entities.filter((entity) => entity.kind === "profession")) {
+    validateQualificationRecord(profession.data.qualificationRequirements, `${profession.id}.qualificationRequirements`, categories, issues, normalizePath(relative(root, profession.path)));
+    validateQualificationRecord(profession.data.qualificationGrowthRules, `${profession.id}.qualificationGrowthRules`, categories, issues, normalizePath(relative(root, profession.path)));
+  }
+  return categories;
+}
+
+function validateQualificationRecord(
+  value: unknown,
+  label: string,
+  qualificationCategories: Set<string>,
+  issues: ScenarioValidationIssue[],
+  path: string,
+): void {
+  if (value == null) return;
+  if (!isObject(value)) {
+    issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${label} must be an object.` });
+    return;
+  }
+  for (const [category, amount] of Object.entries(value)) {
+    if (qualificationCategories.size === 0 || !qualificationCategories.has(category)) {
+      issues.push({ code: "BROKEN_REFERENCE", path, message: `${label}.${category} references an unknown qualification category.` });
+    }
+    if (typeof amount !== "number" || !Number.isFinite(amount)) {
+      issues.push({ code: "INVALID_POPULATION_DEFINITION", path, message: `${label}.${category} must be a finite number.` });
+    }
   }
 }
 
@@ -1270,6 +1677,9 @@ function validateEntityReferences(root: string, entities: LoadedEntity[], issues
   const ids = new Set(entities.map((entity) => entity.id));
   const countries = new Set(entities.filter((entity) => entity.kind === "country").map((entity) => entity.id));
   const goods = new Set(entities.filter((entity) => entity.kind === "good").map((entity) => entity.id));
+  const cultures = new Set(entities.filter((entity) => entity.kind === "culture").map((entity) => entity.id));
+  const religions = new Set(entities.filter((entity) => entity.kind === "religion").map((entity) => entity.id));
+  const races = new Set(entities.filter((entity) => entity.kind === "race").map((entity) => entity.id));
 
   for (const region of entities.filter((entity) => entity.kind === "region")) {
     validateOptionalReference(root, region, "ownerCountryId", countries, issues);
@@ -1279,8 +1689,65 @@ function validateEntityReferences(root: string, entities: LoadedEntity[], issues
     validateRegionResources(root, region, goods, issues);
   }
 
+  for (const country of entities.filter((entity) => entity.kind === "country")) {
+    validateReferenceArray(root, country, "acceptedCultureIds", cultures, issues);
+    validateReferenceArray(root, country, "acceptedReligionIds", religions, issues);
+    validateReferenceArray(root, country, "acceptedRaceIds", races, issues);
+  }
+
   for (const entity of entities) {
+    if (entity.kind === "law") {
+      validateReferenceArray(root, entity, "acceptedCultureIds", cultures, issues);
+      validateReferenceArray(root, entity, "acceptedReligionIds", religions, issues);
+      validateReferenceArray(root, entity, "acceptedRaceIds", races, issues);
+    }
     validateKnownStableReferences(root, entity, ids, issues);
+  }
+
+  validateNeedsProfiles(root, entities, goods, issues);
+}
+
+function validateNeedsProfiles(root: string, entities: LoadedEntity[], goods: Set<string>, issues: ScenarioValidationIssue[]): void {
+  for (const entity of entities.filter((item) => item.kind === "culture" || item.kind === "race" || item.kind === "religion" || item.kind === "profession")) {
+    const profile = entity.data.needsProfile;
+    if (profile == null) continue;
+    const path = normalizePath(relative(root, entity.path));
+    if (!isObject(profile) || !Array.isArray(profile.tiers)) {
+      issues.push({ code: "BROKEN_REFERENCE", path, message: `${entity.id}.needsProfile.tiers must be an array.` });
+      continue;
+    }
+    for (const [tierIndex, tier] of profile.tiers.entries()) {
+      if (!isObject(tier) || !Array.isArray(tier.needs)) {
+        issues.push({ code: "BROKEN_REFERENCE", path, message: `${entity.id}.needsProfile.tiers[${tierIndex}].needs must be an array.` });
+        continue;
+      }
+      for (const [needIndex, need] of tier.needs.entries()) {
+        if (!isObject(need) || !Array.isArray(need.goods) || need.goods.length === 0) {
+          issues.push({ code: "BROKEN_REFERENCE", path, message: `${entity.id}.needsProfile.tiers[${tierIndex}].needs[${needIndex}].goods must be a non-empty array.` });
+          continue;
+        }
+        for (const [goodIndex, good] of need.goods.entries()) {
+          const goodLabel = `${entity.id}.needsProfile.tiers[${tierIndex}].needs[${needIndex}].goods[${goodIndex}]`;
+          if (!isObject(good) || typeof good.goodId !== "string" || !goods.has(good.goodId)) {
+            issues.push({
+              code: "BROKEN_REFERENCE",
+              path,
+              message: `${goodLabel} references missing good ${String(isObject(good) ? good.goodId : good)}.`,
+            });
+            continue;
+          }
+          if (good.taboo != null && typeof good.taboo !== "boolean") {
+            issues.push({ code: "BROKEN_REFERENCE", path, message: `${goodLabel}.taboo must be boolean when provided.` });
+          }
+          if (
+            good.obsessionMultiplier != null &&
+            (typeof good.obsessionMultiplier !== "number" || !Number.isFinite(good.obsessionMultiplier) || good.obsessionMultiplier < 1)
+          ) {
+            issues.push({ code: "BROKEN_REFERENCE", path, message: `${goodLabel}.obsessionMultiplier must be a finite number >= 1 when provided.` });
+          }
+        }
+      }
+    }
   }
 }
 
@@ -1444,6 +1911,8 @@ function validateGoodDepositDefinitions(root: string, entities: LoadedEntity[], 
         path: normalizePath(relative(root, good.path)),
         message: `${good.id}.deposit.generation must be an object.`,
       });
+    } else if (isObject(generation)) {
+      validateMapTagQuery(generation.tagQuery, `${good.id}.deposit.generation.tagQuery`, normalizePath(relative(root, good.path)), "BROKEN_REFERENCE", issues);
     }
   }
 }

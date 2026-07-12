@@ -6,14 +6,14 @@
       "frame": 0,
       "weight": 2,
       "conditions": {
-        "biomes": ["temperate_forest", "temperate_grassland"]
+        "tagQuery": { "all": ["feature:vegetated"], "not": ["biome:tropical"] }
       }
     },
     {
       "frame": 1,
       "weight": 2,
       "conditions": {
-        "biomes": ["temperate_forest"],
+        "tagQuery": { "all": ["feature:vegetated"] },
         "moistureBands": ["normal", "wet"]
       }
     },
@@ -21,7 +21,7 @@
       "frame": 2,
       "priority": 5,
       "conditions": {
-        "biomes": ["boreal_forest"],
+        "tagQuery": { "all": ["feature:vegetated", "biome:tundra"] },
         "temperatureBands": ["cold", "cool"]
       }
     },

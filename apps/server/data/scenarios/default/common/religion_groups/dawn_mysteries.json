@@ -1,0 +1,23 @@
+{
+  "id": "religion_group:dawn_mysteries",
+  "nameKey": "religionGroup.dawnMysteries.name",
+  "descriptionKey": "religionGroup.dawnMysteries.description",
+  "color": "#f97316",
+  "modifiers": [
+    {
+      "id": "sunrise_vigils",
+      "label": "Sunrise vigils",
+      "scope": "country",
+      "effects": [
+        { "stat": "religion_gain", "mode": "add", "value": 1 },
+        { "stat": "construction_gain", "mode": "add", "value": 1 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.12,
+    "standardOfLiving": 8,
+    "loyalists": 25,
+    "ideologies": { "ideology:default": 1 }
+  }
+}

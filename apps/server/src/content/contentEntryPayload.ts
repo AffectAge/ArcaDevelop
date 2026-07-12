@@ -23,7 +23,6 @@ import {
   normalizeStringList,
 } from "./contentNormalizers";
 import type {
-  BattalionContentEntry,
   BuildingContentEntry,
   GameContentEntry,
   GoodContentEntry,
@@ -510,6 +509,22 @@ export const culturePayloadSchema = z.object({
   explorationLargeVeinMin: z.number().finite().min(0).optional(),
   explorationLargeVeinMax: z.number().finite().min(0).optional(),
   baseWage: z.number().finite().min(0).optional(),
+  qualificationRequirements: z.record(z.string().trim().min(1).max(120), z.number().finite().min(0)).optional(),
+  qualificationGrowthRules: z.record(z.string().trim().min(1).max(120), z.number().finite()).optional(),
+  acceptedCultureIds: z.array(z.string().trim().min(1).max(120)).optional(),
+  acceptedReligionIds: z.array(z.string().trim().min(1).max(120)).optional(),
+  acceptedRaceIds: z.array(z.string().trim().min(1).max(120)).optional(),
+  acceptanceMode: z.enum(["add", "replace"]).optional(),
+  discrimination: z
+    .object({
+      wagePenaltyPct: z.number().finite().min(0).max(1).optional(),
+      hiringPenaltyPct: z.number().finite().min(0).max(1).optional(),
+      qualificationGrowthPenaltyPct: z.number().finite().min(0).max(1).optional(),
+      politicalStrengthPenaltyPct: z.number().finite().min(0).max(1).optional(),
+      radicalizationPerTurn: z.number().finite().min(0).optional(),
+    })
+    .nullable()
+    .optional(),
   needsProfile: z
     .object({
       tiers: z.array(
@@ -527,6 +542,8 @@ export const culturePayloadSchema = z.object({
                 z.object({
                   goodId: z.string().trim().min(1).max(120),
                   weight: z.number().finite().min(0.001),
+                  taboo: z.boolean().optional(),
+                  obsessionMultiplier: z.number().finite().min(1).optional(),
                 }),
               ),
             }),
@@ -576,17 +593,6 @@ export const culturePayloadSchema = z.object({
     capacity: z.number().int().min(1).nullable().optional(),
     requiresActive: z.boolean().optional(),
   }).nullable().optional(),
-  manpower: z.number().finite().min(0).optional(),
-  attack: z.number().finite().min(0).optional(),
-  defense: z.number().finite().min(0).optional(),
-  breakthrough: z.number().finite().min(0).optional(),
-  organization: z.number().finite().min(1).optional(),
-  hp: z.number().finite().min(1).optional(),
-  speed: z.number().finite().min(0.1).optional(),
-  supplyUse: z.number().finite().min(0).optional(),
-  trainingCostDucats: z.number().finite().min(0).optional(),
-  trainingCostManpower: z.number().finite().min(0).optional(),
-  equipmentNeeds: z.array(z.object({ goodId: z.string().trim().min(1).max(120), amount: z.number().finite().min(0), affectedByFertility: z.boolean().optional() })).optional(),
   ideologyWeights: z.record(z.string().trim().min(1).max(120), z.number().finite().min(0).max(100)).optional(),
   interestGroupWeights: z.record(z.string().trim().min(1).max(120), z.number().finite().min(0).max(100)).optional(),
   professionWeights: z.record(z.string().trim().min(1).max(120), z.number().finite().min(0).max(100)).optional(),
@@ -618,6 +624,7 @@ export const culturePayloadSchema = z.object({
 
 export const contentEntryKindSchema = z.enum([
   "cultures",
+  "cultureGroups",
   "resourceCategories",
   "hexTypes",
   "hexClimates",
@@ -625,6 +632,7 @@ export const contentEntryKindSchema = z.enum([
   "hexContinents",
   "hexStrategicRegions",
   "religions",
+  "religionGroups",
   "professions",
   "ideologies",
   "interestGroups",
@@ -642,22 +650,15 @@ export const contentEntryKindSchema = z.enum([
   "decisions",
   "events",
   "journalEntries",
-  "battalions",
-  "shipTypes",
-  "aircraftTypes",
 ]);
 
 export type ContentEntryKind = z.infer<typeof contentEntryKindSchema>;
 export type CulturePayload = z.infer<typeof culturePayloadSchema>;
 
-export function isMilitaryContentKind(kind: ContentEntryKind): kind is "battalions" | "shipTypes" | "aircraftTypes" {
-  return kind === "battalions" || kind === "shipTypes" || kind === "aircraftTypes";
-}
-
 export function sanitizeContentEntryByKind(
   kind: ContentEntryKind,
   payload: CulturePayload,
-): Partial<GameContentEntry & GoodContentEntry & BuildingContentEntry & BattalionContentEntry> {
+): Partial<GameContentEntry & GoodContentEntry & BuildingContentEntry> {
   if (kind === "goods") {
     const basePrice = Number((payload.basePrice ?? DEFAULT_RESOURCE_BASE_PRICE).toFixed(3));
     const minPrice = Number(Math.max(0, payload.minPrice ?? basePrice * 0.1).toFixed(3));
@@ -726,20 +727,12 @@ export function sanitizeContentEntryByKind(
       explorationLargeVeinMax,
     };
   }
-  if (kind === "professions") return { baseWage: Number(Math.max(0, payload.baseWage ?? 1).toFixed(3)) };
-  if (isMilitaryContentKind(kind)) {
+  if (kind === "professions") {
     return {
-      manpower: Math.max(0, Math.floor(payload.manpower ?? 1000)),
-      attack: Number(Math.max(0, payload.attack ?? 6).toFixed(3)),
-      defense: Number(Math.max(0, payload.defense ?? 6).toFixed(3)),
-      breakthrough: Number(Math.max(0, payload.breakthrough ?? 2).toFixed(3)),
-      organization: Number(Math.max(1, payload.organization ?? 8).toFixed(3)),
-      hp: Number(Math.max(1, payload.hp ?? 20).toFixed(3)),
-      speed: Number(Math.max(0.1, payload.speed ?? 1).toFixed(3)),
-      supplyUse: Number(Math.max(0, payload.supplyUse ?? 1).toFixed(3)),
-      trainingCostDucats: Number(Math.max(0, payload.trainingCostDucats ?? 10).toFixed(3)),
-      trainingCostManpower: Number(Math.max(0, payload.trainingCostManpower ?? payload.manpower ?? 1000).toFixed(3)),
-      equipmentNeeds: normalizeGoodFlows(payload.equipmentNeeds),
+      baseWage: Number(Math.max(0, payload.baseWage ?? 1).toFixed(3)),
+      needsProfile: normalizeCultureNeedsProfile(payload.needsProfile),
+      qualificationRequirements: normalizeNumberRecord(payload.qualificationRequirements, 0, 1_000_000),
+      qualificationGrowthRules: normalizeNumberRecord(payload.qualificationGrowthRules, -1_000_000, 1_000_000),
     };
   }
   if (kind === "decisions") {
@@ -805,7 +798,7 @@ export function sanitizeContentEntryByKind(
       },
     };
   }
-  if (kind === "cultures") return { needsProfile: normalizeCultureNeedsProfile(payload.needsProfile) };
+  if (kind === "cultures" || kind === "races" || kind === "religions") return { needsProfile: normalizeCultureNeedsProfile(payload.needsProfile) };
   if (kind === "ideologies") return { ideologyAttractionRules: normalizeIdeologyAttractionRules(payload.ideologyAttractionRules) };
   if (kind === "parties") {
     return {
@@ -857,6 +850,11 @@ export function sanitizeContentEntryByKind(
       enactmentDifficulty: Number(Math.max(0.1, payload.enactmentDifficulty ?? 1).toFixed(3)),
       votingDurationTurns: Math.max(1, Math.floor(payload.votingDurationTurns ?? 3)),
       parliamentPower: normalizeLawParliamentPowerEffect(payload.parliamentPower),
+      acceptedCultureIds: normalizeCountryIdList(payload.acceptedCultureIds),
+      acceptedReligionIds: normalizeCountryIdList(payload.acceptedReligionIds),
+      acceptedRaceIds: normalizeCountryIdList(payload.acceptedRaceIds),
+      acceptanceMode: payload.acceptanceMode ?? "add",
+      discrimination: payload.discrimination ?? null,
     };
   }
   if (kind === "technologies") {

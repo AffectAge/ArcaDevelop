@@ -5,7 +5,7 @@ import type { WsOutMessage, WorldBase } from "@arcanorum/shared";
 import { WORLD_DELTA_MASK } from "@arcanorum/shared";
 import type { RouteAuth } from "../security/routeAuth";
 import type { upload } from "../uploads/uploadMiddleware";
-import { CREST_IMAGE_RULE, FLAG_IMAGE_RULE } from "../uploads/uploadPaths";
+import { CREST_IMAGE_RULE, FLAG_IMAGE_RULE, IDENTITY_LOGO_IMAGE_RULE } from "../uploads/uploadPaths";
 import type { createBuildingSystemsRuntime } from "./buildingSystemsRuntime";
 import type { createColonizationRuntimeFacade } from "./colonizationRuntimeFacade";
 import type { createCountryRuntimeHelpers } from "./countryRuntimeHelpers";
@@ -58,6 +58,7 @@ type ServerInteractiveRouteRegistrationRuntimeParams = {
   getGameSettings: () => GameSettings;
   getHexIndex: () => HexMapIndexEntry[];
   getHexMovementCost: Parameters<typeof registerWebSocketRouteComposition>[0]["getHexMovementCost"];
+  areHexIdsAdjacentOrSame: Parameters<typeof registerWebSocketRouteComposition>[0]["areHexIdsAdjacentOrSame"];
   getAiControlledCountryIds: Parameters<typeof registerWebSocketRouteComposition>[0]["getAiControlledCountryIds"];
   pushAdminAuditLog: Parameters<typeof registerAccountControlRouteComposition>[0]["pushAdminAuditLog"];
   validateImageRule: Parameters<typeof registerAccountControlRouteComposition>[0]["validateImageRule"];
@@ -83,11 +84,12 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
     jwtSecret: params.jwtSecret,
     flagImageRule: FLAG_IMAGE_RULE,
     crestImageRule: CREST_IMAGE_RULE,
+    identityLogoImageRule: IDENTITY_LOGO_IMAGE_RULE,
     masks: {
       resourcesByCountry: WORLD_DELTA_MASK.resourcesByCountry,
       hexOwner: WORLD_DELTA_MASK.hexOwner,
       colonyProgressByRegion: WORLD_DELTA_MASK.colonyProgressByRegion,
-      unitEquipmentState: WORLD_DELTA_MASK.unitEquipmentState,
+      unitState: WORLD_DELTA_MASK.unitState,
       regionConstructionQueueByRegion: WORLD_DELTA_MASK.regionConstructionQueueByRegion,
       parliamentByCountry: WORLD_DELTA_MASK.parliamentByCountry,
       technologyByCountry: WORLD_DELTA_MASK.technologyByCountry,
@@ -97,13 +99,11 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
       countryEventFlagsByCountryId: WORLD_DELTA_MASK.countryEventFlagsByCountryId,
       journalEntriesByCountryId: WORLD_DELTA_MASK.journalEntriesByCountryId,
       countryModifiersByCountryId: WORLD_DELTA_MASK.countryModifiersByCountryId,
-      divisionTemplatesByCountry: WORLD_DELTA_MASK.divisionTemplatesByCountry,
-      divisionsById: WORLD_DELTA_MASK.divisionsById,
-      militaryFormationQueueByCountry: WORLD_DELTA_MASK.militaryFormationQueueByCountry,
       diplomacyProposals: WORLD_DELTA_MASK.diplomacyProposals,
     },
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,
+    getGameSettings: params.getGameSettings,
     getOrdersByTurn: () => params.turnStateRuntime.ordersByTurn,
     getResolveReadyByTurn: () => params.turnStateRuntime.resolveReadyByTurn,
     getCustomizationSettings: () => params.getGameSettings().customization,
@@ -162,8 +162,7 @@ export function registerServerInteractiveRouteRuntime(params: ServerInteractiveR
     buildingRuntime: params.buildingRuntime,
     progressionRuntime: params.progressionRuntime,
     getGlobalBuildLimit,
-    normalizeArmyMoveRoute: params.turnMechanicsAdapterRuntime.normalizeArmyMoveRoute,
-    isContiguousArmyRoute: params.turnMechanicsAdapterRuntime.isContiguousArmyRoute,
+    areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame,
     getHexMovementCost: params.getHexMovementCost,
     broadcast: params.broadcast,
     broadcastTurnResolveStarted: params.broadcastTurnResolveStarted,

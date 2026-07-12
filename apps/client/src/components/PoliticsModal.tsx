@@ -7,9 +7,9 @@ import type { CountryParliament, CountryParliamentPowers, WorldBase } from "@arc
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 import { fetchPolitics, startLawBill, type ContentEntry, type PoliticsResponse } from "../lib/api";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppEmptyState, AppSection, AppToolbar } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppEmptyState, AppSection, AppToolbar } from "./templates/AppSurface";
 
 type Props = {
   open: boolean;

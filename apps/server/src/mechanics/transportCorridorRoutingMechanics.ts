@@ -1,4 +1,4 @@
-import type { HexMapArtifact, HexTile, WorldBase } from "@arcanorum/shared";
+import { axialDistance, getNeighborAxial, makeHexId, type HexMapArtifact, type HexTile, type WorldBase } from "@arcanorum/shared";
 import type { GoodTransportMode } from "./marketTurnMechanics";
 
 export type TransportCorridorWaypoint = {
@@ -203,7 +203,7 @@ function findCorridorPath(params: {
       if (nextCost >= (costSoFar.get(neighbor.id) ?? Number.POSITIVE_INFINITY)) continue;
       costSoFar.set(neighbor.id, nextCost);
       cameFrom.set(neighbor.id, current.hexId);
-      frontier.push({ hexId: neighbor.id, cost: nextCost, priority: nextCost + axialDistance(neighbor, goal, params.map.settings.wrapX ? params.map.settings.width : null) });
+      frontier.push({ hexId: neighbor.id, cost: nextCost, priority: nextCost + axialDistance(neighbor, goal, params.map.settings.wrapX ? params.map.settings.width : undefined) });
     }
   }
   if (!cameFrom.has(params.goalHexId)) return { hexIds: [], cost: 0 };
@@ -218,23 +218,9 @@ function findCorridorPath(params: {
 }
 
 function getNeighborIds(tile: HexTile, map: HexMapArtifact): string[] {
-  const directions = [
-    [1, 0],
-    [1, -1],
-    [0, -1],
-    [-1, 0],
-    [-1, 1],
-    [0, 1],
-  ];
-  return directions.flatMap(([dq, dr]) => {
-    let q = tile.q + dq;
-    if (map.settings.wrapX) {
-      q = ((q % map.settings.width) + map.settings.width) % map.settings.width;
-    }
-    if (q < 0 || q >= map.settings.width) return [];
-    const r = tile.r + dr;
-    if (r < 0 || r >= map.settings.height) return [];
-    return [`hex:${q}:${r}`];
+  return [0, 1, 2, 3, 4, 5].flatMap((direction) => {
+    const neighbor = getNeighborAxial(tile, direction as 0 | 1 | 2 | 3 | 4 | 5, map.settings);
+    return neighbor ? [makeHexId(neighbor.q, neighbor.r)] : [];
   });
 }
 
@@ -257,22 +243,6 @@ function getTransportModeStepCost(
   if (mode === "pipeline") return round3(base * 1.35);
   if (mode === "powerGrid") return round3(base * 1.25);
   return round3(base);
-}
-
-function axialDistance(a: Pick<HexTile, "q" | "r">, b: Pick<HexTile, "q" | "r">, wrapWidth: number | null): number {
-  const direct = rawAxialDistance(a.q, a.r, b.q, b.r);
-  if (!wrapWidth) return direct;
-  return Math.min(
-    direct,
-    rawAxialDistance(a.q - wrapWidth, a.r, b.q, b.r),
-    rawAxialDistance(a.q + wrapWidth, a.r, b.q, b.r),
-  );
-}
-
-function rawAxialDistance(aq: number, ar: number, bq: number, br: number): number {
-  const dq = aq - bq;
-  const dr = ar - br;
-  return (Math.abs(dq) + Math.abs(dq + dr) + Math.abs(dr)) / 2;
 }
 
 function round3(value: number): number {

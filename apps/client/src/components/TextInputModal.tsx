@@ -1,7 +1,7 @@
-import { AppButton } from "./ui/AppButton";
-import { AppField, AppInput } from "./ui/AppForm";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppField, AppInput } from "./templates/AppForm";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard } from "./templates/AppSurface";
 import { useUiText } from "../i18n/useUiText";
 
 type Props = {

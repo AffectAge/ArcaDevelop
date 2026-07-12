@@ -9,6 +9,8 @@ import {
 export type UploadReferenceRecord = {
   flagUrl?: string | null;
   crestUrl?: string | null;
+  cultureLogoUrl?: string | null;
+  religionLogoUrl?: string | null;
 };
 
 export type UploadCleanupLogger = {
@@ -44,6 +46,10 @@ export function cleanupOrphanUploads(options: {
     if (flagRel) referenced.add(flagRel);
     const crestRel = extractUploadRelativePathFromUrl(record.crestUrl);
     if (crestRel) referenced.add(crestRel);
+    const cultureLogoRel = extractUploadRelativePathFromUrl(record.cultureLogoUrl);
+    if (cultureLogoRel) referenced.add(cultureLogoRel);
+    const religionLogoRel = extractUploadRelativePathFromUrl(record.religionLogoUrl);
+    if (religionLogoRel) referenced.add(religionLogoRel);
   }
 
   const uploadFiles = listUploadFilesRecursively(options.uploadsRoot);

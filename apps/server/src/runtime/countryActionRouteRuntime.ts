@@ -23,7 +23,6 @@ type CountryActionRouteRuntimeParams = {
     regionBuildingsByRegion: number;
     regionBuildingDucatsByRegion: number;
     resourceLedgerByTurn: number;
-    unitEquipmentState: number;
   };
   getTurnId: () => number;
   getWorldBase: () => WorldBase;
@@ -73,14 +72,12 @@ export function registerCountryActionRouteRuntime(params: CountryActionRouteRunt
       regionResourceExplorationQueueByRegion: params.masks.regionResourceExplorationQueueByRegion,
       resourcesByCountry: params.masks.resourcesByCountry,
       resourceLedgerByTurn: params.masks.resourceLedgerByTurn,
-      unitEquipmentState: params.masks.unitEquipmentState,
     },
     createId: randomUUID,
     getTurnId: params.getTurnId,
     getWorldBase: params.getWorldBase,
     getWorldState: params.getWorldBase,
     getMaxActiveColonizations: () => params.getGameSettings().colonization.maxActiveColonizations,
-    getColonizerQueueConfig: () => params.getGameSettings().colonization,
     getHexRegionId: params.getHexRegionId,
     getExplorationDurationTurns: () =>
       Math.max(

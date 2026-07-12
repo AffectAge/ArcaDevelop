@@ -1,0 +1,25 @@
+{
+  "id": "culture_group:maritime_leagues",
+  "nameKey": "cultureGroup.maritimeLeagues.name",
+  "descriptionKey": "cultureGroup.maritimeLeagues.description",
+  "color": "#22d3ee",
+  "iconAssetId": "asset:identity.maritime_leagues",
+  "modifiers": [
+    {
+      "id": "harbor_dues",
+      "label": "Harbor dues",
+      "scope": "country",
+      "effects": [
+        { "stat": "ducats_gain", "mode": "add", "value": 1 },
+        { "stat": "colonization_gain", "mode": "add", "value": 1 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.12,
+    "standardOfLiving": 8,
+    "ducats": 2,
+    "ideologies": { "ideology:default": 1 },
+    "qualificationsByCategory": { "labor": 0.15, "artisan": 0.15 }
+  }
+}

@@ -1,4 +1,4 @@
-import type { HexFeature, HexTile, MapFeatureVisualFrameRule, MapFeatureVisualId, MapFeatureVisualRuleDefinition } from "@arcanorum/shared";
+import { matchesMapTagQuery, type HexTile, type MapFeatureVisualFrameRule, type MapFeatureVisualId, type MapFeatureVisualRuleDefinition } from "@arcanorum/shared";
 
 export const FEATURE_ATLAS_FRAME_SIZE = 64;
 export const FEATURE_ATLAS_VARIANTS = 6;
@@ -15,13 +15,10 @@ export const FEATURE_ATLAS_ROWS: MapFeatureVisualId[] = [
 export const FEATURE_ATLAS_HEIGHT = FEATURE_ATLAS_FRAME_SIZE * FEATURE_ATLAS_ROWS.length;
 export const FEATURE_ATLAS_FALLBACK_URL = "/game-assets/features/fallback-feature-atlas.png";
 
-export const NATURAL_FEATURE_VISUAL_IDS: Record<Exclude<HexFeature, "none">, MapFeatureVisualId> = {
-  forest: "feature:forest",
-  dense_forest: "feature:dense_forest",
-  jungle: "feature:jungle",
-  marsh: "feature:marsh",
-  scrub: "feature:scrub",
-  snowcap: "feature:snowcap",
+export const NATURAL_FEATURE_VISUAL_IDS: Record<string, MapFeatureVisualId> = {
+  "feature:vegetated": "feature:forest",
+  "feature:wet": "feature:marsh",
+  "feature:snow": "feature:snowcap",
 };
 
 export function getFeatureAtlasUrl(scenarioId: string | null | undefined): string {
@@ -58,23 +55,23 @@ export function resolveFeatureAtlasFrame(params: {
 
 export const DEFAULT_FEATURE_VISUAL_RULES: MapFeatureVisualRuleDefinition[] = [
   featureRule("feature:forest", [
-    { frame: 0, weight: 2, conditions: { biomes: ["temperate_forest", "temperate_grassland"] } },
-    { frame: 1, weight: 2, conditions: { biomes: ["temperate_forest"], moistureBands: ["normal", "wet"] } },
-    { frame: 2, priority: 5, conditions: { biomes: ["boreal_forest"], temperatureBands: ["cold", "cool"] } },
+    { frame: 0, weight: 2, conditions: { tagQuery: "feature:vegetated" } },
+    { frame: 1, weight: 2, conditions: { tagQuery: { all: ["feature:vegetated", "biome:grassland"] }, moistureBands: ["normal", "wet"] } },
+    { frame: 2, priority: 5, conditions: { tagQuery: { all: ["feature:vegetated", "biome:tundra"] }, temperatureBands: ["cold", "cool"] } },
     { frame: 3, priority: 5, conditions: { moistureBands: ["wet", "saturated"] } },
     { frame: 4, priority: 8, conditions: { distanceToWater: [1], moistureBands: ["wet", "saturated"] } },
     { frame: 5, priority: 8, conditions: { hasRiver: true } },
   ]),
   featureRule("feature:dense_forest", [
-    { frame: 0, weight: 2, conditions: { biomes: ["temperate_forest"] } },
-    { frame: 1, weight: 2, conditions: { biomes: ["boreal_forest"] } },
+    { frame: 0, weight: 2, conditions: { tagQuery: "feature:vegetated" } },
+    { frame: 1, weight: 2, conditions: { tagQuery: { all: ["feature:vegetated", "biome:tundra"] } } },
     { frame: 2, priority: 5, conditions: { moistureBands: ["wet"] } },
     { frame: 3, priority: 5, conditions: { moistureBands: ["saturated"] } },
     { frame: 4, priority: 8, conditions: { hasRiver: true } },
     { frame: 5, priority: 8, conditions: { temperatureBands: ["cold"], minElevation: 0.58 } },
   ]),
   featureRule("feature:jungle", [
-    { frame: 0, weight: 2, conditions: { biomes: ["tropical_rainforest"] } },
+    { frame: 0, weight: 2, conditions: { tagQuery: { all: ["feature:vegetated", "biome:tropical"] } } },
     { frame: 1, weight: 2, conditions: { temperatureBands: ["warm", "hot"] } },
     { frame: 2, priority: 5, conditions: { moistureBands: ["wet"] } },
     { frame: 3, priority: 5, conditions: { moistureBands: ["saturated"] } },
@@ -82,33 +79,33 @@ export const DEFAULT_FEATURE_VISUAL_RULES: MapFeatureVisualRuleDefinition[] = [
     { frame: 5, priority: 8, conditions: { hasRiver: true } },
   ]),
   featureRule("feature:marsh", [
-    { frame: 0, weight: 2, conditions: { biomes: ["swamp"] } },
+    { frame: 0, weight: 2, conditions: { tagQuery: "feature:wet" } },
     { frame: 1, weight: 2, conditions: { moistureBands: ["wet"] } },
     { frame: 2, priority: 5, conditions: { moistureBands: ["saturated"] } },
     { frame: 3, priority: 5, conditions: { distanceToWater: [1] } },
-    { frame: 4, priority: 8, conditions: { biomes: ["coastal_wetland"], isCoastal: true } },
+    { frame: 4, priority: 8, conditions: { tagQuery: "feature:wet", isCoastal: true } },
     { frame: 5, priority: 8, conditions: { hasRiver: true } },
   ]),
   featureRule("feature:scrub", [
-    { frame: 0, weight: 2, conditions: { biomes: ["dry_scrubland"] } },
+    { frame: 0, weight: 2, conditions: { tagQuery: { all: ["feature:vegetated", "rainfall:dry"] } } },
     { frame: 1, weight: 2, conditions: { moistureBands: ["dry"] } },
     { frame: 2, priority: 5, conditions: { moistureBands: ["arid"] } },
     { frame: 3, priority: 5, conditions: { temperatureBands: ["hot"] } },
-    { frame: 4, priority: 8, conditions: { terrains: ["hills"], minElevation: 0.55 } },
+    { frame: 4, priority: 8, conditions: { tagQuery: "morphology:rough", minElevation: 0.55 } },
     { frame: 5, priority: 8, conditions: { distanceToWater: [1, 2], moistureBands: ["dry", "normal"] } },
   ]),
   featureRule("feature:snowcap", [
-    { frame: 0, weight: 2, conditions: { biomes: ["alpine"] } },
+    { frame: 0, weight: 2, conditions: { tagQuery: "feature:snow" } },
     { frame: 1, weight: 2, conditions: { temperatureBands: ["cold"] } },
     { frame: 2, priority: 5, conditions: { temperatureBands: ["frozen"] } },
-    { frame: 3, priority: 5, conditions: { terrains: ["snow"] } },
-    { frame: 4, priority: 10, conditions: { terrains: ["mountains", "snow"], minElevation: 0.78, maxTemperature: 0.24 } },
-    { frame: 5, priority: 10, conditions: { terrains: ["mountains", "snow"], minElevation: 0.86 } },
+    { frame: 3, priority: 5, conditions: { tagQuery: "biome:tundra" } },
+    { frame: 4, priority: 10, conditions: { tagQuery: "morphology:mountainous", minElevation: 0.78, maxTemperature: 0.24 } },
+    { frame: 5, priority: 10, conditions: { tagQuery: "morphology:mountainous", minElevation: 0.86 } },
   ]),
   featureRule("feature:ancient_ruins", [
     { frame: 0, weight: 2 },
     { frame: 1, weight: 2 },
-    { frame: 2, conditions: { terrains: ["hills", "mountains"] } },
+    { frame: 2, conditions: { tagQuery: { any: ["morphology:rough", "morphology:mountainous"] } } },
     { frame: 3, conditions: { moistureBands: ["dry", "arid"] } },
     { frame: 4, conditions: { isCoastal: true } },
     { frame: 5, conditions: { hasRiver: true } },
@@ -126,9 +123,6 @@ function isValidFrame(frame: MapFeatureVisualFrameRule, variants: number): boole
 function matchesFrameRule(frame: MapFeatureVisualFrameRule, tile: HexTile): boolean {
   const condition = frame.conditions;
   if (!condition) return true;
-  if (condition.terrains && !condition.terrains.includes(tile.terrain)) return false;
-  if (condition.features && !condition.features.includes(tile.feature)) return false;
-  if (condition.biomes && !condition.biomes.includes(tile.biome)) return false;
   if (condition.waterKinds && (!tile.waterKind || !condition.waterKinds.includes(tile.waterKind))) return false;
   if (condition.temperatureBands && !condition.temperatureBands.includes(tile.temperatureBand)) return false;
   if (condition.moistureBands && !condition.moistureBands.includes(tile.moistureBand)) return false;
@@ -142,6 +136,7 @@ function matchesFrameRule(frame: MapFeatureVisualFrameRule, tile: HexTile): bool
   if (condition.isCoastal !== undefined && tile.isCoastal !== condition.isCoastal) return false;
   if (condition.hasRiver !== undefined && (tile.riverMask > 0) !== condition.hasRiver) return false;
   if (condition.riverMasks && !condition.riverMasks.includes(tile.riverMask)) return false;
+  if (!matchesMapTagQuery(tile.mapTags, condition.tagQuery)) return false;
   return true;
 }
 

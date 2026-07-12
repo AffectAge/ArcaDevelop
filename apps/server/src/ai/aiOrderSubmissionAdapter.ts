@@ -1,5 +1,4 @@
 import type { OrderDelta, OrderInput } from "@arcanorum/shared";
-import type { AiColonizationCandidate } from "./aiColonizationCandidates";
 import type { AiEconomyBuildCandidate } from "./aiEconomyCandidates";
 import type { AiRuntimePlan, PlannedAiCountryAction } from "./aiRuntimePlanner";
 
@@ -11,39 +10,7 @@ export type AiBuildOrderSubmissionDraft = {
   order: Extract<OrderInput, { type: "BUILD" }>;
 };
 
-export type AiColonizeOrderSubmissionDraft = {
-  kind: "validated-order-draft";
-  candidateKind: "found-city";
-  countryId: string;
-  requiresValidatedPipeline: true;
-  order: Extract<OrderInput, { type: "FOUND_CITY" }>;
-};
-
-export type AiMoveColonizerOrderSubmissionDraft = {
-  kind: "validated-order-draft";
-  candidateKind: "move-colonizer";
-  countryId: string;
-  requiresValidatedPipeline: true;
-  order: Extract<OrderInput, { type: "UNIT_MOVE" }>;
-};
-
-export type AiQueueColonizerActionSubmissionDraft = {
-  kind: "validated-ai-action-draft";
-  candidateKind: "queue-colonizer";
-  countryId: string;
-  requiresValidatedPipeline: true;
-  action: {
-    type: "QUEUE_COLONIZER";
-    countryId: string;
-    hexId: Extract<OrderInput, { type: "FOUND_CITY" }>["targetHexId"];
-  };
-};
-
-export type AiOrderSubmissionDraft =
-  | AiBuildOrderSubmissionDraft
-  | AiColonizeOrderSubmissionDraft
-  | AiMoveColonizerOrderSubmissionDraft
-  | AiQueueColonizerActionSubmissionDraft;
+export type AiOrderSubmissionDraft = AiBuildOrderSubmissionDraft;
 
 export type CreateAiBuildOrderDraftsParams = {
   plan: AiRuntimePlan;
@@ -79,33 +46,6 @@ function createAiOrderDraft(
       order: createBuildOrderInput(candidate, turnId, playerIdPrefix),
     }];
   }
-  if (candidate.kind === "found-city") {
-    return [{
-      kind: "validated-order-draft",
-      candidateKind: "found-city",
-      countryId: action.countryId,
-      requiresValidatedPipeline: true,
-      order: createFoundCityOrderInput(candidate, turnId, playerIdPrefix),
-    }];
-  }
-  if (candidate.kind === "move-colonizer") {
-    return [{
-      kind: "validated-order-draft",
-      candidateKind: "move-colonizer",
-      countryId: action.countryId,
-      requiresValidatedPipeline: true,
-      order: createMoveColonizerOrderInput(candidate, turnId, playerIdPrefix),
-    }];
-  }
-  if (candidate.kind === "queue-colonizer") {
-    return [{
-      kind: "validated-ai-action-draft",
-      candidateKind: "queue-colonizer",
-      countryId: action.countryId,
-      requiresValidatedPipeline: true,
-      action: candidate.actionDraft,
-    }];
-  }
   return [];
 }
 
@@ -121,48 +61,6 @@ function createBuildOrderInput(
     countryId: candidate.countryId,
     regionId: candidate.regionId,
     targetHexId: candidate.orderDraft.targetHexId as Extract<OrderInput, { type: "BUILD" }>["targetHexId"],
-    payload: candidate.orderDraft.payload,
-  };
-}
-
-function createMoveColonizerOrderInput(
-  candidate: AiColonizationCandidate,
-  turnId: number,
-  playerIdPrefix: string,
-): Extract<OrderInput, { type: "UNIT_MOVE" }> {
-  if (candidate.kind !== "move-colonizer") {
-    throw new Error("AI_COLONIZATION_CANDIDATE_IS_NOT_MOVE_COLONIZER");
-  }
-  return {
-    type: "UNIT_MOVE",
-    turnId,
-    playerId: `${playerIdPrefix}:${candidate.countryId}`,
-    countryId: candidate.countryId,
-    unitId: candidate.civilianUnitId,
-    unitKind: "civilian",
-    targetHexId: candidate.targetHexId,
-    path: candidate.path,
-    payload: candidate.orderDraft.payload,
-  };
-}
-
-function createFoundCityOrderInput(
-  candidate: AiColonizationCandidate,
-  turnId: number,
-  playerIdPrefix: string,
-): Extract<OrderInput, { type: "FOUND_CITY" }> {
-  if (candidate.kind !== "found-city") {
-    throw new Error("AI_COLONIZATION_CANDIDATE_IS_NOT_FOUND_CITY");
-  }
-  return {
-    type: "FOUND_CITY",
-    turnId,
-    playerId: `${playerIdPrefix}:${candidate.countryId}`,
-    countryId: candidate.countryId,
-    civilianUnitId: candidate.civilianUnitId,
-    name: candidate.orderDraft.name,
-    regionId: candidate.regionId,
-    targetHexId: candidate.targetHexId,
     payload: candidate.orderDraft.payload,
   };
 }
@@ -220,14 +118,9 @@ function normalizeRejectedReason(reason: string): string {
 export type AiOrderDeltaSubmitter = (delta: OrderDelta) => Promise<AiOrderDraftSubmitOutcome>;
 
 export function createAiOrderDeltaSubmitter(submitOrderDelta: AiOrderDeltaSubmitter): SubmitAiOrderDraftsParams["submitDraft"] {
-  return async (draft) => {
-    if (draft.kind !== "validated-order-draft") {
-      return { ok: false, reason: "AI_ACTION_SUBMITTER_REQUIRED" };
-    }
-    return submitOrderDelta(createOrderDeltaFromAiDraft(draft));
-  };
+  return async (draft) => submitOrderDelta(createOrderDeltaFromAiDraft(draft));
 }
 
-export function createOrderDeltaFromAiDraft(draft: Extract<AiOrderSubmissionDraft, { kind: "validated-order-draft" }>): OrderDelta {
+export function createOrderDeltaFromAiDraft(draft: AiOrderSubmissionDraft): OrderDelta {
   return { type: "ORDER_DELTA", order: draft.order };
 }

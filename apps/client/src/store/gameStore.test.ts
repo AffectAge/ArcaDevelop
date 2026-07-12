@@ -113,7 +113,7 @@ describe("gameStore region world deltas", () => {
     expect(useGameStore.getState().worldBase?.regionConstructionQueueByRegion).not.toHaveProperty("region:a");
   });
 
-  it("applies grouped unit, settlement, city, and equipment deltas", () => {
+  it("applies grouped unit, settlement, and city deltas", () => {
     useGameStore.getState().setWorldBase(makeWorldBase(), 1, 1);
 
     useGameStore.getState().applyWorldDelta(
@@ -121,7 +121,7 @@ describe("gameStore region world deltas", () => {
         type: "WORLD_DELTA",
         turnId: 2,
         worldStateVersion: 2,
-        mask: WORLD_DELTA_MASK.unitEquipmentState,
+        mask: WORLD_DELTA_MASK.unitState,
         cu: {
           "civilian:a": {
             id: "civilian:a",
@@ -164,64 +164,6 @@ describe("gameStore region world deltas", () => {
             createdTurnId: 1,
           },
         },
-        ev: {
-          "equipment:a": {
-            id: "equipment:a",
-            countryId: "country:a",
-            classId: "equipment-class:infantry",
-            name: "Infantry Kit",
-            moduleIdsBySlotId: { weapon: "module:rifle" },
-            stats: { attack: 1 },
-            goodsCost: [{ goodId: "good:iron", amount: 1 }],
-            createdTurnId: 1,
-          },
-        },
-        el: {
-          "country:a": [
-            {
-              id: "line:a",
-              countryId: "country:a",
-              equipmentVariantId: "equipment:a",
-              assignedCapacity: 1,
-              progress: 0,
-              active: true,
-              createdTurnId: 1,
-            },
-          ],
-        },
-        es: { "country:a": { "equipment:a": 3 } },
-        fl: {
-          "fleet:a": {
-            id: "fleet:a",
-            countryId: "country:a",
-            templateId: "template:navy",
-            name: "First Fleet",
-            hexId: "hex:0:0",
-            strength: 1,
-            organization: 10,
-            stats: { manpower: 100, attack: 1, defense: 1, breakthrough: 0, organization: 10, hp: 10, speed: 3, supplyUse: 1 },
-            status: "idle",
-            path: [],
-            targetHexId: null,
-            createdTurnId: 1,
-          },
-        },
-        aw: {
-          "air-wing:a": {
-            id: "air-wing:a",
-            countryId: "country:a",
-            templateId: "template:air",
-            name: "First Air Wing",
-            baseHexId: "hex:0:0",
-            strength: 1,
-            organization: 10,
-            stats: { manpower: 100, attack: 1, defense: 1, breakthrough: 0, organization: 10, hp: 10, speed: 3, supplyUse: 1 },
-            status: "idle",
-            mission: "none",
-            targetRegionId: null,
-            createdTurnId: 1,
-          },
-        },
         rejectedOrders: [],
       },
       2,
@@ -232,11 +174,6 @@ describe("gameStore region world deltas", () => {
     expect(world?.civilianUnitsById["civilian:a"]?.type).toBe("colonizer");
     expect(world?.settlementProjectsById["settlement:a"]?.state).toBe("active");
     expect(world?.cityMarkersById["city:a"]?.visualState).toBe("working");
-    expect(world?.equipmentVariantsById["equipment:a"]?.stats.attack).toBe(1);
-    expect(world?.equipmentProductionLinesByCountry["country:a"]?.[0]?.equipmentVariantId).toBe("equipment:a");
-    expect(world?.equipmentStockpileByCountry["country:a"]).toEqual({ "equipment:a": 3 });
-    expect(world?.fleetsById["fleet:a"]?.name).toBe("First Fleet");
-    expect(world?.airWingsById["air-wing:a"]?.baseHexId).toBe("hex:0:0");
   });
 
   it("applies explanation record deltas by turn", () => {
@@ -371,8 +308,27 @@ function makePop(overrides?: Partial<PopulationPop>): PopulationPop {
     cultureId: "culture:a",
     religionId: "religion:a",
     raceId: "race:a",
+    professionId: "profession:unemployed",
+    literacy: 0,
+    ducats: 0,
+    standardOfLiving: 8,
+    radicals: 0,
+    loyalists: 0,
+    qualificationsByCategory: {},
     ideologies: {},
-    professions: {},
+    lastIncomeDucats: 0,
+    lastNeedsSpendDucats: 0,
+    lastNeedsSatisfaction: 1,
+    lastNeedsByCategory: {},
+    lastNeedsDeficitByGood: {},
+    lastNeedsBudgetShortageByGood: {},
+    lastBirths: 0,
+    lastDeaths: 0,
+    lastEmployed: 0,
+    lastOpenJobs: 0,
+    lastQualificationLimit: 0,
+    lastDiscriminationPenalty: 0,
+    politicalStrength: 0,
     ...overrides,
   };
 }
@@ -402,18 +358,10 @@ function makeWorldBase(overrides?: Partial<WorldBase>): WorldBase {
     countryScheduledEventsByCountryId: {},
     countryEventFlagsByCountryId: {},
     journalEntriesByCountryId: {},
-    divisionTemplatesByCountry: {},
-    divisionsById: {},
-    fleetsById: {},
-    airWingsById: {},
-    militaryFormationQueueByCountry: {},
     civilianUnitsById: {},
     civilianUnitQueueByCountry: {},
     settlementProjectsById: {},
     cityMarkersById: {},
-    equipmentVariantsById: {},
-    equipmentProductionLinesByCountry: {},
-    equipmentStockpileByCountry: {},
     diplomacyProposals: [],
     ...overrides,
     countryModifiersByCountryId: overrides?.countryModifiersByCountryId ?? {},

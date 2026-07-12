@@ -1,0 +1,23 @@
+{
+  "id": "religion_group:sacred_flame",
+  "nameKey": "religionGroup.sacredFlame.name",
+  "descriptionKey": "religionGroup.sacredFlame.description",
+  "color": "#ef4444",
+  "modifiers": [
+    {
+      "id": "watch_fires",
+      "label": "Watch fires",
+      "scope": "country",
+      "effects": [
+        { "stat": "construction_gain", "mode": "add", "value": 1 },
+        { "stat": "gold_gain", "mode": "add", "value": 1 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.1,
+    "standardOfLiving": 8,
+    "loyalists": 35,
+    "ideologies": { "ideology:default": 1 }
+  }
+}

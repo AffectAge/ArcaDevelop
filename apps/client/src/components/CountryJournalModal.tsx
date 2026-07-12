@@ -4,9 +4,9 @@ import type { ActiveJournalEntry, CountryJournalState, EventTriggerExplanation, 
 import type { ContentEntry } from "../lib/api";
 import { useUiText } from "../i18n/useUiText";
 import type { UiTextKey } from "../i18n/uiText";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppEmptyState } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppEmptyState } from "./templates/AppSurface";
 
 type Props = {
   open: boolean;

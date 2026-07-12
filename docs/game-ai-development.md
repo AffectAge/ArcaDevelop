@@ -120,7 +120,7 @@ These keys control runtime budget, cache behavior, and conservative candidate fi
 
 The Phase 2 context layer derives per-country AI inputs from a `WorldBase` snapshot without mutating the world and without generating orders. AI ticks should build world indexes once per snapshot, then pass those indexes into each country context build instead of rescanning the whole world for every country.
 
-The current context includes owned/controlled region ids, compact region summaries, construction-project counts, diplomacy-proposal counts, division counts, and current resources. Landless countries must produce valid empty region contexts.
+The current context includes owned/controlled region ids, compact region summaries, construction-project counts, diplomacy-proposal counts, MapUnit counts, and current resources. Landless countries must produce valid empty region contexts.
 
 
 ## Economy Candidate MVP
@@ -156,9 +156,9 @@ Crisis config can enable treasury, landless, and market-shortage signals. A cris
 
 ## Diplomacy And Military Candidate MVP
 
-The Phase 7 diplomacy/military MVP derives bounded, deterministic diplomacy contact and army movement candidates from the existing AI context and world snapshot. It is read-only: it must not mutate diplomacy proposals, move divisions, start wars, transfer regions, or submit orders directly.
+The Phase 7 diplomacy/unit MVP derives bounded, deterministic diplomacy contact and unit movement candidates from the existing AI context and world snapshot. It is read-only: it must not mutate diplomacy proposals, move units, start wars, transfer regions, or submit orders directly.
 
-Diplomacy candidates are limited to countries without an active pending/renewal proposal between the same pair and carry the `/diplomacy/proposals` request shape for later server validation. Military candidates only draft adjacent, same-country land repositioning `ARMY_MOVE` orders for idle, organized divisions; they deliberately avoid hostile movement or conquest logic until later war integration can route those decisions through normal validation and visibility rules. Each Phase 7 candidate carries an explicit validated-pipeline marker so runtime integration treats the output as a draft, not as permission to mutate world state.
+Diplomacy candidates are limited to countries without an active pending/renewal proposal between the same pair and carry the `/diplomacy/proposals` request shape for later server validation. The old division-based military candidate path has been removed with the military runtime. Future AI tactical movement must draft normal `MapUnit` orders (`UNIT_MOVE`, `UNIT_ATTACK`, and related actions) through the same validated player pipeline, not mutate world state directly.
 
 ## Runtime Planner Integration
 

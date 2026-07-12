@@ -3,27 +3,28 @@ import type {
   BuildingPlacementRules,
   GoodDepositDefinition,
   DecisionDefinition,
-  DivisionStats,
-  EquipmentClass,
-  EquipmentFrame,
-  EquipmentModule,
   GameEventDefinition,
   JournalEntryDefinition,
   IdeologyAttractionRule,
   LawParliamentPowerEffect,
-  MilitaryBranch,
   ModifierDefinition,
   TreatyConstructionExpirationPolicy,
+  UnitSkillDefinition,
+  UnitSkillTreeDefinition,
+  UnitTypeDefinition,
 } from "@arcanorum/shared";
 import type { BuildingCountryLimit, PollutionProductivityMode } from "../mechanics/buildingMechanics";
 import type { GoodDistributionType, GoodTransportMode } from "../mechanics/marketTurnMechanics";
 import type { CultureNeedsProfile } from "../mechanics/populationMechanics";
 import type { BuildingExtractionFlow, GoodFlow, WorkforceRequirement } from "../mechanics/contentFieldNormalizers";
 
+export type ContentMilitaryBranch = "land" | "naval" | "air";
+
 export type GameContentEntry = {
   id: string;
   nameKey?: string | null;
   name: string;
+  descriptionKey?: string | null;
   description: string;
   color: string;
   logoUrl: string | null;
@@ -39,6 +40,19 @@ export type GameContentEntry = {
   femalePortraitAssetId?: string | null;
   baseWage?: number | null;
   needsProfile?: CultureNeedsProfile | null;
+  qualificationRequirements?: Record<string, number>;
+  qualificationGrowthRules?: Record<string, number>;
+  acceptedCultureIds?: string[];
+  acceptedReligionIds?: string[];
+  acceptedRaceIds?: string[];
+  acceptanceMode?: "add" | "replace";
+  discrimination?: {
+    wagePenaltyPct?: number;
+    hiringPenaltyPct?: number;
+    qualificationGrowthPenaltyPct?: number;
+    politicalStrengthPenaltyPct?: number;
+    radicalizationPerTurn?: number;
+  } | null;
   ideologyWeights?: Record<string, number>;
   interestGroupWeights?: Record<string, number>;
   professionWeights?: Record<string, number>;
@@ -66,6 +80,17 @@ export type GameContentEntry = {
   event?: GameEventDefinition | null;
   journalEntry?: JournalEntryDefinition | null;
   ideologyAttractionRules?: IdeologyAttractionRule[];
+  startingPop?: CountryIdentityStartingPop | null;
+};
+
+export type CountryIdentityStartingPop = {
+  literacy?: number;
+  ducats?: number;
+  standardOfLiving?: number;
+  radicals?: number;
+  loyalists?: number;
+  qualificationsByCategory?: Record<string, number>;
+  ideologies?: Record<string, number>;
 };
 
 export type AssetContentEntry = {
@@ -146,21 +171,11 @@ export type BuildingContentEntry = GameContentEntry & {
   placement?: BuildingPlacementRules | null;
   adjacencyEffects?: BuildingAdjacencyEffect[] | null;
   deployment?: {
-    branches: MilitaryBranch[];
+    branches: ContentMilitaryBranch[];
     capacity?: number | null;
     requiresActive?: boolean | null;
   } | null;
 };
-
-export type BattalionContentEntry = GameContentEntry & DivisionStats & {
-  trainingCostDucats?: number | null;
-  trainingCostManpower?: number | null;
-  equipmentNeeds?: GoodFlow[];
-};
-
-export type MilitaryContentEntry = BattalionContentEntry;
-
-export type DefaultBattalionKind = "infantry" | "archers" | "cavalry" | "artillery" | "mages" | "constructs" | "support";
 
 export type MarketTradePolicyEntry = {
   allowImportFromWorld?: boolean;
@@ -277,6 +292,8 @@ export type GameSettings = {
   content: {
     assets: AssetContentEntry[];
     races: GameContentEntry[];
+    cultureGroups: GameContentEntry[];
+    religionGroups: GameContentEntry[];
     resourceCategories: GameContentEntry[];
     hexTypes: GameContentEntry[];
     hexClimates: GameContentEntry[];
@@ -301,12 +318,9 @@ export type GameSettings = {
     decisions: GameContentEntry[];
     events: GameContentEntry[];
     journalEntries: GameContentEntry[];
-    battalions: BattalionContentEntry[];
-    shipTypes: MilitaryContentEntry[];
-    aircraftTypes: MilitaryContentEntry[];
-    equipmentClasses: EquipmentClass[];
-    equipmentFrames: EquipmentFrame[];
-    equipmentModules: EquipmentModule[];
+    unitSkills: UnitSkillDefinition[];
+    unitSkillTrees: UnitSkillTreeDefinition[];
+    unitTypes: UnitTypeDefinition[];
   };
   ai: {
     enabled: boolean;
@@ -409,7 +423,7 @@ export type GameSettings = {
   };
   military: {
     militaryFormationSpeed: number;
-    landDivisionStackLimitPerHex: number;
+    landUnitStackLimitPerHex: number;
   };
   registration: {
     requireAdminApproval: boolean;

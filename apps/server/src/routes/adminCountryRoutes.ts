@@ -15,6 +15,17 @@ export type AdminCountryDbRecord = {
   color: string;
   flagUrl: string | null;
   crestUrl: string | null;
+  cultureId: string;
+  cultureName: string;
+  cultureColor: string;
+  cultureLogoUrl: string | null;
+  religionId: string;
+  religionName: string;
+  religionColor: string;
+  religionLogoUrl: string | null;
+  cultureGroupId: string;
+  religionGroupId: string;
+  raceId: string;
   isAdmin: boolean;
   isLocked: boolean;
   blockedUntilTurn: number | null;
@@ -84,9 +95,6 @@ export type AdminCountryRoutesDependencies = {
     countryEventFlagsByCountryId: number;
     journalEntriesByCountryId: number;
     countryModifiersByCountryId: number;
-    divisionTemplatesByCountry: number;
-    divisionsById: number;
-    militaryFormationQueueByCountry: number;
     diplomacyProposals: number;
   };
   getTurnId: () => number;
@@ -103,7 +111,12 @@ export type AdminCountryRoutesDependencies = {
   makeVersionedUploadUrl: (relativePath: string) => string;
   buildCountryDeletionPlan: (
     countryId: string,
-    target: { flagUrl?: string | null; crestUrl?: string | null },
+    target: {
+      flagUrl?: string | null;
+      crestUrl?: string | null;
+      cultureLogoUrl?: string | null;
+      religionLogoUrl?: string | null;
+    },
   ) => CountryDeletionPlan;
   removeCountryOrdersAndReadiness: (countryId: string) => void;
   cleanupWorldBaseAfterCountryRemoval: (countryId: string) => void;
@@ -173,14 +186,14 @@ export function registerAdminCountryRoutes(app: express.Express, deps: AdminCoun
         deps.removeUploadedFiles([flagFile, crestFile]);
         return res
           .status(400)
-          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "flag", max: "192x128", ratio: "3:2" });
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "flag", max: "192x128" });
       }
 
       if (crestFile && !deps.validateImageRule(crestFile, deps.crestImageRule)) {
         deps.removeUploadedFiles([flagFile, crestFile]);
         return res
           .status(400)
-          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "crest", max: "128x192", ratio: "2:3" });
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "crest", max: "128x146" });
       }
 
       const data: AdminCountryUpdateData = {};
@@ -269,9 +282,6 @@ export function registerAdminCountryRoutes(app: express.Express, deps: AdminCoun
         deps.masks.countryEventFlagsByCountryId |
         deps.masks.journalEntriesByCountryId |
         deps.masks.countryModifiersByCountryId |
-        deps.masks.divisionTemplatesByCountry |
-        deps.masks.divisionsById |
-        deps.masks.militaryFormationQueueByCountry |
         deps.masks.diplomacyProposals,
     );
     await deps.deleteCountry(countryIdParam);
@@ -279,6 +289,8 @@ export function registerAdminCountryRoutes(app: express.Express, deps: AdminCoun
 
     deps.removeUploadedByUrl(target.flagUrl);
     deps.removeUploadedByUrl(target.crestUrl);
+    deps.removeUploadedByUrl(target.cultureLogoUrl);
+    deps.removeUploadedByUrl(target.religionLogoUrl);
     deps.removeCountryOrdersAndReadiness(countryIdParam);
     deps.cleanupWorldBaseAfterCountryRemoval(countryIdParam);
     deps.cleanupMarketsAfterCountryRemoval(countryIdParam);

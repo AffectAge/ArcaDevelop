@@ -10,24 +10,56 @@ Use:
 scenarios/<scenario_id>/map/hex-settings.json
 ```
 
-Hex map settings are required after the hex map hard cutover. They define deterministic map generation and chunking parameters:
+Hex map settings are required after the hex map hard cutover. They define deterministic map generation and chunking parameters. The old flat noise settings format is invalid; scenario validation must reject keys such as `seaLevel`, `moisture`, `mountains`, `forests`, and `targetLandRegionSize`.
 
 ```json
 {
-  "seed": "bohemia-hex-map",
+  "seed": "bohemia-hex-map-v2",
   "width": 160,
   "height": 96,
   "hexSize": 24,
-  "seaLevel": 0.42,
-  "temperature": 0.5,
-  "moisture": 0.5,
-  "mountains": 0.78,
-  "rivers": 0.45,
-  "forests": 0.55,
-  "targetLandRegionSize": 24,
-  "targetWaterRegionSize": 32,
   "chunkSize": 16,
-  "wrapX": true
+  "wrapX": false,
+  "generation": {
+    "mapScript": "continents",
+    "landmasses": {
+      "majorContinents": { "min": 2, "max": 4 },
+      "landRatio": 0.48,
+      "islandDensity": "medium"
+    },
+    "climate": {
+      "preset": "earthlike",
+      "temperature": "temperate",
+      "rainfall": "balanced"
+    },
+    "rivers": {
+      "density": "rare",
+      "navigable": true,
+      "crossingPenalty": 1
+    },
+    "regions": {
+      "targetLandRegionSize": 74,
+      "targetWaterRegionSize": 140
+    },
+    "tags": {
+      "enabled": true
+    }
+  }
+}
+```
+
+Supported `generation.mapScript` values are `continents`, `pangaea`, and `archipelago`. Generated maps remain rectangular pointy-top hex maps and `wrapX` must be `false`.
+
+Generator internals may use landmass/plate-like data, but scenario rules should use `mapTags`, not private generator fields. The closed tag vocabulary uses `namespace:value` ids such as `fertility:rich`, `rainfall:wet`, `slope:hilly`, `latitude:temperate`, `elevation:highland`, `landmass:continent`, `continent:homeland`, `basin:delta`, `river:navigable`, and `coast:coastal`. Every supported tag requires `mapTag.<namespace>.<value>` localization in English and Russian.
+
+Generated landmass seeds use deterministic spacing attempts to reduce clustering. The generator also applies an internal plate-like uplift layer for mountain and highland structure plus a bounded erosion-like smoothing pass for extreme local slopes; these layers have no public shape parameters. Generated islands are separated from generated continents by a two-hex water buffer on the island side. Generated region growth uses seeded anchors and hard land/water and landmass boundaries only; it does not make region borders follow elevation, moisture, rivers, mountains, or biome changes. River classes use edge width, downstream connection, distance to mouth, and local slope to expose `river:major` and `river:navigable` tags.
+
+Scenario rule filters may use object-style tag queries:
+
+```json
+{
+  "all": ["fertility:rich", { "any": ["rainfall:wet", "basin:delta"] }],
+  "not": ["slope:rugged"]
 }
 ```
 
@@ -111,10 +143,13 @@ Generated files are not authored source. They must not be manually edited, and s
 Generated scenario maps may also include:
 
 ```text
+scenarios/<scenario_id>/.generated/hex-map.json
 scenarios/<scenario_id>/.generated/regions.json
 ```
 
-This file is produced by scenario map generation and contains generated region membership plus empty starting region state for bootstrap scenarios. It is read by the runtime together with authored `history/regions/*.json`, but it remains generated output and must not be manually edited. Authored scenario regions should still use one file per region under `history/regions/`.
+These files are produced by scenario map generation. `.generated/hex-map.json` is the static map artifact, and `.generated/regions.json` contains generated region membership plus empty starting region state for bootstrap scenarios. They are read by the runtime together with authored `history/regions/*.json`, but remain generated output and must not be manually edited. Authored scenario regions should still use one file per region under `history/regions/`.
+
+Applying a scenario may regenerate `.generated/hex-map.json` and `.generated/regions.json` when the settings hash changes. Generated region IDs are coordinate anchored, for example `region:hex_120_44`, so they remain stable for unchanged generated geography.
 
 Generated special map features are written to:
 
@@ -131,6 +166,10 @@ Scenario validation must reject:
 - duplicate IDs,
 - invalid strict JSON or schema,
 - missing or invalid `map/hex-settings.json`,
+- old flat hex settings format,
+- unknown map tags or missing map tag localization,
+- invalid map tag query DSL,
+- stale or invalid generated map artifacts,
 - legacy province authored paths,
 - generated province indexes,
 - broken stable-ID references,

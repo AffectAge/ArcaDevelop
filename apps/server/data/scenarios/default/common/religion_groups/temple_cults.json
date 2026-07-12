@@ -1,0 +1,23 @@
+{
+  "id": "religion_group:temple_cults",
+  "nameKey": "religionGroup.templeCults.name",
+  "descriptionKey": "religionGroup.templeCults.description",
+  "color": "#f59e0b",
+  "iconAssetId": "asset:identity.temple_cults",
+  "modifiers": [
+    {
+      "id": "temple_calendar",
+      "label": "Temple calendar",
+      "scope": "country",
+      "effects": [
+        { "stat": "religion_gain", "mode": "add", "value": 1 },
+        { "stat": "ducats_gain", "mode": "add", "value": 1 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.11,
+    "standardOfLiving": 8,
+    "ideologies": { "ideology:default": 1 }
+  }
+}

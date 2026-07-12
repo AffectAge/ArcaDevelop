@@ -1,8 +1,8 @@
 import { AlertTriangle } from "lucide-react";
 import { useUiText } from "../i18n/useUiText";
 import type { MarketOverviewAlert } from "../lib/api";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppEmptyState } from "./ui/AppSurface";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppEmptyState } from "./templates/AppSurface";
 
 type Props = {
   open: boolean;

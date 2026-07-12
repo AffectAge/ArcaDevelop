@@ -123,7 +123,7 @@ Each mechanic migration must report:
 Move client code toward:
 
 - app shell/providers -> `apps/client/src/app/`,
-- generic primitives -> `apps/client/src/components/ui/`,
+- reusable UI primitives and modal templates -> `apps/client/src/components/templates/`,
 - map HUD -> `apps/client/src/components/map-hud/`,
 - domain views -> `apps/client/src/features/<domain>/`,
 - localization -> `apps/client/src/i18n/`,
@@ -137,6 +137,7 @@ Rules:
 - admin UI cannot be the only permission barrier,
 - map changes must respect UI frame budgets,
 - Arcawiki stays player-facing and non-technical.
+- agents creating or changing reusable UI must use `apps/client/src/components/templates/DEMO_ELEMENTS.md`, update it when adding template components, and avoid recreating removed `components/ui` primitives.
 
 ### 8. Cleanup And Deletion Lifecycle
 

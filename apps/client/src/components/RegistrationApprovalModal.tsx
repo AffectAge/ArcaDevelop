@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppEmptyState } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppEmptyState } from "./templates/AppSurface";
 import { useUiText } from "../i18n/useUiText";
 
 type Props = {

@@ -1,7 +1,9 @@
 import type express from "express";
 import type { Country, ResourceTotals, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { AdminCountryDbRecord } from "./adminCountryRoutes";
+import type { GameContentEntry, GameSettings } from "../runtime/gameSettingsTypes";
 import type { ImageDimensionRule } from "../uploads/uploadValidation";
 import type { RouteAuth } from "../security/routeAuth";
 
@@ -18,6 +20,8 @@ export type AuthRegistrationWorldState = {
   hexOwner: Record<string, string>;
   colonyProgressByRegion: Record<string, Record<string, number>>;
   civilianUnitsById: WorldBase["civilianUnitsById"];
+  countryPopulationAcceptanceByCountryId?: WorldBase["countryPopulationAcceptanceByCountryId"];
+  countryIdentityByCountryId?: WorldBase["countryIdentityByCountryId"];
 };
 
 export type CountryBlockInfo = {
@@ -30,6 +34,13 @@ export type CountryBlockInfo = {
 export const registerSchema = z.object({
   countryName: z.string().min(2).max(32),
   countryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  cultureGroupId: z.string().min(1).max(120),
+  cultureName: z.string().min(2).max(48),
+  cultureColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  religionGroupId: z.string().min(1).max(120),
+  religionName: z.string().min(2).max(48),
+  religionColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  raceId: z.string().min(1).max(120),
   password: z.string().min(8),
 });
 
@@ -48,23 +59,38 @@ export type AuthRegistrationRoutesDependencies = {
   upload: AuthRegistrationUploadMiddleware;
   flagImageRule: ImageDimensionRule;
   crestImageRule: ImageDimensionRule;
+  identityLogoImageRule: ImageDimensionRule;
   masks: {
     resourcesByCountry: number;
     hexOwner: number;
     colonyProgressByRegion: number;
-    unitEquipmentState: number;
+    unitState: number;
   };
   getTurnId: () => number;
   getWorldBase: () => WorldBase & AuthRegistrationWorldState;
   getRegistrationRequiresAdminApproval: () => boolean;
   getInitialColonizationPoints: () => number;
   getInitialConstructionPoints: () => number;
+  getGameSettings: () => GameSettings;
+  countryIdentityNameExists: (kind: "culture" | "religion", name: string) => Promise<boolean>;
   countAdminCountries: () => Promise<number>;
   createCountry: (data: {
+    id: string;
     name: string;
     color: string;
     flagUrl: string | null;
     crestUrl: string | null;
+    cultureId: string;
+    cultureName: string;
+    cultureColor: string;
+    cultureLogoUrl: string | null;
+    religionId: string;
+    religionName: string;
+    religionColor: string;
+    religionLogoUrl: string | null;
+    cultureGroupId: string;
+    religionGroupId: string;
+    raceId: string;
     passwordHash: string;
     isAdmin: boolean;
     isRegistrationApproved: boolean;
@@ -125,44 +151,118 @@ export function registerAuthRegistrationRoutes(
 ): void {
   app.post(
     "/auth/register",
-    deps.upload.fields([{ name: "flag", maxCount: 1 }, { name: "crest", maxCount: 1 }]),
+    deps.upload.fields([
+      { name: "flag", maxCount: 1 },
+      { name: "crest", maxCount: 1 },
+      { name: "cultureLogo", maxCount: 1 },
+      { name: "religionLogo", maxCount: 1 },
+    ]),
     async (req, res) => {
       const parsed = registerSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ error: "INVALID_PAYLOAD", issues: parsed.error.issues });
       }
 
-      const files = req.files as { flag?: Express.Multer.File[]; crest?: Express.Multer.File[] } | undefined;
+      const files = req.files as
+        | {
+            flag?: Express.Multer.File[];
+            crest?: Express.Multer.File[];
+            cultureLogo?: Express.Multer.File[];
+            religionLogo?: Express.Multer.File[];
+          }
+        | undefined;
       const flagFile = files?.flag?.[0];
       const crestFile = files?.crest?.[0];
+      const cultureLogoFile = files?.cultureLogo?.[0];
+      const religionLogoFile = files?.religionLogo?.[0];
+      const uploadedFiles = [flagFile, crestFile, cultureLogoFile, religionLogoFile];
 
       if (flagFile && !deps.validateImageRule(flagFile, deps.flagImageRule)) {
-        deps.removeUploadedFile(flagFile);
-        deps.removeUploadedFile(crestFile);
+        uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
         return res
           .status(400)
-          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "flag", max: "192x128", ratio: "3:2" });
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "flag", max: "192x128" });
       }
 
       if (crestFile && !deps.validateImageRule(crestFile, deps.crestImageRule)) {
-        deps.removeUploadedFile(flagFile);
-        deps.removeUploadedFile(crestFile);
+        uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
         return res
           .status(400)
-          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "crest", max: "128x192", ratio: "2:3" });
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "crest", max: "128x146" });
       }
 
-      const { countryName, countryColor, password } = parsed.data;
+      if (cultureLogoFile && !deps.validateImageRule(cultureLogoFile, deps.identityLogoImageRule)) {
+        uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
+        return res
+          .status(400)
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "cultureLogo", max: "64x64" });
+      }
+
+      if (religionLogoFile && !deps.validateImageRule(religionLogoFile, deps.identityLogoImageRule)) {
+        uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
+        return res
+          .status(400)
+          .json({ error: "IMAGE_DIMENSIONS_TOO_LARGE", field: "religionLogo", max: "64x64" });
+      }
+
+      const {
+        countryName,
+        countryColor,
+        cultureGroupId,
+        cultureName,
+        cultureColor,
+        religionGroupId,
+        religionName,
+        religionColor,
+        raceId,
+        password,
+      } = parsed.data;
+      const gameSettings = deps.getGameSettings();
+      if (!entryExists(gameSettings.content.cultureGroups, cultureGroupId)) {
+        uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
+        return res.status(400).json({ error: "UNKNOWN_CULTURE_GROUP" });
+      }
+      if (!entryExists(gameSettings.content.religionGroups, religionGroupId)) {
+        uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
+        return res.status(400).json({ error: "UNKNOWN_RELIGION_GROUP" });
+      }
+      if (!entryExists(gameSettings.content.races, raceId)) {
+        uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
+        return res.status(400).json({ error: "UNKNOWN_RACE" });
+      }
+      if (await deps.countryIdentityNameExists("culture", cultureName)) {
+        uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
+        return res.status(409).json({ error: "CULTURE_NAME_EXISTS" });
+      }
+      if (await deps.countryIdentityNameExists("religion", religionName)) {
+        uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
+        return res.status(409).json({ error: "RELIGION_NAME_EXISTS" });
+      }
       const passwordHash = await deps.hashPassword(password);
 
       try {
+        const countryId = `country:${randomUUID()}`;
+        const cultureId = `culture:${countryId}`;
+        const religionId = `religion:${countryId}`;
         const isAdminCountry = (await deps.countAdminCountries()) <= 0;
         const requiresApproval = deps.getRegistrationRequiresAdminApproval() && !isAdminCountry;
         const country = await deps.createCountry({
+          id: countryId,
           name: countryName,
           color: countryColor,
           flagUrl: flagFile ? deps.makeVersionedUploadUrl(`flags/${flagFile.filename}`) : null,
           crestUrl: crestFile ? deps.makeVersionedUploadUrl(`crests/${crestFile.filename}`) : null,
+          cultureId,
+          cultureName,
+          cultureColor,
+          cultureLogoUrl: cultureLogoFile ? deps.makeVersionedUploadUrl(`culture-logos/${cultureLogoFile.filename}`) : null,
+          religionId,
+          religionName,
+          religionColor,
+          religionLogoUrl: religionLogoFile ? deps.makeVersionedUploadUrl(`religion-logos/${religionLogoFile.filename}`) : null,
+          cultureGroupId,
+          religionGroupId,
+          raceId,
           passwordHash,
           isAdmin: isAdminCountry,
           isRegistrationApproved: !requiresApproval,
@@ -170,9 +270,33 @@ export function registerAuthRegistrationRoutes(
         deps.invalidateCountryQueryCache();
 
         const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
-          deps.masks.resourcesByCountry | deps.masks.unitEquipmentState,
+          deps.masks.resourcesByCountry | deps.masks.unitState,
         );
         const worldBase = deps.getWorldBase();
+        worldBase.countryPopulationAcceptanceByCountryId ??= {};
+        worldBase.countryIdentityByCountryId ??= {};
+        worldBase.countryPopulationAcceptanceByCountryId[country.id] = {
+          acceptedCultureIds: [cultureId],
+          acceptedReligionIds: [religionId],
+          acceptedRaceIds: [raceId],
+        };
+        worldBase.countryIdentityByCountryId[country.id] = {
+          cultureId,
+          religionId,
+          raceId,
+          cultureGroupId,
+          religionGroupId,
+        };
+        addRuntimeIdentityContent(gameSettings, {
+          cultureId,
+          cultureName,
+          cultureColor,
+          cultureLogoUrl: country.cultureLogoUrl,
+          religionId,
+          religionName,
+          religionColor,
+          religionLogoUrl: country.religionLogoUrl,
+        });
         if (!worldBase.resourcesByCountry[country.id]) {
           worldBase.resourcesByCountry[country.id] = {
             culture: 5,
@@ -210,8 +334,7 @@ export function registerAuthRegistrationRoutes(
         });
         return res.status(201).json(deps.countryFromDb(country));
       } catch {
-        deps.removeUploadedFile(flagFile);
-        deps.removeUploadedFile(crestFile);
+        uploadedFiles.forEach((file) => deps.removeUploadedFile(file));
         return res.status(409).json({ error: "COUNTRY_EXISTS" });
       }
     },
@@ -324,7 +447,7 @@ export function registerAuthRegistrationRoutes(
     deps.removeUploadedByUrl(fullTarget.flagUrl);
     deps.removeUploadedByUrl(fullTarget.crestUrl);
     const previousWorldBase = deps.cloneWorldBaseSectionSnapshot(
-      deps.masks.resourcesByCountry | deps.masks.hexOwner | deps.masks.colonyProgressByRegion | deps.masks.unitEquipmentState,
+      deps.masks.resourcesByCountry | deps.masks.hexOwner | deps.masks.colonyProgressByRegion | deps.masks.unitState,
     );
     await deps.deleteCountry(targetId);
     deps.invalidateCountryQueryCache();
@@ -362,4 +485,38 @@ export function registerAuthRegistrationRoutes(
     });
     return res.json({ ok: true, approved: false, countryId: target.id });
   });
+}
+
+function entryExists(entries: GameContentEntry[], id: string): boolean {
+  return entries.some((entry) => entry.id === id);
+}
+
+function addRuntimeIdentityContent(
+  gameSettings: GameSettings,
+  identity: {
+    cultureId: string;
+    cultureName: string;
+    cultureColor: string;
+    cultureLogoUrl: string | null;
+    religionId: string;
+    religionName: string;
+    religionColor: string;
+    religionLogoUrl: string | null;
+  },
+): void {
+  const makeEntry = (id: string, name: string, color: string, logoUrl: string | null): GameContentEntry => ({
+    id,
+    name,
+    description: "",
+    color,
+    logoUrl,
+    malePortraitUrl: null,
+    femalePortraitUrl: null,
+  });
+  if (!gameSettings.content.cultures.some((entry) => entry.id === identity.cultureId)) {
+    gameSettings.content.cultures.push(makeEntry(identity.cultureId, identity.cultureName, identity.cultureColor, identity.cultureLogoUrl));
+  }
+  if (!gameSettings.content.religions.some((entry) => entry.id === identity.religionId)) {
+    gameSettings.content.religions.push(makeEntry(identity.religionId, identity.religionName, identity.religionColor, identity.religionLogoUrl));
+  }
 }

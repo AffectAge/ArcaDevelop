@@ -12,6 +12,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "d3-delaunay": "^6.0.4",
+    "flatqueue": "^3.1.0",
     "simplex-noise": "^4.0.3"
+  },
+  "devDependencies": {
+    "@types/d3-delaunay": "^6.0.4"
   }
 }

@@ -3,10 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { ActiveModifierRow, ModifierEffect, ModifierMode, ModifierScope, ModifierStat } from "@arcanorum/shared";
 import { fetchCountryModifiers } from "../lib/api";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppEmptyState, AppSection, AppToolbar } from "./ui/AppSurface";
-import { AppCell, AppHeadCell, AppTable, AppTableShell } from "./ui/AppTable";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppEmptyState, AppSection, AppToolbar } from "./templates/AppSurface";
+import { AppCell, AppHeadCell, AppTable, AppTableShell } from "./templates/AppTable";
 import { useUiText } from "../i18n/useUiText";
 import type { UiTextKey } from "../i18n/uiText";
 

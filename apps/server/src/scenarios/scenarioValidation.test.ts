@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
 import { afterEach, describe, expect, it } from "vitest";
+import { HEX_MAP_TAGS } from "@arcanorum/shared";
 import { buildScenarioGeneratedIndexes, validateScenarioDirectory } from "./scenarioValidation";
 
 const tempDirs: string[] = [];
@@ -143,7 +144,7 @@ describe("scenarioValidation", () => {
       typeId: "feature:ancient_ruins",
       category: "site",
       global: { count: 3 },
-      allowedTerrains: ["plains", "hills"],
+      tagQuery: { any: ["biome:plains", "morphology:rough"] },
     });
 
     const result = await validateScenarioDirectory(scenarioDir);
@@ -161,8 +162,7 @@ describe("scenarioValidation", () => {
           frame: 5,
           priority: 10,
           conditions: {
-            terrains: ["mountains", "snow"],
-            biomes: ["alpine"],
+            tagQuery: { all: ["morphology:mountainous", "feature:snow"] },
             temperatureBands: ["cold", "frozen"],
             moistureBands: ["normal", "wet"],
             minElevation: 0.86,
@@ -416,6 +416,111 @@ describe("scenarioValidation", () => {
 
     expect(result.ok).toBe(false);
     expect(result.issues.some((issue) => issue.code === "INVALID_DEFINES")).toBe(true);
+  });
+
+  it("validates authored atomic population files", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await addPopulationDomains(scenarioDir);
+    await writeJson(join(scenarioDir, "common/defines.json"), {
+      population: {
+        qualificationCategories: ["labor", "technical"],
+      },
+    });
+    await writeJson(join(scenarioDir, "common/populations/bohemia.json"), {
+      regionId: "region:bohemia",
+      pops: [
+        {
+          id: "pop:bohemia:workers",
+          size: 1000,
+          cultureId: "culture:bohemian",
+          religionId: "religion:solar",
+          raceId: "race:human",
+          professionId: "profession:workers",
+          qualificationsByCategory: {
+            labor: 1000,
+            technical: 25,
+          },
+        },
+      ],
+    });
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects removed population shapes and unknown qualification categories", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await addPopulationDomains(scenarioDir);
+    await writeJson(join(scenarioDir, "common/defines.json"), {
+      population: {
+        qualificationCategories: ["labor"],
+      },
+    });
+    await writeJson(join(scenarioDir, "common/populations/bohemia.json"), {
+      regionId: "region:bohemia",
+      populationTotal: 1000,
+      pops: [
+        {
+          id: "pop:legacy",
+          size: 1000,
+          cultureId: "culture:bohemian",
+          religionId: "religion:solar",
+          raceId: "race:human",
+          professionId: "profession:workers",
+          professions: {
+            "profession:workers": { size: 1000 },
+          },
+          qualificationsByCategory: {
+            technical: 5,
+          },
+        },
+      ],
+    });
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "INVALID_POPULATION_DEFINITION", message: expect.stringContaining("populationTotal") }),
+        expect.objectContaining({ code: "INVALID_POPULATION_DEFINITION", message: expect.stringContaining(".professions is removed") }),
+        expect.objectContaining({ code: "BROKEN_REFERENCE", message: expect.stringContaining("unknown qualification category") }),
+      ]),
+    );
+  });
+
+  it("validates country-authored accepted population groups", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await addPopulationDomains(scenarioDir);
+    await writeJson(join(scenarioDir, "history/countries/bohemia.json"), {
+      id: "country:bohemia",
+      nameKey: "country.bohemia.name",
+      color: "#a33f2f",
+      controlMode: "open",
+      acceptedCultureIds: ["culture:bohemian"],
+      acceptedReligionIds: ["religion:solar"],
+      acceptedRaceIds: ["race:human"],
+    });
+
+    const valid = await validateScenarioDirectory(scenarioDir);
+    expect(valid.ok).toBe(true);
+
+    await writeJson(join(scenarioDir, "history/countries/bohemia.json"), {
+      id: "country:bohemia",
+      nameKey: "country.bohemia.name",
+      color: "#a33f2f",
+      controlMode: "open",
+      acceptedCultureIds: ["culture:missing"],
+    });
+
+    const invalid = await validateScenarioDirectory(scenarioDir);
+    expect(invalid.ok).toBe(false);
+    expect(invalid.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "BROKEN_REFERENCE", message: expect.stringContaining("acceptedCultureIds") }),
+      ]),
+    );
   });
 
   it("fails on legacy raw event fields", async () => {
@@ -1138,6 +1243,7 @@ async function createScenarioFixture(): Promise<string> {
     decision: { legacy: { name: "Legacy decision" } },
     event: { legacy: { name: "Legacy", title: "Legacy", description: "Legacy", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Economy" } },
+    ...makeMapTagLocalization("en"),
   });
   await writeJson(join(scenarioDir, "localisation/ru.json"), {
     scenario: { fixture: { name: "Fixture RU" } },
@@ -1148,6 +1254,7 @@ async function createScenarioFixture(): Promise<string> {
     decision: { legacy: { name: "Legacy decision RU" } },
     event: { legacy: { name: "Legacy RU", title: "Legacy RU", description: "Legacy RU", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Экономика" } },
+    ...makeMapTagLocalization("ru"),
   });
   await writeJson(join(scenarioDir, "map/hex-settings.json"), createHexSettings());
   await writeJson(join(scenarioDir, "history/regions/bohemia.json"), {
@@ -1184,16 +1291,37 @@ function createHexSettings(): Record<string, unknown> {
     width: 16,
     height: 12,
     hexSize: 24,
-    seaLevel: 0.42,
-    temperature: 0.5,
-    moisture: 0.5,
-    mountains: 0.78,
-    rivers: 0.45,
-    forests: 0.55,
-    targetLandRegionSize: 8,
-    targetWaterRegionSize: 12,
     chunkSize: 8,
-    wrapX: true,
+    wrapX: false,
+    generation: {
+      mapScript: "continents",
+      landmasses: {
+        majorContinents: { min: 2, max: 4 },
+        majorContinentSize: { min: 240, max: 420 },
+        landRatio: 0.48,
+        islandDensity: "medium",
+        islandSize: { min: 4, max: 32 },
+        edgeOceanMargin: { min: 4, max: 6 },
+      },
+      climate: {
+        preset: "earthlike",
+        temperature: "temperate",
+        rainfall: "balanced",
+      },
+      rivers: {
+        density: "rare",
+        navigable: true,
+        crossingPenalty: 1,
+      },
+      regions: {
+        targetLandRegionSize: 8,
+        targetWaterRegionSize: 12,
+        respectLandmassBoundaries: true,
+      },
+      tags: {
+        enabled: true,
+      },
+    },
   };
 }
 
@@ -1212,6 +1340,7 @@ async function addBuilding(scenarioDir: string, id: string): Promise<void> {
     decision: { legacy: { name: "Legacy decision" } },
     event: { legacy: { name: "Legacy", title: "Legacy", description: "Legacy", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Economy" } },
+    ...makeMapTagLocalization("en"),
   });
   await writeJson(join(scenarioDir, "localisation/ru.json"), {
     scenario: { fixture: { name: "Fixture RU" } },
@@ -1223,6 +1352,7 @@ async function addBuilding(scenarioDir: string, id: string): Promise<void> {
     decision: { legacy: { name: "Legacy decision RU" } },
     event: { legacy: { name: "Legacy RU", title: "Legacy RU", description: "Legacy RU", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Экономика" } },
+    ...makeMapTagLocalization("ru"),
   });
 }
 
@@ -1242,6 +1372,7 @@ async function addCulture(scenarioDir: string, id: string): Promise<void> {
     decision: { legacy: { name: "Legacy decision" } },
     event: { legacy: { name: "Legacy", title: "Legacy", description: "Legacy", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Economy" } },
+    ...makeMapTagLocalization("en"),
   });
   await writeJson(join(scenarioDir, "localisation/ru.json"), {
     scenario: { fixture: { name: "Fixture RU" } },
@@ -1253,7 +1384,30 @@ async function addCulture(scenarioDir: string, id: string): Promise<void> {
     decision: { legacy: { name: "Legacy decision RU" } },
     event: { legacy: { name: "Legacy RU", title: "Legacy RU", description: "Legacy RU", option: { ok: "OK" } } },
     arcawiki: { economy: { name: "Экономика" } },
+    ...makeMapTagLocalization("ru"),
   });
+}
+
+async function addPopulationDomains(scenarioDir: string): Promise<void> {
+  await writeJson(join(scenarioDir, "common/cultures/bohemian.json"), {
+    id: "culture:bohemian",
+  });
+  await writeJson(join(scenarioDir, "common/religions/solar.json"), {
+    id: "religion:solar",
+  });
+  await writeJson(join(scenarioDir, "common/races/human.json"), {
+    id: "race:human",
+  });
+  await writeJson(join(scenarioDir, "common/professions/workers.json"), {
+    id: "profession:workers",
+    qualificationRequirements: {
+      labor: 1,
+    },
+  });
+}
+
+function makeMapTagLocalization(locale: "en" | "ru"): Record<string, string> {
+  return Object.fromEntries(HEX_MAP_TAGS.map((tag) => [`mapTag.${tag.replace(":", ".")}`, locale === "en" ? tag : `${tag} RU`]));
 }
 
 async function writeBuildingAtlas(path: string, width: number, height: number): Promise<void> {

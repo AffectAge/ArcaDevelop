@@ -1,0 +1,7 @@
+{
+  "id": "asset:unit.warrior",
+  "type": "atlas",
+  "path": "assets/units/warrior.png",
+  "width": 256,
+  "height": 64
+}

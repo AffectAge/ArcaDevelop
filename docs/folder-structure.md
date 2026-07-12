@@ -23,6 +23,7 @@ project_assets/
 - `project_assets` contains source/reference assets, not scenario-owned runtime uploads.
 
 Repo-owned base client assets that are part of the game itself live under `apps/client/public/game-assets/`. Resource point icons use `apps/client/public/game-assets/resource-icons/*.png`; generated hex terrain material textures use `apps/client/public/game-assets/hex-materials/*.png`. These assets are not scenario-owned uploads and are not configured through runtime game settings.
+Repo-owned fallback art uses the same tree; for example, the login/loading background fallback is `apps/client/public/game-assets/utils/fallback-auth-background.png` when the active scenario does not provide `assets/utils/auth-background.png`.
 
 ## Target Server Layout After Refactor
 
@@ -80,7 +81,7 @@ Current migration note: `apps/server/src/runtime` has started with small runtime
 apps/client/src/
   app/
   components/
-    ui/
+    templates/
     map-hud/
     feature/
   features/
@@ -103,12 +104,13 @@ apps/client/src/
 Folder responsibilities:
 
 - `app`: app shell, providers, high-level orchestration.
-- `components/ui`: reusable generic UI primitives.
+- `components/templates`: reusable game-interface primitives and compositions, such as buttons, fields, modal shells, choice modals, detail panels, tooltip cards, resource panels, notification lists, tabs, action bars, charts, preview chips, and demo galleries. Templates must not own gameplay state or server API calls. `components/templates/DEMO_ELEMENTS.md` is the component catalog agents must use and update when adding reusable UI elements.
 - `components/map-hud`: map overlay controls and HUD components.
 - `components/feature`: temporary bridge for obsolete feature components during migration.
 - `features`: domain-oriented UI modules.
 - `store`: client state slices and selectors.
 - `lib`: small client adapters, API clients, and utilities with clear ownership.
+- `lib/audio`: browser-only UI audio adapters and sound-event routing. It may own sound settings and sprite registration, but not gameplay logic or scenario content.
 - `i18n`: localization keys, helpers, and validation.
 - `theme`: scenario theme loading and token application.
 - `map`: map-specific layers, selectors, and rendering helpers.

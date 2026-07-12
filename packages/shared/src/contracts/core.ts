@@ -7,6 +7,17 @@ export type Country = {
   marketId?: string | null;
   flagUrl?: string | null;
   crestUrl?: string | null;
+  cultureId: string;
+  cultureName: string;
+  cultureColor: string;
+  cultureLogoUrl?: string | null;
+  religionId: string;
+  religionName: string;
+  religionColor: string;
+  religionLogoUrl?: string | null;
+  cultureGroupId: string;
+  religionGroupId: string;
+  raceId: string;
   isAdmin?: boolean;
   isLocked?: boolean;
   blockedUntilTurn?: number | null;

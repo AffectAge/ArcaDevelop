@@ -36,6 +36,12 @@ export type ScenarioResourceTotals = {
   gold: number;
 };
 
+export type ScenarioCountryPopulationAcceptance = {
+  acceptedCultureIds: string[];
+  acceptedReligionIds: string[];
+  acceptedRaceIds: string[];
+};
+
 const SCENARIO_RESOURCE_KEYS = [
   "culture",
   "science",
@@ -86,6 +92,19 @@ export function buildAiControlledCountryIdsFromHistory(history: ScenarioHistory 
     .filter((country) => country.data.controlMode === "ai")
     .map((country) => country.id)
     .sort((left, right) => left.localeCompare(right));
+}
+
+export function buildCountryPopulationAcceptanceFromHistory(history: ScenarioHistory | null): Record<string, ScenarioCountryPopulationAcceptance> {
+  const result: Record<string, ScenarioCountryPopulationAcceptance> = {};
+  if (!history) return result;
+  for (const country of history.countries) {
+    const acceptedCultureIds = normalizeStringArray(country.data.acceptedCultureIds);
+    const acceptedReligionIds = normalizeStringArray(country.data.acceptedReligionIds);
+    const acceptedRaceIds = normalizeStringArray(country.data.acceptedRaceIds);
+    if (acceptedCultureIds.length === 0 && acceptedReligionIds.length === 0 && acceptedRaceIds.length === 0) continue;
+    result[country.id] = { acceptedCultureIds, acceptedReligionIds, acceptedRaceIds };
+  }
+  return result;
 }
 
 export function buildHexOwnerFromRegionHistory(history: ScenarioHistory): Record<string, string> {
@@ -159,6 +178,11 @@ function normalizeCountryColor(value: unknown, countryId: string): string {
 
 function normalizeNullableString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((item): item is string => typeof item === "string" && item.trim().length > 0).map((item) => item.trim()))].sort((a, b) => a.localeCompare(b));
 }
 
 export function loadScenarioHistory(scenarioDir: string): ScenarioHistory {

@@ -22,7 +22,7 @@ For each entity define:
 - Province metadata.
 - Market.
 - Building.
-- Army/division/template.
+- Map units, unit training queues, and unit-authored runtime state.
 - Diplomacy proposal/treaty.
 - Event/notification.
 - Uploaded file.
@@ -36,6 +36,6 @@ For each entity define:
 
 Country deletion must clean or reassign all country-owned data and references, including orders, diplomacy, markets, armies, events, uploaded flag/crest files, AI plans, and scenario-scoped assets.
 
-Server country deletion must build a non-destructive cleanup plan before mutating state. The plan should include resources, owned provinces, colonization progress, construction queues, diplomacy proposals, divisions/templates, military queues, orders, resolve-ready state, country event/decision/technology/parliament entries, and uploaded flag/crest assets.
+Server country deletion must build a non-destructive cleanup plan before mutating state. The plan should include resources, owned provinces, colonization progress, construction queues, diplomacy proposals, map units, unit training queues, orders, resolve-ready state, country event/decision/technology/parliament entries, and uploaded flag/crest assets.
 
 Admin country deletion must expose a preview endpoint before mutation and return the cleanup plan after deletion. Scenario cleanup work should reuse the same plan before deleting countries that are absent from a newly applied scenario.

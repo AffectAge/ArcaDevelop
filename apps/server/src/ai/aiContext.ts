@@ -5,7 +5,6 @@ export type AiWorldIndexes = {
   controlledRegionIdsByCountry: Record<string, string[]>;
   constructionProjectsByCountry: Record<string, RegionConstructionProject[]>;
   diplomacyProposalIdsByCountry: Record<string, string[]>;
-  divisionIdsByCountry: Record<string, string[]>;
 };
 
 export type AiRegionContext = {
@@ -27,7 +26,6 @@ export type AiCountryContext = {
   regions: AiRegionContext[];
   constructionProjectCount: number;
   diplomacyProposalCount: number;
-  divisionCount: number;
 };
 
 const emptyResources: ResourceTotals = {
@@ -45,7 +43,6 @@ export function buildAiWorldIndexes(world: WorldBase): AiWorldIndexes {
   const controlledRegionIdsByCountry: Record<string, string[]> = {};
   const constructionProjectsByCountry: Record<string, RegionConstructionProject[]> = {};
   const diplomacyProposalIdsByCountry: Record<string, string[]> = {};
-  const divisionIdsByCountry: Record<string, string[]> = {};
 
   for (const [regionId, countryId] of Object.entries(world.regionOwner)) {
     pushToIndex(ownedRegionIdsByCountry, countryId, regionId);
@@ -69,16 +66,11 @@ export function buildAiWorldIndexes(world: WorldBase): AiWorldIndexes {
     }
   }
 
-  for (const [divisionId, division] of Object.entries(world.divisionsById)) {
-    pushToIndex(divisionIdsByCountry, division.countryId, divisionId);
-  }
-
   return {
     ownedRegionIdsByCountry: sortIndexValues(ownedRegionIdsByCountry),
     controlledRegionIdsByCountry: sortIndexValues(controlledRegionIdsByCountry),
     constructionProjectsByCountry,
     diplomacyProposalIdsByCountry: sortIndexValues(diplomacyProposalIdsByCountry),
-    divisionIdsByCountry: sortIndexValues(divisionIdsByCountry),
   };
 }
 
@@ -101,7 +93,6 @@ export function buildAiCountryContext(params: {
     regions: relevantRegionIds.map((regionId) => buildAiRegionContext(countryId, regionId, world)),
     constructionProjectCount: indexes.constructionProjectsByCountry[countryId]?.length ?? 0,
     diplomacyProposalCount: indexes.diplomacyProposalIdsByCountry[countryId]?.length ?? 0,
-    divisionCount: indexes.divisionIdsByCountry[countryId]?.length ?? 0,
   };
 }
 

@@ -6,7 +6,7 @@
       "frame": 0,
       "weight": 2,
       "conditions": {
-        "biomes": ["dry_scrubland"]
+        "tagQuery": { "all": ["rainfall:dry"], "not": ["feature:wet"] }
       }
     },
     {
@@ -34,7 +34,7 @@
       "frame": 4,
       "priority": 8,
       "conditions": {
-        "terrains": ["hills"],
+        "tagQuery": { "any": ["morphology:rough", "slope:hilly"] },
         "minElevation": 0.55
       }
     },

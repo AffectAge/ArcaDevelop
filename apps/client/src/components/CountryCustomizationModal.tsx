@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Coins, Palette, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
+import {
+  COUNTRY_CREST_UPLOAD_RULE,
+  COUNTRY_FLAG_UPLOAD_RULE,
+  type ImageUploadRule,
+} from "@arcanorum/shared";
 import { fetchPublicCustomizationPrices, type CustomizationPrices, updateOwnCountryCustomization } from "../lib/api";
-import { AppButton } from "./ui/AppButton";
-import { AppModal, AppModalHeader } from "./ui/AppModal";
-import { AppCard, AppSection } from "./ui/AppSurface";
+import { AppButton } from "./templates/AppButton";
+import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppCard, AppSection } from "./templates/AppSurface";
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 
@@ -72,18 +77,13 @@ function DucatValue({ value, iconUrl, className = "" }: { value: number; iconUrl
 
 async function isImageWithinRule(
   file: File,
-  rule: { maxWidth: number; maxHeight: number; ratioWidth: number; ratioHeight: number },
+  rule: { maxWidth: number; maxHeight: number },
 ): Promise<boolean> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
-      const ratio = img.width / Math.max(1, img.height);
-      const targetRatio = rule.ratioWidth / rule.ratioHeight;
-      const ok =
-        img.width <= rule.maxWidth &&
-        img.height <= rule.maxHeight &&
-        Math.abs(ratio - targetRatio) <= 0.01;
+      const ok = img.width <= rule.maxWidth && img.height <= rule.maxHeight;
       URL.revokeObjectURL(url);
       resolve(ok);
     };
@@ -95,18 +95,33 @@ async function isImageWithinRule(
   });
 }
 
+async function getImageUploadErrorKey(file: File, rule: ImageUploadRule, dimensionsErrorKey: UiTextKey): Promise<UiTextKey | null> {
+  if (!(rule.mimeTypes as readonly string[]).includes(file.type)) {
+    return "auth.onlyImages";
+  }
+  if (file.size > rule.maxBytes) {
+    return "auth.fileTooLarge";
+  }
+  if (!(await isImageWithinRule(file, rule))) {
+    return dimensionsErrorKey;
+  }
+  return null;
+}
+
 function FilePicker({
   label,
   file,
   hint,
   selectLabel,
+  error,
   onChange,
 }: {
   label: string;
   file: File | null;
   hint: string;
   selectLabel: string;
-  onChange: (file: File | null) => void;
+  error?: string;
+  onChange: (file: File | null) => void | Promise<boolean | void>;
 }) {
   return (
     <div>
@@ -114,9 +129,18 @@ function FilePicker({
       <label className="panel-border flex cursor-pointer items-center gap-2 rounded-lg bg-[var(--arc-overlay-35)] px-3 py-2 text-sm text-[var(--arc-color-text)] transition hover:border-[var(--arc-color-gold)]">
         <Upload size={14} className="text-[var(--arc-color-gold)]" />
         <span className="truncate">{file ? file.name : selectLabel}</span>
-        <input type="file" accept="image/*" className="hidden" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          onChange={async (e) => {
+            const result = await onChange(e.target.files?.[0] ?? null);
+            if (result === false) e.currentTarget.value = "";
+          }}
+        />
       </label>
       <p className="mt-1 text-xs text-[var(--arc-color-text-muted)]">{hint}</p>
+      {error ? <p className="mt-1 text-xs text-[var(--arc-color-danger)]">{error}</p> : null}
     </div>
   );
 }
@@ -132,6 +156,8 @@ export function CountryCustomizationModal({ open, token, country, currentDucats,
   const [crestFile, setCrestFile] = useState<File | null>(null);
   const [flagPreviewUrl, setFlagPreviewUrl] = useState<string | null>(null);
   const [crestPreviewUrl, setCrestPreviewUrl] = useState<string | null>(null);
+  const [flagUploadError, setFlagUploadError] = useState<string | undefined>();
+  const [crestUploadError, setCrestUploadError] = useState<string | undefined>();
 
   useEffect(() => {
     if (!open) {
@@ -142,6 +168,8 @@ export function CountryCustomizationModal({ open, token, country, currentDucats,
     setColor(country.color);
     setFlagFile(null);
     setCrestFile(null);
+    setFlagUploadError(undefined);
+    setCrestUploadError(undefined);
   }, [open, country.color, country.name]);
 
   useEffect(() => {
@@ -199,6 +227,31 @@ export function CountryCustomizationModal({ open, token, country, currentDucats,
   const totalCost = (nameChanged ? prices.renameDucats : 0) + (colorChanged ? prices.recolorDucats : 0) + (flagFile ? prices.flagDucats : 0) + (crestFile ? prices.crestDucats : 0);
   const canAfford = currentDucats >= totalCost;
 
+  async function validateSelectedImage(
+    file: File | null,
+    rule: ImageUploadRule,
+    dimensionsErrorKey: UiTextKey,
+    setFile: (file: File | null) => void,
+    setError: (message?: string) => void,
+  ): Promise<boolean> {
+    if (!file) {
+      setFile(null);
+      setError(undefined);
+      return true;
+    }
+    const errorKey = await getImageUploadErrorKey(file, rule, dimensionsErrorKey);
+    if (errorKey) {
+      const message = t(errorKey);
+      setFile(null);
+      setError(message);
+      toast.error(message);
+      return false;
+    }
+    setFile(file);
+    setError(undefined);
+    return true;
+  }
+
   const changes = useMemo(
     () => [
       { labelKey: "customization.rename" as UiTextKey, enabled: nameChanged, cost: prices.renameDucats },
@@ -230,12 +283,18 @@ export function CountryCustomizationModal({ open, token, country, currentDucats,
       return;
     }
 
-    if (flagFile && !(await isImageWithinRule(flagFile, { maxWidth: 192, maxHeight: 128, ratioWidth: 3, ratioHeight: 2 }))) {
-      toast.error(t("auth.flagInvalid"));
+    const flagErrorKey = flagFile ? await getImageUploadErrorKey(flagFile, COUNTRY_FLAG_UPLOAD_RULE, "auth.flagInvalid") : null;
+    if (flagErrorKey) {
+      const message = t(flagErrorKey);
+      setFlagUploadError(message);
+      toast.error(message);
       return;
     }
-    if (crestFile && !(await isImageWithinRule(crestFile, { maxWidth: 128, maxHeight: 192, ratioWidth: 2, ratioHeight: 3 }))) {
-      toast.error(t("auth.crestInvalid"));
+    const crestErrorKey = crestFile ? await getImageUploadErrorKey(crestFile, COUNTRY_CREST_UPLOAD_RULE, "auth.crestInvalid") : null;
+    if (crestErrorKey) {
+      const message = t(crestErrorKey);
+      setCrestUploadError(message);
+      toast.error(message);
       return;
     }
 
@@ -327,14 +386,20 @@ export function CountryCustomizationModal({ open, token, country, currentDucats,
                   file={flagFile}
                   hint={t("auth.flagHint")}
                   selectLabel={t("auth.selectImage")}
-                  onChange={setFlagFile}
+                  error={flagUploadError}
+                  onChange={(file) =>
+                    validateSelectedImage(file, COUNTRY_FLAG_UPLOAD_RULE, "auth.flagInvalid", setFlagFile, setFlagUploadError)
+                  }
                 />
                 <FilePicker
                   label={t("auth.crest")}
                   file={crestFile}
                   hint={t("auth.crestHint")}
                   selectLabel={t("auth.selectImage")}
-                  onChange={setCrestFile}
+                  error={crestUploadError}
+                  onChange={(file) =>
+                    validateSelectedImage(file, COUNTRY_CREST_UPLOAD_RULE, "auth.crestInvalid", setCrestFile, setCrestUploadError)
+                  }
                 />
               </div>
 

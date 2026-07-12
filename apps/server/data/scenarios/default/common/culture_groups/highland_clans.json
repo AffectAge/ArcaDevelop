@@ -1,0 +1,24 @@
+{
+  "id": "culture_group:highland_clans",
+  "nameKey": "cultureGroup.highlandClans.name",
+  "descriptionKey": "cultureGroup.highlandClans.description",
+  "color": "#94a3b8",
+  "iconAssetId": "asset:identity.highland_clans",
+  "modifiers": [
+    {
+      "id": "stone_terraces",
+      "label": "Stone terraces",
+      "scope": "country",
+      "effects": [
+        { "stat": "construction_gain", "mode": "add", "value": 1 }
+      ]
+    }
+  ],
+  "startingPop": {
+    "literacy": 0.1,
+    "standardOfLiving": 9,
+    "loyalists": 25,
+    "ideologies": { "ideology:default": 1 },
+    "qualificationsByCategory": { "labor": 0.25 }
+  }
+}

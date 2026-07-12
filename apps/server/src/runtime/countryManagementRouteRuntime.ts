@@ -30,9 +30,6 @@ type CountryManagementMasks = {
   countryEventFlagsByCountryId: number;
   journalEntriesByCountryId: number;
   countryModifiersByCountryId: number;
-  divisionTemplatesByCountry: number;
-  divisionsById: number;
-  militaryFormationQueueByCountry: number;
   diplomacyProposals: number;
 };
 
@@ -127,6 +124,8 @@ export function registerCountryManagementRouteRuntime(params: CountryManagementR
         resolveReadyByTurn: params.getResolveReadyByTurn(),
         flagUrl: target.flagUrl,
         crestUrl: target.crestUrl,
+        cultureLogoUrl: target.cultureLogoUrl,
+        religionLogoUrl: target.religionLogoUrl,
       }),
     removeCountryOrdersAndReadiness: (countryId) =>
       removeCountryOrdersAndReadinessFromState({

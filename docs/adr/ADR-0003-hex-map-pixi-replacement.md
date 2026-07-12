@@ -14,7 +14,7 @@ The existing player-facing map is built on MapLibre, deck.gl, and authored provi
 
 Use a PixiJS 2D renderer for the main client map entrypoint and perform a hard cutover to deterministic hex map artifacts. There is no target fallback to province polygons, authored province files, generated province indexes, or province movement graphs. The implementation renders a deterministic generated hex artifact in the existing React app:
 
-- pointy-top axial hexes;
+- pointy-top rectangular offset hexes, so the visible map has straight left and right sides instead of an accumulating axial parallelogram skew;
 - X wrapping;
 - terrain, biome, feature, water kind, movement cost metadata;
 - edge-based rivers;
