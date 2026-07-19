@@ -1,5 +1,5 @@
 import type express from "express";
-import type { EventLogEntry, HexMapArtifact, MapFeatureInstance, MapFeatureVisualRuleDefinition, WorldBase, WsOutMessage } from "@arcanorum/shared";
+import type { EventLogEntry, MapFeatureVisualRuleDefinition, NaturalFeatureVisualCatalog, WorldBase, WsOutMessage } from "@arcanorum/shared";
 import type { PrismaClient } from "@prisma/client";
 import { registerAdminHexMutationRoutes } from "../routes/adminHexMutationRoutes";
 import { registerCountryHexCustomizationRoutes } from "../routes/countryHexCustomizationRoutes";
@@ -9,6 +9,7 @@ import type { RouteAuth } from "../security/routeAuth";
 import type { RegionColonizationConfig } from "../mechanics/colonizationMechanics";
 import type { ResourceLedgerEntryInput } from "./resourceLedgerRuntime";
 import type { WorldBaseSectionSnapshot } from "./worldDeltaDiff";
+import type { HexMapClientArtifactRuntime } from "../scenarios/hexMapClientArtifacts";
 
 type HexRouteRuntimeParams = {
   app: express.Express;
@@ -26,9 +27,9 @@ type HexRouteRuntimeParams = {
   };
   getTurnId: () => number;
   getHexIndex: () => HexMapIndexEntry[];
-  getHexMapArtifact: () => HexMapArtifact | null;
-  getMapFeatures: () => MapFeatureInstance[];
+  getHexMapClientArtifact: () => HexMapClientArtifactRuntime | null;
   getMapFeatureVisuals: () => MapFeatureVisualRuleDefinition[];
+  getNaturalFeatureVisualCatalog: () => NaturalFeatureVisualCatalog;
   getWorldBase: () => WorldBase;
   getHexRenameDucatsCost: () => number;
   getRegionColonizationConfig: (regionId: string) => RegionColonizationConfig;
@@ -78,9 +79,9 @@ export function registerHexRouteRuntime(params: HexRouteRuntimeParams): void {
   registerHexReadRoutes(params.app, {
     routeAuth: params.routeAuth,
     getHexIndex: params.getHexIndex,
-    getHexMapArtifact: params.getHexMapArtifact,
-    getMapFeatures: params.getMapFeatures,
+    getHexMapClientArtifact: params.getHexMapClientArtifact,
     getMapFeatureVisuals: params.getMapFeatureVisuals,
+    getNaturalFeatureVisualCatalog: params.getNaturalFeatureVisualCatalog,
     getWorldBase: params.getWorldBase,
   });
 

@@ -33,11 +33,24 @@ export type HexBiome =
   | "swamp"
   | "coastal_wetland";
 
-export type HexFeature = "none" | "forest" | "dense_forest" | "jungle" | "marsh" | "scrub" | "snowcap";
+export type HexFeature =
+  | "none"
+  | "forest"
+  | "dense_forest"
+  | "jungle"
+  | "marsh"
+  | "scrub"
+  | "snowcap";
 export type HexWaterKind = "ocean" | "sea" | "lake" | null;
 export type HexDirection = 0 | 1 | 2 | 3 | 4 | 5;
 export type HexDistanceToWater = 0 | 1 | 2 | 3;
-export type HexTemperatureBand = "frozen" | "cold" | "cool" | "temperate" | "warm" | "hot";
+export type HexTemperatureBand =
+  | "frozen"
+  | "cold"
+  | "cool"
+  | "temperate"
+  | "warm"
+  | "hot";
 export type HexMoistureBand = "arid" | "dry" | "normal" | "wet" | "saturated";
 export type HexMapTag = `${string}:${string}`;
 export type MapFeatureTypeId = `feature:${string}`;
@@ -140,6 +153,165 @@ export type HexMapArtifact = {
   coastOverlays: HexCoastOverlayRecord[];
 };
 
+export const HEX_MAP_CLIENT_FORMAT_VERSION = 1 as const;
+
+export type HexMapClientBounds = {
+  minQ: number;
+  minR: number;
+  maxQ: number;
+  maxR: number;
+};
+
+export type HexMapClientArtifactDescriptor = {
+  fileName: string;
+  contentHash: string;
+  byteLength: number;
+  gzipByteLength: number;
+  brotliByteLength: number;
+};
+
+export type HexMapClientChunkFileName = `chunk-${number}-${number}.json`;
+
+export type HexMapClientChunkDescriptor = Omit<
+  HexMapClientArtifactDescriptor,
+  "fileName"
+> & {
+  id: HexChunkId;
+  fileName: HexMapClientChunkFileName;
+  chunkQ: number;
+  chunkR: number;
+  bounds: HexMapClientBounds;
+  tileCount: number;
+  haloTileCount: number;
+};
+
+export type HexMapClientRegionSummary = {
+  id: RegionId;
+  tileCount: number;
+  waterTileCount: number;
+  bounds: HexMapClientBounds;
+  labelAnchor: HexAxial;
+};
+
+export type HexMapClientManifest = {
+  formatVersion: typeof HEX_MAP_CLIENT_FORMAT_VERSION;
+  artifactVersion: string;
+  settings: HexMapSettings;
+  regions: HexMapClientRegionSummary[];
+  navigation: HexMapClientArtifactDescriptor & { fileName: "navigation.json" };
+  chunks: HexMapClientChunkDescriptor[];
+};
+
+export type HexMapClientChunk = {
+  formatVersion: typeof HEX_MAP_CLIENT_FORMAT_VERSION;
+  artifactVersion: string;
+  id: HexChunkId;
+  bounds: HexMapClientBounds;
+  tiles: HexTile[];
+  visualHalo: HexTile[];
+  riverEdges: HexEdgeRecord[];
+  coastOverlays: HexCoastOverlayRecord[];
+  features: MapFeatureInstance[];
+};
+
+export const HEX_MAP_NAVIGATION_WATER_KIND = {
+  land: 0,
+  ocean: 1,
+  sea: 2,
+  lake: 3,
+} as const;
+
+export type HexMapNavigationWaterKind =
+  (typeof HEX_MAP_NAVIGATION_WATER_KIND)[keyof typeof HEX_MAP_NAVIGATION_WATER_KIND];
+
+export const HEX_MAP_NAVIGATION_RIVER_CLASS = {
+  minor: 0,
+  major: 1,
+  navigable: 2,
+} as const;
+
+export type HexMapNavigationRiverClass =
+  (typeof HEX_MAP_NAVIGATION_RIVER_CLASS)[keyof typeof HEX_MAP_NAVIGATION_RIVER_CLASS];
+
+export type HexMapNavigationRiverEdge = [
+  tileIndex: number,
+  direction: HexDirection,
+  width: number,
+  riverClass: HexMapNavigationRiverClass,
+  navigable: 0 | 1,
+  crossingCost: number,
+];
+
+export type HexMapNavigationArtifact = {
+  formatVersion: typeof HEX_MAP_CLIENT_FORMAT_VERSION;
+  artifactVersion: string;
+  width: number;
+  height: number;
+  wrapX: boolean;
+  regionIds: RegionId[];
+  passability: Array<0 | 1>;
+  waterKinds: HexMapNavigationWaterKind[];
+  movementCosts: number[];
+  stopsMovementOnEnter: Array<0 | 1>;
+  regionIndexes: number[];
+  riverEdges: HexMapNavigationRiverEdge[];
+};
+
+export type HexMapPathRequestMode = "unit" | "corridor" | "attack";
+
+export type HexMapWorkerRequest =
+  | {
+      type: "configure";
+      apiBase: string;
+      manifest: HexMapClientManifest;
+      generation: number;
+    }
+  | {
+      type: "setDesiredChunkIds";
+      chunkIds: HexChunkId[];
+      generation: number;
+    }
+  | {
+      type: "findPath";
+      requestId: number;
+      fromHexId: HexId;
+      toHexId: HexId;
+      mode: HexMapPathRequestMode;
+      generation: number;
+    }
+  | {
+      type: "cancelPath";
+      requestId: number;
+      generation: number;
+    };
+
+export type HexMapWorkerResponse<TChunkRenderData = HexMapClientChunk> =
+  | { type: "configured"; generation: number }
+  | {
+      type: "chunkReady";
+      chunkId: HexChunkId;
+      data: TChunkRenderData;
+      generation: number;
+    }
+  | {
+      type: "chunkFailed";
+      chunkId: HexChunkId;
+      code: string;
+      generation: number;
+    }
+  | {
+      type: "pathReady";
+      requestId: number;
+      hexIds: HexId[];
+      generation: number;
+    }
+  | {
+      type: "pathFailed";
+      requestId: number;
+      code: string;
+      generation: number;
+    };
+
 export type MapFeatureInstance = {
   id: MapFeatureInstanceId;
   typeId: MapFeatureTypeId;
@@ -215,7 +387,86 @@ export type MapFeatureVisualRuleDefinition = {
   frames: MapFeatureVisualFrameRule[];
 };
 
-export type MapVisualLayer = "base" | "morphology" | "feature" | "water" | "river" | "coast";
+export type NaturalFeatureTextureSetId =
+  | "grassland"
+  | "plains"
+  | "tropical"
+  | "desert"
+  | "tundra"
+  | "wetland"
+  | "snow"
+  | "glacial_mountain"
+  | "mountain"
+  | "highland";
+
+export const NATURAL_FEATURE_FRAME_MAX = 15 as const;
+
+export type NaturalFeatureRenderLod = "simplified" | "detailed";
+export type NaturalFeatureVisualLayer =
+  | "landform"
+  | "vegetation"
+  | "wet"
+  | "snow";
+export const NATURAL_FEATURE_VISUAL_LAYOUT_IDS = [
+  "temperate_grove",
+  "temperate_understory",
+  "plains_grove",
+  "plains_scrub",
+  "tropical_grove",
+  "tropical_understory",
+  "oasis_ring",
+  "scrub_edge",
+  "taiga_stand",
+  "tundra_edge",
+  "wetland_band",
+  "wetland_copse",
+  "mountain_massif_base",
+  "mountain_ridge",
+  "mountain_slope",
+  "mountain_tree_line",
+  "snow_ridge",
+  "rock_cluster",
+] as const;
+export type NaturalFeatureVisualLayoutId =
+  (typeof NATURAL_FEATURE_VISUAL_LAYOUT_IDS)[number];
+
+export type NaturalFeatureVisualPlacement = {
+  id: string;
+  frameIds: number[];
+  count: { min: number; max: number };
+  /** Stable composition family; its variants arrange objects as a readable natural group. */
+  layoutId: NaturalFeatureVisualLayoutId;
+  tagQuery?: MapTagQuery;
+  lod: NaturalFeatureRenderLod;
+  layer: NaturalFeatureVisualLayer;
+  /** Explicit render order inside one natural layer; higher values draw over lower ones. */
+  drawOrder?: number;
+  scale?: { min: number; max: number };
+  rotation?: boolean;
+};
+
+/** Scenario-authored recipe for transparent, terrain-complementary natural objects. */
+export type NaturalFeatureVisualRuleDefinition = {
+  id: `natural_feature_visual:${string}`;
+  tagQuery: MapTagQuery;
+  textureSetId: NaturalFeatureTextureSetId;
+  placements: NaturalFeatureVisualPlacement[];
+  priority?: number;
+  assetId?: `asset:${string}`;
+};
+
+export type NaturalFeatureVisualCatalog = {
+  visuals: NaturalFeatureVisualRuleDefinition[];
+  textureUrls: Partial<Record<NaturalFeatureTextureSetId, string>>;
+};
+
+export type MapVisualLayer =
+  | "base"
+  | "morphology"
+  | "feature"
+  | "water"
+  | "river"
+  | "coast";
 
 export type MapVisualProfileRule = {
   id: `map_visual_rule:${string}`;
@@ -232,8 +483,10 @@ export type MapVisualProfileDefinition = {
   rules: MapVisualProfileRule[];
 };
 
-export type MapTagQuery = string | {
-  all?: MapTagQuery[];
-  any?: MapTagQuery[];
-  not?: MapTagQuery | MapTagQuery[];
-};
+export type MapTagQuery =
+  | string
+  | {
+      all?: MapTagQuery[];
+      any?: MapTagQuery[];
+      not?: MapTagQuery | MapTagQuery[];
+    };

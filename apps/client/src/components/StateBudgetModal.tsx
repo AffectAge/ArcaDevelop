@@ -89,7 +89,6 @@ const EXPENSE_CHART_COLORS = ["#fb7185", "#f87171", "#f59e0b", "#f97316", "#a78b
 export function StateBudgetModal({
   open,
   onClose,
-  worldBase,
   turnId,
   countryId,
   countryName,

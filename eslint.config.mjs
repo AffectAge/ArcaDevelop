@@ -1,5 +1,13 @@
 import js from "@eslint/js";
+import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
+
+const reactHookMigrationRules = Object.fromEntries(
+  Object.entries(reactHooks.configs.flat.recommended.rules).map(([name, value]) => [
+    name,
+    Array.isArray(value) ? ["warn", ...value.slice(1)] : "warn"
+  ])
+);
 
 export default tseslint.config(
   {
@@ -30,6 +38,17 @@ export default tseslint.config(
     }
   },
   {
+    files: ["apps/client/src/**/*.{ts,tsx}"],
+    plugins: {
+      "react-hooks": reactHooks
+    },
+    rules: {
+      ...reactHookMigrationRules,
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn"
+    }
+  },
+  {
     files: ["**/*.test.ts"],
     languageOptions: {
       globals: {
@@ -40,11 +59,16 @@ export default tseslint.config(
     }
   },
   {
-    files: ["scripts/**/*.mjs", "apps/server/scripts/**/*.ts", "apps/server/src/**/*.ts"],
+    files: ["scripts/**/*.{mjs,cjs}", "apps/server/scripts/**/*.{ts,mjs}", "apps/server/src/**/*.ts"],
     languageOptions: {
       globals: {
+        AbortController: "readonly",
+        Buffer: "readonly",
+        clearTimeout: "readonly",
         console: "readonly",
-        process: "readonly"
+        process: "readonly",
+        require: "readonly",
+        setTimeout: "readonly"
       }
     }
   },

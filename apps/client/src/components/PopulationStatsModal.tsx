@@ -1,13 +1,13 @@
-import type { PopulationPop, RegionPopulation, WorldBase } from "@arcanorum/shared";
+import type { PopulationPop, WorldBase } from "@arcanorum/shared";
 import * as echarts from "echarts";
 import type { EChartsType } from "echarts";
-import { BarChart3, Briefcase, ChevronDown, ChevronRight, CircleDot, Globe2, ListTree, MapPinned, RotateCcw, Rows3, Users } from "lucide-react";
+import { ChevronDown, ChevronRight, CircleDot, Globe2, ListTree, MapPinned, RotateCcw, Rows3 } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { fetchContentEntries } from "../lib/api";
 import type { UiTextKey } from "../i18n/uiText";
 import { useUiText } from "../i18n/useUiText";
 import { AppButton } from "./templates/AppButton";
-import { AppModal, AppModalHeader } from "./templates/AppModal";
+import { AppModal } from "./templates/AppModal";
 
 type Props = {
   open: boolean;
@@ -165,13 +165,6 @@ function formatCompact(value: number): string {
   return formatInt(value);
 }
 
-function formatSignedInt(value: number): string {
-  const rounded = Math.round(value);
-  if (rounded > 0) return `+${formatInt(rounded)}`;
-  if (rounded < 0) return `-${formatInt(Math.abs(rounded))}`;
-  return "0";
-}
-
 function round3(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Number(value.toFixed(3));
@@ -188,10 +181,6 @@ function colorFromId(id: string): string {
 function normalizeColor(value: string | null | undefined, id: string): string {
   if (value && /^#[0-9a-fA-F]{6}$/.test(value.trim())) return value.trim();
   return colorFromId(id);
-}
-
-function getPopulationTotal(population: RegionPopulation | null | undefined): number {
-  return Math.max(0, Math.floor((population?.pops ?? []).reduce((sum, pop) => sum + Math.max(0, Number(pop.size)), 0)));
 }
 
 function resolveScopeRegionIds(worldBase: WorldBase | null, scope: ViewMode, countryId: string): string[] {

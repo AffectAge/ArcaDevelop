@@ -46,6 +46,12 @@ Error responses should include:
 - `BUILD_PLACEMENT_FEATURE_DENIED` and `BUILD_PLACEMENT_FEATURE_NOT_ALLOWED`: feature rules reject the target hex.
 - `BUILD_PLACEMENT_WATER_DENIED` and `BUILD_PLACEMENT_WATER_NOT_ALLOWED`: water rules reject the target hex.
 
+## Static Map Artifact Codes
+
+- `MAP_ARTIFACT_UNAVAILABLE`: the active scenario does not have a complete validated client map manifest/artifact set, or a declared identity/gzip/Brotli file is missing, has the wrong length or SHA-256, or fails compression-parity validation.
+- `MAP_VERSION_MISMATCH`: a navigation/chunk request omitted the version or used a version other than the active manifest's `artifactVersion`; the client must reload the manifest.
+- `MAP_CHUNK_NOT_FOUND`: the requested chunk ID is not present in the active manifest. Raw route input is never resolved as a filesystem path.
+
 ## Settlement / Found City Codes
 
 - `COLONIZER_NOT_FOUND`: the `FOUND_CITY` order references a missing colonizer, a non-colonizer civilian unit, or a unit owned by another country.

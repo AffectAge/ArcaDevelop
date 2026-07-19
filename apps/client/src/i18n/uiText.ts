@@ -1788,11 +1788,16 @@ export type UiTextKey =
   | "map.lens.activeLens"
   | "hexMap.title"
   | "hexMap.renderer"
-  | "hexMap.pixiRenderer"
+  | "hexMap.phaserRenderer"
   | "hexMap.loadingTitle"
   | "hexMap.loadingDescription"
   | "hexMap.artifactErrorTitle"
   | "hexMap.artifactErrorDescription"
+  | "hexMap.workerErrorDescription"
+  | "hexMap.versionMismatchDescription"
+  | "hexMap.chunkNotFoundDescription"
+  | "hexMap.contextLostDescription"
+  | "hexMap.retry"
   | "hexMap.renderErrorTitle"
   | "hexMap.renderErrorDescription"
   | "hexMap.tiles"
@@ -1956,6 +1961,9 @@ export type UiTextKey =
   | "hexMap.unitTrainingPlacementHud"
   | "hexMap.unitTrainingUnavailable"
   | "hexMap.cityPendingNameFallback"
+  | "hexMap.cityLabelAria"
+  | "hexMap.cityLabelPending"
+  | "hexMap.cityLabelProgressAria"
   | "hexMap.build"
   | "hexMap.colonize"
   | "hexMap.admin"
@@ -5447,13 +5455,18 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.lens.activeLens": "Lens",
     "hexMap.title": "Hex world",
     "hexMap.renderer": "Renderer",
-    "hexMap.pixiRenderer": "PixiJS hex",
+    "hexMap.phaserRenderer": "Phaser textured hexes",
     "hexMap.loadingTitle": "Loading map",
     "hexMap.loadingDescription": "The server is preparing the authoritative scenario map.",
     "hexMap.artifactErrorTitle": "Map artifact unavailable",
     "hexMap.artifactErrorDescription": "The server did not return the authoritative hex map artifact.",
+    "hexMap.workerErrorDescription": "The map worker stopped while loading or building visible chunks. Retry to restart the current map version.",
+    "hexMap.versionMismatchDescription": "The scenario map changed while chunks were loading. Retry to request its current manifest.",
+    "hexMap.chunkNotFoundDescription": "A visible map chunk is missing from the current scenario artifact. Retry to reload the versioned manifest.",
+    "hexMap.contextLostDescription": "The graphics context could not be restored safely. Retry to recreate the map renderer.",
+    "hexMap.retry": "Retry map",
     "hexMap.renderErrorTitle": "Map renderer unavailable",
-    "hexMap.renderErrorDescription": "The terrain shader or material pack failed to initialize. The map is blocked instead of using a fallback renderer.",
+    "hexMap.renderErrorDescription": "The textured map atlas or Phaser renderer failed to initialize. Retry to recreate the map safely.",
     "hexMap.tiles": "Hexes",
     "hexMap.seed": "Seed",
     "hexMap.selected": "Selected hex",
@@ -5615,6 +5628,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.unitTrainingPlacementHud": "Select a controlled deployment hex for this unit.",
     "hexMap.unitTrainingUnavailable": "This hex cannot train the selected unit.",
     "hexMap.cityPendingNameFallback": "New city",
+    "hexMap.cityLabelAria": "{city}, owned by {owner}",
+    "hexMap.cityLabelPending": "Founding",
+    "hexMap.cityLabelProgressAria": "Foundation progress for {city}",
     "hexMap.build": "Build",
     "hexMap.colonize": "Colonize",
     "hexMap.admin": "Admin",
@@ -9105,13 +9121,18 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "map.lens.activeLens": "Линза",
     "hexMap.title": "Гекс-мир",
     "hexMap.renderer": "Рендерер",
-    "hexMap.pixiRenderer": "PixiJS hex",
+    "hexMap.phaserRenderer": "Phaser: текстурные гексы",
     "hexMap.loadingTitle": "Загрузка карты",
     "hexMap.loadingDescription": "Сервер подготавливает авторитетную карту сценария.",
     "hexMap.artifactErrorTitle": "Артефакт карты недоступен",
     "hexMap.artifactErrorDescription": "Сервер не вернул авторитетный артефакт гекс-карты.",
+    "hexMap.workerErrorDescription": "Фоновый поток карты остановился при загрузке или построении видимых чанков. Повторите попытку, чтобы заново запустить текущую версию карты.",
+    "hexMap.versionMismatchDescription": "Карта сценария изменилась во время загрузки чанков. Повторите попытку, чтобы запросить актуальный манифест.",
+    "hexMap.chunkNotFoundDescription": "В текущем артефакте сценария отсутствует видимый чанк карты. Повторите попытку, чтобы перезагрузить версионный манифест.",
+    "hexMap.contextLostDescription": "Графический контекст не удалось безопасно восстановить. Повторите попытку, чтобы пересоздать рендерер карты.",
+    "hexMap.retry": "Повторить загрузку карты",
     "hexMap.renderErrorTitle": "Рендерер карты недоступен",
-    "hexMap.renderErrorDescription": "Шейдер местности или набор материалов не инициализировался. Карта заблокирована вместо использования резервного рендера.",
+    "hexMap.renderErrorDescription": "Текстурный атлас карты или Phaser-рендерер не инициализировался. Повторите попытку, чтобы безопасно пересоздать карту.",
     "hexMap.tiles": "Гексы",
     "hexMap.seed": "Сид",
     "hexMap.selected": "Выбранный гекс",
@@ -9273,6 +9294,9 @@ const uiText: Record<UiLocale, Record<UiTextKey, string>> = {
     "hexMap.unitTrainingPlacementHud": "Выберите контролируемый гекс размещения для этого юнита.",
     "hexMap.unitTrainingUnavailable": "На этом гексе нельзя тренировать выбранный юнит.",
     "hexMap.cityPendingNameFallback": "Новый город",
+    "hexMap.cityLabelAria": "{city}, владелец: {owner}",
+    "hexMap.cityLabelPending": "Основание",
+    "hexMap.cityLabelProgressAria": "Прогресс основания города {city}",
     "hexMap.build": "Строить",
     "hexMap.colonize": "Колонизировать",
     "hexMap.admin": "Админ",

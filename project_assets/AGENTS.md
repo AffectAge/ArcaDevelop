@@ -1,11 +1,8 @@
-# Project Assets Agent Guide
+# Project assets guide
 
-Always start from root `AGENTS.md` and `docs/README.md` before using this folder guide.
+Always start from root `AGENTS.md` and `docs/README.md`.
 
-Use this guide for `project_assets`.
-
-- Store only source/reference assets and project-owned asset working files here.
-- Do not store secrets, credentials, private player/admin data, or `.env` files.
-- Scenario-authored runtime assets belong in scenario data under `apps/server/data/scenarios/<scenario_id>/common/assets/*.json` and generated/runtime upload paths, not as ad-hoc references from code.
-- Keep asset IDs stable when assets are referenced by scenario data.
-- Large generated outputs should be documented and reproducible rather than manually edited.
+- Store source/reference art and project-owned working files only; runtime scenario assets belong to scenario data.
+- Keep stable asset IDs, provenance, licenses/creation notes, and reproducible generation commands.
+- Generated outputs are not hand-edited; rebuild them through documented scripts and validate manifests/hashes.
+- Do not store secrets, credentials, `.env` files, or private player/admin data.

@@ -70,9 +70,9 @@ Scenario-owned uploaded assets live under `assets/uploads/` inside the scenario 
 
 ## Scenario Map Settings
 
-`map/hex-settings.json` is the scenario-owned source for generated map geography. It uses the sectioned v2 format with `seed`, `width`, `height`, `hexSize`, `chunkSize`, `wrapX: false`, and `generation.landmasses`, `generation.climate`, `generation.rivers`, `generation.regions`, and `generation.tags`.
+`map/hex-settings.json` is the scenario-owned source for generated map geography. It uses the sectioned v2 format with `seed`, `width`, `height`, `hexSize`, `chunkSize`, boolean `wrapX`, and `generation.landmasses`, `generation.climate`, `generation.rivers`, `generation.regions`, and `generation.tags`. `wrapX: true` wraps horizontal neighbor lookup only; the pointy-top offset artifact still uses rectangular `q`/`r` bounds.
 
-Supported scripts are `continents`, `pangaea`, and `archipelago`. Applying a scenario regenerates `.generated/hex-map.json` and `.generated/regions.json` when the settings hash changes. Those generated files are runtime artifacts, not authored source.
+Supported scripts are `continents`, `pangaea`, and `archipelago`. Applying a scenario regenerates `.generated/hex-map.json` and `.generated/regions.json` when the settings hash changes, then creates the content-addressed `.generated/hex-map-client/<artifactVersion>/` manifest, compact navigation file, Windows-safe chunks, and gzip/Brotli variants. Static generated feature changes also change the client artifact version. These generated files are runtime artifacts, not authored source.
 
 `generation.landmasses` can constrain landmass scale with hex-count ranges:
 
@@ -95,6 +95,46 @@ River classes are derived from edge width, downstream connection, distance to mo
 The generator applies a small deterministic erosion-like smoothing pass to reduce extreme local elevation drops before final terrain, biome, morphology, and movement tags are resolved. It is intentionally bounded and does not replace the scenario-owned map settings or public `mapTags`.
 
 Map generation exposes closed, localized `mapTags` on hexes. Scenario rules should use `tagQuery` for geography-sensitive deposits, features, building placement, adjacency, and visual rules. Do not author rules against private generator plate or landmass internals.
+
+### Natural-object recipes
+
+Natural geography uses one generated `ecoregion:*` tag, a detailed `natural:*` tag (for example `natural:coniferous_forest`, `natural:mangrove`, or `natural:rock_outcrop`), and where applicable `vegetation:sparse`, `vegetation:normal`, or `vegetation:dense`. The canonical tags continue to drive rules and movement; they are not renderer-private data.
+
+Scenario files in `common/natural_feature_visuals/*.json` select one terrain-oriented atlas and provide placement recipes. Each recipe lists only valid frame IDs `0..15`, a deterministic count range, named composition layout, LOD, layer, optional tag query, `drawOrder`, scale, and rotation. Layouts such as `taiga_stand`, `wetland_band`, `oasis_ring`, and `mountain_slope` pick a stable, hand-arranged composition rather than uniformly scattering objects. `drawOrder` is an integer from `0` to `10` inside one layer; larger values render over smaller ones. `mountain` and `glacial_mountain` are mutually exclusive and each produces exactly one dominant central massif per hex; `highland` is reserved for smaller rock outcrops.
+
+Valid layouts are `temperate_grove`, `temperate_understory`, `plains_grove`, `plains_scrub`, `tropical_grove`, `tropical_understory`, `oasis_ring`, `scrub_edge`, `taiga_stand`, `tundra_edge`, `wetland_band`, `wetland_copse`, `mountain_massif_base`, `mountain_ridge`, `mountain_slope`, `mountain_tree_line`, `snow_ridge`, and `rock_cluster`. `mountain_massif_base` anchors one dominant peak below the hex centre; `mountain_ridge` places smaller peaks above it, producing a ridge without adding runtime sprites. The scenario validator rejects an unknown name.
+
+```json
+{
+  "id": "natural_feature_visual:taiga_objects",
+  "tagQuery": { "all": ["ecoregion:taiga", "natural:coniferous_forest"] },
+  "textureSetId": "tundra",
+  "placements": [
+    {
+      "id": "taiga_far",
+      "frameIds": [0, 1, 2],
+      "count": { "min": 1, "max": 2 },
+      "layoutId": "taiga_stand",
+      "lod": "simplified",
+      "layer": "vegetation",
+      "scale": { "min": 0.68, "max": 0.92 },
+      "rotation": true
+    },
+    {
+      "id": "taiga_near",
+      "frameIds": [0, 1, 2, 3],
+      "count": { "min": 4, "max": 9 },
+      "layoutId": "taiga_stand",
+      "tagQuery": { "any": ["vegetation:normal", "vegetation:dense"] },
+      "lod": "detailed",
+      "layer": "vegetation"
+    }
+  ],
+  "priority": 20
+}
+```
+
+The base game ships ten terrain-oriented sheets under `game-assets/phaser/natural_features/`, with sixteen isolated transparent 128×128 objects per sheet. `mountain_features.webp` is dedicated to full-hex massifs and ridges, `glacial_mountain_features.webp` overlays glaciers and ice on `ecoregion:glacial_mountains` peaks, while `highland_features.webp` remains for smaller outcrops. They may not contain soil, grass, water, a terrain patch, a continuous lower strip, or painted cast/contact shadows. Terrain remains the sole ground layer. The renderer only bakes recipes for visible chunks; it never retains one runtime tree sprite per object.
 
 Authored asset registry entries live in `common/assets/*.json` and point to local files under scenario `assets/`:
 
@@ -377,11 +417,14 @@ Scenario-authored buildings live in `scenarios/<scenarioId>/common/buildings/*.j
   "inputs": [
     { "goodId": "good:grain", "amount": 5, "minLevel": 2, "maxLevel": 4 }
   ],
-  "outputs": [
-    { "goodId": "good:flour", "amount": 8, "minLevel": 2 }
-  ],
+  "outputs": [{ "goodId": "good:flour", "amount": 8, "minLevel": 2 }],
   "extractions": [
-    { "goodId": "good:ore", "amount": 10, "requiresDeposit": true, "minLevel": 3 }
+    {
+      "goodId": "good:ore",
+      "amount": 10,
+      "requiresDeposit": true,
+      "minLevel": 3
+    }
   ]
 }
 ```
@@ -405,8 +448,15 @@ New building construction requires a `targetHexId` chosen from a controlled regi
   "adjacencyEffects": [
     {
       "id": "river_watermill_bonus",
-      "when": { "adjacentToRiver": true, "neighborTagQuery": { "any": ["river:major", "river:navigable"] } },
-      "modifier": { "target": "building.throughput", "operation": "multiply", "value": 1.1 }
+      "when": {
+        "adjacentToRiver": true,
+        "neighborTagQuery": { "any": ["river:major", "river:navigable"] }
+      },
+      "modifier": {
+        "target": "building.throughput",
+        "operation": "multiply",
+        "value": 1.1
+      }
     }
   ]
 }
@@ -529,7 +579,11 @@ Event options may define `aiWeight` rules for automatic timeout resolution. If a
   "aiWeight": [
     { "base": 5 },
     {
-      "if": { "type": "country_resource_above", "resource": "ducats", "value": 100 },
+      "if": {
+        "type": "country_resource_above",
+        "resource": "ducats",
+        "value": 100
+      },
       "add": 25
     }
   ]
@@ -589,7 +643,11 @@ Events may declare `chain` followups:
         "eventId": "event:industrial_unrest_followup",
         "delayTurns": 2,
         "chancePct": 75,
-        "conditions": { "type": "country_resource_above", "resource": "ducats", "value": 10 }
+        "conditions": {
+          "type": "country_resource_above",
+          "resource": "ducats",
+          "value": 10
+        }
       }
     ]
   }
@@ -652,11 +710,23 @@ Example:
         "pick": { "orderBy": "population", "direction": "desc" }
       }
     },
-    "startTrigger": { "type": "country_resource_above", "resource": "ducats", "value": 25 },
-    "completeTrigger": { "type": "region_has_building", "targetId": "building:factory" },
+    "startTrigger": {
+      "type": "country_resource_above",
+      "resource": "ducats",
+      "value": 25
+    },
+    "completeTrigger": {
+      "type": "region_has_building",
+      "targetId": "building:factory"
+    },
     "timeoutTurns": 12,
     "onCompleteEffects": [
-      { "type": "add_resource", "resource": "science", "amount": 10, "labelKey": "resourceLedger.source.generic" }
+      {
+        "type": "add_resource",
+        "resource": "science",
+        "amount": 10,
+        "labelKey": "resourceLedger.source.generic"
+      }
     ],
     "events": {
       "onComplete": ["event:industrial_success"]
@@ -699,6 +769,7 @@ Validation/build tooling should fail loudly instead of silently repairing author
 ## Arcawiki
 
 Arcawiki should explain gameplay to players, not implementation internals.
+
 ## Resource Ledger Defines
 
 Scenario defines may include `resourceLedger.retentionTurns` and `resourceLedger.maxEntriesPerTurn`. Retention controls how many recent turns of country resource flow history are persisted for explanations; max entries bounds one turn's ledger size. Invalid values fail scenario validation.

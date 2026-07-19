@@ -2,7 +2,6 @@ import {
   ArrowDown,
   ArrowDownUp,
   ArrowUp,
-  CheckCircle2,
   Clock3,
   Filter,
   Plus,
@@ -226,24 +225,6 @@ export function MarketSanctionsModal({ open, onClose, token, countryId, marketId
     () => rulesWithValidation.filter((row) => !row.error),
     [rulesWithValidation],
   );
-
-  const previewStats = useMemo(() => {
-    const banCount = validRules.filter((row) => row.mode === "ban").length;
-    const capRows = validRules.filter((row) => row.mode === "cap");
-    const capCount = capRows.length;
-    const capTotal = capRows.reduce((sum, row) => sum + Math.max(0, Number(row.capAmount || 0)), 0);
-    const goodNames = validRules
-      .map((row) => goods.find((g) => g.id === row.goodId)?.name ?? row.goodId)
-      .slice(0, 8);
-    return {
-      totalRules: validRules.length,
-      banCount,
-      capCount,
-      capTotal,
-      goodNames,
-      overflowCount: Math.max(0, validRules.length - goodNames.length),
-    };
-  }, [validRules, goods]);
 
   const filteredSanctions = useMemo(() => {
     return sanctions.filter((sanction) => {

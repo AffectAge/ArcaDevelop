@@ -1,5 +1,5 @@
 {
-  "seed": "default",
+  "seed": "defaultseed",
   "width": 360,
   "height": 160,
   "hexSize": 18,
@@ -19,8 +19,8 @@
       "landRatio": 0.60,
       "islandDensity": "high",
       "islandSize": {
-        "min": 20,
-        "max": 200
+        "min": 10,
+        "max": 20
       },
       "edgeOceanMargin": {
         "min": 5,
@@ -38,8 +38,8 @@
       "crossingPenalty": 1
     },
     "regions": {
-      "targetLandRegionSize": 74,
-      "targetWaterRegionSize": 140,
+      "targetLandRegionSize": 150,
+      "targetWaterRegionSize": 280,
       "respectLandmassBoundaries": true
     },
     "tags": {

@@ -203,6 +203,7 @@ function buildExpectedAuthoredPaths(): Record<string, string> {
     modifier: "modifiers",
     mapFeatureGenerator: "mapFeatureGenerators",
     mapFeatureVisual: "mapFeatureVisuals",
+    naturalFeatureVisual: "naturalFeatureVisuals",
     interestGroup: "interestGroups",
     party: "parties",
     company: "companies",

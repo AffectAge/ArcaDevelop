@@ -235,6 +235,13 @@ function stripInternalTile(tile: TileDraft): HexTile {
     morphology: _morphology,
     ...publicTile
   } = tile;
+  void _landmassId;
+  void _isHomeland;
+  void _isIsland;
+  void _internalTerrain;
+  void _internalFeature;
+  void _civBiome;
+  void _morphology;
   return {
     ...publicTile,
     regionId: publicTile.regionId ?? "region:hex_0_0",
@@ -246,7 +253,7 @@ function normalizeHexMapSettings(settings: HexMapSettings): HexMapSettings {
   return {
     ...DEFAULT_HEX_MAP_SETTINGS,
     ...settings,
-    wrapX: false,
+    wrapX: settings.wrapX,
     generation: {
       ...DEFAULT_HEX_MAP_SETTINGS.generation,
       ...(settings.generation ?? {}),
@@ -1035,7 +1042,7 @@ function buildRiverMouthDistanceByEdgeKey(
     visiting.add(key);
     const source = tileById.get(edge.hexId);
     const target = source ? getRiverTargetTile(source, edge.direction, tileById, settings) : null;
-    let distance = 99;
+    let distance: number;
     if (!target || target.waterKind) {
       distance = 0;
     } else {
@@ -1149,7 +1156,7 @@ function assignCoastalWaterToLandRegions(tiles: TileDraft[], tileById: Map<strin
 }
 
 function applyMapTags(tiles: TileDraft[], riverEdges: readonly HexEdgeRecord[] = [], settings?: HexMapSettings): void {
-  const maxR = Math.max(1, Math.max(...tiles.map((tile) => tile.r)));
+  const maxR = tiles.reduce((maximum, tile) => Math.max(maximum, tile.r), 1);
   const riverClassByTileId = collectRiverClassByTile(riverEdges, tiles, settings);
   for (const tile of tiles) {
     const tags = new Set<HexMapTag>();
@@ -1159,14 +1166,19 @@ function applyMapTags(tiles: TileDraft[], riverEdges: readonly HexEdgeRecord[] =
     if (tile.waterKind === "lake" || tile.riverMask > 0) tags.add("water:fresh");
     if (!tile.waterKind) {
       tags.add(`biome:${tile.civBiome}`);
+      tags.add(resolveEcoregionTag(tile));
       tags.add(`morphology:${tile.morphology}`);
       tags.add(tile.isIsland ? "landmass:island" : "landmass:continent");
       if (!tile.isIsland) tags.add(tile.isHomeland ? "continent:homeland" : "continent:distant");
     }
     if (tile.waterKind === "sea" || tile.waterKind === "lake") tags.add("feature:aquatic");
-    if (tile.internalFeature === "forest" || tile.internalFeature === "dense_forest" || tile.internalFeature === "jungle" || tile.internalFeature === "scrub") tags.add("feature:vegetated");
-    if (tile.internalFeature === "marsh" || tile.internalTerrain === "wetland") tags.add("feature:wet");
-    if (tile.internalFeature === "snowcap" || tile.internalTerrain === "snow") tags.add("feature:snow");
+    const naturalFeature = resolveNaturalFeatureTag(tile, settings?.seed ?? "default");
+    if (naturalFeature) {
+      tags.add(naturalFeature.tag);
+      if (naturalFeature.vegetationDensity) tags.add(naturalFeature.vegetationDensity);
+      if (isVegetatedNaturalFeature(naturalFeature.tag)) tags.add("feature:vegetated");
+      if (isWetNaturalFeature(naturalFeature.tag)) tags.add("feature:wet");
+    }
     tags.add(tile.waterKind ? "fertility:barren" : fertilityTag(tile));
     tags.add(rainfallTag(tile.moisture));
     tags.add(slopeTag(tile.elevation, tile.morphology));
@@ -1184,6 +1196,90 @@ function applyMapTags(tiles: TileDraft[], riverEdges: readonly HexEdgeRecord[] =
     if (tile.morphology !== "flat" || tags.has("feature:vegetated") || tags.has("feature:wet") || tile.waterKind === "ocean") tags.add("movement:stop_on_enter");
     tile.mapTags = [...tags].sort();
   }
+}
+
+type NaturalFeatureTag = `natural:${string}`;
+type VegetationDensityTag = `vegetation:${string}`;
+type EcoregionTag = `ecoregion:${string}`;
+
+function resolveEcoregionTag(tile: TileDraft): EcoregionTag {
+  if (tile.morphology === "mountainous") {
+    return tile.elevation >= 0.88 ? "ecoregion:glacial_mountains" : "ecoregion:alpine_tundra";
+  }
+  if (tile.internalTerrain === "wetland") {
+    return tile.isCoastal && tile.temperature > 0.58 ? "ecoregion:mangrove" : "ecoregion:wetland";
+  }
+  if (tile.civBiome === "desert") return "ecoregion:desert";
+  if (tile.civBiome === "tropical") {
+    return tile.moisture > 0.5 ? "ecoregion:tropical_forest" : "ecoregion:savanna";
+  }
+  if (tile.civBiome === "tundra") {
+    return tile.temperature >= 0.2 && tile.moisture > 0.46 && tile.elevation < 0.72
+      ? "ecoregion:taiga"
+      : "ecoregion:tundra";
+  }
+  return tile.moisture < 0.46 ? "ecoregion:steppe" : "ecoregion:temperate_forest";
+}
+
+function resolveNaturalFeatureTag(
+  tile: TileDraft,
+  seed: string,
+): { tag: NaturalFeatureTag; vegetationDensity?: VegetationDensityTag } | null {
+  if (tile.waterKind) return null;
+  const variation = stableUnit(`${seed}:${tile.id}:natural-feature`);
+  const density = resolveVegetationDensity(tile, variation);
+  const coastal = tile.isCoastal;
+  const ecoregion = resolveEcoregionTag(tile);
+
+  if (tile.internalTerrain === "snow" || tile.morphology === "mountainous") {
+    if (tile.elevation >= 0.88) return null;
+    if (tile.temperature > 0.28 && tile.moisture > 0.48 && variation > 0.48) {
+      return { tag: "natural:alpine_conifers", vegetationDensity: density };
+    }
+    return { tag: "natural:rock_outcrop" };
+  }
+  if (tile.civBiome === "desert") {
+    if (tile.moisture > 0.24 && tile.distanceToWater <= 1 && variation > 0.72) return { tag: "natural:oasis", vegetationDensity: "vegetation:normal" };
+    return variation > 0.72 ? { tag: "natural:shrubland", vegetationDensity: "vegetation:sparse" } : null;
+  }
+  if (tile.internalTerrain === "wetland") {
+    if (coastal && tile.temperature > 0.58) return { tag: "natural:mangrove", vegetationDensity: density };
+    if (tile.temperature > 0.5 && variation > 0.43) return { tag: "natural:swamp_forest", vegetationDensity: density };
+    return { tag: "natural:marsh", vegetationDensity: density };
+  }
+  if (tile.civBiome === "tropical") {
+    if (coastal && tile.moisture > 0.72) return { tag: "natural:mangrove", vegetationDensity: density };
+    if (tile.moisture > 0.72) return { tag: "natural:tropical_rainforest", vegetationDensity: density };
+    if (tile.moisture > 0.5) return { tag: "natural:tropical_dry_forest", vegetationDensity: density };
+    return variation > 0.38 ? { tag: "natural:savanna", vegetationDensity: "vegetation:sparse" } : null;
+  }
+  if (ecoregion === "ecoregion:taiga") {
+    if (variation > 0.36) return { tag: "natural:coniferous_forest", vegetationDensity: density };
+    return variation > 0.16 ? { tag: "natural:shrubland", vegetationDensity: "vegetation:sparse" } : null;
+  }
+  if (ecoregion === "ecoregion:tundra") {
+    return variation > 0.68 ? { tag: "natural:shrubland", vegetationDensity: "vegetation:sparse" } : null;
+  }
+  if (tile.morphology === "rough" && variation > 0.72) return { tag: "natural:rock_outcrop" };
+  if (tile.internalFeature === "scrub" || (tile.moisture < 0.4 && variation > 0.7)) return { tag: "natural:shrubland", vegetationDensity: "vegetation:sparse" };
+  if (tile.moisture > 0.62 && variation > 0.42) return { tag: "natural:mixed_forest", vegetationDensity: density };
+  if (tile.moisture > 0.5 && variation > 0.5) return { tag: "natural:broadleaf_forest", vegetationDensity: density };
+  return null;
+}
+
+function resolveVegetationDensity(tile: TileDraft, variation: number): VegetationDensityTag {
+  const score = tile.moisture * 0.7 + variation * 0.3;
+  if (score > 0.76) return "vegetation:dense";
+  if (score < 0.44) return "vegetation:sparse";
+  return "vegetation:normal";
+}
+
+function isVegetatedNaturalFeature(tag: NaturalFeatureTag): boolean {
+  return tag !== "natural:marsh" && tag !== "natural:rock_outcrop";
+}
+
+function isWetNaturalFeature(tag: NaturalFeatureTag): boolean {
+  return tag === "natural:marsh" || tag === "natural:swamp_forest" || tag === "natural:mangrove";
 }
 
 function collectRiverClassByTile(

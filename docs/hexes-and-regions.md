@@ -76,6 +76,8 @@ Use stable authored region IDs for authored gameplay regions and coordinate IDs 
 
 Generated region IDs must be based on anchor coordinates, not transient cluster counters. Authored regions should still use stable readable IDs across saves, localization, diplomacy, AI strategy, and scenario diffs.
 
+The underlying artifact remains a rectangular pointy-top offset grid even when `wrapX` is enabled. Horizontal neighbor lookup may wrap from `q = 0` to `q = width - 1`; rows never wrap and authored/generated coordinates always remain inside the same rectangular bounds.
+
 ## Map Tags And River Edges
 
 `HexTile.mapTags` is the public geography vocabulary for scenario rules and player inspection. Tags use a closed `namespace:value` format with localization keys `mapTag.<namespace>.<value>`. Current namespaces cover fertility, rainfall, slope, latitude, elevation, landmass, continent role, river basin, river class, and coast state.
@@ -108,3 +110,5 @@ The runtime should derive bounded indexes at scenario load:
 - region adjacency derived from neighboring hexes.
 
 Static hex artifacts should be chunked and cached. World deltas should carry dynamic gameplay state, not resend static map tiles every turn.
+
+Client delivery uses a generated content-addressed manifest, row-major navigation artifact, and viewport chunks under `.generated/hex-map-client/<artifactVersion>/`. Each chunk contains primary tiles, a one-neighbor visual halo for seam decisions, touching river/coast records, and primary-tile special features. Identity, gzip, and Brotli files are generated together; clients must not fall back to downloading the server's internal full `HexMapArtifact`.

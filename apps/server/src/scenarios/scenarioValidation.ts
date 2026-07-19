@@ -18,6 +18,13 @@ import {
   normalizeScenarioTurnTimerDefines,
 } from "./scenarioDefinesLoader";
 import { normalizeMapFeatureGenerator } from "./mapFeatureGeneration";
+import { normalizeNaturalFeatureVisual } from "./naturalFeatureVisuals";
+import { ensureScenarioMapArtifacts } from "./defaultScenarioBootstrap";
+import {
+  GENERATED_HEX_MAP_CLIENT_CURRENT_FILE,
+  GENERATED_HEX_MAP_CLIENT_DIRECTORY,
+  loadHexMapClientArtifactRuntime,
+} from "./hexMapClientArtifacts";
 
 export type ScenarioValidationIssueCode =
   | "MISSING_REQUIRED_FILE"
@@ -47,6 +54,7 @@ export type ScenarioValidationIssueCode =
   | "MAP_FEATURE_GENERATOR_IMPOSSIBLE"
   | "MAP_FEATURE_GENERATOR_DUPLICATE_HEX"
   | "INVALID_MAP_FEATURE_VISUAL"
+  | "INVALID_NATURAL_FEATURE_VISUAL"
   | "INVALID_ASSET_REGISTRY"
   | "FORBIDDEN_AUTHORED_ASSET_URL"
   | "FORBIDDEN_LEGACY_CONTENT_FIELD"
@@ -128,6 +136,7 @@ export const SCENARIO_ENTITY_DIRECTORIES = [
   { kind: "modifier", path: "common/modifiers" },
   { kind: "mapFeatureGenerator", path: "common/map_feature_generators" },
   { kind: "mapFeatureVisual", path: "common/map_feature_visuals" },
+  { kind: "naturalFeatureVisual", path: "common/natural_feature_visuals" },
   { kind: "interestGroup", path: "common/interestGroups" },
   { kind: "party", path: "common/parties" },
   { kind: "company", path: "common/companies" },
@@ -285,23 +294,6 @@ const EVENT_RESOURCE_IDS = new Set(["culture", "science", "religion", "colonizat
 const EVENT_CATEGORY_IDS = new Set(["system", "colonization", "politics", "economy", "military", "diplomacy"]);
 const EVENT_PRIORITY_IDS = new Set(["low", "medium", "high"]);
 const EVENT_VISIBILITY_IDS = new Set(["public", "private"]);
-const VALID_HEX_TERRAINS = new Set(["ocean", "sea", "lake", "coast", "plains", "grassland", "forest", "hills", "mountains", "desert", "tundra", "snow", "wetland"]);
-const VALID_HEX_FEATURES = new Set(["none", "forest", "dense_forest", "jungle", "marsh", "scrub", "snowcap"]);
-const VALID_HEX_BIOMES = new Set([
-  "deep_ocean",
-  "coastal_water",
-  "freshwater",
-  "temperate_grassland",
-  "temperate_forest",
-  "boreal_forest",
-  "tropical_rainforest",
-  "dry_scrubland",
-  "arid_desert",
-  "alpine",
-  "tundra",
-  "swamp",
-  "coastal_wetland",
-]);
 const VALID_HEX_WATER_KINDS = new Set(["ocean", "sea", "lake"]);
 const VALID_HEX_TEMPERATURE_BANDS = new Set(["frozen", "cold", "cool", "temperate", "warm", "hot"]);
 const VALID_HEX_MOISTURE_BANDS = new Set(["arid", "dry", "normal", "wet", "saturated"]);
@@ -370,6 +362,7 @@ export async function validateScenarioDirectory(
   validateJournalDefinitions(root, loadedEntities, localizationKeys, issues);
   validateMapFeatureGenerators(root, loadedEntities, issues);
   validateMapFeatureVisuals(root, loadedEntities, issues);
+  validateNaturalFeatureVisuals(root, loadedEntities, issues);
   validateUnitSkills(root, loadedEntities, issues);
   validateEntityLocalization(root, loadedEntities, localizationKeys, issues);
   await validateBuildingAtlases(root, loadedEntities, issues);
@@ -377,7 +370,7 @@ export async function validateScenarioDirectory(
   await validateCityAtlases(root, loadedEntities, issues);
   await validateFeatureAtlases(root, loadedEntities, issues);
   await validateGeneratedManifest(root, summary, issues, options.requireGeneratedIndexes === true);
-  await validateGeneratedMapArtifacts(root, issues);
+  await validateGeneratedMapArtifacts(root, issues, options.requireGeneratedIndexes === true);
 
   return {
     ok: issues.length === 0,
@@ -411,6 +404,7 @@ export async function buildScenarioGeneratedIndexes(scenarioDir: string): Promis
   await writeJson(join(generatedDir, GENERATED_MANIFEST), manifest);
   await writeJson(join(generatedDir, "entity-counts.json"), validation.summary);
   await writeJson(join(generatedDir, "hex-map-settings.json"), await loadHexMapSettings(root));
+  ensureScenarioMapArtifacts({ scenarioDir: root, forceGenerated: true });
 
   return manifest;
 }
@@ -611,7 +605,11 @@ function sanitizeBuildingAtlasId(buildingId: string): string {
   return buildingId.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
-async function validateGeneratedMapArtifacts(root: string, issues: ScenarioValidationIssue[]): Promise<void> {
+async function validateGeneratedMapArtifacts(
+  root: string,
+  issues: ScenarioValidationIssue[],
+  requireGeneratedIndexes: boolean,
+): Promise<void> {
   for (const fileName of ["hexes.json", "hex-map.json"]) {
     const artifactPath = join(root, GENERATED_DIR, fileName);
     if (!existsSync(artifactPath)) continue;
@@ -632,6 +630,22 @@ async function validateGeneratedMapArtifacts(root: string, issues: ScenarioValid
         message: `Generated map tile ${index} uses removed ${legacyField}; generated artifacts must be tag-only.`,
       });
       break;
+    }
+  }
+  const clientCurrentPath = join(
+    root,
+    GENERATED_DIR,
+    GENERATED_HEX_MAP_CLIENT_DIRECTORY,
+    GENERATED_HEX_MAP_CLIENT_CURRENT_FILE,
+  );
+  if (existsSync(clientCurrentPath) || requireGeneratedIndexes) {
+    const clientArtifacts = loadHexMapClientArtifactRuntime(root);
+    if (!clientArtifacts) {
+      issues.push({
+        code: "INVALID_GENERATED_INDEX",
+        path: normalizePath(relative(root, clientCurrentPath)),
+        message: "Generated client hex map artifacts are missing, incomplete, or invalid.",
+      });
     }
   }
 }
@@ -784,6 +798,22 @@ function validateMapFeatureVisuals(root: string, entities: LoadedEntity[], issue
       validateOptionalNumberField(frame.weight, `${visual.id}.frames[${index}].weight`, path, issues, { integer: true, min: 1 });
       validateMapFeatureVisualConditions(frame.conditions, `${visual.id}.frames[${index}].conditions`, path, issues);
     }
+  }
+}
+
+function validateNaturalFeatureVisuals(root: string, entities: LoadedEntity[], issues: ScenarioValidationIssue[]): void {
+  const seenIds = new Set<string>();
+  for (const visual of entities.filter((entity) => entity.kind === "naturalFeatureVisual")) {
+    const path = normalizePath(relative(root, visual.path));
+    const result = normalizeNaturalFeatureVisual(visual.data, path);
+    for (const issue of result.issues) {
+      issues.push({ code: "INVALID_NATURAL_FEATURE_VISUAL", path: issue.path, message: issue.message });
+    }
+    if (!result.definition) continue;
+    if (seenIds.has(result.definition.id)) {
+      issues.push({ code: "DUPLICATE_ID", path, message: `Duplicate natural feature visual id ${result.definition.id}.` });
+    }
+    seenIds.add(result.definition.id);
   }
 }
 
@@ -1329,11 +1359,11 @@ async function validateHexMapSettings(root: string, localizationKeys: Set<string
     });
   }
 
-  if (loaded.data.wrapX !== false) {
+  if (typeof loaded.data.wrapX !== "boolean") {
     issues.push({
       code: "INVALID_HEX_MAP_SETTINGS",
       path: "map/hex-settings.json",
-      message: "Hex map setting wrapX must be false for the current rectangular scenario map format.",
+      message: "Hex map setting wrapX must be a boolean.",
     });
   }
 
@@ -3018,10 +3048,6 @@ async function writeJson(path: string, data: unknown): Promise<void> {
 
 function isObject(value: unknown): value is JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function removeUndefined(value: JsonObject): JsonObject {
-  return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined));
 }
 
 function normalizePath(path: string): string {

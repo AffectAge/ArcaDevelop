@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  normalizeMovementPoints,
   WORLD_DELTA_MASK,
   type BuildingOwner,
   type CountryParliament,
@@ -211,11 +212,12 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
             getNeighborHexIds,
             getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number,
             getHex: getHexForUnitMovement,
-            getEnemyZoneOfControlHexIds: (countryId) =>
+            getEnemyZoneOfControlHexIds: (countryId, domain) =>
               getEnemyZoneOfControlHexIds({
                 worldBase: params.getWorldBase(),
                 unitTypes: params.getGameSettings().content.unitTypes,
                 countryId,
+                domain,
                 getNeighborHexIds,
               }),
           });
@@ -321,11 +323,12 @@ export function createTurnRuntime(params: TurnRuntimeParams) {
           movedUnitIds: movedMapUnitIds,
           news,
           getHexMovementCost: params.getHexMovementCost as (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number,
-          getEnemyZoneOfControlHexIds: (countryId) =>
+          getEnemyZoneOfControlHexIds: (countryId, domain) =>
             getEnemyZoneOfControlHexIds({
               worldBase: params.getWorldBase(),
               unitTypes: params.getGameSettings().content.unitTypes,
               countryId,
+              domain,
               getNeighborHexIds,
           }),
         });
@@ -470,13 +473,14 @@ function getEnemyZoneOfControlHexIds(params: {
   worldBase: WorldBase;
   unitTypes: readonly UnitTypeDefinition[];
   countryId: string;
+  domain: UnitDomain;
   getNeighborHexIds: (hexId: HexId) => HexId[];
 }): ReadonlySet<HexId> {
   const zones = new Set<HexId>();
   for (const unit of Object.values(params.worldBase.unitsById ?? {})) {
     if (unit.countryId === params.countryId || unit.status === "destroyed" || unit.status === "captured") continue;
     const unitType = params.unitTypes.find((candidate) => candidate.id === unit.unitTypeId);
-    if (!unitType || (unitType.domain !== "land" && unitType.domain !== "naval")) continue;
+    if (!unitType || unitType.domain !== params.domain || (unitType.domain !== "land" && unitType.domain !== "naval")) continue;
     for (const neighborId of params.getNeighborHexIds(unit.hexId)) {
       zones.add(neighborId);
     }
@@ -492,7 +496,7 @@ function refreshMapUnitsForTurn(params: {
     if (unit.status === "destroyed" || unit.status === "captured" || unit.status === "sleeping" || unit.status === "fortified") continue;
     const unitType = params.unitTypes.find((candidate) => candidate.id === unit.unitTypeId);
     if (!unitType) continue;
-    unit.movementPoints = Math.max(0, Math.floor(unitType.stats.movement));
+    unit.movementPoints = normalizeMovementPoints(unitType.stats.movement);
     unit.lastActionTurnId = null;
     if (unit.status === "fighting") unit.status = "idle";
   }

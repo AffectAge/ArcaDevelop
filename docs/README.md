@@ -12,6 +12,7 @@ This is the entrypoint for project documentation.
 - `docs/glossary.md` - shared project terminology.
 - `docs/definition-of-done.md` - completion checklist for implementation tasks.
 - `docs/programming-standards.md` - canonical day-to-day coding standards.
+- `docs/official-engineering-sources.md` - primary OpenAI, TypeScript, React, ESLint, WCAG, MDN, Node.js, and Phaser sources behind those standards.
 - `docs/engineering-standards.md` - code structure, typing, configuration, and error rules.
 - `docs/folder-structure.md` - current and target repository layout rules.
 - `docs/refactoring-plan.md` - phased plan for bringing obsolete code toward the agent rules.
@@ -58,18 +59,22 @@ This is the entrypoint for project documentation.
 - `docs/accessibility.md` - keyboard, focus, contrast, and readable UI.
 - `docs/localization.md` - i18n keys, namespaces, and error-code text.
 - `docs/theme-system.md` - scenario theme tokens and validation.
+- `docs/project-assets-map-art-folder-proposal.md` - source-art/provenance folder boundaries for reproducible map atlases.
 - `apps/client/src/components/templates/DEMO_ELEMENTS.md` - reusable UI template component catalog for modals, panels, buttons, form controls, chips, charts, and demo-maintenance rules.
 
 ## Scenario Authoring
 
 - `docs/modding-authoring.md` - scenario/modding authoring principles.
 - `docs/libraries.md` - approved library map and dependency approval policy.
+- `docs/dependency-eslint-react-hooks.md` - official React Hooks lint dependency rationale and scope.
 
 ## Architecture Decisions
 
 - `docs/adr/README.md` - when to write an ADR.
 - `docs/adr/ADR-0001-template.md` - ADR template.
 - `docs/adr/ADR-0002-per-entity-scenario-files.md` - accepted scenario per-entity file layout decision.
+- `docs/adr/ADR-0011-content-addressed-hex-map-streaming.md` - accepted worker-owned, content-addressed chunk streaming and client artifact format.
+- `docs/adr/ADR-0014-baked-natural-object-render-textures.md` - accepted deterministic individual natural-object recipes baked into visible chunk RenderTextures.
 
 ## Templates
 

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Tooltip } from "../Tooltip";
 import { Briefcase, type LucideIcon } from "lucide-react";
 
@@ -35,6 +35,18 @@ export function MapLensHud<TLayer extends string, TLens extends string>({
   onLayerToggle,
   onLensChange,
 }: Props<TLayer, TLens>) {
+  const previousLayersRef = useRef(layers);
+  const [activeByLayer, setActiveByLayer] = useState(() =>
+    buildMapLayerActiveState(layers),
+  );
+
+  useEffect(() => {
+    setActiveByLayer((current) =>
+      reconcileMapLayerActiveState(current, previousLayersRef.current, layers),
+    );
+    previousLayersRef.current = layers;
+  }, [layers]);
+
   return (
     <div className="arc-map-lens-hud pointer-events-auto absolute bottom-0 left-1/2 z-[34] w-[min(92vw,860px)] -translate-x-1/2 text-[var(--arc-color-text-soft)]">
       <div className="relative mx-auto mb-3 w-[min(100%,820px)]">
@@ -61,14 +73,28 @@ export function MapLensHud<TLayer extends string, TLens extends string>({
             >
               {layers.map((layer) => {
                 const Icon = layer.icon ?? Briefcase;
+                const active = activeByLayer[layer.id] ?? layer.active;
                 return (
-                  <Tooltip key={layer.id} content={layer.tooltip ?? layer.label}>
+                  <Tooltip
+                    key={layer.id}
+                    content={layer.tooltip ?? layer.label}
+                  >
                     <motion.button
                       type="button"
-                      onClick={() => onLayerToggle(layer.id)}
-                      className={getLensIconButtonClass(layer.active)}
+                      onClick={() => {
+                        setActiveByLayer((current) =>
+                          toggleMapLayerActiveState(
+                            current,
+                            layer.id,
+                            layer.active,
+                          ),
+                        );
+                        onLayerToggle(layer.id);
+                      }}
+                      className={getLensIconButtonClass(active)}
                       aria-label={layer.label}
-                      aria-pressed={layer.active}
+                      aria-pressed={active}
+                      data-map-layer-id={layer.id}
                     >
                       <Icon size={20} />
                     </motion.button>
@@ -101,4 +127,33 @@ export function MapLensHud<TLayer extends string, TLens extends string>({
       </div>
     </div>
   );
+}
+
+export type MapLayerActiveState = Readonly<Record<string, boolean>>;
+
+export function buildMapLayerActiveState<TLayer extends string>(
+  layers: ReadonlyArray<Pick<MapLayerOption<TLayer>, "id" | "active">>,
+): MapLayerActiveState {
+  return Object.fromEntries(layers.map((layer) => [layer.id, layer.active]));
+}
+
+export function toggleMapLayerActiveState<TLayer extends string>(
+  current: MapLayerActiveState,
+  layerId: TLayer,
+  fallback: boolean,
+): MapLayerActiveState {
+  return {
+    ...current,
+    [layerId]: !(current[layerId] ?? fallback),
+  };
+}
+
+export function reconcileMapLayerActiveState<TLayer extends string>(
+  current: MapLayerActiveState,
+  previousLayers: ReadonlyArray<MapLayerOption<TLayer>>,
+  nextLayers: ReadonlyArray<MapLayerOption<TLayer>>,
+): MapLayerActiveState {
+  return previousLayers === nextLayers
+    ? current
+    : buildMapLayerActiveState(nextLayers);
 }

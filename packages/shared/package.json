@@ -7,7 +7,7 @@
   "types": "src/index.ts",
   "scripts": {
     "build": "echo shared build skipped",
-    "lint": "echo shared lint skipped",
+    "lint": "eslint src --cache --cache-location ../../node_modules/.cache/eslint-shared",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },

@@ -22,7 +22,9 @@ project_assets/
 - `scripts` contains root-level build/data preparation scripts.
 - `project_assets` contains source/reference assets, not scenario-owned runtime uploads.
 
-Repo-owned base client assets that are part of the game itself live under `apps/client/public/game-assets/`. Resource point icons use `apps/client/public/game-assets/resource-icons/*.png`; generated hex terrain material textures use `apps/client/public/game-assets/hex-materials/*.png`. These assets are not scenario-owned uploads and are not configured through runtime game settings.
+`project_assets/map-art/` contains project-owned source sheets, provenance records, and reproducible build inputs for Phaser map atlases. `npm run map-assets:build` writes runtime PNGs and their hash manifest under `apps/client/public/game-assets/phaser/` plus scenario unit output paths; generated runtime files and scenario uploads do not belong in the source folder.
+
+Repo-owned base client assets that are part of the game itself live under `apps/client/public/game-assets/`. Resource point icons use `apps/client/public/game-assets/resource-icons/*.png`; generated Phaser terrain/object/edge atlases use `apps/client/public/game-assets/phaser/*.png`. These are fallback runtime assets; scenario overrides use stable `asset:*` references rather than direct authored URLs.
 Repo-owned fallback art uses the same tree; for example, the login/loading background fallback is `apps/client/public/game-assets/utils/fallback-auth-background.png` when the active scenario does not provide `assets/utils/auth-background.png`.
 
 ## Target Server Layout After Refactor
@@ -98,6 +100,7 @@ apps/client/src/
   i18n/
   theme/
   map/
+    rendering/
   testing/
 ```
 
@@ -114,6 +117,7 @@ Folder responsibilities:
 - `i18n`: localization keys, helpers, and validation.
 - `theme`: scenario theme loading and token application.
 - `map`: map-specific layers, selectors, and rendering helpers.
+- `map/rendering`: Phaser scene/controller, chunk tile layers, border masks, and atlas/frame selection. It may not own gameplay rules or React HUD state.
 - `testing`: client fixtures and test helpers.
 
 ## Target Shared Layout After Refactor

@@ -3,6 +3,7 @@ import type { HexMapIndexEntry } from "../map/hexIndex";
 export type AiColonizationCandidate = never;
 
 export function selectAiColonizationCandidates(_params: unknown): AiColonizationCandidate[] {
+  void _params;
   return [];
 }
 

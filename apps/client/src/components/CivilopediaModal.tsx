@@ -398,23 +398,22 @@ export function CivilopediaModal({
   const renderInlineParagraph = (text: string) => {
     const nodes: ReactNode[] = [];
     let remaining = text;
-    let key = 0;
     const tokenRegex = /\[img:([^\]|]+)(?:\|(\d{1,3}))?\]|\[color:(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/color\]/;
     while (remaining.length > 0) {
       const match = tokenRegex.exec(remaining);
       if (!match || match.index < 0) {
-        nodes.push(<Fragment key={`t-${key++}`}>{remaining}</Fragment>);
+        nodes.push(<Fragment key={`t-${nodes.length}`}>{remaining}</Fragment>);
         break;
       }
       if (match.index > 0) {
-        nodes.push(<Fragment key={`t-${key++}`}>{remaining.slice(0, match.index)}</Fragment>);
+        nodes.push(<Fragment key={`t-${nodes.length}`}>{remaining.slice(0, match.index)}</Fragment>);
       }
       if (match[1]) {
         const url = match[1];
         const size = Math.max(12, Math.min(64, Number(match[2] || 64)));
         nodes.push(
           <img
-            key={`img-${key++}`}
+            key={`img-${nodes.length}`}
             src={url}
             alt=""
             className="mx-1 inline-block rounded align-middle object-cover"
@@ -423,7 +422,7 @@ export function CivilopediaModal({
         );
       } else if (match[3]) {
         nodes.push(
-          <span key={`c-${key++}`} style={{ color: match[3] }} className="font-medium">
+          <span key={`c-${nodes.length}`} style={{ color: match[3] }} className="font-medium">
             {match[4]}
           </span>,
         );

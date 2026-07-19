@@ -31,6 +31,16 @@ const TEST_SETTINGS: HexMapSettings = {
 };
 
 describe("generateHexMap", () => {
+  it("preserves optional horizontal wrapping in the generated artifact", () => {
+    const artifact = generateHexMap({ ...TEST_SETTINGS, wrapX: true });
+
+    expect(artifact.settings.wrapX).toBe(true);
+    expect(getNeighborAxial({ q: 0, r: 0 }, 3, artifact.settings)).toEqual({
+      q: artifact.settings.width - 1,
+      r: 0,
+    });
+  });
+
   it("keeps generated islands separated from continents by a visible water buffer", () => {
     const artifact = generateHexMap(TEST_SETTINGS);
     const tileById = new Map<HexId, HexTile>(artifact.tiles.map((tile) => [tile.id, tile]));
@@ -63,6 +73,43 @@ describe("generateHexMap", () => {
 
     expect(landRegionIds.size).toBeGreaterThan(1);
     expect([...landRegionIds].every((regionId) => regionId.startsWith("region:hex_"))).toBe(true);
+  });
+
+  it("emits deterministic detailed natural-feature and vegetation-density tags", () => {
+    const first = generateHexMap(TEST_SETTINGS);
+    const second = generateHexMap(TEST_SETTINGS);
+    const firstNaturalTags = first.tiles.map((tile) => tile.mapTags.filter((tag) => tag.startsWith("natural:") || tag.startsWith("vegetation:")));
+    const secondNaturalTags = second.tiles.map((tile) => tile.mapTags.filter((tag) => tag.startsWith("natural:") || tag.startsWith("vegetation:")));
+    expect(firstNaturalTags).toEqual(secondNaturalTags);
+    expect(first.tiles.some((tile) => tile.mapTags.some((tag) => tag.startsWith("natural:")))).toBe(true);
+    for (const tile of first.tiles.filter((candidate) => candidate.mapTags.some((tag) => tag.startsWith("natural:")))) {
+      if (tile.mapTags.includes("natural:rock_outcrop" as HexMapTag)) continue;
+      expect(tile.mapTags.some((tag) => tag.startsWith("vegetation:"))).toBe(true);
+    }
+  });
+
+  it("keeps ecoregions and mandatory mountain geography internally consistent", () => {
+    const artifact = generateHexMap(TEST_SETTINGS);
+    const landTiles = artifact.tiles.filter((tile) => tile.waterKind == null);
+    expect(landTiles.every((tile) => tile.mapTags.filter((tag) => tag.startsWith("ecoregion:")).length === 1)).toBe(true);
+
+    for (const tile of landTiles) {
+      if (tile.mapTags.includes("ecoregion:tundra" as HexMapTag)) {
+        expect(tile.mapTags.includes("natural:coniferous_forest" as HexMapTag)).toBe(false);
+      }
+      if (tile.mapTags.includes("morphology:mountainous" as HexMapTag)) {
+        const isGlacialPeak = tile.mapTags.includes("ecoregion:glacial_mountains" as HexMapTag);
+        expect(tile.mapTags.some((tag) => [
+          "natural:rock_outcrop",
+          "natural:alpine_conifers",
+        ].includes(tag))).toBe(!isGlacialPeak);
+      }
+      if (tile.mapTags.includes("morphology:mountainous" as HexMapTag) && tile.elevation >= 0.88) {
+        expect(tile.mapTags.includes("ecoregion:glacial_mountains" as HexMapTag)).toBe(true);
+        expect(tile.mapTags.includes("feature:snow" as HexMapTag)).toBe(false);
+        expect(tile.mapTags.some((tag) => tag.startsWith("natural:"))).toBe(false);
+      }
+    }
   });
 });
 

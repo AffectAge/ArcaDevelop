@@ -1,58 +1,13 @@
-# Shared Contract Agents
+# Shared contracts guide
 
-Always start from root `AGENTS.md` and `docs/README.md` before using this folder guide.
+Always start from root `AGENTS.md` and `docs/README.md`.
 
-Use this guide for `packages/shared`.
+Read root `AGENTS.md`, `docs/api-ws-versioning.md`, `docs/concurrency.md`, and `docs/engineering-standards.md`.
 
-Also read:
-
-- `docs/api-ws-versioning.md`
-- `docs/engineering-standards.md`
-- `docs/concurrency.md`
-
-## Contract Steward Agent
-
-Shared types are the contract between client and server. Any world-model change must be updated across:
-
-- shared contracts,
-- server producers/validators,
-- client consumers/store/UI,
-- tests and docs.
-
-Do not add province-level heavy mechanic fields without explicit approval.
-
-New public contracts require stable names, typed payloads, stable error codes where relevant, compatibility/removal notes, and tests.
-
-## Region Contract Agent
-
-The shared world model must move toward region-first heavy mechanics:
-
-- region ownership/control,
-- region population,
-- region buildings,
-- region construction,
-- region resources,
-- region colonization,
-- region diplomacy transfer.
-
-Province contracts should remain focused on movement/map data and lightweight metadata.
-
-## Delta Protocol Agent
-
-World deltas must stay compact and versioned. When adding region state:
-
-- add explicit region delta sections,
-- keep province and region masks separate,
-- preserve ACK/replay behavior,
-- avoid full snapshots except bootstrap/resync,
-- add tests for apply/replay/idempotency.
-
-Rejected orders must use stable machine-readable error codes for localization.
-
-Do not encode player-facing text in shared protocol payloads when an error code/localization key is appropriate.
-
-## Resource Ledger Contract Agent
-
-Country resource mutations are represented by shared `ResourceFlow` records and bounded `resourceLedgerByTurn` history. `resourcesByCountry` remains the authoritative current balance for compatibility, validation, AI, and existing UI, but contracts must preserve ledger deltas so clients can explain income, expenses, net totals, categories, and recent entries without receiving full history every turn.
-
-`ResourceFlow.labelKey` is the player-facing label contract. Do not put raw player-facing text in ledger entries; use localization keys and optional params.
+- Shared types are the client/server contract. A model change updates validators, server producers, client consumers, tests, and docs together.
+- Keep public names stable and payloads typed. Use machine-readable error codes and localization keys, not player-facing prose.
+- Regions own heavy state; province/hex contracts stay focused on geometry, terrain, adjacency, passability, cost, and movement.
+- Keep delta sections explicit, compact, versioned, idempotent, and ACK/replay safe. Avoid full snapshots outside bootstrap/resync.
+- Country resource changes use `ResourceFlow` plus bounded ledger history. `labelKey` is localized at the client boundary.
+- Hex geometry and movement helpers must be pure, deterministic, precision-safe, and covered by focused tests.
+- Do not put server-only persistence, permissions, or runtime state into shared contracts.

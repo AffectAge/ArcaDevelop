@@ -1,0 +1,721 @@
+{
+  "id": "arcanorum-terrain-choice-hexes-v1",
+  "generatedBy": "scripts/build-terrain-choice-hexes.mjs",
+  "frame": {
+    "width": 112,
+    "height": 128,
+    "margin": 2,
+    "spacing": 4
+  },
+  "grid": {
+    "columns": 4,
+    "rows": 4,
+    "framesPerTextureSet": 16
+  },
+  "textureSets": [
+    {
+      "id": "grassland",
+      "source": "project_assets/map-art/sources/terrain-choice-grassland-surface-4x4.png",
+      "output": "project_assets/map-art/sources/terrain-choice-grassland-hexes-4x4.png",
+      "sha256": "43ba15fa92c00a714b14160e44011bcd67e640e07aba740119bfd0d932ac1452",
+      "frames": [
+        {
+          "id": 0,
+          "row": 1,
+          "column": 1
+        },
+        {
+          "id": 1,
+          "row": 1,
+          "column": 2
+        },
+        {
+          "id": 2,
+          "row": 1,
+          "column": 3
+        },
+        {
+          "id": 3,
+          "row": 1,
+          "column": 4
+        },
+        {
+          "id": 4,
+          "row": 2,
+          "column": 1
+        },
+        {
+          "id": 5,
+          "row": 2,
+          "column": 2
+        },
+        {
+          "id": 6,
+          "row": 2,
+          "column": 3
+        },
+        {
+          "id": 7,
+          "row": 2,
+          "column": 4
+        },
+        {
+          "id": 8,
+          "row": 3,
+          "column": 1
+        },
+        {
+          "id": 9,
+          "row": 3,
+          "column": 2
+        },
+        {
+          "id": 10,
+          "row": 3,
+          "column": 3
+        },
+        {
+          "id": 11,
+          "row": 3,
+          "column": 4
+        },
+        {
+          "id": 12,
+          "row": 4,
+          "column": 1
+        },
+        {
+          "id": 13,
+          "row": 4,
+          "column": 2
+        },
+        {
+          "id": 14,
+          "row": 4,
+          "column": 3
+        },
+        {
+          "id": 15,
+          "row": 4,
+          "column": 4
+        }
+      ]
+    },
+    {
+      "id": "plains",
+      "source": "project_assets/map-art/sources/terrain-choice-plains-surface-4x4.png",
+      "output": "project_assets/map-art/sources/terrain-choice-plains-hexes-4x4.png",
+      "sha256": "182ccd48f7714494f3c6fe1195a36b1738bbd46001e41f79a4f005ba9d30b12c",
+      "frames": [
+        {
+          "id": 0,
+          "row": 1,
+          "column": 1
+        },
+        {
+          "id": 1,
+          "row": 1,
+          "column": 2
+        },
+        {
+          "id": 2,
+          "row": 1,
+          "column": 3
+        },
+        {
+          "id": 3,
+          "row": 1,
+          "column": 4
+        },
+        {
+          "id": 4,
+          "row": 2,
+          "column": 1
+        },
+        {
+          "id": 5,
+          "row": 2,
+          "column": 2
+        },
+        {
+          "id": 6,
+          "row": 2,
+          "column": 3
+        },
+        {
+          "id": 7,
+          "row": 2,
+          "column": 4
+        },
+        {
+          "id": 8,
+          "row": 3,
+          "column": 1
+        },
+        {
+          "id": 9,
+          "row": 3,
+          "column": 2
+        },
+        {
+          "id": 10,
+          "row": 3,
+          "column": 3
+        },
+        {
+          "id": 11,
+          "row": 3,
+          "column": 4
+        },
+        {
+          "id": 12,
+          "row": 4,
+          "column": 1
+        },
+        {
+          "id": 13,
+          "row": 4,
+          "column": 2
+        },
+        {
+          "id": 14,
+          "row": 4,
+          "column": 3
+        },
+        {
+          "id": 15,
+          "row": 4,
+          "column": 4
+        }
+      ]
+    },
+    {
+      "id": "tropical",
+      "source": "project_assets/map-art/sources/terrain-choice-tropical-surface-4x4.png",
+      "output": "project_assets/map-art/sources/terrain-choice-tropical-hexes-4x4.png",
+      "sha256": "fde6ee72f0f74305e95956fe87522a8b03d8e06a4d43deeb10257add79178320",
+      "frames": [
+        {
+          "id": 0,
+          "row": 1,
+          "column": 1
+        },
+        {
+          "id": 1,
+          "row": 1,
+          "column": 2
+        },
+        {
+          "id": 2,
+          "row": 1,
+          "column": 3
+        },
+        {
+          "id": 3,
+          "row": 1,
+          "column": 4
+        },
+        {
+          "id": 4,
+          "row": 2,
+          "column": 1
+        },
+        {
+          "id": 5,
+          "row": 2,
+          "column": 2
+        },
+        {
+          "id": 6,
+          "row": 2,
+          "column": 3
+        },
+        {
+          "id": 7,
+          "row": 2,
+          "column": 4
+        },
+        {
+          "id": 8,
+          "row": 3,
+          "column": 1
+        },
+        {
+          "id": 9,
+          "row": 3,
+          "column": 2
+        },
+        {
+          "id": 10,
+          "row": 3,
+          "column": 3
+        },
+        {
+          "id": 11,
+          "row": 3,
+          "column": 4
+        },
+        {
+          "id": 12,
+          "row": 4,
+          "column": 1
+        },
+        {
+          "id": 13,
+          "row": 4,
+          "column": 2
+        },
+        {
+          "id": 14,
+          "row": 4,
+          "column": 3
+        },
+        {
+          "id": 15,
+          "row": 4,
+          "column": 4
+        }
+      ]
+    },
+    {
+      "id": "desert",
+      "source": "project_assets/map-art/sources/terrain-choice-desert-surface-4x4.png",
+      "output": "project_assets/map-art/sources/terrain-choice-desert-hexes-4x4.png",
+      "sha256": "59105aaad1052c9715fe7da4cc700cabf355fd8d96ea6c3674fb26e13e96b90c",
+      "frames": [
+        {
+          "id": 0,
+          "row": 1,
+          "column": 1
+        },
+        {
+          "id": 1,
+          "row": 1,
+          "column": 2
+        },
+        {
+          "id": 2,
+          "row": 1,
+          "column": 3
+        },
+        {
+          "id": 3,
+          "row": 1,
+          "column": 4
+        },
+        {
+          "id": 4,
+          "row": 2,
+          "column": 1
+        },
+        {
+          "id": 5,
+          "row": 2,
+          "column": 2
+        },
+        {
+          "id": 6,
+          "row": 2,
+          "column": 3
+        },
+        {
+          "id": 7,
+          "row": 2,
+          "column": 4
+        },
+        {
+          "id": 8,
+          "row": 3,
+          "column": 1
+        },
+        {
+          "id": 9,
+          "row": 3,
+          "column": 2
+        },
+        {
+          "id": 10,
+          "row": 3,
+          "column": 3
+        },
+        {
+          "id": 11,
+          "row": 3,
+          "column": 4
+        },
+        {
+          "id": 12,
+          "row": 4,
+          "column": 1
+        },
+        {
+          "id": 13,
+          "row": 4,
+          "column": 2
+        },
+        {
+          "id": 14,
+          "row": 4,
+          "column": 3
+        },
+        {
+          "id": 15,
+          "row": 4,
+          "column": 4
+        }
+      ]
+    },
+    {
+      "id": "tundra",
+      "source": "project_assets/map-art/sources/terrain-choice-tundra-surface-4x4.png",
+      "output": "project_assets/map-art/sources/terrain-choice-tundra-hexes-4x4.png",
+      "sha256": "f9afe6d4c555c6fd8bf8196fab779ef62c3a0c60b38378a5cf671936d693523a",
+      "frames": [
+        {
+          "id": 0,
+          "row": 1,
+          "column": 1
+        },
+        {
+          "id": 1,
+          "row": 1,
+          "column": 2
+        },
+        {
+          "id": 2,
+          "row": 1,
+          "column": 3
+        },
+        {
+          "id": 3,
+          "row": 1,
+          "column": 4
+        },
+        {
+          "id": 4,
+          "row": 2,
+          "column": 1
+        },
+        {
+          "id": 5,
+          "row": 2,
+          "column": 2
+        },
+        {
+          "id": 6,
+          "row": 2,
+          "column": 3
+        },
+        {
+          "id": 7,
+          "row": 2,
+          "column": 4
+        },
+        {
+          "id": 8,
+          "row": 3,
+          "column": 1
+        },
+        {
+          "id": 9,
+          "row": 3,
+          "column": 2
+        },
+        {
+          "id": 10,
+          "row": 3,
+          "column": 3
+        },
+        {
+          "id": 11,
+          "row": 3,
+          "column": 4
+        },
+        {
+          "id": 12,
+          "row": 4,
+          "column": 1
+        },
+        {
+          "id": 13,
+          "row": 4,
+          "column": 2
+        },
+        {
+          "id": 14,
+          "row": 4,
+          "column": 3
+        },
+        {
+          "id": 15,
+          "row": 4,
+          "column": 4
+        }
+      ]
+    },
+    {
+      "id": "wetland",
+      "source": "project_assets/map-art/sources/terrain-choice-wetland-surface-4x4.png",
+      "output": "project_assets/map-art/sources/terrain-choice-wetland-hexes-4x4.png",
+      "sha256": "103f0a70c00f25f8d0d1d8117118916308675ca4f16970faedbde9e9bd081417",
+      "frames": [
+        {
+          "id": 0,
+          "row": 1,
+          "column": 1
+        },
+        {
+          "id": 1,
+          "row": 1,
+          "column": 2
+        },
+        {
+          "id": 2,
+          "row": 1,
+          "column": 3
+        },
+        {
+          "id": 3,
+          "row": 1,
+          "column": 4
+        },
+        {
+          "id": 4,
+          "row": 2,
+          "column": 1
+        },
+        {
+          "id": 5,
+          "row": 2,
+          "column": 2
+        },
+        {
+          "id": 6,
+          "row": 2,
+          "column": 3
+        },
+        {
+          "id": 7,
+          "row": 2,
+          "column": 4
+        },
+        {
+          "id": 8,
+          "row": 3,
+          "column": 1
+        },
+        {
+          "id": 9,
+          "row": 3,
+          "column": 2
+        },
+        {
+          "id": 10,
+          "row": 3,
+          "column": 3
+        },
+        {
+          "id": 11,
+          "row": 3,
+          "column": 4
+        },
+        {
+          "id": 12,
+          "row": 4,
+          "column": 1
+        },
+        {
+          "id": 13,
+          "row": 4,
+          "column": 2
+        },
+        {
+          "id": 14,
+          "row": 4,
+          "column": 3
+        },
+        {
+          "id": 15,
+          "row": 4,
+          "column": 4
+        }
+      ]
+    },
+    {
+      "id": "snow",
+      "source": "project_assets/map-art/sources/terrain-choice-snow-surface-4x4.png",
+      "output": "project_assets/map-art/sources/terrain-choice-snow-hexes-4x4.png",
+      "sha256": "bd74ca8010dd9721ee48d1bf7e2f55d9b1377338ec8ae15538bf73350b8d29ae",
+      "frames": [
+        {
+          "id": 0,
+          "row": 1,
+          "column": 1
+        },
+        {
+          "id": 1,
+          "row": 1,
+          "column": 2
+        },
+        {
+          "id": 2,
+          "row": 1,
+          "column": 3
+        },
+        {
+          "id": 3,
+          "row": 1,
+          "column": 4
+        },
+        {
+          "id": 4,
+          "row": 2,
+          "column": 1
+        },
+        {
+          "id": 5,
+          "row": 2,
+          "column": 2
+        },
+        {
+          "id": 6,
+          "row": 2,
+          "column": 3
+        },
+        {
+          "id": 7,
+          "row": 2,
+          "column": 4
+        },
+        {
+          "id": 8,
+          "row": 3,
+          "column": 1
+        },
+        {
+          "id": 9,
+          "row": 3,
+          "column": 2
+        },
+        {
+          "id": 10,
+          "row": 3,
+          "column": 3
+        },
+        {
+          "id": 11,
+          "row": 3,
+          "column": 4
+        },
+        {
+          "id": 12,
+          "row": 4,
+          "column": 1
+        },
+        {
+          "id": 13,
+          "row": 4,
+          "column": 2
+        },
+        {
+          "id": 14,
+          "row": 4,
+          "column": 3
+        },
+        {
+          "id": 15,
+          "row": 4,
+          "column": 4
+        }
+      ]
+    },
+    {
+      "id": "highland",
+      "source": "project_assets/map-art/sources/terrain-choice-highland-surface-4x4.png",
+      "output": "project_assets/map-art/sources/terrain-choice-highland-hexes-4x4.png",
+      "sha256": "072d9f881ef4c6fe7e5220d8c6b485ff93c3b6f656f8274f6d7e03f262d89f5f",
+      "frames": [
+        {
+          "id": 0,
+          "row": 1,
+          "column": 1
+        },
+        {
+          "id": 1,
+          "row": 1,
+          "column": 2
+        },
+        {
+          "id": 2,
+          "row": 1,
+          "column": 3
+        },
+        {
+          "id": 3,
+          "row": 1,
+          "column": 4
+        },
+        {
+          "id": 4,
+          "row": 2,
+          "column": 1
+        },
+        {
+          "id": 5,
+          "row": 2,
+          "column": 2
+        },
+        {
+          "id": 6,
+          "row": 2,
+          "column": 3
+        },
+        {
+          "id": 7,
+          "row": 2,
+          "column": 4
+        },
+        {
+          "id": 8,
+          "row": 3,
+          "column": 1
+        },
+        {
+          "id": 9,
+          "row": 3,
+          "column": 2
+        },
+        {
+          "id": 10,
+          "row": 3,
+          "column": 3
+        },
+        {
+          "id": 11,
+          "row": 3,
+          "column": 4
+        },
+        {
+          "id": 12,
+          "row": 4,
+          "column": 1
+        },
+        {
+          "id": 13,
+          "row": 4,
+          "column": 2
+        },
+        {
+          "id": 14,
+          "row": 4,
+          "column": 3
+        },
+        {
+          "id": 15,
+          "row": 4,
+          "column": 4
+        }
+      ]
+    }
+  ]
+}

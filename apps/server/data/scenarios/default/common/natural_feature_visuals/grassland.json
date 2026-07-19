@@ -1,0 +1,62 @@
+{
+  "id": "natural_feature_visual:grassland_objects",
+  "tagQuery": {
+    "all": [
+      "biome:grassland",
+      {
+        "any": [
+          "natural:broadleaf_forest",
+          "natural:mixed_forest",
+          "natural:shrubland"
+        ]
+      }
+    ]
+  },
+  "textureSetId": "grassland",
+  "placements": [
+    {
+      "id": "grassland_canopy",
+      "frameIds": [0, 1, 2, 3, 4, 5, 6, 7],
+      "count": { "min": 1, "max": 2 },
+      "layoutId": "temperate_grove",
+      "tagQuery": {
+        "all": [
+          { "any": ["natural:broadleaf_forest", "natural:mixed_forest"] },
+          "vegetation:sparse"
+        ]
+      },
+      "lod": "simplified",
+      "layer": "vegetation",
+      "scale": { "min": 0.6, "max": 0.78 },
+      "rotation": true
+    },
+    {
+      "id": "grassland_forest",
+      "frameIds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "count": { "min": 8, "max": 12 },
+      "layoutId": "temperate_grove",
+      "tagQuery": {
+        "all": [
+          { "any": ["natural:broadleaf_forest", "natural:mixed_forest"] },
+          { "any": ["vegetation:normal", "vegetation:dense"] }
+        ]
+      },
+      "lod": "detailed",
+      "layer": "vegetation",
+      "scale": { "min": 0.48, "max": 0.72 },
+      "rotation": true
+    },
+    {
+      "id": "grassland_shrubs",
+      "frameIds": [12, 13, 14, 15],
+      "count": { "min": 2, "max": 5 },
+      "layoutId": "temperate_understory",
+      "tagQuery": "natural:shrubland",
+      "lod": "detailed",
+      "layer": "vegetation",
+      "scale": { "min": 0.3, "max": 0.5 },
+      "rotation": true
+    }
+  ],
+  "priority": 20
+}

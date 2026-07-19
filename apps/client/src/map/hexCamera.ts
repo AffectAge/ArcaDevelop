@@ -69,6 +69,17 @@ export function screenToWorld(point: ScreenPoint, viewport: ViewportRect, camera
   };
 }
 
+export function worldToScreen(
+  point: ScreenPoint,
+  viewport: ViewportRect,
+  camera: HexCamera,
+): ScreenPoint {
+  return {
+    x: viewport.width / 2 + (point.x - camera.x) * camera.scale,
+    y: viewport.height / 2 + (point.y - camera.y) * camera.scale,
+  };
+}
+
 export function zoomCameraToScreenPoint(
   camera: HexCamera,
   viewport: ViewportRect,

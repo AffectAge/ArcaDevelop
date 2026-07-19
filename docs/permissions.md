@@ -14,6 +14,10 @@ All privileged actions must be enforced server-side.
 
 Every API endpoint and WS command must declare its required permission level. UI visibility is not security.
 
+The static map delivery endpoints `GET /hex-map/manifest`, `GET /hex-map/navigation`, and
+`GET /hex-map/chunks/:chunkId` are readonly public (`guest`) endpoints. They expose only generated
+scenario map artifacts and do not expose player-private state or authorize any mutation.
+
 Server routes must resolve current admin status from trusted server state or a server-side permission checker. Do not trust an `isAdmin` token claim as the final authorization decision for privileged mutations.
 
 ## High-Risk Actions

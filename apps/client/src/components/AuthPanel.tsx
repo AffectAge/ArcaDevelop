@@ -39,9 +39,7 @@ import {
   GameColorPickerButton,
   GameDetailPanel,
   GameDropdownField,
-  GameFramePanel,
   GameImageUploadCard,
-  GamePreviewChip,
   GamePreviewChipGroup,
   GameSwitch,
   GameTabs,
@@ -182,13 +180,11 @@ function ColorPickerField({
   value,
   onChange,
   error,
-  t,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   error?: string;
-  t: AuthTranslator;
 }) {
   const safeColor = colord(value).isValid() ? colord(value).toHex() : "#4ade80";
   return (
@@ -331,10 +327,6 @@ function buildIdentityChoices(entries: ContentEntry[], t: AuthTranslator): GameC
       }),
     };
   });
-}
-
-function ImagePreviewBadge({ src, label, fallback }: { src: string | null; label: string; fallback: string }) {
-  return <GamePreviewChip src={src} label={label} emptyLabel={fallback} />;
 }
 
 function SummaryImageSlot({
@@ -1204,7 +1196,6 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                           value={registerColor}
                           onChange={(value) => registerForm.setValue("countryColor", value, { shouldDirty: true, shouldValidate: true })}
                           error={registerForm.formState.errors.countryColor?.message}
-                          t={t}
                         />
                         <ImageUploadFrame
                           label={t("auth.flag")}
@@ -1241,7 +1232,6 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                           value={registerValues.cultureColor}
                           onChange={(value) => registerForm.setValue("cultureColor", value, { shouldDirty: true, shouldValidate: true })}
                           error={registerForm.formState.errors.cultureColor?.message}
-                          t={t}
                         />
                         <ImageUploadFrame
                           label={t("auth.cultureLogo")}
@@ -1269,7 +1259,6 @@ export function AuthPanel({ onSuccess, onOpenCivilopedia, onModeChange }: Props)
                           value={registerValues.religionColor}
                           onChange={(value) => registerForm.setValue("religionColor", value, { shouldDirty: true, shouldValidate: true })}
                           error={registerForm.formState.errors.religionColor?.message}
-                          t={t}
                         />
                         <ImageUploadFrame
                           label={t("auth.religionLogo")}

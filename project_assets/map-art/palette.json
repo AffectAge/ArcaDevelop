@@ -1,0 +1,21 @@
+{
+  "deep_water": [17, 48, 66],
+  "coastal_water": [37, 105, 111],
+  "fresh_water": [58, 126, 119],
+  "tundra_flat": [149, 154, 132],
+  "tundra_rough": [125, 132, 113],
+  "tundra_mountainous": [103, 106, 101],
+  "grassland_flat": [111, 142, 75],
+  "grassland_rough": [82, 116, 68],
+  "grassland_mountainous": [69, 90, 64],
+  "plains_flat": [164, 145, 87],
+  "plains_rough": [140, 119, 75],
+  "plains_mountainous": [112, 98, 72],
+  "desert_flat": [196, 157, 91],
+  "desert_rough": [166, 130, 82],
+  "desert_mountainous": [130, 106, 80],
+  "tropical_flat": [58, 127, 73],
+  "tropical_rough": [43, 103, 64],
+  "tropical_mountainous": [37, 80, 58],
+  "city": [130, 112, 94]
+}

@@ -138,6 +138,76 @@ describe("mapUnitMechanics wait orders", () => {
     expect(result.rejectedOrder).toBeNull();
     expect(worldBase.unitsById["unit:a"]?.hexId).toBe("hex:1:0");
   });
+
+  it("spends fractional movement costs without rounding every step up", () => {
+    const worldBase = { unitsById: { "unit:a": makeUnit("unit:a") } };
+    const route = ["hex:1:0", "hex:2:0", "hex:3:0", "hex:4:0"] as const;
+    const result = resolveMapUnitMoveOrder({
+      order: makeMoveOrder([...route]),
+      playerId: "player:a",
+      worldBase,
+      unitTypes: [makeUnitType("unit:warrior", "land")],
+      turnId: 7,
+      movedUnitIds: new Set<string>(),
+      areHexIdsAdjacentOrSame: () => true,
+      getHex: (hexId) => ({ id: hexId, passable: true, waterKind: null }),
+      getHexMovementCost: () => 0.5,
+    });
+
+    expect(result.rejectedOrder).toBeNull();
+    expect(worldBase.unitsById["unit:a"]).toMatchObject({
+      hexId: "hex:4:0",
+      movementPoints: 0,
+      path: [],
+      status: "idle",
+    });
+  });
+
+  it("spends all remaining movement after entering an enemy zone of control", () => {
+    const worldBase = { unitsById: { "unit:a": makeUnit("unit:a") } };
+    resolveMapUnitMoveOrder({
+      order: makeMoveOrder(["hex:1:0", "hex:2:0"]),
+      playerId: "player:a",
+      worldBase,
+      unitTypes: [makeUnitType("unit:warrior", "land")],
+      turnId: 7,
+      movedUnitIds: new Set<string>(),
+      areHexIdsAdjacentOrSame: () => true,
+      getHex: (hexId) => ({ id: hexId, passable: true, waterKind: null }),
+      getHexMovementCost: () => 0.5,
+      getEnemyZoneOfControlHexIds: () => new Set(["hex:1:0"]),
+    });
+
+    expect(worldBase.unitsById["unit:a"]).toMatchObject({
+      hexId: "hex:1:0",
+      movementPoints: 0,
+      path: ["hex:2:0"],
+      status: "moving",
+    });
+  });
+
+  it("lets cavalry ignore enemy zones of control", () => {
+    const worldBase = { unitsById: { "unit:a": makeUnit("unit:a") } };
+    resolveMapUnitMoveOrder({
+      order: makeMoveOrder(["hex:1:0", "hex:2:0"]),
+      playerId: "player:a",
+      worldBase,
+      unitTypes: [makeUnitType("unit:warrior", "land", { class: "cavalry" })],
+      turnId: 7,
+      movedUnitIds: new Set<string>(),
+      areHexIdsAdjacentOrSame: () => true,
+      getHex: (hexId) => ({ id: hexId, passable: true, waterKind: null }),
+      getHexMovementCost: () => 0.5,
+      getEnemyZoneOfControlHexIds: () => new Set(["hex:1:0"]),
+    });
+
+    expect(worldBase.unitsById["unit:a"]).toMatchObject({
+      hexId: "hex:2:0",
+      movementPoints: 1,
+      path: [],
+      status: "idle",
+    });
+  });
 });
 
 function makeUnit(id: string, overrides: Partial<MapUnit> = {}): MapUnit {
@@ -210,6 +280,21 @@ function makeWaitOrder(type: "UNIT_SKIP_TURN" | "UNIT_SLEEP" | "UNIT_WAKE" | "UN
     countryId: "country:a",
     unitId: "unit:a",
     payload: {},
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
+}
+
+function makeMoveOrder(path: Array<`hex:${number}:${number}`>): Order {
+  return {
+    id: "order:move",
+    type: "UNIT_MOVE",
+    turnId: 7,
+    playerId: "player:a",
+    countryId: "country:a",
+    unitId: "unit:a",
+    targetHexId: path.at(-1) ?? "hex:0:0",
+    path,
+    payload: { path },
     createdAt: "2026-01-01T00:00:00.000Z",
   };
 }

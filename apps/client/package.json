@@ -7,7 +7,7 @@
     "dev": "vite --configLoader runner",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "echo lint skipped",
+    "lint": "eslint src --cache --cache-location ../../node_modules/.cache/eslint-client",
     "typecheck": "tsc -p tsconfig.app.json --noEmit"
   },
   "dependencies": {
@@ -23,11 +23,10 @@
     "colord": "^2.9.3",
     "echarts": "^6.0.0",
     "elkjs": "^0.11.0",
-    "flatbush": "^4.6.2",
     "framer-motion": "^11.15.0",
     "howler": "^2.2.4",
     "lucide-react": "^0.475.0",
-    "pixi.js": "^8.19.0",
+    "phaser": "^4.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.54.2",

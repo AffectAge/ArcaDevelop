@@ -38,7 +38,7 @@ Regenerates the Prisma client, runs workspace typechecks, and runs the Vitest su
 npm run lint
 ```
 
-Runs ESLint for the currently wired server AI/app/scenario/map/lifecycle/security/persistence/runtime/routes/uploads modules, shared package sources, and project check scripts. This is a partial lint pass, not whole-repository lint coverage.
+Runs workspace ESLint across all client, server, and shared source trees, then checks root scripts. Client lint includes the official React Hooks recommended rules. `npm run lint:all` additionally checks every non-ignored lintable file in the repository.
 
 ```bash
 npm run map:from-geojson
@@ -47,22 +47,26 @@ npm run map:from-geojson
 Builds map data from GeoJSON using `scripts/prepare-map-from-geojson.mjs`.
 
 ```bash
-node scripts/measure-hex-map-performance.mjs --url http://127.0.0.1:5175
+npm run map:perf:fixtures
+npm run map:perf:fixtures -- default
+npm run map:perf:fixtures -- 200k
 ```
 
-Runs a Chrome DevTools Protocol benchmark for 50k/200k hex map cases against a running client dev server.
+Builds or reuses deterministic `360x160` (57,600 hex) and `500x400` (200,000 hex) client-streaming fixtures. The command uses the production shared generator and server client-artifact packer, then caches immutable manifest/navigation/chunk files under the ignored root `.generated/map-perf-fixtures/`. Pass `default` or `200k` to build one fixture; omitting the argument builds both.
 
 ```bash
-node scripts/generate-hex-material-textures.mjs
+npm run map:perf -- --url http://127.0.0.1:5173
+npm run map:perf -- --url http://127.0.0.1:5173 --assert
+npm run map:perf -- --url http://127.0.0.1:4173 --assert --screenshots
 ```
 
-Regenerates project-owned hex terrain albedo/detail PNG atlases under `apps/client/public/game-assets/hex-materials/`.
+Ensures the selected fixtures, starts a bounded loopback-only read-only CORS server with production-equivalent map cache/content-encoding headers, and runs the Chrome DevTools Protocol benchmark against the auth-free `/hex-perf` surface. The surface mounts the production `MapView` without login/application-shell work and accepts its fixture API base only when the query points to an allowlisted loopback fixture path. The benchmark performs warmup plus 20 repeat pan cycles, wheel zoom, hover/picking, and a layer toggle; it reports phase timings, frame percentiles, hover/layer latency, long tasks, render counts, bounded cache size, retained heap/cache growth, and immutable-cache reuse after reopening. CDP commands and scripted interactions have bounded timeouts, the requested debugging port must be free, and the harness terminates only its own Chrome process tree during cleanup. `--assert` applies `docs/performance-budgets.md` and exits non-zero on missing metrics or regressions. Use `--screenshots` against a production preview to overwrite deterministic far/mid/near, reduced-motion, English, and Russian evidence under the ignored `.generated/map-perf/screenshots/` directory. The screenshot-only fixture seeds ownership, cities, and units on `/hex-perf`; it is not used by timed cases.
 
 ```bash
-npm run hex-masks:generate
+npm run map-assets:build
 ```
 
-Regenerates project-owned grayscale coastline, biome transition, and river mask atlases under `apps/client/public/game-assets/hex-materials/`.
+Regenerates deterministic Phaser terrain, object, border, river, fill, and unit bitmap atlases plus provenance/output hashes from `project_assets/map-art/`. The existing Sharp development dependency performs the offline build; generated runtime files live under `apps/client/public/game-assets/phaser/` and the default scenario unit-asset paths.
 
 ## Server Commands
 
@@ -88,6 +92,7 @@ npm run dev -w @arcanorum/client
 npm run build -w @arcanorum/client
 npm run preview -w @arcanorum/client
 npm run typecheck -w @arcanorum/client
+npm run lint -w @arcanorum/client
 ```
 
 Use client commands for UI, map, localization, Arcawiki, and admin workflow work.
@@ -97,18 +102,11 @@ Use client commands for UI, map, localization, Arcawiki, and admin workflow work
 Agents should propose or add these when implementing their systems:
 
 ```bash
-npm run test
-npm run test:unit
-npm run test:e2e
-npm run scenario:validate -- --scenario <scenarioId>
-npm run scenario:build-indexes -- --scenario <scenarioId>
-npm run scenario:generate-map -- --scenario default
 npm run localization:check
 npm run theme:validate
-npm run docs:check
 ```
 
-Do not pretend missing commands exist until package scripts are added.
+`test:e2e` and `test:integration` currently exist only as explicit placeholder scripts; they are not real coverage and must be replaced before being reported as verification. Do not pretend missing or placeholder commands provide coverage.
 
 `scenario:validate` should validate strict per-entity JSON, stable-ID references, localization, assets, region/province membership, forbidden province-heavy fields, and generated index freshness. `scenario:build-indexes` should create or refresh `scenarios/<scenario_id>/.generated/` from authored per-entity files.
 

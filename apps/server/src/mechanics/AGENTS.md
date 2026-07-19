@@ -1,20 +1,11 @@
-# Server Mechanics Agents
+# Server mechanics guide
 
-Always start from root `AGENTS.md` and `docs/README.md` before using this folder guide.
+Always start from root `AGENTS.md` and `docs/README.md`.
 
-Use this guide for domain/gameplay mechanics under `apps/server/src/mechanics`.
-
-Mechanics modules should:
-
-- keep game rules separate from Express routes, DB calls, WebSocket broadcasts, and filesystem work,
-- prefer pure functions with explicit inputs and return values,
-- keep balance values supplied by scenario defines or caller-owned content/config,
-- consume data-authored content and shared modifiers instead of hardcoding concrete buildings, goods, laws, events, technologies, or bonuses,
-- return or emit structured explanation records for important visible state changes,
-- emit country-level resource changes as resource ledger flows instead of mutating `resourcesByCountry` directly,
-- include source type, source id, category id, resource id, direction, amount, and localization label key on every resource ledger flow,
-- expose stable domain names that can support future mechanics, not one-off route names,
-- include focused unit tests for calculations, validation, cleanup, and edge cases,
-- avoid province-heavy mechanics unless explicitly approved.
-
-Do not add hidden gameplay fallback, hidden visible-value calculations, mechanic-specific modifier bypasses, client-trusted decisions, unbounded caches, or direct persistence side effects here.
+- Prefer pure rules with explicit inputs/results; keep Express, WS, DB, and filesystem side effects outside.
+- Receive balance from scenario defines/content and bonuses from shared modifiers. Never special-case concrete content IDs.
+- Keep heavy mechanics on regions and lightweight movement/map rules on provinces/hexes.
+- Resource changes emit complete ledger flows; important visible changes emit structured explanations.
+- Validate ownership and legality through the authoritative order pipeline. AI uses the same path.
+- Add focused tests for calculation, rejection, edge cases, explanations, and cleanup.
+- Do not add hidden fallback, direct final resource writes, unbounded caches, or client-trusted decisions.

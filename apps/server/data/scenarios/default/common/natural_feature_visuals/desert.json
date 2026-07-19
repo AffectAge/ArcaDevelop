@@ -1,0 +1,57 @@
+{
+  "id": "natural_feature_visual:desert_objects",
+  "tagQuery": {
+    "all": [
+      "ecoregion:desert",
+      { "any": ["natural:oasis", "natural:shrubland"] }
+    ]
+  },
+  "textureSetId": "desert",
+  "placements": [
+    {
+      "id": "desert_oasis",
+      "frameIds": [0, 1, 2, 3],
+      "count": { "min": 0, "max": 1 },
+      "layoutId": "oasis_ring",
+      "tagQuery": "natural:oasis",
+      "lod": "simplified",
+      "layer": "vegetation",
+      "scale": { "min": 0.64, "max": 0.88 },
+      "rotation": true
+    },
+    {
+      "id": "desert_oasis_detail",
+      "frameIds": [0, 1, 2, 3, 4, 5],
+      "count": { "min": 0, "max": 1 },
+      "layoutId": "oasis_ring",
+      "tagQuery": "natural:oasis",
+      "lod": "detailed",
+      "layer": "vegetation",
+      "scale": { "min": 0.5, "max": 0.76 },
+      "rotation": true
+    },
+    {
+      "id": "desert_scrub",
+      "frameIds": [4, 5, 6, 7, 8, 9, 10, 11],
+      "count": { "min": 0, "max": 1 },
+      "layoutId": "scrub_edge",
+      "tagQuery": "natural:shrubland",
+      "lod": "simplified",
+      "layer": "vegetation",
+      "scale": { "min": 0.32, "max": 0.5 },
+      "rotation": true
+    },
+    {
+      "id": "desert_scrub_detail",
+      "frameIds": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      "count": { "min": 0, "max": 1 },
+      "layoutId": "scrub_edge",
+      "tagQuery": "natural:shrubland",
+      "lod": "detailed",
+      "layer": "vegetation",
+      "scale": { "min": 0.28, "max": 0.46 },
+      "rotation": true
+    }
+  ],
+  "priority": 20
+}

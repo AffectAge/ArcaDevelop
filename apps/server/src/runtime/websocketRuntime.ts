@@ -442,11 +442,12 @@ function applyImmediateUnitOrder(input: {
       areHexIdsAdjacentOrSame: params.areHexIdsAdjacentOrSame as (fromHexId: HexId, toHexId: HexId) => boolean,
       getHexMovementCost: params.getHexMovementCost,
       getHex: (hexId) => hexById.get(hexId) ?? null,
-      getEnemyZoneOfControlHexIds: (countryId) =>
+      getEnemyZoneOfControlHexIds: (countryId, domain) =>
         getEnemyZoneOfControlHexIds({
           worldBase: params.getWorldBase(),
           unitTypes: params.getGameSettings().content.unitTypes,
           countryId,
+          domain,
           getNeighborHexIds: (hexId) =>
             (hexById.get(hexId)?.neighbors ?? []).filter((neighborId): neighborId is HexId => /^hex:-?\d+:-?\d+$/.test(neighborId)),
         }),
@@ -509,13 +510,14 @@ function getEnemyZoneOfControlHexIds(params: {
   worldBase: WorldBase;
   unitTypes: readonly UnitTypeDefinition[];
   countryId: string;
+  domain: UnitDomain;
   getNeighborHexIds: (hexId: HexId) => HexId[];
 }): ReadonlySet<HexId> {
   const zones = new Set<HexId>();
   for (const unit of Object.values(params.worldBase.unitsById ?? {})) {
     if (unit.countryId === params.countryId || unit.status === "destroyed" || unit.status === "captured") continue;
     const unitType = params.unitTypes.find((candidate) => candidate.id === unit.unitTypeId);
-    if (!unitType || (unitType.domain !== "land" && unitType.domain !== "naval")) continue;
+    if (!unitType || unitType.domain !== params.domain || (unitType.domain !== "land" && unitType.domain !== "naval")) continue;
     for (const neighborId of params.getNeighborHexIds(unit.hexId)) {
       zones.add(neighborId);
     }

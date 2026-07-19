@@ -1,0 +1,3 @@
+interface:
+  display_name: "Arcanorum Repository Cleanup"
+  short_description: "Safe repository cleanup and structural refactoring for Arcanorum"

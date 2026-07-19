@@ -1,22 +1,26 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { enrichHexMapVisualMetadata, type HexMapArtifact, type HexTile } from "@arcanorum/shared";
-import type { MapFeatureInstance, MapFeatureVisualRuleDefinition } from "@arcanorum/shared";
+import type { MapFeatureVisualRuleDefinition, NaturalFeatureVisualCatalog } from "@arcanorum/shared";
 import {
   loadHexIndexFromFile,
   type HexMapIndexEntry,
 } from "../map/hexIndex";
-import { loadGeneratedMapFeatures, GENERATED_MAP_FEATURES_FILE } from "../scenarios/mapFeatureGeneration";
+import {
+  loadHexMapClientArtifactRuntime,
+  type HexMapClientArtifactRuntime,
+} from "../scenarios/hexMapClientArtifacts";
+import { loadNaturalFeatureVisualCatalog } from "../scenarios/naturalFeatureVisuals";
 
 type MapRuntimeState = {
   prebuiltTileRoot: string;
   rasterTileRoot: string;
   hexIndexJsonPath: string;
   hexMapArtifactJsonPath: string;
-  mapFeaturesJsonPath: string;
   hexMapArtifact: HexMapArtifact | null;
-  mapFeatures: MapFeatureInstance[];
+  hexMapClientArtifact: HexMapClientArtifactRuntime | null;
   mapFeatureVisuals: MapFeatureVisualRuleDefinition[];
+  naturalFeatureVisualCatalog: NaturalFeatureVisualCatalog;
   hexIndex: HexMapIndexEntry[];
   hexAreaById: Map<string, number>;
   hexById: Map<string, HexMapIndexEntry>;
@@ -26,7 +30,6 @@ type MapRuntimeState = {
 function buildMapRuntimeState(mapRoot: string, hexIndexPath = resolve(mapRoot, "hexes.json")): MapRuntimeState {
   const prebuiltTileRoot = resolve(mapRoot, "tiles/hex");
   const hexMapArtifactJsonPath = resolve(dirname(hexIndexPath), "hex-map.json");
-  const mapFeaturesJsonPath = resolve(dirname(hexIndexPath), GENERATED_MAP_FEATURES_FILE);
   const scenarioDir = resolve(dirname(hexIndexPath), "..");
   const hexIndex = loadHexIndexFromFile(hexIndexPath);
   const hexMapArtifact = loadHexMapArtifactIfExists(hexMapArtifactJsonPath);
@@ -35,10 +38,10 @@ function buildMapRuntimeState(mapRoot: string, hexIndexPath = resolve(mapRoot, "
     rasterTileRoot: resolve(mapRoot, "tiles/raster"),
     hexIndexJsonPath: hexIndexPath,
     hexMapArtifactJsonPath,
-    mapFeaturesJsonPath,
     hexMapArtifact,
-    mapFeatures: loadGeneratedMapFeatures(mapFeaturesJsonPath),
+    hexMapClientArtifact: loadHexMapClientArtifactRuntime(scenarioDir),
     mapFeatureVisuals: loadMapFeatureVisuals(resolve(scenarioDir, "common", "map_feature_visuals")),
+    naturalFeatureVisualCatalog: loadNaturalFeatureVisualCatalog(scenarioDir),
     hexIndex,
     hexAreaById: new Map(hexIndex.map((hex) => [hex.id, hex.areaKm2] as const)),
     hexById: new Map(hexIndex.map((hex) => [hex.id, hex] as const)),
@@ -64,8 +67,9 @@ export function createMapRuntimeState(mapRoot: string, hexIndexPath?: string) {
     getHexIndexJsonPath: () => state.hexIndexJsonPath,
     getHexMapArtifact: () => state.hexMapArtifact,
     getHexMapArtifactJsonPath: () => state.hexMapArtifactJsonPath,
-    getMapFeatures: () => state.mapFeatures,
+    getHexMapClientArtifact: () => state.hexMapClientArtifact,
     getMapFeatureVisuals: () => state.mapFeatureVisuals,
+    getNaturalFeatureVisualCatalog: () => state.naturalFeatureVisualCatalog,
   };
 }
 

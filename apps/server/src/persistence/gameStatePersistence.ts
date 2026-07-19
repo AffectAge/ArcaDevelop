@@ -86,6 +86,7 @@ function buildGameStateDbWrite<TGameSettings, TMarketOverview>(
 function stripAuthoredContentFromGameSettings(input: unknown): unknown {
   if (!input || typeof input !== "object" || Array.isArray(input)) return input;
   const { content: _content, ...rest } = input as Record<string, unknown>;
+  void _content;
   return rest;
 }
 

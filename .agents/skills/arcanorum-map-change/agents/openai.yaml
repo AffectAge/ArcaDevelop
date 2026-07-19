@@ -1,0 +1,3 @@
+interface:
+  display_name: "Arcanorum Map Change"
+  short_description: "Map rendering and movement changes for Arcanorum"

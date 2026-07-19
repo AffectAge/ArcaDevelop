@@ -1,5 +1,9 @@
 import { resolve } from "node:path";
-import { ensureDefaultScenario } from "../src/scenarios/defaultScenarioBootstrap";
+import {
+  ensureDefaultScenario,
+  ensureScenarioMapArtifacts,
+} from "../src/scenarios/defaultScenarioBootstrap";
+import { normalizeScenarioId } from "../src/scenarios/runtimePaths";
 
 const args = process.argv.slice(2);
 const scenarioArgIndex = args.indexOf("--scenario");
@@ -11,19 +15,27 @@ if (!scenarioId) {
   process.exit(1);
 }
 
-if (scenarioId !== "default") {
-  console.error(`Only the server-generated default scenario is supported by this command today: ${scenarioId}`);
+const normalizedScenarioId = normalizeScenarioId(scenarioId);
+if (!normalizedScenarioId) {
+  console.error(`Invalid scenario id: ${scenarioId}`);
   process.exit(1);
 }
 
 const dataRoot = resolveDataRoot();
-const result = ensureDefaultScenario({ dataRoot, forceGenerated: true });
+const result = normalizedScenarioId === "default"
+  ? ensureDefaultScenario({ dataRoot, forceGenerated: true })
+  : ensureScenarioMapArtifacts({
+      scenarioDir: resolve(dataRoot, "scenarios", normalizedScenarioId),
+      forceGenerated: true,
+    });
 
-console.log(`scenario map generated: ${result.scenarioId}`);
+console.log(`scenario map generated: ${normalizedScenarioId}`);
 console.log(`hexes: ${result.artifact.tiles.length}`);
 console.log(`river edges: ${result.artifact.riverEdges.length}`);
 console.log(`coast overlays: ${result.artifact.coastOverlays.length}`);
 console.log(`artifact: ${result.hexMapArtifactPath}`);
+console.log(`client manifest: ${result.hexMapClientManifestPath}`);
+console.log(`client artifact version: ${result.hexMapClientArtifactVersion}`);
 console.log(`hex index: ${result.hexIndexPath}`);
 console.log(`region index: ${result.generatedRegionIndexPath}`);
 

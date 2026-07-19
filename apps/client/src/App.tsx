@@ -1,11 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Dialog } from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import type { Country, DiplomacyProposal, HexId, MapUnit, OrderDelta, TurnActionItem, UnitTypeDefinition, WsOutMessage } from "@arcanorum/shared";
 import { AuthPanel, type AuthSuccess } from "./components/AuthPanel";
-import { MapView } from "./components/MapView";
+import { MapView } from "./components/PhaserMapView";
 import { StrategyShell, type MarketTradeOverviewRow, type StrategyMode, type StrategyShellSelectedHexDetails } from "./components/strategy-shell/StrategyShell";
 import { CommandPalette } from "./components/CommandPalette";
 import { AdminPanel } from "./components/AdminPanel";
@@ -67,9 +74,9 @@ import { BASE_RESOURCE_ICON_URLS } from "./assets/baseResourceIcons";
 import { useWs } from "./lib/useWs";
 import { useGameStore } from "./store/gameStore";
 import { MAP_NAVIGATION_SETTINGS_EVENT, readMapNavigationSettings, writeMapNavigationSettings } from "./map/mapNavigationSettings";
-import type { MapInteractionMode, MapLensId } from "./map/mapLensTypes";
 import type { UiTextKey } from "./i18n/uiText";
 import { useUiText } from "./i18n/useUiText";
+import { beginEntryGameTransition } from "./entryGameTransition";
 
 const AUTH_BACKGROUND_FILE_NAME = "auth-background.png";
 const AUTH_BACKGROUND_FALLBACK_URL = "/game-assets/utils/fallback-auth-background.png";
@@ -120,14 +127,6 @@ function readStrategyShellState(): { mode: StrategyMode; workspaceOpen: boolean 
 
 function isStrategyMode(value: string): value is StrategyMode {
   return ["overview", "construction", "colonization", "population", "market", "diplomacy", "army", "units", "governance"].includes(value);
-}
-
-function resolveSuggestedMapMode(_strategyMode: StrategyMode): MapInteractionMode {
-  return "overview";
-}
-
-function resolveSuggestedMapLens(_strategyMode: StrategyMode): MapLensId {
-  return "terrain";
 }
 
 function getCorridorErrorKey(code: string): UiTextKey {
@@ -291,7 +290,9 @@ export default function App() {
   const worldResyncInFlightRef = useRef(false);
   const replayRequestInFlightRef = useRef(false);
   const resolveStartTimeoutRef = useRef<number | null>(null);
+  const cancelEntryGameActivationRef = useRef<(() => void) | null>(null);
   const [entryLoadingGate, setEntryLoadingGate] = useState<"hidden" | "loading" | "ready">("hidden");
+  const [gameHudMounted, setGameHudMounted] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [pendingDeltaAckVersion, setPendingDeltaAckVersion] = useState<number | null>(null);
   const [pendingReplayFromWorldStateVersion, setPendingReplayFromWorldStateVersion] = useState<number | null>(null);
@@ -322,6 +323,33 @@ export default function App() {
     setActiveStrategyMode(mode);
     setStrategyWorkspaceOpen(true);
   }, []);
+
+  const cancelEntryGameActivation = useCallback(() => {
+    cancelEntryGameActivationRef.current?.();
+    cancelEntryGameActivationRef.current = null;
+  }, []);
+
+  const enterLoadedGame = useCallback(() => {
+    cancelEntryGameActivation();
+    cancelEntryGameActivationRef.current = beginEntryGameTransition({
+      dismissGate: () => setEntryLoadingGate("hidden"),
+      activateGameHud: () => {
+        cancelEntryGameActivationRef.current = null;
+        startTransition(() => setGameHudMounted(true));
+      },
+      requestFrame: window.requestAnimationFrame.bind(window),
+      cancelFrame: window.cancelAnimationFrame.bind(window),
+      scheduleAfterFrame: (callback) => window.setTimeout(callback, 0),
+      cancelAfterFrame: window.clearTimeout.bind(window),
+    });
+  }, [cancelEntryGameActivation]);
+
+  useEffect(
+    () => () => {
+      cancelEntryGameActivation();
+    },
+    [cancelEntryGameActivation],
+  );
 
   useEffect(() => {
     try {
@@ -392,15 +420,8 @@ export default function App() {
     turnId: 0,
     amount: 0,
   });
-  const [hexRenameDucatSpend, setHexRenameDucatSpend] = useState<{ turnId: number; amount: number }>({
-    turnId: 0,
-    amount: 0,
-  });
   const [maxActiveColonizations, setMaxActiveColonizations] = useState(3);
-  const [colonizationCostPer1000Km2, setColonizationCostPer1000Km2] = useState({ points: 5, ducats: 5 });
   const [demolitionCostConstructionPercent, setDemolitionCostConstructionPercent] = useState(20);
-  const [hexRenameDucatsCost, setHexRenameDucatsCost] = useState(25);
-  const [showAntarctica, setShowAntarctica] = useState(false);
   const [showMapControls, setShowMapControls] = useState(false);
   const [showZoomIndicator, setShowZoomIndicator] = useState(true);
   const [showZoomIndicatorLoadedKey, setShowZoomIndicatorLoadedKey] = useState<string | null>(null);
@@ -437,7 +458,6 @@ export default function App() {
   const [mapFocusRequest, setMapFocusRequest] = useState<{ hexId: HexId; nonce: number } | null>(null);
   const [selectedCommandUnitId, setSelectedCommandUnitId] = useState<string | null>(null);
   const [unitCommandRequest, setUnitCommandRequest] = useState<{ unitId: string; mode: "move" | "attack" | "foundCity"; nonce: number } | null>(null);
-  const [queueingColonizerHexId, setQueueingColonizerHexId] = useState<HexId | null>(null);
   const [selectedHexDetails, setSelectedHexDetails] = useState<StrategyShellSelectedHexDetails | null>(null);
   const [openHexWorkspaceRequestId, setOpenHexWorkspaceRequestId] = useState(0);
   const [colonizerPlacement, setColonizerPlacement] = useState<{ active: boolean } | null>(null);
@@ -455,11 +475,6 @@ export default function App() {
   } | null>(null);
   const [technologyEntries, setTechnologyEntries] = useState<ContentEntry[]>([]);
   const [journalEntries, setJournalEntries] = useState<ContentEntry[]>([]);
-  const [turnTimerUi, setTurnTimerUi] = useState<{ enabled: boolean; secondsPerTurn: number; startedAtMs: number | null }>({
-    enabled: false,
-    secondsPerTurn: 300,
-    startedAtMs: null,
-  });
   const auth = useGameStore((s) => s.auth);
   const wsResumeFromWorldStateVersion = useGameStore((s) => (s.worldBase ? s.worldStateVersion : null));
   const turnId = useGameStore((s) => s.turnId);
@@ -566,7 +581,6 @@ export default function App() {
       replayRequestInFlightRef.current = false;
       resetOverlay(snapshot.turnId);
       await hydrateCurrentTurnOrders(token);
-      setTurnTimerUi((prev) => ({ ...prev, startedAtMs: Date.now() }));
       toast.warning(t("shell.worldResynced"));
     } catch {
       toast.error(t("shell.worldResyncFailed"));
@@ -663,7 +677,6 @@ export default function App() {
         applyWorldDelta(msg, msg.turnId, msg.worldStateVersion);
         setPendingDeltaAckVersion(msg.worldStateVersion);
         replayRequestInFlightRef.current = false;
-        setTurnTimerUi((prev) => ({ ...prev, startedAtMs: Date.now() }));
         resetOverlay(msg.turnId);
         pruneLogEntries(msg.turnId);
         if (msg.rejectedOrders.length > 0) {
@@ -877,22 +890,8 @@ export default function App() {
             gold: ui.economy.baseGoldPerTurn,
           });
           setMaxActiveColonizations(ui.colonization.maxActiveColonizations);
-          setColonizationCostPer1000Km2({
-            points: ui.colonization.pointsCostPer1000Km2,
-            ducats: ui.colonization.ducatsCostPer1000Km2,
-          });
           setDemolitionCostConstructionPercent(ui.economy.demolitionCostConstructionPercent ?? 20);
-          setShowAntarctica(ui.map?.showAntarctica ?? true);
           setActiveScenarioId(ui.activeScenarioId ?? "default");
-          setHexRenameDucatsCost(ui.customization?.hexRenameDucats ?? 25);
-          setTurnTimerUi({
-            enabled: ui.turnTimer?.enabled ?? false,
-            secondsPerTurn: ui.turnTimer?.secondsPerTurn ?? 300,
-            startedAtMs:
-              typeof ui.turnTimer?.currentTurnStartedAtMs === "number" && Number.isFinite(ui.turnTimer.currentTurnStartedAtMs)
-                ? ui.turnTimer.currentTurnStartedAtMs
-                : Date.now(),
-          });
           setPublicUiLoaded(true);
         }
       })
@@ -1044,6 +1043,8 @@ export default function App() {
   }, [activeStrategyMode, auth?.token, strategyWorkspaceOpen, turnId]);
 
   const onAuthSuccess = (payload: AuthSuccess) => {
+    cancelEntryGameActivation();
+    setGameHudMounted(false);
     setEntryLoadingGate("loading");
     setAuth({ token: payload.token, playerId: payload.playerId, countryId: payload.countryId, isAdmin: payload.isAdmin });
     setCountry({ name: payload.countryName, color: payload.countryColor, flagUrl: payload.flagUrl, crestUrl: payload.crestUrl });
@@ -1068,7 +1069,7 @@ export default function App() {
       return { provinceCount: 0 };
     }
     let provinceCount = 0;
-    for (const [hexId, ownerCountryId] of Object.entries(worldBase.hexOwner ?? {})) {
+    for (const ownerCountryId of Object.values(worldBase.hexOwner ?? {})) {
       if (ownerCountryId !== auth.countryId) continue;
       provinceCount += 1;
     }
@@ -1325,8 +1326,8 @@ export default function App() {
         if (canceledConstructionQueueKeys.has(`${regionId}:${project.queueId}`)) continue;
         if (!isHexId(project.targetHexId)) continue;
         const building = buildingById.get(project.buildingId);
-        let ownerName = "";
-        let ownerIconUrl: string | null = null;
+        let ownerName: string;
+        let ownerIconUrl: string | null;
         if (project.owner.type === "company" && "companyId" in project.owner) {
           const companyId = project.owner.companyId;
           const ownerCompany = companyEntries.find((company) => company.id === companyId);
@@ -1408,7 +1409,11 @@ export default function App() {
     }
     rows.push(...pendingByKey.values());
     rows.sort((a, b) => Number(b.selected) - Number(a.selected) || a.name.localeCompare(b.name, "ru") || a.regionId.localeCompare(b.regionId, "ru"));
-    return rows.map(({ selected: _selected, ...row }) => row);
+    return rows.map((row) => {
+      const { selected, ...visibleRow } = row;
+      void selected;
+      return visibleRow;
+    });
   }, [auth, buildingEntries, canceledConstructionQueueKeys, companyEntries, countryById, countryNameById, ordersByTurn, selectedHexId, t, turnId, worldBase]);
   const cancelConstructionQueueProject = useCallback(
     async (item: { source: "queued"; regionId: string; queueId: string; targetHexId: HexId; buildingId: string } | { source: "pending"; orderId: string }) => {
@@ -1850,7 +1855,7 @@ export default function App() {
 
   const ducatExpenseBreakdown = useMemo(() => {
     const customization = customizationDucatSpend.turnId === turnId ? Math.max(0, Math.floor(customizationDucatSpend.amount)) : 0;
-    const hexRename = hexRenameDucatSpend.turnId === turnId ? Math.max(0, Math.floor(hexRenameDucatSpend.amount)) : 0;
+    const hexRename = 0;
     const colonizationSupport =
       myColonizationProjection.predictedPointsSpend > 0
         ? Math.min(
@@ -1876,8 +1881,6 @@ export default function App() {
     myColonizationProjection.predictedSupportDucatSpend,
     myConstructionProjection.predictedDucatSpend,
     myConstructionProjection.predictedPointsSpend,
-    hexRenameDucatSpend.amount,
-    hexRenameDucatSpend.turnId,
     subsidyBudgetBreakdown.total,
     turnId,
   ]);
@@ -1963,7 +1966,6 @@ export default function App() {
   }, [marketShellCountries, marketShellOverview]);
   useEffect(() => {
     setCustomizationDucatSpend((prev) => (prev.turnId === turnId ? prev : { turnId, amount: 0 }));
-    setHexRenameDucatSpend((prev) => (prev.turnId === turnId ? prev : { turnId, amount: 0 }));
   }, [turnId]);
 
   const logoutToAuth = () => {
@@ -1972,6 +1974,8 @@ export default function App() {
     setTurnResolveOverlay({ phase: "idle" });
     setAuth(null);
     setCountry(null);
+    cancelEntryGameActivation();
+    setGameHudMounted(false);
     setEntryLoadingGate("hidden");
     toast(t("shell.logoutToast"));
   };
@@ -2206,7 +2210,6 @@ export default function App() {
       toast.error(t("shell.buildings.noCountry"));
       return;
     }
-    setQueueingColonizerHexId(hexId);
     try {
       await queueCountryColonizer(auth.token, hexId);
       toast.success(t("hexMap.queueColonizerQueued"), { description: hexId });
@@ -2223,8 +2226,6 @@ export default function App() {
       const code = error instanceof Error ? error.message : "COLONIZER_QUEUE_FAILED";
       const key = resolveColonizerQueueErrorKey(code);
       toast.error(t(key));
-    } finally {
-      setQueueingColonizerHexId((current) => (current === hexId ? null : current));
     }
   };
 
@@ -2352,6 +2353,8 @@ export default function App() {
 
   useEffect(() => {
     if (!auth) {
+      cancelEntryGameActivation();
+      setGameHudMounted(false);
       setEntryLoadingGate("hidden");
       setMapReady(false);
       return;
@@ -2362,7 +2365,7 @@ export default function App() {
       if (prev === "loading" && ready) return "ready";
       return prev;
     });
-  }, [auth, country, mapReady, publicUiLoaded, worldBase]);
+  }, [auth, cancelEntryGameActivation, country, mapReady, publicUiLoaded, worldBase]);
 
   useEffect(() => {
     if (!auth?.token) return;
@@ -2724,7 +2727,10 @@ export default function App() {
     }
   };
 
-  const gameSceneMounted = Boolean(auth && entryLoadingGate === "hidden");
+  // Mount the map while the entry gate is loading so it can publish
+  // `mapReady`; otherwise the gate would wait for a map that is only mounted
+  // after the gate has already been dismissed.
+  const gameSceneMounted = Boolean(auth);
   const entryLoadingProgressPercent = Math.round(
     (((worldBase ? 1 : 0) + (publicUiLoaded ? 1 : 0) + (country ? 1 : 0) + (mapReady ? 1 : 0)) / 4) * 100,
   );
@@ -2772,31 +2778,11 @@ export default function App() {
               setUnitTrainingPlacement(null);
               void trainUnitOnHex(unitTypeId, target.hexId);
             }}
-            colonizationIconUrl={BASE_RESOURCE_ICON_URLS.colonization}
-            ducatsIconUrl={BASE_RESOURCE_ICON_URLS.ducats}
-            maxActiveColonizations={maxActiveColonizations}
-            hexRenameDucatsCost={hexRenameDucatsCost}
             countryColorById={countryColorById}
             countryNameById={countryNameById}
-            suggestedMapMode={resolveSuggestedMapMode(activeStrategyMode)}
-            suggestedMapLens={resolveSuggestedMapLens(activeStrategyMode)}
             showMapControls={showMapControls}
             showZoomIndicator={showZoomIndicator}
-            showAntarctica={showAntarctica}
-            buildingEntries={buildingEntries}
-            buildingOverviewToken={auth.token}
-            buildingOverviewCountryId={auth.countryId}
-            buildingOverviewBuildings={buildingEntries}
-            buildingOverviewCompanies={companyEntries}
-            buildingOverviewCountries={countries}
-            buildingOverviewIndustries={industryEntries}
-            buildingOverviewSectors={sectorEntries}
-            buildingOverviewDemolitionCostConstructionPercent={demolitionCostConstructionPercent}
-            buildingOverviewCancelingConstructionQueueKey={cancelingConstructionQueueKey}
-            onCancelConstructionProject={cancelConstructionQueueProject}
-            canceledConstructionQueueKeys={canceledConstructionQueueKeyList}
             hexBuildPlacement={hexBuildPlacement}
-            transportCorridors={marketTransportCorridors}
             corridorPlacement={corridorPlacement}
             onSelectCorridorPlacementPoint={selectCorridorPlacementPoint}
             onUndoCorridorPlacementPoint={undoCorridorPlacementPoint}
@@ -2816,12 +2802,6 @@ export default function App() {
               });
             }}
             onMapReadyChange={setMapReady}
-            onHexRenameCharged={(chargedDucats) => {
-              if (chargedDucats <= 0) return;
-              setHexRenameDucatSpend((prev) =>
-                prev.turnId === turnId ? { turnId, amount: prev.amount + chargedDucats } : { turnId, amount: chargedDucats },
-              );
-            }}
           />
         </div>
       ) : null}
@@ -2865,7 +2845,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {gameSceneMounted && (
+      {gameSceneMounted && gameHudMounted && (
         <InAppNotificationTray
           items={uiNotifications}
           viewedIds={viewedUiNotificationIds}
@@ -2945,7 +2925,7 @@ export default function App() {
                   <div className="arc-building-overview-body arc-entry-ready-body">
                     <button
                       type="button"
-                      onClick={() => setEntryLoadingGate("hidden")}
+                      onClick={enterLoadedGame}
                       className="arc-auth-primary-button"
                     >
                       {t("shell.entryEnterGame")}
@@ -2958,7 +2938,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {gameSceneMounted && auth && (
+      {gameSceneMounted && gameHudMounted && auth && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="pointer-events-none absolute inset-0 z-[111]">
           <StrategyShell
             activeMode={activeStrategyMode}
@@ -3421,10 +3401,6 @@ export default function App() {
           onClose={() => setGameSettingsOpen(false)}
           onSettingsUpdated={(updated) => {
             setMaxActiveColonizations(updated.colonization.maxActiveColonizations);
-            setColonizationCostPer1000Km2({
-              points: updated.colonization.pointsCostPer1000Km2,
-              ducats: updated.colonization.ducatsCostPer1000Km2,
-            });
             setResourceGrowthByTurn((prev) => ({
               ...prev,
               culture: updated.economy.baseCulturePerTurn ?? 1,
@@ -3436,13 +3412,6 @@ export default function App() {
               gold: updated.economy.baseGoldPerTurn,
             }));
             setEventLogRetentionTurns(updated.eventLog.retentionTurns);
-            setShowAntarctica(updated.map?.showAntarctica ?? true);
-            setHexRenameDucatsCost(updated.customization?.hexRenameDucats ?? 25);
-            setTurnTimerUi((prev) => ({
-              enabled: updated.turnTimer?.enabled ?? prev.enabled,
-              secondsPerTurn: updated.turnTimer?.secondsPerTurn ?? prev.secondsPerTurn,
-              startedAtMs: Date.now(),
-            }));
           }}
         />
       )}

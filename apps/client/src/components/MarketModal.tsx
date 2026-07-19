@@ -41,7 +41,6 @@ type ViewTab = "country" | "global";
 type SortMode = "deficit" | "price" | "volatility";
 type QuickFilter = "all" | "critical";
 
-const formatNumber = (value: number) => new Intl.NumberFormat("ru-RU").format(Math.max(0, Math.floor(value)));
 const formatCompact = (value: number): string => {
   const sign = value < 0 ? "-" : "";
   const abs = Math.abs(value);

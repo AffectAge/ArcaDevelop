@@ -7,6 +7,11 @@
 - **Core:** Historical/legal country claim treated as fundamental to that country.
 - **Claim:** Detailed political claim with claimant, type, strength, source, and optional expiry.
 - **Scenario:** Complete game setup: map, regions, countries, content, defines, AI, localization, Arcawiki, theme, and assets.
+- **Hex Map Client Artifact:** Immutable, version-addressed generated map payload used only for client rendering and navigation. It consists of a manifest, compact row-major navigation data, and independently cacheable visual chunks.
+- **Hex Map Chunk:** Bounded rectangular group of pointy-top offset hexes streamed and rendered as one lifecycle unit. Chunking does not change canonical `q/r` coordinates, map bounds, ownership, or movement rules.
+- **Visual Halo:** The one-hex ring of neighboring tile data stored with a visual chunk so coast, river, feature, and border edges can be built without loading the full map. Halo tiles are context and are not duplicated gameplay ownership.
+- **Map LOD:** A zoom bucket with hysteresis that selects which visual layers are visible. Far, Mid, and Near affect presentation only; they never change simulation or hit-testing geometry.
+- **Map Asset Provenance Manifest:** Project-owned record linking reproducible map-art sources, license/origin statements, generated runtime outputs, and their content hashes.
 - **Defines:** Scenario-owned balance and pacing configuration, similar to Victoria-style defines.
 - **Arcawiki:** Player-facing guide/wiki for mechanics, UI concepts, strategy, and scenario lore.
 - **AI Profile:** Scenario-authored AI personality/strategy configuration.

@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Rajdhani:wght@500;700&display=swap");
 @import "./styles/theme.css";
 
 @tailwind base;
@@ -32,14 +31,18 @@ select,
   background: transparent;
 }
 
-
 .glass {
-  background: linear-gradient(160deg, color-mix(in srgb, var(--arc-color-panel) 95%, black), color-mix(in srgb, var(--arc-color-bg) 93%, black));
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--arc-color-panel) 95%, black),
+    color-mix(in srgb, var(--arc-color-bg) 93%, black)
+  );
   backdrop-filter: blur(10px);
 }
 
 .panel-border {
-  border: 1px solid color-mix(in srgb, var(--arc-color-gold-soft) 24%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-gold-soft) 24%, transparent);
 }
 
 .map-btn {
@@ -53,12 +56,16 @@ select,
 }
 
 .arc-hud-panel {
-  position: relative;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--arc-color-gold-soft) 42%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-gold-soft) 42%, transparent);
   background: var(--arc-color-panel);
   color: var(--arc-color-text);
   box-shadow: var(--arc-shadow-panel);
+}
+
+.arc-hud-panel:not(.absolute):not(.fixed):not(.sticky) {
+  position: relative;
 }
 
 .arc-hud-panel::before {
@@ -94,7 +101,11 @@ select,
 
 .arc-hud-button-solid {
   border: 1px solid var(--arc-color-brown-dark);
-  background: linear-gradient(180deg, var(--arc-color-panel-soft), var(--arc-color-panel));
+  background: linear-gradient(
+    180deg,
+    var(--arc-color-panel-soft),
+    var(--arc-color-panel)
+  );
   color: var(--arc-color-text-soft);
   box-shadow: var(--arc-shadow-inset-button);
 }
@@ -111,13 +122,27 @@ select,
   color: var(--arc-color-text-paper);
   box-shadow: var(--arc-shadow-inset-soft);
   border-radius: 0 !important;
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
 }
 
 .arc-topbar-action,
 .arc-topbar-next-turn {
   border-radius: 0 !important;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
 }
 
 .arc-province-panel {
@@ -126,7 +151,11 @@ select,
 }
 
 .arc-province-panel [class*="border-white/10"] {
-  border-color: color-mix(in srgb, var(--arc-color-brown) 42%, transparent) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-brown) 42%,
+    transparent
+  ) !important;
 }
 
 .arc-province-panel [class*="bg-[#101720]"],
@@ -134,7 +163,11 @@ select,
 .arc-province-panel [class*="bg-black/25"],
 .arc-province-panel [class*="bg-black/30"],
 .arc-province-panel [class*="bg-black/35"] {
-  background: color-mix(in srgb, var(--arc-color-paper-soft) 88%, transparent) !important;
+  background: color-mix(
+    in srgb,
+    var(--arc-color-paper-soft) 88%,
+    transparent
+  ) !important;
   color: var(--arc-color-text-paper) !important;
 }
 
@@ -159,7 +192,11 @@ select,
 }
 
 .arc-province-panel [class*="bg-white/10"] {
-  background: color-mix(in srgb, var(--arc-color-brown) 18%, transparent) !important;
+  background: color-mix(
+    in srgb,
+    var(--arc-color-brown) 18%,
+    transparent
+  ) !important;
 }
 
 .pulse-status {
@@ -175,10 +212,14 @@ select,
   }
 }
 
-
 .arc-toast {
-  background: linear-gradient(160deg, color-mix(in srgb, var(--arc-color-panel) 97%, black), color-mix(in srgb, var(--arc-color-bg) 95%, black)) !important;
-  border: 1px solid color-mix(in srgb, var(--arc-color-gold-soft) 30%, transparent) !important;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--arc-color-panel) 97%, black),
+    color-mix(in srgb, var(--arc-color-bg) 95%, black)
+  ) !important;
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-gold-soft) 30%, transparent) !important;
   color: var(--arc-color-text-soft) !important;
   border-radius: 12px !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32) !important;
@@ -190,24 +231,41 @@ select,
 }
 
 .arc-toast-description {
-  color: color-mix(in srgb, var(--arc-color-text-soft) 70%, transparent) !important;
+  color: color-mix(
+    in srgb,
+    var(--arc-color-text-soft) 70%,
+    transparent
+  ) !important;
 }
 
 .arc-toast-success {
-  border-color: color-mix(in srgb, var(--arc-color-success-border) 70%, transparent) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-success-border) 70%,
+    transparent
+  ) !important;
 }
 
 .arc-toast-error {
-  border-color: color-mix(in srgb, var(--arc-color-danger-border) 70%, transparent) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-danger-border) 70%,
+    transparent
+  ) !important;
 }
 
 .arc-toast-warning {
-  border-color: color-mix(in srgb, var(--arc-color-warning-border) 70%, transparent) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-warning-border) 70%,
+    transparent
+  ) !important;
 }
 
 .arc-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--arc-color-gold) 45%, transparent) color-mix(in srgb, var(--arc-color-paper-soft) 4%, transparent);
+  scrollbar-color: color-mix(in srgb, var(--arc-color-gold) 45%, transparent)
+    color-mix(in srgb, var(--arc-color-paper-soft) 4%, transparent);
 }
 
 .arc-scrollbar::-webkit-scrollbar {
@@ -218,26 +276,43 @@ select,
 .arc-scrollbar::-webkit-scrollbar-track {
   background: color-mix(in srgb, var(--arc-color-paper-soft) 3%, transparent);
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-gold-soft) 16%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-gold-soft) 16%, transparent);
 }
 
 .arc-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--arc-color-gold) 42%, transparent), color-mix(in srgb, var(--arc-color-gold-warm) 22%, transparent));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--arc-color-gold) 42%, transparent),
+    color-mix(in srgb, var(--arc-color-gold-warm) 22%, transparent)
+  );
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--arc-color-gold) 24%, transparent);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 .arc-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--arc-color-gold) 58%, transparent), color-mix(in srgb, var(--arc-color-gold-warm) 34%, transparent));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--arc-color-gold) 58%, transparent),
+    color-mix(in srgb, var(--arc-color-gold-warm) 34%, transparent)
+  );
 }
 
 .arc-kit-gallery {
   min-height: 100vh;
   overflow: auto;
   background:
-    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--arc-color-gold) 11%, transparent), transparent 34%),
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-kit-bg) 88%, transparent), var(--arc-color-bg));
+    radial-gradient(
+      circle at 50% 0%,
+      color-mix(in srgb, var(--arc-color-gold) 11%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-kit-bg) 88%, transparent),
+      var(--arc-color-bg)
+    );
   color: var(--arc-kit-text);
   padding: 24px clamp(16px, 3vw, 48px);
 }
@@ -268,8 +343,19 @@ select,
   border-radius: 0;
   background: var(--arc-kit-border-muted);
   box-shadow: var(--arc-shadow-panel);
-  clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px));
-  --arc-kit-inner-fill: linear-gradient(180deg, color-mix(in srgb, var(--arc-kit-surface) 96%, transparent), color-mix(in srgb, var(--arc-kit-surface-soft) 92%, transparent));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 15px) 0,
+    100% 15px,
+    100% 100%,
+    15px 100%,
+    0 calc(100% - 15px)
+  );
+  --arc-kit-inner-fill: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--arc-kit-surface) 96%, transparent),
+    color-mix(in srgb, var(--arc-kit-surface-soft) 92%, transparent)
+  );
   --arc-kit-inner-cut: 14px;
 }
 
@@ -285,7 +371,14 @@ select,
   inset: 1px;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-kit-action-bar > *,
@@ -319,7 +412,14 @@ select,
   background: color-mix(in srgb, var(--arc-kit-surface-soft) 46%, #050708);
   color: var(--arc-kit-text);
   padding: 14px;
-  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% 100%,
+    13px 100%,
+    0 calc(100% - 13px)
+  );
   --arc-kit-inner-fill: linear-gradient(
     180deg,
     color-mix(in srgb, var(--arc-kit-surface) 88%, #030506),
@@ -335,7 +435,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-kit-frame-panel > * {
@@ -357,10 +464,20 @@ select,
   border-radius: 0;
   background: var(--arc-kit-border-muted);
   color: var(--arc-color-gold);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
   --arc-kit-inner-fill: var(--arc-kit-surface-soft);
   --arc-kit-inner-cut: 6px;
-  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
 .arc-kit-modal__close:hover,
@@ -420,9 +537,17 @@ select,
   overflow: visible;
   text-align: center;
   outline: none;
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-control) 88%, transparent);
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-kit-control) 88%,
+    transparent
+  );
   --arc-kit-inner-cut: 10px;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, background-color 160ms ease;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease,
+    background-color 160ms ease;
 }
 
 .arc-kit-choice-card::before,
@@ -439,7 +564,14 @@ select,
   inset: 1px;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-kit-choice-card::before {
@@ -453,7 +585,14 @@ select,
   z-index: -2;
   pointer-events: none;
   background: var(--arc-kit-choice-frame);
-  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 11px) 0,
+    100% 11px,
+    100% 100%,
+    11px 100%,
+    0 calc(100% - 11px)
+  );
 }
 
 .arc-kit-choice-card > *,
@@ -471,8 +610,16 @@ select,
 
 .arc-kit-choice-card:hover,
 .arc-kit-choice-card:focus-visible {
-  --arc-kit-choice-frame: color-mix(in srgb, var(--arc-kit-choice-accent) 64%, var(--arc-kit-border-muted));
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-choice-accent) 14%, var(--arc-kit-control));
+  --arc-kit-choice-frame: color-mix(
+    in srgb,
+    var(--arc-kit-choice-accent) 64%,
+    var(--arc-kit-border-muted)
+  );
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-kit-choice-accent) 14%,
+    var(--arc-kit-control)
+  );
   transform: translateY(-1px);
 }
 
@@ -482,9 +629,12 @@ select,
 
 .arc-kit-choice-card--selected {
   --arc-kit-choice-frame: var(--arc-kit-choice-accent);
-  filter:
-    drop-shadow(0 0 1px color-mix(in srgb, var(--arc-kit-choice-accent) 76%, transparent))
-    drop-shadow(0 0 18px color-mix(in srgb, var(--arc-kit-choice-accent) 18%, transparent));
+  filter: drop-shadow(
+      0 0 1px color-mix(in srgb, var(--arc-kit-choice-accent) 76%, transparent)
+    )
+    drop-shadow(
+      0 0 18px color-mix(in srgb, var(--arc-kit-choice-accent) 18%, transparent)
+    );
 }
 
 .arc-kit-choice-card__check {
@@ -512,10 +662,25 @@ select,
   justify-content: center;
   overflow: hidden;
   border: 0;
-  background: color-mix(in srgb, var(--arc-kit-choice-accent, var(--arc-color-gold)) 68%, var(--arc-kit-border-muted));
+  background: color-mix(
+    in srgb,
+    var(--arc-kit-choice-accent, var(--arc-color-gold)) 68%,
+    var(--arc-kit-border-muted)
+  );
   color: var(--arc-kit-choice-accent, var(--arc-color-gold));
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-icon-cut, 10px)) 0, 100% var(--arc-kit-icon-cut, 10px), 100% 100%, var(--arc-kit-icon-cut, 10px) 100%, 0 calc(100% - var(--arc-kit-icon-cut, 10px)));
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-choice-accent, var(--arc-color-gold)) 12%, var(--arc-kit-control));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-icon-cut, 10px)) 0,
+    100% var(--arc-kit-icon-cut, 10px),
+    100% 100%,
+    var(--arc-kit-icon-cut, 10px) 100%,
+    0 calc(100% - var(--arc-kit-icon-cut, 10px))
+  );
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-kit-choice-accent, var(--arc-color-gold)) 12%,
+    var(--arc-kit-control)
+  );
   --arc-kit-inner-cut: calc(var(--arc-kit-icon-cut, 10px) - 1px);
 }
 
@@ -533,7 +698,14 @@ select,
   inset: 1px;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-kit-choice-card__icon > *,
@@ -625,12 +797,27 @@ select,
   justify-content: center;
   border: 0;
   border-radius: 0;
-  background: color-mix(in srgb, var(--arc-kit-choice-accent) 58%, var(--arc-kit-border-muted));
+  background: color-mix(
+    in srgb,
+    var(--arc-kit-choice-accent) 58%,
+    var(--arc-kit-border-muted)
+  );
   color: var(--arc-kit-text);
   font-size: 12px;
   font-weight: 700;
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-choice-accent) 18%, var(--arc-kit-control));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-kit-choice-accent) 18%,
+    var(--arc-kit-control)
+  );
   --arc-kit-inner-cut: 6px;
 }
 
@@ -641,7 +828,14 @@ select,
   z-index: -1;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-kit-modal__actions {
@@ -658,8 +852,19 @@ select,
   border: 0;
   border-radius: 0;
   background: var(--arc-kit-border-muted);
-  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-control) 82%, transparent);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 11px) 0,
+    100% 11px,
+    100% 100%,
+    11px 100%,
+    0 calc(100% - 11px)
+  );
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-kit-control) 82%,
+    transparent
+  );
   --arc-kit-inner-cut: 10px;
 }
 
@@ -678,7 +883,10 @@ select,
   outline: none;
   padding: 0 12px;
   text-transform: uppercase;
-  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .arc-kit-tab:last-child {
@@ -741,7 +949,14 @@ select,
   align-items: center;
   overflow: hidden;
   background: var(--arc-kit-border-muted);
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
   transition:
     background 140ms ease,
     filter 140ms ease;
@@ -753,7 +968,14 @@ select,
   inset: 1px;
   pointer-events: none;
   background: color-mix(in srgb, var(--arc-kit-control) 88%, black);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
 .arc-kit-text-field__control {
@@ -774,7 +996,8 @@ select,
 .arc-kit-text-field__control:-webkit-autofill,
 .arc-kit-text-field__control:-webkit-autofill:hover,
 .arc-kit-text-field__control:-webkit-autofill:focus {
-  box-shadow: 0 0 0 1000px color-mix(in srgb, var(--arc-kit-control) 88%, black) inset;
+  box-shadow: 0 0 0 1000px color-mix(in srgb, var(--arc-kit-control) 88%, black)
+    inset;
   caret-color: var(--arc-kit-text);
   -webkit-text-fill-color: var(--arc-kit-text);
 }
@@ -871,7 +1094,14 @@ select,
   overflow-x: hidden;
   background: var(--arc-kit-border-muted);
   box-shadow: var(--arc-shadow-panel);
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
 }
 
 .arc-kit-dropdown-field__menu::before {
@@ -880,7 +1110,14 @@ select,
   inset: 1px;
   pointer-events: none;
   background: color-mix(in srgb, var(--arc-kit-control) 92%, black);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
 .arc-kit-dropdown-field__list {
@@ -907,7 +1144,14 @@ select,
   font-weight: 800;
   padding: 7px 8px;
   text-align: left;
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
 }
 
 .arc-kit-dropdown-field__option > span {
@@ -919,12 +1163,20 @@ select,
 
 .arc-kit-dropdown-field__option:hover,
 .arc-kit-dropdown-field__option[data-active="true"] {
-  background: color-mix(in srgb, var(--arc-color-gold) 12%, var(--arc-kit-surface-soft));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-gold) 12%,
+    var(--arc-kit-surface-soft)
+  );
   color: var(--arc-kit-text);
 }
 
 .arc-kit-dropdown-field__option[data-selected="true"] {
-  background: color-mix(in srgb, var(--arc-color-primary-top) 18%, var(--arc-kit-surface-soft));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-primary-top) 18%,
+    var(--arc-kit-surface-soft)
+  );
   color: var(--arc-kit-text);
 }
 
@@ -939,7 +1191,8 @@ select,
   opacity: 0;
 }
 
-.arc-kit-dropdown-field__option[data-selected="true"] .arc-kit-dropdown-field__check {
+.arc-kit-dropdown-field__option[data-selected="true"]
+  .arc-kit-dropdown-field__check {
   opacity: 1;
 }
 
@@ -955,7 +1208,14 @@ select,
   background: var(--arc-kit-border-muted);
   cursor: pointer;
   padding: 0;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
   transition:
     background 150ms ease,
     filter 150ms ease;
@@ -968,13 +1228,26 @@ select,
   z-index: 0;
   pointer-events: none;
   background: color-mix(in srgb, var(--arc-kit-control) 88%, black);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
 }
 
 .arc-kit-switch:hover,
 .arc-kit-switch:focus-visible {
-  background: color-mix(in srgb, var(--arc-color-gold) 58%, var(--arc-kit-border-muted));
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--arc-color-gold) 18%, transparent));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-gold) 58%,
+    var(--arc-kit-border-muted)
+  );
+  filter: drop-shadow(
+    0 0 10px color-mix(in srgb, var(--arc-color-gold) 18%, transparent)
+  );
 }
 
 .arc-kit-switch:focus-visible {
@@ -988,11 +1261,19 @@ select,
 }
 
 .arc-kit-switch[data-state="checked"] {
-  background: color-mix(in srgb, var(--arc-color-primary-top) 72%, var(--arc-kit-border-muted));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-primary-top) 72%,
+    var(--arc-kit-border-muted)
+  );
 }
 
 .arc-kit-switch[data-state="checked"]::before {
-  background: linear-gradient(180deg, var(--arc-color-primary-top), var(--arc-color-primary-bottom));
+  background: linear-gradient(
+    180deg,
+    var(--arc-color-primary-top),
+    var(--arc-color-primary-bottom)
+  );
 }
 
 .arc-kit-switch__thumb {
@@ -1003,7 +1284,14 @@ select,
   width: 20px;
   margin-left: 4px;
   background: var(--arc-kit-text-muted);
-  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% 100%,
+    5px 100%,
+    0 calc(100% - 5px)
+  );
   transition:
     background 150ms ease,
     transform 150ms ease;
@@ -1016,8 +1304,14 @@ select,
 
 .arc-kit-text-field__frame:hover,
 .arc-kit-text-field__frame:focus-within {
-  background: color-mix(in srgb, var(--arc-color-gold) 58%, var(--arc-kit-border-muted));
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--arc-color-gold) 18%, transparent));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-gold) 58%,
+    var(--arc-kit-border-muted)
+  );
+  filter: drop-shadow(
+    0 0 10px color-mix(in srgb, var(--arc-color-gold) 18%, transparent)
+  );
 }
 
 .arc-kit-text-field__frame:focus-within {
@@ -1026,7 +1320,11 @@ select,
 }
 
 .arc-kit-text-field[data-invalid="true"] .arc-kit-text-field__frame {
-  background: color-mix(in srgb, var(--arc-color-danger-top) 70%, var(--arc-kit-border-muted));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-danger-top) 70%,
+    var(--arc-kit-border-muted)
+  );
 }
 
 .arc-kit-text-field[data-disabled="true"] {
@@ -1058,12 +1356,25 @@ select,
   gap: 8px;
   border: 0;
   padding: 0 12px 0 8px;
-  background: color-mix(in srgb, var(--arc-kit-picker-color) 68%, var(--arc-kit-border-muted));
+  background: color-mix(
+    in srgb,
+    var(--arc-kit-picker-color) 68%,
+    var(--arc-kit-border-muted)
+  );
   color: var(--arc-kit-text);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
   cursor: pointer;
   filter: drop-shadow(0 0 0 transparent);
-  transition: filter 150ms ease, transform 150ms ease;
+  transition:
+    filter 150ms ease,
+    transform 150ms ease;
 }
 
 .arc-kit-color-picker__button::before {
@@ -1072,13 +1383,26 @@ select,
   inset: 1px;
   z-index: -1;
   pointer-events: none;
-  background: color-mix(in srgb, var(--arc-kit-picker-color) 14%, var(--arc-kit-control));
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  background: color-mix(
+    in srgb,
+    var(--arc-kit-picker-color) 14%,
+    var(--arc-kit-control)
+  );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
 }
 
 .arc-kit-color-picker__button:hover,
 .arc-kit-color-picker__button:focus-visible {
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--arc-kit-picker-color) 44%, transparent));
+  filter: drop-shadow(
+    0 0 10px color-mix(in srgb, var(--arc-kit-picker-color) 44%, transparent)
+  );
 }
 
 .arc-kit-color-picker__button:focus-visible {
@@ -1101,7 +1425,14 @@ select,
   width: 28px;
   flex: none;
   background: var(--arc-kit-picker-color);
-  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% 100%,
+    5px 100%,
+    0 calc(100% - 5px)
+  );
   box-shadow: var(--arc-shadow-inset-button);
 }
 
@@ -1128,12 +1459,29 @@ select,
   justify-content: center;
   overflow: hidden;
   border: 0;
-  background: color-mix(in srgb, var(--arc-kit-choice-accent, var(--arc-color-gold)) 68%, var(--arc-kit-border-muted));
+  background: color-mix(
+    in srgb,
+    var(--arc-kit-choice-accent, var(--arc-color-gold)) 68%,
+    var(--arc-kit-border-muted)
+  );
   color: var(--arc-kit-choice-accent, var(--arc-color-gold));
-  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 18px) 0,
+    100% 18px,
+    100% 100%,
+    18px 100%,
+    0 calc(100% - 18px)
+  );
   cursor: pointer;
-  transition: filter 160ms ease, transform 160ms ease;
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-choice-accent, var(--arc-color-gold)) 12%, var(--arc-kit-control));
+  transition:
+    filter 160ms ease,
+    transform 160ms ease;
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-kit-choice-accent, var(--arc-color-gold)) 12%,
+    var(--arc-kit-control)
+  );
 }
 
 .arc-kit-image-upload__card::before {
@@ -1142,12 +1490,26 @@ select,
   inset: 1px;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - 17px) 0, 100% 17px, 100% 100%, 17px 100%, 0 calc(100% - 17px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 17px) 0,
+    100% 17px,
+    100% 100%,
+    17px 100%,
+    0 calc(100% - 17px)
+  );
 }
 
 .arc-kit-image-upload__card:hover,
 .arc-kit-image-upload__card:focus-within {
-  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--arc-kit-choice-accent, var(--arc-color-gold)) 32%, transparent));
+  filter: drop-shadow(
+    0 0 12px
+      color-mix(
+        in srgb,
+        var(--arc-kit-choice-accent, var(--arc-color-gold)) 32%,
+        transparent
+      )
+  );
 }
 
 .arc-kit-image-upload__card:active {
@@ -1161,7 +1523,14 @@ select,
   height: calc(100% - 2px);
   width: calc(100% - 2px);
   object-fit: cover;
-  clip-path: polygon(0 0, calc(100% - 17px) 0, 100% 17px, 100% 100%, 17px 100%, 0 calc(100% - 17px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 17px) 0,
+    100% 17px,
+    100% 100%,
+    17px 100%,
+    0 calc(100% - 17px)
+  );
 }
 
 .arc-kit-image-upload__icon {
@@ -1181,9 +1550,20 @@ select,
   align-items: center;
   justify-content: center;
   border: 0;
-  background: color-mix(in srgb, var(--arc-color-danger-top) 72%, var(--arc-kit-border-muted));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-danger-top) 72%,
+    var(--arc-kit-border-muted)
+  );
   color: var(--arc-color-danger-text);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
   cursor: pointer;
 }
 
@@ -1193,7 +1573,11 @@ select,
 }
 
 .arc-kit-preview-chip {
-  --arc-kit-preview-chip-fill: color-mix(in srgb, var(--arc-kit-control) 82%, transparent);
+  --arc-kit-preview-chip-fill: color-mix(
+    in srgb,
+    var(--arc-kit-control) 82%,
+    transparent
+  );
   --arc-kit-preview-chip-cut: 9px;
   --arc-kit-preview-chip-inner-cut: 8px;
   position: relative;
@@ -1204,7 +1588,14 @@ select,
   overflow: hidden;
   background: var(--arc-kit-border-muted);
   color: var(--arc-kit-text-muted);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-preview-chip-cut)) 0, 100% var(--arc-kit-preview-chip-cut), 100% 100%, var(--arc-kit-preview-chip-cut) 100%, 0 calc(100% - var(--arc-kit-preview-chip-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-preview-chip-cut)) 0,
+    100% var(--arc-kit-preview-chip-cut),
+    100% 100%,
+    var(--arc-kit-preview-chip-cut) 100%,
+    0 calc(100% - var(--arc-kit-preview-chip-cut))
+  );
 }
 
 .arc-kit-preview-chip::before {
@@ -1214,7 +1605,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: var(--arc-kit-preview-chip-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-preview-chip-inner-cut)) 0, 100% var(--arc-kit-preview-chip-inner-cut), 100% 100%, var(--arc-kit-preview-chip-inner-cut) 100%, 0 calc(100% - var(--arc-kit-preview-chip-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-preview-chip-inner-cut)) 0,
+    100% var(--arc-kit-preview-chip-inner-cut),
+    100% 100%,
+    var(--arc-kit-preview-chip-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-preview-chip-inner-cut))
+  );
 }
 
 .arc-kit-preview-chip > * {
@@ -1352,8 +1750,19 @@ select,
   padding: 6px 9px;
   color: var(--arc-kit-text-muted);
   font-size: 12px;
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-control) 62%, transparent);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-kit-control) 62%,
+    transparent
+  );
   --arc-kit-inner-cut: 6px;
 }
 
@@ -1381,10 +1790,20 @@ select,
   border-radius: 0;
   background: var(--arc-kit-border-muted);
   color: var(--arc-color-gold);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
   --arc-kit-inner-fill: var(--arc-kit-surface-soft);
   --arc-kit-inner-cut: 6px;
-  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
 .arc-kit-icon-button--compact {
@@ -1401,10 +1820,19 @@ select,
   border-radius: 0;
   background: var(--arc-kit-border-muted);
   color: var(--arc-kit-text);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
   --arc-kit-inner-fill: transparent;
   --arc-kit-inner-cut: 6px;
-  transition: border-color 160ms ease, background-color 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
 }
 
 .arc-kit-panel__full-action:hover {
@@ -1450,7 +1878,14 @@ select,
   color: var(--arc-kit-text);
   padding: 18px 20px;
   text-align: center;
-  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 11px) 0,
+    100% 11px,
+    100% 100%,
+    11px 100%,
+    0 calc(100% - 11px)
+  );
   box-shadow: var(--arc-shadow-panel);
 }
 
@@ -1467,9 +1902,25 @@ select,
   z-index: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-kit-control) 90%, transparent), color-mix(in srgb, var(--arc-kit-bg) 88%, transparent)),
-    linear-gradient(115deg, transparent 0 42%, color-mix(in srgb, var(--arc-kit-surface-soft) 26%, transparent) 42% 52%, transparent 52%);
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-kit-control) 90%, transparent),
+      color-mix(in srgb, var(--arc-kit-bg) 88%, transparent)
+    ),
+    linear-gradient(
+      115deg,
+      transparent 0 42%,
+      color-mix(in srgb, var(--arc-kit-surface-soft) 26%, transparent) 42% 52%,
+      transparent 52%
+    );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
 }
 
 .arc-kit-plot-tooltip--compact {
@@ -1552,7 +2003,14 @@ select,
   place-items: center;
   color: var(--arc-kit-gold-strong);
   background: color-mix(in srgb, var(--arc-kit-control) 88%, transparent);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
 .arc-kit-plot-tooltip__resource {
@@ -1570,9 +2028,20 @@ select,
   height: 52px;
   width: 52px;
   place-items: center;
-  background: color-mix(in srgb, var(--arc-color-primary-top) 55%, var(--arc-kit-border-muted));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-primary-top) 55%,
+    var(--arc-kit-border-muted)
+  );
   color: var(--arc-color-gold);
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
 }
 
 .arc-kit-plot-tooltip__resource strong,
@@ -1602,7 +2071,14 @@ select,
   margin-top: 4px;
   padding: 8px 10px;
   background: color-mix(in srgb, var(--arc-kit-control) 62%, transparent);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
   text-align: left;
 }
 
@@ -1690,7 +2166,14 @@ select,
   padding: 5px 7px;
   background: color-mix(in srgb, var(--arc-kit-bg) 54%, transparent);
   color: var(--arc-kit-text-muted);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
   text-align: left;
 }
 
@@ -1779,7 +2262,14 @@ select,
   font-style: normal;
   font-weight: 700;
   line-height: 1;
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
 }
 
 .arc-kit-tech {
@@ -1833,8 +2323,17 @@ select,
   overflow: hidden;
   border: 1px solid var(--arc-kit-border-muted);
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--arc-kit-divider) 42%, transparent) 1px, transparent 1px) 0 0 / 32px 100%,
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-kit-surface-soft) 86%, transparent), color-mix(in srgb, var(--arc-kit-control) 82%, transparent));
+    linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--arc-kit-divider) 42%, transparent) 1px,
+        transparent 1px
+      )
+      0 0 / 32px 100%,
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-kit-surface-soft) 86%, transparent),
+      color-mix(in srgb, var(--arc-kit-control) 82%, transparent)
+    );
 }
 
 .arc-kit-chart-echarts {
@@ -1846,7 +2345,14 @@ select,
   overflow: hidden;
   background: var(--arc-kit-border-muted);
   padding: 1px;
-  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 11px) 0,
+    100% 11px,
+    100% 100%,
+    11px 100%,
+    0 calc(100% - 11px)
+  );
 }
 
 .arc-kit-scroll-demo__content {
@@ -1855,7 +2361,14 @@ select,
   gap: 8px;
   overflow: auto;
   background: color-mix(in srgb, var(--arc-kit-control) 46%, transparent);
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
   padding: 10px;
 }
 
@@ -1869,10 +2382,21 @@ select,
   border: 0;
   background: var(--arc-kit-border-muted);
   color: var(--arc-kit-text-muted);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
   padding: 7px 9px;
   font-size: 12px;
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-surface-soft) 78%, transparent);
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-kit-surface-soft) 78%,
+    transparent
+  );
   --arc-kit-inner-cut: 7px;
 }
 
@@ -1882,7 +2406,14 @@ select,
   inset: 1px;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-kit-scroll-demo__row > * {
@@ -1918,10 +2449,20 @@ select,
   color: var(--arc-kit-text);
   padding: 8px 10px;
   text-align: left;
-  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 11px) 0,
+    100% 11px,
+    100% 100%,
+    11px 100%,
+    0 calc(100% - 11px)
+  );
   --arc-kit-inner-fill: var(--arc-kit-control);
   --arc-kit-inner-cut: 10px;
-  transition: border-color 160ms ease, filter 160ms ease, transform 160ms ease;
+  transition:
+    border-color 160ms ease,
+    filter 160ms ease,
+    transform 160ms ease;
 }
 
 .arc-kit-tech-node:hover {
@@ -1957,7 +2498,14 @@ select,
   overflow: hidden;
   border: 0 !important;
   background: var(--arc-kit-border-muted) !important;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
   --arc-kit-button-fill: var(--arc-kit-control);
   --arc-kit-button-cut: 7px;
 }
@@ -1970,7 +2518,14 @@ select,
   z-index: -1;
   pointer-events: none;
   background: var(--arc-kit-button-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-button-cut)) 0, 100% var(--arc-kit-button-cut), 100% 100%, var(--arc-kit-button-cut) 100%, 0 calc(100% - var(--arc-kit-button-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-button-cut)) 0,
+    100% var(--arc-kit-button-cut),
+    100% 100%,
+    var(--arc-kit-button-cut) 100%,
+    0 calc(100% - var(--arc-kit-button-cut))
+  );
 }
 
 .arc-kit-gallery [data-arc-button]:hover,
@@ -1983,11 +2538,19 @@ select,
 .arc-kit-gallery [data-arc-button][data-variant="primary"],
 .arc-kit-gallery [data-arc-button][data-variant="selected"] {
   background: var(--arc-color-primary-border) !important;
-  --arc-kit-button-fill: linear-gradient(180deg, var(--arc-color-primary-top), var(--arc-color-primary-bottom));
+  --arc-kit-button-fill: linear-gradient(
+    180deg,
+    var(--arc-color-primary-top),
+    var(--arc-color-primary-bottom)
+  );
 }
 
 .arc-kit-gallery [data-arc-button][data-variant="secondary"] {
-  background: color-mix(in srgb, var(--arc-kit-surface-soft) 58%, #050708) !important;
+  background: color-mix(
+    in srgb,
+    var(--arc-kit-surface-soft) 58%,
+    #050708
+  ) !important;
   color: var(--arc-kit-text);
   --arc-kit-button-fill: linear-gradient(
     180deg,
@@ -2008,17 +2571,29 @@ select,
 
 .arc-kit-gallery [data-arc-button][data-variant="danger"] {
   background: var(--arc-color-danger-border) !important;
-  --arc-kit-button-fill: linear-gradient(180deg, var(--arc-color-danger-top), var(--arc-color-danger-bottom));
+  --arc-kit-button-fill: linear-gradient(
+    180deg,
+    var(--arc-color-danger-top),
+    var(--arc-color-danger-bottom)
+  );
 }
 
 .arc-kit-gallery [data-arc-button][data-variant="success"] {
   background: var(--arc-color-success-border) !important;
-  --arc-kit-button-fill: linear-gradient(180deg, var(--arc-color-success-top), var(--arc-color-success-bottom));
+  --arc-kit-button-fill: linear-gradient(
+    180deg,
+    var(--arc-color-success-top),
+    var(--arc-color-success-bottom)
+  );
 }
 
 .arc-kit-gallery [data-arc-button][data-variant="warning"] {
   background: var(--arc-color-warning-border) !important;
-  --arc-kit-button-fill: linear-gradient(180deg, var(--arc-color-warning-top), var(--arc-color-warning-bottom));
+  --arc-kit-button-fill: linear-gradient(
+    180deg,
+    var(--arc-color-warning-top),
+    var(--arc-color-warning-bottom)
+  );
 }
 
 .arc-kit-gallery [data-arc-button][data-variant="ghost"] {
@@ -2035,7 +2610,14 @@ select,
   border: 0 !important;
   background: var(--arc-kit-border-muted) !important;
   padding: 1px;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
 .arc-kit-gallery .arc-app-field-frame:hover,
@@ -2048,7 +2630,14 @@ select,
 }
 
 .arc-kit-gallery .arc-app-field-control {
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
   background: var(--arc-kit-control) !important;
   box-shadow: none !important;
 }
@@ -2058,7 +2647,11 @@ select,
 }
 
 .arc-kit-gallery .arc-app-toggle[data-state="checked"]::before {
-  background: color-mix(in srgb, var(--arc-color-primary-bottom) 36%, var(--arc-kit-surface-soft));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-primary-bottom) 36%,
+    var(--arc-kit-surface-soft)
+  );
 }
 
 .arc-kit-gallery .arc-button-icon,
@@ -2095,7 +2688,14 @@ select,
 .arc-kit-gallery .arc-app-toggle > span:last-child {
   overflow: hidden;
   border-radius: 0;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
 .arc-kit-gallery .arc-app-toggle > span:last-child > span {
@@ -2112,12 +2712,24 @@ select,
   overflow: hidden;
   border: 1px solid var(--arc-color-atlas-line-strong);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 14px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.04) 0 1px,
+      transparent 1px 14px
+    );
   color: var(--arc-color-atlas-ink);
   padding: 11px 12px;
   box-shadow: var(--arc-shadow-atlas-panel);
-  transition: width 200ms ease, height 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+  transition:
+    width 200ms ease,
+    height 200ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
 }
 
 .arc-notification-chip:hover {
@@ -2134,18 +2746,30 @@ select,
 }
 
 .arc-notification-chip--registration {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 54%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 54%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
 .arc-notification-chip--politics,
 .arc-notification-chip--diplomacy {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 54%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 54%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-primary);
 }
 
 .arc-notification-chip--economy {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-good) 54%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 54%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-good);
 }
 
@@ -2167,12 +2791,20 @@ select,
 }
 
 .arc-notification-quick--primary {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-good) 46%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 46%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-good);
 }
 
 .arc-notification-quick--danger {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 46%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 46%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
@@ -2195,13 +2827,23 @@ select,
   width: 100%;
   border: 1px solid var(--arc-color-atlas-line);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white), color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.035) 0 1px, transparent 1px 18px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white),
+      color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.035) 0 1px,
+      transparent 1px 18px
+    );
   color: var(--arc-color-atlas-ink);
   padding: 12px;
   text-align: left;
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.48) inset;
-  transition: border-color 160ms ease, filter 160ms ease;
+  transition:
+    border-color 160ms ease,
+    filter 160ms ease;
 }
 
 .arc-notification-history-row:hover {
@@ -2221,18 +2863,30 @@ select,
 }
 
 .arc-notification-history-icon--registration {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 46%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 46%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
 .arc-notification-history-icon--politics,
 .arc-notification-history-icon--diplomacy {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 46%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 46%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-primary);
 }
 
 .arc-notification-history-icon--economy {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-good) 46%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 46%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-good);
 }
 
@@ -2258,7 +2912,11 @@ select,
 
 .arc-notification-history-state--new,
 .arc-notification-history-decision {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 42%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 42%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
@@ -2277,11 +2935,17 @@ select,
   border: 1px solid var(--arc-color-atlas-line);
   background: var(--arc-color-atlas-paper);
   color: var(--arc-color-atlas-muted);
-  transition: border-color 160ms ease, color 160ms ease;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease;
 }
 
 .arc-notification-history-delete:hover {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 46%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 46%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
@@ -2295,8 +2959,16 @@ select,
 .arc-budget-history-row {
   border-color: var(--arc-color-atlas-line);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white), color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.035) 0 1px, transparent 1px 18px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white),
+      color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.035) 0 1px,
+      transparent 1px 18px
+    );
   color: var(--arc-color-atlas-ink);
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.48) inset;
 }
@@ -2340,8 +3012,16 @@ select,
 .arc-buildings-toolbar {
   border-color: var(--arc-color-atlas-line);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 84%, white), color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.035) 0 1px, transparent 1px 18px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 84%, white),
+      color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.035) 0 1px,
+      transparent 1px 18px
+    );
 }
 
 .arc-buildings-filter-chip,
@@ -2356,7 +3036,10 @@ select,
   padding: 0 9px;
   font-size: 12px;
   font-weight: 800;
-  transition: border-color 160ms ease, color 160ms ease, filter 160ms ease;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    filter 160ms ease;
 }
 
 .arc-buildings-filter-chip {
@@ -2376,8 +3059,17 @@ select,
 }
 
 .arc-buildings-filter-count {
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-primary) 44%, var(--arc-color-atlas-line));
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 14%, var(--arc-color-atlas-paper));
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--arc-color-atlas-primary) 44%,
+      var(--arc-color-atlas-line)
+    );
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 14%,
+    var(--arc-color-atlas-paper)
+  );
   color: var(--arc-color-atlas-primary);
   padding: 1px 5px;
   font-size: 10px;
@@ -2387,8 +3079,16 @@ select,
 .arc-buildings-region-section {
   border-color: var(--arc-color-atlas-line);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 74%, white), color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.035) 0 1px, transparent 1px 18px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 74%, white),
+      color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.035) 0 1px,
+      transparent 1px 18px
+    );
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.48) inset;
 }
 
@@ -2437,11 +3137,17 @@ select,
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  transition: color 160ms ease, background-color 160ms ease;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
 }
 
 .arc-construction-group-toggle:hover {
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 55%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 55%,
+    transparent
+  );
   color: var(--arc-color-atlas-ink);
 }
 
@@ -2466,21 +3172,35 @@ select,
 }
 
 .arc-construction-building-thumb--can {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-good) 44%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 44%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-construction-building-thumb--locked {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 44%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 44%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-construction-building-thumb--queued {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 44%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 44%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-construction-add-button {
   border: 1px solid var(--arc-color-atlas-line);
   background: var(--arc-color-atlas-paper);
-  transition: filter 160ms ease, transform 160ms ease;
+  transition:
+    filter 160ms ease,
+    transform 160ms ease;
 }
 
 .arc-construction-add-button:hover:not(:disabled) {
@@ -2489,12 +3209,20 @@ select,
 }
 
 .arc-construction-add-button--can {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-good) 55%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 55%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-good);
 }
 
 .arc-construction-add-button--locked {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 55%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 55%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
@@ -2503,15 +3231,27 @@ select,
   background: repeating-linear-gradient(
     -45deg,
     color-mix(in srgb, var(--arc-color-atlas-primary) 92%, white) 0 8px,
-    color-mix(in srgb, var(--arc-color-atlas-paper-deep) 92%, var(--arc-color-atlas-ink)) 8px 16px
+    color-mix(
+        in srgb,
+        var(--arc-color-atlas-paper-deep) 92%,
+        var(--arc-color-atlas-ink)
+      )
+      8px 16px
   );
 }
 
 .arc-construction-cancel-button {
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-primary) 55%, var(--arc-color-atlas-line));
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--arc-color-atlas-primary) 55%,
+      var(--arc-color-atlas-line)
+    );
   background: var(--arc-color-atlas-paper);
   color: var(--arc-color-atlas-primary);
-  transition: filter 160ms ease, transform 160ms ease;
+  transition:
+    filter 160ms ease,
+    transform 160ms ease;
 }
 
 .arc-construction-cancel-button:hover:not(:disabled) {
@@ -2538,8 +3278,18 @@ select,
   color: var(--arc-color-atlas-ink);
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 72%, white);
   border: 1px solid var(--arc-color-atlas-line);
-  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
-  transition: border-color 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 11px) 0,
+    100% 11px,
+    100% 100%,
+    11px 100%,
+    0 calc(100% - 11px)
+  );
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease;
 }
 
 .arc-strategy-warehouse-row::after {
@@ -2547,25 +3297,46 @@ select,
   position: absolute;
   inset: 3px;
   pointer-events: none;
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 62%, transparent);
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 62%, transparent);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
 }
 
 .arc-strategy-warehouse-row:hover {
   filter: brightness(1.02);
-  box-shadow: 0 7px 16px color-mix(in srgb, var(--arc-color-atlas-ink) 12%, transparent);
+  box-shadow: 0 7px 16px
+    color-mix(in srgb, var(--arc-color-atlas-ink) 12%, transparent);
 }
 
 .arc-strategy-warehouse-row--positive {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-good) 54%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 54%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-strategy-warehouse-row--warning {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 58%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 58%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-strategy-warehouse-row--negative {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 62%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 62%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-strategy-warehouse-icon {
@@ -2576,7 +3347,14 @@ select,
   color: var(--arc-color-atlas-primary);
   background: var(--arc-color-atlas-paper);
   border: 1px solid var(--arc-color-atlas-line);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
 .arc-strategy-warehouse-main {
@@ -2615,7 +3393,14 @@ select,
   color: var(--arc-color-atlas-ink);
   font-size: 10px;
   line-height: 1.1;
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
 }
 
 .arc-strategy-warehouse-metric span {
@@ -2659,7 +3444,14 @@ select,
   color: var(--arc-color-atlas-muted);
   font-size: 10px;
   font-weight: 800;
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
 }
 
 .arc-strategy-warehouse-good img {
@@ -2673,7 +3465,11 @@ select,
 }
 
 .arc-strategy-formation-row--active {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 72%, var(--arc-color-atlas-border));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 72%,
+    var(--arc-color-atlas-border)
+  );
   box-shadow: var(--arc-shadow-atlas-sm);
 }
 
@@ -2696,12 +3492,24 @@ select,
 .arc-strategy-formation-controls select,
 .arc-strategy-formation-repeat {
   min-height: 28px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-border) 80%, transparent);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper) 86%, var(--arc-color-atlas-paper-deep));
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-border) 80%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper) 86%,
+    var(--arc-color-atlas-paper-deep)
+  );
   color: var(--arc-color-atlas-ink);
   font-size: 11px;
   font-weight: 700;
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
 }
 
 .arc-strategy-formation-controls input,
@@ -2746,7 +3554,11 @@ select,
 }
 
 .arc-market-chart-frame {
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-deep) 42%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-deep) 42%,
+    transparent
+  );
   border: 1px solid var(--arc-color-atlas-line);
 }
 
@@ -2767,12 +3579,20 @@ select,
 }
 
 .arc-market-summary-chip--danger {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 48%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 48%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
 .arc-market-summary-chip--primary {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 48%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 48%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-primary);
 }
 
@@ -2793,7 +3613,10 @@ select,
   color: var(--arc-color-atlas-ink);
   padding: 8px 12px;
   font-size: 14px;
-  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
 }
 
 .arc-market-good-row:hover {
@@ -2802,13 +3625,29 @@ select,
 }
 
 .arc-market-good-row--selected {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 56%, var(--arc-color-atlas-line));
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 12%, var(--arc-color-atlas-paper));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 56%,
+    var(--arc-color-atlas-line)
+  );
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 12%,
+    var(--arc-color-atlas-paper)
+  );
 }
 
 .arc-market-good-row--critical {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 48%, var(--arc-color-atlas-line));
-  background: color-mix(in srgb, var(--arc-color-atlas-danger) 10%, var(--arc-color-atlas-paper));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 48%,
+    var(--arc-color-atlas-line)
+  );
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 10%,
+    var(--arc-color-atlas-paper)
+  );
 }
 
 .arc-market-section-title {
@@ -2859,15 +3698,41 @@ select,
 }
 
 .arc-market-warning-card {
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-warning) 48%, var(--arc-color-atlas-line));
-  background: color-mix(in srgb, var(--arc-color-atlas-warning) 10%, var(--arc-color-atlas-paper));
-  color: color-mix(in srgb, var(--arc-color-atlas-warning) 74%, var(--arc-color-atlas-ink));
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--arc-color-atlas-warning) 48%,
+      var(--arc-color-atlas-line)
+    );
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-warning) 10%,
+    var(--arc-color-atlas-paper)
+  );
+  color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-warning) 74%,
+    var(--arc-color-atlas-ink)
+  );
 }
 
 .arc-market-danger-card {
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-danger) 46%, var(--arc-color-atlas-line));
-  background: color-mix(in srgb, var(--arc-color-atlas-danger) 10%, var(--arc-color-atlas-paper));
-  color: color-mix(in srgb, var(--arc-color-atlas-danger) 74%, var(--arc-color-atlas-ink));
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--arc-color-atlas-danger) 46%,
+      var(--arc-color-atlas-line)
+    );
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 10%,
+    var(--arc-color-atlas-paper)
+  );
+  color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 74%,
+    var(--arc-color-atlas-ink)
+  );
 }
 
 .arc-market-sticky {
@@ -2912,7 +3777,10 @@ select,
   border: 1px solid var(--arc-color-atlas-line);
   background: color-mix(in srgb, var(--arc-color-atlas-paper) 86%, white);
   padding: 8px;
-  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
 }
 
 .arc-market-rule-row:hover {
@@ -2922,11 +3790,19 @@ select,
 }
 
 .arc-market-rule-row--ban {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 44%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 44%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-market-rule-row--cap {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-warning) 44%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-warning) 44%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-market-status-chip {
@@ -2939,17 +3815,29 @@ select,
 }
 
 .arc-market-status-chip--active {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-good) 48%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 48%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-good);
 }
 
 .arc-market-status-chip--expired {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 48%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 48%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
 .arc-market-status-chip--paused {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-warning) 48%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-warning) 48%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-warning);
 }
 
@@ -2979,8 +3867,16 @@ select,
 .arc-pop-card {
   border: 1px solid var(--arc-color-atlas-line);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.035) 0 1px, transparent 1px 18px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.035) 0 1px,
+      transparent 1px 18px
+    );
   color: var(--arc-color-atlas-muted);
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.48) inset;
 }
@@ -3025,12 +3921,23 @@ select,
   gap: 14px;
   border: 1px solid var(--arc-color-atlas-line-strong);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 96%, white), var(--arc-color-atlas-paper)),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 96%, white),
+      var(--arc-color-atlas-paper)
+    ),
     radial-gradient(circle at 25% 0%, rgb(255 255 255 / 0.56), transparent 34%);
   color: var(--arc-color-atlas-ink);
   box-shadow: var(--arc-shadow-atlas-panel);
   padding: 8px 10px;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
 }
 
 .arc-strategy-flag {
@@ -3095,8 +4002,18 @@ select,
   padding: 0 10px;
   font-size: 12px;
   font-weight: 700;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  transition: transform 160ms ease, filter 160ms ease, background-color 160ms ease;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  transition:
+    transform 160ms ease,
+    filter 160ms ease,
+    background-color 160ms ease;
 }
 
 .arc-strategy-icon-button {
@@ -3111,7 +4028,11 @@ select,
 }
 
 .arc-strategy-icon-button--danger {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 55%, transparent);
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 55%,
+    transparent
+  );
   color: var(--arc-color-atlas-danger);
 }
 
@@ -3134,7 +4055,11 @@ select,
 
 .arc-turn-advancer-card {
   --arc-turn-advancer-frame: var(--arc-color-atlas-line-strong);
-  --arc-turn-advancer-glow: color-mix(in srgb, var(--arc-color-atlas-primary) 10%, transparent);
+  --arc-turn-advancer-glow: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 10%,
+    transparent
+  );
   position: relative;
   width: min(520px, calc(100vw - 104px));
   min-height: 136px;
@@ -3155,9 +4080,21 @@ select,
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 0 0, var(--arc-turn-advancer-glow), transparent 42%),
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(0deg, rgb(70 52 30 / 0.035) 0 1px, transparent 1px 12px);
+    radial-gradient(
+      circle at 0 0,
+      var(--arc-turn-advancer-glow),
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgb(70 52 30 / 0.035) 0 1px,
+      transparent 1px 12px
+    );
   clip-path: polygon(0 0, 100% 0, 100% 100%, 13px 100%, 0 calc(100% - 13px));
 }
 
@@ -3167,13 +4104,29 @@ select,
 }
 
 .arc-turn-advancer-card--blocked {
-  --arc-turn-advancer-frame: color-mix(in srgb, var(--arc-color-atlas-danger) 48%, var(--arc-color-atlas-line-strong));
-  --arc-turn-advancer-glow: color-mix(in srgb, var(--arc-color-atlas-danger) 12%, transparent);
+  --arc-turn-advancer-frame: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 48%,
+    var(--arc-color-atlas-line-strong)
+  );
+  --arc-turn-advancer-glow: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 12%,
+    transparent
+  );
 }
 
 .arc-turn-advancer-card--ready {
-  --arc-turn-advancer-frame: color-mix(in srgb, var(--arc-color-atlas-good) 42%, var(--arc-color-atlas-line-strong));
-  --arc-turn-advancer-glow: color-mix(in srgb, var(--arc-color-atlas-good) 12%, transparent);
+  --arc-turn-advancer-frame: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 42%,
+    var(--arc-color-atlas-line-strong)
+  );
+  --arc-turn-advancer-glow: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 12%,
+    transparent
+  );
 }
 
 .arc-turn-advancer-layout {
@@ -3190,7 +4143,8 @@ select,
   align-content: start;
   gap: 4px;
   min-height: 70px;
-  border-right: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 78%, transparent);
+  border-right: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 78%, transparent);
   padding-right: 8px;
 }
 
@@ -3218,9 +4172,17 @@ select,
   border: 0;
   background: var(--arc-color-atlas-primary);
   color: var(--arc-color-atlas-muted);
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  );
   box-shadow:
-    inset 0 0 0 2px color-mix(in srgb, var(--arc-color-atlas-paper-soft) 70%, transparent),
+    inset 0 0 0 2px
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 70%, transparent),
     0 1px 3px rgb(0 0 0 / 0.22);
 }
 
@@ -3281,7 +4243,14 @@ select,
   height: 6px;
   overflow: hidden;
   background: color-mix(in srgb, var(--arc-color-atlas-line) 72%, transparent);
-  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 4px) 0,
+    100% 4px,
+    100% 100%,
+    4px 100%,
+    0 calc(100% - 4px)
+  );
 }
 
 .arc-turn-advancer-health__track > span {
@@ -3312,7 +4281,14 @@ select,
   font-size: 11px;
   font-weight: 800;
   color: var(--arc-color-atlas-ink);
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
 }
 
 .arc-turn-advancer-command-strip {
@@ -3321,7 +4297,8 @@ select,
   align-items: center;
   gap: 6px;
   min-height: 33px;
-  border-top: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 72%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 72%, transparent);
   padding-top: 5px;
 }
 
@@ -3335,15 +4312,33 @@ select,
   overflow: hidden;
   background: var(--arc-color-atlas-line);
   color: var(--arc-color-atlas-primary);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
 }
 
 .arc-turn-advancer-command-strip__lead::before {
   content: "";
   position: absolute;
   inset: 1px;
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 10%, var(--arc-color-atlas-paper-soft));
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 10%,
+    var(--arc-color-atlas-paper-soft)
+  );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
 }
 
 .arc-turn-advancer-command-strip__lead > svg {
@@ -3358,7 +4353,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
-  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% 100%,
+    5px 100%,
+    0 calc(100% - 5px)
+  );
 }
 
 .arc-turn-advancer-stat > * {
@@ -3377,11 +4379,21 @@ select,
   border: 0;
   background: var(--arc-color-atlas-line);
   color: var(--arc-color-atlas-muted);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.5),
     0 1px 2px rgb(0 0 0 / 0.14);
-  transition: transform 160ms ease, filter 160ms ease, border-color 160ms ease;
+  transition:
+    transform 160ms ease,
+    filter 160ms ease,
+    border-color 160ms ease;
 }
 
 .arc-turn-advancer-action::before {
@@ -3391,7 +4403,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
 }
 
 .arc-turn-advancer-action > svg {
@@ -3407,12 +4426,20 @@ select,
 }
 
 .arc-turn-advancer-action--danger {
-  background: color-mix(in srgb, var(--arc-color-atlas-danger) 58%, var(--arc-color-atlas-line));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 58%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
 .arc-turn-advancer-action--danger::before {
-  background: color-mix(in srgb, var(--arc-color-atlas-danger) 8%, var(--arc-color-atlas-paper-soft));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 8%,
+    var(--arc-color-atlas-paper-soft)
+  );
 }
 
 .arc-turn-advancer-queue {
@@ -3424,7 +4451,14 @@ select,
   height: 10px;
   border: 0;
   background: var(--arc-color-atlas-muted);
-  clip-path: polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 3px) 0,
+    100% 3px,
+    100% 100%,
+    3px 100%,
+    0 calc(100% - 3px)
+  );
 }
 
 .arc-turn-advancer-queue__dot--active {
@@ -3455,7 +4489,9 @@ select,
     0 1px 0 rgb(255 255 255 / 0.35) inset,
     var(--arc-shadow-floating);
   color: var(--arc-color-atlas-ink);
-  transition: transform 160ms ease, filter 160ms ease;
+  transition:
+    transform 160ms ease,
+    filter 160ms ease;
   margin-left: -1px;
 }
 
@@ -3466,8 +4502,16 @@ select,
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 88%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(0deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 10px);
+    radial-gradient(
+      circle at 50% 42%,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 88%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgb(70 52 30 / 0.04) 0 1px,
+      transparent 1px 10px
+    );
   clip-path: polygon(0 0, 63% 0, 100% 27%, 100% 73%, 63% 100%, 0 100%);
 }
 
@@ -3491,12 +4535,20 @@ select,
 }
 
 .arc-turn-advancer-orb--blocked {
-  background: color-mix(in srgb, var(--arc-color-atlas-danger) 58%, var(--arc-color-atlas-line-strong));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 58%,
+    var(--arc-color-atlas-line-strong)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
 .arc-turn-advancer-orb--ready {
-  background: color-mix(in srgb, var(--arc-color-atlas-good) 58%, var(--arc-color-atlas-line-strong));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 58%,
+    var(--arc-color-atlas-line-strong)
+  );
   color: var(--arc-color-atlas-good);
 }
 
@@ -3511,7 +4563,14 @@ select,
   font-size: 10px;
   font-weight: 900;
   color: var(--arc-color-atlas-ink);
-  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% 100%,
+    5px 100%,
+    0 calc(100% - 5px)
+  );
 }
 
 @media (max-width: 720px) {
@@ -3599,7 +4658,14 @@ select,
   font-size: 12px;
   font-weight: 700;
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.55) inset;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
   transition:
     width 180ms ease,
     transform 160ms ease,
@@ -3616,7 +4682,9 @@ select,
   min-width: max-content;
   opacity: 0;
   transform: translateX(12px);
-  transition: opacity 160ms ease, transform 180ms ease;
+  transition:
+    opacity 160ms ease,
+    transform 180ms ease;
 }
 
 .arc-strategy-mode-button:hover,
@@ -3640,7 +4708,9 @@ select,
 }
 
 .arc-strategy-mode-button--active {
-  box-shadow: 4px 0 0 var(--arc-color-atlas-primary) inset, 0 1px 0 rgb(255 255 255 / 0.65) inset;
+  box-shadow:
+    4px 0 0 var(--arc-color-atlas-primary) inset,
+    0 1px 0 rgb(255 255 255 / 0.65) inset;
 }
 
 .arc-map-lens-hud {
@@ -3678,19 +4748,35 @@ select,
 }
 
 .arc-map-lens-legend-item--good {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 38%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 38%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-map-lens-legend-item--warn {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-warning) 38%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-warning) 38%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-map-lens-legend-item--bad {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 38%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 38%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-map-lens-legend-item--accent {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 38%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 38%,
+    var(--arc-color-atlas-line)
+  );
 }
 
 .arc-map-lens-swatch {
@@ -3700,7 +4786,8 @@ select,
   flex: none;
   border: 1px solid var(--arc-color-atlas-line-strong);
   background: var(--arc-map-lens-swatch-color);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--arc-color-atlas-paper-soft) 74%, transparent) inset;
+  box-shadow: 0 1px 0
+    color-mix(in srgb, var(--arc-color-atlas-paper-soft) 74%, transparent) inset;
 }
 
 .arc-map-lens-button {
@@ -3714,12 +4801,35 @@ select,
   overflow: hidden;
   border: 1px solid var(--arc-color-atlas-line);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 10px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.04) 0 1px,
+      transparent 1px 10px
+    );
   color: var(--arc-color-atlas-muted);
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.55) inset, 0 5px 12px rgb(52 36 18 / 0.16);
-  transition: transform 160ms ease, color 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.55) inset,
+    0 5px 12px rgb(52 36 18 / 0.16);
+  transition:
+    transform 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease;
 }
 
 .arc-map-lens-button:hover,
@@ -3728,16 +4838,29 @@ select,
   border-color: var(--arc-color-atlas-line-strong);
   color: var(--arc-color-atlas-ink);
   filter: brightness(1.03);
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.62) inset, 0 8px 16px rgb(52 36 18 / 0.22);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.62) inset,
+    0 8px 16px rgb(52 36 18 / 0.22);
 }
 
 .arc-map-lens-button--active {
   border-color: var(--arc-color-atlas-line-strong);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white), var(--arc-color-atlas-paper-soft)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 10px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white),
+      var(--arc-color-atlas-paper-soft)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.04) 0 1px,
+      transparent 1px 10px
+    );
   color: var(--arc-color-atlas-ink);
-  box-shadow: 0 4px 0 var(--arc-color-atlas-primary) inset, 0 1px 0 rgb(255 255 255 / 0.65) inset, 0 8px 16px rgb(52 36 18 / 0.2);
+  box-shadow:
+    0 4px 0 var(--arc-color-atlas-primary) inset,
+    0 1px 0 rgb(255 255 255 / 0.65) inset,
+    0 8px 16px rgb(52 36 18 / 0.2);
 }
 
 .arc-map-lens-badge {
@@ -3772,7 +4895,14 @@ select,
   font-size: 13px;
   font-weight: 650;
   text-align: center;
-  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 11px) 0,
+    100% 11px,
+    100% 100%,
+    11px 100%,
+    0 calc(100% - 11px)
+  );
   animation: arc-map-notice-in 140ms ease-out;
 }
 
@@ -3784,9 +4914,24 @@ select,
   pointer-events: none;
   opacity: 1;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 95%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(0deg, rgb(70 52 30 / 0.03) 0 1px, transparent 1px 12px);
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 95%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgb(70 52 30 / 0.03) 0 1px,
+      transparent 1px 12px
+    );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
 }
 
 .arc-map-mode-notice .arc-hud-content {
@@ -3849,12 +4994,27 @@ select,
   overflow: auto;
   border: 1px solid var(--arc-color-atlas-line-strong);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 94%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(0deg, rgb(70 52 30 / 0.03) 0 1px, transparent 1px 12px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 94%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgb(70 52 30 / 0.03) 0 1px,
+      transparent 1px 12px
+    );
   color: var(--arc-color-atlas-ink);
   box-shadow: var(--arc-shadow-atlas-panel);
   padding: 12px;
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  );
 }
 
 .arc-corridor-build-panel__header {
@@ -3967,6 +5127,8 @@ select,
 
 .arc-map-building-popover {
   position: absolute;
+  top: 0;
+  left: 0;
   z-index: 74;
   width: min(370px, calc(100vw - 24px));
   overflow: visible;
@@ -3985,7 +5147,8 @@ select,
   display: grid;
   width: min(340px, calc(100vw - 24px));
   gap: 10px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 84%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 84%, transparent);
   background: color-mix(in srgb, var(--arc-color-atlas-paper) 94%, transparent);
   box-shadow: var(--arc-shadow-atlas-panel);
   padding: 12px;
@@ -4048,12 +5211,27 @@ select,
   overflow: hidden;
   border: 1px solid var(--arc-color-atlas-line-strong);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 94%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(0deg, rgb(70 52 30 / 0.03) 0 1px, transparent 1px 12px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 94%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgb(70 52 30 / 0.03) 0 1px,
+      transparent 1px 12px
+    );
   color: var(--arc-color-atlas-ink);
   box-shadow: var(--arc-shadow-atlas-panel);
   padding: 18px;
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  );
   z-index: 2;
 }
 
@@ -4092,8 +5270,20 @@ select,
   background: color-mix(in srgb, var(--arc-color-atlas-paper) 86%, white);
   color: var(--arc-color-atlas-muted);
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.52) inset;
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
-  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease, transform 180ms ease, box-shadow 160ms ease;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 180ms ease,
+    box-shadow 160ms ease;
   will-change: transform;
 }
 
@@ -4112,7 +5302,9 @@ select,
   border-bottom-color: var(--arc-color-atlas-paper-soft);
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 88%, white);
   color: var(--arc-color-atlas-ink);
-  box-shadow: 0 4px 0 var(--arc-color-atlas-primary) inset, 0 1px 0 rgb(255 255 255 / 0.55) inset;
+  box-shadow:
+    0 4px 0 var(--arc-color-atlas-primary) inset,
+    0 1px 0 rgb(255 255 255 / 0.55) inset;
   transform: translateY(-8px);
   z-index: 3;
 }
@@ -4155,8 +5347,16 @@ select,
   margin-top: 18px;
   border: 1px solid var(--arc-color-atlas-line);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 72%, white), color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.035) 0 1px, transparent 1px 18px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 72%, white),
+      color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.035) 0 1px,
+      transparent 1px 18px
+    );
   padding: 13px;
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.52) inset;
 }
@@ -4167,7 +5367,8 @@ select,
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 75%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 75%, transparent);
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 68%, white);
   padding: 7px 9px;
   font-size: 12px;
@@ -4219,8 +5420,16 @@ select,
   border: 1px solid var(--arc-color-atlas-line);
   border-left-width: 4px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white), color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.035) 0 1px, transparent 1px 18px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white),
+      color-mix(in srgb, var(--arc-color-atlas-paper) 92%, white)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.035) 0 1px,
+      transparent 1px 18px
+    );
   padding: 12px;
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.48) inset;
 }
@@ -4280,17 +5489,29 @@ select,
 }
 
 .arc-turn-status-pill--ready {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-good) 45%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 45%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-good);
 }
 
 .arc-turn-status-pill--waiting {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 45%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 45%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-primary);
 }
 
 .arc-turn-status-pill--blocked {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-danger) 48%, var(--arc-color-atlas-line));
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 48%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
@@ -4333,7 +5554,8 @@ select,
 .arc-strategy-story-row,
 .arc-strategy-generic-row,
 .arc-strategy-empty-preview {
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 78%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 78%, transparent);
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 72%, white);
   padding: 9px;
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.44) inset;
@@ -4383,11 +5605,20 @@ select,
   background: color-mix(in srgb, var(--arc-color-atlas-line) 82%, transparent);
   padding: 8px 10px 8px 8px;
   color: var(--arc-color-atlas-ink);
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  );
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.48),
     0 1px 0 rgb(0 0 0 / 0.1);
-  transition: box-shadow 0.16s ease, filter 0.16s ease;
+  transition:
+    box-shadow 0.16s ease,
+    filter 0.16s ease;
 }
 
 .arc-strategy-construction-row::before {
@@ -4396,9 +5627,19 @@ select,
   inset: 1px;
   z-index: 0;
   pointer-events: none;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, transparent), color-mix(in srgb, var(--arc-color-atlas-paper) 92%, transparent));
-  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, transparent),
+    color-mix(in srgb, var(--arc-color-atlas-paper) 92%, transparent)
+  );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% 100%,
+    13px 100%,
+    0 calc(100% - 13px)
+  );
 }
 
 .arc-strategy-construction-row > * {
@@ -4448,7 +5689,8 @@ select,
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 78%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 78%, transparent);
   background: var(--arc-color-atlas-paper);
   color: var(--arc-color-atlas-primary);
   font-size: 8px;
@@ -4475,7 +5717,11 @@ select,
 
 .arc-strategy-construction-row-action {
   --arc-construction-action-border: var(--arc-color-atlas-line);
-  --arc-construction-action-fill: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 88%, transparent);
+  --arc-construction-action-fill: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 88%,
+    transparent
+  );
   --arc-construction-action-fill-hover: var(--arc-color-atlas-paper-soft);
   --arc-construction-action-text: var(--arc-color-atlas-ink);
   position: relative;
@@ -4495,8 +5741,17 @@ select,
   font-weight: 700;
   line-height: 1;
   text-align: center;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  transition: filter 0.14s ease, box-shadow 0.14s ease;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  transition:
+    filter 0.14s ease,
+    box-shadow 0.14s ease;
 }
 
 .arc-strategy-construction-row-action::before {
@@ -4506,7 +5761,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: var(--arc-construction-action-fill);
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
   transition: background 0.14s ease;
 }
 
@@ -4516,14 +5778,30 @@ select,
 }
 
 .arc-strategy-construction-row-action--danger {
-  --arc-construction-action-border: color-mix(in srgb, var(--arc-color-atlas-danger) 76%, white);
-  --arc-construction-action-fill-hover: color-mix(in srgb, var(--arc-color-atlas-danger) 12%, var(--arc-color-atlas-paper-soft));
+  --arc-construction-action-border: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 76%,
+    white
+  );
+  --arc-construction-action-fill-hover: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 12%,
+    var(--arc-color-atlas-paper-soft)
+  );
   --arc-construction-action-text: var(--arc-color-atlas-danger);
 }
 
 .arc-strategy-construction-row-action--primary {
-  --arc-construction-action-border: color-mix(in srgb, var(--arc-color-atlas-primary) 68%, var(--arc-color-atlas-line));
-  --arc-construction-action-fill-hover: color-mix(in srgb, var(--arc-color-atlas-primary) 12%, var(--arc-color-atlas-paper-soft));
+  --arc-construction-action-border: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 68%,
+    var(--arc-color-atlas-line)
+  );
+  --arc-construction-action-fill-hover: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 12%,
+    var(--arc-color-atlas-paper-soft)
+  );
   --arc-construction-action-text: var(--arc-color-atlas-primary);
 }
 
@@ -4562,7 +5840,8 @@ select,
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   align-items: center;
   gap: 10px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 70%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 70%, transparent);
   background: color-mix(in srgb, var(--arc-color-atlas-panel) 72%, transparent);
   padding: 8px 10px;
   font-size: 12px;
@@ -4601,7 +5880,8 @@ select,
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 82%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 82%, transparent);
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
   color: var(--arc-color-atlas-ink);
   padding: 7px 9px;
@@ -4609,7 +5889,14 @@ select,
   font-size: 13px;
   font-weight: 700;
   text-align: left;
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
 }
 
 .arc-strategy-building-category-header:hover,
@@ -4676,11 +5963,21 @@ select,
   padding: 8px 10px 8px 8px;
   color: var(--arc-color-atlas-ink);
   text-align: left;
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  );
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.48),
     0 1px 0 rgb(0 0 0 / 0.1);
-  transition: box-shadow 0.16s ease, filter 0.16s ease, transform 0.16s ease;
+  transition:
+    box-shadow 0.16s ease,
+    filter 0.16s ease,
+    transform 0.16s ease;
 }
 
 .arc-strategy-building-list-row::before {
@@ -4689,9 +5986,19 @@ select,
   inset: 1px;
   z-index: 0;
   pointer-events: none;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, transparent), color-mix(in srgb, var(--arc-color-atlas-paper) 92%, transparent));
-  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, transparent),
+    color-mix(in srgb, var(--arc-color-atlas-paper) 92%, transparent)
+  );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% 100%,
+    13px 100%,
+    0 calc(100% - 13px)
+  );
 }
 
 .arc-strategy-building-list-row > * {
@@ -4735,11 +6042,21 @@ select,
   overflow: hidden;
   border: 0;
   background: var(--arc-color-atlas-primary);
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  );
   box-shadow:
-    inset 0 0 0 2px color-mix(in srgb, var(--arc-color-atlas-paper-soft) 70%, transparent),
+    inset 0 0 0 2px
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 70%, transparent),
     0 1px 3px rgb(0 0 0 / 0.22);
-  transition: filter 0.16s ease, transform 0.16s ease;
+  transition:
+    filter 0.16s ease,
+    transform 0.16s ease;
 }
 
 .arc-strategy-building-list-row:hover .arc-strategy-building-list-icon,
@@ -4754,7 +6071,14 @@ select,
   display: block;
   width: calc(100% - 2px) !important;
   height: calc(100% - 2px) !important;
-  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% 100%,
+    13px 100%,
+    0 calc(100% - 13px)
+  );
 }
 
 .arc-strategy-building-list-main {
@@ -4838,10 +6162,18 @@ select,
   height: 100%;
   flex-direction: column;
   border: 1px solid var(--arc-color-atlas-line);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 72%, var(--arc-color-atlas-paper)), var(--arc-color-atlas-paper));
+  background: linear-gradient(
+    180deg,
+    color-mix(
+      in srgb,
+      var(--arc-color-atlas-paper-soft) 72%,
+      var(--arc-color-atlas-paper)
+    ),
+    var(--arc-color-atlas-paper)
+  );
   padding: 12px;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--arc-color-atlas-paper-soft) 64%, transparent);
+  box-shadow: inset 0 1px 0
+    color-mix(in srgb, var(--arc-color-atlas-paper-soft) 64%, transparent);
 }
 
 .arc-strategy-market-trade-grid {
@@ -4855,14 +6187,22 @@ select,
 .arc-strategy-market-trade-header,
 .arc-strategy-market-trade-row {
   display: grid;
-  grid-template-columns: minmax(92px, 1.25fr) 68px minmax(72px, 0.85fr) minmax(72px, 0.85fr);
+  grid-template-columns: minmax(92px, 1.25fr) 68px minmax(72px, 0.85fr) minmax(
+      72px,
+      0.85fr
+    );
   gap: 8px;
   align-items: center;
 }
 
 .arc-strategy-market-trade-header {
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 82%, transparent);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 82%, var(--arc-color-atlas-paper));
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 82%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 82%,
+    var(--arc-color-atlas-paper)
+  );
   padding: 7px 8px;
   color: var(--arc-color-atlas-muted);
   font-size: 10px;
@@ -4881,11 +6221,17 @@ select,
 
 .arc-strategy-market-trade-row {
   min-height: 50px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 78%, transparent);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 72%, var(--arc-color-atlas-paper));
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 78%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 72%,
+    var(--arc-color-atlas-paper)
+  );
   padding: 7px 8px;
   color: var(--arc-color-atlas-ink);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--arc-color-atlas-paper-soft) 64%, transparent);
+  box-shadow: inset 0 1px 0
+    color-mix(in srgb, var(--arc-color-atlas-paper-soft) 64%, transparent);
 }
 
 .arc-strategy-market-trade-price,
@@ -4960,8 +6306,18 @@ select,
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
   color: var(--arc-color-atlas-ink);
   padding: 11px;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
 }
 
 .arc-strategy-workspace-action:hover {
@@ -4971,7 +6327,11 @@ select,
 }
 
 .arc-strategy-workspace-action--primary {
-  border-color: color-mix(in srgb, var(--arc-color-atlas-primary) 46%, transparent);
+  border-color: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 46%,
+    transparent
+  );
 }
 
 .arc-strategy-workspace-action-icon {
@@ -4987,7 +6347,14 @@ select,
   border: 0;
   background: var(--arc-color-atlas-line);
   color: var(--arc-color-atlas-primary);
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
 }
 
 .arc-strategy-workspace-action-icon::before {
@@ -4997,7 +6364,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: var(--arc-color-atlas-paper);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
 .arc-strategy-workspace-action-icon > * {
@@ -5052,8 +6426,22 @@ select,
 .arc-strategy-workspace-action {
   --arc-cut-border: var(--arc-color-atlas-line);
   --arc-cut-fill: var(--arc-color-atlas-paper-soft);
-  --arc-cut-outer: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  --arc-cut-inner: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  --arc-cut-outer: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  --arc-cut-inner: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
   clip-path: var(--arc-cut-outer);
 }
 
@@ -5090,9 +6478,27 @@ select,
 
 .arc-hud-chip {
   --arc-cut-border: color-mix(in srgb, var(--arc-color-brown) 55%, transparent);
-  --arc-cut-fill: color-mix(in srgb, var(--arc-color-paper-muted) 92%, transparent);
-  --arc-cut-outer: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
-  --arc-cut-inner: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  --arc-cut-fill: color-mix(
+    in srgb,
+    var(--arc-color-paper-muted) 92%,
+    transparent
+  );
+  --arc-cut-outer: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
+  --arc-cut-inner: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
 .arc-hud-chip:hover {
@@ -5101,9 +6507,27 @@ select,
 
 .arc-topbar-chip {
   --arc-cut-border: color-mix(in srgb, var(--arc-color-brown) 58%, transparent);
-  --arc-cut-fill: color-mix(in srgb, var(--arc-color-paper-muted) 94%, transparent);
-  --arc-cut-outer: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  --arc-cut-inner: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  --arc-cut-fill: color-mix(
+    in srgb,
+    var(--arc-color-paper-muted) 94%,
+    transparent
+  );
+  --arc-cut-outer: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  --arc-cut-inner: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
   border-radius: 0 !important;
   box-shadow:
     0 1px 0 rgb(255 255 255 / 0.5) inset,
@@ -5118,7 +6542,11 @@ select,
 .arc-topbar-action,
 .arc-topbar-next-turn {
   --arc-cut-border: var(--arc-color-brown-dark);
-  --arc-cut-fill: linear-gradient(180deg, var(--arc-color-panel-soft), var(--arc-color-panel));
+  --arc-cut-fill: linear-gradient(
+    180deg,
+    var(--arc-color-panel-soft),
+    var(--arc-color-panel)
+  );
 }
 
 .arc-topbar-action:hover,
@@ -5133,11 +6561,19 @@ select,
 }
 
 .arc-strategy-icon-button--danger {
-  --arc-cut-border: color-mix(in srgb, var(--arc-color-atlas-danger) 55%, transparent);
+  --arc-cut-border: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 55%,
+    transparent
+  );
 }
 
 .arc-strategy-primary {
-  --arc-cut-border: color-mix(in srgb, var(--arc-color-atlas-primary) 58%, var(--arc-color-atlas-line));
+  --arc-cut-border: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 58%,
+    var(--arc-color-atlas-line)
+  );
   --arc-cut-fill: var(--arc-color-atlas-primary);
 }
 
@@ -5156,8 +6592,16 @@ select,
 .arc-map-lens-button {
   --arc-cut-border: var(--arc-color-atlas-line);
   --arc-cut-fill:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 10px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.04) 0 1px,
+      transparent 1px 10px
+    );
 }
 
 .arc-map-lens-button:hover,
@@ -5168,8 +6612,16 @@ select,
 
 .arc-map-lens-button--active {
   --arc-cut-fill:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white), var(--arc-color-atlas-paper-soft)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 10px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white),
+      var(--arc-color-atlas-paper-soft)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.04) 0 1px,
+      transparent 1px 10px
+    );
 }
 
 .arc-strategy-workspace-tab {
@@ -5180,8 +6632,20 @@ select,
   border-radius: 0 !important;
   --arc-cut-border: var(--arc-color-atlas-line);
   --arc-cut-fill: color-mix(in srgb, var(--arc-color-atlas-paper) 86%, white);
-  --arc-cut-outer: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%);
-  --arc-cut-inner: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  --arc-cut-outer: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    0 100%
+  );
+  --arc-cut-inner: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    0 100%
+  );
   background: var(--arc-cut-border);
   clip-path: var(--arc-cut-outer);
 }
@@ -5205,12 +6669,24 @@ select,
 .arc-strategy-workspace-tab:focus-visible,
 .arc-strategy-workspace-tab--active {
   --arc-cut-border: var(--arc-color-atlas-line-strong);
-  --arc-cut-fill: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 88%, white);
+  --arc-cut-fill: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 88%,
+    white
+  );
 }
 
 .arc-strategy-building-category-header {
-  --arc-cut-border: color-mix(in srgb, var(--arc-color-atlas-line) 82%, transparent);
-  --arc-cut-fill: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
+  --arc-cut-border: color-mix(
+    in srgb,
+    var(--arc-color-atlas-line) 82%,
+    transparent
+  );
+  --arc-cut-fill: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 76%,
+    white
+  );
 }
 
 .arc-strategy-building-category-header:hover,
@@ -5220,7 +6696,11 @@ select,
 
 .arc-strategy-workspace-action {
   --arc-cut-border: var(--arc-color-atlas-line);
-  --arc-cut-fill: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
+  --arc-cut-fill: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 76%,
+    white
+  );
 }
 
 .arc-strategy-workspace-action:hover {
@@ -5230,16 +6710,26 @@ select,
 }
 
 .arc-strategy-workspace-action--primary {
-  --arc-cut-border: color-mix(in srgb, var(--arc-color-atlas-primary) 46%, transparent);
+  --arc-cut-border: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 46%,
+    transparent
+  );
 }
 
 .arc-strategy-workspace-action--available {
-  transition: box-shadow 0.16s ease, filter 0.16s ease, transform 0.16s ease;
+  transition:
+    box-shadow 0.16s ease,
+    filter 0.16s ease,
+    transform 0.16s ease;
 }
 
 .arc-strategy-workspace-action--available::before {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, transparent), color-mix(in srgb, var(--arc-color-atlas-paper) 92%, transparent));
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--arc-color-atlas-paper-soft) 86%, transparent),
+    color-mix(in srgb, var(--arc-color-atlas-paper) 92%, transparent)
+  );
 }
 
 .arc-strategy-workspace-action--available:hover,
@@ -5256,13 +6746,22 @@ select,
 
 .arc-strategy-workspace-action--available:hover::before,
 .arc-strategy-workspace-action--available:focus-visible::before {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, transparent), color-mix(in srgb, var(--arc-color-atlas-paper) 96%, transparent));
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, transparent),
+    color-mix(in srgb, var(--arc-color-atlas-paper) 96%, transparent)
+  );
 }
 
-.arc-strategy-workspace-action--available:hover .arc-strategy-workspace-action-icon,
-.arc-strategy-workspace-action--available:focus-visible .arc-strategy-workspace-action-icon {
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 68%, var(--arc-color-atlas-line));
+.arc-strategy-workspace-action--available:hover
+  .arc-strategy-workspace-action-icon,
+.arc-strategy-workspace-action--available:focus-visible
+  .arc-strategy-workspace-action-icon {
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 68%,
+    var(--arc-color-atlas-line)
+  );
   filter: brightness(1.08) saturate(1.08);
 }
 
@@ -5274,7 +6773,14 @@ select,
   background: var(--arc-color-atlas-line-strong);
   color: var(--arc-color-atlas-ink);
   box-shadow: var(--arc-shadow-atlas-panel);
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  );
 }
 
 .arc-hex-build-confirm::before {
@@ -5284,9 +6790,24 @@ select,
   z-index: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 94%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(0deg, rgb(70 52 30 / 0.03) 0 1px, transparent 1px 12px);
-  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 94%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgb(70 52 30 / 0.03) 0 1px,
+      transparent 1px 12px
+    );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% 100%,
+    13px 100%,
+    0 calc(100% - 13px)
+  );
 }
 
 .arc-hex-build-confirm > * {
@@ -5318,7 +6839,8 @@ select,
   grid-template-columns: minmax(98px, 0.42fr) minmax(0, 1fr);
   gap: 12px;
   align-items: baseline;
-  border-bottom: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 68%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 68%, transparent);
   padding-bottom: 8px;
   color: var(--arc-color-atlas-muted);
   font-size: 12px;
@@ -5420,7 +6942,11 @@ select,
 
 .arc-hex-build-confirm__actions .arc-strategy-workspace-action {
   --arc-confirm-action-border: var(--arc-color-atlas-line);
-  --arc-confirm-action-fill: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
+  --arc-confirm-action-fill: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 76%,
+    white
+  );
   --arc-confirm-action-fill-hover: var(--arc-color-atlas-paper-soft);
   --arc-confirm-action-text: var(--arc-color-atlas-ink);
   position: relative;
@@ -5433,7 +6959,14 @@ select,
   font-size: 13px;
   font-weight: 800;
   text-align: center;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
 }
 
 .arc-hex-build-confirm__actions .arc-strategy-workspace-action::before {
@@ -5443,7 +6976,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: var(--arc-confirm-action-fill);
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
 }
 
 .arc-hex-build-confirm__actions .arc-strategy-workspace-action:hover {
@@ -5460,20 +7000,40 @@ select,
 }
 
 .arc-hex-build-confirm__actions .arc-strategy-workspace-action--primary {
-  --arc-confirm-action-border: color-mix(in srgb, var(--arc-color-atlas-primary) 58%, var(--arc-color-atlas-line));
+  --arc-confirm-action-border: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 58%,
+    var(--arc-color-atlas-line)
+  );
   --arc-confirm-action-text: var(--arc-color-atlas-primary);
 }
 
 .arc-hex-build-confirm__actions .arc-hex-build-confirm__action--cancel {
-  --arc-confirm-action-border: color-mix(in srgb, var(--arc-color-atlas-danger) 70%, white);
-  --arc-confirm-action-fill: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
-  --arc-confirm-action-fill-hover: color-mix(in srgb, var(--arc-color-atlas-danger) 10%, var(--arc-color-atlas-paper-soft));
+  --arc-confirm-action-border: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 70%,
+    white
+  );
+  --arc-confirm-action-fill: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 76%,
+    white
+  );
+  --arc-confirm-action-fill-hover: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 10%,
+    var(--arc-color-atlas-paper-soft)
+  );
   --arc-confirm-action-text: var(--arc-color-atlas-danger);
   color: var(--arc-color-atlas-danger);
 }
 
 .arc-hex-build-confirm__actions .arc-hex-build-confirm__action--cancel:hover {
-  --arc-confirm-action-border: color-mix(in srgb, var(--arc-color-atlas-danger) 82%, white);
+  --arc-confirm-action-border: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 82%,
+    white
+  );
 }
 
 .arc-hex-build-confirm__actions .arc-hex-build-confirm__action--cancel > span {
@@ -5508,12 +7068,20 @@ select,
   font-weight: 700;
   outline: none;
   padding: 6px 8px;
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
 }
 
 .arc-found-city-confirm__name input:focus-visible {
   border-color: var(--arc-color-atlas-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--arc-color-atlas-primary) 22%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--arc-color-atlas-primary) 22%, transparent);
 }
 
 .arc-found-city-confirm__name > span {
@@ -5529,86 +7097,6 @@ select,
   font-weight: 700;
 }
 
-.arc-map-city-label {
-  position: absolute;
-  z-index: 32;
-  display: grid;
-  width: 176px;
-  grid-template-columns: 22px minmax(0, 1fr);
-  align-items: center;
-  gap: 7px;
-  pointer-events: none;
-  background: var(--arc-color-atlas-line-strong);
-  color: var(--arc-color-atlas-ink);
-  filter: drop-shadow(0 5px 10px rgb(31 22 14 / 0.24));
-  padding: 1px;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
-}
-
-.arc-map-city-label::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  z-index: 0;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 12px);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
-}
-
-.arc-map-city-label--pending {
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 62%, var(--arc-color-atlas-line-strong));
-}
-
-.arc-map-city-label > * {
-  position: relative;
-  z-index: 1;
-}
-
-.arc-map-city-label__flag {
-  display: grid;
-  width: 22px;
-  height: 18px;
-  place-items: center;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--arc-color-atlas-ink) 12%, var(--arc-color-atlas-paper-soft));
-  color: var(--arc-color-atlas-primary);
-  font-size: 10px;
-  font-weight: 800;
-  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
-}
-
-.arc-map-city-label__flag img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.arc-map-city-label__name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--arc-font-display);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.arc-map-city-label__progress {
-  grid-column: 1 / -1;
-  display: block;
-  height: 3px;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--arc-color-atlas-line) 62%, transparent);
-  clip-path: polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px));
-}
-
-.arc-map-city-label__progress > span {
-  display: block;
-  height: 100%;
-  background: var(--arc-color-atlas-primary);
-}
-
 .arc-building-overview-modal {
   position: relative;
   display: flex;
@@ -5621,7 +7109,14 @@ select,
   background: var(--arc-color-atlas-line-strong);
   color: var(--arc-color-atlas-ink);
   box-shadow: var(--arc-shadow-atlas-panel);
-  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 16px) 0,
+    100% 16px,
+    100% 100%,
+    16px 100%,
+    0 calc(100% - 16px)
+  );
 }
 
 .arc-building-overview-modal::before {
@@ -5631,9 +7126,24 @@ select,
   z-index: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 96%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(0deg, rgb(70 52 30 / 0.035) 0 1px, transparent 1px 12px);
-  clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 96%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgb(70 52 30 / 0.035) 0 1px,
+      transparent 1px 12px
+    );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 15px) 0,
+    100% 15px,
+    100% 100%,
+    15px 100%,
+    0 calc(100% - 15px)
+  );
 }
 
 .arc-building-overview-modal > * {
@@ -5716,14 +7226,29 @@ select,
   height: 34px;
   width: 34px;
   min-height: 34px;
-  background: color-mix(in srgb, var(--arc-auth-server-status-color) 44%, var(--arc-kit-border-muted));
+  background: color-mix(
+    in srgb,
+    var(--arc-auth-server-status-color) 44%,
+    var(--arc-kit-border-muted)
+  );
   color: var(--arc-kit-text-muted);
   font-size: 11px;
   font-weight: 800;
   padding: 0;
   text-transform: uppercase;
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-auth-server-status-fill) 86%, black);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-auth-server-status-fill) 86%,
+    black
+  );
   --arc-kit-inner-cut: 8px;
   filter: drop-shadow(0 0 0 transparent);
   transition:
@@ -5733,21 +7258,36 @@ select,
 
 .arc-auth-server-status[data-status="online"] {
   --arc-auth-server-status-color: var(--arc-color-success-text);
-  --arc-auth-server-status-fill: color-mix(in srgb, var(--arc-color-success-top) 12%, var(--arc-kit-surface-soft));
+  --arc-auth-server-status-fill: color-mix(
+    in srgb,
+    var(--arc-color-success-top) 12%,
+    var(--arc-kit-surface-soft)
+  );
 }
 
 .arc-auth-server-status[data-status="offline"] {
   --arc-auth-server-status-color: var(--arc-color-danger-text);
-  --arc-auth-server-status-fill: color-mix(in srgb, var(--arc-color-danger-top) 12%, var(--arc-kit-surface-soft));
+  --arc-auth-server-status-fill: color-mix(
+    in srgb,
+    var(--arc-color-danger-top) 12%,
+    var(--arc-kit-surface-soft)
+  );
 }
 
 .arc-auth-server-status[data-status="maintenance"] {
   --arc-auth-server-status-color: var(--arc-color-warning-top);
-  --arc-auth-server-status-fill: color-mix(in srgb, var(--arc-color-warning-top) 12%, var(--arc-kit-surface-soft));
+  --arc-auth-server-status-fill: color-mix(
+    in srgb,
+    var(--arc-color-warning-top) 12%,
+    var(--arc-kit-surface-soft)
+  );
 }
 
 .arc-auth-server-status:hover {
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--arc-auth-server-status-color) 18%, transparent));
+  filter: drop-shadow(
+    0 0 10px
+      color-mix(in srgb, var(--arc-auth-server-status-color) 18%, transparent)
+  );
 }
 
 .arc-auth-server-status::before {
@@ -5757,7 +7297,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-auth-server-status > * {
@@ -5771,13 +7318,22 @@ select,
   width: 10px;
   border-radius: 999px;
   background: var(--arc-auth-server-status-color);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--arc-auth-server-status-color) 58%, transparent);
+  box-shadow: 0 0 8px
+    color-mix(in srgb, var(--arc-auth-server-status-color) 58%, transparent);
 }
 
 .arc-auth-kit-backdrop {
   background:
-    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--arc-color-gold) 11%, transparent), transparent 34%),
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-kit-bg) 88%, transparent), var(--arc-color-bg));
+    radial-gradient(
+      circle at 50% 0%,
+      color-mix(in srgb, var(--arc-color-gold) 11%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-kit-bg) 88%, transparent),
+      var(--arc-color-bg)
+    );
 }
 
 .arc-auth-body {
@@ -5796,7 +7352,11 @@ select,
 .arc-auth-login-panel {
   min-height: 100%;
   background: transparent;
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-control) 82%, transparent);
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-kit-control) 82%,
+    transparent
+  );
 }
 
 .arc-auth-login-panel--combined {
@@ -5835,8 +7395,19 @@ select,
   pointer-events: none;
   opacity: 1;
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--arc-kit-divider) 56%, transparent), transparent 1px),
-    linear-gradient(115deg, transparent 0 33%, color-mix(in srgb, var(--arc-kit-surface-soft) 42%, transparent) 33% 42%, transparent 42% 60%, color-mix(in srgb, var(--arc-kit-border-muted) 38%, transparent) 60% 66%, transparent 66%);
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--arc-kit-divider) 56%, transparent),
+      transparent 1px
+    ),
+    linear-gradient(
+      115deg,
+      transparent 0 33%,
+      color-mix(in srgb, var(--arc-kit-surface-soft) 42%, transparent) 33% 42%,
+      transparent 42% 60%,
+      color-mix(in srgb, var(--arc-kit-border-muted) 38%, transparent) 60% 66%,
+      transparent 66%
+    );
 }
 
 .arc-auth-login-welcome-pane > * {
@@ -5859,7 +7430,14 @@ select,
   place-items: center;
   background: var(--arc-kit-border-muted);
   color: var(--arc-color-gold);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
 .arc-auth-login-brand__name,
@@ -5985,7 +7563,11 @@ select,
 .arc-auth-tab:focus-visible,
 .arc-auth-tab--selected {
   border-color: var(--arc-color-atlas-primary);
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 14%, var(--arc-color-atlas-paper-soft));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 14%,
+    var(--arc-color-atlas-paper-soft)
+  );
   color: var(--arc-color-atlas-ink);
 }
 
@@ -6024,8 +7606,19 @@ select,
   font-size: 11px;
   font-weight: 800;
   padding: 7px 9px;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
-  --arc-auth-password-rule-fill: color-mix(in srgb, var(--arc-kit-control) 88%, black);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+  --arc-auth-password-rule-fill: color-mix(
+    in srgb,
+    var(--arc-kit-control) 88%,
+    black
+  );
 }
 
 .arc-auth-password-rule::before {
@@ -6035,7 +7628,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: var(--arc-auth-password-rule-fill);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
 }
 
 .arc-auth-password-rule > * {
@@ -6044,9 +7644,17 @@ select,
 }
 
 .arc-auth-password-rule[data-state="valid"] {
-  background: color-mix(in srgb, var(--arc-color-success-top) 58%, var(--arc-kit-border-muted));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-success-top) 58%,
+    var(--arc-kit-border-muted)
+  );
   color: var(--arc-color-success-text);
-  --arc-auth-password-rule-fill: color-mix(in srgb, var(--arc-color-success-bottom) 26%, var(--arc-kit-control));
+  --arc-auth-password-rule-fill: color-mix(
+    in srgb,
+    var(--arc-color-success-bottom) 26%,
+    var(--arc-kit-control)
+  );
 }
 
 .arc-auth-password-rule__icon {
@@ -6056,7 +7664,14 @@ select,
   flex: 0 0 auto;
   place-items: center;
   background: color-mix(in srgb, currentColor 16%, var(--arc-kit-surface-soft));
-  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% 100%,
+    5px 100%,
+    0 calc(100% - 5px)
+  );
 }
 
 .arc-auth-login-form {
@@ -6077,8 +7692,19 @@ select,
   border-radius: 0 !important;
   background: var(--arc-kit-border-muted);
   color: var(--arc-kit-text);
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  --arc-kit-button-inner: color-mix(in srgb, var(--arc-kit-control) 84%, transparent);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  --arc-kit-button-inner: color-mix(
+    in srgb,
+    var(--arc-kit-control) 84%,
+    transparent
+  );
   --arc-kit-button-inner-cut: 9px;
 }
 
@@ -6089,18 +7715,42 @@ select,
   z-index: -1;
   pointer-events: none;
   background: var(--arc-kit-button-inner);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-button-inner-cut)) 0, 100% var(--arc-kit-button-inner-cut), 100% 100%, var(--arc-kit-button-inner-cut) 100%, 0 calc(100% - var(--arc-kit-button-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-button-inner-cut)) 0,
+    100% var(--arc-kit-button-inner-cut),
+    100% 100%,
+    var(--arc-kit-button-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-button-inner-cut))
+  );
 }
 
 .arc-auth-login-form [data-arc-button][data-variant="primary"] {
-  background: color-mix(in srgb, var(--arc-color-primary-top) 72%, var(--arc-kit-border-muted));
-  --arc-kit-button-inner: linear-gradient(180deg, var(--arc-color-primary-top), var(--arc-color-primary-bottom));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-primary-top) 72%,
+    var(--arc-kit-border-muted)
+  );
+  --arc-kit-button-inner: linear-gradient(
+    180deg,
+    var(--arc-color-primary-top),
+    var(--arc-color-primary-bottom)
+  );
   color: var(--arc-color-text);
 }
 
-.arc-auth-login-form [data-arc-button].arc-auth-create-country-button[data-variant="primary"] {
-  background: color-mix(in srgb, var(--arc-color-success-top) 72%, var(--arc-kit-border-muted));
-  --arc-kit-button-inner: linear-gradient(180deg, var(--arc-color-success-top), var(--arc-color-success-bottom));
+.arc-auth-login-form
+  [data-arc-button].arc-auth-create-country-button[data-variant="primary"] {
+  background: color-mix(
+    in srgb,
+    var(--arc-color-success-top) 72%,
+    var(--arc-kit-border-muted)
+  );
+  --arc-kit-button-inner: linear-gradient(
+    180deg,
+    var(--arc-color-success-top),
+    var(--arc-color-success-bottom)
+  );
   color: var(--arc-color-success-text);
 }
 
@@ -6117,7 +7767,10 @@ select,
 
 .arc-auth-login-form [data-arc-button]:hover:not(:disabled),
 .arc-auth-login-form [data-arc-button]:focus-visible {
-  filter: brightness(1.08) drop-shadow(0 0 10px color-mix(in srgb, var(--arc-color-gold) 18%, transparent));
+  filter: brightness(1.08)
+    drop-shadow(
+      0 0 10px color-mix(in srgb, var(--arc-color-gold) 18%, transparent)
+    );
 }
 
 .arc-auth-login-form [data-arc-button] > * {
@@ -6154,7 +7807,14 @@ select,
   color: var(--arc-kit-text-muted);
   cursor: pointer;
   padding: 9px 11px;
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
   --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-control) 88%, black);
   --arc-kit-inner-cut: 8px;
 }
@@ -6166,7 +7826,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-auth-kit-checkbox input {
@@ -6203,7 +7870,14 @@ select,
     color 140ms ease,
     filter 140ms ease,
     opacity 140ms ease;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
 }
 
 .arc-auth-primary-button::before,
@@ -6223,9 +7897,32 @@ select,
   inset: 1px;
   z-index: -1;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-primary) 46%, var(--arc-color-atlas-paper-soft)), color-mix(in srgb, var(--arc-color-atlas-primary) 24%, var(--arc-color-atlas-paper))),
-    repeating-linear-gradient(135deg, rgb(255 255 255 / 0.08) 0 1px, transparent 1px 9px);
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+    linear-gradient(
+      180deg,
+      color-mix(
+        in srgb,
+        var(--arc-color-atlas-primary) 46%,
+        var(--arc-color-atlas-paper-soft)
+      ),
+      color-mix(
+        in srgb,
+        var(--arc-color-atlas-primary) 24%,
+        var(--arc-color-atlas-paper)
+      )
+    ),
+    repeating-linear-gradient(
+      135deg,
+      rgb(255 255 255 / 0.08) 0 1px,
+      transparent 1px 9px
+    );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
   transition:
     background 140ms ease,
     inset 140ms ease;
@@ -6241,8 +7938,16 @@ select,
 
 .arc-auth-secondary-button::after {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white), color-mix(in srgb, var(--arc-color-atlas-paper) 92%, black)),
-    repeating-linear-gradient(135deg, rgb(214 182 106 / 0.05) 0 1px, transparent 1px 9px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white),
+      color-mix(in srgb, var(--arc-color-atlas-paper) 92%, black)
+    ),
+    repeating-linear-gradient(
+      135deg,
+      rgb(214 182 106 / 0.05) 0 1px,
+      transparent 1px 9px
+    );
 }
 
 .arc-auth-primary-button:hover:not(:disabled),
@@ -6256,8 +7961,24 @@ select,
 .arc-auth-primary-button:hover:not(:disabled)::after,
 .arc-auth-primary-button:focus-visible::after {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-primary) 58%, var(--arc-color-atlas-paper-soft)), color-mix(in srgb, var(--arc-color-atlas-primary) 34%, var(--arc-color-atlas-paper))),
-    repeating-linear-gradient(135deg, rgb(255 255 255 / 0.1) 0 1px, transparent 1px 9px);
+    linear-gradient(
+      180deg,
+      color-mix(
+        in srgb,
+        var(--arc-color-atlas-primary) 58%,
+        var(--arc-color-atlas-paper-soft)
+      ),
+      color-mix(
+        in srgb,
+        var(--arc-color-atlas-primary) 34%,
+        var(--arc-color-atlas-paper)
+      )
+    ),
+    repeating-linear-gradient(
+      135deg,
+      rgb(255 255 255 / 0.1) 0 1px,
+      transparent 1px 9px
+    );
 }
 
 .arc-auth-secondary-button:hover:not(:disabled)::before,
@@ -6268,8 +7989,20 @@ select,
 .arc-auth-secondary-button:hover:not(:disabled)::after,
 .arc-auth-secondary-button:focus-visible::after {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-primary) 15%, var(--arc-color-atlas-paper-soft)), color-mix(in srgb, var(--arc-color-atlas-paper) 90%, white)),
-    repeating-linear-gradient(135deg, rgb(214 182 106 / 0.08) 0 1px, transparent 1px 9px);
+    linear-gradient(
+      180deg,
+      color-mix(
+        in srgb,
+        var(--arc-color-atlas-primary) 15%,
+        var(--arc-color-atlas-paper-soft)
+      ),
+      color-mix(in srgb, var(--arc-color-atlas-paper) 90%, white)
+    ),
+    repeating-linear-gradient(
+      135deg,
+      rgb(214 182 106 / 0.08) 0 1px,
+      transparent 1px 9px
+    );
 }
 
 .arc-auth-primary-button:disabled,
@@ -6319,7 +8052,12 @@ select,
 
 .arc-auth-modal--wizard .arc-auth-wizard-panel {
   color: var(--arc-kit-text);
-  scrollbar-color: color-mix(in srgb, var(--arc-color-warning-top) 55%, transparent) transparent;
+  scrollbar-color: color-mix(
+      in srgb,
+      var(--arc-color-warning-top) 55%,
+      transparent
+    )
+    transparent;
 }
 
 .arc-auth-wizard-panel::-webkit-scrollbar {
@@ -6380,7 +8118,11 @@ select,
 
 .arc-auth-info-section {
   border: 1px solid var(--arc-color-atlas-line);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 46%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 46%,
+    transparent
+  );
   padding: 10px;
 }
 
@@ -6406,8 +8148,19 @@ select,
   border-radius: 0;
   background: var(--arc-kit-border-muted);
   padding: 14px;
-  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
-  --arc-kit-inner-fill: linear-gradient(180deg, color-mix(in srgb, var(--arc-kit-surface) 94%, transparent), color-mix(in srgb, var(--arc-kit-surface-soft) 90%, transparent));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% 100%,
+    13px 100%,
+    0 calc(100% - 13px)
+  );
+  --arc-kit-inner-fill: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--arc-kit-surface) 94%, transparent),
+    color-mix(in srgb, var(--arc-kit-surface-soft) 90%, transparent)
+  );
   --arc-kit-inner-cut: 12px;
 }
 
@@ -6417,7 +8170,14 @@ select,
   inset: 1px;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-auth-kit-section > * {
@@ -6451,8 +8211,19 @@ select,
   min-height: 0;
   overflow: hidden;
   background: var(--arc-kit-border-muted);
-  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-surface) 96%, transparent);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% 100%,
+    13px 100%,
+    0 calc(100% - 13px)
+  );
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-kit-surface) 96%,
+    transparent
+  );
   --arc-kit-inner-cut: 12px;
 }
 
@@ -6463,7 +8234,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-auth-kit-choice-grid {
@@ -6557,14 +8335,25 @@ select,
   isolation: isolate;
   place-items: center;
   border: 0;
-  background: color-mix(in srgb, var(--arc-auth-identity-color, var(--arc-color-gold)) 68%, var(--arc-kit-border-muted));
+  background: color-mix(
+    in srgb,
+    var(--arc-auth-identity-color, var(--arc-color-gold)) 68%,
+    var(--arc-kit-border-muted)
+  );
   color: var(--arc-auth-identity-color, var(--arc-color-gold));
   font-family: var(--arc-font-serif);
   font-size: 15px;
   font-weight: 900;
   overflow: hidden;
   padding: 1px;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
   transition:
     background 140ms ease,
     box-shadow 140ms ease;
@@ -6576,9 +8365,28 @@ select,
   inset: 2px;
   z-index: -1;
   background:
-    radial-gradient(circle at 42% 32%, color-mix(in srgb, var(--arc-auth-identity-color, var(--arc-color-gold)) 18%, transparent), transparent 62%),
-    color-mix(in srgb, var(--arc-auth-identity-color, var(--arc-color-gold)) 10%, var(--arc-kit-control));
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    radial-gradient(
+      circle at 42% 32%,
+      color-mix(
+        in srgb,
+        var(--arc-auth-identity-color, var(--arc-color-gold)) 18%,
+        transparent
+      ),
+      transparent 62%
+    ),
+    color-mix(
+      in srgb,
+      var(--arc-auth-identity-color, var(--arc-color-gold)) 10%,
+      var(--arc-kit-control)
+    );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
 }
 
 .arc-auth-identity-emblem--large {
@@ -6621,8 +8429,19 @@ select,
   isolation: isolate;
   overflow: hidden;
   background: var(--arc-kit-border-muted);
-  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
-  --arc-kit-inner-fill: color-mix(in srgb, var(--arc-kit-surface) 96%, transparent);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% 100%,
+    13px 100%,
+    0 calc(100% - 13px)
+  );
+  --arc-kit-inner-fill: color-mix(
+    in srgb,
+    var(--arc-kit-surface) 96%,
+    transparent
+  );
   --arc-kit-inner-cut: 12px;
 }
 
@@ -6639,7 +8458,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: var(--arc-kit-inner-fill);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-auth-summary-copy > *,
@@ -6728,7 +8554,14 @@ select,
   height: calc(100% - 2px);
   width: calc(100% - 2px);
   object-fit: cover;
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-inner-cut)) 0, 100% var(--arc-kit-inner-cut), 100% 100%, var(--arc-kit-inner-cut) 100%, 0 calc(100% - var(--arc-kit-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-inner-cut)) 0,
+    100% var(--arc-kit-inner-cut),
+    100% 100%,
+    var(--arc-kit-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-inner-cut))
+  );
 }
 
 .arc-auth-summary-asset--crest {
@@ -6911,8 +8744,19 @@ select,
   min-width: 168px;
   border: 0;
   border-radius: 0 !important;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  --arc-kit-button-inner: color-mix(in srgb, var(--arc-kit-control) 84%, transparent);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  --arc-kit-button-inner: color-mix(
+    in srgb,
+    var(--arc-kit-control) 84%,
+    transparent
+  );
   --arc-kit-button-inner-cut: 9px;
 }
 
@@ -6923,12 +8767,27 @@ select,
   z-index: -1;
   pointer-events: none;
   background: var(--arc-kit-button-inner);
-  clip-path: polygon(0 0, calc(100% - var(--arc-kit-button-inner-cut)) 0, 100% var(--arc-kit-button-inner-cut), 100% 100%, var(--arc-kit-button-inner-cut) 100%, 0 calc(100% - var(--arc-kit-button-inner-cut)));
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--arc-kit-button-inner-cut)) 0,
+    100% var(--arc-kit-button-inner-cut),
+    100% 100%,
+    var(--arc-kit-button-inner-cut) 100%,
+    0 calc(100% - var(--arc-kit-button-inner-cut))
+  );
 }
 
 .arc-auth-wizard-actions [data-arc-button][data-variant="primary"] {
-  background: color-mix(in srgb, var(--arc-color-primary-top) 72%, var(--arc-kit-border-muted));
-  --arc-kit-button-inner: linear-gradient(180deg, var(--arc-color-primary-top), var(--arc-color-primary-bottom));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-primary-top) 72%,
+    var(--arc-kit-border-muted)
+  );
+  --arc-kit-button-inner: linear-gradient(
+    180deg,
+    var(--arc-color-primary-top),
+    var(--arc-color-primary-bottom)
+  );
   color: var(--arc-color-text);
 }
 
@@ -6940,7 +8799,10 @@ select,
 
 .arc-auth-wizard-actions [data-arc-button]:hover:not(:disabled),
 .arc-auth-wizard-actions [data-arc-button]:focus-visible {
-  filter: brightness(1.08) drop-shadow(0 0 10px color-mix(in srgb, var(--arc-color-gold) 18%, transparent));
+  filter: brightness(1.08)
+    drop-shadow(
+      0 0 10px color-mix(in srgb, var(--arc-color-gold) 18%, transparent)
+    );
 }
 
 .arc-auth-wizard-actions [data-arc-button] > * {
@@ -6964,7 +8826,11 @@ select,
 
 .arc-auth-loading-card {
   border: 1px solid var(--arc-color-atlas-line);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 58%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 58%,
+    transparent
+  );
   padding: 10px;
 }
 
@@ -7095,7 +8961,11 @@ select,
   display: block;
   height: 100%;
   background:
-    linear-gradient(90deg, var(--arc-color-atlas-primary), color-mix(in srgb, var(--arc-color-atlas-primary) 72%, white)),
+    linear-gradient(
+      90deg,
+      var(--arc-color-atlas-primary),
+      color-mix(in srgb, var(--arc-color-atlas-primary) 72%, white)
+    ),
     var(--arc-color-atlas-primary);
   transition: width 220ms ease;
 }
@@ -7164,7 +9034,8 @@ select,
 .arc-building-overview-filters input:focus-visible,
 .arc-building-overview-rename input:focus-visible {
   border-color: var(--arc-color-atlas-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--arc-color-atlas-primary) 20%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--arc-color-atlas-primary) 20%, transparent);
 }
 
 .arc-building-overview-search {
@@ -7191,7 +9062,11 @@ select,
 
 .arc-building-overview-empty {
   border: 1px solid var(--arc-color-atlas-line);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 58%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-soft) 58%,
+    transparent
+  );
   color: var(--arc-color-atlas-muted);
   padding: 18px;
   text-align: center;
@@ -7268,7 +9143,14 @@ select,
   box-shadow:
     0 1px 0 rgb(255 255 255 / 0.35) inset,
     0 8px 20px rgb(0 0 0 / 0.12);
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% 100%,
+    12px 100%,
+    0 calc(100% - 12px)
+  );
 }
 
 .arc-building-overview-card::before {
@@ -7278,9 +9160,24 @@ select,
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 0 0, var(--arc-building-overview-card-glow), transparent 42%),
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 90%, white), var(--arc-color-atlas-paper));
-  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+    radial-gradient(
+      circle at 0 0,
+      var(--arc-building-overview-card-glow),
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 90%, white),
+      var(--arc-color-atlas-paper)
+    );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 11px) 0,
+    100% 11px,
+    100% 100%,
+    11px 100%,
+    0 calc(100% - 11px)
+  );
 }
 
 .arc-building-overview-card > * {
@@ -7289,8 +9186,16 @@ select,
 }
 
 .arc-building-overview-card--working {
-  --arc-building-overview-card-frame: color-mix(in srgb, var(--arc-color-atlas-good) 48%, var(--arc-color-atlas-line-strong));
-  --arc-building-overview-card-glow: color-mix(in srgb, var(--arc-color-atlas-good) 16%, transparent);
+  --arc-building-overview-card-frame: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 48%,
+    var(--arc-color-atlas-line-strong)
+  );
+  --arc-building-overview-card-glow: color-mix(
+    in srgb,
+    var(--arc-color-atlas-good) 16%,
+    transparent
+  );
 }
 
 .arc-building-overview-card--queued {
@@ -7299,13 +9204,25 @@ select,
 }
 
 .arc-building-overview-card--pending {
-  --arc-building-overview-card-frame: color-mix(in srgb, #8b5cf6 70%, var(--arc-color-atlas-line-strong));
+  --arc-building-overview-card-frame: color-mix(
+    in srgb,
+    #8b5cf6 70%,
+    var(--arc-color-atlas-line-strong)
+  );
   --arc-building-overview-card-glow: rgb(139 92 246 / 0.2);
 }
 
 .arc-building-overview-card--inactive {
-  --arc-building-overview-card-frame: color-mix(in srgb, var(--arc-color-atlas-danger) 60%, var(--arc-color-atlas-line-strong));
-  --arc-building-overview-card-glow: color-mix(in srgb, var(--arc-color-atlas-danger) 14%, transparent);
+  --arc-building-overview-card-frame: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 60%,
+    var(--arc-color-atlas-line-strong)
+  );
+  --arc-building-overview-card-glow: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 14%,
+    transparent
+  );
 }
 
 .arc-building-overview-card-compact {
@@ -7314,7 +9231,11 @@ select,
 
 .arc-building-overview-card-compact:hover,
 .arc-building-overview-card-compact:focus-visible {
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 6%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 6%,
+    transparent
+  );
   outline: none;
 }
 
@@ -7345,9 +9266,17 @@ select,
   overflow: hidden;
   border: 0;
   background: var(--arc-color-atlas-primary);
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  );
   box-shadow:
-    inset 0 0 0 2px color-mix(in srgb, var(--arc-color-atlas-paper-soft) 70%, transparent),
+    inset 0 0 0 2px
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 70%, transparent),
     0 1px 3px rgb(0 0 0 / 0.22);
 }
 
@@ -7357,7 +9286,14 @@ select,
   display: block;
   width: calc(100% - 2px) !important;
   height: calc(100% - 2px) !important;
-  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 13px) 0,
+    100% 13px,
+    100% 100%,
+    13px 100%,
+    0 calc(100% - 13px)
+  );
 }
 
 .arc-building-overview-level-badge {
@@ -7374,7 +9310,14 @@ select,
   font-size: 10px;
   font-weight: 900;
   line-height: 1;
-  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 5px) 0,
+    100% 5px,
+    100% 100%,
+    5px 100%,
+    0 calc(100% - 5px)
+  );
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
 }
 
@@ -7392,7 +9335,14 @@ select,
   inset: 1px;
   z-index: -1;
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 82%, white);
-  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 4px) 0,
+    100% 4px,
+    100% 100%,
+    4px 100%,
+    0 calc(100% - 4px)
+  );
 }
 
 .arc-building-overview-card-text {
@@ -7476,7 +9426,14 @@ select,
   justify-content: center;
   border: 0;
   background: var(--arc-building-overview-card-frame);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
 }
 
 .arc-building-overview-status > span {
@@ -7484,8 +9441,16 @@ select,
   height: 10px;
   width: 10px;
   background: var(--arc-building-overview-card-frame);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--arc-color-atlas-paper-soft) 82%, white) inset;
-  clip-path: polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px));
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--arc-color-atlas-paper-soft) 82%, white) inset;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 3px) 0,
+    100% 3px,
+    100% 100%,
+    3px 100%,
+    0 calc(100% - 3px)
+  );
 }
 
 .arc-building-overview-card-metrics {
@@ -7515,7 +9480,14 @@ select,
   background: var(--arc-color-atlas-line);
   color: var(--arc-color-atlas-ink);
   padding: 0 8px;
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.5),
     0 1px 2px rgb(0 0 0 / 0.1);
@@ -7528,7 +9500,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white);
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
 }
 
 .arc-building-overview-metric span {
@@ -7584,7 +9563,14 @@ select,
   border: 0;
   background: var(--arc-color-atlas-line);
   color: var(--arc-color-atlas-ink);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.5),
     0 1px 2px rgb(0 0 0 / 0.1);
@@ -7597,7 +9583,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white);
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
 }
 
 .arc-building-overview-progress > div:first-child {
@@ -7634,11 +9627,15 @@ select,
   background: var(--arc-color-atlas-good);
 }
 
-.arc-building-overview-progress--warn .arc-building-overview-progress-track span {
+.arc-building-overview-progress--warn
+  .arc-building-overview-progress-track
+  span {
   background: var(--arc-color-atlas-primary);
 }
 
-.arc-building-overview-progress--bad .arc-building-overview-progress-track span {
+.arc-building-overview-progress--bad
+  .arc-building-overview-progress-track
+  span {
   background: var(--arc-color-atlas-danger);
 }
 
@@ -7663,7 +9660,14 @@ select,
   overflow: hidden;
   border: 0;
   background: var(--arc-color-atlas-line);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
   padding: 7px;
 }
 
@@ -7674,7 +9678,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 78%, white);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
 }
 
 .arc-building-overview-economy-section > * {
@@ -7709,9 +9720,21 @@ select,
   align-items: center;
   gap: 8px;
   min-height: 25px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 72%, transparent);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-deep) 64%, transparent);
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 72%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-deep) 64%,
+    transparent
+  );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
   padding: 2px 6px;
   color: var(--arc-color-atlas-ink);
   font-size: 11px;
@@ -7755,7 +9778,14 @@ select,
   color: var(--arc-color-atlas-muted);
   font-size: 9px;
   font-weight: 900;
-  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 4px) 0,
+    100% 4px,
+    100% 100%,
+    4px 100%,
+    0 calc(100% - 4px)
+  );
 }
 
 .arc-building-overview-good-icon img {
@@ -7782,7 +9812,14 @@ select,
   border: 0;
   background: var(--arc-color-atlas-line);
   color: var(--arc-color-atlas-muted);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.5),
     0 1px 2px rgb(0 0 0 / 0.14);
@@ -7795,7 +9832,14 @@ select,
   z-index: 0;
   pointer-events: none;
   background: color-mix(in srgb, var(--arc-color-atlas-paper-soft) 76%, white);
-  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
 }
 
 .arc-building-overview-icon-action > svg {
@@ -7816,16 +9860,28 @@ select,
 }
 
 .arc-building-overview-icon-action--active::before {
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 13%, var(--arc-color-atlas-paper-soft));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 13%,
+    var(--arc-color-atlas-paper-soft)
+  );
 }
 
 .arc-building-overview-icon-action--danger {
-  background: color-mix(in srgb, var(--arc-color-atlas-danger) 58%, var(--arc-color-atlas-line));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 58%,
+    var(--arc-color-atlas-line)
+  );
   color: var(--arc-color-atlas-danger);
 }
 
 .arc-building-overview-icon-action--danger::before {
-  background: color-mix(in srgb, var(--arc-color-atlas-danger) 8%, var(--arc-color-atlas-paper-soft));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-danger) 8%,
+    var(--arc-color-atlas-paper-soft)
+  );
 }
 
 .arc-building-overview-icon-action:disabled {
@@ -7872,8 +9928,16 @@ select,
   overflow: auto;
   border-right: 1px solid var(--arc-color-atlas-line);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 82%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(135deg, rgb(70 52 30 / 0.045) 0 1px, transparent 1px 11px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 82%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      135deg,
+      rgb(70 52 30 / 0.045) 0 1px,
+      transparent 1px 11px
+    );
   padding: 12px 14px;
 }
 
@@ -7930,12 +9994,23 @@ select,
   justify-content: center;
   gap: 8px;
   border: 1px solid var(--arc-color-atlas-line-strong);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-deep) 76%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-deep) 76%,
+    transparent
+  );
   color: var(--arc-color-atlas-ink);
   font-family: var(--arc-font-display);
   font-size: 15px;
   font-weight: 800;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
 }
 
 .arc-pop-overview-reset:not(:disabled):hover,
@@ -8004,8 +10079,13 @@ select,
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 82%, transparent);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-deep) 64%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 82%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-deep) 64%,
+    transparent
+  );
   color: var(--arc-color-atlas-ink);
   font-size: 11px;
   font-weight: 800;
@@ -8015,7 +10095,11 @@ select,
 
 .arc-pop-overview-filter-chip--selected {
   border-color: var(--arc-color-atlas-primary);
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 12%, var(--arc-color-atlas-paper-soft));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 12%,
+    var(--arc-color-atlas-paper-soft)
+  );
 }
 
 .arc-pop-overview-filter-chip > span:nth-child(2) {
@@ -8059,7 +10143,14 @@ select,
   overflow: hidden;
   border: 0;
   background: var(--arc-color-atlas-line-strong);
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
   padding: 9px;
 }
 
@@ -8070,9 +10161,24 @@ select,
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 0 0, color-mix(in srgb, var(--arc-color-atlas-primary) 10%, transparent), transparent 44%),
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 84%, white), var(--arc-color-atlas-paper));
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+    radial-gradient(
+      circle at 0 0,
+      color-mix(in srgb, var(--arc-color-atlas-primary) 10%, transparent),
+      transparent 44%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 84%, white),
+      var(--arc-color-atlas-paper)
+    );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
 }
 
 .arc-pop-overview-chart-card > * {
@@ -8092,8 +10198,19 @@ select,
   min-height: 150px;
   overflow: hidden;
   border: 1px solid var(--arc-color-atlas-line-strong);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-deep) 76%, transparent);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-deep) 76%,
+    transparent
+  );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
 .arc-pop-overview-chart-canvas {
@@ -8169,7 +10286,11 @@ select,
 
 .arc-pop-overview-table-mode button[data-active="true"] {
   border-color: var(--arc-color-atlas-primary);
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 13%, var(--arc-color-atlas-paper-soft));
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 13%,
+    var(--arc-color-atlas-paper-soft)
+  );
 }
 
 .arc-pop-overview-table-shell {
@@ -8203,14 +10324,19 @@ select,
 }
 
 .arc-pop-overview-table td {
-  border-bottom: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 64%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 64%, transparent);
   padding: 6px 8px;
   vertical-align: middle;
   white-space: nowrap;
 }
 
 .arc-pop-overview-table-row:hover {
-  background: color-mix(in srgb, var(--arc-color-atlas-primary) 7%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-primary) 7%,
+    transparent
+  );
 }
 
 .arc-pop-overview-table td:nth-child(2),
@@ -8241,8 +10367,13 @@ select,
   min-width: 0;
   align-items: center;
   gap: 4px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 82%, transparent);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-deep) 64%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 82%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-deep) 64%,
+    transparent
+  );
   color: var(--arc-color-atlas-ink);
   font-size: 11px;
   font-weight: 800;
@@ -8250,7 +10381,11 @@ select,
 }
 
 .arc-pop-overview-row-detail > td {
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-deep) 68%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-deep) 68%,
+    transparent
+  );
   padding: 10px 12px 12px;
   white-space: normal;
 }
@@ -8283,7 +10418,8 @@ select,
   gap: 8px;
   min-height: 23px;
   align-items: center;
-  border-top: 1px solid color-mix(in srgb, var(--arc-color-atlas-line) 56%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--arc-color-atlas-line) 56%, transparent);
   color: var(--arc-color-atlas-muted);
   font-size: 11px;
   padding-top: 4px;
@@ -8645,7 +10781,9 @@ select,
   }
 
   .arc-strategy-mode-button--active {
-    box-shadow: 0 -4px 0 var(--arc-color-atlas-primary) inset, 0 1px 0 rgb(255 255 255 / 0.65) inset;
+    box-shadow:
+      0 -4px 0 var(--arc-color-atlas-primary) inset,
+      0 1px 0 rgb(255 255 255 / 0.65) inset;
   }
 
   .arc-strategy-workspace-frame {
@@ -8720,24 +10858,39 @@ select,
 }
 
 .arc-scrollbar-construction {
-  scrollbar-color: color-mix(in srgb, var(--arc-color-warning-top) 55%, transparent) color-mix(in srgb, var(--arc-color-paper-soft) 4%, transparent);
+  scrollbar-color: color-mix(
+      in srgb,
+      var(--arc-color-warning-top) 55%,
+      transparent
+    )
+    color-mix(in srgb, var(--arc-color-paper-soft) 4%, transparent);
 }
 
 .arc-scrollbar-construction::-webkit-scrollbar-track {
   background: color-mix(in srgb, var(--arc-color-paper-soft) 3%, transparent);
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-warning-top) 22%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-warning-top) 22%, transparent);
 }
 
 .arc-scrollbar-construction::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--arc-color-warning-top) 58%, transparent), color-mix(in srgb, var(--arc-color-warning-bottom) 40%, transparent));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--arc-color-warning-top) 58%, transparent),
+    color-mix(in srgb, var(--arc-color-warning-bottom) 40%, transparent)
+  );
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--arc-color-warning-top) 38%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--arc-color-warning-top) 38%, transparent);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 .arc-scrollbar-construction::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--arc-color-warning-top) 72%, transparent), color-mix(in srgb, var(--arc-color-warning-bottom) 52%, transparent));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--arc-color-warning-top) 72%, transparent),
+    color-mix(in srgb, var(--arc-color-warning-bottom) 52%, transparent)
+  );
 }
 
 .arc-tooltip {
@@ -8753,7 +10906,14 @@ select,
   color: var(--arc-color-atlas-ink);
   font-size: 12px;
   line-height: 1.35;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
 }
 
 .arc-tooltip::before {
@@ -8763,9 +10923,24 @@ select,
   z-index: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white), var(--arc-color-atlas-paper)),
-    repeating-linear-gradient(90deg, rgb(70 52 30 / 0.04) 0 1px, transparent 1px 12px);
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--arc-color-atlas-paper-soft) 92%, white),
+      var(--arc-color-atlas-paper)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(70 52 30 / 0.04) 0 1px,
+      transparent 1px 12px
+    );
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
 }
 
 .arc-tooltip > * {
@@ -8795,12 +10970,26 @@ select,
   font-size: 11px;
   font-weight: 500;
   line-height: 1.35;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
 .arc-tooltip.arc-kit-simple-tooltip::before {
   background: color-mix(in srgb, var(--arc-kit-control) 91%, black);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    7px 100%,
+    0 calc(100% - 7px)
+  );
 }
 
 .arc-tooltip.arc-kit-simple-tooltip .arc-tooltip-text {
@@ -8898,7 +11087,11 @@ select,
 .arc-tooltip-shortcut {
   border: 1px solid var(--arc-color-atlas-line);
   border-radius: var(--arc-radius-sm);
-  background: color-mix(in srgb, var(--arc-color-atlas-paper-deep) 48%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--arc-color-atlas-paper-deep) 48%,
+    transparent
+  );
   padding: 1px 5px;
   color: var(--arc-color-atlas-muted);
   font-size: 10px;
@@ -8940,7 +11133,11 @@ select,
   inset: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--arc-color-atlas-paper) 12%, transparent), transparent 42%),
+    radial-gradient(
+      circle at 50% 35%,
+      color-mix(in srgb, var(--arc-color-atlas-paper) 12%, transparent),
+      transparent 42%
+    ),
     var(--arc-color-bg);
 }
 
@@ -8959,6 +11156,100 @@ select,
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.arc-map-city-label-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 18;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.arc-map-city-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: var(--arc-map-city-label-flag-size) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--arc-map-city-label-gap);
+  box-sizing: border-box;
+  overflow: hidden;
+  border: var(--arc-map-city-label-border-width) solid
+    var(--arc-map-city-label-border);
+  border-radius: var(--arc-radius-md);
+  padding: var(--arc-map-city-label-padding);
+  background: var(--arc-map-city-label-surface);
+  box-shadow: var(--arc-map-city-label-shadow);
+  color: var(--arc-map-label-text);
+  font-family: var(--arc-font-display);
+  font-size: var(--arc-map-city-label-font-size);
+  line-height: 1.05;
+  transform: translateZ(0);
+}
+
+.arc-map-city-label--pending {
+  border-style: dashed;
+}
+
+.arc-map-city-label__flag {
+  display: grid;
+  width: var(--arc-map-city-label-flag-size);
+  height: var(--arc-map-city-label-flag-size);
+  place-items: center;
+  overflow: hidden;
+  border: var(--arc-map-city-label-border-width) solid
+    var(--arc-map-city-label-border);
+  border-radius: var(--arc-radius-sm);
+  background: var(--arc-map-label-stroke);
+  font-weight: 800;
+}
+
+.arc-map-city-label__flag img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.arc-map-city-label__copy {
+  display: grid;
+  min-width: 0;
+  gap: var(--arc-map-city-label-gap);
+}
+
+.arc-map-city-label__copy strong,
+.arc-map-city-label__copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arc-map-city-label__copy span,
+.arc-map-city-label__status {
+  color: color-mix(in srgb, var(--arc-map-label-text) 72%, transparent);
+  font-family: var(--arc-font-body);
+  font-size: var(--arc-map-city-label-secondary-font-size);
+}
+
+.arc-map-city-label__status {
+  max-width: calc(var(--arc-map-city-label-width) * 0.32);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arc-map-city-label__progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--arc-map-city-label-progress-height);
+  background: linear-gradient(
+    90deg,
+    var(--arc-map-city-label-progress) var(--arc-map-city-label-progress-value),
+    transparent var(--arc-map-city-label-progress-value)
+  );
 }
 
 .arc-hex-map__stats {
@@ -9055,7 +11346,14 @@ select,
   flex-direction: column;
   background: var(--arc-color-atlas-paper);
   color: var(--arc-color-ink);
-  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 16px) 0,
+    100% 16px,
+    100% 100%,
+    16px 100%,
+    0 calc(100% - 16px)
+  );
   border: 1px solid rgba(84, 61, 39, 0.45);
   box-shadow: 0 26px 80px rgba(0, 0, 0, 0.32);
 }
@@ -9065,7 +11363,14 @@ select,
   position: absolute;
   inset: 6px;
   pointer-events: none;
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% 100%,
+    12px 100%,
+    0 calc(100% - 12px)
+  );
   border: 1px solid rgba(126, 97, 64, 0.32);
 }
 
@@ -9104,7 +11409,14 @@ select,
 .arc-army-designer-side,
 .arc-army-designer-panel {
   position: relative;
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% 100%,
+    12px 100%,
+    0 calc(100% - 12px)
+  );
   border: 1px solid rgba(123, 81, 55, 0.42);
   background: rgba(255, 248, 229, 0.46);
 }
@@ -9189,7 +11501,14 @@ select,
   display: grid;
   place-items: center;
   padding: 8px;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
   border: 1px solid rgba(78, 82, 62, 0.42);
   background: rgba(41, 50, 42, 0.08);
   color: var(--arc-color-ink);
@@ -9212,7 +11531,11 @@ select,
   place-items: center;
   gap: 12px;
   color: rgba(35, 54, 68, 0.62);
-  background: linear-gradient(135deg, rgba(70, 98, 116, 0.14), rgba(255, 252, 239, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(70, 98, 116, 0.14),
+    rgba(255, 252, 239, 0.2)
+  );
   border: 1px solid rgba(70, 98, 116, 0.22);
 }
 
@@ -9231,7 +11554,14 @@ select,
   gap: 10px;
   margin-top: 6px;
   padding: 5px 8px;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
   border: 1px solid rgba(104, 82, 54, 0.34);
   background: rgba(255, 252, 239, 0.62);
   font-size: 12px;
@@ -9254,7 +11584,14 @@ select,
   align-items: center;
   justify-content: center;
   gap: 8px;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
   border: 1px solid rgba(44, 110, 103, 0.58);
   background: rgba(44, 110, 103, 0.12);
   color: rgb(24, 84, 78);

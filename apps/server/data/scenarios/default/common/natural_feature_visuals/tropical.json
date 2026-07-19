@@ -1,0 +1,52 @@
+{
+  "id": "natural_feature_visual:tropical_objects",
+  "tagQuery": {
+    "all": [
+      { "any": ["ecoregion:tropical_forest", "ecoregion:savanna"] },
+      {
+        "any": [
+          "natural:tropical_rainforest",
+          "natural:tropical_dry_forest",
+          "natural:savanna"
+        ]
+      }
+    ]
+  },
+  "textureSetId": "tropical",
+  "placements": [
+    {
+      "id": "tropical_canopy",
+      "frameIds": [0, 1, 2, 3, 4, 5, 6, 7],
+      "count": { "min": 2, "max": 3 },
+      "layoutId": "tropical_grove",
+      "lod": "simplified",
+      "layer": "vegetation",
+      "scale": { "min": 0.64, "max": 0.88 },
+      "rotation": true
+    },
+    {
+      "id": "tropical_forest",
+      "frameIds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "count": { "min": 9, "max": 12 },
+      "layoutId": "tropical_grove",
+      "tagQuery": {
+        "any": ["natural:tropical_rainforest", "vegetation:dense"]
+      },
+      "lod": "detailed",
+      "layer": "vegetation",
+      "scale": { "min": 0.46, "max": 0.72 },
+      "rotation": true
+    },
+    {
+      "id": "tropical_understory",
+      "frameIds": [8, 9, 10, 11, 12, 13, 14, 15],
+      "count": { "min": 2, "max": 6 },
+      "layoutId": "tropical_understory",
+      "lod": "detailed",
+      "layer": "vegetation",
+      "scale": { "min": 0.28, "max": 0.48 },
+      "rotation": true
+    }
+  ],
+  "priority": 20
+}

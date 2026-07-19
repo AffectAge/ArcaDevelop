@@ -1,6 +1,6 @@
 # Programming Standards
 
-This is the day-to-day coding standard for Arcanorum agents. It applies to new and touched code. obsolete code may violate parts of this document; do not mass-rewrite obsolete code without explicit approval.
+This is the day-to-day coding standard for Arcanorum agents. It applies to new and touched code. `docs/official-engineering-sources.md` records the primary sources behind these rules. Existing code may violate parts of this document; clean it only within an approved task scope.
 
 ## Code Organization
 

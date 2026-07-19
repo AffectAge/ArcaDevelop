@@ -1,0 +1,246 @@
+[33mcommit 04a76492f72d96ca8519e04fe5adb1965d09b4e3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mArcanorum-Updated[m[33m, [m[1;31morigin/codex/find-20-optimization-points-with-explanations[m[33m, [m[1;32mcodex/find-20-optimization-points-with-explanations[m[33m)[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    -
+
+[33mcommit 0a3f6189e3f4a382a5678f6288003af06e75d3f8[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit c74c2d958498a8679dd0fa7f8d1b1b2fcbee9eb8[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    -
+
+[33mcommit 55244bac2ce49d51194bb0e2b29a519eaafc51fd[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit f6a49bcbf0188fdd55c5cc6ac44b9cee8c9e1f6e[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    Update AuthPanel.tsx
+
+[33mcommit 96bef22d9ff175d6611630c2be8014457196ea9c[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    Extract GamePreviewChip component and update image constraints
+    
+    Create reusable GamePreviewChip and GamePreviewChipGroup components to consolidate preview badge rendering logic from AuthPanel. Update image validation rules: crests from 128x192 (2:3) to 128x146, logos from 128x192 (2:3) to 64x64 (1:1). Consolidate CSS styling, remove redundant classes, and add component preview to template gallery with localization keys.
+
+[33mcommit 94bcec2556ecb76531e0043844dd3aea3001903e[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 0a879f09d651e9d3fc2d14f74c54a77d9f46d31a[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 87e726a79aae25b22a5d89624432802523149d46[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit ac28da1a301e381814310b330b4dae3ee90a35e0[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 10445afd896a21a1bf84844741e770f5956fb7c6[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 9dbd7a49510994511029f1116e67bcb869a18712[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit c9eb1506222843a1a3a019f3529a7fb2293ef7b8[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit de87f2789682d8a73a4a5d4a9d53785633de9c6c[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 0d8e94dbadf03b319f9c6a5e93401f94938815b5[m
+Author: AffectAge <41058630+AffectAge@users.noreply.github.com>
+Commit: AffectAge <41058630+AffectAge@users.noreply.github.com>
+
+    Track skipped dirty snapshot masks
+
+[33mcommit 901f25add6700b3baa4e00f7f91e35fbca58e59a[m[33m ([m[1;31morigin/2.0-Perfom[m[33m, [m[1;32m2.0-Perfom[m[33m)[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    -
+
+[33mcommit 55b5cf1d5a4c398f3dc6779bfeff6a7bcfb326ea[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    Remove texture-quality setting; refactor map & auth UI
+    
+    Remove per-user map texture-quality option and related hex index usage; adopt a fixed high shader quality for terrain rendering and add prefers-reduced-motion support. Rework App entry-loading flow and AuthPanel visuals (replace many atomistic tailwind classes with arc-* design classes), redesign loading/ready states, and remove province area/hex-index dependent logic. Update MapView to use sprite/graphics pooling, prune/hide pools, and streamline renderer quality handling (fixed quality + reduced-motion media handling). Update ClientSettingsModal to drop textureQuality control and persist navigation settings without texture. Also remove legacy hexTextureSystem files and tests; several map/asset/style adjustments to support these changes.
+
+[33mcommit abe770350cffb3b5ae9a4952a7c1ac31f7b56fe2[m[33m ([m[1;31morigin/1.0-Futures[m[33m, [m[1;32m1.0-Futures[m[33m)[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    -
+
+[33mcommit 27c6dc5ea83a7055b5e7e2e8226eb2f2edb03381[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 140e9236f55525199d89199d79d59d75ca3b4563[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 813916283c707a3f85d0ea392330a0dbb626cee6[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 049819a988b3c0a31d8f5b2b07ed9c25015df0fd[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit ef53eb66e405f4ff903737fdd0f26e212983b43b[m[33m ([m[1;31morigin/content-manager[m[33m, [m[1;32mcontent-manager[m[33m)[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    -
+
+[33mcommit 739fb3744a8b30b8d50b5c386ec8bc80ca508466[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 241cabdb6c895114002442f7671933d8d4c5f0e5[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit e28a9866f9e8a68e168737de707ef1fd5484acab[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit cbdfbe618ead6ebc7cbf6b4dd1c8cc3b82902638[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    -
+
+[33mcommit 6ef2c78e3dc50f6ac08e24ba76dd41339a2e448e[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit d5f8bcea9d6ddd6095ad6a7b88fa0851b4cba4b0[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 1bbb8249d3cda7d479ec058c113e0b48b1ce172e[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit b01d2011257dc00093e40a4aeb867e04df3e37e9[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 04a997946af11a612386eb73b3002efc8f01adcd[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    -
+
+[33mcommit 1eb6ee6ccfafce20cda7e3aeb457bbe57f4a878d[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit e8d1b75e08e897c77ec0df41ba31011b2782ea53[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 19c68ad12156d0aeeff5c9d9f77fb1e9d9f92e27[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 2c52b77cb6e0b19653198d0a54a87126a00fd0cd[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 6db7fc9930fb9ef0168a5ead4327922efe7fa841[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit adbda6cc82e5029379b8cbb6c9ac02854120be39[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit a7279c71a6afbf0b69c6081c5739492a5330ab20[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit 5ff342efe65862366bc086f0758dbc982eaea3f9[m
+Author: AffectAge <survivalera.info@gmail.com>
+Commit: AffectAge <survivalera.info@gmail.com>
+
+    .
+
+[33mcommit d95422d5836036de902a0eb7cd9468a2ad28f847[m
+Author: AffectAge <survivale

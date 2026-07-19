@@ -48,7 +48,7 @@ Hex map settings are required after the hex map hard cutover. They define determ
 }
 ```
 
-Supported `generation.mapScript` values are `continents`, `pangaea`, and `archipelago`. Generated maps remain rectangular pointy-top hex maps and `wrapX` must be `false`.
+Supported `generation.mapScript` values are `continents`, `pangaea`, and `archipelago`. Generated maps remain rectangular pointy-top offset hex maps. `wrapX` is a required boolean: `false` keeps hard left/right boundaries, while `true` wraps only horizontal neighbor lookup without changing coordinate bounds or artifact shape.
 
 Generator internals may use landmass/plate-like data, but scenario rules should use `mapTags`, not private generator fields. The closed tag vocabulary uses `namespace:value` ids such as `fertility:rich`, `rainfall:wet`, `slope:hilly`, `latitude:temperate`, `elevation:highland`, `landmass:continent`, `continent:homeland`, `basin:delta`, `river:navigable`, and `coast:coastal`. Every supported tag requires `mapTag.<namespace>.<value>` localization in English and Russian.
 
@@ -145,11 +145,15 @@ Generated scenario maps may also include:
 ```text
 scenarios/<scenario_id>/.generated/hex-map.json
 scenarios/<scenario_id>/.generated/regions.json
+scenarios/<scenario_id>/.generated/hex-map-client/current.json
+scenarios/<scenario_id>/.generated/hex-map-client/<artifact_version>/manifest.json
+scenarios/<scenario_id>/.generated/hex-map-client/<artifact_version>/navigation.json
+scenarios/<scenario_id>/.generated/hex-map-client/<artifact_version>/chunk-<q>-<r>.json
 ```
 
-These files are produced by scenario map generation. `.generated/hex-map.json` is the static map artifact, and `.generated/regions.json` contains generated region membership plus empty starting region state for bootstrap scenarios. They are read by the runtime together with authored `history/regions/*.json`, but remain generated output and must not be manually edited. Authored scenario regions should still use one file per region under `history/regions/`.
+These files are produced by scenario map generation. `.generated/hex-map.json` is the internal server-authoritative static map artifact, and `.generated/regions.json` contains generated region membership plus empty starting region state for bootstrap scenarios. `hex-map-client/current.json` points to the active content-addressed client version; that version owns the manifest, compact navigation artifact, Windows-safe chunks, and `.gz`/`.br` variants for every navigation/chunk JSON file. They are read by the runtime together with authored `history/regions/*.json`, but remain generated output and must not be manually edited. Authored scenario regions should still use one file per region under `history/regions/`.
 
-Applying a scenario may regenerate `.generated/hex-map.json` and `.generated/regions.json` when the settings hash changes. Generated region IDs are coordinate anchored, for example `region:hex_120_44`, so they remain stable for unchanged generated geography.
+Applying a scenario may regenerate `.generated/hex-map.json`, `.generated/regions.json`, and the content-addressed client artifact set when map settings or static generated features change. Generated region IDs are coordinate anchored, for example `region:hex_120_44`, so they remain stable for unchanged generated geography.
 
 Generated special map features are written to:
 
@@ -157,7 +161,7 @@ Generated special map features are written to:
 scenarios/<scenario_id>/.generated/map-features.json
 ```
 
-This file is produced from authored `common/map_feature_generators/*.json` and the deterministic hex map artifact. It stores concrete `MapFeatureInstance` rows with stable ids, `hexId`, `regionId`, category, visibility, and visual id. Natural hex features such as forest, jungle, marsh, scrub, and snowcap remain in the hex map artifact as `HexTile.feature`.
+This file is produced from authored `common/map_feature_generators/*.json` and the deterministic hex map artifact. It stores concrete `MapFeatureInstance` rows with stable ids, `hexId`, `regionId`, category, visibility, and visual id. Client generation copies each instance into its owning primary chunk. Natural geography remains represented by `HexTile.mapTags` and visual metadata in the static tile payload.
 
 ## Validation
 

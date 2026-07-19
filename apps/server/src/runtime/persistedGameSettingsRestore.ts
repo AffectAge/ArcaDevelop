@@ -486,11 +486,6 @@ function restoreTurnTimer(next: Partial<GameSettings>, defaults: GameSettings): 
 }
 
 
-function stringOrNullOrDefault(value: unknown, fallback: string | null): string | null {
-  if (value === null) return null;
-  return typeof value === "string" && value.trim() ? value.trim().slice(0, 500) : fallback;
-}
-
 function numberOrDefault(value: unknown, fallback: number): number {
   return typeof value === "number" ? Math.max(0, Math.floor(value)) : fallback;
 }

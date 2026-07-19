@@ -275,52 +275,6 @@ function makeUnitAttackOrder(attackerUnitId: string, targetHexId: string): Order
   };
 }
 
-function makeNoopTurnResolverDeps(input: { currentOrders: Map<string, Order[]>; calls: string[] }) {
-  let turnId = 3;
-  return {
-    fullSnapshotMask: 7,
-    getTurnId: () => turnId,
-    setTurnId: (nextTurnId: number) => {
-      turnId = nextTurnId;
-    },
-    setWorldBaseTurnId: () => undefined,
-    cloneWorldBaseSectionSnapshot: () => ({ id: "snapshot" }),
-    getCurrentOrders: () => input.currentOrders,
-    getActiveColonizeRegionsByCountry: () => new Map(),
-    resolveUnitMoveOrder: () => undefined,
-    resolveUnitAttackOrder: () => undefined,
-    resolveUnitPromoteOrder: () => undefined,
-    resolveUnitWaitOrder: () => undefined,
-    resolveBuildOrder: () => undefined,
-    resolveColonizeOrder: () => undefined,
-    resolveFoundCityOrder: () => undefined,
-    advanceStoredUnitRoutesTurn: () => input.calls.push("stored-unit-routes"),
-    refreshMapUnitsForTurn: () => input.calls.push("refresh-map-units"),
-    advanceUnitTrainingQueue: () => undefined,
-    resolveColonizationSupportTurn: () => undefined,
-    resolveSettlementProjectsTurn: () => undefined,
-    flushResourceLedger: () => undefined,
-    enqueueBuildingAutoUpgradesTurn: () => undefined,
-    resolveBuildingConstructionQueuesTurn: () => undefined,
-    resolveResourceExplorationTurn: () => undefined,
-    resolveTransportCorridorConstructionTurn: () => undefined,
-    resolveColonizationCapturesTurn: () => [],
-    makeColonizationCaptureNews: () => makeNews("capture"),
-    applyCountryResourceIncomeTurn: () => undefined,
-    applyPerTurnTreatyMoneyTransfers: () => undefined,
-    rechargeDecisionCharges: () => undefined,
-    resolveTechnologyTurn: () => undefined,
-    autoResolveExpiredCountryEvents: () => undefined,
-    resolveJournalEntriesTurn: () => undefined,
-    maybeGenerateCountryEvents: () => undefined,
-    resolvePopulationTurn: () => undefined,
-    resolveParliamentTurn: () => undefined,
-    resetTurnTimerAnchor: () => undefined,
-    cleanupResolvedTurn: () => undefined,
-    flushPersistentStateNow: () => undefined,
-  };
-}
-
 function makeNews(title: string): EventLogEntry {
   return {
     id: `event:${title}`,

@@ -1,0 +1,34 @@
+{
+  "id": "natural_feature_visual:snowland_objects",
+  "tagQuery": {
+    "all": [
+      "feature:snow",
+      "natural:rock_outcrop",
+      { "not": "morphology:mountainous" }
+    ]
+  },
+  "textureSetId": "snow",
+  "placements": [
+    {
+      "id": "snow_ice_outcrop",
+      "frameIds": [4, 5, 8, 9, 11, 12, 13, 14],
+      "count": { "min": 1, "max": 2 },
+      "layoutId": "rock_cluster",
+      "lod": "simplified",
+      "layer": "landform",
+      "scale": { "min": 0.32, "max": 0.54 },
+      "rotation": true
+    },
+    {
+      "id": "snow_ice_detail",
+      "frameIds": [4, 5, 8, 9, 11, 12, 13, 14],
+      "count": { "min": 2, "max": 5 },
+      "layoutId": "rock_cluster",
+      "lod": "detailed",
+      "layer": "landform",
+      "scale": { "min": 0.22, "max": 0.44 },
+      "rotation": true
+    }
+  ],
+  "priority": 40
+}

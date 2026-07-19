@@ -1,0 +1,30 @@
+{
+  "id": "natural_feature_visual:rough_rock_objects",
+  "tagQuery": {
+    "all": ["natural:rock_outcrop", { "not": "morphology:mountainous" }]
+  },
+  "textureSetId": "highland",
+  "placements": [
+    {
+      "id": "rough_rock",
+      "frameIds": [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      "count": { "min": 1, "max": 2 },
+      "layoutId": "rock_cluster",
+      "lod": "simplified",
+      "layer": "landform",
+      "scale": { "min": 0.4, "max": 0.62 },
+      "rotation": true
+    },
+    {
+      "id": "rough_rock_detail",
+      "frameIds": [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      "count": { "min": 2, "max": 5 },
+      "layoutId": "rock_cluster",
+      "lod": "detailed",
+      "layer": "landform",
+      "scale": { "min": 0.32, "max": 0.54 },
+      "rotation": true
+    }
+  ],
+  "priority": 18
+}

@@ -1,5 +1,7 @@
 # ADR-0003: Replace MapLibre Map Surface With PixiJS Hex Renderer
 
+> Superseded by ADR-0012. Retained only as historical architecture context.
+
 ## Status
 
 Accepted for hard replacement implementation.

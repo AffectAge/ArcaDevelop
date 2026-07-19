@@ -262,6 +262,7 @@
       "modifiers": "scenarios/<scenarioId>/common/modifiers/*.json",
       "mapFeatureGenerators": "scenarios/<scenarioId>/common/map_feature_generators/*.json",
       "mapFeatureVisuals": "scenarios/<scenarioId>/common/map_feature_visuals/*.json",
+      "naturalFeatureVisuals": "scenarios/<scenarioId>/common/natural_feature_visuals/*.json",
       "interestGroups": "scenarios/<scenarioId>/common/interestGroups/*.json",
       "parties": "scenarios/<scenarioId>/common/parties/*.json",
       "companies": "scenarios/<scenarioId>/common/companies/*.json",
@@ -270,9 +271,6 @@
       "decisions": "scenarios/<scenarioId>/common/decisions/*.json",
       "events": "scenarios/<scenarioId>/common/events/*.json",
       "journalEntries": "scenarios/<scenarioId>/common/journal_entries/*.json",
-      "battalions": "scenarios/<scenarioId>/common/battalions/*.json",
-      "shipTypes": "scenarios/<scenarioId>/common/shipTypes/*.json",
-      "aircraftTypes": "scenarios/<scenarioId>/common/aircraftTypes/*.json",
       "unitTypes": "scenarios/<scenarioId>/common/unit_types/*.json",
       "unitSkills": "scenarios/<scenarioId>/common/unit_skills/*.json",
       "unitSkillTrees": "scenarios/<scenarioId>/common/unit_skill_trees/*.json",
@@ -337,7 +335,7 @@
         },
         "military": {
           "militaryFormationSpeed": { "type": "number", "min": 1, "max": 1000000000000 },
-          "landDivisionStackLimitPerHex": { "type": "integer", "min": 1, "max": 100 }
+          "landUnitStackLimitPerHex": { "type": "integer", "min": 1, "max": 100 }
         },
         "registration": {
           "requireAdminApproval": { "type": "boolean" }

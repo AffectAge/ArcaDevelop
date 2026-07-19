@@ -4,6 +4,7 @@ import {
   centerCameraOnWorldPoint,
   normalizeHexCamera,
   screenToWorld,
+  worldToScreen,
   zoomCameraToScreenPoint,
   type HexCamera,
   type HexCameraBounds,
@@ -30,6 +31,17 @@ describe("hex camera helpers", () => {
 
     expect(after.x).toBeCloseTo(before.x, 5);
     expect(after.y).toBeCloseTo(before.y, 5);
+  });
+
+  it("round-trips a world point through the viewport transform", () => {
+    const camera: HexCamera = { x: 400, y: 300, scale: 1.75 };
+    const viewport = { width: 800, height: 600 };
+    const world = { x: 520, y: 240 };
+
+    const screen = worldToScreen(world, viewport, camera);
+
+    expect(screen).toEqual({ x: 610, y: 195 });
+    expect(screenToWorld(screen, viewport, camera)).toEqual(world);
   });
 
   it("clamps X camera movement with limited edge overscroll", () => {

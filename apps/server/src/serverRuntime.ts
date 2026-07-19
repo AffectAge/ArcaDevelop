@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { WebSocketServer } from "ws";
 import { createServer } from "http";
@@ -241,7 +240,6 @@ const { marketAccessRuntime, marketRuntimeFacade } = createMarketSystemsRuntime(
   removeUploadedByUrl,
   round3,
 });
-let resourceLedgerRuntime!: ReturnType<typeof createResourceLedgerRuntime>;
 const { worldPopulationRuntime } = createPopulationSystemsRuntime({
   getGameSettings: () => gameSettings,
   getWorldBase: () => worldBase,
@@ -327,7 +325,7 @@ const { defaultGameSettings, defaultWorldBase } = createServerDefaultStateRuntim
 
 let gameSettings: GameSettings = defaultGameSettings();
 let worldBase: WorldBase = defaultWorldBase(turnId);
-resourceLedgerRuntime = createResourceLedgerRuntime({
+const resourceLedgerRuntime = createResourceLedgerRuntime({
   getWorldBase: () => worldBase,
   getTurnId: () => turnId,
   getRetentionTurns: () => gameSettings.resourceLedger.retentionTurns,

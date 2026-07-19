@@ -15,6 +15,7 @@ Use this checklist for implementation tasks.
 - Arcawiki is updated when player-facing mechanics change.
 - Technical docs are updated when architecture, data format, protocol, or operations change.
 - Performance impact is considered for map, resolver, AI, WS, scenario loading, and hot paths.
+- Map renderer changes pass the default and 200,000-hex scripted performance gates, keep worker/Phaser cache growth bounded, restrict visible layers to visible chunks, and avoid idle render scheduling. If browser/GPU verification is unavailable, the work is not performance-complete and the skipped gate must be reported.
 - Building mechanics that appear on the map must include `targetHexId` validation, localized placement errors, map-visible construction/completed state, and tooltip-ready placement reasons.
 
 ## Final Report

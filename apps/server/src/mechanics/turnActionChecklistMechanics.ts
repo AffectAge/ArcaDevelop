@@ -1,4 +1,4 @@
-import type { HexId, MapUnit, Order, TurnActionChecklist, TurnActionItem, UnitTypeDefinition, WorldBase } from "@arcanorum/shared";
+import type { MapUnit, Order, TurnActionChecklist, TurnActionItem, UnitTypeDefinition, WorldBase } from "@arcanorum/shared";
 
 export function buildTurnActionChecklist(params: {
   worldBase: Pick<WorldBase, "unitsById">;

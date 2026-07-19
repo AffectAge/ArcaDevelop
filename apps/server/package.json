@@ -11,7 +11,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push --skip-generate",
-    "lint": "echo lint skipped",
+    "lint": "eslint src scripts --cache --cache-location ../../node_modules/.cache/eslint-server",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --root ../..",
     "scenario:validate": "tsx scripts/scenario-validate.ts",

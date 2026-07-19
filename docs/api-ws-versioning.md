@@ -77,11 +77,19 @@ Feature visuals use one common scenario atlas at `/scenario-assets/<scenarioId>/
 
 Resource deposit visuals use one shared scenario atlas at `/scenario-assets/<scenarioId>/assets/resources/resource-deposit-atlas.png`, with a repo fallback at `/game-assets/resources/fallback-resource-deposit-atlas.png`. Each frame is `64x64`; columns are stock-ratio tiers and stable variants, while rows map to supported `good:*` ids. The client chooses the tier from `amount / maxAmount` and the variant from a stable hash of `goodId + hexId`.
 
-`GET /hex-map/features` returns `{ features: MapFeatureInstance[] }` for readonly generated/special map features. This endpoint is public map metadata and does not mutate world state. Natural hex features remain in `/hex-map/artifact`.
+Static client map delivery uses the content-addressed format from ADR-0011:
 
-`GET /hex-map/artifact` returns the generated static map artifact from `.generated/hex-map.json`. `HexTile` entries may include `mapTags`, and river edge records may include `riverClass`, `navigable`, and `crossingCost`. This is static scenario map metadata, not a world-delta contract. Clients use it for hex tooltips, feature visuals, path previews, and navigable river previews; server movement resolution uses the same artifact for authoritative costs.
+- `GET /hex-map/manifest` returns `HexMapClientManifest` directly. It is public, readonly, uses `Cache-Control: no-cache`, and supports ETag revalidation.
+- `GET /hex-map/navigation?version=<hash>` returns `HexMapNavigationArtifact` directly. It contains row-major passability, water-kind, movement-cost, stop-on-enter, and region-index arrays plus compact river edge tuples.
+- `GET /hex-map/chunks/:chunkId?version=<hash>` returns the requested `HexMapClientChunk` directly. A chunk includes primary tiles, a one-neighbor visual halo, touching river/coast records, and special feature instances owned by primary tiles.
 
-`GET /hex-map/feature-visuals` returns `{ visuals: MapFeatureVisualRuleDefinition[] }` for scenario-authored conditional frame rules. If it returns an empty list, the client uses built-in defaults. Conditions are evaluated against `HexTile` visual metadata such as `biome`, `temperatureBand`, `moistureBand`, `distanceToWater`, `isCoastal`, and `riverMask`.
+Navigation and chunk responses use `Cache-Control: public, max-age=31536000, immutable`, `Vary: Accept-Encoding`, and prebuilt identity/gzip/Brotli variants. `version` must equal the active manifest's `artifactVersion`; chunk IDs are resolved only through the active manifest descriptor allowlist. The three endpoints are idempotent public GETs, so they require no auth, audit event, idempotency key, or additional route-specific rate limit.
+
+`MAP_ARTIFACT_UNAVAILABLE` (`503`), `MAP_VERSION_MISMATCH` (`409`), and `MAP_CHUNK_NOT_FOUND` (`404`) use the normalized `{ code }` error shape. `/hex-map/artifact` and `/hex-map/features` are removed without compatibility fallback. Special map features now travel in their owning chunks. The internal `.generated/hex-map.json` remains the authoritative server/generator input for movement and corridor validation and is not a public transport contract.
+
+`GET /hex-map/feature-visuals` returns `{ visuals: MapFeatureVisualRuleDefinition[] }` for scenario-authored conditional frame rules. If it returns an empty list, the client uses built-in defaults. Conditions are evaluated against current `HexTile` visual metadata such as `mapTags`, `waterKind`, `temperatureBand`, `moistureBand`, `distanceToWater`, `isCoastal`, and `riverMask`; removed raw `biome` fields are not a transport fallback.
+
+`GET /hex-map/natural-feature-visuals` returns `NaturalFeatureVisualCatalog`: scenario-authored rules plus safe runtime URLs resolved from optional stable `asset:*` texture-set overrides. Rules use `ecoregion:*`, detailed `natural:*`, and `vegetation:*` queries to return placement recipes — allowed atlas frames `0..15`, count range, named composition layout, scale, rotation, layer, and simplified/detail LOD — rather than a pre-composed image. The client deterministically bakes matching objects into visible chunk RenderTextures; this readonly endpoint does not carry GPU state.
 
 ## Transport Corridor Contract
 
@@ -98,6 +106,7 @@ Scenario corridor visuals use `/scenario-assets/<scenarioId>/assets/corridors/co
 ## Unit Movement Orders
 
 `UNIT_MOVE`, `UNIT_ATTACK`, `UNIT_PROMOTE`, `UNIT_SKIP_TURN`, `UNIT_SLEEP`, `UNIT_FORTIFY`, and `UNIT_WAKE` target individual `MapUnit` records from `unitsById`. The server validates ownership, current unit status, queued-order conflicts, route contiguity for movement, melee/ranged target legality for attacks, promotion choice legality, and resting-state legality for wake. The client uses `/turn/actions` to guide players toward blocking idle units, but readiness remains a UX layer: force-end turn still sends the normal ready request without inventing hidden orders.
+
 ## Resource Ledger Deltas
 
 `WorldBase.resourceLedgerByTurn` stores bounded persisted `ResourceFlow[]` history. World deltas use the compact `resourceLedgerByTurn` delta field for newly changed or pruned ledger turns. Bootstrap/resync may include the bounded snapshot, but normal turn deltas must not rebroadcast full history.

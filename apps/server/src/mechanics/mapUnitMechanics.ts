@@ -1,5 +1,7 @@
 import {
   axialDistance,
+  normalizeMovementPoints,
+  resolveHexMovementStep,
   type EventLogEntry,
   type HexId,
   type MapUnit,
@@ -44,10 +46,6 @@ export type MapUnitPromoteOrderResolution = {
   rejectedOrder: MapUnitRejectedOrder | null;
 };
 
-type HexLookup = {
-  byId: Map<string, MapUnitHexNode & { passable?: boolean; waterKind?: string | null }>;
-};
-
 export function resolveMapUnitMoveOrder(params: {
   order: Order;
   playerId: string;
@@ -59,7 +57,7 @@ export function resolveMapUnitMoveOrder(params: {
   getNeighborHexIds?: (hexId: HexId) => HexId[];
   getHexMovementCost?: (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number;
   getHex?: (hexId: HexId) => { id: string; passable?: boolean; waterKind?: string | null } | null | undefined;
-  getEnemyZoneOfControlHexIds?: (countryId: string) => ReadonlySet<HexId>;
+  getEnemyZoneOfControlHexIds?: (countryId: string, domain: UnitDomain) => ReadonlySet<HexId>;
   news?: EventLogEntry[];
 }): MapUnitMoveOrderResolution {
   const reject = (reason: string): MapUnitMoveOrderResolution => ({
@@ -271,7 +269,7 @@ export function advanceStoredMapUnitRoutesTurn(params: {
   movedUnitIds: Set<string>;
   news?: EventLogEntry[];
   getHexMovementCost?: (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number;
-  getEnemyZoneOfControlHexIds?: (countryId: string) => ReadonlySet<HexId>;
+  getEnemyZoneOfControlHexIds?: (countryId: string, domain: UnitDomain) => ReadonlySet<HexId>;
 }): void {
   for (const unit of Object.values(params.worldBase.unitsById ?? {})) {
     if (
@@ -405,27 +403,32 @@ function advanceMapUnitAlongRoute(params: {
   turnId: number;
   news?: EventLogEntry[];
   getHexMovementCost?: (hexId: HexId, countryId?: string, fromHexId?: HexId, unitDomain?: UnitDomain) => number;
-  getEnemyZoneOfControlHexIds?: (countryId: string) => ReadonlySet<HexId>;
+  getEnemyZoneOfControlHexIds?: (countryId: string, domain: UnitDomain) => ReadonlySet<HexId>;
 }): boolean {
-  let budget = Math.max(0, Math.floor(params.unit.movementPoints));
+  let budget = normalizeMovementPoints(params.unit.movementPoints);
   if (budget <= 0) return false;
   const remainingRoute = [...params.unit.path];
-  const enemyZoneOfControl = params.getEnemyZoneOfControlHexIds?.(params.unit.countryId) ?? new Set<HexId>();
+  const enemyZoneOfControl = params.getEnemyZoneOfControlHexIds?.(params.unit.countryId, params.unitType.domain) ?? new Set<HexId>();
   let moved = false;
   while (remainingRoute.length > 0) {
     const nextHexId = remainingRoute[0]!;
     if (isStackBlocked(params.worldBase, params.unitTypes, params.unit, nextHexId)) break;
-    const cost = Math.max(1, Math.ceil(params.getHexMovementCost?.(nextHexId, params.unit.countryId, params.unit.hexId, params.unitType.domain) ?? 1));
-    if (cost > budget) break;
-    budget -= cost;
+    const step = resolveHexMovementStep({
+      remainingMovement: budget,
+      movementCost: params.getHexMovementCost?.(nextHexId, params.unit.countryId, params.unit.hexId, params.unitType.domain) ?? 1,
+      entersEnemyZoneOfControl: enemyZoneOfControl.has(nextHexId),
+      ignoresEnemyZoneOfControl: params.unitType.class === "cavalry" || params.unitType.domain === "air",
+    });
+    if (!step.canEnter) break;
+    budget = step.remainingMovement;
     params.unit.hexId = nextHexId;
     remainingRoute.shift();
     moved = true;
-    if (enemyZoneOfControl.has(nextHexId) && remainingRoute.length > 0) break;
+    if (step.stoppedByEnemyZoneOfControl) break;
   }
   params.unit.path = remainingRoute;
   params.unit.targetHexId = remainingRoute.length > 0 ? remainingRoute[remainingRoute.length - 1]! : null;
-  params.unit.movementPoints = budget;
+  params.unit.movementPoints = normalizeMovementPoints(budget);
   params.unit.lastActionTurnId = params.turnId;
   params.unit.status = remainingRoute.length > 0 ? "moving" : "idle";
   params.worldBase.unitsById ??= {};

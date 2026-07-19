@@ -1,176 +1,26 @@
-# Scenario And Data Agents
+# Scenario data guide
 
-Always start from root `AGENTS.md` and `docs/README.md` before using this folder guide.
+Always start from root `AGENTS.md` and `docs/README.md`.
 
-Use this guide for `apps/server/data` and scenario folders.
+Read root `AGENTS.md`, `docs/modding-authoring.md`, `docs/scenario-region-history.md`, `docs/data-deletion-lifecycle.md`, and `docs/entity-ownership.md`.
 
-Also read:
+## Ownership and layout
 
-- `docs/data-deletion-lifecycle.md`
-- `docs/scenario-region-history.md`
-- `docs/security-baseline.md`
-- `docs/secrets-policy.md`
-- `docs/engineering-standards.md`
+Each scenario owns its manifest, map, history, content, defines, AI, localization, Arcawiki, theme, and assets. Author strict JSON with one entity per file and an authoritative stable `id`.
 
-## Scenario Structure Agent
+- `history/provinces/*.json`: lightweight hex/province identity, terrain, climate, passability, movement cost, adjacency metadata, sites, and deposits.
+- `history/regions/*.json`: member province IDs plus owner, controller, cores, claims, population, buildings, construction, resources, infrastructure, and regional state.
+- `history/countries/*.json`: country identity, localized name, asset IDs, resources, government, laws, politics, control mode, and AI reference. Countries may begin landless.
+- `common/defines.json`: scenario balance, pacing, costs, limits, retention, and explicit AI bonuses.
+- `common/<content-type>/*.json`: concrete content and modifier-backed effects.
+- `common/ai/{archetypes,personalities,strategies}/`: stable AI configuration.
+- `localisation/{en,ru}.json`, `arcawiki/entries/`, `theme/`, and `assets/`: player-facing scenario material.
+- `.generated/`: generated indexes only; never manually edit.
 
-Scenarios own their full gameplay setup:
+Do not create root aggregate content libraries, direct asset URLs in authored entities, or old global upload roots. Authored assets use stable `asset:*` IDs from `common/assets/*.json`; runtime uploads remain scenario-scoped under `assets/uploads/`.
 
-- map provinces,
-- map regions,
-- region history,
-- starting countries,
-- diplomacy,
-- defines,
-- AI config,
-- localization,
-- Arcawiki,
-- theme,
-- assets/uploads.
+## Validation and cleanup
 
-Recommended structure:
+Scenario validation must reject duplicate/missing IDs, invalid references, invalid defines, missing localization/assets, orphaned assets, and province-heavy gameplay state. Do not silently repair invalid authored data.
 
-```text
-scenarios/<scenario_id>/
-  scenario.json
-  history/
-    provinces/
-      <province_id_or_name>.json
-    regions/
-      <region_id_or_name>.json
-    countries/
-      <country_id_or_name>.json
-    diplomacy/
-      relations/
-      treaties/
-  common/
-    defines.json
-    goods/
-    buildings/
-    technologies/
-    laws/
-    cultures/
-    religions/
-    ideologies/
-    professions/
-    populations/
-    races/
-    markets/
-    modifiers/
-    ai/
-      archetypes/
-      personalities/
-      strategies/
-  localisation/
-    en.json
-    ru.json
-  arcawiki/
-    entries/
-  theme/
-  assets/uploads/
-  .generated/
-```
-
-Authored scenario data uses strict JSON and one entity per file. The JSON `id` is authoritative; file names are only human-readable organization aids. Generated indexes live in `.generated/` and are not authored source.
-
-Root aggregate content libraries are not valid runtime or authored sources. Do not create or restore `apps/server/data/content-library.json`; scenario-owned content belongs under `scenarios/<scenario_id>/common/*/*.json`.
-
-Concrete gameplay content must be authored as scenario data. Buildings, goods, technologies, laws, events, decisions, modifiers, units, institutions, cultures, and religions belong in scenario files under `common/`, `history/`, `arcawiki/`, `localisation/`, or other documented scenario-owned folders. Do not ask core simulation code to special-case a concrete content ID when a data-authored effect or modifier can describe it.
-
-`common/defines.json` stores scenario-owned tunables such as audit retention, colonization limits/costs, customization costs, balance, pacing, and explicit AI bonuses. Invalid defines must fail validation/application instead of being silently repaired.
-
-`common/populations/*.json` is the authored source for initial region population. Population rows are atomic pop groups (`cultureId`, `religionId`, `raceId`, `professionId`, `size`); regions without authored population remain empty.
-
-Scenario uploads are owned by the scenario under `assets/uploads/`. Managed server URLs must use `/scenario-assets/<scenario_id>/assets/uploads/<relative_path>`; old global upload roots are not valid scenario data.
-
-## Region History Agent
-
-`history/provinces/*.json` defines province map/movement data:
-
-- province id,
-- localization key,
-- authored map color,
-- terrain/landscape,
-- climate,
-- passability,
-- movement cost,
-- adjacency metadata when needed,
-- local special sites,
-- local resources/deposits.
-
-Province files must not define pops, buildings, construction, production, taxes, markets, colonization progress, or diplomacy transfer state.
-
-`history/regions/*.json` defines region membership and starting gameplay state:
-
-- region id,
-- localization key,
-- authored map color,
-- province ids,
-- optional continent/strategic area,
-- metadata.
-
-- owner/controller,
-- cores,
-- detailed claims,
-- pops,
-- buildings,
-- construction,
-- resources/deposits,
-- infrastructure,
-- local modifiers,
-- unrest/devastation/occupation if used.
-
-## Country Setup Agent
-
-`history/countries/<country_id>.json` defines:
-
-- stable country id,
-- localization key,
-- color,
-- flag/crest asset references,
-- resources,
-- capital region if any,
-- laws/government/politics,
-- control mode,
-- AI profile reference.
-
-Countries may be landless at scenario start.
-
-## AI Config Agent
-
-AI config lives in:
-
-```text
-common/ai/
-  archetypes/
-  personalities/
-  strategies/
-```
-
-Use readable stable IDs. Archetypes provide defaults; personalities and country files may override weights.
-
-## Validation Agent
-
-Scenario validation must catch:
-
-- duplicate IDs,
-- invalid strict JSON/schema,
-- missing region/province references,
-- invalid owner/controller/core/claim references,
-- missing localization keys,
-- invalid AI profile references,
-- invalid defines,
-- missing assets,
-- orphaned assets,
-- province-heavy data added for heavy mechanics without approval,
-- stale or invalid `.generated/` indexes when runtime requires generated indexes.
-
-## Deletion And Cleanup Agent
-
-Scenario data must define ownership and cleanup for content entries, countries, regions, AI profiles, localization keys, Arcawiki entries, themes, and assets.
-
-Removed scenario entities must not leave orphaned references or assets. Destructive cleanup should support dry-run/preview where practical and must be scenario-scoped.
-
-## Secrets And Sensitive Data Agent
-
-Scenario files must not contain real secrets, tokens, passwords, private admin notes, or private player data. Use placeholder examples only.
+Removal must clean or explicitly migrate references, localization, Arcawiki, themes, generated indexes, and owned assets. Keep destructive cleanup scenario-scoped and provide preview/dry-run where practical. Never store secrets or private player/admin data in scenario files.

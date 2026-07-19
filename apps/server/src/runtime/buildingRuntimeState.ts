@@ -4,8 +4,6 @@ import {
   buildCityHexIdSet,
   resolveEffectiveHexTile,
   type BuildingOwner,
-  type HexFeature,
-  type HexTerrain,
   type HexTile,
   type HexWaterKind,
   type Order,

@@ -202,7 +202,7 @@ export function PoliticsModal({ open, token, countryId, countryName, worldBase, 
       const flexibleSeats = row.seats - committedSeats;
       let yesSeats = 0;
       let noSeats = 0;
-      let abstainSeats = 0;
+      let abstainSeats: number;
       if (support > 5) {
         yesSeats = committedSeats + Math.floor(flexibleSeats / 2);
         abstainSeats = row.seats - yesSeats;

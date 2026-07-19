@@ -1,0 +1,57 @@
+{
+  "id": "natural_feature_visual:wetland_objects",
+  "tagQuery": {
+    "all": [
+      "feature:wet",
+      { "any": ["natural:marsh", "natural:swamp_forest", "natural:mangrove"] }
+    ]
+  },
+  "textureSetId": "wetland",
+  "placements": [
+    {
+      "id": "wetland_reeds",
+      "frameIds": [0, 1, 2],
+      "count": { "min": 2, "max": 4 },
+      "layoutId": "wetland_band",
+      "tagQuery": "natural:marsh",
+      "lod": "simplified",
+      "layer": "wet",
+      "scale": { "min": 0.34, "max": 0.54 },
+      "rotation": true
+    },
+    {
+      "id": "wetland_reeds_detail",
+      "frameIds": [0, 1, 2, 3, 8, 9, 10, 11],
+      "count": { "min": 5, "max": 10 },
+      "layoutId": "wetland_band",
+      "tagQuery": "natural:marsh",
+      "lod": "detailed",
+      "layer": "wet",
+      "scale": { "min": 0.28, "max": 0.48 },
+      "rotation": true
+    },
+    {
+      "id": "wetland_trees",
+      "frameIds": [4, 5, 6, 7, 12, 13, 14, 15],
+      "count": { "min": 2, "max": 3 },
+      "layoutId": "wetland_copse",
+      "tagQuery": { "any": ["natural:swamp_forest", "natural:mangrove"] },
+      "lod": "simplified",
+      "layer": "vegetation",
+      "scale": { "min": 0.56, "max": 0.8 },
+      "rotation": true
+    },
+    {
+      "id": "wetland_trees_detail",
+      "frameIds": [4, 5, 6, 7, 12, 13, 14, 15],
+      "count": { "min": 7, "max": 11 },
+      "layoutId": "wetland_copse",
+      "tagQuery": { "any": ["natural:swamp_forest", "natural:mangrove"] },
+      "lod": "detailed",
+      "layer": "vegetation",
+      "scale": { "min": 0.46, "max": 0.7 },
+      "rotation": true
+    }
+  ],
+  "priority": 24
+}

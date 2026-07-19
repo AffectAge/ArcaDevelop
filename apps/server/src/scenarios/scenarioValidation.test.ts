@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
@@ -26,6 +26,18 @@ describe("scenarioValidation", () => {
       contentEntries: 1,
       arcawikiEntries: 1,
     });
+  });
+
+  it("accepts a rectangular map with optional horizontal wrapping enabled", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await writeJson(join(scenarioDir, "map/hex-settings.json"), {
+      ...createHexSettings(),
+      wrapX: true,
+    });
+
+    const result = await validateScenarioDirectory(scenarioDir);
+
+    expect(result.ok).toBe(true);
   });
 
   it("fails on duplicate IDs", async () => {
@@ -1199,6 +1211,34 @@ describe("scenarioValidation", () => {
     expect(hexSettings.seed).toBe("fixture-seed");
     expect(hexSettings.width).toBe(16);
     expect(validWithGenerated.ok).toBe(true);
+  });
+
+  it("fails generated validation when a declared client map encoding is missing", async () => {
+    const scenarioDir = await createScenarioFixture();
+    await buildScenarioGeneratedIndexes(scenarioDir);
+    const current = JSON.parse(
+      await readFile(join(scenarioDir, ".generated/hex-map-client/current.json"), "utf8"),
+    ) as { artifactVersion: string };
+    await unlink(
+      join(
+        scenarioDir,
+        ".generated/hex-map-client",
+        current.artifactVersion,
+        "navigation.json.br",
+      ),
+    );
+
+    const result = await validateScenarioDirectory(scenarioDir, { requireGeneratedIndexes: true });
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "INVALID_GENERATED_INDEX",
+          path: ".generated/hex-map-client/current.json",
+        }),
+      ]),
+    );
   });
 
   it("fails when generated indexes are stale", async () => {

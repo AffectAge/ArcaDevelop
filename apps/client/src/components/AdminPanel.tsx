@@ -1,6 +1,6 @@
 import { Listbox } from "@headlessui/react";
 import { useEffect, useMemo, useState } from "react";
-import { BellRing, Check, ChevronDown, Flag, Map as MapIcon, Palette, RotateCcw, Shield, Trash2, Upload } from "lucide-react";
+import { BellRing, Check, ChevronDown, Flag, Map as MapIcon, Palette, RotateCcw, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import type { Country } from "@arcanorum/shared";
 import type { UiTextKey } from "../i18n/uiText";
@@ -378,11 +378,6 @@ export function AdminPanel({ open, token, currentCountryId, onClose, onSessionCo
     } finally {
       setSaving(false);
     }
-  };
-
-  const reloadAdminRegions = async () => {
-    const regionList = await fetchAdminRegions(token);
-    setRegions(regionList);
   };
 
   return (

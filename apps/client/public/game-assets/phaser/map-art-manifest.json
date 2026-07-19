@@ -1,0 +1,257 @@
+{
+  "id": "arcanorum-phaser-map-v8",
+  "generatedBy": "scripts/build-phaser-map-atlases.mjs",
+  "provenance": "project_assets/map-art/provenance.json",
+  "sourceLicense": "Project-owned AI-assisted source artwork; no third-party game assets",
+  "frame": {
+    "width": 112,
+    "height": 128,
+    "margin": 2,
+    "spacing": 4
+  },
+  "terrain": {
+    "url": "/game-assets/phaser/terrain-atlas.webp",
+    "columns": 8,
+    "variants": 1,
+    "field": {
+      "columns": 1,
+      "rows": 1
+    },
+    "groups": {
+      "deep_water": 0,
+      "coastal_water": 1,
+      "fresh_water": 2,
+      "grassland": 3,
+      "plains": 4,
+      "desert": 5,
+      "tundra": 6,
+      "snow": 7,
+      "tropical": 8,
+      "marsh": 9
+    }
+  },
+  "objects": {
+    "url": "/game-assets/phaser/object-atlas.png",
+    "frameWidth": 128,
+    "frameHeight": 128,
+    "columns": 8,
+    "variants": 4,
+    "groups": {
+      "feature:ancient_ruins": 0,
+      "marker:city": 4,
+      "building:farm": 8,
+      "building:mine": 12
+    }
+  },
+  "naturalFeatures": {
+    "frameWidth": 128,
+    "frameHeight": 128,
+    "columns": 4,
+    "rows": 4,
+    "framesPerTextureSet": 16,
+    "textureSets": [
+      "grassland",
+      "plains",
+      "tropical",
+      "desert",
+      "tundra",
+      "wetland",
+      "snow",
+      "glacial_mountain",
+      "mountain",
+      "highland"
+    ],
+    "transparentOverlays": true,
+    "sources": {
+      "grassland": [
+        "project_assets/map-art/sources/natural-choice-temperate-trees-4x4.png",
+        "project_assets/map-art/sources/natural-choice-shrubs-undergrowth-4x4.png"
+      ],
+      "plains": [
+        "project_assets/map-art/sources/natural-choice-temperate-trees-4x4.png",
+        "project_assets/map-art/sources/natural-choice-shrubs-undergrowth-4x4.png"
+      ],
+      "tropical": [
+        "project_assets/map-art/sources/natural-choice-tropical-trees-4x4.png"
+      ],
+      "desert": [
+        "project_assets/map-art/sources/natural-choice-desert-oasis-4x4.png"
+      ],
+      "tundra": [
+        "project_assets/map-art/sources/natural-choice-northern-tundra-4x4.png"
+      ],
+      "wetland": [
+        "project_assets/map-art/sources/natural-choice-wetland-mangrove-4x4.png"
+      ],
+      "snow": [
+        "project_assets/map-art/sources/natural-choice-snow-ice-4x4.png"
+      ],
+      "glacial_mountain": [
+        "project_assets/map-art/sources/natural-choice-snow-ice-4x4.png",
+        "project_assets/map-art/sources/natural-choice-mountain-ridges-4x4.png"
+      ],
+      "mountain": [
+        "project_assets/map-art/sources/natural-choice-mountain-ridges-4x4.png",
+        "project_assets/map-art/sources/natural-choice-northern-tundra-4x4.png"
+      ],
+      "highland": [
+        "project_assets/map-art/sources/natural-choice-mountains-rocks-4x4.png"
+      ]
+    }
+  },
+  "borders": {
+    "url": "/game-assets/phaser/border-atlas.png",
+    "styles": {
+      "country": 0,
+      "region": 64,
+      "controller": 128,
+      "selection": 192
+    }
+  },
+  "rivers": {
+    "url": "/game-assets/phaser/river-atlas.png"
+  },
+  "fill": {
+    "url": "/game-assets/phaser/fill-atlas.png"
+  },
+  "sources": [
+    {
+      "path": "project_assets/map-art/sources/terrain-materials-v6-water-grass.png",
+      "sha256": "5c49be358667d455bd0373d426e07549bb8713b9a6012d8ef822a25cb59141ff"
+    },
+    {
+      "path": "project_assets/map-art/sources/terrain-materials-v6-dry-cold.png",
+      "sha256": "7173e0681d62f675610d16868c5db837ee7a4323f0a07177fd8dbce0850d0f16"
+    },
+    {
+      "path": "project_assets/map-art/sources/terrain-materials-v6-wet-ground.png",
+      "sha256": "de1f53460b7fc59ef91f9df06197c2a98b9cd946b5f8015e82e58ab893f6e619"
+    },
+    {
+      "path": "project_assets/map-art/sources/map-objects-v3.png",
+      "sha256": "1e7b84ca6537ba5cec4cee3b0f4075ed8da960b745f74caf996001640280483d"
+    },
+    {
+      "path": "project_assets/map-art/sources/natural-choice-temperate-trees-4x4.png",
+      "sha256": "342dc3912cc14eb406d127f87c18a75f7330467211a066cfe1f4cd60c51585dd"
+    },
+    {
+      "path": "project_assets/map-art/sources/natural-choice-shrubs-undergrowth-4x4.png",
+      "sha256": "db6913a912965c683af8773805da8d916f025db6463f75a630dd4ec4f14bfb96"
+    },
+    {
+      "path": "project_assets/map-art/sources/natural-choice-tropical-trees-4x4.png",
+      "sha256": "704249b6f58ecbe6871d486386a7b5217be0c10d828804e4ba9d0393fcf9690e"
+    },
+    {
+      "path": "project_assets/map-art/sources/natural-choice-desert-oasis-4x4.png",
+      "sha256": "f5629623e7f68f5ced814ef75deee917e65318377431d03111bd31661d5193ec"
+    },
+    {
+      "path": "project_assets/map-art/sources/natural-choice-northern-tundra-4x4.png",
+      "sha256": "6dd6bf16ac9c7f0c0f8d78c9402c7854759489ae2158b9a59d04087de37e44da"
+    },
+    {
+      "path": "project_assets/map-art/sources/natural-choice-wetland-mangrove-4x4.png",
+      "sha256": "4f40bde689d506135854691a1063fea19c27be819111c1a5fa007cf19d9b9700"
+    },
+    {
+      "path": "project_assets/map-art/sources/natural-choice-snow-ice-4x4.png",
+      "sha256": "013167bb3202ca1dc1386925feccfb81979e3d8ad6cf11af07a535870c04436b"
+    },
+    {
+      "path": "project_assets/map-art/sources/natural-choice-mountain-ridges-4x4.png",
+      "sha256": "4606a31a6382d6aef2c45a4dc4ae7abed83d05d7dedb5dea96779e2f9736daf1"
+    },
+    {
+      "path": "project_assets/map-art/sources/natural-choice-mountains-rocks-4x4.png",
+      "sha256": "63647fe9f813409f963f05221388044bbb765249f7df97460c2e88ff4c8ea932"
+    },
+    {
+      "path": "project_assets/map-art/sources/map-units-v3.png",
+      "sha256": "f002df3281f1e0599d5b3c3cd961d72f764872bd1b95808b78c6a1a3c38e5ef2"
+    },
+    {
+      "path": "project_assets/map-art/sources/river-materials-v1.png",
+      "sha256": "d7cc4a8e746f99f2146d90efd07d8d9e6dd490dcddeecc1768df148a26d58d36"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "apps/client/public/game-assets/phaser/terrain-atlas.webp",
+      "sha256": "2be952f5ca5116141248063a7816685dfa2ff7733540925db4480ab41ee059e6"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/object-atlas.png",
+      "sha256": "d676b1120d8c7a6433b8bc2693feae2cadf0e7661a8bcd3aa5bc87c75e7271bc"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/natural_features/grassland_features.webp",
+      "sha256": "4b0c16ce6a24f1e21a91a793367a9eb81b45ebfbbfeb0b7f235ea6037e18401b"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/natural_features/plains_features.webp",
+      "sha256": "d92eab4cdf4da017c7e4c6042c83fb9820cc5de904e71f3a71603fd0064640df"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/natural_features/tropical_features.webp",
+      "sha256": "c823768f6666d1ee712a2605fe93643f178255bf84a71d168f9e057023715592"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/natural_features/desert_features.webp",
+      "sha256": "ad907e578fc87aac87e67a8ad09df4425f4fe3a3d54a60188de8b072a0d0a68c"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/natural_features/tundra_features.webp",
+      "sha256": "eaa5f06577818a6e020d243a085edff2ec554272ba16e32701380d34e8d3cc8f"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/natural_features/wetland_features.webp",
+      "sha256": "f750e3813de639cf10ffd4f5d24dfe107f2d06098e71d82c43b89081a50169f7"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/natural_features/snow_features.webp",
+      "sha256": "1deac878e616e2e1f932e56b8fc8b6d580496e745bb185d29cd0230074c6a5cf"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/natural_features/glacial_mountain_features.webp",
+      "sha256": "f7b9c159926fcc4ea3a4926cca1a4604643ac791c3845ee23fefe1c53d9e5369"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/natural_features/mountain_features.webp",
+      "sha256": "bab42af525d08e60c6064372fda3686cfe45fc5cacb0b7d25ca1958de6d9dd92"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/natural_features/highland_features.webp",
+      "sha256": "c8c430206825288e494481efc6399d81efaf03dbd6eea09e0a7572f966cdccf0"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/border-atlas.png",
+      "sha256": "955386fb1e6efb7232338333bc8b353c286fa240af3d69a296a4c3751fcdca9a"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/river-atlas.png",
+      "sha256": "d7e9ecc9982333b21681be1886937618e63c198d19fd12b8d2537e4ae003e5da"
+    },
+    {
+      "path": "apps/client/public/game-assets/phaser/fill-atlas.png",
+      "sha256": "487dc920a85af3968481c9e9a0ddecd62f4b8537d4f97b78dc6509f50864d7ea"
+    },
+    {
+      "path": "apps/server/data/scenarios/default/assets/units/archer.png",
+      "sha256": "36bb15ce59d0cbd9e60635865fa68706d29a0f62c9b4bf9b322c45d782e2ec09"
+    },
+    {
+      "path": "apps/server/data/scenarios/default/assets/units/colonizer.png",
+      "sha256": "e99d85d1aff34eac926a59481704b400447280453fa5b7547cf632b7ad214365"
+    },
+    {
+      "path": "apps/server/data/scenarios/default/assets/units/galley.png",
+      "sha256": "d0cada6869991dca514cc366c7f166c984d27a5722e0eac8828ab52051f84c9e"
+    },
+    {
+      "path": "apps/server/data/scenarios/default/assets/units/warrior.png",
+      "sha256": "cb7808d8f06d98e203bba3a81434ab3163190496e3544878d303938168166598"
+    }
+  ]
+}

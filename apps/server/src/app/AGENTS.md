@@ -1,23 +1,10 @@
-# App Agents
+# Server app guide
 
-Always start from root `AGENTS.md` and `docs/README.md` before using this folder guide.
+Always start from root `AGENTS.md` and `docs/README.md`.
 
-Use this guide for `apps/server/src/app`.
+This folder owns Express construction, global middleware, static serving, and app-level HTTP boundaries.
 
-Also read:
-
-- `apps/server/AGENTS.md`
-- `docs/security-baseline.md`
-- `docs/api-ws-versioning.md`
-- `docs/programming-standards.md`
-
-## Responsibility
-
-This folder owns Express app construction, global middleware wiring, static serving, and app-level HTTP concerns.
-
-## Rules
-
-- Keep route handlers out of this folder unless they are truly global app health or middleware boundaries.
-- Do not put game mechanics, persistence queries, permissions policies, or upload cleanup logic here.
-- Middleware order is behavior. Preserve it intentionally and test or report any order changes.
-- Static serving of uploads must use upload path helpers and must not bypass upload security rules.
+- Middleware order is behavior; preserve and test/report changes.
+- Keep route handlers, mechanics, persistence, permissions, and cleanup in their owning modules.
+- Static scenario/upload serving uses centralized safe path helpers and never bypasses ownership or validation.
+- Apply the server security and API/WS rules from root and `apps/server/AGENTS.md`.

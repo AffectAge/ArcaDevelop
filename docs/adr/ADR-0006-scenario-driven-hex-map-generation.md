@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted; the `wrapX: true` prohibition is superseded by ADR-0011.
 
 ## Context
 
@@ -28,7 +28,7 @@ Accepted
 
 - Benefits: Scenarios can choose readable scripts such as `continents`, `pangaea`, and `archipelago`; generated regions receive permanent coordinate-anchor IDs; rules can query closed, localized map tags instead of private generator internals; region ownership can include adjacent coastal waters without turning deep ocean into land gameplay space.
 - Risks: Existing local scenarios with flat `hex-settings.json` are intentionally rejected and must be rewritten. Generated region IDs may change when geography settings change.
-- Migration/removal work: Old flat keys such as `seaLevel`, `temperature`, `moisture`, `mountains`, `forests`, and `wrapX: true` are invalid. Generated tiles containing `terrain`, `biome`, or `feature` are invalid. Old `.generated/hex-map-artifact.json` is no longer a runtime target.
+- Migration/removal work: Old flat keys such as `seaLevel`, `temperature`, `moisture`, `mountains`, and `forests` are invalid. ADR-0011 later made boolean `wrapX: true` valid while preserving the same rectangular pointy-top artifact. Generated tiles containing `terrain`, `biome`, or `feature` are invalid. Old `.generated/hex-map-artifact.json` is no longer a runtime target.
 - Compatibility decision: No compatibility fallback. During active development, invalid old map settings should fail loudly.
 - Follow-up tasks: Start-position selection, unique exposed continent IDs, strategic chokepoint tags, and richer island size tags remain separate mechanics.
 
